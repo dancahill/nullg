@@ -4,15 +4,16 @@
 # files, etc.  It might be good policy to run a cron job like this daily.
 
 BASEDIR=/usr/local/nullgroupware
-DATE=`date +%d-%m-%Y`
+CURDATE=`date +%Y-%m-%d`
 
 mkdir -p ${BASEDIR}/var/backup
 cd ${BASEDIR}/bin
-${BASEDIR}/bin/dbutil dump ${BASEDIR}/var/backup/backup-${DATE}
+${BASEDIR}/bin/dbutil dump ../backup-${CURDATE}
 cd ${BASEDIR}
-rm -f ${BASEDIR}/var/backup/backup-${DATE}.gz
-gzip ${BASEDIR}/var/backup/backup-${DATE}
+gzip backup-${CURDATE}
 echo -n "Archiving backup tarball..."
-rm backup-${DATE}.tgz
-tar zcf backup-${DATE}.tgz cgi-bin etc var
+rm -f var/backup/backup-${CURDATE}.tgz
+tar zcf backup-${CURDATE}.tgz backup-${CURDATE}.gz cgi-bin etc var --exclude=var/backup/*
+rm -f backup-${CURDATE}.gz
+mv backup-${CURDATE}.tgz var/backup
 echo "done."

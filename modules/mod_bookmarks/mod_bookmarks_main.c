@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,15 +18,27 @@
 #include "mod_stub.h"
 #include "mod_bookmarks.h"
 
+static int htselect_bookmarkfolder_r(CONN *sid, int sqr, int depth, int parentid, int selected)
+{
+	int foldercount=0;
+	int fid, pid;
+	int i, j;
+
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		pid=atoi(sql_getvalue(sqr, i, 1));
+		if (pid==parentid) {
+			fid=atoi(sql_getvalue(sqr, i, 0));
+			prints(sid, "<OPTION VALUE='%d'%s>", fid, fid==selected?" SELECTED":"");
+			for (j=0;j<depth;j++) prints(sid, "&nbsp;&nbsp;&nbsp;&nbsp;");
+			prints(sid, "%s\n", str2html(sid, sql_getvalue(sqr, i, 2)));
+			foldercount+=htselect_bookmarkfolder_r(sid, sqr, depth+1, fid, selected);
+		}
+	}
+	return foldercount;
+}
+
 void htselect_bookmarkfolder(CONN *sid, int selected)
 {
-	_btree *btree;
-	_ptree *ptree;
-	int base=0;
-	int depth=1;
-	int indent=0;
-	int i, j;
-	int x;
 	int sqr;
 
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
@@ -39,39 +51,7 @@ void htselect_bookmarkfolder(CONN *sid, int selected)
 		sql_freeresult(sqr);
 		return;
 	}
-	btree=calloc(sql_numtuples(sqr)+2, sizeof(_btree));
-	ptree=calloc(sql_numtuples(sqr)+2, sizeof(_ptree));
-	j=0;
-	widthloop:
-	for (i=base;i<sql_numtuples(sqr);i++) {
-		if (btree[i].printed) continue;
-		if (atoi(sql_getvalue(sqr, i, 1))==btree[depth].lastref) {
-			ptree[j].id=i;
-			ptree[j].depth=depth-1;
-			j++;
-			btree[depth+1].lastref=atoi(sql_getvalue(sqr, i, 0));
-			btree[i].printed=1;
-			depth++;
-		}
-	}
-	if (depth>0) {
-		depth--;
-		goto widthloop;
-	}
-	base++;
-	btree[depth].lastref=0;
-	depth=0;
-	if (base<sql_numtuples(sqr)) {
-		goto widthloop;
-	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		x=atoi(sql_getvalue(sqr, ptree[i].id, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>", x, x==selected?" SELECTED":"");
-		for (indent=0;indent<ptree[i].depth;indent++) prints(sid, "&nbsp;&nbsp;&nbsp;&nbsp;");
-		prints(sid, "%s\n", str2html(sid, sql_getvalue(sqr, ptree[i].id, 2)));
-	}
-	free(ptree);
-	free(btree);
+	htselect_bookmarkfolder_r(sid, sqr, 1, 0, selected);
 	sql_freeresult(sqr);
 	return;
 }

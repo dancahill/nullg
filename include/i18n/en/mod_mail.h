@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@
 #define MOD_MAIL_FOLDER4	"Trash"
 #define MOD_MAIL_FOLDER5	"Drafts"
 #define MOD_MAIL_FOLDER6	"Saved Items"
+#define MOD_MAIL_FOLDER7	"Quarantine"
 
 #define MOD_MAIL_TAB_GEN	"GENERAL"
 #define MOD_MAIL_TAB_SER	"SERVERS"

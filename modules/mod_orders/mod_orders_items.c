@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,11 +100,11 @@ void orderitemedit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Quantity&nbsp;     </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=quantity     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.quantity);
 	if (strncmp(sid->dat->in_RequestURI, "/orders/itemeditnew", 17)!=0) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Discount %%&nbsp;  </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=discount     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.discount);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.unitprice);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.internalcost);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Discount&nbsp;     </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.discount*100.0F);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.unitprice);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.internalcost);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1*100.0F);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2*100.0F);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
@@ -195,11 +195,11 @@ void orderitemsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "ORDERID"))!=NULL) orderitem.orderid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PRODUCTID"))!=NULL) orderitem.productid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "QUANTITY"))!=NULL) orderitem.quantity=(float)atof(ptemp);
-	if ((ptemp=getpostenv(sid, "DISCOUNT"))!=NULL) orderitem.discount=(float)atof(ptemp);
+	if ((ptemp=getpostenv(sid, "DISCOUNT"))!=NULL) orderitem.discount=(float)atof(ptemp)/100.0F;
 	if ((ptemp=getpostenv(sid, "UNITPRICE"))!=NULL) orderitem.unitprice=(float)atof(ptemp);
 	if ((ptemp=getpostenv(sid, "INTERNALCOST"))!=NULL) orderitem.internalcost=(float)atof(ptemp);
-	if ((ptemp=getpostenv(sid, "TAX1"))!=NULL) orderitem.tax1=(float)atof(ptemp);
-	if ((ptemp=getpostenv(sid, "TAX2"))!=NULL) orderitem.tax2=(float)atof(ptemp);
+	if ((ptemp=getpostenv(sid, "TAX1"))!=NULL) orderitem.tax1=(float)atof(ptemp)/100.0F;
+	if ((ptemp=getpostenv(sid, "TAX2"))!=NULL) orderitem.tax2=(float)atof(ptemp)/100.0F;
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
@@ -233,11 +233,11 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", orderitem.orderid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", orderitem.productid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.quantity);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.discount);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", orderitem.discount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.unitprice);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.internalcost);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.tax1);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f')", orderitem.tax2);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", orderitem.tax1);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f')", orderitem.tax2);
 		if (sql_update(sid, query)<0) return;
 		prints(sid, "<CENTER>Order item %d added successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "insert", "%s - %s added order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
@@ -250,11 +250,11 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "orderid = '%d', ", orderitem.orderid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "productid = '%d', ", orderitem.productid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "quantity = '%1.2f', ", orderitem.quantity);
-		strncatf(query, sizeof(query)-strlen(query)-1, "discount = '%1.2f', ", orderitem.discount);
+		strncatf(query, sizeof(query)-strlen(query)-1, "discount = '%1.3f', ", orderitem.discount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "unitprice = '%1.2f', ", orderitem.unitprice);
 		strncatf(query, sizeof(query)-strlen(query)-1, "internalcost = '%1.2f', ", orderitem.internalcost);
-		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.2f', ", orderitem.tax1);
-		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.2f'", orderitem.tax2);
+		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.3f', ", orderitem.tax1);
+		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.3f'", orderitem.tax2);
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE orderitemid = %d", orderitem.orderitemid);
 		if (sql_update(sid, query)<0) return;
 		prints(sid, "<CENTER>Order item %d modified successfully</CENTER><BR>\n", orderitem.orderitemid);

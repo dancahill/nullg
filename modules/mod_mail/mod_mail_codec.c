@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -526,6 +526,7 @@ char *EncodeBase64string(CONN *sid, char *src)
 		dest[dst+1]=Base64[b];
 		dest[dst+2]='=';
 		dest[dst+3]='=';
+		dst+=4;
 	} else if (remlen==2) {
 		a=(cp[0]>>2);
 		b=(cp[0]<<4)&0x30;
@@ -535,6 +536,7 @@ char *EncodeBase64string(CONN *sid, char *src)
 		dest[dst+1]=Base64[b];
 		dest[dst+2]=Base64[c];
 		dest[dst+3]='=';
+		dst+=4;
 	}
 done:
 	dest[dst]='\0';

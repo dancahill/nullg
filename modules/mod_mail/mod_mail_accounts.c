@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ void wmaccount_list(CONN *sid)
 			}
 			prints(sid, "</TABLE>\n");
 		}
-		if (sql_numtuples(sqr)<5) {
+		if (sql_numtuples(sqr)<10) {
 			prints(sid, "[<A HREF=%s/mail/accounts/editnew>Add Mail Account</A>]\n", sid->dat->in_ScriptName);
 		}
 		sql_freeresult(sqr);
@@ -323,6 +323,7 @@ void wmaccount_save(CONN *sid)
 		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
 		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
 		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
 		prints(sid, "<BR><CENTER>E-Mail account %d added successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {

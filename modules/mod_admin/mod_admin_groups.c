@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ void admingroupedit(CONN *sid)
 	}
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>Group Name    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=groupname   value=\"%s\" SIZE=50></TD></TR>\n", config->colour_editform, str2html(sid, group.groupname));
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>Message of the Day</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, group.motd));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, group.motd));
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "admin")&A_ADMIN)&&(groupid>1)) {

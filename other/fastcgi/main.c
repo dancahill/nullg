@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,6 +52,31 @@ char *str2hex(const char *format, ...)
 	return outbuffer;
 }
 
+/*
+static void logdata(const char *format, ...)
+{
+	FILE *fp;
+	va_list ap;
+	char buffer[1024];
+#ifdef WIN32
+	char *file="C:\\webmail.log";
+#else
+	char *file="/tmp/webmail.log";
+#endif
+
+	fp=fopen(file, "a");
+	if (fp!=NULL) {
+		memset(buffer, 0, sizeof(buffer));
+		va_start(ap, format);
+		vsnprintf(buffer, sizeof(buffer)-1, format, ap);
+		va_end(ap);
+//		striprn(buffer);
+		fprintf(fp, "%s", buffer);
+		fclose(fp);
+	}
+}
+*/
+
 int htprintf(const char *format, ...)
 {
 	char buffer[1024];
@@ -64,6 +89,7 @@ int htprintf(const char *format, ...)
 	va_end(ap);
 	len=strlen(buffer);
 	send(htsocket, buffer, len, 0);
+//	logdata(">> %s", buffer);
 	return len;
 }
 
@@ -83,7 +109,7 @@ int htfgets(char *buffer, int max, int fd)
 	}
 	*pbuffer=0;
 //	striprn(pbuffer);
-//	logdata ("<< %s\r\n", pbuffer);
+//	logdata("<< %s", buffer);
 	return n;
 }
 
@@ -139,6 +165,8 @@ void ReadPOSTData(CONN *sid)
 		}
 		if ((rc=read(fileno(stdin), buffer, blocksize))<0) return;
 		send(htsocket, buffer, rc, 0);
+//	buffer[rc]='\0';
+//	logdata(">> %s\r\n", buffer);
 		bytesleft-=rc;
 	}
 	return;
@@ -191,12 +219,18 @@ int main(int argc, char *argv[])
 	if (strcmp(sid.in_RequestMethod, "POST")==0) {
 		ReadPOSTData(&sid);
 	}
+	/* IIS bursts into flames when we do a redirect, so use nph- */
+	if (strstr(sid.in_ScriptName, "nph-")!=NULL) {
+		printf("HTTP/1.0 200 OK\r\n");
+	}
 //	htfgets(buffer, sizeof(buffer)-1, htsocket);
 //	if (strncasecmp(buffer, "HTTP/", 5)!=0) {
 //		fwrite(buffer, sizeof(char), strlen(buffer), stdout);
 //	}
 	while (1) {
 		if ((i=recv(htsocket, buffer, sizeof(buffer)-1, 0))<1) break;
+//		buffer[i]='\0';
+//		logdata("<< %s", buffer);
 		fwrite(buffer, sizeof(char), i, stdout);
 	}
 	htserver_disconnect();

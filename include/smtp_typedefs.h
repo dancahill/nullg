@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -162,6 +162,7 @@ typedef struct {
 	short int http_port;
 	short int http_maxconn;
 	short int http_maxidle;
+	int       http_maxpostsize;
 	char      pop3_hostname[128];
 	short int pop3_port;
 	short int pop3_maxconn;
@@ -179,7 +180,8 @@ typedef struct {
 	char      sql_hostname[128];
 	short int sql_port;
 	short int sql_maxconn;
-	char      util_virusscan[255];
+	char      util_scanfile[255];
+	char      util_scanmail[255];
 } CONFIG;
 
 typedef struct {

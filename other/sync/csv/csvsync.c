@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ void usage(char *arg0)
 {
 	char *progname;
 
-	printf("\r\nNullLogic Groupware CSV Sync [1.2.4]\r\n");
+	printf("\r\nNullLogic Groupware CSV Sync [1.2.5]\r\n");
 #ifdef WIN32
 	progname=strrchr(arg0, '\\');
 #else

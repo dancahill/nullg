@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ void orderedit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=orderid VALUE='%d'>\n", order.orderid);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", order.userid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, order.orderid, config->colour_thtext, order.orderid);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, order.orderid, config->colour_thtext, order.orderid);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Order Date      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=orderdate       value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, time_unix2sql(sid, order.orderdate));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Customer        &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:217px'>", config->colour_editform);
 	htselect_contact(sid, order.contactid);
@@ -92,7 +92,7 @@ void orderedit(CONN *sid)
 	htselect_eventstatus(sid, order.status);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, order.details));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, order.details));
 	prints(sid, "<TR><TD ALIGN=center COLSPAN=2>\n");
 	orderitemlist(sid, orderid);
 	prints(sid, "</TD></TR>");

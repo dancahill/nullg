@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,43 @@ unsigned sleep(unsigned seconds)
 #else
 #include <unistd.h>
 #endif
+
+void htselect_groupfilter(CONN *sid, int groupid, char *baseuri)
+{
+	int i, j;
+	int sqr;
+
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\r\n");
+	prints(sid, "<FORM METHOD=GET NAME=groupfilter ACTION=%s%s>\r\n", sid->dat->in_ScriptName, baseuri);
+	prints(sid, "<TD ALIGN=LEFT>\r\n");
+	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
+	prints(sid, "<!--\r\n");
+	prints(sid, "function go2() {\r\n");
+	prints(sid, "	location=document.groupfilter.groupid.options[document.groupfilter.groupid.selectedIndex].value\r\n");
+	prints(sid, "}\r\n");
+	prints(sid, "document.write('<SELECT NAME=groupid onChange=\"go2()\">');\r\n");
+	if ((sqr=sql_queryf(sid, "SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(sqr, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	}
+	prints(sid, "document.write('</SELECT>');\r\n");
+	prints(sid, "//-->\r\n");
+	prints(sid, "</SCRIPT>\r\n");
+	prints(sid, "<NOSCRIPT>\r\n");
+	prints(sid, "<SELECT NAME=groupid>\r\n");
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		j=atoi(sql_getvalue(sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	}
+	prints(sid, "</SELECT>\r\n");
+	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
+	prints(sid, "</NOSCRIPT>\r\n");
+	prints(sid, "</TD></FORM>\r\n");
+	prints(sid, "</TR></TABLE>\r\n");
+	sql_freeresult(sqr);
+	return;
+}
 
 void messagestatus(CONN *sid, int messageid, char status)
 {
@@ -60,15 +97,23 @@ void messagestatus(CONN *sid, int messageid, char status)
 
 void messages_userlist(CONN *sid)
 {
+	char *ptemp;
 	int i;
 	int sqr;
+	int groupid=-1;
 
 	htpage_header(sid, "Null Messenger");
 	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_queryf(sid, "SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d ORDER BY username ASC", sid->dat->user_uid))<0) return;
+	if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
+		groupid=atoi(ptemp);
+	} else {
+		groupid=sid->dat->user_gid;
+	}
+	htselect_groupfilter(sid, groupid, "/messages/userlist");
+	if ((sqr=sql_queryf(sid, "SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d AND groupid = %d ORDER BY username ASC", sid->dat->user_uid, groupid))<0) return;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
 	prints(sid, "function ViewHistory(userid, username)\r\n");
 	prints(sid, "{\r\n");

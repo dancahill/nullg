@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -116,8 +116,9 @@ void ReadPOSTData(CONN *sid) {
 			if (rc<0) {
 				closeconnect(sid, 1);
 				return;
+			} else if (rc>0) {
+				sid->atime=time(NULL);
 			}
-			sid->atime=time(NULL);
 			bytesleft-=rc;
 			pPostData+=rc;
 		}
@@ -143,8 +144,9 @@ void ReadPOSTData(CONN *sid) {
 			if (rc<0) {
 				closeconnect(sid, 1);
 				return;
+			} else if (rc>0) {
+				sid->atime=time(NULL);
 			}
-			sid->atime=time(NULL);
 			bytesleft-=rc;
 			pPostData+=rc;
 		}

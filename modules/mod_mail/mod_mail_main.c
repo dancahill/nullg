@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -236,7 +236,7 @@ void webmaillist(CONN *sid)
 		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox1 onclick='CheckAll(1);'>");
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest1>\n", MOD_MAIL_MOVETO);
-		htselect_mailfolder(sid, 0, 1);
+		htselect_mailfolder(sid, 0, 1, 0);
 		prints(sid, "</SELECT></NOBR></TD>");
 	} else {
 		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP>&nbsp;</TD>");
@@ -326,7 +326,7 @@ void webmaillist(CONN *sid)
 		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox2 onclick='CheckAll(2);'>");
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest2>\n", MOD_MAIL_MOVETO);
-		htselect_mailfolder(sid, 0, 1);
+		htselect_mailfolder(sid, 0, 1, 0);
 		prints(sid, "</SELECT></NOBR></TD>");
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD></TR>\n");
 		prints(sid, "</FORM>\n");
@@ -823,11 +823,13 @@ void webmailsave(CONN *sid)
 	if (strlen(header.InReplyTo)) {
 		fprintf(fp, "In-Reply-To: %s\r\n", header.InReplyTo);
 	}
-	if (filesize>0) {
+	if ((filesize>0)||(strcasecmp(header.contenttype, "text/html")==0)) {
 		fprintf(fp, "MIME-Version: 1.0\r\n");
+	}
+	if (filesize>0) {
 		fprintf(fp, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", header.boundary);
 	} else {
-		fprintf(fp, "Content-Type: %s\r\n", header.contenttype);
+		fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "iso-8859-1");
 	}
 	fprintf(fp, "X-Mailer: %s %s\r\n", SERVER_NAME, SERVER_VERSION);
 	fprintf(fp, "\r\n");
@@ -837,6 +839,7 @@ void webmailsave(CONN *sid)
 		fprintf(fp, "Content-Type: %s\r\n", msgctype);
 		fprintf(fp, "Content-Transfer-Encoding: 8bit\r\n\r\n");
 	}
+	if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "<HTML>\r\n");
 	pmsgbody=msgbody;
 	while (strlen(pmsgbody)>78) {
 		memset(line, 0, sizeof(line));
@@ -869,6 +872,7 @@ void webmailsave(CONN *sid)
 		if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "</PRE>");
 		fprintf(fp, "\r\n");
 	}
+	if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "</HTML>\r\n");
 	if (filesize>0) {
 		fprintf(fp, "\r\n--%s\r\n", header.boundary);
 		fprintf(fp, "Content-Type: application/octet-stream; name=\"%s\"\r\n", filename);

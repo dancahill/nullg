@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ void forumgroupedit(CONN *sid)
 	}
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>Title</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=title value=\"%s\" SIZE=50></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.title));
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>Description</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.description));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.description));
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 //	if ((auth_priv(sid, "forums")&A_ADMIN)&&(forumgroupid>1)) {
@@ -574,8 +574,8 @@ void fmessagelist(CONN *sid)
 	btree=calloc(sql_numtuples(sqr)+2, sizeof(_btree));
 	ptree=calloc(sql_numtuples(sqr)+2, sizeof(_ptree));
 	j=0;
-	widthloop:
-	for (i=base; i<sql_numtuples(sqr); i++) {
+widthloop:
+	for (i=base;i<sql_numtuples(sqr); i++) {
 		if (btree[atoi(sql_getvalue(sqr, i, 0))].printed) continue;
 		if (atoi(sql_getvalue(sqr, i, 1))==btree[depth].lastref) {
 			ptree[j].id=i;
@@ -596,7 +596,7 @@ void fmessagelist(CONN *sid)
 	if (base<sql_numtuples(sqr)) {
 		goto widthloop;
 	}
-	for (i=0; i<sql_numtuples(sqr); i++) {
+	for (i=0;i<sql_numtuples(sqr); i++) {
 		for (j=i+1; j<sql_numtuples(sqr); j++) {
 			if (ptree[j].depth<ptree[i].depth+1) break;
 			if (ptree[j].depth>ptree[i].depth+1) continue;

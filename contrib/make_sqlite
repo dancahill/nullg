@@ -2,12 +2,12 @@
 
 case "$1" in
 'build')
-	if [ ! -r "sqlite-2.8.4.tar.gz" ]; then
+	if [ ! -r "sqlite-2.8.11.tar.gz" ]; then
 		echo "sqlite source not found"
 		exit 0
 	fi
 	if [ ! -r "sqlite/configure" ]; then
-		tar zxf sqlite-2.8.4.tar.gz
+		tar zxf sqlite-2.8.11.tar.gz
 	fi
 	mkdir -p build
 	cd build
@@ -20,12 +20,12 @@ case "$1" in
 		make -s
 	fi
 	cd ..
-	if [ -r "build/.libs/libsqlite.so.0.5.3" ]; then
-		strip build/.libs/libsqlite.so.0.5.3
-		cp -p build/.libs/libsqlite.so.0.5.3 ../distrib/lib/libsqlite.so
-	elif [ -r "build/.libs/libsqlite.so.5" ]; then
-		strip build/.libs/libsqlite.so.5
-		cp -p build/.libs/libsqlite.so.5 ../distrib/lib/libsqlite.so
+	if [ -r "build/.libs/libsqlite.so.0.8.6" ]; then
+		strip build/.libs/libsqlite.so.0.8.6
+		cp -p build/.libs/libsqlite.so.0.8.6 ../distrib/lib/libsqlite.so
+	elif [ -r "build/.libs/libsqlite.so.8" ]; then
+		strip build/.libs/libsqlite.so.8
+		cp -p build/.libs/libsqlite.so.8 ../distrib/lib/libsqlite.so
 	fi
 	;;
 'clean')

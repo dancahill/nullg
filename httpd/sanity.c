@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -137,38 +137,39 @@ int sanity_dbcheck()
 	proc.info.tax1percent=(float)atof(sql_getvalue(sqr, 0, 3));
 	proc.info.tax2percent=(float)atof(sql_getvalue(sqr, 0, 4));
 	sql_freeresult(sqr);
-	if ((!proc.RunAsCGI)&&(strcasecmp(proc.config.sql_type, "SQLITE")!=0)) {
-		if (sanity_dbcheck_table("gw_activity",		"activityid",		ACTIVITYFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_bookmarkfolders",	"folderid",		BOOKMARKFOLDERFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_bookmarks",	"bookmarkid",		BOOKMARKFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_callactions",	"callactionid",		CALLACTIONFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_calls",		"callid",		CALLFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_contacts",		"contactid",		CONTACTFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_eventclosings",	"eventclosingid",	EVENTCLOSINGFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_events",		"eventid",		EVENTFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_eventtypes",	"eventtypeid",		EVENTTYPEFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_files",		"fileid",		FILEFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_forumgroups",	"forumgroupid",		FORUMGROUPFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_forumposts",	"messageid",		FORUMPOSTFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_forums",		"forumid",		FORUMFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_groups",		"groupid",		GROUPFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_mailaccounts",	"mailaccountid",	MAILACCTFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_mailfilters",	"mailfilterid",		MAILFILTERFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_mailfolders",	"mailfolderid",		MAILFOLDERFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_mailheaders",	"mailheaderid",		MAILHEADFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_messages",		"messageid",		MESSAGEFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_notes",		"noteid",		NOTEFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_orderitems",	"orderitemid",		ORDERITEMFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_orders",		"orderid",		ORDERFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_products",		"productid",		PRODUCTFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_queries",		"queryid",		QUERYFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_tasks",		"taskid",		TASKFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_users",		"userid",		USERFIELDS)==-1) checkerror++;
-		if (sanity_dbcheck_table("gw_zones",		"zoneid",		ZONEFIELDS)==-1) checkerror++;
-		if (checkerror!=0) {
-			logerror(NULL, __FILE__, __LINE__, 0, "Please use dbutil to dump and restore the database");
-			exit(-2);
-		}
+	if (proc.RunAsCGI) return 0;
+	// The rest of the sanity checking is for SAS mode only.
+//	if ((!proc.RunAsCGI)&&(strcasecmp(proc.config.sql_type, "SQLITE")!=0)) {
+	if (sanity_dbcheck_table("gw_activity",		"activityid",		ACTIVITYFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_bookmarkfolders",	"folderid",		BOOKMARKFOLDERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_bookmarks",	"bookmarkid",		BOOKMARKFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_callactions",	"callactionid",		CALLACTIONFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_calls",		"callid",		CALLFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_contacts",		"contactid",		CONTACTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_eventclosings",	"eventclosingid",	EVENTCLOSINGFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_events",		"eventid",		EVENTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_eventtypes",	"eventtypeid",		EVENTTYPEFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_files",		"fileid",		FILEFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_forumgroups",	"forumgroupid",		FORUMGROUPFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_forumposts",	"messageid",		FORUMPOSTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_forums",		"forumid",		FORUMFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_groups",		"groupid",		GROUPFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_mailaccounts",	"mailaccountid",	MAILACCTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_mailfilters",	"mailfilterid",		MAILFILTERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_mailfolders",	"mailfolderid",		MAILFOLDERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_mailheaders",	"mailheaderid",		MAILHEADFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_messages",		"messageid",		MESSAGEFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_notes",		"noteid",		NOTEFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_orderitems",	"orderitemid",		ORDERITEMFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_orders",		"orderid",		ORDERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_products",		"productid",		PRODUCTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_queries",		"queryid",		QUERYFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_tasks",		"taskid",		TASKFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_users",		"userid",		USERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_zones",		"zoneid",		ZONEFIELDS)==-1) checkerror++;
+	if (checkerror!=0) {
+		logerror(NULL, __FILE__, __LINE__, 0, "Please use dbutil to dump and restore the database");
+		exit(-2);
 	}
 /*
 	gettimeofday(&ttime, &tzone);

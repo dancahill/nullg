@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -441,6 +441,8 @@ int sqliteConnect(CONN *sid)
 		return -1;
 	}
 	sql_is_connected=1;
+	libsqlite.exec(db, "PRAGMA default_synchronous = TRUE;", NULL, 0, &zErrMsg);
+	libsqlite.exec(db, "PRAGMA empty_result_callbacks = ON;", NULL, 0, &zErrMsg);
 	return 0;
 #else
 	return -1;
@@ -528,8 +530,20 @@ int sqliteUpdate(CONN *sid, char *sqlquery)
 #ifdef HAVE_SQLITE
 	char *zErrMsg=0;
 	int rc;
+	short int retries=10;
 
+retry:
 	rc=libsqlite.exec(db, sqlquery, NULL, 0, &zErrMsg);
+	switch (rc) {
+	case SQLITE_OK:
+		return 0;
+	case SQLITE_BUSY:
+	case SQLITE_CORRUPT:
+		if (retries>0) { retries--; msleep(5); goto retry; }
+		break;
+	default:
+		break;
+	}
 	if (rc!=SQLITE_OK) {
 		logerror(sid, __FILE__, __LINE__, 1, "SQLite error: %s", zErrMsg);
 		logerror(sid, __FILE__, __LINE__, 2, "SQLite: [%s]", sqlquery);
@@ -768,8 +782,8 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 	unsigned int field;
 	int sqr=(int)vpsqr;
 
-	sqlreply[sqr].NumFields=argc;
-	if (sqlreply[sqr].NumTuples==0) {
+	if (sqlreply[sqr].cursor==NULL) {
+		sqlreply[sqr].NumFields=argc;
 		// retreive the field names
 		column=sqlreply[sqr].fields;
 		for (field=0;field<sqlreply[sqr].NumFields;field++) {
@@ -779,24 +793,28 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 		// build our cursor and track the number of tuples
 		sqlreply[sqr].NumTuples=0;
 		rowsalloc=50;
-//		sqlreply[sqr].cursor=(char **)calloc(rowsalloc, sizeof(char *));
+		if ((sqlreply[sqr].cursor=(char **)calloc(rowsalloc, sizeof(char *)))==NULL) {
+			logerror(NULL, __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor.");
+			exit(-1);
+		}
 	}
 	// now to populate the cursor
-	sqlreply[sqr].cursor[sqlreply[sqr].NumTuples]=calloc(MAX_TUPLE_SIZE, sizeof(char));
-	if (sqlreply[sqr].cursor[sqlreply[sqr].NumTuples]==NULL) {
-		printf("\nmalloc() error creating SQL cursor tuple.\n");
-		exit(-1);
+	if (argv!=NULL) {
+		if ((sqlreply[sqr].cursor[sqlreply[sqr].NumTuples]=calloc(MAX_TUPLE_SIZE, sizeof(char)))==NULL) {
+			logerror(NULL, __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor tuple.");
+			exit(-1);
+		}
+		column=sqlreply[sqr].cursor[sqlreply[sqr].NumTuples];
+		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+			snprintf(column, MAX_FIELD_SIZE, "%s", argv[field]?argv[field]:"NULL");
+			column+=strlen(column)+1;
+		}
+		if (sqlreply[sqr].NumTuples+2>rowsalloc) {
+			rowsalloc+=50;
+			sqlreply[sqr].cursor=(char **)realloc(sqlreply[sqr].cursor, rowsalloc*sizeof(char *));
+		}
+		sqlreply[sqr].NumTuples++;
 	}
-	column=sqlreply[sqr].cursor[sqlreply[sqr].NumTuples];
-	for (field=0;field<sqlreply[sqr].NumFields;field++) {
-		snprintf(column, MAX_FIELD_SIZE, "%s", argv[field]?argv[field]:"NULL");
-		column+=strlen(column)+1;
-	}
-	if (sqlreply[sqr].NumTuples+2>rowsalloc) {
-		rowsalloc+=50;
-		sqlreply[sqr].cursor=(char **)realloc(sqlreply[sqr].cursor, rowsalloc*sizeof(char *));
-	}
-	sqlreply[sqr].NumTuples++;
 	return 0;
 }
 
@@ -805,17 +823,25 @@ int sqliteQuery(CONN *sid, int sqr, char *sqlquery)
 #ifdef HAVE_SQLITE
 	char *zErrMsg=0;
 	int rc;
+	short int retries=10;
 
 	sqlreply[sqr].NumFields=0;
 	sqlreply[sqr].NumTuples=0;
-	sqlreply[sqr].cursor=(char **)calloc(50, sizeof(char *));
+retry:
 	rc=libsqlite.exec(db, sqlquery, sqliteCallback, (void *)sqr, &zErrMsg);
-	if (rc!=SQLITE_OK) {
-		logerror(sid, __FILE__, __LINE__, 1, "SQLite error: %s", zErrMsg);
-		logerror(sid, __FILE__, __LINE__, 2, "SQLite: [%s]", sqlquery);
-		return -1;
+	switch (rc) {
+	case SQLITE_OK:
+		return sqr;
+	case SQLITE_BUSY:
+	case SQLITE_CORRUPT:
+		if (retries>0) { retries--; msleep(5); goto retry; }
+		break;
+	default:
+		break;
 	}
-	return sqr;
+	logerror(sid, __FILE__, __LINE__, 1, "SQLite error: %d %s", rc, zErrMsg);
+	logerror(sid, __FILE__, __LINE__, 2, "SQLite: [%s]", sqlquery);
+	return -1;
 #else
 	return -1;
 #endif
@@ -871,7 +897,7 @@ void sql_freeresult(int sqr)
 	memset(sqlreply[sqr].fields, 0, sizeof(sqlreply[sqr].fields));
 	if (sqlreply[sqr].cursor!=NULL) {
 		for (tuple=0;tuple<sqlreply[sqr].NumTuples;tuple++) {
-			if (sqlreply[sqr].cursor[tuple]) {
+			if (sqlreply[sqr].cursor[tuple]!=NULL) {
 				free(sqlreply[sqr].cursor[tuple]);
 				sqlreply[sqr].cursor[tuple]=NULL;
 			}
@@ -952,13 +978,12 @@ int sql_query(CONN *sid, char *query)
 		}
 		if (sqlreply[i].cursor==NULL) break;
 	}
-	proc.stats.sql_queries++;
-	proc.stats.sql_handlecount++;
 	if (sid==NULL) {
 		logerror(sid, __FILE__, __LINE__, 3, "SQL query [%d] by system: %s", i, query);
 	} else {
 		logerror(sid, __FILE__, __LINE__, 3, "SQL query [%d] by %s: %s", i, sid->dat->user_username, query);
 	}
+	proc.stats.sql_queries++;
 	if (strcmp(proc.config.sql_type, "ODBC")==0) {
 		if (odbcConnect(sid)<0) {
 			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
@@ -996,6 +1021,7 @@ int sql_query(CONN *sid, char *query)
 			sqliteConnect(sid);
 		}
 	}
+	if (rc>-1) proc.stats.sql_handlecount++;
 	if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }

@@ -1,12 +1,16 @@
 #!/bin/sh
+# Init script to start/stop/restart the NullLogic Groupware servers.
 #
 # basic IRIX-style chkconfig (RedHat uses this)
 # chkconfig: 2345 85 10
 # description: NullLogic Groupware Server Suite. \
 #	Starts and stops NullLogic Groupware services as requested.
-#
-# Init script to start/stop/restart the NullLogic Groupware servers.
+
 BASE_PATH="/usr/local/nullgroupware"
+
+if [ -x /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
 
 groupware_start() {
 	ps axw > /tmp/_gw_proclist
@@ -74,19 +78,19 @@ groupware_restart() {
 }
 
 case "$1" in
-'start')
+start)
 	groupware_start
 	;;
-'stop')
+stop)
 	groupware_stop
 	;;
-'status')
+status)
 	groupware_status
 	;;
-'restart')
+restart|reload)
 	groupware_restart
 	;;
 *)
-	echo "Usage: $0 {start|stop|status|restart}"
+	echo "Usage: $0 {start|stop|status|restart|reload}"
 esac
 exit 0

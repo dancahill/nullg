@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ CREATE TABLE gw_dbinfo (\n\
 	dbversion	varchar(10)	NOT NULL,\n\
 	tax1name	varchar(20)	NOT NULL,\n\
 	tax2name	varchar(20)	NOT NULL,\n\
-	tax1percent	numeric(9,2)	NOT NULL DEFAULT '0.08',\n\
-	tax2percent	numeric(9,2)	NOT NULL DEFAULT '0.07'\n\
+	tax1percent	numeric(9,3)	NOT NULL DEFAULT '0.08',\n\
+	tax2percent	numeric(9,3)	NOT NULL DEFAULT '0.07'\n\
 );"
 
 #define MYSQLDB_ACTIVITY "\
@@ -467,8 +467,8 @@ CREATE TABLE gw_orderitems (\n\
 	discount	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
 	unitprice	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
 	internalcost	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
-	tax1		numeric(9,2)	NOT NULL DEFAULT '0.08',\n\
-	tax2		numeric(9,2)	NOT NULL DEFAULT '0.07',\n\
+	tax1		numeric(9,3)	NOT NULL DEFAULT '0.08',\n\
+	tax2		numeric(9,3)	NOT NULL DEFAULT '0.07',\n\
 	PRIMARY KEY (orderitemid)\n\
 );"
 
@@ -487,8 +487,8 @@ CREATE TABLE gw_products (\n\
 	discount	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
 	unitprice	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
 	internalcost	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
-	tax1		numeric(9,2)	NOT NULL DEFAULT '0.08',\n\
-	tax2		numeric(9,2)	NOT NULL DEFAULT '0.07',\n\
+	tax1		numeric(9,3)	NOT NULL DEFAULT '0.08',\n\
+	tax2		numeric(9,3)	NOT NULL DEFAULT '0.07',\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (productid)\n\
 );"

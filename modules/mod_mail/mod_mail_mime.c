@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -262,9 +262,12 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			}
 		}
 		if (strncasecmp(ctype, "message/rfc822", 14)==0) {
-			webmailfiledl_r(sid, fp, ctype, cencode, boundary, filename, depth);
-			head=1;
-			continue;
+			if (webmailfiledl_r(sid, fp, ctype, cencode, boundary, filename, depth)==1) {
+				return 1;
+			} else {
+				head=1;
+				continue;
+			}
 		}
 		if ((ptemp=p_strcasestr(ctype, "boundary="))!=NULL) {
 			ptemp+=9;

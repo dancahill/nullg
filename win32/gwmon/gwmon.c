@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,70 @@ static HINSTANCE hInst;
 
 DWORD g_dwOSVersion;
 UINT  g_bUiTaskbarCreated;
+
+typedef struct {
+	char http_hostname[128];
+	short int http_port;
+} CONFIG;
+CONFIG cfg;
+
+int config_read(CONFIG *config)
+{
+	FILE *fp=NULL;
+	char line[512];
+	char *pVar;
+	char *pVal;
+	int i;
+
+	/* define default values */
+	strncpy(config->http_hostname, "localhost", sizeof(config->http_hostname)-1);
+	config->http_port=4110;
+	/* try to open the config file */
+	/* try the current directory first, then ../etc/ */
+	fp=fopen("groupware.cfg", "r");
+	if (fp==NULL) {
+		fp=fopen("../etc/groupware.cfg", "r");
+	}
+	/* if config file couldn't be opened, abort */
+	if (fp==NULL) return 0;
+	/* else if config file does exist, read it */
+	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
+		while (1) {
+			i=strlen(line);
+			if (i<1) break;
+			if (line[i-1]=='\r') { line[i-1]='\0'; continue; }
+			if (line[i-1]=='\n') { line[i-1]='\0'; continue; }
+			break;
+		};
+		if (isalpha(line[0])) {
+			pVar=line;
+			pVal=line;
+			while ((*pVal!='=')&&((char *)&pVal+1!='\0')) pVal++;
+			*pVal='\0';
+			pVal++;
+			while (*pVar==' ') pVar++;
+			while (pVar[strlen(pVar)-1]==' ') pVar[strlen(pVar)-1]='\0';
+			while (*pVal==' ') pVal++;
+			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
+			while (*pVal=='"') pVal++;
+			if (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
+			if (strcmp(pVar, "HTTP.HOSTNAME")==0) {
+				strncpy(config->http_hostname, pVal, sizeof(config->http_hostname)-1);
+			} else if (strcmp(pVar, "HTTP.PORT")==0) {
+				config->http_port=atoi(pVal);
+			}
+			*pVal='\0';
+			*pVar='\0';
+		}
+	}
+	fclose(fp);
+	if (strlen(config->http_hostname)==0) strncpy(config->http_hostname, "localhost", sizeof(config->http_hostname)-1);
+	if ((strcasecmp("ANY", config->http_hostname)==0)||(strcasecmp("INADDR_ANY", config->http_hostname)==0)) {
+		strncpy(config->http_hostname, "localhost", sizeof(config->http_hostname)-1);
+	}
+	if (config->http_port<1) config->http_port=4110;
+	return 0;
+}
 
 int winsystem(WORD show_hide, const char *format, ...)
 {
@@ -290,7 +354,7 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			winsystem(SW_SHOW, ".\\config.exe");
 			break;
 		case 2:
-			snprintf(commandline, sizeof(commandline)-1, "http://localhost:4110/");
+			snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", cfg.http_hostname, cfg.http_port);
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;
 		case 3:
@@ -402,6 +466,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	HANDLE hMutex;
 
 	if (!os_version(&g_dwOSVersion)) return 0;
+	memset((char *)&cfg, 0, sizeof(cfg));
+	config_read(&cfg);
 	hMutex=CreateMutex(NULL, FALSE, "NGMON_MUTEX");
 	if ((hMutex==NULL)||(GetLastError()==ERROR_ALREADY_EXISTS)) {
 		if (hMutex) CloseHandle(hMutex);

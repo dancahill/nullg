@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.2.4"
+MAIN_TITLE="NullLogic Groupware Configuration v1.2.5"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..
@@ -42,7 +42,8 @@ SQL_PORT="0"
 SQL_DBNAME="nullgroupware"
 SQL_USERNAME="nullgw"
 SQL_PASSWORD="password"
-UTIL_VIRUSSCAN=""
+UTIL_SCANFILE=""
+UTIL_SCANMAIL=""
 
 read_config() {
 	if [ -r "$CFG_FILE" ]; then
@@ -98,9 +99,13 @@ read_config() {
 		if test -n "$TMPSTR"; then
 			SQL_PASSWORD=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
 		fi
-		TMPSTR=`grep -i UTIL\.VIRUSSCAN $CFG_FILE | awk -F'#' '{ print $1 }'`
+		TMPSTR=`grep -i UTIL\.SCANFILE $CFG_FILE | awk -F'#' '{ print $1 }'`
 		if test -n "$TMPSTR"; then
-			UTIL_VIRUSSCAN=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
+			UTIL_SCANFILE=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
+		fi
+		TMPSTR=`grep -i UTIL\.SCANMAIL $CFG_FILE | awk -F'#' '{ print $1 }'`
+		if test -n "$TMPSTR"; then
+			UTIL_SCANMAIL=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
 		fi
 		sleep 2
 	fi
@@ -132,12 +137,13 @@ SQL.PORT          = "$SQL_PORT"
 SQL.DBNAME        = "$SQL_DBNAME"
 SQL.USERNAME      = "$SQL_USERNAME"
 SQL.PASSWORD      = "$SQL_PASSWORD"
-UTIL.VIRUSSCAN    = "$UTIL_VIRUSSCAN"
+UTIL.SCANFILE     = "$UTIL_SCANFILE"
+UTIL.SCANMAIL     = "$UTIL_SCANMAIL"
 EOF
 	fi
 	if [ -x "/usr/sbin/useradd" ]; then
 		/usr/sbin/groupadd $SERVER_GROUPNAME 1>/dev/null 2>/dev/null
-		/usr/sbin/useradd -c "NullLogic Groupware" -d $SERVER_DIR_BASE/bin -g $SERVER_GROUPNAME $SERVER_USERNAME 1>/dev/null 2>/dev/null
+		/usr/sbin/useradd -c "NullLogic Groupware" -d $SERVER_DIR_BASE/etc -g $SERVER_GROUPNAME $SERVER_USERNAME 1>/dev/null 2>/dev/null
 	elif [ -x "/usr/sbin/pw" ]; then
 		pw group add $SERVER_GROUPNAME       1>/dev/null 2>/dev/null
 		pw user add $SERVER_USERNAME         1>/dev/null 2>/dev/null
@@ -147,6 +153,7 @@ EOF
 }
 
 setup_console() {
+	read_config
 	clear 2>/dev/null
 	echo "NullLogic Groupware Configuration"
 	echo "================================="
@@ -389,6 +396,8 @@ EOF
 		exit
 	fi
 
+	read_config
+
 	setup_dialog_sql
 
 	if [ "$SQL_TYPE" != "SQLITE" ]; then
@@ -418,10 +427,8 @@ Is this correct?  Press 'Yes' to continue, or 'No' to reconfigure." 0 0
 
 if [ -x /bin/dialog ]; then
 	HAVE_DIALOG="yes"
-	read_config
 	setup_dialog
 else
-	read_config
 	setup_console
 fi
 write_config

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ int dump_db(char *filename)
 	FILE *fp;
 
 	configread();
-	printf("Dumping %s database to %s...", sql.sql_type, filename);
+	printf("Dumping %s database to %s...", config.sql_type, filename);
 	fp=fopen(filename, "wa");
 	if (fp==NULL) {
 		printf("\r\nCould not create output file.\r\n");
@@ -410,18 +410,18 @@ int init_sqlite(void)
 
 int init_db(void)
 {
-	if (strcasecmp(sql.sql_type, "MYSQL")==0) {
+	if (strcasecmp(config.sql_type, "MYSQL")==0) {
 		printf("Initialising MySQL database...");
 		if (init_mysql()<0) return -1;
 #ifdef WIN32
-	} else if (strcasecmp(sql.sql_type, "ODBC")==0) {
+	} else if (strcasecmp(config.sql_type, "ODBC")==0) {
 		printf("Initialising ODBC *.mdb database...");
 		if (init_mdb()<0) return -1;
 #endif
-	} else if (strcasecmp(sql.sql_type, "PGSQL")==0) {
+	} else if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		printf("Initialising PostgreSQL database...");
 		if (init_pgsql()<0) return -1;
-	} else if (strcasecmp(sql.sql_type, "SQLITE")==0) {
+	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
 		printf("Initialising SQLite database...");
 		if (init_sqlite()<0) return -1;
 	}
@@ -446,7 +446,7 @@ int init_db(void)
 	if (sqlUpdate(1, DBDATA_19)<0) { printf("\r\nError inserting dbdata_19\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_20)<0) { printf("\r\nError inserting dbdata_20\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_21)<0) { printf("\r\nError inserting dbdata_21\r\n"); return -1; }
-	if (strcasecmp(sql.sql_type, "PGSQL")==0) {
+	if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		init_pgsqlseq();
 	}
 	if (strlen(rootpass)>0) {
@@ -471,18 +471,18 @@ int restore_db(char *filename)
 		printf("Could not open source file.\r\n");
 		return -1;
 	}
-	if (strcasecmp(sql.sql_type, "MYSQL")==0) {
+	if (strcasecmp(config.sql_type, "MYSQL")==0) {
 		printf("Restoring MySQL database from %s...", filename);
 		if (init_mysql()<0) return -1;
 #ifdef WIN32
-	} else if (strcasecmp(sql.sql_type, "ODBC")==0) {
+	} else if (strcasecmp(config.sql_type, "ODBC")==0) {
 		printf("Restoring ODBC database from %s...", filename);
 		if (init_mdb()<0) return -1;
 #endif
-	} else if (strcasecmp(sql.sql_type, "PGSQL")==0) {
+	} else if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		printf("Restoring PostgreSQL database from %s...", filename);
 		if (init_pgsql()<0) return -1;
-	} else if (strcasecmp(sql.sql_type, "SQLITE")==0) {
+	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
 		printf("Restoring SQLite database from %s...", filename);
 		if (init_sqlite()<0) return -1;
 	}
@@ -502,7 +502,7 @@ int restore_db(char *filename)
 			if (sqlUpdate(1, line)<0) return -1;
 		}
 	}
-	if (strcasecmp(sql.sql_type, "PGSQL")==0) {
+	if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		init_pgsqlseq();
 	}
 	fclose(fp);

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@
 
 #include "i18n/httpd.h"
 #include "defines.h"
+#include "version.h"
 #include "http_typedefs.h"
 #include "http_functions.h"
 

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -518,9 +518,9 @@ void mod_html_motd(CONN *sid)
 
 void mod_html_frameset(CONN *sid)
 {
-	MOD_MAIL_SYNC mod_mail_sync;
-	int i, j;
-	int sqr1;
+//	MOD_MAIL_SYNC mod_mail_sync;
+//	int i, j;
+//	int sqr1;
 
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Frameset//EN\">\r\n");
@@ -539,6 +539,7 @@ void mod_html_frameset(CONN *sid)
 	prints(sid, "To view this page, you need a web browser capable of displaying frames.\r\n");
 	prints(sid, "</HTML>\r\n");
 	prints(sid, "<!--\r\n");
+/*
 	if ((mod_mail_sync=module_call(sid, "mod_mail_sync"))!=NULL) {
 		if ((sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))>-1) {
 			for (i=0;i<sql_numtuples(sqr1);i++) {
@@ -551,6 +552,7 @@ void mod_html_frameset(CONN *sid)
 			sql_freeresult(sqr1);
 		}
 	}
+*/
 	prints(sid, "-->\r\n");
 }
 
@@ -604,6 +606,7 @@ void mod_html_menuframe(CONN *sid)
 			if (strlen(proc->mod_menuitems[i].mod_menuperm)!=0) {
 				if (!auth_priv(sid, proc->mod_menuitems[i].mod_menuperm)) continue;
 			}
+			// Mozilla treats this as double click.  Bad gecko.
 			prints(sid, "<TR><TD style=\"cursor:hand\" onClick=");
 			if (strncasecmp(proc->mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
 				prints(sid, "%s><A HREF=%s>", proc->mod_menuitems[i].mod_menuuri, proc->mod_menuitems[i].mod_menuuri);

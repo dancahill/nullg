@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.2.4"
+MAIN_TITLE="NullLogic Groupware Setup v1.2.5"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -57,12 +57,13 @@ do_copying() {
 	if [ "$HAVE_DIALOG" = "yes" ]; then
 		echo "done." 1>>$LOGFILE 2>>$LOGFILE
 	fi
+	sleep 1
 }
 
 setup_console() {
 	clear 2>/dev/null
-	echo "NullLogic Groupware Configuration"
-	echo "================================="
+	echo "NullLogic Groupware Installation"
+	echo "================================"
 	echo -n "Install to what directory? [$SERVER_DIR_BASE]: "
 	read TMP
 	if [ ! -z $TMP ]; then
@@ -81,10 +82,7 @@ setup_console() {
 
 setup_dialog() {
 	if [ "`whoami`" != "root" ]; then
-		dialog --backtitle "$MAIN_TITLE" --title "WARNING" --yesno "
-NullLogic Groupware should be installed by root.
-
-Do you want to continue with the installation?" 12 70
+		dialog --backtitle "$MAIN_TITLE" --title "WARNING" --yesno "\nNullLogic Groupware should be installed by root.\n\nDo you want to continue with the installation?" 12 70
 		FLAG=$?
 		if [ ! $FLAG = 0 -a ! $FLAG = 1 ]; then
 			exit 1
@@ -97,9 +95,7 @@ Do you want to continue with the installation?" 12 70
 		fi
 	fi
 	while [ 0 ]; do
-		dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --inputbox "
-Install to what directory?
-" 10 70 $SERVER_DIR_BASE 2> $TMP/gw_tmpout
+		dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --inputbox "\nInstall to what directory?\n" 10 70 $SERVER_DIR_BASE 2> $TMP/gw_tmpout
 		if [ $? = 1 -o $? = 255 ]; then
 			rm -f $TMP/tempmsg $TMP/gw_tmpout
 			exit
@@ -119,12 +115,13 @@ rm -f $LOGFILE
 touch $LOGFILE
 if [ -x /bin/dialog ]; then
 	HAVE_DIALOG="yes"
+	dialog --textbox README.txt 21 76
 	setup_dialog
 else
+	less README.txt
 	setup_console
 fi
 rm -f $LOGFILE
-cd $SERVER_DIR_BASE ; less README.txt
 cd $SERVER_DIR_BASE/bin ; ./configure
 
 echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./configure'."

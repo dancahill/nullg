@@ -4,6 +4,7 @@ include Rules.mak
 
 all: _dbutil _httpd _pop3d _smtpd _modules _sqlite
 	@cp -p other/rc.groupware distrib/bin/rc.groupware
+	@cp -p other/cron.daily distrib/bin/cron.daily
 	@cp -p other/configure distrib/bin/configure
 	@cp -p other/setup distrib/setup
 
@@ -17,12 +18,10 @@ oldlinux:
 
 freebsd:
 	@ln -sf Rules/FreeBSD Rules.mak
-	@$(MAKE) all
+	@make all
 
 _sqlite:
-	@echo ""
-	@echo "Compiling SQLite"
-	@echo ""
+	@echo "sqlite"
 	@cd contrib;./make_sqlite build
 
 _dbutil:

@@ -163,6 +163,12 @@ no way limits the number of users who can log on simultaneously.
 The 'HTTP Server Max Idle Time' setting controls the amount of idle time (in seconds)
 which is allowed for an http connection before it is terminated. The default is 120.
 </P>
+<H3>HTTP Server Max POST Size - HTTP.MAXPOSTSIZE</A></H1>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'HTTP Server Max POST Size' setting controls the maximum size (in bytes)
+of an allowed HTTP POST request.  This mainly affects the maximum size of a
+file which can be uploaded using the web interface.
+</P>
 <H3>SQL Server Type - SQL.TYPE</H3>
 <P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 The 'SQL Server Type' setting is used to specify whether MySQL, PostgreSQL or
@@ -217,7 +223,7 @@ to use when connecting to the database through ODBC.  The default setting should
 be similar to the following (depending on where NullLogic Groupware was installed
 to):
 <PRE>
-	DRIVER={Microsoft Access Driver (*.mdb)};DBQ=C:\Program Files\NullLogic Groupware\var\db\groupware.mdb
+	DRIVER={Microsoft Access Driver (*.mdb)};DBQ=C:\database\groupware.mdb
 </PRE>
 </P>
 <P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -230,6 +236,22 @@ connect to the database:
 </P>
 <P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 This setting is used only when ODBC is chosen as a data source.
+</P>
+<H3>External File Scan Utility - UTIL.SCANFILE</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'External File Scan Utility' setting allows you to specify a script or
+executable program to use to scan files for viruses and/or inappropriate
+content.  Configuring and using this facility exceeds the scope of this
+document, however a sample shell script <I>scan_file.sh</I> is included with
+the source distribution of NullLogic Groupware.
+</P>
+<H3>External Mail Scan Utility - UTIL.SCANMAIL</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'External Mail Scan Utility' setting allows you to specify a script or
+executable program to use to scan e-mail for viruses and/or inappropriate
+content.  Configuring and using this facility exceeds the scope of this
+document, however a sample shell script <I>scan_mail.sh</I> is included with
+the source distribution of NullLogic Groupware.
 </P>
 <HR>
 <CENTER>

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ typedef struct {
 	char encoding[128];
 	char uidl[100];
 	char status[10];
+	char X_Bogosity[128];
 	int size;
 } wmheader;
 
@@ -74,7 +75,7 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 int dbread_mailcurrent(CONN *sid, int mailcurrent);
 int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header);
 /* mod_mail_filters.c */
-int wmfilter_apply(CONN *sid, wmheader *header, int accountid);
+int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid);
 void wmfilter_edit(CONN *sid);
 void wmfilter_list(CONN *sid, int accountid);
 void wmfilter_save(CONN *sid);
@@ -84,7 +85,7 @@ void wmfolder_edit(CONN *sid);
 void wmfolder_save(CONN *sid);
 /* mod_mail_html.c */
 void htselect_mailaccount(CONN *sid, int selected);
-void htselect_mailfolder(CONN *sid, int selected, short int allow_zero);
+void htselect_mailfolder(CONN *sid, int selected, short int allow_zero, short int show_root);
 void htselect_mailfolderjump(CONN *sid, int selected);
 void htselect_mailjump(CONN *sid, int selected);
 /* mod_mail_main.c */

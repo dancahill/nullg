@@ -1,5 +1,5 @@
 LIBRARY		mod_searches
-VERSION		1.2.4
+VERSION		1.2.5
 EXPORTS
 	mod_init
 	mod_main

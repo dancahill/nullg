@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,8 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 	strncpy(mailacct->smtphost,	sql_getvalue(sqr, 0, 16), sizeof(mailacct->smtphost)-1);
 	mailacct->smtpport=atoi(sql_getvalue(sqr, 0, 17));
 	strncpy(mailacct->popusername,	sql_getvalue(sqr, 0, 18), sizeof(mailacct->popusername)-1);
-	strncpy(mailacct->poppassword,	decode_b64s(sid, sql_getvalue(sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
+//	strncpy(mailacct->poppassword,	decode_b64s(sid, sql_getvalue(sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
+	strncpy(mailacct->poppassword,  DecodeBase64string(sid, sql_getvalue(sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
 	strncpy(mailacct->smtpauth,	sql_getvalue(sqr, 0, 20), sizeof(mailacct->smtpauth)-1);
 	mailacct->lastcount=atoi(sql_getvalue(sqr, 0, 21));
 	mailacct->notify=atoi(sql_getvalue(sqr, 0, 22));

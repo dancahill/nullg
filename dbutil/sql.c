@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -258,7 +258,7 @@ int mysqlConnect()
 	if(mysqlDLLInit()!=0) return -1;
 	if (Connected) return 0;
 	libmysql.init(&mysql);
-	if (!(mysock=libmysql.real_connect(&mysql, sql.sql_hostname, sql.sql_username, sql.sql_password, sql.sql_dbname, atoi(sql.sql_port), NULL, 0))) {
+	if (!(mysock=libmysql.real_connect(&mysql, config.sql_hostname, config.sql_username, config.sql_password, config.sql_dbname, config.sql_port, NULL, 0))) {
 		printf("\nMYSQL error: %s", libmysql.error(&mysql));
 		return -1;
 	}
@@ -297,7 +297,7 @@ int odbcConnect()
 		odbcDisconnect();
 		return -1;
 	}
-	rc=SQLDriverConnect(hDBC, NULL, sql.sql_odbc_dsn, (short int)strlen(sql.sql_odbc_dsn), szConnStr, sizeof(szConnStr), &cbConnStr, SQL_DRIVER_NOPROMPT);
+	rc=SQLDriverConnect(hDBC, NULL, config.sql_odbc_dsn, (short int)strlen(config.sql_odbc_dsn), szConnStr, sizeof(szConnStr), &cbConnStr, SQL_DRIVER_NOPROMPT);
 	if ((rc!=SQL_SUCCESS)&&(rc!=SQL_SUCCESS_WITH_INFO)) {
 		SQLError(hEnv, hDBC, hStmt, sqlstate, NULL, buf, sizeof(buf), NULL);
 		printf("\nODBC Connect - SQLDriverConnect %s", buf);
@@ -319,8 +319,8 @@ int pgsqlConnect()
 	if(pgsqlDLLInit()!=0) return -1;
 	if (Connected) return 0;
 	memset (port, 0, sizeof(port));
-	snprintf(port, sizeof(port)-1, "%d", atoi(sql.sql_port));
-	pgconn=libpgsql.setdblogin(sql.sql_hostname, port, NULL, NULL, sql.sql_dbname, sql.sql_username, sql.sql_password);
+	snprintf(port, sizeof(port)-1, "%d", config.sql_port);
+	pgconn=libpgsql.setdblogin(config.sql_hostname, port, NULL, NULL, config.sql_dbname, config.sql_username, config.sql_password);
 	if (libpgsql.status(pgconn)==CONNECTION_BAD) {
 		printf("\nPGSQL Connect - %s", libpgsql.errormessage(pgconn));
 		return -1;
@@ -337,16 +337,20 @@ int pgsqlConnect()
 int sqliteConnect()
 {
 #ifdef HAVE_SQLITE
+	char dbname[255];
 	char *zErrMsg=0;
 
-	if(SQLiteDLLInit()!=0) return -1;
+	if (SQLiteDLLInit()!=0) return -1;
 	if (Connected) return 0;
-	db=libsqlite.open("../var/db/groupware.db", 0, &zErrMsg);
+	snprintf(dbname, sizeof(dbname)-1, "%s/groupware.db", config.server_dir_var_db);
+//	fixslashes(dbname);
+	db=libsqlite.open(dbname, 0, &zErrMsg);
 	if (db==0) {
 		printf("\nSQLite Connect - %s", zErrMsg);
 		return -1;
 	}
 	Connected=1;
+	libsqlite.exec(db, "PRAGMA default_synchronous = FALSE;", NULL, 0, &zErrMsg);
 	return 0;
 #else
 	return -1;
@@ -723,13 +727,13 @@ int sqliteQuery(int sqr, char *sqlquery)
 
 void sqlDisconnect()
 {
-	if (strcmp(sql.sql_type, "ODBC")==0) {
+	if (strcmp(config.sql_type, "ODBC")==0) {
 		odbcDisconnect();
-	} else if (strcmp(sql.sql_type, "MYSQL")==0) {
+	} else if (strcmp(config.sql_type, "MYSQL")==0) {
 		mysqlDisconnect();
-	} else if (strcmp(sql.sql_type, "PGSQL")==0) {
+	} else if (strcmp(config.sql_type, "PGSQL")==0) {
 		pgsqlDisconnect();
-	} else if (strcmp(sql.sql_type, "SQLITE")==0) {
+	} else if (strcmp(config.sql_type, "SQLITE")==0) {
 		sqliteDisconnect();
 	}
 	return;
@@ -756,16 +760,16 @@ int sqlUpdate(int verbose, char *sqlquery)
 {
 	int rc=-1;
 
-	if (strcmp(sql.sql_type, "ODBC")==0) {
+	if (strcmp(config.sql_type, "ODBC")==0) {
 		if (odbcConnect()<0) return -1;
 		rc=odbcUpdate(verbose, sqlquery);
-	} else if (strcmp(sql.sql_type, "MYSQL")==0) {
+	} else if (strcmp(config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect()<0) return -1;
 		rc=mysqlUpdate(verbose, sqlquery);
-	} else if (strcmp(sql.sql_type, "PGSQL")==0) {
+	} else if (strcmp(config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect()<0) return -1;
 		rc=pgsqlUpdate(verbose, sqlquery);
-	} else if (strcmp(sql.sql_type, "SQLITE")==0) {
+	} else if (strcmp(config.sql_type, "SQLITE")==0) {
 		if (sqliteConnect()<0) return -1;
 		rc=sqliteUpdate(verbose, sqlquery);
 	}
@@ -796,16 +800,16 @@ int sqlQuery(char *query)
 		printf("\ndropping sql connection - max %d", MAX_QUERIES);
 		return -1;
 	}
-	if (strcmp(sql.sql_type, "ODBC")==0) {
+	if (strcmp(config.sql_type, "ODBC")==0) {
 		if (odbcConnect()<0) return -1;
 		rc=odbcQuery(i, query);
-	} else if (strcmp(sql.sql_type, "MYSQL")==0) {
+	} else if (strcmp(config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect()<0) return -1;
 		rc=mysqlQuery(i, query);
-	} else if (strcmp(sql.sql_type, "PGSQL")==0) {
+	} else if (strcmp(config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect()<0) return -1;
 		rc=pgsqlQuery(i, query);
-	} else if (strcmp(sql.sql_type, "SQLITE")==0) {
+	} else if (strcmp(config		.sql_type, "SQLITE")==0) {
 		if (sqliteConnect()<0) return -1;
 		rc=sqliteQuery(i, query);
 	}
@@ -870,9 +874,9 @@ char *str2sql(char *instring)
 	while ((instring[i])&&(i<sizeof(buffer)-1)) {
 		ch=instring[i];
 		if (ch==0) break;
-		if ((ch<32)||(ch>255)) { i++; continue; }
+		if (ch<32) { i++; continue; }
 		if (ch=='\'') {
-			if (strcmp(sql.sql_type, "ODBC")==0) {
+			if (strcmp(config.sql_type, "ODBC")==0) {
 				buffer[bufferlength]='\'';
 			} else {
 				buffer[bufferlength]='\\';

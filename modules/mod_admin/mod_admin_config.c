@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -110,7 +110,8 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Idle Time</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxidle STYLE='width:255px'>", config->colour_editform);
 	htselect_number(sid, cfg.http_maxidle, 5, 300, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Virus Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_virusscan   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_virusscan));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanfile VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanfile));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Mail Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanmail VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanmail));
 	prints(sid, "</TABLE>");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
@@ -240,7 +241,8 @@ void adminconfigsave(CONN *sid)
 #ifdef WIN32
 	if ((ptemp=getpostenv(sid, "SQL_ODBC_DSN"))!=NULL)          strncpy(cfg.sql_odbc_dsn,          ptemp, sizeof(cfg.sql_odbc_dsn)-1);
 #endif
-	if ((ptemp=getpostenv(sid, "UTIL_VIRUSSCAN"))!=NULL)        strncpy(cfg.util_virusscan,        ptemp, sizeof(cfg.util_virusscan)-1);
+	if ((ptemp=getpostenv(sid, "UTIL_SCANFILE"))!=NULL)         strncpy(cfg.util_scanfile,         ptemp, sizeof(cfg.util_scanfile)-1);
+	if ((ptemp=getpostenv(sid, "UTIL_SCANMAIL"))!=NULL)         strncpy(cfg.util_scanmail,         ptemp, sizeof(cfg.util_scanmail)-1);
 	if (config_write(&cfg)!=0) {
 		logerror(sid, __FILE__, __LINE__, 1, ADM_CFG_NOFILE, proc->config_filename);
 		prints(sid, ADM_CFG_NOFILE, proc->config_filename);

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ retry:
 		x=sizeof(sid->dat->wm->recvbuf)-sid->dat->wm->recvbufoffset-sid->dat->wm->recvbufsize-2;
 		obuffer=sid->dat->wm->recvbuf+sid->dat->wm->recvbufoffset+sid->dat->wm->recvbufsize;
 		if ((rc=recv(fd, obuffer, x, 0))<0) {
+			msleep(1);
 			prints(sid, "<BR>" MOD_MAIL_ERR_CONNRESET);
 			shutdown(sid->dat->wm->socket, 2);
 			closesocket(sid->dat->wm->socket);
@@ -72,6 +73,7 @@ retry:
 		sid->dat->wm->recvbufsize+=rc;
 		sid->dat->wm->imapmread+=rc;
 	}
+	if (time(NULL)-sid->atime>config->http_maxidle) return -1;
 	obuffer=sid->dat->wm->recvbuf+sid->dat->wm->recvbufoffset;
 	if ((pf==0)&&(buffer[0]=='.')&&(buffer[1]=='.')) {
 		pf=1;
@@ -915,8 +917,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 			nummessages=-1;
 			goto cleanup;
 		}
-		dstmbox=wmfilter_apply(sid, &header, sid->dat->user_mailcurrent);
-		if (dstmbox<1) dstmbox=1;
+		dstmbox=1;
 		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 			for (;;) {
 				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) {
@@ -963,6 +964,8 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		}
 		prints(sid, ".");
 		wmserver_msgsync(sid, i+1, headerid, 0);
+		dstmbox=wmfilter_apply(sid, &header, sid->dat->user_mailcurrent, headerid);
+		if (dstmbox<1) dstmbox=1;
 		flushbuffer(sid);
 	}
 	sql_freeresult(sqr1);

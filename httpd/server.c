@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,11 +46,13 @@ int closeconnect(CONN *sid, int exitflag)
 		exit(0);
 	} else if (sid!=NULL) {
 		/* shutdown(x,0=recv, 1=send, 2=both) */
-		if (sid->dat->wm!=NULL) {
-			if (sid->dat->wm->socket!=-1) {
-				shutdown(sid->dat->wm->socket, 2);
-				closesocket(sid->dat->wm->socket);
-				sid->dat->wm->socket=-1;
+		if (sid->dat!=NULL) {
+			if (sid->dat->wm!=NULL) {
+				if (sid->dat->wm->socket!=-1) {
+					shutdown(sid->dat->wm->socket, 2);
+					closesocket(sid->dat->wm->socket);
+					sid->dat->wm->socket=-1;
+				}
 			}
 		}
 		if (sid->socket!=-1) {
@@ -464,6 +466,10 @@ void init()
 		}
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 		endpwent();
+/*
+		chroot("/usr/local/nullgroupware");
+		chdir("/");
+*/
 		if (setgid(pw->pw_gid)) exit(-2);
 		if (setuid(pw->pw_uid)) exit(-2);
 	}
@@ -573,7 +579,11 @@ void dorequest(CONN *sid)
 	if (pageuri[strlen(pageuri)-1]=='&') pageuri[strlen(pageuri)-1]='\0';
 	if (pageuri[strlen(pageuri)-1]=='?') pageuri[strlen(pageuri)-1]='\0';
 	if (relocate) {
-		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
+		/*
+		 * maybe someday M$ will fix their web server.
+		 * Until then, it's _very_ unsafe to use redirects.
+		 */
+//		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
 //		send_header(sid, 0, 303, "OK", "1", "text/html", -1, -1);
 		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 		prints(sid, "<HTML><HEAD></HEAD><BODY>\n");

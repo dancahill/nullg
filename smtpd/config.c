@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ int config_read(CONFIG *config)
 {
 	FILE *fp=NULL;
 	char line[512];
+	struct stat sb;
 	char *pVar;
 	char *pVal;
 	short int founddir=0;
@@ -65,31 +66,11 @@ int config_read(CONFIG *config)
 	if (!founddir) {
 		snprintf(config->server_dir_base, sizeof(config->server_dir_base)-1, "%s", DEFAULT_BASE_DIR);
 	}
-	snprintf(config->server_dir_bin,        sizeof(config->server_dir_bin)-1,        "%s/bin", config->server_dir_base);
-	snprintf(config->server_dir_cgi,        sizeof(config->server_dir_cgi)-1,        "%s/cgi-bin", config->server_dir_base);
-	snprintf(config->server_dir_etc,        sizeof(config->server_dir_etc)-1,        "%s/etc", config->server_dir_base);
-	snprintf(config->server_dir_lib,        sizeof(config->server_dir_lib)-1,        "%s/lib", config->server_dir_base);
-	snprintf(config->server_dir_var,        sizeof(config->server_dir_var)-1,        "%s/var", config->server_dir_base);
-	snprintf(config->server_dir_var_backup, sizeof(config->server_dir_var_backup)-1, "%s/backup", config->server_dir_var);
-	snprintf(config->server_dir_var_db,     sizeof(config->server_dir_var_db)-1,     "%s/db", config->server_dir_var);
-	snprintf(config->server_dir_var_files,  sizeof(config->server_dir_var_files)-1,  "%s/files", config->server_dir_var);
-	snprintf(config->server_dir_var_htdocs, sizeof(config->server_dir_var_htdocs)-1, "%s/htdocs", config->server_dir_var);
-	snprintf(config->server_dir_var_log,    sizeof(config->server_dir_var_log)-1,    "%s/log", config->server_dir_var);
-	snprintf(config->server_dir_var_mail,   sizeof(config->server_dir_var_mail)-1,   "%s/mail", config->server_dir_var);
-	snprintf(config->server_dir_var_tmp,    sizeof(config->server_dir_var_tmp)-1,    "%s/tmp", config->server_dir_var);
-	fixslashes(config->server_dir_base);
-	fixslashes(config->server_dir_bin);
-	fixslashes(config->server_dir_cgi);
-	fixslashes(config->server_dir_etc);
-	fixslashes(config->server_dir_lib);
-	fixslashes(config->server_dir_var);
-	fixslashes(config->server_dir_var_backup);
-	fixslashes(config->server_dir_var_db);
-	fixslashes(config->server_dir_var_files);
-	fixslashes(config->server_dir_var_htdocs);
-	fixslashes(config->server_dir_var_log);
-	fixslashes(config->server_dir_var_mail);
-	fixslashes(config->server_dir_var_tmp);
+	snprintf(config->server_dir_bin, sizeof(config->server_dir_bin)-1, "%s/bin", config->server_dir_base);
+	snprintf(config->server_dir_cgi, sizeof(config->server_dir_cgi)-1, "%s/cgi-bin", config->server_dir_base);
+	snprintf(config->server_dir_etc, sizeof(config->server_dir_etc)-1, "%s/etc", config->server_dir_base);
+	snprintf(config->server_dir_lib, sizeof(config->server_dir_lib)-1, "%s/lib", config->server_dir_base);
+	snprintf(config->server_dir_var, sizeof(config->server_dir_var)-1, "%s/var", config->server_dir_base);
 #ifdef HAVE_SQLITE
 	strncpy(config->sql_type, "SQLITE", sizeof(config->sql_type)-1);
 #endif
@@ -97,6 +78,7 @@ int config_read(CONFIG *config)
 	config->http_port=4110;
 	config->http_maxconn=50;
 	config->http_maxidle=120;
+	config->http_maxpostsize=33554432; /* 32 MB limit for POST request sizes */
 	config->pop3_port=110;
 	config->pop3_maxconn=50;
 	config->pop3_maxidle=120;
@@ -120,10 +102,17 @@ int config_read(CONFIG *config)
 		fixslashes(proc.config_filename);
 		fp=fopen(proc.config_filename, "r");
 	}
-	/* if config file couldn't be opened, abort */
+	/* if config file couldn't be opened, try to write one */
 	if (fp==NULL) {
-		logerror(NULL, __FILE__, __LINE__, CONFIG_NODIR, config->server_dir_etc);
-		return -1;
+		if (stat(config->server_dir_etc, &sb)!=0) {
+			logerror(NULL, __FILE__, __LINE__, 0, CONFIG_NODIR, config->server_dir_etc);
+			return -1;
+		};
+//		printf("\r\n%s", CONFIG_MAKE);
+//		logerror(NULL, __FILE__, __LINE__, 1, "%s", CONFIG_MAKE);
+//		config_write(config);
+//		printf("done.\n");
+		goto sanity_check;
 	}
 	/* else if config file does exist, read it */
 	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
@@ -206,6 +195,8 @@ int config_read(CONFIG *config)
 				config->http_maxconn=atoi(pVal);
 			} else if (strcmp(pVar, "HTTP.MAXIDLE")==0) {
 				config->http_maxidle=atoi(pVal);
+			} else if (strcmp(pVar, "HTTP.MAXPOSTSIZE")==0) {
+				config->http_maxpostsize=atoi(pVal);
 			} else if (strcmp(pVar, "POP3.HOSTNAME")==0) {
 				strncpy(config->pop3_hostname, pVal, sizeof(config->pop3_hostname)-1);
 			} else if (strcmp(pVar, "POP3.PORT")==0) {
@@ -238,19 +229,57 @@ int config_read(CONFIG *config)
 				strncpy(config->sql_password, pVal, sizeof(config->sql_password)-1);
 			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
 				strncpy(config->sql_odbc_dsn, pVal, sizeof(config->sql_odbc_dsn)-1);
-			} else if (strcmp(pVar, "UTIL.VIRUSSCAN")==0) {
-				strncpy(config->util_virusscan, pVal, sizeof(config->util_virusscan)-1);
+			} else if (strcmp(pVar, "UTIL.SCANFILE")==0) {
+				strncpy(config->util_scanfile, pVal, sizeof(config->util_scanfile)-1);
+			} else if (strcmp(pVar, "UTIL.SCANMAIL")==0) {
+				strncpy(config->util_scanmail, pVal, sizeof(config->util_scanmail)-1);
 			}
 			*pVal='\0';
 			*pVar='\0';
 		}
 	}
 	fclose(fp);
+sanity_check:
+	if (!strlen(config->server_dir_var_backup)) {
+		snprintf(config->server_dir_var_backup, sizeof(config->server_dir_var_backup)-1, "%s/backup", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_db)) {
+		snprintf(config->server_dir_var_db,     sizeof(config->server_dir_var_db)-1,     "%s/db", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_files)) {
+		snprintf(config->server_dir_var_files,  sizeof(config->server_dir_var_files)-1,  "%s/files", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_htdocs)) {
+		snprintf(config->server_dir_var_htdocs, sizeof(config->server_dir_var_htdocs)-1, "%s/htdocs", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_log)) {
+		snprintf(config->server_dir_var_log,    sizeof(config->server_dir_var_log)-1,    "%s/log", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_mail)) {
+		snprintf(config->server_dir_var_mail,   sizeof(config->server_dir_var_mail)-1,   "%s/mail", config->server_dir_var);
+	}
+	if (!strlen(config->server_dir_var_tmp)) {
+		snprintf(config->server_dir_var_tmp,    sizeof(config->server_dir_var_tmp)-1,    "%s/tmp", config->server_dir_var);
+	}
+	fixslashes(config->server_dir_base);
+	fixslashes(config->server_dir_bin);
+	fixslashes(config->server_dir_cgi);
+	fixslashes(config->server_dir_etc);
+	fixslashes(config->server_dir_lib);
+	fixslashes(config->server_dir_var);
+	fixslashes(config->server_dir_var_backup);
+	fixslashes(config->server_dir_var_db);
+	fixslashes(config->server_dir_var_files);
+	fixslashes(config->server_dir_var_htdocs);
+	fixslashes(config->server_dir_var_log);
+	fixslashes(config->server_dir_var_mail);
+	fixslashes(config->server_dir_var_tmp);
 	if (config->http_maxconn==0) config->http_maxconn=50;
 	if (config->http_maxidle==0) config->http_maxidle=120;
 	if (config->http_maxconn<5) config->http_maxconn=5;
 	if (config->http_maxconn>1000) config->http_maxconn=1000;
 	if (config->http_maxidle<15) config->http_maxidle=15;
+	if (config->http_maxpostsize<1048576) config->http_maxpostsize=1048576;
 	if (strlen(config->http_hostname)==0) strncpy(config->http_hostname, "INADDR_ANY", sizeof(config->http_hostname)-1);
 	if (config->pop3_maxconn==0) config->pop3_maxconn=50;
 	if (config->pop3_maxidle==0) config->pop3_maxidle=120;

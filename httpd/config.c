@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -229,8 +229,10 @@ int config_read(CONFIG *config)
 				strncpy(config->sql_password, pVal, sizeof(config->sql_password)-1);
 			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
 				strncpy(config->sql_odbc_dsn, pVal, sizeof(config->sql_odbc_dsn)-1);
-			} else if (strcmp(pVar, "UTIL.VIRUSSCAN")==0) {
-				strncpy(config->util_virusscan, pVal, sizeof(config->util_virusscan)-1);
+			} else if (strcmp(pVar, "UTIL.SCANFILE")==0) {
+				strncpy(config->util_scanfile, pVal, sizeof(config->util_scanfile)-1);
+			} else if (strcmp(pVar, "UTIL.SCANMAIL")==0) {
+				strncpy(config->util_scanmail, pVal, sizeof(config->util_scanmail)-1);
 			}
 			*pVal='\0';
 			*pVar='\0';
@@ -373,7 +375,8 @@ int config_write(CONFIG *config)
 #ifdef WIN32
 	fprintf(fp, "SQL.ODBC_DSN          = \"%s\"\n", config->sql_odbc_dsn);
 #endif
-	fprintf(fp, "UTIL.VIRUSSCAN        = \"%s\"\n", config->util_virusscan);
+	fprintf(fp, "UTIL.SCANFILE         = \"%s\"\n", config->util_scanfile);
+	fprintf(fp, "UTIL.SCANMAIL         = \"%s\"\n", config->util_scanmail);
 	fclose(fp);
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,19 +52,19 @@ void productedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (productid>0) {
-		prints(sid, "Product %d</FONT></TH></TR>\n", product.productid);
+		prints(sid, "<A HREF=%s/orders/productview?productid=%d STYLE='color: %s'>Product %d</A></FONT></TH></TR>\n", sid->dat->in_ScriptName, product.productid, config->colour_thtext, product.productid);
 	} else {
 		prints(sid, "New Product</FONT></TH></TR>\n");
 	}
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Product Name  </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=productname  value=\"%s\" SIZE=30></TD></TR>\n", config->colour_editform, str2html(sid, product.productname));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Category      </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=category     value=\"%s\" SIZE=30></TD></TR>\n", config->colour_editform, str2html(sid, product.category));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Discount      </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=discount     value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.discount);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Unit Price    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=unitprice    value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.unitprice);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Internal Cost </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=internalcost value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.internalcost);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax1name, product.tax1);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax2name, product.tax2);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Discount      </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, product.discount*100.0F);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Unit Price    </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.unitprice);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Internal Cost </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.internalcost);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax1name, product.tax1*100.0F);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax2name, product.tax2*100.0F);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=3 COLS=40>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, product.details));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=3 COLS=40>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, product.details));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "orders")&A_ADMIN)&&(product.productid!=0)) {
@@ -99,11 +99,11 @@ void productview(CONN *sid)
 	prints(sid, "</FONT></TH></TR>\n");
 	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Product Name </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.productname));
 	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Category     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.category));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Discount     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Unit Price   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Internal Cost</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Discount     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount*100.0F);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Unit Price   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Internal Cost</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1*100.0F);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2*100.0F);
 	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
 	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, product.details));
 	prints(sid, "</TABLE>\n<BR>\n</CENTER>\n");
@@ -165,11 +165,11 @@ void productsave(CONN *sid)
 	}
 	if ((ptemp=getpostenv(sid, "PRODUCTNAME"))!=NULL) snprintf(product.productname, sizeof(product.productname)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "CATEGORY"))!=NULL) snprintf(product.category, sizeof(product.category)-1, "%s", ptemp);
-	if ((ptemp=getpostenv(sid, "DISCOUNT"))!=NULL) product.discount=(float)atof(ptemp);
+	if ((ptemp=getpostenv(sid, "DISCOUNT"))!=NULL) product.discount=(float)atof(ptemp)/100.0F;
 	if ((ptemp=getpostenv(sid, "UNITPRICE"))!=NULL) product.unitprice=(float)atof(ptemp);
 	if ((ptemp=getpostenv(sid, "INTERNALCOST"))!=NULL) product.internalcost=(float)atof(ptemp);
-	if ((ptemp=getpostenv(sid, "TAX1"))!=NULL) product.tax1=(float)atof(ptemp);
-	if ((ptemp=getpostenv(sid, "TAX2"))!=NULL) product.tax2=(float)atof(ptemp);
+	if ((ptemp=getpostenv(sid, "TAX1"))!=NULL) product.tax1=(float)atof(ptemp)/100.0F;
+	if ((ptemp=getpostenv(sid, "TAX2"))!=NULL) product.tax2=(float)atof(ptemp)/100.0F;
 	if ((ptemp=getpostenv(sid, "DETAILS"))!=NULL) snprintf(product.details, sizeof(product.details)-1, "%s", ptemp);
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
@@ -194,11 +194,11 @@ void productsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", product.productid, curdate, curdate, sid->dat->user_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, product.productname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, product.category));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", product.discount);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", product.discount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", product.unitprice);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", product.internalcost);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", product.tax1);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", product.tax2);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", product.tax1);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", product.tax2);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, product.details));
 		if (sql_update(sid, query)<0) return;
 		prints(sid, "<CENTER>Product %d added successfully</CENTER><BR>\n", product.productid);
@@ -211,11 +211,11 @@ void productsave(CONN *sid)
 		snprintf(query, sizeof(query)-1, "UPDATE gw_products SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, product.obj_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "productname = '%s', ", str2sql(sid, product.productname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "category = '%s', ", str2sql(sid, product.category));
-		strncatf(query, sizeof(query)-strlen(query)-1, "discount = '%1.2f', ", product.discount);
+		strncatf(query, sizeof(query)-strlen(query)-1, "discount = '%1.3f', ", product.discount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "unitprice = '%1.2f', ", product.unitprice);
 		strncatf(query, sizeof(query)-strlen(query)-1, "internalcost = '%1.2f', ", product.internalcost);
-		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.2f', ", product.tax1);
-		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.2f', ", product.tax2);
+		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.3f', ", product.tax1);
+		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.3f', ", product.tax2);
 		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(sid, product.details));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE productid = %d", product.productid);
 		if (sql_update(sid, query)<0) return;

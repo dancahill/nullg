@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:02"
-OUTFILE=nullgroupware-1.2.4-x86
+OUTFILE=nullgroupware-1.2.5-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "Linux" ]; then
@@ -14,7 +14,7 @@ else
 fi
 
 set_perms() {
-	chown -R root:root distrib
+	chown -R 0:0 distrib
 	chmod 0644 distrib/COPYING
 	chmod 0644 distrib/COPYRIGHT.txt
 	chmod 0644 distrib/README.txt

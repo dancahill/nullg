@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ void flushheader(CONN *sid)
 	} else {
 		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
 	}
+	memset(line, 0, sizeof(line));
 	if (proc.RunAsCGI) {
 		/* IIS bursts into flames when we do a redirect, so use nph- */
 		if (strstr(sid->dat->in_ScriptName, "nph-")!=NULL) {
@@ -252,35 +253,7 @@ int raw_prints(CONN *sid, const char *format, ...)
 		return send(sid->socket, buffer, strlen(buffer), 0);
 	}
 }
-/*
-int sgets(CONN *sid, char *buffer, int max, int fd)
-{
-	int n=0;
-	int rc;
 
-	if (sid==NULL) return -1;
-	sid->atime=time(NULL);
-	if (proc.RunAsCGI) {
-		fgets(buffer, sizeof(buffer)-1, stdin);
-		return strlen(buffer);
-	}
-	while (n<max) {
-		if ((rc=recv(sid->socket, buffer, 1, 0))<1) {
-			return -1;
-		} else if (rc<1) {
-			msleep(1);
-		}
-		n++;
-		if (*buffer=='\n') {
-			buffer++;
-			break;
-		}
-		buffer++;
-	}
-	*buffer=0;
-	return n;
-}
-*/
 int sgets(CONN *sid, char *buffer, int max, int fd)
 {
 	char *pbuffer=buffer;
@@ -291,7 +264,6 @@ int sgets(CONN *sid, char *buffer, int max, int fd)
 	short int x;
 
 	if (sid==NULL) return -1;
-	sid->atime=time(NULL);
 retry:
 	if (!sid->dat->recvbufsize) {
 		x=sizeof(sid->dat->recvbuf)-sid->dat->recvbufoffset-sid->dat->recvbufsize-2;
@@ -306,6 +278,8 @@ retry:
 			 */
 			msleep(1);
 			goto retry;
+		} else {
+			sid->atime=time(NULL);
 		}
 		sid->dat->recvbufsize+=rc;
 	}

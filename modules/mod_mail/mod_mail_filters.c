@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,14 +18,82 @@
 #include "mod_substub.h"
 #include "mod_mail.h"
 
-int wmfilter_apply(CONN *sid, wmheader *header, int accountid)
+#ifdef WIN32
+int winsystem(const char *format, ...)
 {
+	DWORD exitcode=0;
+	HANDLE hMyProcess=GetCurrentProcess();
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	char Command[512];
+	va_list ap;
+	int pid;
+
+	ZeroMemory(&pi, sizeof(pi));
+	ZeroMemory(&si, sizeof(si));
+	memset(Command, 0, sizeof(Command));
+	va_start(ap, format);
+	vsnprintf(Command, sizeof(Command)-1, format, ap);
+	va_end(ap);
+	si.cb=sizeof(si);
+	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+	si.wShowWindow=SW_HIDE;
+	si.hStdInput=NULL;
+	si.hStdOutput=NULL;
+	si.hStdError=NULL;
+	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+		return -1;
+	}
+	pid=pi.dwProcessId;
+	CloseHandle(si.hStdInput);
+	CloseHandle(si.hStdOutput);
+stuff:
+	GetExitCodeProcess(pi.hProcess, &exitcode);
+	if (exitcode==STILL_ACTIVE) goto stuff;
+//      if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+	return exitcode;
+}
+#endif
+
+int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
+{
+	char cmdline[512];
+	char msgfilename[512];
 	char *hptr;
 	int dstmbox;
 	int i;
 	int match;
 	int sqr1;
+	short int err=0;
+	struct stat sb;
 
+	memset(msgfilename, 0, sizeof(msgfilename));
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, messageid);
+	fixslashes(msgfilename);
+	if (strlen(config->util_scanmail)>0) {
+		memset(cmdline, 0, sizeof(cmdline));
+		snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
+//		logerror(sid, __FILE__, __LINE__, 0, "[%s]", cmdline);
+#ifdef WIN32
+		err=winsystem(cmdline);
+#else
+		err=system(cmdline);
+#endif
+		if (err>255) err=err>>8;
+		if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
+			sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
+		}
+	}
+//	prints(sid, "[%d]", err);
+	if ((err==1)||(err==2)||(err==3)) {
+		if (err==1) prints(sid, "[SPAM]");
+		if (err==2) prints(sid, "[VIRUS]");
+		if (err==3) prints(sid, "[VIRUS+SPAM]");
+		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 7, status = 'o' WHERE mailheaderid = %d AND accountid = %d", messageid, accountid);
+		return 7;
+	}
 	dstmbox=1;
 	if ((sqr1=sql_queryf(sid, "SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return -1;
 	if (sql_numtuples(sqr1)<1) {
@@ -77,6 +145,7 @@ testrule:
 		dstmbox=-1;
 	}
 	sql_freeresult(sqr1);
+	sql_updatef(sid, "UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d", dstmbox, messageid, accountid);
 	return dstmbox;
 }
 
@@ -177,7 +246,7 @@ void wmfilter_edit(CONN *sid)
 //	prints(sid, "<OPTION VALUE='delete'%s>Delete from server\n", strcasecmp(action, "delete")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Move to Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=dstfolderid style='width:217px'>\n", config->colour_editform);
-	htselect_mailfolder(sid, dstfolderid, 1);
+	htselect_mailfolder(sid, dstfolderid, 1, 0);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "</TABLE>\n");

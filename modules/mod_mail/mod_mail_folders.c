@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ void wmfolder_edit(CONN *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'%s>\n", config->colour_editform, (folderid<1)||(folderid>5)?"":" DISABLED");
-	htselect_mailfolder(sid, parentid, 1);
+	htselect_mailfolder(sid, parentid, 1, 1);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'%s></TD></TR>\n", config->colour_editform, str2html(sid, foldername), (folderid<1)||(folderid>5)?"":" DISABLED");
 	prints(sid, "</TABLE></TD></TR>\n");

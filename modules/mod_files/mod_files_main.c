@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -286,7 +286,7 @@ int dirlist(CONN *sid)
 	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 	i=4;
 	if (auth_priv(sid, "files")&A_MODIFY) i++;
-	if (strlen(config->util_virusscan)) i++;
+	if (strlen(config->util_scanfile)) i++;
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, i);
 	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
 	memset(uri2, 0, sizeof(uri2));
@@ -310,7 +310,7 @@ int dirlist(CONN *sid)
 	if (auth_priv(sid, "files")&A_MODIFY) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
-	if (strlen(config->util_virusscan)) {
+	if (strlen(config->util_scanfile)) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
 	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
@@ -320,7 +320,7 @@ int dirlist(CONN *sid)
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
-		if (strlen(config->util_virusscan)) {
+		if (strlen(config->util_scanfile)) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
 		prints(sid, "<TD COLSPAN=4 STYLE='border-style:solid'><A HREF=%s", sid->dat->in_ScriptName);
@@ -344,7 +344,7 @@ int dirlist(CONN *sid)
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
 		}
-		if (strlen(config->util_virusscan)) {
+		if (strlen(config->util_scanfile)) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>");
 			if (!(sb.st_mode & S_IFDIR)) {
 				prints(sid, "<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -441,7 +441,7 @@ int fileul(CONN *sid)
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Uploading new file to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
@@ -513,7 +513,7 @@ int filemkdir(CONN *sid)
 	prints(sid, "<TR><TH BGCOLOR=%s COLSPAN=2><FONT COLOR=%s>Adding folder to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
 	prints(sid, "<TR BGCOLOR=%s><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
@@ -573,7 +573,7 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Name    </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filename));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Location</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filepath     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filepath));
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
@@ -609,7 +609,7 @@ void fileinfoedit(CONN *sid)
 			printhex(sid, "%s", file.filepath);
 			prints(sid, ">Edit File</A>]\n");
 		}
-		if (strlen(config->util_virusscan)) {
+		if (strlen(config->util_scanfile)) {
 			prints(sid, "[<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
 			printhex(sid, "%s", file.filepath);
 			prints(sid, ">Scan File</A>]\n");
@@ -1130,7 +1130,7 @@ void filescan(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (strlen(config->util_virusscan)==0) return;
+	if (strlen(config->util_scanfile)==0) return;
 	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
 	if (dbread_file(sid, 1, fileid, &file)!=0) {
@@ -1150,16 +1150,10 @@ void filescan(CONN *sid)
 		prints(sid, "Not a file");
 		return;
 	}
-//	prints(sid, "I would scan %s if I knew how.<BR>\n", filename);
-//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /DUMB /LIST /NOBOOT /NOBREAK /NOMEM /OLD /REPORT=\"%s\" \"%s\"", tempname, filename);
-//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /REPORT=\"%s\" \"%s\"", tempname, filename);
-	snprintf(line, sizeof(line)-1, config->util_virusscan, filename);
-	strncatf(line, sizeof(line)-strlen(line)-1, " > %s", tempname);
+	snprintf(line, sizeof(line)-1, "%s %s > %s", config->util_scanfile, filename, tempname);
 #ifndef WIN32
 	strncatf(line, sizeof(line)-strlen(line)-1, " 2>&1");
 #endif
-//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /DUMB /NOBOOT /NOMEM \"%s\" > %s", filename, tempname);
-//	prints(sid, "[%d][%s]<BR>\n", strlen(line), line);
 	prints(sid, "Scanning '%s'<BR>\n", filename);
 	flushbuffer(sid);
 #ifdef WIN32
@@ -1167,7 +1161,8 @@ void filescan(CONN *sid)
 #else
 	err=system(line);
 #endif
-	if (err>0) {
+	if (err>255) err=err>>8;
+	if ((err>0)&&(err<4)) {
 		prints(sid, "<FONT COLOR=red><B>INFECTED AND/OR POTENTIALLY DANGEROUS</B></FONT><BR>\n");
 	} else if (err==0) {
 		prints(sid, "<FONT COLOR=green><B>LOOKS OK TO ME</B></FONT><BR>\n");

@@ -1,3 +1,19 @@
+1.2.5
+-----
+- extended precision of percentages in mod_orders
+- removed 303 redirects for IIS compatibility
+- upgraded sqlite to 2.8.11
+- improved performance in fastcgi bridge
+- added pragma command for sqlite to improve write performance
+- added pragma command for sqlite to allow empty tables
+- added retry loops for locked sqlite databases
+- added spam filtering capability (via external script)
+- fixed minor config parsing errors
+- fixed html email formatting so it looks a lot less ... spammy
+- fixed incorrect date display for task reminders
+- fixed truncated email passwords
+- added a group selector for messenger user listing
+
 1.2.4
 -----
 - minor fixes for outlook<->gw sync tool

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,21 +36,65 @@
 	#include <stdlib.h>
 	#include <string.h>
 #endif
+#include "version.h"
 
 typedef struct {
 	char name[40];
 	char value[512];
 } sql_struct;
 typedef struct {
-	char sql_type[32];
-	char sql_hostname[64];
-	char sql_port[10];
-	char sql_username[32];
-	char sql_password[32];
-	char sql_dbname[32];
-	char sql_odbc_dsn[100];
-} db_struct;
-db_struct sql;
+	char      colour_topmenu[10];
+	char      colour_editform[10];
+	char      colour_fieldname[10];
+	char      colour_fieldnametext[10];
+	char      colour_fieldval[10];
+	char      colour_fieldvaltext[10];
+	char      colour_tabletrim[10];
+	char      colour_th[10];
+	char      colour_thtext[10];
+	char      colour_thlink[10];
+	char      colour_links[10];
+	char      server_dir_base[255];
+	char      server_dir_bin[255];
+	char      server_dir_cgi[255];
+	char      server_dir_etc[255];
+	char      server_dir_lib[255];
+	char      server_dir_var[255];
+	char      server_dir_var_backup[255];
+	char      server_dir_var_db[255];
+	char      server_dir_var_files[255];
+	char      server_dir_var_htdocs[255];
+	char      server_dir_var_log[255];
+	char      server_dir_var_mail[255];
+	char      server_dir_var_tmp[255];
+	short int server_loglevel;
+	char      server_username[33];
+	char      http_hostname[128];
+	short int http_port;
+	short int http_maxconn;
+	short int http_maxidle;
+	int       http_maxpostsize;
+	char      pop3_hostname[128];
+	short int pop3_port;
+	short int pop3_maxconn;
+	short int pop3_maxidle;
+	char      smtp_hostname[128];
+	char      smtp_relayhost[128];
+	short int smtp_port;
+	short int smtp_maxconn;
+	short int smtp_maxidle;
+	char      sql_type[32];
+	char      sql_username[32];
+	char      sql_password[32];
+	char      sql_dbname[32];
+	char      sql_odbc_dsn[200];
+	char      sql_hostname[128];
+	char      sql_fwdhost[128];
+	short int sql_port;
+	short int sql_maxconn;
+	char      util_virusscan[255];
+} CONFIG;
+CONFIG config;
 char rootpass[40];
 
 int configread(void);

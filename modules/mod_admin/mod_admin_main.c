@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,19 @@
 
 void admin_stats(CONN *sid)
 {
+	char *ptemp;
+
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Server Statistics</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>Version         </FONT></TD><TD BGCOLOR=%s STYLE='border-style:solid'>%s</TD></TR>\r\n", config->colour_fieldname, config->colour_fieldvaltext, config->colour_fieldval, SERVER_VERSION);
+	if (proc->RunAsCGI) {
+		prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>Host            </FONT></TD><TD BGCOLOR=%s STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldvaltext, config->colour_fieldval);
+		if ((ptemp=getenv("SERVER_SOFTWARE"))!=NULL) {
+			prints(sid, "%s</TD></TR>\r\n", ptemp);
+		} else {
+			prints(sid, "unknown</TD></TR>\r\n");
+		}
+	}
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>Start Time      </FONT></TD><TD BGCOLOR=%s STYLE='border-style:solid'>%s</TD></TR>\r\n", config->colour_fieldname, config->colour_fieldvaltext, config->colour_fieldval, time_unix2text(sid, proc->stats.starttime+time_tzoffset(sid, time(NULL))));
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>HTTP Pages      </FONT></TD><TD BGCOLOR=%s STYLE='border-style:solid'>%d</TD></TR>\r\n", config->colour_fieldname, config->colour_fieldvaltext, config->colour_fieldval, proc->stats.http_pages);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>HTTP Connections</FONT></TD><TD BGCOLOR=%s STYLE='border-style:solid'>%d</TD></TR>\r\n", config->colour_fieldname, config->colour_fieldvaltext, config->colour_fieldval, proc->stats.http_conns);
