@@ -76,6 +76,7 @@ int config_read(CONFIG *config)
 	snprintf(config->server_dir_var_htdocs, sizeof(config->server_dir_var_htdocs)-1, "%s/htdocs", config->server_dir_var);
 	snprintf(config->server_dir_var_log,    sizeof(config->server_dir_var_log)-1, "%s/log", config->server_dir_var);
 	snprintf(config->server_dir_var_mail,   sizeof(config->server_dir_var_mail)-1, "%s/mail", config->server_dir_var);
+	snprintf(config->server_dir_var_tmp,    sizeof(config->server_dir_var_tmp)-1, "%s/tmp", config->server_dir_var);
 	fixslashes(config->server_dir_base);
 	fixslashes(config->server_dir_bin);
 	fixslashes(config->server_dir_cgi);
@@ -88,6 +89,7 @@ int config_read(CONFIG *config)
 	fixslashes(config->server_dir_var_htdocs);
 	fixslashes(config->server_dir_var_log);
 	fixslashes(config->server_dir_var_mail);
+	fixslashes(config->server_dir_var_tmp);
 #ifdef HAVE_SQLITE
 	strncpy(config->sql_type, "SQLITE", sizeof(config->sql_type)-1);
 #endif
@@ -139,6 +141,7 @@ int config_read(CONFIG *config)
 		fprintf(fp, "SERVER.DIR.VAR.HTDOCS = \"%s\"\n", config->server_dir_var_htdocs);
 		fprintf(fp, "SERVER.DIR.VAR.LOG    = \"%s\"\n", config->server_dir_var_log);
 		fprintf(fp, "SERVER.DIR.VAR.MAIL   = \"%s\"\n", config->server_dir_var_mail);
+		fprintf(fp, "SERVER.DIR.VAR.TMP    = \"%s\"\n", config->server_dir_var_tmp);
 		fprintf(fp, "SERVER.LOGLEVEL       = \"%d\"\n", config->server_loglevel);
 		fprintf(fp, "SERVER.HOSTNAME       = \"%s\"\n", config->server_hostname);
 		fprintf(fp, "SERVER.PORT           = \"%d\"\n", config->server_port);
@@ -153,6 +156,7 @@ int config_read(CONFIG *config)
 #ifdef WIN32
 		fprintf(fp, "SQL.ODBC_DSN          = \"%s\"\n", config->sql_odbc_dsn);
 #endif
+		fprintf(fp, "UTIL.VIRUSSCAN        = \"\"\n");
 		fclose(fp);
 		printf("done.\n");
 		goto sanity_check;
@@ -177,7 +181,7 @@ int config_read(CONFIG *config)
 			while (*pVal==' ') pVal++;
 			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
 			while (*pVal=='"') pVal++;
-			while (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
+			if (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
 			if (strcmp(pVar, "COLOUR.TOPMENU")==0) {
 				snprintf(config->colour_topmenu,       sizeof(config->colour_topmenu)-1,       "%s", pVal);
 			} else if (strcmp(pVar, "COLOUR.EDITFORM")==0) {
@@ -224,6 +228,8 @@ int config_read(CONFIG *config)
 				strncpy(config->server_dir_var_log, pVal, sizeof(config->server_dir_var_log)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.VAR.MAIL")==0) {
 				strncpy(config->server_dir_var_mail, pVal, sizeof(config->server_dir_var_mail)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.VAR.TMP")==0) {
+				strncpy(config->server_dir_var_tmp, pVal, sizeof(config->server_dir_var_tmp)-1);
 			} else if (strcmp(pVar, "SERVER.LOGLEVEL")==0) {
 				config->server_loglevel=atoi(pVal);
 			} else if (strcmp(pVar, "SERVER.HOSTNAME")==0) {
@@ -248,6 +254,8 @@ int config_read(CONFIG *config)
 				strncpy(config->sql_password, pVal, sizeof(config->sql_password)-1);
 			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
 				strncpy(config->sql_odbc_dsn, pVal, sizeof(config->sql_odbc_dsn)-1);
+			} else if (strcmp(pVar, "UTIL.VIRUSSCAN")==0) {
+				strncpy(config->util_virusscan, pVal, sizeof(config->util_virusscan)-1);
 			}
 			*pVal='\0';
 			*pVar='\0';
@@ -302,6 +310,7 @@ int config_write(CONFIG *config)
 	fprintf(fp, "SERVER.DIR.VAR.HTDOCS = \"%s\"\n", config->server_dir_var_htdocs);
 	fprintf(fp, "SERVER.DIR.VAR.LOG    = \"%s\"\n", config->server_dir_var_log);
 	fprintf(fp, "SERVER.DIR.VAR.MAIL   = \"%s\"\n", config->server_dir_var_mail);
+	fprintf(fp, "SERVER.DIR.VAR.TMP    = \"%s\"\n", config->server_dir_var_tmp);
 	fprintf(fp, "SERVER.LOGLEVEL       = \"%d\"\n", config->server_loglevel);
 	fprintf(fp, "SERVER.HOSTNAME       = \"%s\"\n", config->server_hostname);
 	fprintf(fp, "SERVER.PORT           = \"%d\"\n", config->server_port);
@@ -316,6 +325,7 @@ int config_write(CONFIG *config)
 #ifdef WIN32
 	fprintf(fp, "SQL.ODBC_DSN          = \"%s\"\n", config->sql_odbc_dsn);
 #endif
+	fprintf(fp, "UTIL.VIRUSSCAN        = \"%s\"\n", config->util_virusscan);
 	fclose(fp);
 	return 0;
 }

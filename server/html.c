@@ -166,6 +166,7 @@ void htpage_topmenu(CONN *sid, int menu)
 	int userid=-1;
 	int groupid=-1;
 	int status=0;
+	int i;
 
 	if ((mod_html_topmenu=module_call(sid, "mod_html_topmenu"))!=NULL) {
 		mod_html_topmenu(sid, menu);
@@ -214,58 +215,33 @@ void htpage_topmenu(CONN *sid, int menu)
 	}
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	if ((menu==MENU_WEBMAIL)&&(sid->dat->user_menustyle>0)) {
-		if ((strncmp(sid->dat->in_RequestURI, "/mail/list", 10)!=0)&&(strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)!=0)) return;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/list", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/folders", 13)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/purge", 11)==0) {
+			menu=MENU_PROFILE;
+			goto domenu;
+		}
+		return;
 	}
+domenu:
 	prints(sid, "<CENTER>\r\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=100%%>\r\n", proc.config.colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	if (sid->dat->user_menustyle==0) {
-		prints(sid, "<TR><TD><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", proc.config.colour_topmenu);
-		if (module_exists(sid, "mod_admin")&&(auth_priv(sid, "admin")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/admin/>ADMIN</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_bookmarks")&&(auth_priv(sid, "bookmarks")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/bookmarks/list>BOOKMARKS</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/calendar/list>CALENDAR</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_calls")&&(auth_priv(sid, "calls")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/calls/list>CALLS</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_contacts")&&(auth_priv(sid, "contacts")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/contacts/list>CONTACTS</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/mail/list>E-MAIL</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_files")&&(auth_priv(sid, "files")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/files/>FILES</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_forums")&&(auth_priv(sid, "forums")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/forums/list>FORUMS</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_messages")&&(auth_priv(sid, "messages")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=javascript:ListUsers()>MESSENGER</A>", dot?"&nbsp;&middot;&nbsp;":"");
-			dot=1;
-		}
-		if (module_exists(sid, "mod_notes")) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/notes/list>NOTEBOOK</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_orders")&&(auth_priv(sid, "orders")>0)) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/orders/list>ORDERS</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
-			dot=1;
-		}
-		if (module_exists(sid, "mod_searches")) {
-			prints(sid, "%s<A CLASS='TBAR' HREF=%s/search/>SEARCHES</A>", dot?"&nbsp;&middot;&nbsp;":"", sid->dat->in_ScriptName);
+		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", proc.config.colour_topmenu);
+		for (i=0;;i++) {
+			if (strlen(proc.mod_menuitems[i].mod_name)==0) break;
+			if (strlen(proc.mod_menuitems[i].mod_menuname)==0) continue;
+			if (strlen(proc.mod_menuitems[i].mod_menuperm)!=0) {
+				if (!auth_priv(sid, proc.mod_menuitems[i].mod_menuperm)) continue;
+			}
+			prints(sid, "%s<A CLASS='TBAR' HREF=", dot?"&nbsp;&middot;&nbsp;":"");
+			if (strncasecmp(proc.mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
+				prints(sid, "%s", proc.mod_menuitems[i].mod_menuuri);
+			} else {
+				prints(sid, "\"%s%s\"", sid->dat->in_ScriptName, proc.mod_menuitems[i].mod_menuuri);
+			}
+			prints(sid, ">%s</A>", proc.mod_menuitems[i].mod_menuname);
 			dot=1;
 		}
 		prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
@@ -276,7 +252,7 @@ void htpage_topmenu(CONN *sid, int menu)
 		prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 		prints(sid, "</TR></TABLE>\r\n</TD></TR>\r\n");
 	}
-	prints(sid, "<TR><TD><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s>\r\n", proc.config.colour_topmenu);
+	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s>\r\n", proc.config.colour_topmenu);
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
@@ -322,10 +298,10 @@ void htpage_topmenu(CONN *sid, int menu)
 		case MENU_CONTACTS:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/list>CONTACTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			if (strncmp(sid->dat->in_RequestURI, "/contacts/search", 16)==0) {
-				prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/editnew2>NEW CONTACT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/viewnew2>NEW CONTACT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/search1>SEARCH</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
-				prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/editnew>NEW CONTACT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/contacts/viewnew>NEW CONTACT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}
 			break;
 		case MENU_FILES:
@@ -377,6 +353,7 @@ void htpage_topmenu(CONN *sid, int menu)
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/write>COMPOSE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}
 			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/folders>FOLDERS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/quit%s>QUIT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=gwmain":"");
 			break;
 	}
@@ -414,7 +391,7 @@ void htpage_motd(CONN *sid)
 	t=(time(NULL)+time_tzoffset(sid, time(NULL)));
 	strftime(showtime, sizeof(showtime), "%A, %B %d, %Y", gmtime(&t));
 	prints(sid, "<BR>\r\n<CENTER>\r\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=80%%><TR><TH BGCOLOR=%s>\n", proc.config.colour_tabletrim, proc.config.colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=80%% STYLE='border-style:solid'><TR><TH BGCOLOR=%s STYLE='border-style:solid'>\n", proc.config.colour_th);
 	prints(sid, "<TABLE WIDTH=100%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>\r\n");
 	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left><FONT COLOR=%s>Welcome, %s.&nbsp;</FONT></TH>\r\n", proc.config.colour_thtext, str2html(sid, sid->dat->user_username));
 	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right><FONT COLOR=%s>&nbsp;%s</FONT></TH>\r\n", proc.config.colour_thtext, showtime);
@@ -423,7 +400,7 @@ void htpage_motd(CONN *sid)
 	if ((sqr=sql_queryf(sid, "SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>\r\n", proc.config.colour_fieldval);
+			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 STYLE='border-style:solid'>\r\n", proc.config.colour_fieldval);
 			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
@@ -622,11 +599,12 @@ void htselect_group(CONN *sid, int selected)
 	return;
 }
 
-void htselect_number(CONN *sid, int selected, int start, int end)
+void htselect_number(CONN *sid, int selected, int start, int end, int increment)
 {
 	int i;
 
-	for (i=start;i<end+1;i++) {
+	if (increment<1) increment=1;
+	for (i=start;i<end+1;i+=increment) {
 		prints(sid, "<OPTION VALUE='%d'%s>%d\n", i, i==selected?" SELECTED":"", i);
 	}
 }
@@ -821,4 +799,24 @@ char *htview_user(CONN *sid, int selected)
 	}
 	sql_freeresult(sqr);
 	return buffer;
+}
+
+void htscript_showpage(CONN *sid, short int pages)
+{
+	if (pages<1) return;
+	if (pages>10) pages=10;
+	prints(sid, "function showpage(page) {\n");
+	prints(sid, "	for (var i=1;i<%d;i++) {\n", pages+1);
+	prints(sid, "		if (i==page) {\n");
+	prints(sid, "			document.getElementById('page'+i+'tab').style.borderBottom='solid 0px #000000';\n");
+	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='%s';\n", proc.config.colour_fieldval);
+	prints(sid, "			document.getElementById('page'+i).style.display='block';\n");
+	prints(sid, "		} else {\n");
+	prints(sid, "			document.getElementById('page'+i+'tab').style.borderBottom='solid 1px #000000';\n");
+	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='%s';\n", proc.config.colour_fieldname);
+	prints(sid, "			document.getElementById('page'+i).style.display='none';\n");
+	prints(sid, "		}\n");
+	prints(sid, "	}\n");
+	prints(sid, "}\n");
+	return;
 }

@@ -53,12 +53,12 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 		status=0;
 	}
 	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&unixdate));
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET ACTION=%s/calendar/list>", sid->dat->in_ScriptName);
 	if (userid>0) prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", userid);
 	if (groupid>0) prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
 	prints(sid, "<INPUT TYPE=hidden NAME=status VALUE='%d'>\n", status);
-	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='font-weight:normal'><FONT SIZE=2>\n", config->colour_th);
+	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='font-weight:normal; border-style:solid''><FONT SIZE=2>\n", config->colour_th);
 	prints(sid, "<SELECT NAME=month>\n");
 	htselect_month(sid, posttime1);
 	prints(sid, "</SELECT>\n");
@@ -68,7 +68,7 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>");
 	prints(sid, "</FONT></TH></TR>\n");
 	prints(sid, "</FORM>\n");
-	prints(sid, "<TR><TD WIDTH=100%%>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR><TD WIDTH=100%% STYLE='border-style:solid'>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>S</FONT></TH><TH><FONT COLOR=%s SIZE=2>M</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>W</FONT></TH>", config->colour_thtext, config->colour_thtext);
@@ -171,13 +171,13 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 		status=0;
 	}
 	strftime(posttime1, sizeof(posttime1), "%B", gmtime(&unixdate));
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP><FONT SIZE=2>", config->colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='border-style:solid'><FONT SIZE=2>", config->colour_th);
 	prints(sid, "<A HREF=%s/calendar/mlist?month=%d&year=%d", sid->dat->in_ScriptName, today.tm_mon, today.tm_year);
 	if (userid>0) prints(sid, "&userid=%d", userid);
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, "&status=%d style='color: %s'>%s</A></FONT></TH></TR>\n", status, config->colour_thtext, posttime1);
-	prints(sid, "<TR><TD WIDTH=100%%>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR><TD WIDTH=100%% STYLE='border-style:solid'>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>S</FONT></TH><TH><FONT COLOR=%s SIZE=2>M</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>W</FONT></TH>", config->colour_thtext, config->colour_thtext);

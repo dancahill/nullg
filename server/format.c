@@ -693,6 +693,27 @@ int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
 	return tzoffset;
 }
 
+int time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid)
+{
+	int sqr;
+	int tz=-1;
+	time_t tzoffset;
+	struct tm *today;
+
+	if ((sqr=sql_queryf(sid, "SELECT timezone FROM gw_contacts where contactid = %d", contactid))<0) return 0;
+	if (sql_numtuples(sqr)==1) {
+		tz=atoi(sql_getvalue(sqr, 0, 0));
+	}
+	sql_freeresult(sqr);
+	if ((tz<0)||(tz>61)) return 0;
+	tzoffset=timezones[tz].minutes*60;
+	today=localtime(&unixdate);
+	if ((timezones[tz].dst)&&(today->tm_isdst)) {
+		tzoffset+=3600;
+	}
+	return tzoffset;
+}
+
 time_t time_wmgetdate(char *src)
 {
 	int dim[12]={ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

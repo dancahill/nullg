@@ -130,29 +130,29 @@ void orderitemlist(CONN *sid, int orderid)
 	int sqr;
 
 	if ((sqr=sql_queryf(sid, "SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_fieldname);
-	prints(sid, "<TD NOWRAP><B>Product</B></TD><TD NOWRAP><B>Quantity</B></TD><TD NOWRAP><B>Unit Price</B></TD><TD NOWRAP><B>Discount</B></TD><TD NOWRAP><B>Extended</B></TD></TR>\n");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_fieldname);
+	prints(sid, "<TD NOWRAP STYLE='border-style:solid'><B>Product</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Quantity</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Unit Price</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Discount</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Extended</B></TD></TR>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", config->colour_editform, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-		prints(sid, "<TD NOWRAP>");
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>");
 		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
 		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "</A>");
 		prints(sid, "&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 4))*100.0);
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2))*atof(sql_getvalue(sqr, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 4))*100.0);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2))*atof(sql_getvalue(sqr, i, 3)));
 		prints(sid, "</TR>\n");
 	}
 	sql_freeresult(sqr);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
 		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", config->colour_editform, sid->dat->in_ScriptName, orderid);
-		prints(sid, "<TD NOWRAP WIDTH=100%%><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
+		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE>\n");
@@ -396,29 +396,29 @@ void orderview(CONN *sid)
 	order.orderdate+=time_tzoffset(sid, order.orderdate);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400><TR><TD><CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", config->colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Order %d", config->colour_th, config->colour_thtext, orderid);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Order %d", config->colour_th, config->colour_thtext, orderid);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
 		prints(sid, " [<A HREF=%s/orders/edit?orderid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, orderid, config->colour_thlink);
 	}
 	prints(sid, "</TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Date</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
-	prints(sid, "<TR><TD BGCOLOR=%s><B>Customer</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Order Date</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
+	prints(sid, "<TR><TD BGCOLOR=%s STYLE='border-style:solid'><B>Customer</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, order.contactid);
 	prints(sid, "%s</A>&nbsp;</TD></TR>\n", htview_contact(sid, order.contactid));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Employee        </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Type      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Method of Payment</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Employee         </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Order Type       </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Method of Payment</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
 	if (strlen(order.details)) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
 	}
-	prints(sid, "<TR STYLE='spacing:0px'><TD NOWRAP COLSPAN=2 STYLE='padding:0px'>");
+	prints(sid, "<TR STYLE='spacing:0px'><TD NOWRAP COLSPAN=2 STYLE='padding:0px; border-style:solid'>");
 	orderitemlist(sid, orderid);
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentreceived);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentreceived);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "</CENTER></TD></TR></TABLE>\n");
@@ -531,27 +531,27 @@ void orderlist(CONN *sid)
 		return;
 	}
 	if ((sqr2=sql_query(sid, "SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
-	prints(sid, "<TH NOWRAP><FONT COLOR=%s>Order ID</FONT></TH><TH NOWRAP><FONT COLOR=%s>Customer Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>Order Date</FONT></TH><TH NOWRAP><FONT COLOR=%s>Amount Due</FONT></TH><TH NOWRAP><FONT COLOR=%s>Amount Received</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Order ID</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Customer Name</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Order Date</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Amount Due</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Amount Received</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		prints(sid, "<TD ALIGN=right NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/view?orderid=%d'\"><A HREF=%s/orders/view?orderid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TD ALIGN=right NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%d'\"><A HREF=%s/orders/view?orderid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
 		for (j=0;j<sql_numtuples(sqr2);j++) {
 			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
 				if (strlen(sql_getvalue(sqr2, j, 1))&&strlen(sql_getvalue(sqr2, j, 2))) prints(sid, ", ");
 				prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr2, j, 2)));
 				break;
 			}
 		}
 		if (j==sql_numtuples(sqr2)) {
-			prints(sid, "<TD NOWRAP>&nbsp;</TD>");
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
-		prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr1, i, 2)));
+		prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr1, i, 2)));
 		due=(int)(atof(sql_getvalue(sqr1, i, 3))*100.0F)/100.0F;
 		received=(int)(atof(sql_getvalue(sqr1, i, 4))*100.0F)/100.0F;
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", due);
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", received);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", due);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", received);
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE>\n<TABLE><TR>\n");
@@ -746,21 +746,21 @@ void productview(CONN *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", productid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", config->colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Product %d", config->colour_th, config->colour_thtext, productid);
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Product %d", config->colour_th, config->colour_thtext, productid);
 	if (auth_priv(sid, "orders")&A_ADMIN) {
 		prints(sid, " [<A HREF=%s/orders/productedit?productid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, productid, config->colour_thlink);
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Product Name </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.productname));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Category     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.category));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Discount     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Unit Price   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Internal Cost</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, product.details));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Product Name </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.productname));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Category     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.category));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Discount     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Unit Price   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Internal Cost</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, product.details));
 	prints(sid, "</TABLE>\n<BR>\n</CENTER>\n");
 }
 
@@ -777,14 +777,14 @@ void productlist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(sqr));
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
-		prints(sid, "<TH NOWRAP><FONT COLOR=%s>Product Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>Category</FONT></TH><TH NOWRAP><FONT COLOR=%s>Unit Price</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Product Name</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Category</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Unit Price</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD NOWRAP><A HREF=%s/orders/productview?productid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/productview?productid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
@@ -921,10 +921,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_orders", "ORDERS", "/orders/list", "mod_main", "/orders/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=2;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_orders");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "ORDERS");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "orders");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/orders/list");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/orders/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

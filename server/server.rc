@@ -30,8 +30,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "icons\icon1.ico"
-IDI_ICON2               ICON    DISCARDABLE     "icons\icon2.ico"
+IDI_ICON1               ICON    DISCARDABLE     "..\win32\icons\groupware.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -72,14 +71,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "NullLogic\0"
             VALUE "FileDescription", "NullLogic Groupware Server\0"
-            VALUE "FileVersion", "1.2.2\0"
+            VALUE "FileVersion", "1.2.3\0"
             VALUE "InternalName", "NullLogic Groupware\0"
             VALUE "LegalCopyright", "Copyright © 2000-2003\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "groupware.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "NullLogic Groupware\0"
-            VALUE "ProductVersion", "1.2.2\0"
+            VALUE "ProductVersion", "1.2.3\0"
             VALUE "SpecialBuild", "\0"
         END
     END

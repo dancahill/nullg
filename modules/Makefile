@@ -1,12 +1,14 @@
 # Makefile for NullLogic Groupware mods
 
-all: _mod_admin _mod_bookmarks _mod_calendar _mod_calls _mod_cgi \
-	_mod_contacts _mod_files _mod_forums _mod_html _mod_mail \
-	_mod_messages _mod_notes _mod_orders _mod_profile _mod_searches \
-	_mod_tasks _mod_xmlrpc
+all: _mod_admin _mod_bookmarks _mod_calendar _mod_calls _mod_cgi _mod_contacts \
+	_mod_files _mod_forums _mod_html _mod_mail _mod_messages _mod_notes \
+	_mod_orders _mod_profile _mod_searches _mod_tasks _mod_xmlrpc
 
 _mod_admin:
 	@cd mod_admin;make
+
+_mod_accounting:
+	@cd mod_accounting;make
 
 _mod_bookmarks:
 	@cd mod_bookmarks;make

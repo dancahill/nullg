@@ -27,7 +27,7 @@ int webmailheader(CONN *sid, wmheader *header)
 
 	header->status='n';
 	for (;;) {
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		striprn(inbuffer);
 		if (strcmp(inbuffer, "")==0) break;
 		if (strncasecmp(inbuffer, "Reply-To:", 9)==0) {
@@ -119,6 +119,7 @@ int webmailheader(CONN *sid, wmheader *header)
 		if (*ptemp=='<') {
 			ptemp++;
 			memmove(header->ReplyTo, ptemp, strlen(ptemp)+1);
+			ptemp=header->ReplyTo;
 			while ((*ptemp)&&(*ptemp!='>')) ptemp++;
 			if (*ptemp=='>') *ptemp='\0';
 		}
@@ -642,6 +643,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 					DecodeHTML(sid, reply, inbuffer, ctype, 1);
 				}
 			} else if (strncasecmp(contenttype, "multipart/alternative", 21)!=0) {
+//			} else {
 				if (strncasecmp(cencode, "quoted-printable", 16)==0) {
 					DecodeQP(sid, reply, inbuffer, ctype);
 				} else if (strncasecmp(cencode, "base64", 6)==0) {

@@ -471,6 +471,11 @@ int read_header(CONN *sid)
 	char *ptemp2;
 	time_t x;
 
+	struct stat sb;
+	char progname[255];
+	char scriptname[255];
+	int length;
+
 	DEBUG_IN(sid, "read_header()");
 	strncpy(sid->dat->in_RemoteAddr, inet_ntoa(sid->ClientAddr.sin_addr), sizeof(sid->dat->in_RemoteAddr)-1);
 	x=time(NULL);
@@ -567,6 +572,42 @@ int read_header(CONN *sid)
 	if (strchr(sid->dat->in_RequestURI, '?')!=NULL) {
 		strncpy(sid->dat->in_QueryString, strchr(sid->dat->in_RequestURI, '?')+1, sizeof(sid->dat->in_QueryString)-1);
 	}
+//////////////////
+	strncpy(sid->dat->in_CGIScriptName, sid->dat->in_RequestURI, sizeof(sid->dat->in_CGIScriptName)-1);
+	if ((ptemp=strchr(sid->dat->in_CGIScriptName, '?'))!=NULL) *ptemp='\0';
+	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
+	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
+		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", proc.config.server_dir_cgi, progname);
+	} else if (strncmp(sid->dat->in_CGIScriptName, "/", 1)==0) {
+		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+1);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", proc.config.server_dir_var_htdocs, progname);
+	}
+	ptemp=scriptname;
+ 	while (*ptemp) { if (*ptemp=='\\') *ptemp='/'; ptemp++; }
+	length=strlen(scriptname);
+	do {
+		if ((stat(scriptname, &sb)==0)&&(!(sb.st_mode&S_IFDIR))) break;
+//		if (stat(scriptname, &sb)==0) break;
+//		scriptname[strlen(scriptname)-1]='\0';
+		if ((ptemp=strrchr(scriptname, '/'))!=NULL) {
+			*ptemp='\0';
+		} else {
+			break;
+		}
+	} while (strlen(scriptname)>0);
+	fixslashes(scriptname);
+	length=length-strlen(scriptname);
+	if (length>0) {
+		snprintf(sid->dat->in_CGIPathInfo, sizeof(sid->dat->in_CGIPathInfo)-1, "%s", progname+(strlen(progname)-length));
+		sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-length]='\0';
+	}
+//logerror(sid, __FILE__, __LINE__, "scriptname[%s]", sid->dat->in_CGIScriptName);
+//logerror(sid, __FILE__, __LINE__, "pathinfo[%s]", sid->dat->in_CGIPathInfo);
+//logerror(sid, __FILE__, __LINE__, "requesturi[%s]", sid->dat->in_RequestURI);
+//logerror(sid, __FILE__, __LINE__, "progname[%s]", progname);
+//logerror(sid, __FILE__, __LINE__, "scriname[%s]", scriptname);
+//////////////////
 	if (strcasecmp(sid->dat->in_Connection, "Keep-Alive")==0) {
 		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Keep-Alive");
 	} else {

@@ -99,6 +99,7 @@ mkdir -p $INSTALL_PATH/var/files
 mkdir -p $INSTALL_PATH/var/htdocs
 mkdir -p $INSTALL_PATH/var/log
 mkdir -p $INSTALL_PATH/var/mail
+mkdir -p $INSTALL_PATH/var/tmp
 cp -a bin/* $INSTALL_PATH/bin
 cp -a cgi-bin/* $INSTALL_PATH/cgi-bin
 cp -a etc/* $INSTALL_PATH/etc

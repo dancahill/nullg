@@ -96,11 +96,11 @@ void notes_sublist(CONN *sid, char *table, int index, int colspan)
 	}
 	if (sql_numtuples(sqr)>0) {
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT COLSPAN=%d NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", config->colour_fieldval, colspan, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT COLSPAN=%d NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", config->colour_fieldval, colspan, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "&nbsp;<A HREF=%s/notes/view?noteid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	} else {
-		prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=%d NOWRAP>&nbsp;</TD></TR>\n", config->colour_fieldval, colspan);
+		prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=%d NOWRAP STYLE='border-style:solid'>&nbsp;</TD></TR>\n", config->colour_fieldval, colspan);
 	}
 	sql_freeresult(sqr);
 	return;
@@ -199,17 +199,17 @@ void notesview(CONN *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", noteid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=500>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Note %d", config->colour_th, config->colour_thtext, noteid);
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Note %d", config->colour_th, config->colour_thtext, noteid);
 	if (auth_priv(sid, "orders")&A_ADMIN) {
 		prints(sid, " [<A HREF=%s/notes/edit?noteid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, noteid, config->colour_thlink);
 	} else if ((note.obj_uid==sid->dat->user_uid)||((note.obj_gid==sid->dat->user_gid)&&(note.obj_gperm>1))||(note.obj_operm>1)) {
 		prints(sid, " [<A HREF=%s/notes/edit?noteid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, noteid, config->colour_thlink);
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Note Title</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, note.notetitle));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Note Title</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, note.notetitle));
 	if (strcmp(note.tablename, "calls")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Call </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Call </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT callid, callname FROM gw_calls WHERE callid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/calls/view?callid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
@@ -218,7 +218,7 @@ void notesview(CONN *sid)
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "contacts")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Contact </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Contact </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/contacts/view?contactid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, 0, 0));
@@ -229,7 +229,7 @@ void notesview(CONN *sid)
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "events")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Event </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Event </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT eventid, eventname FROM gw_events WHERE eventid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%d>", sid->dat->in_ScriptName, note.tableindex);
@@ -238,7 +238,7 @@ void notesview(CONN *sid)
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "notes")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Note </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Note </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle FROM gw_notes WHERE noteid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/notes/view?noteid=%d>", sid->dat->in_ScriptName, note.tableindex);
@@ -247,7 +247,7 @@ void notesview(CONN *sid)
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "tasks")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Task </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT taskid, taskname FROM gw_tasks WHERE taskid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/tasks/view?taskid=%d>", sid->dat->in_ScriptName, note.tableindex);
@@ -256,7 +256,7 @@ void notesview(CONN *sid)
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "users")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>User </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>User </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", note.tableindex))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, note.tableindex);
@@ -267,12 +267,12 @@ void notesview(CONN *sid)
 	}
 	mdate=note.obj_mtime;
 	mdate+=time_tzoffset(sid, mdate);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Last Modified</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s (%s)</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, mdate), time_unix2datetext(sid, mdate));
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Note</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2>", config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Last Modified</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s (%s)</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, mdate), time_unix2datetext(sid, mdate));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><B>Note</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'>", config->colour_fieldval);
 	printline2(sid, 1, note.notetext);
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 	prints(sid, " [<A HREF=%s/notes/editnew?table=notes&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, note.noteid, config->colour_thlink);
 	prints(sid, "</FONT></TH></TR>\n");
 	notes_sublist(sid, "notes", note.noteid, 2);
@@ -325,30 +325,30 @@ void noteslist(CONN *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<BR>\r\n");
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=450>\r\n", proc->config.colour_tabletrim);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Note Title&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Reference&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Last Modified&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=450 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Note Title&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Reference&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Last Modified&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD ALIGN=LEFT NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD ALIGN=LEFT NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<A HREF=%s/notes/view?noteid=%d>%s</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 			if (strcasecmp(sql_getvalue(sqr, i, 3), "calls")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "contacts")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "events")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "notes")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "tasks")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "users")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else {
-				prints(sid, "<TD NOWRAP>None</TD>");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>None</TD>");
 			}
 			mdate=time_sql2unix(sql_getvalue(sqr, i, 2));
 			mdate+=time_tzoffset(sid, mdate);
-			prints(sid, "<TD ALIGN=right NOWRAP>%s</TD></TR>\n", time_unix2datetext(sid, mdate));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s</TD></TR>\n", time_unix2datetext(sid, mdate));
 		}
 		prints(sid, "</TABLE>\n");
 		if (sql_numtuples(sqr)>sid->dat->user_maxlist) {
@@ -460,11 +460,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_notes", "NOTEBOOK", "/notes/list", "mod_main", "/notes/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=3;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_notes");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "NOTEBOOK");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/notes/list");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/notes/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_notes", "mod_notes_sublist", notes_sublist)!=0) return -1;
 	return 0;
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
-OUTFILE=nullgroupware-1.2.2-x86-linux
-FILEDATE="2003-05-07 01:02"
+OUTFILE=nullgroupware-1.2.3-x86-linux
+FILEDATE="2003-08-02 01:02"
 
 build_clean() {
 	rm -f distrib/setup
@@ -10,34 +10,9 @@ build_clean() {
 build_pack() {
 	rm -rf ${OUTFILE}
 	rm -rf ${OUTFILE}.tar.gz
-	fromdos < other/rc.groupware > other/rc.groupware.dos ; mv other/rc.groupware.dos other/rc.groupware
-	fromdos < other/setup > other/setup.dos ; mv other/setup.dos other/setup
 	cp -av other/rc.groupware distrib/bin/rc.groupware
 	cp -av other/setup distrib/setup
 
-	cp -av contrib/libsqlite.so distrib/lib/libsqlite.so
-
-	fromdos < distrib/COPYING > temp.dos       ; mv temp.dos distrib/COPYING
-	fromdos < distrib/COPYRIGHT.txt > temp.dos ; mv temp.dos distrib/COPYRIGHT.txt
-	fromdos < distrib/README.txt > temp.dos    ; mv temp.dos distrib/README.txt
-	for i in distrib/cgi-bin/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	for i in distrib/etc/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	for i in distrib/var/files/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	for i in distrib/var/htdocs/groupware/css/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	for i in distrib/var/htdocs/groupware/help/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	for i in distrib/var/htdocs/groupware/javascript/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
 	chmod 0755 distrib -R
 	chmod 0644 distrib/COPYING
 	chmod 0644 distrib/COPYRIGHT.txt
@@ -62,6 +37,8 @@ build_pack() {
 	chmod 0600 distrib/var/log/*
 	chmod 0700 distrib/var/mail
 	chmod 0600 distrib/var/mail/*
+	chmod 0700 distrib/var/tmp
+	chmod 0600 distrib/var/tmp/*
 
 	touch --date="$FILEDATE" *
 	touch --date="$FILEDATE" distrib/*

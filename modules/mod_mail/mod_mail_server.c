@@ -50,30 +50,31 @@ int wmfgets(CONN *sid, char *buffer, int max, int fd)
 	while (n<max) {
 		if ((rc=recv(fd, temp, 1, 0))<1) {
 			prints(sid, "<CENTER>Connection reset by mail server.</CENTER>");
-			closeconnect(sid, 1);
+			*pbuffer=0;
+//			closeconnect(sid, 1);
 			return -1;
 		}
 		sid->dat->wm->imapmread++;
 		n++;
 		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
-			if ((temp[0]=='.')&&(pbuffer[0]=='.')&&(n==2)) {
+			if ((temp[0]=='.')&&(buffer[0]=='.')&&(n==2)) {
 				popflag=1;
 				continue;
 			}
 		}
 		if (temp[0]==13) continue;
-		*buffer=temp[0];
-		buffer++;
+		*pbuffer=temp[0];
+		pbuffer++;
 		if (temp[0]==10) break;
 	}
-	*buffer=0;
-	striprn(pbuffer);
-	if ((popflag)&&(pbuffer[0]=='.')&&(pbuffer[1]=='\0')) {
-		pbuffer[1]=' ';
-		pbuffer[2]='\0';
+	*pbuffer=0;
+	striprn(buffer);
+	if ((popflag)&&(buffer[0]=='.')&&(buffer[1]=='\0')) {
+		buffer[1]=' ';
+		buffer[2]='\0';
 	}
 
-//	logerror(sid, __FILE__, __LINE__, "< %s", pbuffer);
+//	logerror(sid, __FILE__, __LINE__, "< %s", buffer);
 	return n;
 }
 
@@ -129,7 +130,7 @@ int wmserver_smtpconnect(CONN *sid)
 	}
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	return 0;
 }
@@ -144,7 +145,7 @@ int wmserver_smtpauth(CONN *sid)
 	EncodeBase64(sid, authstring, (strlen(sid->dat->wm->username)*2)+strlen(sid->dat->wm->password)+2);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "502", 3)==0) return 0;
 	if (strncasecmp(inbuffer, "235", 3)!=0) return -1;
@@ -158,7 +159,7 @@ void wmserver_smtpdisconnect(CONN *sid)
 	wmprints(sid, "QUIT\r\n");
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	wmclose(sid);
 }
@@ -239,11 +240,11 @@ int wmserver_connect(CONN *sid, int verbose)
 	}
 	sid->dat->wm->connected=1;
 	/* Check current status */
-	wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+	if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		/* Send user name */
 		wmprints(sid, "USER %s\r\n", sid->dat->wm->username);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			if (verbose) {
 				ptemp=strchr(inbuffer, ' ');
@@ -258,7 +259,7 @@ int wmserver_connect(CONN *sid, int verbose)
 		}
 		/* Send password */
 		wmprints(sid, "PASS %s\r\n", sid->dat->wm->password);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			if (verbose) {
 				ptemp=strchr(inbuffer, ' ');
@@ -276,7 +277,7 @@ int wmserver_connect(CONN *sid, int verbose)
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d LOGIN %s %s\r\n", sid->dat->wm->imapidx, sid->dat->wm->username, sid->dat->wm->password);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -296,7 +297,7 @@ int wmserver_connect(CONN *sid, int verbose)
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d SELECT INBOX\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -336,7 +337,7 @@ void wmserver_disconnect(CONN *sid)
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d LOGOUT\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 			if (isdigit(inbuffer[0])) break;
 		}
 		wmclose(sid);
@@ -353,7 +354,7 @@ int wmserver_count(CONN *sid)
 
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "STAT\r\n");
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -363,7 +364,7 @@ int wmserver_count(CONN *sid)
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d STATUS INBOX (MESSAGES)\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 			if (strncasecmp(inbuffer, "* STATUS", 8)==0) {
 				ptemp=inbuffer;
@@ -394,20 +395,20 @@ int wmserver_msgdele(CONN *sid, int message)
 
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "DELE %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
 	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d STORE %d +FLAGS (\\Deleted)\r\n", sid->dat->wm->imapidx, message);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 		}
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d EXPUNGE\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -431,7 +432,7 @@ int wmserver_msghead(CONN *sid, int message)
 
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "TOP %d 0\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
 	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
@@ -450,13 +451,13 @@ int wmserver_msgretr(CONN *sid, int message)
 
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "RETR %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
 	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->wm->imapidx, message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		ptemp=strchr(inbuffer, '{');
 		if (*ptemp) ptemp++;
 		if (*ptemp) {
@@ -478,7 +479,7 @@ int wmserver_msgsize(CONN *sid, int message)
 
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "LIST %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -490,7 +491,7 @@ int wmserver_msgsize(CONN *sid, int message)
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d FETCH %d RFC822.SIZE\r\n", sid->dat->wm->imapidx, message);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (isdigit(inbuffer[0])) break;
 			if (p_strcasestr(inbuffer, "FETCH")!=NULL) {
 				ptemp=inbuffer;
@@ -531,7 +532,7 @@ int wmserver_uidl(CONN *sid, int message, char *uidl)
 	memset(uidltemp, 0, sizeof(uidltemp));
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "UIDL %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((*ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -542,7 +543,7 @@ int wmserver_uidl(CONN *sid, int message, char *uidl)
 	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d FETCH %d UID\r\n", sid->dat->wm->imapidx, message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
 		if (*ptemp) ptemp++;
@@ -605,7 +606,7 @@ int is_msg_end(CONN *sid, char *buffer)
 				if (isdigit(inbuffer[0])) {
 					if (atoi(inbuffer)==sid->dat->wm->imapidx) break;
 				}
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return 1;
 			}
 			return 1;
 		}
@@ -658,13 +659,13 @@ int wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose)
 	}
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "RETR %d\r\n", remoteid);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		goto sync;
 	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 		sid->dat->wm->imapidx++;
 		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->wm->imapidx, remoteid);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		ptemp=strchr(inbuffer, '{');
 		if (*ptemp) ptemp++;
 		if (*ptemp) {
@@ -683,7 +684,7 @@ sync:
 		return -1;
 	} else {
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 			if (is_msg_end(sid, inbuffer)) break;
 			fprintf(fp, "%s\r\n", inbuffer);
 		}
@@ -694,13 +695,13 @@ sync:
 	if (sid->dat->wm->remove==1) {
 		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 			wmprints(sid, "NOOP\r\n");
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 			if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 			sid->dat->wm->imapidx++;
 			wmprints(sid, "%d NOOP\r\n", sid->dat->wm->imapidx);
 			for (;;) {
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 				if (isdigit(inbuffer[0])) break;
 			}
 			ptemp=inbuffer;
@@ -727,7 +728,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 	char inbuffer[1024];
 	char query[2048];
 	char uidltemp[71];
-	char **uidls;
+	char **uidls=NULL;
 	char *ptemp;
 	int i, j;
 	int found;
@@ -798,13 +799,16 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 	for (i=0;i<nummessages;i++) uidls[i]=calloc(120, sizeof(char));
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "UIDL\r\n");
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) {
+			nummessages=-1;
+			goto cleanup;
+		}
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			nummessages=-1;
 			goto cleanup;
 		}
 		for (i=0;;i++) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 			if (strcmp(inbuffer, ".")==0) break;
 			if (atoi(inbuffer)<1) break;
 			if (i<nummessages) {
@@ -826,7 +830,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		wmprints(sid, "%d FETCH 1:* UID\r\n", sid->dat->wm->imapidx);
 		for (;;) {
 			memset(uidltemp, 0, sizeof(uidltemp));
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 			if (isdigit(inbuffer[0])) break;
 			ptemp=inbuffer;
 			while ((*ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -891,12 +895,12 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		}
 		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 			for (;;) {
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 				if (strcmp(inbuffer, ".")==0) break;
 			}
 		} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 			for (;;) {
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 				if (isdigit(inbuffer[0])) break;
 			}
 		}
@@ -906,7 +910,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", headerid, curdate, curdate, sid->dat->user_uid, 0, 0, 0);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d", sid->dat->user_mailcurrent);
-		strncatf(query, sizeof(query)-strlen(query)-1, "', 'Inbox");
+		strncatf(query, sizeof(query)-strlen(query)-1, "', '1");
 		strncatf(query, sizeof(query)-strlen(query)-1, "', '%c", header.status);
 		strncatf(query, sizeof(query)-strlen(query)-1, "', '0");
 		strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, (char *)uidls[i]));
@@ -999,7 +1003,7 @@ void wmtestsend(CONN *sid, int mailid, int verbose)
 	int sqr;
 
 	memset((char *)&header, 0, sizeof(header));
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = 'Outbox' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		if (verbose) prints(sid, "No such message.<BR>");
 		return;
@@ -1072,7 +1076,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 
 	memset((char *)&header, 0, sizeof(header));
 	memset(outbuffer, 0, sizeof(outbuffer));
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = 'Outbox' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return -1;
+	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		if (verbose) prints(sid, "<BR>No such message.");
 		return -1;
@@ -1093,7 +1097,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) goto quit;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 //	if (use_auth) if (wmserver_smtpauth(sid)!=0) goto quit;
@@ -1101,7 +1105,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) goto quit;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 	for (i=0;i<3;i++) {
@@ -1143,7 +1147,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 			wmprints(sid, "%s", outbuffer);
 			do {
 				memset(inbuffer, 0, sizeof(inbuffer));
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) goto quit;
 			} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 			if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 		}
@@ -1162,7 +1166,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) goto quit;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "354", 3)!=0) goto quit;
 	for (;;) {
@@ -1176,14 +1180,14 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) break;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)==0) {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (verbose) prints(sid, "<BR><B>Message %d Sent.</B>\n", mailid);
 		flushbuffer(sid);
 		wmserver_smtpdisconnect(sid);
-		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 'Sent Items' WHERE mailheaderid = %d AND accountid = %d", mailid, sid->dat->user_mailcurrent);
+		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = '3' WHERE mailheaderid = %d AND accountid = %d", mailid, sid->dat->user_mailcurrent);
 		return 0;
 	}
 quit:
@@ -1196,7 +1200,7 @@ quit:
 
 int wmsync(CONN *sid, int verbose)
 {
-	char **uidls;
+	char **uidls=NULL;
 	int numremote;
 	int numlocal;
 	int i, j;
@@ -1239,9 +1243,9 @@ cleanup:
 	}
 	wmserver_disconnect(sid);
 	for (i=0;i<numremote;i++) free(uidls[i]);
-	free(uidls);
+	if (uidls!=NULL) free(uidls);
 	if (verbose) {
-		if ((sqr=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = 'Outbox'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return -1;
+		if ((sqr=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return -1;
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
 //			wmtestsend(sid, atoi(sql_getvalue(sqr, i, 0)), verbose);

@@ -24,6 +24,45 @@
 #include <sys/types.h>
 #endif
 
+#ifdef WIN32
+int winsystem(const char *format, ...)
+{
+	DWORD exitcode=0;
+	HANDLE hMyProcess=GetCurrentProcess();
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	char Command[512];
+	va_list ap;
+	int pid;
+
+	ZeroMemory(&pi, sizeof(pi));
+	ZeroMemory(&si, sizeof(si));
+	memset(Command, 0, sizeof(Command));
+	va_start(ap, format);
+	vsnprintf(Command, sizeof(Command)-1, format, ap);
+	va_end(ap);
+	si.cb=sizeof(si);
+	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+	si.wShowWindow=SW_HIDE;
+	si.hStdInput=NULL;
+	si.hStdOutput=NULL;
+	si.hStdError=NULL;
+	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+		return -1;
+	}
+	pid=pi.dwProcessId;
+	CloseHandle(si.hStdInput);
+	CloseHandle(si.hStdOutput);
+stuff:
+	GetExitCodeProcess(pi.hProcess, &exitcode);
+	if (exitcode==STILL_ACTIVE) goto stuff;
+//	if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+	return exitcode;
+}
+#endif
+
 int fileperm(CONN *sid, int perm, char *dir, char *file)
 {
 	struct stat sb;
@@ -244,8 +283,8 @@ int dirlist(CONN *sid)
 		sql_freeresult(sqr);
 		if ((sqr=sql_queryf(sid, "SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
 	}
-	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d>", config->colour_th, (auth_priv(sid, "files")&A_MODIFY)?5:4);
+	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, (auth_priv(sid, "files")&A_MODIFY)?5:4);
 	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
 	memset(uri2, 0, sizeof(uri2));
 	i=0;
@@ -266,16 +305,16 @@ int dirlist(CONN *sid)
 	prints(sid, "</FONT></TH></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
 	if (auth_priv(sid, "files")&A_MODIFY) {
-		prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
+		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 	}
-	prints(sid, "<TD width=20%%><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%%><B>&nbsp;Date&nbsp;</B></TD>");
-	prints(sid, "<TD width=10%%><B>&nbsp;Size&nbsp;</B></TD><TD width=60%%><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
+	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
+	prints(sid, "<TD width=10%% STYLE='border-style:solid'><B>&nbsp;Size&nbsp;</B></TD><TD width=60%% STYLE='border-style:solid'><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
 	if ((strncmp(uri, "/files/", 7)==0)&&(strlen(file.filepath)>1)) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		if (auth_priv(sid, "files")&A_MODIFY) {
-			prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
+			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
-		prints(sid, "<TD COLSPAN=4><A HREF=%s", sid->dat->in_ScriptName);
+		prints(sid, "<TD COLSPAN=4 STYLE='border-style:solid'><A HREF=%s", sid->dat->in_ScriptName);
 		printhex(sid, "%s", file.filepath);
 		prints(sid, "><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.gif HEIGHT=16 WIDTH=16> Parent Directory</A></TD>\n");
 	}
@@ -292,11 +331,11 @@ int dirlist(CONN *sid)
 		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(sqr, i, 1));
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		if (auth_priv(sid, "files")&A_MODIFY) {
-			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
 		}
-		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style=\"cursor:hand\" onClick=window.location.href=\"");
+		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style='cursor:hand; border-style:solid' onClick=window.location.href=\"");
 		printhex(sid, "%s", showfile);
 		prints(sid, "%s\" TITLE=\"%s\">", (strcmp(sql_getvalue(sqr, i, 5), "dir")==0)?"/":"", showfile);
 		prints(sid, "<A HREF=");
@@ -308,20 +347,20 @@ int dirlist(CONN *sid)
 		}
 		prints(sid, " %.25s%s</A></TD>", sql_getvalue(sqr, i, 1), strlen(sql_getvalue(sqr, i, 1))>25?"..":"");
 		if (isvalid) {
-			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP>%s</TD>", timebuf);
+			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>%s</TD>", timebuf);
 			if (sb.st_size>1048576) {
-				prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP>%10.1f M</TD>", (float)sb.st_size/1048576.0);
+				prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>%10.1f M</TD>", (float)sb.st_size/1048576.0);
 			} else {
-				prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP>%10.1f K</TD>", (float)sb.st_size/1024.0);
+				prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>%10.1f K</TD>", (float)sb.st_size/1024.0);
 			}
 		} else {
-			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP>&nbsp;</TD>");
-			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP>&nbsp;</TD>");
+			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		if (i>-1) {
-			prints(sid, "<TD ALIGN=left VALIGN=top><PRE>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD ALIGN=left VALIGN=top STYLE='border-style:solid'><PRE>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 4)));
 		} else {
-			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP>&nbsp;</TD>");
+			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		prints(sid, "</TR>\n");
 	}
@@ -540,10 +579,17 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "</TD></TR>");
 	prints(sid, "</FORM>\n");
 	prints(sid, "</TABLE>\n");
-	if ((strcmp(file.filetype, "file")==0)&&(strncmp(get_mime_type(file.filename), "text/", 5)==0)) {
-		prints(sid, "[<A HREF=%s/fileedit?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
-		printhex(sid, "%s", file.filepath);
-		prints(sid, ">Edit File</A>]\n");
+	if (strcmp(file.filetype, "file")==0) {
+		if (strncmp(get_mime_type(file.filename), "text/", 5)==0) {
+			prints(sid, "[<A HREF=%s/fileedit?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
+			printhex(sid, "%s", file.filepath);
+			prints(sid, ">Edit File</A>]\n");
+		}
+		if (strlen(config->util_virusscan)) {
+			prints(sid, "[<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
+			printhex(sid, "%s", file.filepath);
+			prints(sid, ">Scan File</A>]\n");
+		}
 	}
 	prints(sid, "</CENTER>\n");
 //	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.fileedit.filename.focus();\n// -->\n</SCRIPT>\n");
@@ -578,7 +624,7 @@ int filerecv(CONN *sid)
 	DEBUG_IN(sid, "filerecv()");
 	htpage_header(sid, "File Upload");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=100%%><TR><TD>\r\n", proc->config.colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TD STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n", config->colour_topmenu);
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n<BR>\n");
@@ -718,7 +764,7 @@ int filerecv(CONN *sid)
 	db_log_activity(sid, 1, "files", fileid, "insert", "%s - %s uploaded file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, filename);
 	prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
 	prints(sid, "<CENTER>\nFile '%s%s' has been received.<BR>\n", location, filename);
-	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]</CENTER>\n", sid->dat->in_ScriptName);
+	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]</CENTER>\n");
 	htpage_footer(sid);
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
@@ -1035,6 +1081,80 @@ void filesave(CONN *sid)
 	return;
 }
 
+void filescan(CONN *sid)
+{
+	REC_FILE file;
+	FILE *fp;
+	struct stat sb;
+	int fileid;
+	char cmdline[512];
+	char filename[255];
+	char tempname[255];
+	char *directory;
+	int err;
+	int ich;
+
+	if (!(auth_priv(sid, "files")&A_READ)) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (strlen(config->util_virusscan)==0) return;
+	if (getgetenv(sid, "FILEID")==NULL) return;
+	fileid=atoi(getgetenv(sid, "FILEID"));
+	if (dbread_file(sid, 2, fileid, &file)!=0) {
+		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", fileid);
+		return;
+	}
+	directory=file.filepath+7;
+	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
+	fixslashes(filename);
+	snprintf(tempname, sizeof(tempname)-1, "%s/scan-%d.tmp", config->server_dir_var_tmp, (int)(time(NULL)%999));
+	fixslashes(tempname);
+	if (stat(filename, &sb)!=0) {
+		prints(sid, "File not found");
+		return;
+	}
+	if (sb.st_mode&S_IFDIR) {
+		prints(sid, "Not a file");
+		return;
+	}
+//	prints(sid, "I would scan %s if I knew how.<BR>\n", filename);
+//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /DUMB /LIST /NOBOOT /NOBREAK /NOMEM /OLD /REPORT=\"%s\" \"%s\"", tempname, filename);
+//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /REPORT=\"%s\" \"%s\"", tempname, filename);
+	snprintf(cmdline, sizeof(cmdline)-1, config->util_virusscan, filename);
+	strncatf(cmdline, sizeof(cmdline)-strlen(cmdline)-1, " > %s", tempname);
+//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /DUMB /NOBOOT /NOMEM \"%s\" > %s", filename, tempname);
+//	prints(sid, "[%d][%s]<BR>\n", strlen(cmdline), cmdline);
+	prints(sid, "Scanning '%s'<BR>\n", filename);
+	flushbuffer(sid);
+#ifdef WIN32
+	err=winsystem(cmdline);
+#else
+	err=system(cmdline);
+#endif
+	if (err>0) {
+		prints(sid, "<FONT COLOR=red><B>INFECTED AND/OR POTENTIALLY DANGEROUS</B></FONT><BR>\n");
+	} else if (err==0) {
+		prints(sid, "<FONT COLOR=green><B>LOOKS OK TO ME</B></FONT><BR>\n");
+	} else {
+		prints(sid, "<FONT COLOR=yellow><B>PROGRAM ERROR?</B></FONT><BR>\n");
+	}
+	prints(sid, "Scanner returned %d\n", err);
+	if (err!=0) {
+		prints(sid, "<HR><PRE>");
+		fp=fopen(tempname, "r");
+		if (fp!=NULL) {
+			while ((ich=getc(fp))!=EOF) {
+				prints(sid, "%c", ich);
+			}
+			fclose(fp);
+		}
+		prints(sid, "</PRE>");
+	}
+	unlink(tempname);
+	return;
+}
+
 void mod_main(CONN *sid)
 {
 	if (dirlist(sid)==0) return;
@@ -1047,6 +1167,8 @@ void mod_main(CONN *sid)
 		fileul(sid);
 	} else if (strncmp(sid->dat->in_RequestURI, "/filerecv", 9)==0) {
 		filerecv(sid);
+	} else if (strncmp(sid->dat->in_RequestURI, "/filescan", 9)==0) {
+		filescan(sid);
 	} else if (strncmp(sid->dat->in_RequestURI, "/fileinfoedit", 13)==0) {
 		fileinfoedit(sid);
 	} else if (strncmp(sid->dat->in_RequestURI, "/fileinfosave", 13)==0) {
@@ -1066,10 +1188,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_files", "FILES", "/files/", "mod_main", "/file", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=3;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_files");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "FILES");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "files");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/files/");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/file");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -1,18 +1,22 @@
 #!/bin/sh
 # Init script to start/stop/restart the NullLogic Groupware server.
 RUN_AS_USER="groupware"
+BASE_PATH="/usr/local/groupware"
 
 groupware_start() {
-	if test `ps axw | grep -c groupware` -gt 3
+	ps axwm > /tmp/_gw_proclist
+	if test `grep -c groupware /tmp/_gw_proclist` -gt 1
 	then
 		echo "NullLogic Groupware appears to be running already."
 	else
-		su - ${RUN_AS_USER} -c "cd /usr/local/groupware/bin;/usr/local/groupware/bin/groupware"
+		su - ${RUN_AS_USER} -c "cd ${BASE_PATH}/bin;${BASE_PATH}/bin/groupware"
 	fi
+	rm -f /tmp/_gw_proclist
 }
 
 groupware_stop() {
-	if test `ps axw | grep -c groupware` -gt 3
+	ps axwm > /tmp/_gw_proclist
+	if test `grep -c groupware /tmp/_gw_proclist` -gt 1
 	then
 		echo "Stopping NullLogic Groupware..."
 		killall -15 -q groupware
@@ -21,11 +25,11 @@ groupware_stop() {
 	else
 		echo "NullLogic Groupware does not appear to be running."
 	fi
+	rm -f /tmp/_gw_proclist
 }
 
 groupware_restart() {
 	groupware_stop
-	sleep 1
 	groupware_start
 }
 

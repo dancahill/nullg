@@ -41,6 +41,10 @@ void adminuserlist(CONN *sid);
 void adminusersave(CONN *sid);
 void adminusertimeedit(CONN *sid);
 void adminusertimesave(CONN *sid);
+/* mod_admin_zones.c */
+void adminzoneedit(CONN *sid);
+void adminzonelist(CONN *sid);
+void adminzonesave(CONN *sid);
 #ifndef WIN32
 #include <unistd.h>
 #include <sys/resource.h>

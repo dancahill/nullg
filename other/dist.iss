@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.2.2
+AppVerName=NullLogic Groupware 1.2.3
 AppPublisher=NullLogic
 AppPublisherURL=http://www.nulllogic.com/
 AppSupportURL=http://www.nulllogic.com/
@@ -16,11 +16,15 @@ InfoAfterFile=..\distrib\README.txt
 [Files]
 Source: "..\distrib\*.*"; Flags: ignoreversion recursesubdirs; DestDir: "{app}"
 [Icons]
-Name: "{group}\NullLogic Groupware "; Workingdir: "{app}\bin"; Filename: "{app}\bin\groupware.exe"
-Name: "{group}\NullLogic Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\config.exe"
-Name: "{group}\NullLogic Groupware Help"; Filename: "{app}\htdocs\groupware\help\index.html"
-Name: "{group}\NullLogic Groupware Online"; Filename: "http://www.nulllogic.com/"
+Name: "{group}\Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\config.exe"
+Name: "{group}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
+Name: "{group}\Groupware Help"; Filename: "{app}\htdocs\groupware\help\index.html"
+Name: "{group}\Groupware Online"; Filename: "http://www.nulllogic.com/"
 [Run]
+Filename: "{app}\bin\groupware.exe"; Parameters: "install"; Workingdir: "{app}\bin"; Flags: runminimized
 Filename: "{app}\bin\config.exe"; Workingdir: "{app}\bin"; Description: "Edit Groupware Configuration"; Flags: postinstall skipifsilent unchecked
-Filename: "{app}\bin\groupware.exe"; Workingdir: "{app}\bin"; Description: "Launch NullLogic Groupware"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\gwmon.exe"; Workingdir: "{app}\bin"; Description: "Launch Groupware Monitor"; Flags: nowait postinstall skipifsilent
+[UninstallRun]
+Filename: "net.exe"; Parameters: "stop groupware"; Flags: runminimized
+Filename: "{app}\bin\groupware.exe"; Parameters: "remove"; Workingdir: "{app}\bin"; Flags: runminimized
 

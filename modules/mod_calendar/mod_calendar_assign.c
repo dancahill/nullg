@@ -92,11 +92,7 @@ char *db_avail_getfullweek(CONN *sid, int userid, int record, time_t eventstart,
 	eventfinish=eventstart+604800;
 	strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
 	strftime(timebuf2, sizeof(timebuf2)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventfinish));
-	if (strcmp(config->sql_type, "ODBC")==0) {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= #%s# and eventstart < #%s#) or (eventfinish > #%s# and eventfinish < #%s#) or (eventstart < #%s# and eventfinish >= #%s#)) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return NULL;
-	} else {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return NULL;
-	}
+	if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return NULL;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		eventstart=time_sql2unix(sql_getvalue(sqr, i, 1));
 		eventstart+=time_tzoffset2(sid, eventstart, userid);
@@ -154,11 +150,7 @@ int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart
 		if (availability[i]=='1') continue;
 		strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
 		strftime(timebuf2, sizeof(timebuf2)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventfinish));
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= #%s# and eventstart < #%s#) or (eventfinish > #%s# and eventfinish < #%s#) or (eventstart < #%s# and eventfinish >= #%s#)) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return -1;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return -1;
-		}
+		if ((sqr=sql_queryf(sid, "SELECT eventid FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return -1;
 		if (sql_numtuples(sqr)>0) {
 			ret=atoi(sql_getvalue(sqr, 0, 0));
 			sql_freeresult(sqr);

@@ -89,7 +89,7 @@ void usage(char *arg0)
 {
 	char *progname;
 
-	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.2]\r\n");
+	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.3]\r\n");
 #ifdef WIN32
 	progname=strrchr(arg0, '\\');
 #else

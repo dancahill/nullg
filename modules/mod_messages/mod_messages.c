@@ -78,11 +78,11 @@ void messages_userlist(CONN *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left WIDTH=100%%><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='cursor:hand' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
-		prints(sid, "<TD>&nbsp;<A HREF=\"javascript:ViewHistory('%d', '%s')\">history</A>&nbsp;</TD></TR>\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1));
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='cursor:hand; border-style:solid' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
+		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;<A HREF=\"javascript:ViewHistory('%d', '%s')\">history</A>&nbsp;</TD></TR>\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1));
 	}
 	prints(sid, "</TABLE></CENTER>\n");
 	sql_freeresult(sqr);
@@ -287,6 +287,7 @@ void messages_history(CONN *sid)
 	int i;
 	int sqr;
 	int userid=0;
+	time_t lastdate;
 	time_t msgdate;
 
 	htpage_header(sid, "Null Messenger");
@@ -310,26 +311,26 @@ void messages_history(CONN *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<BR><B>Message history for %s</B><BR><BR>\n", username);
-	if ((sqr=sql_queryf(sid, "SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid DESC", sid->dat->user_uid, userid, userid))<0) return;
+	prints(sid, "<BR><B>Message history for %s</B><BR>\n", username);
+	if ((sqr=sql_queryf(sid, "SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
 	if (sql_numtuples(sqr)<1) {
-		prints(sid, "<B>No Messages</B><BR>\n");
+		prints(sid, "<BR><B>No Messages</B><BR>\n");
 		sql_freeresult(sqr);
 		return;
 	}
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH>&nbsp;</TH><TH ALIGN=left WIDTH=100%%><FONT COLOR=%s>&nbsp;Message&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\r\n");
+	lastdate=0;
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		prints(sid, "<TD NOWRAP VALIGN=TOP><A HREF=%s/messages/delete?userid=%d&messageid=%s>delete</A></TD>", sid->dat->in_ScriptName, userid, sql_getvalue(sqr, i, 0));
-		if (atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid) {
-			prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=black>%s: </FONT></B>%s</TD>", sid->dat->user_username, str2html(sid, sql_getvalue(sqr, i, 5)));
-		} else {
-			prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=blue>%s: </FONT></B>%s</TD>", username, str2html(sid, sql_getvalue(sqr, i, 5)));
-		}
 		msgdate=time_sql2unix(sql_getvalue(sqr, i, 1));
 		msgdate+=time_tzoffset(sid, msgdate);
-		prints(sid, "<TD NOWRAP VALIGN=TOP>%s %s</TD>", time_unix2datetext(sid, msgdate), time_unix2timetext(sid, msgdate));
+		if (lastdate+86399<msgdate) {
+			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP><B>%s</B></TD></TR>\r\n", config->colour_fieldval, time_unix2datetext(sid, msgdate));
+			lastdate=(int)(msgdate/86400)*86400;
+		}
+		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TD NOWRAP VALIGN=TOP><A HREF=%s/messages/delete?userid=%d&messageid=%s>delete</A></TD>", sid->dat->in_ScriptName, userid, sql_getvalue(sqr, i, 0));
+		prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=%s>", atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid?"black":"blue");
+		prints(sid, "%s (%s): </FONT></B>%s</TD>", sid->dat->user_username, time_unix2timetext(sid, msgdate), str2html(sid, sql_getvalue(sqr, i, 5)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE></CENTER>\n");
@@ -360,10 +361,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_messages", "MESSENGER", "javascript:ListUsers()", "mod_main", "/messages/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=1;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_messages");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "MESSENGER");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "messages");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "javascript:ListUsers();");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/messages/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

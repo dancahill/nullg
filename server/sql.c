@@ -141,11 +141,6 @@ int mysqlDLLInit()
 	snprintf(libname, sizeof(libname)-1, "%s/libmysqlclient.%s", proc.config.server_dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-#ifdef WIN32
-	snprintf(libname, sizeof(libname)-1, "libmysql.%s", libext);
-	fixslashes(libname);
-	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-#endif
 	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.12", libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
@@ -155,6 +150,11 @@ int mysqlDLLInit()
 	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s", libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+#ifdef WIN32
+	snprintf(libname, sizeof(libname)-1, "libmysql.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+#endif
 	goto fail;
 found:
 	if ((libmysql.close=(LIBMYSQL_CLOSE)dlsym(hinstLib, "mysql_close"))==NULL) goto fail;
@@ -437,7 +437,7 @@ int sqliteConnect(CONN *sid)
 	fixslashes(dbname);
 	db=libsqlite.open(dbname, 0, &zErrMsg);
 	if (db==0) {
-		logerror(sid, __FILE__, __LINE__, "SQLite Connect - %s", &zErrMsg);
+		logerror(sid, __FILE__, __LINE__, "SQLite Connect - %s", zErrMsg);
 		return -1;
 	}
 	sql_is_connected=1;

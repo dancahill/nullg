@@ -23,17 +23,9 @@ int dblist_events(CONN *sid, char *startdate, char *enddate)
 	int sqr;
 
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", startdate, enddate);
-		} else {
-			sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", startdate, enddate);
-		}
+		sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", startdate, enddate);
 	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid);
-		} else {
-			sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid);
-		}
+		sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid);
 	}
 	return sqr;
 }

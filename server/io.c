@@ -38,7 +38,17 @@ void flushheader(CONN *sid)
 	} else {
 		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
 	}
+	if (strcasestr(sid->dat->in_Protocol, "HTTP/1.1")!=NULL) {
+		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.1");
+	} else {
+		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
+	}
 	if (proc.RunAsCGI) {
+		/* IIS bursts into flames when we do a redirect, so use nph- */
+		if (strstr(sid->dat->in_ScriptName, "nph-")!=NULL) {
+			snprintf(line, sizeof(line)-1, "%s %d OK\r\n", sid->dat->out_Protocol, sid->dat->out_status);
+			printf("%s", line);
+		}
 		if (strlen(sid->dat->out_CacheControl)) {
 			snprintf(line, sizeof(line)-1, "Cache-Control: %s\r\n", sid->dat->out_CacheControl);
 			printf("%s", line);
@@ -65,6 +75,7 @@ void flushheader(CONN *sid)
 		}
 		if (strlen(sid->dat->out_Location)) {
 			snprintf(line, sizeof(line)-1, "Location: %s\r\n", sid->dat->out_Location);
+			sid->dat->out_status=303;
 			printf("%s", line);
 		}
 		if (strlen(sid->dat->out_Pragma)) {
@@ -80,7 +91,15 @@ void flushheader(CONN *sid)
 			printf("%s", line);
 		}
 		if (sid->dat->out_status) {
-			snprintf(line, sizeof(line)-1, "Status: %d\r\n", sid->dat->out_status);
+			snprintf(line, sizeof(line)-1, "Status: %d", sid->dat->out_status);
+			if (sid->dat->out_status==200) {
+				strncat(line, " OK", sizeof(line)-1);
+			} else if (sid->dat->out_status==303) {
+				strncat(line, " See Other", sizeof(line)-1);
+			} else {
+				strncat(line, " OK", sizeof(line)-1);
+			}
+			strncat(line, "\r\n", sizeof(line)-1);
 			printf("%s", line);
 		}
 		if (strlen(sid->dat->out_ContentType)) {
@@ -91,11 +110,6 @@ void flushheader(CONN *sid)
 			printf("%s", line);
 		}
 	} else {
-		if (strcasestr(sid->dat->in_Protocol, "HTTP/1.1")!=NULL) {
-			snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.1");
-		} else {
-			snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
-		}
 		snprintf(line, sizeof(line)-1, "%s %d OK\r\n", sid->dat->out_Protocol, sid->dat->out_status);
 		send(sid->socket, line, strlen(line), 0);
 		if (strlen(sid->dat->out_CacheControl)) {

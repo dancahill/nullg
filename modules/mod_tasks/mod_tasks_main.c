@@ -34,28 +34,25 @@ void taskreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (strcmp(config->sql_type, "ODBC")==0) {
-		if ((sqr=sql_queryf(sid, "SELECT taskid, taskname, duedate, reminder FROM gw_tasks where duedate < #%s# and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
-	} else {
-		if ((sqr=sql_queryf(sid, "SELECT taskid, taskname, duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
-	}
+	if ((sqr=sql_queryf(sid, "SELECT taskid, taskname, duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Due Tasks</FONT></B>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
+		a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, i, 2)));
 		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
 		if (b<0) {
 			reminders++;
 			if (reminders==1) {
 				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
-				prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
-				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%%>&nbsp;Task Name&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Date&nbsp;</TH></TR>\n", config->colour_th);
+				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
+				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;Task Name&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH></TR>\n", config->colour_th);
 			}
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD NOWRAP VALIGN=top><A HREF=%s/tasks/reminderreset?taskid=%s>reset</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			prints(sid, "<TD><A HREF=%s/tasks/view?taskid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
+			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/tasks/reminderreset?taskid=%s>reset</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
 			duedate=time_sql2unix(sql_getvalue(sqr, i, 2));
-//			duedate+=time_tzoffset(sid, duedate);
-			prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_unix2datetext(sid, duedate));
+			duedate+=time_tzoffset(sid, duedate);
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, duedate));
 			prints(sid, "</TR>\n");
 		}
 	}
@@ -256,8 +253,8 @@ void taskview(CONN *sid)
 	}
 	strftime(duedate, sizeof(duedate)-1, "%Y-%m-%d", gmtime(&task.duedate));
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, task.taskname));
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, task.taskname));
 	if (auth_priv(sid, "calendar")&A_MODIFY) {
 		if ((task.assignedby==sid->dat->user_uid)||(task.assignedto==sid->dat->user_uid)||(task.obj_uid==sid->dat->user_uid)||((task.obj_gid==sid->dat->user_gid)&&(task.obj_gperm>=2))||(task.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/tasks/edit?taskid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, task.taskid, config->colour_thlink);
@@ -265,14 +262,14 @@ void taskview(CONN *sid)
 	}
 	prints(sid, "</FONT></TH></TR>\n");
 	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) return;
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned By&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned By&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedby) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned To&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned To&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -280,20 +277,20 @@ void taskview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
 	sql_freeresult(sqr);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Priority&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Priority&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	if (task.priority==0) prints(sid, "Lowest");
 	else if (task.priority==1) prints(sid, "Low");
 	else if (task.priority==2) prints(sid, "Normal");
 	else if (task.priority==3) prints(sid, "High");
 	else if (task.priority==4) prints(sid, "Highest");
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Reminder&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, task.reminder));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Due Date&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_sql2datetext(sid, duedate));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Status&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, task.status));
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details&nbsp;</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, task.details));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Reminder&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, task.reminder));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Due Date&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_sql2datetext(sid, duedate));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Status&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, task.status));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><B>Details&nbsp;</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, task.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=tasks&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, task.taskid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "tasks", task.taskid, 2);
@@ -326,8 +323,8 @@ void tasks_list(CONN *sid, int userid, int groupid)
 		if ((sqr=sql_queryf(sid, "SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=1 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH  ALIGN=LEFT WIDTH=100%%><FONT SIZE=2 COLOR=%s>&nbsp;Tasks</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH  ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2 COLOR=%s>&nbsp;Tasks</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
 		if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, i, 2)))) continue;
@@ -339,7 +336,7 @@ void tasks_list(CONN *sid, int userid, int groupid)
 			}
 			if (j==sql_numtuples(sqr2)) continue;
 		}
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 		prints(sid, "&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 		if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
 		prints(sid, "%s\">%-.25s", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
@@ -350,7 +347,7 @@ void tasks_list(CONN *sid, int userid, int groupid)
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
 		if (atoi(sql_getvalue(sqr, i, 2))!=0) continue;
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 		prints(sid, "&nbsp;*&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"[UNASSIGNED] %s\">%-.25s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
 		if (strlen(sql_getvalue(sqr, i, 3))>25) prints(sid, "..");
 		prints(sid, "</A>&nbsp;</TD></TR>\n");
@@ -359,7 +356,7 @@ void tasks_list(CONN *sid, int userid, int groupid)
 	sql_freeresult(sqr2);
 	sql_freeresult(sqr);
 	if (!tcount) {
-		prints(sid, "<TR BGCOLOR=%s><TD WIDTH=100%%>&nbsp;No tasks assigned&nbsp;</TD></TR>\n", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=%s><TD WIDTH=100%% STYLE='border-style:solid'>&nbsp;No tasks assigned&nbsp;</TD></TR>\n", config->colour_fieldval);
 	}
 	prints(sid, "</TABLE>\n");
 	return;
@@ -469,11 +466,19 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_tasks", "", "", "mod_main", "/tasks/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_tasks");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calendar");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/tasks/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_tasks", "mod_tasks_list", tasks_list)!=0) return -1;
 	return 0;
 }

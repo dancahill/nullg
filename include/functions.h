@@ -90,6 +90,7 @@ char   *time_unix2timetext(CONN *sid, time_t unixdate);
 char   *time_unix2lotimetext(CONN *sid, time_t unixdate);
 int     time_tzoffset(CONN *sid, time_t unixdate);
 int     time_tzoffset2(CONN *sid, time_t unixdate, int userid);
+int     time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid);
 time_t  time_wmgetdate(char *src);
 char   *DecodeBase64string(CONN *sid, char *src);
 /* html.c functions */
@@ -127,7 +128,7 @@ void    htselect_forumgroup(CONN *sid, int selected);
 void    htselect_group(CONN *sid, int selected);
 void    htselect_layout(CONN *sid, int selected);
 void    htselect_mailaccount(CONN *sid, int selected);
-void    htselect_number(CONN *sid, int selected, int start, int end);
+void    htselect_number(CONN *sid, int selected, int start, int end, int increment);
 void    htselect_priority(CONN *sid, int selected);
 void    htselect_product(CONN *sid, int selected);
 void    htselect_reminder(CONN *sid, int selected);
@@ -143,6 +144,7 @@ char   *htview_holiday(char *date);
 char   *htview_product(CONN *sid, int selected);
 char   *htview_reminder(CONN *sid, int selected);
 char   *htview_user(CONN *sid, int selected);
+void    htscript_showpage(CONN *sid, short int pages);
 /* http.c functions */
 char   *get_mime_type(char *name);
 void    ReadPOSTData(CONN *sid);

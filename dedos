@@ -1,20 +1,32 @@
 #!/bin/sh
 
 from_dos() {
-	for i in * ; do
-		if [ ! -d "$i" ]; then
-			fromdos < $i > ${i}.dos
-			mv ${i}.dos ${i}
-		fi
-	done
+	if [ -x /usr/bin/fromdos ]; then
+		for i in * ; do
+			if [ ! -d "$i" ]; then
+				/usr/bin/fromdos < $i > ${i}.dos
+				mv ${i}.dos ${i}
+			fi
+		done
+	else
+		exit 0
+	fi
 }
 
+rm -f contrib/libsqlite.dll
+rm -f distrib/bin/*.exe
+rm -f distrib/lib/*.dll
+rm -rf obj
+mv copying COPYING
+mv distrib/copying distrib/COPYING
+mv distrib/readme.txt distrib/README.txt
+chmod 644 contrib/sqlite-*.tar.gz
 chmod g-w * -R
 chmod o-w * -R
 
 cd dbutil;from_dos;cd ..
 
-cd distrib;from_dos;
+cd distrib;from_dos
 cd bin;from_dos;cd ..
 cd cgi-bin;from_dos;cd ..
 cd etc;from_dos;cd ..
@@ -22,24 +34,19 @@ cd lib;from_dos;cd ..
 cd var;from_dos
 cd db;from_dos;cd ..
 cd files;from_dos;cd ..
-
 cd htdocs;from_dos
 cd groupware;from_dos
 cd css;from_dos;cd ..
 cd help;from_dos;cd ..
 cd javascript;from_dos;cd ..
-cd ..
-cd ..
+cd ../..
 cd log;from_dos;cd ..
 cd mail;from_dos;cd ..
+cd ../..
+
+cd include;from_dos
 cd ..
-cd ..
-
-
-cd include;from_dos;cd ..
-
 cd modules;from_dos
-cd include;from_dos;cd ..
 cd mod_admin;from_dos;cd ..
 cd mod_bookmarks;from_dos;cd ..
 cd mod_calendar;from_dos;cd ..
@@ -60,6 +67,11 @@ cd mod_xmlrpc;from_dos;cd ..
 cd ..
 cd other;from_dos;cd ..
 cd server;from_dos;cd ..
+cd win32
+cd config;from_dos;cd ..
+cd gwmon;from_dos;cd ..
+cd icons;chmod 644 *;cd ..
+cd ..
 
 chmod 0755 distrib -R
 chmod 0644 distrib/COPYING
@@ -85,3 +97,8 @@ chmod 0700 distrib/var/log
 chmod 0600 distrib/var/log/*
 chmod 0700 distrib/var/mail
 chmod 0600 distrib/var/mail/*
+
+chmod 644 other/xmlrpc/*
+chmod 755 other/fromdos
+chmod 755 other/rc.groupware
+chmod 755 other/setup

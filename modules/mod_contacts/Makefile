@@ -3,7 +3,7 @@
 TOPDIR=../
 include $(TOPDIR)Rules.mak
 
-OBJECTS  = mod_contacts_db.o mod_contacts_main.o
+OBJECTS  = mod_contacts_db.o mod_contacts_main.o mod_contacts_vcard.o
 TARGET   = $(TARGETDIR)/mod_contacts.so
 
 all: mod_contacts

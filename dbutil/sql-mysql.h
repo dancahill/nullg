@@ -338,7 +338,7 @@ CREATE TABLE gw_mailheaders (\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	accountid	int4		NOT NULL DEFAULT 0,\n\
-	folder		varchar(50)	NOT NULL DEFAULT '',\n\
+	folder		int4		NOT NULL DEFAULT 1,\n\
 	status		varchar(10)	NOT NULL DEFAULT 'n',\n\
 	size		int4		NOT NULL DEFAULT -1,\n\
 	uidl		varchar(80)	NOT NULL DEFAULT '',\n\
@@ -353,6 +353,22 @@ CREATE TABLE gw_mailheaders (\n\
 	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailheaderid, accountid)\n\
+);"
+
+#define MYSQLDB_MAILFOLDERS "\
+CREATE TABLE gw_mailfolders (\n\
+	mailfolderid	int4		NOT NULL auto_increment,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	accountid	int4		NOT NULL DEFAULT 0,\n\
+	parentfolderid	int4		NOT NULL DEFAULT 0,\n\
+	foldername	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (mailfolderid, accountid)\n\
 );"
 
 #define MYSQLDB_MESSAGES "\

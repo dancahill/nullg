@@ -1,13 +1,14 @@
 # Makefile for NullLogic Groupware dbutil
 CC       = gcc
-CFLAGS   = -Wall -O2 -s -I../include
-LDFLAGS  = -ldl
+CFLAGS   = -Wall -O2 -I../include
+LDFLAGS  = -s -ldl
 OBJECTS  = dbio.o main.o md5.o sql.o
+TARGET = ../distrib/bin/dbutil
 
 all: dbutil
 
 dbutil: $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o ../distrib/bin/dbutil
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
-	rm -f ../distrib/bin/dbutil $(OBJECTS)
+	rm -f $(TARGET) $(OBJECTS) *~

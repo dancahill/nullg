@@ -52,6 +52,7 @@ static FUNCTION functions[]={
 	{ "htview_holiday",		htview_holiday			},
 	{ "htview_reminder",		htview_reminder			},
 	{ "htview_user",		htview_user			},
+	{ "htscript_showpage",		htscript_showpage		},
 	{ "md5_init",			md5_init			},
 	{ "md5_update",			md5_update			},
 	{ "md5_final",			md5_final			},
@@ -71,6 +72,7 @@ static FUNCTION functions[]={
 	{ "time_sql2unix",		time_sql2unix			},
 	{ "time_tzoffset",		time_tzoffset			},
 	{ "time_tzoffset2",		time_tzoffset2			},
+	{ "time_tzoffsetcon",		time_tzoffsetcon		},
 	{ "time_unix2sql",		time_unix2sql			},
 	{ "time_unix2text",		time_unix2text			},
 	{ "time_unix2lotimetext",	time_unix2lotimetext		},
@@ -218,9 +220,9 @@ int modules_init()
 		fprintf(fp, "mod_calls\r\n");
 		fprintf(fp, "#mod_cgi\r\n");
 		fprintf(fp, "mod_contacts\r\n");
+		fprintf(fp, "mod_mail\r\n");
 		fprintf(fp, "mod_files\r\n");
 		fprintf(fp, "mod_forums\r\n");
-		fprintf(fp, "mod_mail\r\n");
 		fprintf(fp, "mod_messages\r\n");
 		fprintf(fp, "mod_notes\r\n");
 		fprintf(fp, "#mod_orders\r\n");
@@ -248,24 +250,5 @@ int modules_init()
 		}
 	}
 	fclose(fp);
-/*
-	module_load("mod_html");
-	module_load("mod_admin");
-	module_load("mod_bookmarks");
-	module_load("mod_calendar");
-	module_load("mod_calls");
-	module_load("mod_cgi");
-	module_load("mod_contacts");
-	module_load("mod_files");
-	module_load("mod_forums");
-	module_load("mod_mail");
-	module_load("mod_messages");
-	module_load("mod_notes");
-	module_load("mod_orders");
-	module_load("mod_profile");
-	module_load("mod_searches");
-	module_load("mod_tasks");
-	module_load("mod_xmlrpc");
-*/
 	return 0;
 }

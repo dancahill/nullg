@@ -56,15 +56,23 @@ LINK32=link.exe
 # Name "mod_xmlrpc - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_xmlrpc.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_xmlrpc.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_xmlrpc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_xmlrpc_auth.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_xmlrpc_contacts.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_xmlrpc_main.c
 # End Source File
 # End Target
 # End Project

@@ -181,29 +181,26 @@ void calendarreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (strcmp(config->sql_type, "ODBC")==0) {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < #%s# and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
-	} else {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
-	}
+	if ((sqr=sql_queryf(sid, "SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", CAL_EVENT_TITLE);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
+		a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, i, 2)));
 		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
 		if (b<0) {
 			reminders++;
 			if (reminders==1) {
 				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
-				prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
-				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%%>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Time&nbsp;</TH></TR>\n", config->colour_th, CAL_EVENT_NAME);
+				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
+				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", config->colour_th, CAL_EVENT_NAME);
 			}
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD NOWRAP VALIGN=top><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), CAL_EVENT_RESET);
-			prints(sid, "<TD><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
+			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), CAL_EVENT_RESET);
+			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
 			eventdate=time_sql2unix(sql_getvalue(sqr, i, 2));
 			eventdate+=time_tzoffset(sid, eventdate);
-			prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_unix2datetext(sid, eventdate));
-			prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_unix2timetext(sid, eventdate));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, eventdate));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2timetext(sid, eventdate));
 			prints(sid, "</TR>\n");
 		}
 	}
@@ -334,8 +331,8 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 			}
 			if (eventrec.eventfinish<eventrec.eventstart) eventrec.eventfinish=eventrec.eventstart;
 		} else {
-			if (getgetenv(sid, "EVENTID")==NULL) return;
-			eventid=atoi(getgetenv(sid, "EVENTID"));
+			if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
+			eventid=atoi(ptemp);
 			if (dbread_event(sid, 2, eventid, &eventrec)!=0) {
 				prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", eventid);
 				return;
@@ -513,15 +510,17 @@ void calendarview(CONN *sid)
 	}
 	event.eventstart+=time_tzoffset(sid, event.eventstart);
 	event.eventfinish+=time_tzoffset(sid, event.eventfinish);
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, event.eventname));
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, event.eventname));
 	if (auth_priv(sid, "calendar")&A_MODIFY) {
-		if ((event.assignedby==sid->dat->user_uid)||(event.assignedto==sid->dat->user_uid)||(event.obj_uid==sid->dat->user_uid)||((event.obj_gid==sid->dat->user_gid)&&(event.obj_gperm>=2))||(event.obj_operm>=2)) {
+		if (auth_priv(sid, "contacts")&A_ADMIN) {
+			prints(sid, " [<A HREF=%s/calendar/edit?eventid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
+		} else if ((event.assignedby==sid->dat->user_uid)||(event.assignedto==sid->dat->user_uid)||(event.obj_uid==sid->dat->user_uid)||((event.obj_gid==sid->dat->user_gid)&&(event.obj_gperm>=2))||(event.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/calendar/edit?eventid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
 		}
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned By </B></TD><TD BGCOLOR=%s NOWRAP>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) return;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedby) {
@@ -529,8 +528,8 @@ void calendarview(CONN *sid)
 		}
 	}
 	prints(sid, "&nbsp;</TD>\n");
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Date        </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, event.eventstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned To </B></TD><TD BGCOLOR=%s NOWRAP>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Date        </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100 STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, event.eventstart));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -538,10 +537,10 @@ void calendarview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD>\n");
 	sql_freeresult(sqr);
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Start Time  </B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Event Type  </B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_eventtype(sid, event.eventtype));
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Finish Time </B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventfinish));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Contact     </B></TD><TD BGCOLOR=%s NOWRAP>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Start Time  </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventstart));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Event Type  </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_eventtype(sid, event.eventtype));
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Finish Time </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventfinish));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	if ((sqr=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", event.contactid))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
@@ -551,25 +550,25 @@ void calendarview(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	prints(sid, "&nbsp;</TD>\n", sql_getvalue(sqr, 0, 2));
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Availability</B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, event.busy>0?"Busy":"Available");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Priority    </B></TD><TD BGCOLOR=%s NOWRAP>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Availability</B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, event.busy>0?"Busy":"Available");
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Priority    </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	if (event.priority==0) prints(sid, "Lowest");
 	else if (event.priority==1) prints(sid, "Low");
 	else if (event.priority==2) prints(sid, "Normal");
 	else if (event.priority==3) prints(sid, "High");
 	else if (event.priority==4) prints(sid, "Highest");
 	prints(sid, "&nbsp;</TD>\n");
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Status      </B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, event.status));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Reminder    </B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, event.reminder));
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, event.status));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Reminder    </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, event.reminder));
 	if (event.status) {
-		prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Closing Status</B></TD><TD BGCOLOR=%s NOWRAP>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventclosingstatus(sid, event.closingstatus));
+		prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Closing Status</B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventclosingstatus(sid, event.closingstatus));
 	} else {
-		prints(sid, "    <TD BGCOLOR=%s>&nbsp;</TD><TD BGCOLOR=%s>&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "    <TD BGCOLOR=%s STYLE='border-style:solid'>&nbsp;</TD><TD BGCOLOR=%s STYLE='border-style:solid'>&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval);
 	}
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, event.details));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, event.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=events&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "events", event.eventid, 4);
@@ -664,15 +663,15 @@ void calendarlistday(CONN *sid)
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100%%><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<24;i++) {
 		snprintf(showtime, sizeof(showtime)-1, "%02d:00:00", i);
 		if ((i>=sid->dat->user_daystart)&&(i<sid->dat->user_daystart+sid->dat->user_daylength)) {
-			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
 			prints(sid, "<FONT SIZE=2><A HREF=%s/calendar/editnew?", sid->dat->in_ScriptName);
 			prints(sid, "time=%d>%s</A></FONT></TD>", unixdate+(i*3600), time_sql2timetext(sid, showtime));
-			prints(sid, "<TD NOWRAP WIDTH=100%%><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
+			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
 		}
 		while (index<sql_numtuples(sqr)) {
 			t=unixdate+i*3600;
@@ -696,9 +695,9 @@ void calendarlistday(CONN *sid)
 				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
 			}
 			t2+=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP><FONT SIZE=2>");
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), time_unix2timetext(sid, t2));
-			prints(sid, "</FONT></TD><TD NOWRAP WIDTH=100%%><FONT SIZE=2>");
+			prints(sid, "</FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>");
 			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), str2html(sid, sql_getvalue(sqr, index, 5)));
 			prints(sid, "</FONT></TD></TR>\n");
@@ -813,12 +812,12 @@ void calendarlistweek(CONN *sid)
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
 	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	for (i=0;i<7;i++) {
 		t=unixdate+(i*86400);
 		strftime(showtime, sizeof(showtime), "%Y-%m-%d", gmtime(&t));
 		t-=time_tzoffset(sid, t);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP>", config->colour_th);
+		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>", config->colour_th);
 		prints(sid, "<FONT SIZE=2><B><A HREF=%s/calendar/list?day=%d", sid->dat->in_ScriptName, (int)(t/86400));
 		if (userid>0) prints(sid, "&userid=%d", userid);
 		if (groupid>0) prints(sid, "&groupid=%d", groupid);
@@ -839,11 +838,11 @@ void calendarlistweek(CONN *sid)
 				if (k==sql_numtuples(sqr2)) continue;
 			}
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP><FONT SIZE=2>");
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
 			t2=time_sql2unix(sql_getvalue(sqr, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 2)));
-			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%%><FONT SIZE=2>", time_unix2timetext(sid, t2));
+			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>", time_unix2timetext(sid, t2));
 			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, k, 2)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0));
 			prints(sid, "%s</A>&nbsp;", str2html(sid, sql_getvalue(sqr, j, 5)));
@@ -851,7 +850,7 @@ void calendarlistweek(CONN *sid)
 			if (line>0) line--;
 		}
 		while (line>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP WIDTH=100%%><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
 			line--;
 		}
 	}
@@ -997,10 +996,10 @@ void calendarlistmonth(CONN *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Sunday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Monday</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Tuesday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Wednesday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Thursday</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Friday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Saturday</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext);
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Sunday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Monday</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Tuesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Wednesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Thursday</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Friday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Saturday</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext);
 	printdate=today.day-35-today.week;
 	unixdate=unixdate/86400-35-today.week;
 	while (printdate<-5) { printdate+=7; unixdate+=7; }
@@ -1018,13 +1017,13 @@ void calendarlistmonth(CONN *sid)
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
 		for (j=0;j<7;j++) {
 			if (unixdate==now) {
-				prints(sid, "<TD BGCOLOR=#FFFFFF");
+				prints(sid, "<TD BGCOLOR=#E0E0FF");
 			} else if ((printdate>0)&&(printdate<=dim[today.month-1])) {
 				prints(sid, "<TD BGCOLOR=%s", config->colour_fieldval);
 			} else {
 				prints(sid, "<TD BGCOLOR=#D0D0D0");
 			}
-			prints(sid, " VALIGN=TOP style=\"cursor:hand\" onClick=\"window.location.href='%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, unixdate, status);
+			prints(sid, " VALIGN=TOP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, unixdate, status);
 			if (userid>0) prints(sid, "&userid=%d", userid);
 			if (groupid>0) prints(sid, "&groupid=%d", groupid);
 			prints(sid, "'\">");
@@ -1084,17 +1083,15 @@ void calendarlistmonth(CONN *sid)
 	prints(sid, "</CENTER>\n");
 	prints(sid, "</CENTER>\n");
 	if ((groupid>0)&&(sql_numtuples(sqr2)>0)) {
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", proc->config.colour_tabletrim);
-		prints(sid, "<TR BGCOLOR=%s><TH><FONT COLOR=%s>&nbsp;Colour Key&nbsp;</FONT></TH></TR>", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>", config->colour_fieldval);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Colour Key&nbsp;</FONT></TH></TR>", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\r\n");
 		j=0;
 		for (i=0;i<sql_numtuples(sqr2);i++) {
 			if (j==0) prints(sid, "<TR>");
 			colour="#000000";
-			if (i<colours) {
-				colour=colourkey[i];
-			}
+			if (i<colours) colour=colourkey[i];
 			prints(sid, "<TD style='width:20%%'><FONT COLOR=%s><NOBR>%s</NOBR></FONT></TD>\n", colour, sql_getvalue(sqr2, i, 2));
 			j++;
 			if (j>4) {
@@ -1412,10 +1409,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_calendar", "CALENDAR", "/calendar/list", "mod_main", "/calendar/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=2;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_calendar");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "CALENDAR");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calendar");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/calendar/list");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/calendar/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

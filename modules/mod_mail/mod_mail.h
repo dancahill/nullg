@@ -56,9 +56,16 @@ int  EncodeBase64file(FILE *fp, char *src, int srclen);
 int  DecodeBase64(CONN *sid, char *src, char *ctype);
 char *EncodeBase64string(CONN *sid, char *src);
 char *DecodeBase64string(CONN *sid, char *src);
+/* mod_mail_folders.c */
+void wmfolder_list(CONN *sid);
+void wmfolder_edit(CONN *sid);
+void wmfolder_save(CONN *sid);
 /* mod_mail_html.c */
+void htselect_mailaccount(CONN *sid, int selected);
 void htselect_mailjump(CONN *sid, int selected);
 void htselect_mailmbox(CONN *sid, char *selected);
+void htselect_mailfolder(CONN *sid, int selected);
+void htselect_mailfolder2(CONN *sid, int selected);
 /* mod_mail_main.c */
 void wmloginform(CONN *sid);
 int  webmailheader(CONN *sid, wmheader *header);

@@ -110,7 +110,7 @@ void server_shutdown()
 	pthread_kill(proc.ListenThread, 14);
 	shutdown(proc.ListenSocket, 2);
 	closesocket(proc.ListenSocket);
-	sleep(1);
+	sleep(2);
 	for (i=0;i<proc.config.server_maxconn;i++) {
 		if (conn[i].id==0) continue;
 		pthread_kill(conn[i].handle, 14);
@@ -126,7 +126,6 @@ void server_shutdown()
 		sql_freeresult(i);
 	}
 	free(sqlreply);
-	exit(0);
 }
 
 void server_restart()
@@ -168,7 +167,11 @@ void server_restart()
 	return;
 }
 
+#ifdef WIN32
 void sig_catchint(int sig)
+#else
+void sig_catchint(int sig, struct sigcontext info)
+#endif
 {
 	CONN *sid=NULL;
 	int _sid=get_sid();
@@ -190,6 +193,9 @@ void sig_catchint(int sig)
 		break;
 	case 11:
 		logerror(sid, __FILE__, __LINE__, "SIGSEGV [%d] Segmentation Violation", sig);
+#ifndef WIN32
+		logerror(sid, __FILE__, __LINE__, "SIGSEGV EIP=0x%08X", info.eip);
+#endif
 		break;
 	case 13: // SIGPIPE
 		return;
@@ -300,9 +306,9 @@ void *conn_reaper(void *x)
 		}
 #ifdef WIN32
 		if (connections==0) {
-			TrayIcon(0);
+//			TrayIcon(0);
 		} else {
-			TrayIcon(1);
+//			TrayIcon(1);
 		}
 #endif
 	}
@@ -321,7 +327,6 @@ void cgiinit()
 {
 #ifdef WIN32
 	if (WSAStartup(0x202, &proc.wsaData)) {
-		MessageBox(0, "Winsock 2 initialization failed.", APPTITLE, MB_ICONERROR);
 		WSACleanup();
 		exit(0);
 	}
@@ -376,8 +381,8 @@ void init()
 	int i;
 	int option;
 
-	printf("Starting %s %s", SERVER_NAME, SERVER_VERSION);
 #ifndef WIN32
+	printf("Starting %s %s", SERVER_NAME, SERVER_VERSION);
 	if (getuid()==0) {
 		printf("\r\n%s cannot be run as user 'root'.  Exiting.\r\n", SERVER_NAME);
 		exit(0);
@@ -385,7 +390,7 @@ void init()
 #endif
 #ifdef WIN32
 	if (WSAStartup(0x202, &proc.wsaData)) {
-		MessageBox(0, "Winsock 2 initialization failed.", APPTITLE, MB_ICONERROR);
+		printf("\r\nWinsock 2 initialization failed.\r\n");
 		WSACleanup();
 		exit(0);
 	}
@@ -396,11 +401,7 @@ void init()
 	pthread_mutex_init(&Lock.SQL, NULL);
 	memset((char *)&proc.config, 0, sizeof(CONFIG));
 	if (config_read(&proc.config)!=0) {
-#ifdef WIN32
-		MessageBox(0, "Error reading configuration file", APPTITLE, MB_ICONERROR);
-#else
 		printf("\r\nError reading configuration file\r\n");
-#endif
 		exit(0);
 	}
 	conn=calloc(proc.config.server_maxconn, sizeof(CONN));
@@ -416,16 +417,16 @@ void init()
 	}
 	if (sanity_dbcheck()==-1) {
 		logerror(NULL, __FILE__, __LINE__, "SQL subsystem failed sanity check");
-#ifdef WIN32
-		MessageBox(0, "SQL subsystem failed sanity check.", APPTITLE, MB_ICONERROR);
-#else
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
-#endif
 		exit(0);
 	}
+#ifndef WIN32
 	printf(".");
+#endif
 	if (modules_init()!=0) exit(0);
+#ifndef WIN32
 	printf(".");
+#endif
 	proc.ListenSocket=socket(AF_INET, SOCK_STREAM, 0);
 	memset((char *)&sin, 0, sizeof(sin));
 	sin.sin_family=AF_INET;
@@ -452,11 +453,7 @@ void init()
 		i++;
 		if (i>6) {
 			logerror(NULL, __FILE__, __LINE__, "bind() error [%s:%d]", proc.config.server_hostname, proc.config.server_port);
-#ifdef WIN32
-			MessageBox(0, "The server could not bind itself to the specified port.", APPTITLE, MB_ICONERROR);
-#else
 			perror("\r\nBind error");
-#endif
 			exit(0);
 		}
 	}
@@ -465,9 +462,11 @@ void init()
 		closesocket(proc.ListenSocket);
 		exit(0);
 	}
+#ifndef WIN32
 	printf(".");
-	printf("OK.\r\n");
 	setsigs();
+	printf("OK.\r\n");
+#endif
 	return;
 }
 
@@ -542,7 +541,7 @@ void dorequest(CONN *sid)
 	if (pageuri[strlen(pageuri)-1]=='?') pageuri[strlen(pageuri)-1]='\0';
 	if (relocate) {
 		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
-		send_header(sid, 0, 302, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 303, "OK", "1", "text/html", -1, -1);
 		prints(sid, "<BR><CENTER>The requested resource can be found at <A HREF=%s>%s</A>.</CENTER>\n", pageuri, pageuri);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\nlocation.replace('%s');\r\n// -->\r\n</SCRIPT>\r\n", pageuri);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL='%s/'\">\r\n", pageuri);
@@ -592,7 +591,7 @@ void *htloop(void *x)
 #endif
 	logaccess(&conn[sid], 4, "Opening connection thread [%u]", conn[sid].socket);
 #ifdef WIN32
-	TrayIcon(1);
+//	TrayIcon(1);
 #endif
 	conn[sid].dat=calloc(1, sizeof(CONNDATA));
 	proc.stats.http_conns++;

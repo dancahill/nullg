@@ -15,7 +15,123 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "mod_typedefs.h"
+
+/* auth.c functions */
+MAIN_AUTH_PRIV				auth_priv;
+MAIN_AUTH_SETCOOKIE			auth_setcookie;
+MAIN_AUTH_SETPASS			auth_setpass;
+/* config.c functions */
+MAIN_CONFIG_READ			config_read;
+MAIN_CONFIG_WRITE			config_write;
+/* connio.c functions */
+MAIN_PRINTS				prints;
+MAIN_PRINTHEX				printhex;
+MAIN_PRINTHT				printht;
+MAIN_PRINTLINE				printline;
+MAIN_PRINTLINE2				printline2;
+/* format.c */
+MAIN_TIME_SQL2DATETEXT			time_sql2datetext;
+MAIN_TIME_SQL2TIMETEXT			time_sql2timetext;
+MAIN_TIME_SQL2UNIX			time_sql2unix;
+MAIN_TIME_TZOFFSET			time_tzoffset;
+MAIN_TIME_TZOFFSET2			time_tzoffset2;
+MAIN_TIME_TZOFFSETCON			time_tzoffsetcon;
+MAIN_TIME_UNIX2SQL			time_unix2sql;
+MAIN_TIME_UNIX2TEXT			time_unix2text;
+MAIN_TIME_UNIX2LOTIMETEXT		time_unix2lotimetext;
+MAIN_TIME_UNIX2TIMETEXT			time_unix2timetext;
+MAIN_TIME_UNIX2DATETEXT			time_unix2datetext;
+MAIN_TIME_WMGETDATE			time_wmgetdate;
+/* html.c */
+MAIN_HTPAGE_HEADER			htpage_header;
+MAIN_HTPAGE_FOOTER			htpage_footer;
+MAIN_HTPAGE_TOPMENU			htpage_topmenu;
+MAIN_HTSELECT_CONTACT			htselect_contact;
+MAIN_HTSELECT_DAY			htselect_day;
+MAIN_HTSELECT_GROUP			htselect_group;
+MAIN_HTSELECT_EVENTSTATUS		htselect_eventstatus;
+MAIN_HTSELECT_HOUR			htselect_hour;
+MAIN_HTSELECT_NUMBER			htselect_number;
+MAIN_HTSELECT_MINUTES			htselect_minutes;
+MAIN_HTSELECT_MONTH			htselect_month;
+MAIN_HTSELECT_PRIORITY			htselect_priority;
+MAIN_HTSELECT_QHOURS			htselect_qhours;
+MAIN_HTSELECT_QMINUTES			htselect_qminutes;
+MAIN_HTSELECT_REMINDER			htselect_reminder;
+MAIN_HTSELECT_TIME			htselect_time;
+MAIN_HTSELECT_TIMEZONE			htselect_timezone;
+MAIN_HTSELECT_USER			htselect_user;
+MAIN_HTSELECT_YEAR			htselect_year;
+MAIN_HTSELECT_ZONE			htselect_zone;
+MAIN_HTVIEW_CALLACTION			htview_callaction;
+MAIN_HTVIEW_CONTACT			htview_contact;
+MAIN_HTVIEW_EVENTCLOSINGSTATUS		htview_eventclosingstatus;
+MAIN_HTVIEW_EVENTSTATUS			htview_eventstatus;
+MAIN_HTVIEW_EVENTTYPE			htview_eventtype;
+MAIN_HTVIEW_HOLIDAY			htview_holiday;
+MAIN_HTVIEW_REMINDER			htview_reminder;
+MAIN_HTVIEW_USER			htview_user;
+MAIN_HTSCRIPT_SHOWPAGE			htscript_showpage;
+/* http.c functions */
+MAIN_GET_MIME_TYPE			get_mime_type;
+MAIN_GETGETENV				getgetenv;
+MAIN_GETMIMEENV				getmimeenv;
+MAIN_GETPOSTENV				getpostenv;
+MAIN_GETXMLENV				getxmlenv;
+MAIN_GETXMLPARAM			getxmlparam;
+MAIN_GETXMLSTRUCT			getxmlstruct;
+/* log.c functions */
+MAIN_DB_LOG_ACTIVITY			db_log_activity;
+MAIN_LOGACCESS				logaccess;
+MAIN_LOGERROR				logerror;
+/* md5.c functions */
+MAIN_MD5_INIT				md5_init;
+MAIN_MD5_UPDATE				md5_update;
+MAIN_MD5_FINAL				md5_final;
+MAIN_MD5_CRYPT				md5_crypt;
+/* sql.c functions */
+MAIN_SQL_FREERESULT			sql_freeresult;
+MAIN_SQL_GETNAME			sql_getname;
+MAIN_SQL_GETVALUE			sql_getvalue;
+MAIN_SQL_GETVALUEBYNAME			sql_getvaluebyname;
+MAIN_SQL_NUMFIELDS			sql_numfields;
+MAIN_SQL_NUMTUPLES			sql_numtuples;
+MAIN_SQL_QUERY				sql_query;
+MAIN_SQL_QUERYF				sql_queryf;
+MAIN_SQL_UPDATE				sql_update;
+MAIN_SQL_UPDATEF			sql_updatef;
+
+MAIN_DECODEURL				decodeurl;
+MAIN_DECODE_B64S			decode_b64s;
+MAIN_GETBUFFER				getbuffer;
+MAIN_STR2HTML				str2html;
+MAIN_STRNCATF				strncatf;
+MAIN_SEND_ERROR				send_error;
+MAIN_SEND_HEADER			send_header;
+MAIN_FIXSLASHES				fixslashes;
+MAIN_STRIPRN				striprn;
+MAIN_FLUSHBUFFER			flushbuffer;
+MAIN_STR2SQL				str2sql;
+MAIN_STR2SQLBUF				str2sqlbuf;
+MAIN_FILESEND				filesend;
+MAIN_TCP_SEND				tcp_send;
+MAIN_HEX2INT				hex2int;
+MAIN_CLOSECONNECT			closeconnect;
+MAIN_P_STRCASESTR			p_strcasestr;
+MAIN_SRV_RESTART			srv_restart;
+MAIN_MODULE_EXISTS			module_exists;
+MAIN_MODULE_CALL			module_call;
+#ifdef WIN32
+MAIN_GETTIMEOFDAY			gettimeofday;
+MAIN_OPENDIR				opendir;
+MAIN_READDIR				readdir;
+MAIN_CLOSEDIR				closedir;
+#endif
+
+CONFIG   *config;
+FUNCTION *functions;
+_PROC    *proc;
 
 void *_get_func(char *fn_name)
 {
@@ -24,7 +140,6 @@ void *_get_func(char *fn_name)
 	for (i=0;;i++) {
 		if ((functions[i].fn_name==NULL)||(functions[i].fn_ptr==NULL)) break;
 		if (strcmp(functions[i].fn_name, fn_name)==0) {
-//			if (logerror!=NULL) logerror(NULL, "mod_stub.h", __LINE__, "[%s]=[%d]", functions[i].fn_name, functions[i].fn_ptr);
 			return functions[i].fn_ptr;
 		}
 	}
@@ -71,6 +186,7 @@ int mod_import()
 	if ((htview_holiday             = _get_func("htview_holiday"))==NULL) return -1;
 	if ((htview_reminder            = _get_func("htview_reminder"))==NULL) return -1;
 	if ((htview_user                = _get_func("htview_user"))==NULL) return -1;
+	if ((htscript_showpage          = _get_func("htscript_showpage"))==NULL) return -1;
 	if ((md5_init                   = _get_func("md5_init"))==NULL) return -1;
 	if ((md5_update                 = _get_func("md5_update"))==NULL) return -1;
 	if ((md5_final                  = _get_func("md5_final"))==NULL) return -1;
@@ -90,6 +206,7 @@ int mod_import()
 	if ((time_sql2unix              = _get_func("time_sql2unix"))==NULL) return -1;
 	if ((time_tzoffset              = _get_func("time_tzoffset"))==NULL) return -1;
 	if ((time_tzoffset2             = _get_func("time_tzoffset2"))==NULL) return -1;
+	if ((time_tzoffsetcon           = _get_func("time_tzoffsetcon"))==NULL) return -1;
 	if ((time_unix2sql              = _get_func("time_unix2sql"))==NULL) return -1;
 	if ((time_unix2text             = _get_func("time_unix2text"))==NULL) return -1;
 	if ((time_unix2lotimetext       = _get_func("time_unix2lotimetext"))==NULL) return -1;
@@ -134,12 +251,10 @@ int mod_import()
 	if ((readdir                    = _get_func("readdir"))==NULL) return -1;
 	if ((closedir                   = _get_func("closedir"))==NULL) return -1;
 #endif
-//	if ((notessublist               = _get_func("notessublist"))==NULL) return -1;
-//	logaccess(NULL, 1, "HEY FROM STUBBY!");
 	return 0;
 }
 
-int mod_export_main(char *mod_name, char *mod_menuname, char *mod_menuuri, char *fn_name, char *fn_uri, void *fn_ptr)
+int mod_export_main(MODULE_MENU *newmod)
 {
 	int i;
 
@@ -147,15 +262,17 @@ int mod_export_main(char *mod_name, char *mod_menuname, char *mod_menuuri, char 
 		if (strlen(proc->mod_menuitems[i].mod_name)>0) continue;
 		if (strlen(proc->mod_menuitems[i].mod_menuname)>0) continue;
 		if (proc->mod_menuitems[i].fn_ptr!=NULL) continue;
-		snprintf(proc->mod_menuitems[i].mod_name, sizeof(proc->mod_menuitems[i].mod_name)-1, "%s", mod_name);
-		snprintf(proc->mod_menuitems[i].mod_menuname, sizeof(proc->mod_menuitems[i].mod_menuname)-1, "%s", mod_menuname);
-		snprintf(proc->mod_menuitems[i].mod_menuuri, sizeof(proc->mod_menuitems[i].mod_menuuri)-1, "%s", mod_menuuri);
-		snprintf(proc->mod_menuitems[i].fn_name, sizeof(proc->mod_menuitems[i].fn_name)-1, "%s", fn_name);
-		snprintf(proc->mod_menuitems[i].fn_uri, sizeof(proc->mod_menuitems[i].fn_uri)-1, "%s", fn_uri);
-		proc->mod_menuitems[i].fn_ptr=fn_ptr;
+		proc->mod_menuitems[i].mod_submenu=newmod->mod_submenu;
+		snprintf(proc->mod_menuitems[i].mod_name, sizeof(proc->mod_menuitems[i].mod_name)-1, "%s", newmod->mod_name);
+		snprintf(proc->mod_menuitems[i].mod_menuname, sizeof(proc->mod_menuitems[i].mod_menuname)-1, "%s", newmod->mod_menuname);
+		snprintf(proc->mod_menuitems[i].mod_menuperm, sizeof(proc->mod_menuitems[i].mod_menuperm)-1, "%s", newmod->mod_menuperm);
+		snprintf(proc->mod_menuitems[i].mod_menuuri, sizeof(proc->mod_menuitems[i].mod_menuuri)-1, "%s", newmod->mod_menuuri);
+		snprintf(proc->mod_menuitems[i].fn_name, sizeof(proc->mod_menuitems[i].fn_name)-1, "%s", newmod->fn_name);
+		snprintf(proc->mod_menuitems[i].fn_uri, sizeof(proc->mod_menuitems[i].fn_uri)-1, "%s", newmod->fn_uri);
+		proc->mod_menuitems[i].fn_ptr=newmod->fn_ptr;
 		return 0;
 	}
-	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to find function %s", fn_name);
+	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to find function %s", newmod->fn_name);
 	return -1;
 }
 

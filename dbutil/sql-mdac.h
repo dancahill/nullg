@@ -355,6 +355,22 @@ CREATE TABLE gw_mailheaders (\n\
 	PRIMARY KEY (mailheaderid, accountid)\n\
 );"
 
+#define MDB_MAILFOLDERS "\
+CREATE TABLE gw_mailfolders (\n\
+	mailfolderid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	accountid	integer,\n\
+	parentfolderid	integer,\n\
+	foldername	varchar(50)	NOT NULL,\n\
+	PRIMARY KEY (mailfolderid, accountid)\n\
+);"
+
 #define MDB_MESSAGES "\
 CREATE TABLE gw_messages (\n\
 	messageid	autoincrement,\n\

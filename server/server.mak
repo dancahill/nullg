@@ -13,7 +13,7 @@ CFG=server - Win32 Release
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "server - Win32 Release" (based on "Win32 (x86) Application")
+!MESSAGE "server - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 !ERROR An invalid configuration is specified.
 !ENDIF 
@@ -24,9 +24,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
 OUTDIR=.\..\distrib\bin
 INTDIR=.\..\obj\server
 # Begin Custom Macros
@@ -61,35 +58,8 @@ CLEAN :
 "$(INTDIR)" :
     if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\server.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libcmt.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"$(OUTDIR)\groupware.exe" 
-LINK32_OBJS= \
-	"$(INTDIR)\auth.obj" \
-	"$(INTDIR)\config.obj" \
-	"$(INTDIR)\format.obj" \
-	"$(INTDIR)\html.obj" \
-	"$(INTDIR)\http.obj" \
-	"$(INTDIR)\io.obj" \
-	"$(INTDIR)\log.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\md5.obj" \
-	"$(INTDIR)\modctl.obj" \
-	"$(INTDIR)\sanity.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\sql.obj" \
-	"$(INTDIR)\win32.obj" \
-	"$(INTDIR)\server.res"
-
-"$(OUTDIR)\groupware.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP=cl.exe
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -121,8 +91,35 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_WIN
    $(CPP_PROJ) $< 
 <<
 
-MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\server.res" /d "NDEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\server.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libcmt.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"$(OUTDIR)\groupware.exe" 
+LINK32_OBJS= \
+	"$(INTDIR)\auth.obj" \
+	"$(INTDIR)\config.obj" \
+	"$(INTDIR)\format.obj" \
+	"$(INTDIR)\html.obj" \
+	"$(INTDIR)\http.obj" \
+	"$(INTDIR)\io.obj" \
+	"$(INTDIR)\log.obj" \
+	"$(INTDIR)\main.obj" \
+	"$(INTDIR)\md5.obj" \
+	"$(INTDIR)\modctl.obj" \
+	"$(INTDIR)\sanity.obj" \
+	"$(INTDIR)\server.obj" \
+	"$(INTDIR)\sql.obj" \
+	"$(INTDIR)\win32.obj" \
+	"$(INTDIR)\server.res"
+
+"$(OUTDIR)\groupware.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
 
 
 !IF "$(CFG)" == "server - Win32 Release"

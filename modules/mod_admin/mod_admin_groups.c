@@ -85,10 +85,10 @@ void admingrouplist(CONN *sid)
 	if ((sqr=sql_query(sid, "SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) return;
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=150><FONT COLOR=%s>&nbsp;Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
@@ -240,7 +240,7 @@ void admingrouptimeedit(CONN *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", config->colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/grouptimesave NAME=availability>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
 	for (i=0;i<7;i++) {
@@ -249,24 +249,24 @@ void admingrouptimeedit(CONN *sid)
 	for (i=0;i<24;i++) {
 		prints(sid, "<input type='hidden' name='t%d' value='true'>\n", i);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25><FONT COLOR=%s>Group availability for <A HREF=%s/admin/groupedit?groupid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, groupid, config->colour_thlink, group.groupname);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Group availability for <A HREF=%s/admin/groupedit?groupid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, groupid, config->colour_thlink, group.groupname);
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
-	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2>&nbsp;</TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>A.M.</B></TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>P.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
-		prints(sid, "<TD ALIGN=CENTER><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
+		prints(sid, "<TD ALIGN=CENTER STYLE='border-style:solid'><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
 		for (j=0;j<24;j++) {
-			prints(sid, "<TD><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, availability[i*24+j]=='1'?"checked":"");
+			prints(sid, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, availability[i*24+j]=='1'?"checked":"");
 		}
 		prints(sid, "</TR>\n");
 	}

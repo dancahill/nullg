@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SERVER_NAME	"NullLogic Groupware"
-#define SERVER_VERSION	"1.2.2"
+#define SERVER_VERSION	"1.2.3"
 #define SERVER_BASENAME	"groupware"
 
 #ifdef WIN32
@@ -52,20 +52,7 @@
 #define IMAP_PORT	143
 #define POP3_PORT	110
 #define SMTP_PORT	25
-/*
-#define AUTH_ADMIN	1
-#define AUTH_BOOKMARKS	2
-#define AUTH_CALENDAR	3
-#define AUTH_CALLS	4
-#define AUTH_CONTACTS	5
-#define AUTH_FILES	6
-#define AUTH_FORUMS	7
-#define AUTH_MESSAGES	8
-#define AUTH_ORDERS	9
-#define AUTH_PROFILE	10
-#define AUTH_QUERIES	11
-#define AUTH_WEBMAIL	12
-*/
+
 #define A_READ		1
 #define A_MODIFY	2
 #define A_INSERT	4
@@ -73,21 +60,22 @@
 #define A_ADMIN		16
 
 #define MENU_ADMIN	1
-#define MENU_BOOKMARKS	2
-#define MENU_CALENDAR	3
-#define MENU_CALLS	4
-#define MENU_CONTACTS	5
-#define MENU_FILES	6
-#define MENU_FORUMS	7
-#define MENU_MAIN	8
-#define MENU_MESSAGES	9
-#define MENU_NOTES	10
-#define MENU_ORDERS	11
-#define MENU_PROFILE	12
-#define MENU_SEARCHES	13
-#define MENU_TASKS	14
-#define MENU_WEBMAIL	15
-#define MENU_XMLRPC	16
+#define MENU_ACCOUNTING	2
+#define MENU_BOOKMARKS	3
+#define MENU_CALENDAR	4
+#define MENU_CALLS	5
+#define MENU_CONTACTS	6
+#define MENU_FILES	7
+#define MENU_FORUMS	8
+#define MENU_MAIN	9
+#define MENU_MESSAGES	10
+#define MENU_NOTES	11
+#define MENU_ORDERS	12
+#define MENU_PROFILE	13
+#define MENU_SEARCHES	14
+#define MENU_TASKS	15
+#define MENU_WEBMAIL	16
+#define MENU_XMLRPC	17
 
 #define ACTIVITYFIELDS		14
 #define BOOKMARKFOLDERFIELDS	10
@@ -105,6 +93,7 @@
 #define GROUPFIELDS		12
 #define MAILACCTFIELDS		24
 #define MAILHEADFIELDS		23
+#define MAILFOLDERFIELDS	11
 #define MESSAGEFIELDS		12
 #define NOTEFIELDS		12
 #define ORDERFIELDS		16

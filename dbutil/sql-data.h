@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#define DBDATA_01 "INSERT INTO gw_dbinfo (dbversion, tax1name, tax2name, tax1percent, tax2percent) VALUES ('1.2.2', 'PST', 'GST', '0.08', '0.07');"
+#define DBDATA_01 "INSERT INTO gw_dbinfo (dbversion, tax1name, tax2name, tax1percent, tax2percent) VALUES ('1.2.3', 'PST', 'GST', '0.08', '0.07');"
 #define DBDATA_02 "INSERT INTO gw_bookmarks (bookmarkid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, folderid, bookmarkname, bookmarkurl) VALUES ('1', '2003-01-01 00:00:00', '2003-01-01 00:00:00', '1', '1', '1', '1', '0', 'NullLogic', 'http://www.nulllogic.com/');"
 #define DBDATA_03 "INSERT INTO gw_callactions (callactionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, actionname) VALUES ('1', '2003-01-01 00:00:00', '2003-01-01 00:00:00', '0', '0', '0', '0', 'Phoned');"
 #define DBDATA_04 "INSERT INTO gw_callactions (callactionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, actionname) VALUES ('2', '2003-01-01 00:00:00', '2003-01-01 00:00:00', '0', '0', '0', '0', 'Returned your call');"

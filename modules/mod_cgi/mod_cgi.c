@@ -30,19 +30,28 @@ void cgi_makeargs(CONN *sid, char *args[])
 	DEBUG_IN(sid, "cgi_makeargs()");
 	if (strncmp(sid->dat->in_RequestURI, "/cgi-bin/", 9)!=0) return;
 	args[0]=calloc(255, sizeof(char));
-	snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_RequestURI+9);
+	snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
 	if ((ptemp=strchr(progname, '?'))!=NULL) {
 		args[1]=calloc(255, sizeof(char));
 		snprintf(args[1], 254, "%s", ptemp+1);
 		*ptemp='\0';
 	}
-	if ((ptemp=strchr(progname, '/'))!=NULL) {
-		args[2]=calloc(255, sizeof(char));
-		snprintf(args[2], 254, "%s", ptemp);
-		*ptemp='\0';
-	}
+//	if ((ptemp=strchr(progname, '/'))!=NULL) {
+//		args[2]=calloc(255, sizeof(char));
+//		snprintf(args[2], 254, "%s", ptemp);
+//		*ptemp='\0';
+//	}
 	snprintf(args[0], 254, "%s/%s", proc->config.server_dir_cgi, progname);
 	fixslashes(args[0]);
+//	fixslashes(args[0]);
+	if (strlen(sid->dat->in_QueryString)) {
+		args[1]=calloc(255, sizeof(char));
+		snprintf(args[1], 254, "%s", sid->dat->in_QueryString);
+	}
+	if (strlen(sid->dat->in_PathInfo)) {
+		args[2]=calloc(255, sizeof(char));
+		snprintf(args[2], 254, "%s", sid->dat->in_CGIPathInfo);
+	}
 }
 
 void cgi_makeenv(CONN *sid, char *env[], char *args[])
@@ -62,7 +71,11 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 		env[n]=calloc(1024, sizeof(char));
 		snprintf(env[n++], 1023, "CONTENT_LENGTH=%d", sid->dat->in_ContentLength);
 		env[n]=calloc(1024, sizeof(char));
-		snprintf(env[n++], 1023, "CONTENT_TYPE=%s", sid->dat->in_ContentType);
+		if (strlen(sid->dat->in_ContentType)) {
+			snprintf(env[n++], 1023, "CONTENT_TYPE=%s", sid->dat->in_ContentType);
+		} else {
+			snprintf(env[n++], 1023, "CONTENT_TYPE=application/x-www-form-urlencoded");
+		}
 	}
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s", proc->config.server_dir_var_htdocs);
@@ -105,9 +118,8 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SCRIPT_FILENAME=%s", args[0]);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", sid->dat->in_RequestURI);
+	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", sid->dat->in_CGIScriptName);
 	if ((ptemp=strchr(env[n-1], '?'))!=NULL) *ptemp='\0';
-	if ((ptemp=strchr(env[n-1]+21, '/'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_NAME=%s", proc->config.server_hostname);
 	env[n]=calloc(1024, sizeof(char));
@@ -119,6 +131,10 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_SOFTWARE=%s %s", SERVER_NAME, SERVER_VERSION);
 #ifdef WIN32
+	if ((ptemp=getenv("SYSTEMROOT"))!=NULL) {
+		env[n]=calloc(1024, sizeof(char));
+		snprintf(env[n++], 1023, "SYSTEMROOT=%s", ptemp);
+	}
 	if ((ptemp=getenv("WINDIR"))!=NULL) {
 		env[n]=calloc(1024, sizeof(char));
 		snprintf(env[n++], 1023, "WINDIR=%s", ptemp);
@@ -140,6 +156,7 @@ void mod_main(CONN *sid)
 	};
 	DWORD exitcode=0;
 	HANDLE hMyProcess=GetCurrentProcess();
+	SECURITY_ATTRIBUTES saAttr;
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
 	char Command[512];
@@ -158,6 +175,7 @@ void mod_main(CONN *sid)
 	char *env[50];
 	char cgifilename[255];
 	char *extension;
+	char *ptemp;
 	char szBuffer[BUFF_SIZE];
 	pipe_fd local;
 	pipe_fd remote;
@@ -165,6 +183,7 @@ void mod_main(CONN *sid)
 	int pid;
 	unsigned int i;
 	unsigned int n;
+	int bytesleft;
 
 	DEBUG_IN(sid, "cgi_main()");
 	memset(args, 0, sizeof(args));
@@ -203,13 +222,16 @@ void mod_main(CONN *sid)
 		n+=sprintf(&Environ[n], "%s", env[i]);
 		n++;
 	}
-	if (!CreatePipe((HANDLE)&remote.in, (HANDLE)&local.out, NULL, BUFF_SIZE)) {
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+	if (!CreatePipe((HANDLE)&remote.in, (HANDLE)&local.out, &saAttr, BUFF_SIZE)) {
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
 		return;
 	}
-	if (!CreatePipe((HANDLE)&local.in, (HANDLE)&remote.out, NULL, BUFF_SIZE)) {
+	if (!CreatePipe((HANDLE)&local.in, (HANDLE)&remote.out, &saAttr, BUFF_SIZE)) {
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
 		CloseHandle((HANDLE)remote.in);
@@ -223,7 +245,8 @@ void mod_main(CONN *sid)
 	si.hStdInput=(HANDLE)remote.in;
 	si.hStdOutput=(HANDLE)remote.out;
 	si.hStdError=(HANDLE)remote.out;
-	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, CREATE_NO_WINDOW, Environ, Path, &si, &pi)) {
+	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, CREATE_NEW_CONSOLE|CREATE_NO_WINDOW, Environ, Path, &si, &pi)) {
+//	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, CREATE_NEW_CONSOLE|CREATE_SUSPENDED, Environ, Path, &si, &pi)) {
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
 		CloseHandle((HANDLE)local.in);
@@ -272,11 +295,20 @@ void mod_main(CONN *sid)
 	}
 #endif
 	if (sid->dat->in_ContentLength>0) {
+		bytesleft=sid->dat->in_ContentLength;
+		ptemp=sid->PostData;
+//		logerror(sid, __FILE__, __LINE__, "--[%d][%s]", bytesleft, ptemp);
+		while (bytesleft>0) {
 #ifdef WIN32
-		WriteFile((HANDLE)local.out, sid->PostData, sid->dat->in_ContentLength, &nOutRead, NULL);
+			i=WriteFile((HANDLE)local.out, ptemp, bytesleft, &nOutRead, NULL);
 #else
-		write(local.out, sid->PostData, sid->dat->in_ContentLength);
+			i=write(local.out, ptemp, bytesleft);
 #endif
+			if (i>0) {
+				ptemp+=i;
+				bytesleft-=i;
+			}
+		}
 	}
 	sid->dat->out_headdone=1;
 	sid->dat->out_status=200;
@@ -329,10 +361,17 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_cgi", "", "", "mod_main", "/cgi-bin/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_cgi");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/cgi-bin/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -18,15 +18,6 @@
 #include "mod_stub.h"
 #include "mod_bookmarks.h"
 
-typedef struct {
-	int lastref;
-	int printed;
-} _btree;
-typedef struct {
-	int id;
-	int depth;
-} _ptree;
-
 void htselect_bookmarkfolder(CONN *sid, int selected)
 {
 	_btree *btree;
@@ -53,13 +44,13 @@ void htselect_bookmarkfolder(CONN *sid, int selected)
 	j=0;
 	widthloop:
 	for (i=base;i<sql_numtuples(sqr);i++) {
-		if (btree[atoi(sql_getvalue(sqr, i, 0))].printed) continue;
+		if (btree[i].printed) continue;
 		if (atoi(sql_getvalue(sqr, i, 1))==btree[depth].lastref) {
 			ptree[j].id=i;
 			ptree[j].depth=depth-1;
 			j++;
 			btree[depth+1].lastref=atoi(sql_getvalue(sqr, i, 0));
-			btree[atoi(sql_getvalue(sqr, i, 0))].printed=1;
+			btree[i].printed=1;
 			depth++;
 		}
 	}
@@ -74,7 +65,6 @@ void htselect_bookmarkfolder(CONN *sid, int selected)
 		goto widthloop;
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
-//		logerror(sid, __FILE__, __LINE__, "[%d][%s][%s][%s]", i, sql_getvalue(sqr, ptree[i].id, 0), sql_getvalue(sqr, ptree[i].id, 1), sql_getvalue(sqr, ptree[i].id, 2));
 		x=atoi(sql_getvalue(sqr, ptree[i].id, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>", x, x==selected?" SELECTED":"");
 		for (indent=0;indent<ptree[i].depth;indent++) prints(sid, "&nbsp;&nbsp;");
@@ -195,6 +185,7 @@ void bookmarkfoldersave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "FOLDERNAME"))!=NULL) snprintf(bookmarkfolder.foldername, sizeof(bookmarkfolder.foldername)-1, "%s", ptemp);
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
+	if (bookmarkfolder.parentid==bookmarkfolder.folderid) bookmarkfolder.parentid=0;
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -357,12 +348,12 @@ void bookmarkslist(CONN *sid)
 		if ((sqr=sql_queryf(sid, "SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s><TH", config->colour_tabletrim, config->colour_th);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s><TH", config->colour_th);
 		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-		prints(sid, "><FONT COLOR=%s>%s</FONT></TH></TR>\n", config->colour_thtext, str2html(sid, sql_getvalue(sqr, 0, 1)));
+		prints(sid, " STYLE='border-style:solid'><FONT COLOR=%s>%s</FONT></TH></TR>\n", config->colour_thtext, str2html(sid, sql_getvalue(sqr, 0, 1)));
 		prints(sid, "<TR BGCOLOR=%s><TD", config->colour_fieldval);
 		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-		prints(sid, " WIDTH=300><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
+		prints(sid, " WIDTH=300 STYLE='border-style:solid'><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
 		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.gif HEIGHT=16 WIDTH=16>&nbsp;");
 		prints(sid, "Parent Directory</A></TD></TR>\n");
 		numfolders++;
@@ -375,16 +366,16 @@ void bookmarkslist(CONN *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		if (numfolders==0) {
-			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s><TH", config->colour_tabletrim, config->colour_th);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s><TH", config->colour_th);
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-			prints(sid, "><FONT COLOR=%s>Bookmarks</FONT></TH></TR>\n", config->colour_thtext);
+			prints(sid, " STYLE='border-style:solid'><FONT COLOR=%s>Bookmarks</FONT></TH></TR>\n", config->colour_thtext);
 		}
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=300><NOBR><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.gif HEIGHT=16 WIDTH=16>&nbsp;");
 			prints(sid, "%s</A>&nbsp;</NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
@@ -398,16 +389,16 @@ void bookmarkslist(CONN *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		if (numfolders==0) {
-			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
-			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, "<TH>&nbsp;</TH>");
-			prints(sid, "<TH ALIGN=left WIDTH=250><FONT COLOR=%s>Name</FONT></TH></TR>\n", config->colour_thtext);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, "<TH STYLE='border-style:solid'>&nbsp;</TH>");
+			prints(sid, "<TH ALIGN=left WIDTH=250 STYLE='border-style:solid'><FONT COLOR=%s>Name</FONT></TH></TR>\n", config->colour_thtext);
 		}
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/edit?bookmarkid=%s>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/edit?bookmarkid=%s>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=300><NOBR><A HREF=\"%s\" TARGET=_blank>", sql_getvalue(sqr, i, 2));
+			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=\"%s\" TARGET=_blank>", sql_getvalue(sqr, i, 2));
 			prints(sid, "%s</A></NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
@@ -511,10 +502,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_bookmarks", "BOOKMARKS", "/bookmarks/list", "mod_main", "/bookmarks/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=3;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_bookmarks");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "BOOKMARKS");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "bookmarks");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/bookmarks/list");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/bookmarks/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

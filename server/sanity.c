@@ -73,6 +73,9 @@ int sanity_dbcheck()
 			snprintf(commandline, sizeof(commandline)-1, "./dbutil init");
 #endif
 			fixslashes(commandline);
+#ifndef WIN32
+			printf("\r\n");
+#endif
 			system(commandline);
 		}
 
@@ -98,11 +101,7 @@ int sanity_dbcheck()
 				printf("<HTML><CENTER>\r\n%s\r\n</CENTER></HTML>\n", msgbuffer);
 				closeconnect(0, 1);
 			} else {
-#ifdef WIN32
-				MessageBox(0, msgbuffer, APPTITLE, MB_ICONERROR);
-#else
 				printf("\r\n%s\r\n", msgbuffer);
-#endif
 			}
 			exit(0);
 		}
@@ -140,6 +139,7 @@ int sanity_dbcheck()
 		if (sanity_dbcheck_table("gw_groups",		"groupid",		GROUPFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_mailaccounts",	"mailaccountid",	MAILACCTFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_mailheaders",	"mailheaderid",		MAILHEADFIELDS)==-1) checkerror++;
+		if (sanity_dbcheck_table("gw_mailfolders",	"mailfolderid",		MAILFOLDERFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_messages",		"messageid",		MESSAGEFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_notes",		"noteid",		NOTEFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_orderitems",	"orderitemid",		ORDERITEMFIELDS)==-1) checkerror++;

@@ -1,8 +1,10 @@
 #!/bin/bash
 
-for i in * ; do
-	if [ ! -d "$i" ]; then
-		fromdos < $i > ${i}.dos
-		mv ${i}.dos ${i}
-	fi
-done
+if [ -x /usr/bin/fromdos ]; then
+	for i in * ; do
+		if [ ! -d "$i" ]; then
+			fromdos < $i > ${i}.dos
+			mv ${i}.dos ${i}
+		fi
+	done
+fi

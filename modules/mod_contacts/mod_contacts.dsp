@@ -70,5 +70,9 @@ SOURCE=.\mod_contacts_db.c
 
 SOURCE=.\mod_contacts_main.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\mod_contacts_vcard.c
+# End Source File
 # End Target
 # End Project

@@ -15,176 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
-#include <stdarg.h>
-
-void xmlrpc_addmember(CONN *sid, char *name, char *type, const char *format, ...)
-{
-	char value[1024];
-	char timebuf[20];
-	va_list ap;
-	time_t t;
-
-	memset(value, 0, sizeof(value));
-	va_start(ap, format);
-	vsnprintf(value, sizeof(value)-1, format, ap);
-	va_end(ap);
-	if (strncasecmp(type, "dateTime", 8)==0) type="dateTime.iso8601";
-	prints(sid, "<member><name>%s</name><value><%s>", name, type);
-	if (strcasecmp("dateTime.iso8601", type)==0) {
-		t=atoi(value);
-		strftime(timebuf, sizeof(timebuf)-1, "%Y%m%dT%H:%M:%S", gmtime(&t));
-		prints(sid, "%s", timebuf);
-	} else {
-		prints(sid, "%s", str2html(sid, value));
-	}
-	prints(sid, "</%s></value></member>\r\n", type);
-	return;
-}
-
-void xmlrpc_fault(CONN *sid, int faultid, char *fault)
-{
-	prints(sid, "<?xml version=\"1.0\"?>\r\n");
-	prints(sid, "<methodResponse>\r\n<fault>\r\n");
-	prints(sid, "<value>\r\n<struct>\r\n");
-	xmlrpc_addmember(sid, "faultCode",   "int",    "%d", faultid);
-	xmlrpc_addmember(sid, "faultString", "string", "%s", fault);
-	prints(sid, "</struct>\r\n</value>\r\n");
-	prints(sid, "</fault>\r\n</methodResponse>\r\n");
-	return;
-}
-
-int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
-{
-	char cpassword[64];
-	char salt[10];
-	int contactid;
-	int sqr;
-
-	if ((strlen(sid->dat->user_username)==0)||(strlen(password)==0)) return -1;
-	if ((sqr=sql_queryf(sid, "SELECT contactid, password FROM gw_contacts WHERE username = '%s' and enabled > 0", username))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
-		return -1;
-	}
-	contactid=atoi(sql_getvalue(sqr, 0, 0));
-	strncpy(cpassword, sql_getvalue(sqr, 0, 1), sizeof(cpassword)-1);
-	sql_freeresult(sqr);
-	memset(salt, 0, sizeof(salt));
-	if (strncmp(cpassword, "$1$", 3)==0) {
-		salt[0]=cpassword[3];
-		salt[1]=cpassword[4];
-		salt[2]=cpassword[5];
-		salt[3]=cpassword[6];
-		salt[4]=cpassword[7];
-		salt[5]=cpassword[8];
-		salt[6]=cpassword[9];
-		salt[7]=cpassword[10];
-		if (strcmp(cpassword, md5_crypt(sid, password, salt))!=0) return -1;
-	} else {
-		return -1;
-	}
-	return contactid;
-}
-
-int xmlrpc_auth_login(CONN *sid)
-{
-	MD5_CTX c;
-	unsigned char md[MD5_SIZE];
-	char timebuffer[100];
-	char username[64];
-	char password[64];
-	char raddress[64];
-	char token[64];
-	int contactid;
-	int i;
-	int sqr;
-
-	if (getxmlparam(sid, 3, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-		xmlrpc_fault(sid, -1, "Missing username");
-		return -1;
-	} else if (getxmlparam(sid, 4, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-		xmlrpc_fault(sid, -1, "Missing password");
-		return -1;
-	} else if (getxmlparam(sid, 5, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-		xmlrpc_fault(sid, -1, "Missing loginip");
-		return -1;
-	}
-	memset(username, 0, sizeof(username));
-	memset(password, 0, sizeof(password));
-	memset(raddress, 0, sizeof(raddress));
-	if ((getxmlparam(sid, 3, "string")!=NULL)&&(getxmlparam(sid, 4, "string")!=NULL)) {
-		strncpy(username, getxmlparam(sid, 3, "string"), sizeof(username)-1);
-		strncpy(password, getxmlparam(sid, 4, "string"), sizeof(password)-1);
-		strncpy(raddress, getxmlparam(sid, 5, "string"), sizeof(raddress)-1);
-		if (strlen(password)==32) {
-			if ((strlen(username)==0)||(strlen(sid->dat->user_token)!=32)) return -1;
-			if ((sqr=sql_queryf(sid, "SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s'", username))<0) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Authentication failure");
-				return -1;
-			}
-			if (sql_numtuples(sqr)!=1) {
-				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Authentication failure");
-				return -1;
-			}
-			if (strcmp(raddress, sql_getvalue(sqr, 0, 0))!=0) {
-				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Authentication failure");
-				return -1;
-			}
-			if (strcmp(password, sql_getvalue(sqr, 0, 1))!=0) {
-				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Authentication failure");
-				return -1;
-			}
-			contactid=atoi(sql_getvalue(sqr, 0, 2));
-			sql_freeresult(sqr);
-			memset(password, 0, sizeof(password));
-			return contactid;
-		} else {
-			if ((contactid=xmlrpc_auth_checkpass(sid, username, password))<1) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Authentication failure");
-				return -1;
-			}
-			snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, time(NULL)));
-			md5_init(&c);
-			md5_update(&c, username, strlen(username));
-			md5_update(&c, timebuffer, strlen(timebuffer));
-			md5_final(&(md[0]),&c);
-			memset(token, 0, sizeof(token));
-			for (i=0;i<MD5_SIZE;i++) strncatf(token, sizeof(token)-strlen(token)-1, "%02x", md[i]);
-			sql_updatef(sid, "UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", raddress, timebuffer, token, username);
-			memset(password, 0, sizeof(password));
-			return contactid;
-		}
-	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-	xmlrpc_fault(sid, -1, "Authentication failure");
-	return -1;
-}
-/*
-void xmlrpc_auth_logout(CONN *sid)
-{
-	time_t t;
-	char timebuffer[100];
-
-	sql_updatef(sid, "UPDATE gw_contacts SET logintoken='NULL' WHERE username = '%s'", sid->dat->user_username);
-	t=time(NULL)+604800;
-	strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-	snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s; expires=%s; path=/", sid->dat->user_username, timebuffer);
-	snprintf(sid->dat->out_SetCookiePass, sizeof(sid->dat->out_SetCookiePass)-1, "gwtoken=NULL; path=/");
-	printlogout(sid);
-}
-*/
+#include "mod_substub.h"
+#include "mod_xmlrpc.h"
 
 void xmlrpc_contactread(CONN *sid, int contactid)
 {
@@ -249,6 +81,78 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 	xmlrpc_addmember(sid, "workpostalcode", "string",   "%s", contact.workpostalcode);
 	prints(sid, "</struct>\r\n</value>\r\n");
 	prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
+	return;
+}
+
+void xmlrpc_contactlist(CONN *sid)
+{
+	int i;
+	int sqr;
+
+	send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
+		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		return;
+	}
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
+		sqr=sql_queryf(sid, "SELECT * from gw_contacts ORDER BY contactid ASC");
+	} else {
+		sqr=sql_queryf(sid, "SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
+	}
+	if (sqr<0) {
+		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		return;
+	}
+	prints(sid, "<?xml version=\"1.0\"?>\r\n");
+	prints(sid, "<methodResponse>\r\n<params>\r\n<param>\r\n");
+	prints(sid, "<value>\r\n<array>\r\n<data>\r\n");
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		prints(sid, "<value>\r\n<struct>\r\n");
+		xmlrpc_addmember(sid, "contactid",      "int",      "%d", atoi(sql_getvalue(sqr, i, 0)));
+		xmlrpc_addmember(sid, "obj_ctime",      "dateTime", "%d", time_sql2unix(sql_getvalue(sqr, i, 1)));
+		xmlrpc_addmember(sid, "obj_mtime",      "dateTime", "%d", time_sql2unix(sql_getvalue(sqr, i, 2)));
+		xmlrpc_addmember(sid, "obj_uid",        "int",      "%d", atoi(sql_getvalue(sqr, i, 3)));
+		xmlrpc_addmember(sid, "obj_gid",        "int",      "%d", atoi(sql_getvalue(sqr, i, 4)));
+		xmlrpc_addmember(sid, "obj_did",        "int",      "%d", atoi(sql_getvalue(sqr, i, 5)));
+		xmlrpc_addmember(sid, "obj_gperm",      "int",      "%d", atoi(sql_getvalue(sqr, i, 6)));
+		xmlrpc_addmember(sid, "obj_operm",      "int",      "%d", atoi(sql_getvalue(sqr, i, 7)));
+		xmlrpc_addmember(sid, "loginip",        "string",   "%s", sql_getvalue(sqr, i, 8));
+		xmlrpc_addmember(sid, "logintime",      "dateTime", "%d", time_sql2unix(sql_getvalue(sqr, i, 9)));
+		xmlrpc_addmember(sid, "logintoken",     "string",   "%s", sql_getvalue(sqr, i, 10));
+		xmlrpc_addmember(sid, "username",       "string",   "%s", sql_getvalue(sqr, i, 11));
+		xmlrpc_addmember(sid, "password",       "string",   "%s", sql_getvalue(sqr, i, 12));
+		xmlrpc_addmember(sid, "enabled",        "int",      "%d", atoi(sql_getvalue(sqr, i, 13)));
+		xmlrpc_addmember(sid, "geozone",        "int",      "%d", atoi(sql_getvalue(sqr, i, 14)));
+		xmlrpc_addmember(sid, "timezone",       "int",      "%d", atoi(sql_getvalue(sqr, i, 15)));
+		xmlrpc_addmember(sid, "surname",        "string",   "%s", sql_getvalue(sqr, i, 16));
+		xmlrpc_addmember(sid, "givenname",      "string",   "%s", sql_getvalue(sqr, i, 17));
+		xmlrpc_addmember(sid, "salutation",     "string",   "%s", sql_getvalue(sqr, i, 18));
+		xmlrpc_addmember(sid, "contacttype",    "string",   "%s", sql_getvalue(sqr, i, 19));
+		xmlrpc_addmember(sid, "referredby",     "string",   "%s", sql_getvalue(sqr, i, 20));
+		xmlrpc_addmember(sid, "altcontact",     "string",   "%s", sql_getvalue(sqr, i, 21));
+		xmlrpc_addmember(sid, "prefbilling",    "string",   "%s", sql_getvalue(sqr, i, 22));
+		xmlrpc_addmember(sid, "email",          "string",   "%s", sql_getvalue(sqr, i, 23));
+		xmlrpc_addmember(sid, "homenumber",     "string",   "%s", sql_getvalue(sqr, i, 24));
+		xmlrpc_addmember(sid, "worknumber",     "string",   "%s", sql_getvalue(sqr, i, 25));
+		xmlrpc_addmember(sid, "faxnumber",      "string",   "%s", sql_getvalue(sqr, i, 26));
+		xmlrpc_addmember(sid, "mobilenumber",   "string",   "%s", sql_getvalue(sqr, i, 27));
+		xmlrpc_addmember(sid, "jobtitle",       "string",   "%s", sql_getvalue(sqr, i, 28));
+		xmlrpc_addmember(sid, "organization",   "string",   "%s", sql_getvalue(sqr, i, 29));
+		xmlrpc_addmember(sid, "homeaddress",    "string",   "%s", sql_getvalue(sqr, i, 30));
+		xmlrpc_addmember(sid, "homelocality",   "string",   "%s", sql_getvalue(sqr, i, 31));
+		xmlrpc_addmember(sid, "homeregion",     "string",   "%s", sql_getvalue(sqr, i, 32));
+		xmlrpc_addmember(sid, "homecountry",    "string",   "%s", sql_getvalue(sqr, i, 33));
+		xmlrpc_addmember(sid, "homepostalcode", "string",   "%s", sql_getvalue(sqr, i, 34));
+		xmlrpc_addmember(sid, "workaddress",    "string",   "%s", sql_getvalue(sqr, i, 35));
+		xmlrpc_addmember(sid, "worklocality",   "string",   "%s", sql_getvalue(sqr, i, 36));
+		xmlrpc_addmember(sid, "workregion",     "string",   "%s", sql_getvalue(sqr, i, 37));
+		xmlrpc_addmember(sid, "workcountry",    "string",   "%s", sql_getvalue(sqr, i, 38));
+		xmlrpc_addmember(sid, "workpostalcode", "string",   "%s", sql_getvalue(sqr, i, 39));
+		prints(sid, "</struct>\r\n</value>\r\n");
+	}
+	prints(sid, "</data>\r\n</array>\r\n</value>\r\n");
+	prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
+	sql_freeresult(sqr);
 	return;
 }
 
@@ -352,71 +256,4 @@ void xmlrpc_contactwrite(CONN *sid)
 	}
 	xmlrpc_contactread(sid, contact.contactid);
 	return;
-}
-
-void mod_main(CONN *sid)
-{
-	char methodname[40];
-	char *ptemp;
-	int index;
-
-	DEBUG_IN(sid, "xmlrpc_main()");
-	if (auth_setcookie(sid)!=0) {
-		send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
-		xmlrpc_fault(sid, -1, "Authentication failure");
-		return;
-	}
-	if ((ptemp=getxmlenv(sid, "methodName"))==NULL) {
-		if (strncmp(sid->dat->in_RequestURI, "/xml-rpc/contacts/read", 22)==0) {
-			if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) {
-				xmlrpc_fault(sid, -1, "Missing contactid");
-			}
-			index=atoi(ptemp);
-			xmlrpc_contactread(sid, index);
-		} else if (strncmp(sid->dat->in_RequestURI, "/xml-rpc/contacts/write", 23)==0) {
-			xmlrpc_contactwrite(sid);
-		} else {
-			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-			htpage_topmenu(sid, MENU_XMLRPC);
-			prints(sid, "<BR>\r\n");
-			prints(sid, "</BODY>\r\n</HTML>\r\n");
-		}
-		DEBUG_OUT(sid, "xmlrpc_main()");
-		return;
-	} else {
-		memset(methodname, 0, sizeof(methodname));
-		snprintf(methodname, sizeof(methodname)-1, "%s", ptemp);
-		if (strncmp(methodname, "contacts.read", 13)==0) {
-			if ((ptemp=getxmlparam(sid, 3, "int"))==NULL) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-				xmlrpc_fault(sid, -1, "Missing contactid");
-				DEBUG_OUT(sid, "xmlrpc_main()");
-				return;
-			}
-			index=atoi(ptemp);
-			xmlrpc_contactread(sid, index);
-		} else if (strncmp(methodname, "contacts.login", 14)==0) {
-			if ((index=xmlrpc_auth_login(sid))>0) {
-				xmlrpc_contactread(sid, index);
-			}
-		} else if (strncmp(methodname, "contacts.write", 14)==0) {
-			xmlrpc_contactwrite(sid);
-		} else {
-			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-			xmlrpc_fault(sid, -1, "Invalid methodName");
-		}
-	}
-	DEBUG_OUT(sid, "xmlrpc_main()");
-	return;
-}
-
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
-{
-	proc=_proc;
-	config=&proc->config;
-	functions=_functions;
-	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_xmlrpc", "", "", "mod_main", "/xml-rpc/", mod_main)!=0) return -1;
-//	if (mod_export_function("mod_xmlrpc", "mod_main", mod_main)!=0) return -1;
-	return 0;
 }

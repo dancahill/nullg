@@ -38,6 +38,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_admin_main.obj"
 	-@erase "$(INTDIR)\mod_admin_syscheck.obj"
 	-@erase "$(INTDIR)\mod_admin_users.obj"
+	-@erase "$(INTDIR)\mod_admin_zones.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_admin.exp"
 	-@erase "..\..\distrib\lib\mod_admin.dll"
@@ -96,7 +97,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_admin_logs.obj" \
 	"$(INTDIR)\mod_admin_main.obj" \
 	"$(INTDIR)\mod_admin_syscheck.obj" \
-	"$(INTDIR)\mod_admin_users.obj"
+	"$(INTDIR)\mod_admin_users.obj" \
+	"$(INTDIR)\mod_admin_zones.obj"
 
 "..\..\distrib\lib\mod_admin.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -138,6 +140,11 @@ SOURCE=.\mod_admin_syscheck.c
 SOURCE=.\mod_admin_users.c
 
 "$(INTDIR)\mod_admin_users.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_admin_zones.c
+
+"$(INTDIR)\mod_admin_zones.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

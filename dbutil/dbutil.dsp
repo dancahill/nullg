@@ -47,7 +47,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /libpath:"../win/lib"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386
 # SUBTRACT LINK32 /map
 # Begin Target
 
@@ -66,11 +66,19 @@ SOURCE=.\md5.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\mdb.c
+SOURCE=.\sql.c
+# End Source File
+
+
+# Begin Source File
+
+SOURCE=..\win32\icons\dbutil.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\sql.c
+SOURCE=.\dbutil.rc
 # End Source File
+
+
 # End Target
 # End Project

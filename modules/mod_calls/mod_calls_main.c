@@ -320,24 +320,26 @@ void callview(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	prints(sid, "<BR>\r\n");
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, call.callname));
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, call.callname));
 	if (auth_priv(sid, "calls")&A_MODIFY) {
-		if ((call.assignedby==sid->dat->user_uid)||(call.assignedto==sid->dat->user_uid)||(call.obj_uid==sid->dat->user_uid)||((call.obj_gid==sid->dat->user_gid)&&(call.obj_gperm>=2))||(call.obj_operm>=2)) {
+		if (auth_priv(sid, "calls")&A_ADMIN) {
+			prints(sid, " [<A HREF=%s/calls/edit?callid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
+		} else if ((call.assignedby==sid->dat->user_uid)||(call.assignedto==sid->dat->user_uid)||(call.obj_uid==sid->dat->user_uid)||((call.obj_gid==sid->dat->user_gid)&&(call.obj_gperm>=2))||(call.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/calls/edit?callid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
 		}
 	}
 	prints(sid, "</FONT></TH></TR>\n");
 	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) return;
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned By </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%><NOBR>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedby) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</NOBR></TD>\n");
-	prints(sid, "<TD BGCOLOR=%s NOWRAP><B>Call Date       </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, call.callstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned To </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Call Date       </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, call.callstart));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -345,15 +347,15 @@ void callview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD>\n");
 	sql_freeresult(sqr);
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Call Start  </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Contact Name</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, sid->dat->in_ScriptName, call.contactid, contactname);
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Call Finish </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callfinish));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Action      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_callaction(sid, call.action));
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP><B>Status      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, call.status));
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, call.details));
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Call Start  </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callstart));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Contact Name</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, sid->dat->in_ScriptName, call.contactid, contactname);
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Call Finish </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callfinish));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Action      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_callaction(sid, call.action));
+	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, call.status));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, call.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=calls&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "calls", call.callid, 4);
@@ -416,15 +418,15 @@ void calllist(CONN *sid)
 	}
 	if (total>0) {
 		prints(sid, "Found %d matching calls<BR>\n", total);
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Call ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Contact&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT><FONT COLOR=%s>&nbsp;Duration&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Call ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Duration&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		if (status==2) {
-			prints(sid, "<TH ALIGN=LEFT><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TH>", config->colour_thtext);
+			prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TH>", config->colour_thtext);
 		}
 		prints(sid, "</TR>\n");
 		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 			if (atoi(sql_getvalue(sqr1, i, 6))!=userid) continue;
-			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP style=\"cursor:hand\" ", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' ", config->colour_fieldval);
 			if ((userid==sid->dat->user_uid)&&(atoi(sql_getvalue(sqr1, i, 5))==0)) {
 				prints(sid, "onClick=\"window.location.href='%s/calls/edit?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 				prints(sid, "&nbsp;<A HREF=%s/calls/edit?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
@@ -432,28 +434,28 @@ void calllist(CONN *sid)
 				prints(sid, "onClick=\"window.location.href='%s/calls/view?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 				prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=100%%>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(sqr1, i, 1))));
+			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(sqr1, i, 1))));
 			for (j=0;j<sql_numtuples(sqr2);j++) {
 				if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 2))) {
-					prints(sid, "<TD NOWRAP><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
 					if (strlen(sql_getvalue(sqr2, j, 1))&&strlen(sql_getvalue(sqr2, j, 2))) prints(sid, ", ");
 					prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr2, j, 2)));
 					break;
 				}
 			}
 			if (j==sql_numtuples(sqr2)) {
-				prints(sid, "<TD NOWRAP>&nbsp;</TD>");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			}
 			callstart=time_sql2unix(sql_getvalue(sqr1, i, 3));
 			callstart+=time_tzoffset(sid, callstart);
-			prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_unix2datetext(sid, callstart));
-			prints(sid, "<TD ALIGN=right NOWRAP>%s&nbsp;</TD>", time_unix2timetext(sid, callstart));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, callstart));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2timetext(sid, callstart));
 			duration=time_sql2unix(sql_getvalue(sqr1, i, 4))-time_sql2unix(sql_getvalue(sqr1, i, 3));
 			if (duration<0) duration=0;
 			duration/=60;
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%d Minutes</TD>", duration);
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%d Minutes</TD>", duration);
 			if (status==2) {
-				prints(sid, "<TD NOWRAP>%s</TD>", atoi(sql_getvalue(sqr1, i, 5))==1?"Closed":"Open");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(sqr1, i, 5))==1?"Closed":"Open");
 			}
 			prints(sid, "</TR>\n");
 		}
@@ -608,10 +610,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_calls", "CALLS", "/calls/list", "mod_main", "/calls/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=1;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_calls");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "CALLS");
+	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calls");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/calls/list");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/calls/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

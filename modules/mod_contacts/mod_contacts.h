@@ -18,3 +18,6 @@
 /* mod_contacts_db.c */
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact);
 int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact);
+/* mod_contacts_vcard.c */
+void contacts_vcardexport(CONN *sid);
+void contacts_vcardimport(CONN *sid);

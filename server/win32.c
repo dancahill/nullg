@@ -57,141 +57,100 @@ int winsystem(const char *format, ...)
 	return 0;
 }
 
-BOOL TrayMessage(DWORD dwMessage)
+short installService(void)
 {
-        BOOL res;
-	HICON hIcon;
-	NOTIFYICONDATA tnd;
+	SC_HANDLE scHndl;
+	SC_HANDLE scServ;
+	char cCurDir[256];
 
-	if (iconstatus) {
-		hIcon=LoadImage(proc.hInst, MAKEINTRESOURCE(IDI_ICON2), IMAGE_ICON, 16, 16, 0);
-	} else {
-		hIcon=LoadImage(proc.hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+	memset(cCurDir, 0, sizeof(cCurDir));
+	GetCurrentDirectory(256, cCurDir);
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"groupware.exe":"\\groupware.exe");
+	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	if (scHndl==NULL) {
+		printf("Error in installService-OpenSCManager!\r\n");
+		return 1;
 	}
-	tnd.cbSize		= sizeof(NOTIFYICONDATA);
-	tnd.hWnd		= hDLG;
-	tnd.uID			= 0;
-	tnd.uFlags		= NIF_MESSAGE|NIF_ICON|NIF_TIP;
-	tnd.uCallbackMessage	= MYWM_NOTIFYICON;
-	tnd.hIcon		= hIcon;
-	snprintf(tnd.szTip, sizeof(tnd.szTip)-1, "%s Server", SERVER_NAME);
-	res=Shell_NotifyIcon(dwMessage, &tnd);
-	if (hIcon) {
-		DestroyIcon(hIcon);
+	scServ=CreateService(scHndl,
+		"groupware",
+		"NullLogic Groupware",
+		SERVICE_ALL_ACCESS,
+		SERVICE_WIN32_OWN_PROCESS|SERVICE_INTERACTIVE_PROCESS,
+		SERVICE_AUTO_START,
+		SERVICE_ERROR_NORMAL,
+		cCurDir,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL );
+	if (scServ==NULL) {
+		printf("Error in installService-CreateService !\r\n");
+		CloseHandle(scHndl);
+		return 1;
 	}
-	return res;
+	CloseHandle(scServ);
+	CloseHandle(scHndl);
+	return 0;
 }
 
-void TrayIcon(int newstatus)
+short uninstallService(void)
 {
-	if (iconstatus!=newstatus) {
-		iconstatus=newstatus;
-		TrayMessage(NIM_MODIFY);
+	SC_HANDLE scHndl;
+	SC_HANDLE scServ;
+	DWORD _err = 0;
+
+	// UnInstall the XService from Service Control Manager Database
+	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	if (scHndl==NULL) {
+		printf("Error in uninstallService-OpenSCManager!\r\n");
+		return 1;
 	}
-	return;
-}
-
-BOOL APIENTRY HandlePopupMenu(POINT point)
-{
-	HMENU hMenu;
-	BOOL bRet;
-    
-	hMenu=CreatePopupMenu(); 
-	if (!hMenu) return (FALSE);
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+0, "Help");
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+1, "Configuration");
-	bRet=AppendMenu(hMenu, MF_SEPARATOR, 0, "");
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+2, "Start Client");
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+3, "Restart Server");
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+4, "Shutdown Server");
-	if (!bRet) {
-		DestroyMenu(hMenu);
-		return (FALSE);
-	}
-	SetForegroundWindow(hDLG);
-	TrackPopupMenu(hMenu, TPM_LEFTBUTTON|TPM_RIGHTBUTTON, point.x, point.y, 0, hDLG, NULL);
-	PostMessage(hDLG, WM_USER, 0, 0);
-	return (FALSE);
-}
-
-/****************************************************************************
- *	NullDlgProc()
- *
- *	Purpose	: Message loop to handle tray icon and form messages
- *	Args	: Nothing of consequence
- *	Returns	: Nothing of consequence
- *	Notes	: None
- ***************************************************************************/
-BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	char commandline[128];
-	UINT nNewMode;
-	POINT point;
-
-	hDLG=hDlg;
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TrayMessage(NIM_ADD);
-		break;
-	case WM_COMMAND:
-		nNewMode=GET_WM_COMMAND_ID(wParam, lParam)-(MYWM_NOTIFYICON+10);
-		switch (nNewMode) {
-		case 0:
-			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/%s/help/index.html", proc.config.server_port, SERVER_BASENAME);
-			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/%s/help/index.html", proc.config.server_hostname, proc.config.server_port, SERVER_BASENAME);
-			}
-			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
-			break;
-		case 1:
-			winsystem(".\\config.exe");
-			break;
-		case 2:
-			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", proc.config.server_port);
-			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", proc.config.server_hostname, proc.config.server_port);
-			}
-			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
-			break;
-		case 3:
-			server_restart();
-			break;
-		case 4:
-			PostMessage(hDLG, WM_CLOSE, 0, 0);
-			break;
+	scServ=OpenService(scHndl, "groupware", SERVICE_ALL_ACCESS);
+	_err=GetLastError();
+	if (scServ==NULL) {
+		if (_err==ERROR_SERVICE_DOES_NOT_EXIST) {
+			CloseHandle(scServ);
+			CloseHandle(scHndl);
 		}
-	case MYWM_NOTIFYICON:
-		switch (lParam) {
-		case WM_LBUTTONDOWN:
-			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", proc.config.server_port);
-			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", proc.config.server_hostname, proc.config.server_port);
-			}
-			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
-			break;
-		case WM_RBUTTONDOWN:
-			GetCursorPos(&point);
-			HandlePopupMenu(point);
-			break;
-		default:
-			break;
-		}
-		break;
-	case WM_CLOSE:
-	case WM_QUIT:
-	case WM_DESTROY:
-		sql_disconnect(NULL);
-		TrayMessage(NIM_DELETE);
-		EndDialog(hDLG, TRUE);
-		server_shutdown();
-		break;
-	default:
-		return(FALSE);
+		return 1;
 	}
-	return(TRUE);
+	if (!DeleteService(scServ)) {
+		printf("Error in uninstallService-DeleteService !\r\n");
+		return 1;
+	}
+	CloseHandle(scServ);
+	CloseHandle(scHndl);
+	printf("groupware was uninstalled sucessfully.\r\n");
+	return 0;
+}
+
+short isServiceInstalled(void)
+{
+	SC_HANDLE scHndl;
+	SC_HANDLE scServ;
+	DWORD _err = 0;
+
+	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	if (scHndl==NULL) {
+		printf("Error in isServiceInstalled-OpenSCManager!\r\n");
+		exit(-1);
+	}
+	scServ=OpenService(scHndl, "groupware", SERVICE_ALL_ACCESS);
+	_err=GetLastError();
+	if (scServ==NULL) {
+		if (_err==ERROR_SERVICE_DOES_NOT_EXIST) {
+			CloseHandle(scServ);
+			CloseHandle(scHndl);
+			return 0;
+		} else {
+			printf("Error in isServiceInstalled-OpenService !\r\n");
+			exit(-1);
+		}
+	}
+	CloseHandle(scServ);
+	CloseHandle(scHndl);
+	return 1;
 }
 
 unsigned sleep(unsigned seconds)

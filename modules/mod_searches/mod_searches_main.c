@@ -27,7 +27,7 @@ void searchform(CONN *sid)
 	prints(sid, "function startSearch()\n");
 	prints(sid, "{\n");
 	prints(sid, "	searchString = document.searchForm.searchText.value;\n");
-	prints(sid, "	if(searchString != '') {\n");
+	prints(sid, "	if (searchString!='') {\n");
 	prints(sid, "		searchEngine = document.searchForm.whichEngine.selectedIndex + 1;\n");
 	prints(sid, "		finalSearchString = '';\n");
 	prints(sid, "		if(searchEngine == 1)\n");
@@ -95,7 +95,7 @@ void searchform(CONN *sid)
 	prints(sid, "<OPTION>Yahoo!\n");
 	prints(sid, "</SELECT></TD>\n");
 	prints(sid, "<TD><INPUT TYPE=TEXT NAME='searchText' SIZE=20></TD>\n");
-	prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Search' ONCLICK='startSearch()'></TD></TR>\n");
+	prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Search'></TD></TR>\n");
 	prints(sid, "</FORM>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
@@ -249,7 +249,7 @@ void searchcontacts(CONN *sid)
 	prints(sid, "	document.links[mailtoLink2].href=output;\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "function MailTo(rcptlist) {\r\n");
-	prints(sid, "	window.open('%s/mail/write?'+rcptlist,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=440');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "	window.open('%s/mail/write?'+rcptlist,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName);
 	prints(sid, "}\r\n");
 	prints(sid, "//--></SCRIPT>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\n");
@@ -258,20 +258,20 @@ void searchcontacts(CONN *sid)
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP WIDTH=150>&nbsp;</TD>\n");
 	prints(sid, "</TR>\n");
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		prints(sid, "<TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
 		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");
 		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 2)));
-		prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
-		prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 4)));
-		prints(sid, "<TD NOWRAP><A HREF=javascript:MsgTo('%s')>%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)), str2html(sid, sql_getvalue(sqr1, i, 5)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 4)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=javascript:MsgTo('%s')>%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)), str2html(sid, sql_getvalue(sqr1, i, 5)));
 		prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", i-offset, sql_getvalue(sqr1, i, 5));
-		prints(sid, "<TD NOWRAP STYLE='padding:0px'><SELECT NAME=option%d onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>", i-offset);
+		prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><SELECT NAME=option%d onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>", i-offset);
 		prints(sid, "<OPTION VALUE=''>");
 		if (strchr(sql_getvalue(sqr1, i, 5), '@')) {
 			prints(sid, "<OPTION VALUE='TO'>TO");
@@ -359,7 +359,7 @@ void searchsqladd(CONN *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", config->colour_editform, str2html(sid, query.queryname));
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><TEXTAREA NAME=query ROWS=3 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
+	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
 	if ((query.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "query")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
@@ -429,18 +429,25 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "<CENTER>\n");
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "Saved queries<BR>\n");
-			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>\n", config->colour_tabletrim, config->colour_th);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>\n", config->colour_th);
 			if (auth_priv(sid, "query")&A_ADMIN) {
-				prints(sid, "<TH ALIGN=LEFT>&nbsp;</TH>");
+				prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 			}
-			prints(sid, "<TH ALIGN=LEFT WIDTH=200 NOWRAP><FONT COLOR=%s>Query Name</FONT></TH></TR>\n", config->colour_thtext);
+			prints(sid, "<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Query Name</FONT></TH></TR>\n", config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 				if (auth_priv(sid, "query")&A_ADMIN) {
-					prints(sid, "<TD NOWRAP><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 				}
-				prints(sid, "<TD NOWRAP><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-				prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+				prints(sid, "%s</A>&nbsp;</TD>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+
+				if (strncasecmp("SELECT", sql_getvalue(sqr, i, 2), 6)==0) {
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%d&format=csv>CSV</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				} else {
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>\n");
+				}
+				prints(sid, "</TR>\n");
 			}
 			prints(sid, "</TABLE>\n");
 		} else {
@@ -503,13 +510,40 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "<CENTER>Unknown SQL query type.</CENTER>\n");
 		return;
 	}
+
+	if ((ptemp=getgetenv(sid, "FORMAT"))!=NULL) {
+		snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=query.csv");
+		send_header(sid, 1, 200, "OK", "1", "application/octet-stream", -1, -1);
+		flushbuffer(sid);
+		for (i=0;i<sql_numfields(sqr);i++) {
+			prints(sid, "\"%s\"", sql_getname(sqr, i));
+			if (i<sql_numfields(sqr)-1) {
+				prints(sid, ",");
+			} else {
+				prints(sid, "\r\n");
+			}
+		}
+		for (i=0;i<sql_numtuples(sqr);i++) {
+			for (j=0;j<sql_numfields(sqr);j++) {
+				prints(sid, "\"%s\"", str2html(sid, sql_getvalue(sqr, i, j)));
+				if (j<sql_numfields(sqr)-1) {
+					prints(sid, ",");
+				} else {
+					prints(sid, "\r\n");
+				}
+			}
+		}
+		sql_freeresult(sqr);
+		return;
+	}
+
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<CENTER>Query [%s] returned no results.</CENTER>\n", query.queryname);
 		sql_freeresult(sqr);
 		return;
 	}
 	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(sqr));
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
 		offset=atoi(ptemp);
@@ -517,13 +551,13 @@ void searchsqlrun(CONN *sid)
 		offset=0;
 	}
 	for (i=0;i<sql_numfields(sqr);i++) {
-		prints(sid, "<TH ALIGN=LEFT><FONT COLOR=%s>%s</FONT></TH>", config->colour_thtext, str2html(sid, sql_getname(sqr, i)));
+		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s</FONT></TH>", config->colour_thtext, str2html(sid, sql_getname(sqr, i)));
 	}
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		for (j=0;j<sql_numfields(sqr);j++)
-			prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, j)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, j)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE></CENTER>\n");
@@ -640,6 +674,10 @@ void searchsqlsave(CONN *sid)
  ***************************************************************************/
 void mod_main(CONN *sid)
 {
+	if ((strncmp(sid->dat->in_RequestURI, "/search/sqlrun", 14)==0)&&(getgetenv(sid, "FORMAT")!=NULL)) {
+		searchsqlrun(sid);
+		return;
+	}
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_SEARCHES);
 	prints(sid, "<BR>\r\n");
@@ -660,10 +698,20 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_searches", "SEARCHES", "/search/", "mod_main", "/search/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	newmod.mod_submenu=2;
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_searches");
+	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "SEARCHES");
+	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/search/");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/search/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case "$1" in
+'build')
+	tar zxf sqlite-2.8.4.tar.gz
+	mkdir -p build
+	cd build
+	if [ ! -r "Makefile" ]; then
+		../sqlite/configure
+	fi
+	make
+	cd ..
+	strip build/.libs/libsqlite.so.0.5.3
+	cp -av build/.libs/libsqlite.so.0.5.3 ../distrib/lib/libsqlite.so
+	;;
+'clean')
+	rm -rf sqlite
+	rm -rf build
+	rm -f libsqlite.so
+	;;
+*)
+	echo "Usage: $0 {build|clean}"
+esac
+exit 0

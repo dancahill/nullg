@@ -88,13 +88,14 @@
 #include "typedefs.h"
 #include "functions.h"
 
-struct {
-	pthread_mutex_t Global;
-	pthread_mutex_t DB_mheader;
-	pthread_mutex_t FileList;
-	pthread_mutex_t SQL;
-} Lock;
-
-_PROC   proc;
-CONN   *conn;
-SQLRES *sqlreply;
+#ifdef MAIN_GLOBALS
+	LOCKS   Lock;
+	_PROC   proc;
+	CONN   *conn;
+	SQLRES *sqlreply;
+#else
+	extern LOCKS   Lock;
+	extern _PROC   proc;
+	extern CONN   *conn;
+	extern SQLRES *sqlreply;
+#endif

@@ -68,6 +68,15 @@ typedef struct {
 	short int dst;
 	char *name;
 } tzentry;
+typedef struct {
+	int lastref;
+	int printed;
+} _btree;
+typedef struct {
+	int id;
+	int depth;
+	int numchildren;
+} _ptree;
 
 /* MD5 */
 #ifdef __alpha
@@ -147,6 +156,8 @@ typedef struct {
 	char in_RequestURI[1024];
 	char in_ScriptName[128];
 	char in_UserAgent[128];
+	char in_CGIPathInfo[128];
+	char in_CGIScriptName[128];
 	// OUTGOING DATA
 	short int out_status;
 	short int out_headdone;
@@ -154,7 +165,7 @@ typedef struct {
 	short int out_flushed;
 	char out_CacheControl[40];
 	char out_Connection[20];
-	char out_ContentDisposition[20];
+	char out_ContentDisposition[64];
 	int  out_ContentLength;
 	char out_ContentType[128];
 	char out_Date[40];
@@ -216,6 +227,7 @@ typedef struct {
 	char server_dir_var_htdocs[255];
 	char server_dir_var_log[255];
 	char server_dir_var_mail[255];
+	char server_dir_var_tmp[255];
 	char server_hostname[64];
 	short int server_port;
 	short int server_loglevel;
@@ -229,6 +241,7 @@ typedef struct {
 	char sql_hostname[64];
 	short int sql_port;
 	short int sql_maxconn;
+	char util_virusscan[255];
 } CONFIG;
 typedef struct {
 	char version[11];
@@ -252,8 +265,10 @@ typedef struct {
 } FUNCTION;
 typedef struct {
 	char mod_name[40];
+	short int mod_submenu;
 	char mod_menuname[40];
 	char mod_menuuri[40];
+	char mod_menuperm[40];
 	char fn_name[40];
 	char fn_uri[40];
 	void *fn_ptr;
@@ -280,6 +295,13 @@ typedef struct {
 	WSADATA wsaData;
 	#endif
 } _PROC;
+
+typedef struct {
+	pthread_mutex_t Global;
+	pthread_mutex_t DB_mheader;
+	pthread_mutex_t FileList;
+	pthread_mutex_t SQL;
+} LOCKS;
 
 typedef	int  (*MOD_INIT)(_PROC *, FUNCTION *);
 typedef	void (*MOD_MAIN)(CONN *);

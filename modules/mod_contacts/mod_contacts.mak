@@ -33,6 +33,7 @@ ALL : "..\..\distrib\lib\mod_contacts.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_contacts_db.obj"
 	-@erase "$(INTDIR)\mod_contacts_main.obj"
+	-@erase "$(INTDIR)\mod_contacts_vcard.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_contacts.exp"
 	-@erase "$(OUTDIR)\mod_contacts.lib"
@@ -87,7 +88,8 @@ DEF_FILE= \
 	".\mod_contacts.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_contacts_db.obj" \
-	"$(INTDIR)\mod_contacts_main.obj"
+	"$(INTDIR)\mod_contacts_main.obj" \
+	"$(INTDIR)\mod_contacts_vcard.obj"
 
 "..\..\distrib\lib\mod_contacts.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -104,6 +106,11 @@ SOURCE=.\mod_contacts_db.c
 SOURCE=.\mod_contacts_main.c
 
 "$(INTDIR)\mod_contacts_main.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_contacts_vcard.c
+
+"$(INTDIR)\mod_contacts_vcard.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

@@ -22,7 +22,12 @@ void adminuseredit(CONN *sid, REC_USER *user)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_USER userrec;
+	char maddr[250];
+	char *ptemp;
 	int userid;
+	int tz1;
+	int tz2;
+	time_t t;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -42,195 +47,97 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		}
 		user=&userrec;
 	}
+	tz1=time_tzoffset(sid, time(NULL));
+	tz2=time_tzoffset2(sid, time(NULL), user->userid);
+	if (user->userid<1) tz2=tz1;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
+	htscript_showpage(sid, 6);
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
+	if (user->userid!=0) {
+		prints(sid, "<B>User %d</B>\n", user->userid);
+	} else {
+		prints(sid, "<B>New User</B>\n");
+	}
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/usersave NAME=useredit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", user->userid);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>ACCOUNT INFORMATION - ", config->colour_th, config->colour_thtext);
-	if (user->userid!=0) {
-		prints(sid, "User %d</FONT></TH></TR>\n", user->userid);
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(2)>USER</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(3)>NAME</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(4)>ADDRESS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(5)>PREFERENCES</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(6)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	prints(sid, "%s%s", str2html(sid, user->givenname), strlen(user->givenname)?" ":"");
+	prints(sid, "%s%s", str2html(sid, user->surname), strlen(user->surname)?" ":"");
+	prints(sid, " (%s)", str2html(sid, user->username));
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	if (strlen(user->email)==0) {
+		prints(sid, "&nbsp;</TD></TR>\n");
+	} else if (sid->dat->user_maildefault==0) {
+		prints(sid, "<A HREF=\"mailto:%s\">%s</A>&nbsp;</TD></TR>\n", user->email, str2html(sid, user->email));
 	} else {
-		prints(sid, "New User</FONT></TH></TR>\n");
+		if (sid->dat->user_menustyle>0) {
+			prints(sid, "<A HREF=\"javascript:MsgTo('");
+			prints(sid, "&quot;%s%s%s&quot;", str2html(sid, user->givenname), strlen(user->givenname)?" ":"", str2html(sid, user->surname));
+			prints(sid, " <%s>')\">%s</A>&nbsp;</TD></TR>\n", user->email, str2html(sid, user->email));
+		} else {
+			prints(sid, "<A HREF=\"mailwrite?to=%s\">%s</A>&nbsp;</TD></TR>\n", user->email, str2html(sid, user->email));
+		}
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=left VALIGN=top>\n<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Username&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username VALUE=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->username));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password VALUE=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->password));
-	prints(sid, "</TABLE>\n</TD><TD ALIGN=center VALIGN=top><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:182px'>\n", config->colour_editform);
+	memset(maddr, 0, sizeof(maddr));
+	if (strlen(user->address)&&strlen(user->locality)&&strlen(user->region)&&strlen(user->country)) {
+		snprintf(maddr, sizeof(maddr)-1, "http://www.mapquest.com/maps/map.adp?country=%s&address=%s&city=%s&state=%s", user->country, user->address, user->locality, user->region);
+	}
+	ptemp=maddr;
+	while (*ptemp!=0) {
+		if (*ptemp==' ') *ptemp='+';
+		ptemp++;
+	}
+	if (strlen(maddr)) {
+		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, maddr);
+	}
+	if (tz1!=tz2) {
+		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\n", config->colour_editform);
+	}
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Username&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->username));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->password));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n", config->colour_editform);
 	htselect_group(sid, user->groupid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:182px'%s>\n", config->colour_editform, user->userid==1?" DISABLED":"");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", config->colour_editform, user->userid==1?" DISABLED":"");
 	if ((user->userid==1)||(user->enabled)) {
 		prints(sid, "<OPTION VALUE=0>No\n<OPTION VALUE=1 SELECTED>Yes\n");
 	} else {
 		prints(sid, "<OPTION VALUE=0 SELECTED>No\n<OPTION VALUE=1>Yes\n");
 	}
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>PERMISSIONS</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=left VALIGN=top>\n<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Administration&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	if (user->userid==1) {
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' CHECKED DISABLED></TD>");
-	} else {
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' %s></TD>", (user->authadmin&A_ADMIN)?"checked":"");
-	}
-	prints(sid, "</TR>\n");
-	if (module_exists(sid, "mod_bookmarks")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_i VALUE='1' %s></TD>", (user->authbookmarks&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_d VALUE='1' %s></TD>", (user->authbookmarks&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_a VALUE='1' %s></TD>", (user->authbookmarks&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_calendar")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_i VALUE='1' %s></TD>", (user->authcalendar&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_d VALUE='1' %s></TD>", (user->authcalendar&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_a VALUE='1' %s></TD>", (user->authcalendar&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_calls")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_i VALUE='1' %s></TD>", (user->authcalls&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_d VALUE='1' %s></TD>", (user->authcalls&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_a VALUE='1' %s></TD>", (user->authcalls&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_contacts")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_i VALUE='1' %s></TD>", (user->authcontacts&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_d VALUE='1' %s></TD>", (user->authcontacts&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_a VALUE='1' %s></TD>", (user->authcontacts&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_mail")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_i VALUE='1' %s></TD>", (user->authwebmail&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_d VALUE='1' %s></TD>", (user->authwebmail&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "</TR>\n");
-	}
-	prints(sid, "</TABLE>\n</TD><TD ALIGN=center VALIGN=top><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
-	if (module_exists(sid, "mod_files")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_i VALUE='1' %s></TD>", (user->authfiles&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_d VALUE='1' %s></TD>", (user->authfiles&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_a VALUE='1' %s></TD>", (user->authfiles&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_forums")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_i VALUE='1' %s></TD>", (user->authforums&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_a VALUE='1' %s></TD>", (user->authforums&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_messages")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_i VALUE='1' %s></TD>", (user->authmessages&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_d VALUE='1' %s></TD>", (user->authmessages&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_orders")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_i VALUE='1' %s></TD>", (user->authorders&A_INSERT)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_d VALUE='1' %s></TD>", (user->authorders&A_DELETE)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_a VALUE='1' %s></TD>", (user->authorders&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_profile")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "</TR>\n");
-	}
-	if (module_exists(sid, "mod_searches")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_a VALUE='1' %s></TD>", (user->authquery&A_ADMIN)?"checked":"");
-		prints(sid, "</TR>\n");
-	}
-	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>PREFERENCE INFORMATION</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP>\n", config->colour_editform);
-	if (module_exists(sid, "mod_calendar")) {
-		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:182px'>\n", config->colour_editform);
-		htselect_hour(sid, user->prefdaystart);
-		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:182px'>\n", config->colour_editform);
-		htselect_number(sid, user->prefdaylength, 0, 24);
-		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "</TABLE>\n");
-	}
-	prints(sid, "</TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Max Results/Page&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefmaxlist style='width:182px'>\n", config->colour_editform);
-	htselect_number(sid, user->prefmaxlist, 5, 50);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preftimezone style='width:182px'>\n", config->colour_editform);
-	htselect_timezone(sid, user->preftimezone);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:182px'>\n", config->colour_editform);
-	htselect_zone(sid, user->prefgeozone);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE>\n</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>PERSONAL INFORMATION</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP>\n", config->colour_editform);
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Surname&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname        value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->surname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Given Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname   value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->givenname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle     value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->jobtitle));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Division&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=division      value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->division));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Supervisor&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=supervisor  value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->supervisor));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address        value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->address));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;City&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=locality          value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->locality));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Province&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=region        value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->region));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Country&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=country        value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->country));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=postalcode value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->postalcode));
-	prints(sid, "</TABLE></TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber  value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->homenumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber  value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->worknumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;FAX&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber          value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->faxnumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Cell Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=cellnumber  value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->cellnumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Pager&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pagernumber      value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->pagernumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;E-Mail&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email           value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->email));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Surname&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->surname));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Given Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->givenname));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle     value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->jobtitle));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Division&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=division      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->division));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Supervisor&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=supervisor  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->supervisor));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Date of Birth&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=birthdate2>\n");
 	htselect_month(sid, user->birthdate);
@@ -251,14 +158,172 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<SELECT NAME=hiredate3>\n");
 	htselect_year(sid, 1900, user->hiredate);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;S.I.N.&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sin         value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->sin));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Active&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=isactive    value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user->isactive));
-	prints(sid, "</TABLE>\n</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;S.I.N.&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sin         value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->sin));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Active&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=isactive    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->isactive));
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->homenumber));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->worknumber));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;FAX&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->faxnumber));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Cell Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=cellnumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->cellnumber));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Pager&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pagernumber      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->pagernumber));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;E-Mail&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email           value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->email));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->address));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;City&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=locality          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->locality));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Province&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=region        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->region));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Country&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=country        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->country));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=postalcode value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->postalcode));
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	if (module_exists(sid, "mod_calendar")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:255px'>\n", config->colour_editform);
+		htselect_hour(sid, user->prefdaystart);
+		prints(sid, "</SELECT></TD></TR>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:255px'>\n", config->colour_editform);
+		htselect_number(sid, user->prefdaylength, 0, 24, 1);
+		prints(sid, "</SELECT></TD></TR>\n");
+	}
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Max Results/Page&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefmaxlist style='width:255px'>\n", config->colour_editform);
+	htselect_number(sid, user->prefmaxlist, 5, 200, 5);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preftimezone style='width:255px'>\n", config->colour_editform);
+	htselect_timezone(sid, user->preftimezone);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n", config->colour_editform);
+	htselect_zone(sid, user->prefgeozone);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Administration&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	if (user->userid==1) {
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' CHECKED DISABLED></TD>");
+	} else {
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' %s></TD>", (user->authadmin&A_ADMIN)?"checked":"");
+	}
+	prints(sid, "</TR>\n");
+	if (module_exists(sid, "mod_bookmarks")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_i VALUE='1' %s></TD>", (user->authbookmarks&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_d VALUE='1' %s></TD>", (user->authbookmarks&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_a VALUE='1' %s></TD>", (user->authbookmarks&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_calendar")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_i VALUE='1' %s></TD>", (user->authcalendar&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_d VALUE='1' %s></TD>", (user->authcalendar&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_a VALUE='1' %s></TD>", (user->authcalendar&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_calls")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_i VALUE='1' %s></TD>", (user->authcalls&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_d VALUE='1' %s></TD>", (user->authcalls&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_a VALUE='1' %s></TD>", (user->authcalls&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_contacts")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_i VALUE='1' %s></TD>", (user->authcontacts&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_d VALUE='1' %s></TD>", (user->authcontacts&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_a VALUE='1' %s></TD>", (user->authcontacts&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_mail")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_i VALUE='1' %s></TD>", (user->authwebmail&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_d VALUE='1' %s></TD>", (user->authwebmail&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_files")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_i VALUE='1' %s></TD>", (user->authfiles&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_d VALUE='1' %s></TD>", (user->authfiles&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_a VALUE='1' %s></TD>", (user->authfiles&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_forums")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_i VALUE='1' %s></TD>", (user->authforums&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_a VALUE='1' %s></TD>", (user->authforums&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_messages")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_i VALUE='1' %s></TD>", (user->authmessages&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_d VALUE='1' %s></TD>", (user->authmessages&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_orders")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_i VALUE='1' %s></TD>", (user->authorders&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_d VALUE='1' %s></TD>", (user->authorders&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_a VALUE='1' %s></TD>", (user->authorders&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_profile")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_searches")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authquery_a VALUE='1' %s></TD>", (user->authquery&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR><TD NOWRAP COLSPAN=2>");
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=users&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, user->userid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
-		mod_notes_sublist(sid, "users", user->userid, 2);
+		mod_notes_sublist(sid, "users", user->userid, 1);
+		prints(sid, "</TABLE>\n");
+		prints(sid, "</TD></TR>\n");
 	}
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
@@ -273,7 +338,32 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "[<A HREF=%s/admin/usertimeedit?userid=%d>Edit Availability</A>]\n", sid->dat->in_ScriptName, user->userid);
 	}
 	prints(sid, "</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.useredit.username.focus();\n// -->\n</SCRIPT>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+//	prints(sid, "document.useredit.username.focus();\n");
+	prints(sid, "showpage(1);\n");
+	if (tz1!=tz2) {
+		t=time(NULL);
+		t+=time_tzoffset(sid, t);
+		t+=(tz2-tz1);
+		prints(sid, "var t=%d;\n", t);
+		prints(sid, "var d=new Date();\n");
+		prints(sid, "d.setTime(t*1000);\n");
+		prints(sid, "t+=d.getTimezoneOffset()*60;\n");
+		prints(sid, "function padout(number) { return (number<10)?'0'+number:number; }\n");
+		prints(sid, "function setDuration() {\n");
+		prints(sid, "	d.setTime(t*1000);\n");
+		prints(sid, "	var h=d.getHours();\n");
+		prints(sid, "	var ap='AM';\n");
+		prints(sid, "	if (h>11) ap='PM';\n");
+		prints(sid, "	if (h>12) h-=12;\n");
+		prints(sid, "	if (h<1) h=12;\n");
+		prints(sid, "	document.getElementById('contz').innerHTML=h+':'+padout(d.getMinutes())+':'+padout(d.getSeconds())+' '+ap;\n");
+		prints(sid, "	t++;\n");
+		prints(sid, "	setTimeout(\"setDuration()\", 1000);\n");
+		prints(sid, "}\n");
+		prints(sid, "setDuration();\n");
+	}
+	prints(sid, "// -->\n</SCRIPT>\n");
 	return;
 }
 
@@ -299,37 +389,37 @@ void adminuserlist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
-	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Real Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Group&nbsp;</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Real Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Group&nbsp;</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	if (sql_numtuples(sqr3)>0) {
-		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Zone&nbsp;</FONT></TH>", config->colour_thtext);
+		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Zone&nbsp;</FONT></TH>", config->colour_thtext);
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<sql_numtuples(sqr1);i++) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 1)));
-		prints(sid, "<TD NOWRAP>%s", str2html(sid, sql_getvalue(sqr1, i, 2)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(sqr1, i, 2)));
 		if (strlen(sql_getvalue(sqr1, i, 2))&&strlen(sql_getvalue(sqr1, i, 3))) prints(sid, ", ");
 		prints(sid, "%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
 		for (j=0;j<sql_numtuples(sqr2);j++) {
 			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 4))) {
-				prints(sid, "<TD NOWRAP>%s</TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
 				break;
 			}
 		}
 		if (j==sql_numtuples(sqr2)) {
-			prints(sid, "<TD NOWRAP>&nbsp;</TD>");
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		if (sql_numtuples(sqr3)>0) {
 			for (j=0;j<sql_numtuples(sqr3);j++) {
 				if (atoi(sql_getvalue(sqr3, j, 0))==atoi(sql_getvalue(sqr1, i, 5))) {
-					prints(sid, "<TD NOWRAP>%s</TD>", str2html(sid, sql_getvalue(sqr3, j, 1)));
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr3, j, 1)));
 					break;
 				}
 			}
 			if (j==sql_numtuples(sqr3)) {
-				prints(sid, "<TD NOWRAP>&nbsp;</TD>");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			}
 		}
 		prints(sid, "</TR>\n");
@@ -338,8 +428,8 @@ void adminuserlist(CONN *sid)
 	sql_freeresult(sqr1);
 	sql_freeresult(sqr2);
 	sql_freeresult(sqr3);
-	prints(sid, "<A HREF=%s/admin/usereditnew>New User</A>\n", sid->dat->in_ScriptName);
-	prints(sid, "</CENTER>\n");
+	prints(sid, "<A HREF=%s/admin/usereditnew>New User</A>", sid->dat->in_ScriptName);
+	prints(sid, "</CENTER>");
 	return;
 }
 
@@ -752,7 +842,7 @@ void adminusertimeedit(CONN *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", config->colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/usertimesave NAME=availability>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", user.userid);
 	for (i=0;i<7;i++) {
@@ -761,27 +851,27 @@ void adminusertimeedit(CONN *sid)
 	for (i=0;i<24;i++) {
 		prints(sid, "<input type='hidden' name='t%d' value='true'>\n", i);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25><FONT COLOR=%s>Availability for <A HREF=%s/admin/useredit?userid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, userid, config->colour_thlink, user.username);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Availability for <A HREF=%s/admin/useredit?userid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, userid, config->colour_thlink, user.username);
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
-	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2>&nbsp;</TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>A.M.</B></TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>P.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
-		prints(sid, "<TD ALIGN=CENTER><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
+		prints(sid, "<TD ALIGN=CENTER STYLE='border-style:solid'><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
 		for (j=0;j<24;j++) {
 			if (uavailability[i*24+j]=='X') {
-				prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\n");
+				prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\n");
 			} else {
-				prints(sid, "<TD><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
+				prints(sid, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
 			}
 		}
 		prints(sid, "</TR>\n");

@@ -109,44 +109,44 @@ void profileedit(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/profile/save NAME=profileedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='padding:2px'><FONT COLOR=%s>User Profile for %s</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->user_username);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password             </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password  VALUE=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user.password));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password             </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password  VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user.password));
 	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start       </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-		prints(sid, "<SELECT NAME=prefdaystart style='width:182px'>\n");
+		prints(sid, "<SELECT NAME=prefdaystart style='width:255px'>\n");
 		htselect_hour(sid, user.prefdaystart);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-		prints(sid, "<SELECT NAME=prefdaylength style='width:182px'>\n");
-		htselect_number(sid, user.prefdaylength, 0, 24);
+		prints(sid, "<SELECT NAME=prefdaylength style='width:255px'>\n");
+		htselect_number(sid, user.prefdaylength, 0, 24, 1);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-		prints(sid, "<SELECT NAME=prefgeozone style='width:182px'>\n");
+		prints(sid, "<SELECT NAME=prefgeozone style='width:255px'>\n");
 		htselect_zone(sid, user.prefgeozone);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Current Mail Account </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-		prints(sid, "<SELECT NAME=prefmailcurrent style='width:182px'>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Current Mail Account</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+		prints(sid, "<SELECT NAME=prefmailcurrent style='width:255px'>\n");
 		htselect_mailaccount(sid, user.prefmailcurrent);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Default Mail Account </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefmaildefault style='width:182px'>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Default Mail Account</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<SELECT NAME=prefmaildefault style='width:255px'>\n");
 	prints(sid, "<OPTION VALUE=0%s>External Mail Client\n", user.prefmaildefault!=1?" SELECTED":"");
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		prints(sid, "<OPTION VALUE=1%s>Web E-Mail\n", user.prefmaildefault==1?" SELECTED":"");
 	}
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Maximum Results/Page </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefmaxlist style='width:182px'>\n");
-	htselect_number(sid, user.prefmaxlist, 5, 50);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Maximum Results/Page</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<SELECT NAME=prefmaxlist style='width:255px'>\n");
+	htselect_number(sid, user.prefmaxlist, 5, 200, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Menu and Frame Style </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefmenustyle style='width:182px'>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Menu and Frame Style</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<SELECT NAME=prefmenustyle style='width:255px'>\n");
 	htselect_layout(sid, user.prefmenustyle);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone            </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=preftimezone style='width:182px'>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone           </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<SELECT NAME=preftimezone style='width:255px'>\n");
 	htselect_timezone(sid, user.preftimezone);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
@@ -160,12 +160,12 @@ void profileedit(CONN *sid)
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		if ((sqr=sql_queryf(sid, "SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
-			prints(sid, "<TR BGCOLOR=%s><TH NOWRAP><FONT COLOR=%s>Mail Account Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>E-Mail Address</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Mail Account</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/profile/mailedit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/profile/mailedit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "<A HREF=%s/profile/mailedit?account=%d>%s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
-				prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
+				prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/mail/purge?accountid=%d>purge</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "</TR>\n");
 			}
 			prints(sid, "</TABLE>\n");
@@ -314,7 +314,7 @@ void profilemailedit(CONN *sid)
 	prints(sid, "<OPTION VALUE='2'%s>when deleted from 'Trash'\n", mailacct.remove==2?" SELECTED":"");
 	prints(sid, "</SELECT>\n</TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Signature&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.signature));
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.signature));
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
@@ -512,7 +512,7 @@ void profiletimeedit(CONN *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", proc->config.colour_tabletrim);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/profile/timesave NAME=availability>\n", sid->dat->in_ScriptName);
 	for (i=0;i<7;i++) {
 		prints(sid, "<input type='hidden' name='d%d' value='true'>\n", i);
@@ -520,27 +520,27 @@ void profiletimeedit(CONN *sid)
 	for (i=0;i<24;i++) {
 		prints(sid, "<input type='hidden' name='t%d' value='true'>\n", i);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25><FONT COLOR=%s>Availability for %s</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->user_username);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Availability for %s</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->user_username);
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
-	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2>&nbsp;</TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>A.M.</B></TD>\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12><B>P.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
+	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
-		prints(sid, "<TD ALIGN=CENTER><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
+		prints(sid, "<TD ALIGN=CENTER STYLE='border-style:solid'><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\n", i, j);
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
 		prints(sid, "<TR BGCOLOR=#F0F0F0>\n");
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
 		for (j=0;j<24;j++) {
 			if (uavailability[i*24+j]=='X') {
-				prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\n");
+				prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\n");
 			} else {
-				prints(sid, "<TD><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
+				prints(sid, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
 			}
 		}
 		prints(sid, "</TR>\n");
@@ -622,10 +622,17 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	MODULE_MENU newmod;
+
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	if (mod_export_main("mod_profile", "", "", "mod_main", "/profile/", mod_main)!=0) return -1;
+	memset((char *)&newmod, 0, sizeof(newmod));
+	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_profile");
+	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
+	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/profile/");
+	newmod.fn_ptr=mod_main;
+	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

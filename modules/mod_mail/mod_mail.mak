@@ -33,6 +33,7 @@ ALL : "..\..\distrib\lib\mod_mail.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_mail_addr.obj"
 	-@erase "$(INTDIR)\mod_mail_codec.obj"
+	-@erase "$(INTDIR)\mod_mail_folders.obj"
 	-@erase "$(INTDIR)\mod_mail_html.obj"
 	-@erase "$(INTDIR)\mod_mail_main.obj"
 	-@erase "$(INTDIR)\mod_mail_mime.obj"
@@ -92,6 +93,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_mail_addr.obj" \
 	"$(INTDIR)\mod_mail_codec.obj" \
+	"$(INTDIR)\mod_mail_folders.obj" \
 	"$(INTDIR)\mod_mail_html.obj" \
 	"$(INTDIR)\mod_mail_main.obj" \
 	"$(INTDIR)\mod_mail_mime.obj" \
@@ -112,6 +114,11 @@ SOURCE=.\mod_mail_addr.c
 SOURCE=.\mod_mail_codec.c
 
 "$(INTDIR)\mod_mail_codec.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_folders.c
+
+"$(INTDIR)\mod_mail_folders.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_mail_html.c

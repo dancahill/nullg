@@ -8,7 +8,6 @@
 #define IDM_ABOUT                       102
 #define IDD_TRAYDIALOG                  103
 #define IDI_ICON1                       104
-#define IDI_ICON2                       105
 #define IDD_NULLDIALOG                  115
 #define IDC_COMPANY                     400
 #define IDC_FILEDESC                    401

@@ -187,55 +187,55 @@ void adminactivitylist(CONN *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "Listing %d Log Entries\r\n", sql_numtuples(sqr));
-		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", config->colour_tabletrim);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Log ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;IP Address&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Log ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;IP Address&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
 		if (userid==0) {
-			prints(sid, "<TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Username&nbsp;</FONT></TH>", config->colour_thtext);
+			prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Username&nbsp;</FONT></TH>", config->colour_thtext);
 		}
-		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100%%><FONT COLOR=%s>&nbsp;Record&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Date/Time&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Record&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Date/Time&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/admin/activityview?logid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/activityview?logid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<A HREF=%s/admin/activityview?logid=%d>%d</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<TD ALIGN=LEFT NOWRAP>%s</TD>", sql_getvalue(sqr, i, 3));
+			prints(sid, "<TD ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TD>", sql_getvalue(sqr, i, 3));
 			if (userid==0) {
-				prints(sid, "<TD ALIGN=LEFT NOWRAP>%s</TD>", htview_user(sid, atoi(sql_getvalue(sqr, i, 2))));
+				prints(sid, "<TD ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TD>", htview_user(sid, atoi(sql_getvalue(sqr, i, 2))));
 			}
 			if (strcasecmp(sql_getvalue(sqr, i, 4), "bookmarks")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/edit?bookmarkid=%d>Bookmark</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/edit?bookmarkid=%d>Bookmark</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "bookmarkfolders")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/folderedit?folderid=%d>Bookmark Folder</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>Bookmark Folder</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "calls")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "contacts")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "events")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "files")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/fileinfoedit?fileid=%d>File</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d>File</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "filefolders")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/fileinfoedit?fileid=%d>File Folder</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d>File Folder</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "groups")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/admin/groupedit?groupid=%d>Group</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/groupedit?groupid=%d>Group</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "login")==0) {
-				prints(sid, "<TD NOWRAP>&nbsp;</TD>");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "notes")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "profile")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/admin/useredit?userid=%d>Profile</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 2)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/useredit?userid=%d>Profile</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 2)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "tasks")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "users")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 4), "zones")==0) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/admin/zoneedit?zoneid=%d>Zone</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/zoneedit?zoneid=%d>Zone</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 5)));
 			} else {
-				prints(sid, "<TD NOWRAP>%s&nbsp;</A></TD>", sql_getvalue(sqr, i, 4));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</A></TD>", sql_getvalue(sqr, i, 4));
 			}
-			prints(sid, "<TD ALIGN=LEFT NOWRAP>%s</TD>", sql_getvalue(sqr, i, 6));
+			prints(sid, "<TD ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TD>", sql_getvalue(sqr, i, 6));
 			mdate=time_sql2unix(sql_getvalue(sqr, i, 1));
 			mdate+=time_tzoffset(sid, mdate);
-			prints(sid, "<TD ALIGN=right NOWRAP>%s ", time_unix2datetext(sid, mdate));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s ", time_unix2datetext(sid, mdate));
 			prints(sid, "%s</TD></TR>\n", time_unix2timetext(sid, mdate));
 		}
 		prints(sid, "</TABLE>\n");
@@ -277,15 +277,15 @@ void adminactivityview(CONN *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", logid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=500>\r\n", config->colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Activity Log Entry %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, logid);
+	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Activity Log Entry %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, logid);
 	mdate=time_sql2unix(sql_getvalue(sqr1, 0, 1));
 	mdate+=time_tzoffset(sid, mdate);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Date     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s (%s)</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, mdate), time_unix2datetext(sid, mdate));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>User Name</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_user(sid, atoi(sql_getvalue(sqr1, 0, 2))));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>User IP  </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, sql_getvalue(sqr1, 0, 3));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Date     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s (%s)</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, mdate), time_unix2datetext(sid, mdate));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>User Name</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_user(sid, atoi(sql_getvalue(sqr1, 0, 2))));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>User IP  </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, sql_getvalue(sqr1, 0, 3));
 	if (strcmp(sql_getvalue(sqr1, 0, 4), "calls")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Call</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Call</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr2=sql_queryf(sid, "SELECT callid, callname FROM gw_calls WHERE callid = %d", atoi(sql_getvalue(sqr1, 0, 5))))<0) return;
 		if (sql_numtuples(sqr2)>0) {
 			prints(sid, "<A HREF=%s/calls/view?callid=%d>%s</A>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr2, 0, 0)), str2html(sid, sql_getvalue(sqr2, 0, 1)));
@@ -293,7 +293,7 @@ void adminactivityview(CONN *sid)
 		sql_freeresult(sqr2);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(sql_getvalue(sqr1, 0, 4), "contacts")==0) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Contact</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Contact</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr2=sql_queryf(sid, "SELECT contactid FROM gw_contacts WHERE contactid = %d", atoi(sql_getvalue(sqr1, 0, 5))))<0) return;
 		if (sql_numtuples(sqr2)>0) {
 			prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s</A>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr2, 0, 0)), htview_contact(sid, atoi(sql_getvalue(sqr2, 0, 0))));
@@ -301,9 +301,9 @@ void adminactivityview(CONN *sid)
 		sql_freeresult(sqr2);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Action   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, sql_getvalue(sqr1, 0, 6));
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2>", config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Action   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, sql_getvalue(sqr1, 0, 6));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2 STYLE='border-style:solid'>", config->colour_fieldval);
 	printline2(sid, 1, sql_getvalue(sqr1, 0, 7));
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "</TABLE>\n</CENTER>\n");

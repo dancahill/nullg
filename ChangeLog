@@ -1,3 +1,26 @@
+1.2.3
+-----
+- added support for csv exports from user-defined sql queries
+- added import and export support for vcards
+- added native nt service support
+- changed the layout of contacts to use a new tabbed forms layout
+- minor fixes in css layout for better looking printouts
+- fixed cgi support on nt
+- fixed random segfault in mail syncing (invalid free())
+- fixed messenger history layout
+- fixed odbc date queries
+- fixed postgresql datetime/timestamp schema
+- added sqlite library to build process
+- added contact.list function to xmlrpc
+- wrote client library for xmlrpc contact syncing
+- wrote functional groupware<->outlook sync tool (test)
+- added hierarchical tree support to mail folders
+- fixed mailbox lock releasing with peer disconnects
+- modules can now dynamically add themselves to the main menu
+- fixed broken POST with hosted PHP (missing content-type)
+- fixed missing folders in various tree listings
+- added support for external virus scanner (experimental)
+
 1.2.2
 -----
 - license change - now available under GPL or commercial license

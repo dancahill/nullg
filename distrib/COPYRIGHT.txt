@@ -8,4 +8,4 @@ COPYING.
 
 NullLogic Groupware is also available under commercial non-GPL license.  For
 pricing and ordering information, visit our site at http://www.nulllogic.com/
-or email groupware@nulllogic.com.
+or e-mail groupware@nulllogic.com.

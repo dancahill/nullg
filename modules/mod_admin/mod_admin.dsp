@@ -90,5 +90,9 @@ SOURCE=.\mod_admin_syscheck.c
 
 SOURCE=.\mod_admin_users.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\mod_admin_zones.c
+# End Source File
 # End Target
 # End Project
