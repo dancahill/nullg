@@ -177,7 +177,7 @@ void productsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef("DELETE FROM gw_products WHERE productid = %d", product.productid)<0) return;
+		if (sql_updatef("DELETE FROM gw_products WHERE productid = %d AND obj_did = %d", product.productid, sid->dat->user_did)<0) return;
 		prints(sid, "<CENTER>Product %d deleted successfully</CENTER><BR>\n", product.productid);
 		db_log_activity(sid, 1, "products", product.productid, "delete", "%s - %s deleted product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else if (product.productid==0) {
@@ -216,7 +216,7 @@ void productsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.3f', ", product.tax1);
 		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.3f', ", product.tax2);
 		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, product.details));
-		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE productid = %d", product.productid);
+		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE productid = %d AND obj_did = %d", product.productid, sid->dat->user_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Product %d modified successfully</CENTER><BR>\n", product.productid);
 		db_log_activity(sid, 1, "products", product.productid, "modify", "%s - %s modified product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);

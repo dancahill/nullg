@@ -131,15 +131,6 @@ retry2:
 		} else {
 
 			is_remote=1;
-retry3:
-			gettimeofday(&ttime, &tzone);
-			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/mqueue/%d%03d.msg", config->server_dir_var_spool, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
-			fixslashes(tmpname);
-			if (stat(tmpname, &sb)==0) goto retry3;
-
-			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
-
 /*
 retry3:
 			gettimeofday(&ttime, &tzone);
@@ -147,13 +138,10 @@ retry3:
 			snprintf(tmpname, sizeof(tmpname)-1, "%s/unknown/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry3;
-			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
-
-
-
-			log_error("smtpd", __FILE__, __LINE__, 1, "relaying denied.");
-			continue;
 */
+			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from:'%s', to:'%s'", mconn->from, mconn->rcpt[i]);
+//			log_error("smtpd", __FILE__, __LINE__, 1, "relaying denied.");
+			continue;
 		}
 		if ((fp=fopen(tmpname, "wb"))!=NULL) {
 			if (is_remote) {
@@ -190,7 +178,6 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
-log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		if ((strcmp(line, ".\r\n")==0)||(strcmp(line, ".\n")==0)) break;
 		if ((mconn->msgbodysize+strlen(line)+2)>buf_alloc) {
 			buf_alloc+=131072;
@@ -309,7 +296,6 @@ void smtp_dorequest(CONN *sid)
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
-log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
 			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");
@@ -330,7 +316,6 @@ log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) goto cleanup;
-log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
 			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");

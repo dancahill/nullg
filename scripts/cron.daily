@@ -10,7 +10,7 @@ OLDDATE=`date +%Y-%m-%d -d '7 days ago'`
 mkdir -p ${BASEDIR}/var/backup
 rm -f ${BASEDIR}/var/backup/backup-${OLDDATE}.tgz 
 cd ${BASEDIR}/bin
-${BASEDIR}/bin/dbutil dump ../backup-${CURDATE}
+${BASEDIR}/bin/nullgw-dbutil dump ../backup-${CURDATE}
 cd ${BASEDIR}
 gzip backup-${CURDATE}
 echo -n "Archiving backup tarball..."

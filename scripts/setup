@@ -1,5 +1,4 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.10"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -76,20 +75,20 @@ setup_console() {
 
 setup_dialog() {
 	if [ "`whoami`" != "root" ]; then
-		dialog --backtitle "$MAIN_TITLE" --title "WARNING" --yesno "\nNullLogic Groupware should be installed by root.\n\nDo you want to continue with the installation?" 12 70
+		dialog --yesno "\nNullLogic Groupware should be installed by root.\n\nDo you want to continue with the installation?" 12 70
 		FLAG=$?
 		if [ ! $FLAG = 0 -a ! $FLAG = 1 ]; then
 			exit 1
 		fi
 		if [ $FLAG = 0 ]; then # yes
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --msgbox "\nYou've been warned." 12 70
+			dialog --msgbox "\nYou've been warned." 12 70
 		else
 			clear 2>/dev/null
 			exit
 		fi
 	fi
 	while [ 0 ]; do
-		dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --inputbox "\nInstall to what directory?\n" 10 70 $SERVER_DIR_BASE 2> $TMP/gw_tmpout
+		dialog --inputbox "\nInstall to what directory?\n" 10 70 $SERVER_DIR_BASE 2> $TMP/gw_tmpout
 		if [ $? = 1 -o $? = 255 ]; then
 			rm -f $TMP/tempmsg $TMP/gw_tmpout
 			exit
@@ -100,7 +99,7 @@ setup_dialog() {
 			break;
 		fi
 	done
-	dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --infobox "\nCopying files to $SERVER_DIR_BASE ..." 5 50
+	dialog --infobox "\nCopying files to $SERVER_DIR_BASE ..." 5 50
 	do_copying
 	clear 2>/dev/null
 }
@@ -108,6 +107,10 @@ setup_dialog() {
 rm -f $LOGFILE
 touch $LOGFILE
 if [ -x /bin/dialog ]; then
+	HAVE_DIALOG="yes"
+	dialog --textbox README.txt 21 76
+	setup_dialog
+elif [ -x /usr/bin/dialog ]; then
 	HAVE_DIALOG="yes"
 	dialog --textbox README.txt 21 76
 	setup_dialog
@@ -122,11 +125,11 @@ rm -f $LOGFILE
 
 case "$1" in
 upgrade)
-	cd $SERVER_DIR_BASE/bin ; ./configure upgrade
+	cd $SERVER_DIR_BASE/bin ; ./nullgw-config upgrade
 	;;
 *)
-	cd $SERVER_DIR_BASE/bin ; ./configure
-	echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./configure'."
+	cd $SERVER_DIR_BASE/bin ; ./nullgw-config
+	echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./nullgw-config'."
 	echo
 	echo "To start the server, run 'cd $SERVER_DIR_BASE/bin;./rc.groupware start'."
 	echo

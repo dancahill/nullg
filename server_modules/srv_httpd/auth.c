@@ -243,7 +243,9 @@ int auth_setcookie(CONN *sid)
 		if (result==0) {
 			md5_init(&c);
 			md5_update(&c, sid->dat->user_username, strlen(sid->dat->user_username));
-			md5_update(&c, timebuffer, strlen(timebuffer));
+			if (strcmp(sid->dat->user_username, "guest")!=0) {
+				md5_update(&c, timebuffer, strlen(timebuffer));
+			}
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
@@ -270,7 +272,9 @@ int auth_setcookie(CONN *sid)
 		if (result==0) {
 			md5_init(&c);
 			md5_update(&c, sid->dat->user_username, strlen(sid->dat->user_username));
-			md5_update(&c, timebuffer, strlen(timebuffer));
+			if (strcmp(sid->dat->user_username, "guest")!=0) {
+				md5_update(&c, timebuffer, strlen(timebuffer));
+			}
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
@@ -298,7 +302,9 @@ int auth_setcookie(CONN *sid)
 		if (result==0) {
 			md5_init(&c);
 			md5_update(&c, sid->dat->user_username, strlen(sid->dat->user_username));
-			md5_update(&c, timebuffer, strlen(timebuffer));
+			if (strcmp(sid->dat->user_username, "guest")!=0) {
+				md5_update(&c, timebuffer, strlen(timebuffer));
+			}
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);

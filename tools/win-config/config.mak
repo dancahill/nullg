@@ -24,20 +24,23 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
 OUTDIR=.\..\..\distrib\bin
 INTDIR=.\..\..\obj\config
 # Begin Custom Macros
 OutDir=.\..\..\distrib\bin
 # End Custom Macros
 
-ALL : "$(OUTDIR)\config.exe"
+ALL : "$(OUTDIR)\nullgw-config.exe"
 
 
 CLEAN :
 	-@erase "$(INTDIR)\config.obj"
 	-@erase "$(INTDIR)\config.res"
 	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\config.exe"
+	-@erase "$(OUTDIR)\nullgw-config.exe"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -45,7 +48,21 @@ CLEAN :
 "$(INTDIR)" :
     if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
 
-CPP=cl.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\config.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"$(OUTDIR)\nullgw-config.exe" 
+LINK32_OBJS= \
+	"$(INTDIR)\config.obj" \
+	"$(INTDIR)\config.res"
+
+"$(OUTDIR)\nullgw-config.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
 CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
@@ -78,25 +95,8 @@ CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTD
    $(CPP_PROJ) $< 
 <<
 
-MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\config.res" /d "NDEBUG" 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\config.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"$(OUTDIR)\config.exe" 
-LINK32_OBJS= \
-	"$(INTDIR)\config.obj" \
-	"$(INTDIR)\config.res"
-
-"$(OUTDIR)\config.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
 
 !IF "$(CFG)" == "config - Win32 Release"
 SOURCE=.\config.c

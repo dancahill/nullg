@@ -169,6 +169,21 @@ CREATE TABLE gw_domains (\n\
 	PRIMARY KEY (domainid)\n\
 );"
 
+#define MDB_DOMAINALIASES "\
+CREATE TABLE gw_domainaliases (\n\
+	domainaliasid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	domainid	integer,\n\
+	domainname	varchar(50)	NOT NULL,\n\
+	PRIMARY KEY (domainaliasid)\n\
+);"
+
 #define MDB_EVENTS "\
 CREATE TABLE gw_events (\n\
 	eventid		autoincrement,\n\

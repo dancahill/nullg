@@ -61,12 +61,6 @@ int dump_db(char *filename)
 		printf("\r\nCould not create output file.\r\n");
 		return -1;
 	}
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '1' WHERE folder = 'Inbox'");
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '2' WHERE folder = 'Outbox'");
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '3' WHERE folder = 'Sent Items'");
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '4' WHERE folder = 'Trash')");
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '5' WHERE folder = 'Drafts')");
-	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '6' WHERE folder = 'Saved Items')");
 	if (dump_table(fp, "gw_dbinfo",			"dbversion")<0)		printf("\r\nError dumping gw_dbinfo\r\n");
 	if (dump_table(fp, "gw_users",			"userid")<0) 		printf("\r\nError dumping gw_users\r\n");
 	if (dump_table(fp, "gw_activity",		"activityid")<0)	printf("\r\nError dumping gw_activity\r\n");
@@ -76,6 +70,7 @@ int dump_db(char *filename)
 	if (dump_table(fp, "gw_callactions",		"callactionid")<0)	printf("\r\nError dumping gw_callactions\r\n");
 	if (dump_table(fp, "gw_contacts",		"contactid")<0)		printf("\r\nError dumping gw_contacts\r\n");
 	if (dump_table(fp, "gw_domains",		"domainid")<0)		printf("\r\nError dumping gw_domains\r\n");
+	if (dump_table(fp, "gw_domainaliases",		"domainaliasid")<0)	printf("\r\nError dumping gw_domainaliases\r\n");
 	if (dump_table(fp, "gw_events",			"eventid")<0)		printf("\r\nError dumping gw_events\r\n");
 	if (dump_table(fp, "gw_eventclosings",		"eventclosingid")<0)	printf("\r\nError dumping gw_eventclosings\r\n");
 	if (dump_table(fp, "gw_eventtypes",		"eventtypeid")<0)	printf("\r\nError dumping gw_eventtypes\r\n");
@@ -114,6 +109,7 @@ int init_mdb(void)
 	if (sqlUpdate(1, MDB_CALLACTIONS)<0)       { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
 	if (sqlUpdate(1, MDB_CONTACTS)<0)          { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
 	if (sqlUpdate(1, MDB_DOMAINS)<0)           { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, MDB_DOMAINALIASES)<0)     { printf("\r\nError inserting gw_domainaliasess\r\n");  return -1; }
 	if (sqlUpdate(1, MDB_EVENTS)<0)            { printf("\r\nError inserting gw_events\r\n");          return -1; }
 	if (sqlUpdate(1, MDB_EVENTCLOSINGS)<0)     { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
 	if (sqlUpdate(1, MDB_EVENTTYPES)<0)        { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
@@ -150,6 +146,7 @@ int init_mysql(void)
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_callactions;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_contacts;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_domains;");
+	sqlUpdate(0, "DROP TABLE IF EXISTS gw_domainaliases;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_events;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_eventclosings;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_eventtypes;");
@@ -180,6 +177,7 @@ int init_mysql(void)
 	if (sqlUpdate(1, MYSQLDB_CALLACTIONS)<0)           { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
 	if (sqlUpdate(1, MYSQLDB_CONTACTS)<0)              { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
 	if (sqlUpdate(1, MYSQLDB_DOMAINS)<0)               { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, MYSQLDB_DOMAINALIASES)<0)         { printf("\r\nError inserting gw_domainaliases\r\n");   return -1; }
 	if (sqlUpdate(1, MYSQLDB_EVENTS)<0)                { printf("\r\nError inserting gw_events\r\n");          return -1; }
 	if (sqlUpdate(1, MYSQLDB_EVENTCLOSINGS)<0)         { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
 	if (sqlUpdate(1, MYSQLDB_EVENTTYPES)<0)            { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
@@ -214,6 +212,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP SEQUENCE calaid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE contid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE domaid_seq;");
+	sqlUpdate(0, "DROP SEQUENCE domlid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE evenid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE ecloid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE etypid_seq;");
@@ -243,6 +242,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP TABLE gw_callactions;");
 	sqlUpdate(0, "DROP TABLE gw_contacts;");
 	sqlUpdate(0, "DROP TABLE gw_domains;");
+	sqlUpdate(0, "DROP TABLE gw_domainaliases;");
 	sqlUpdate(0, "DROP TABLE gw_events;");
 	sqlUpdate(0, "DROP TABLE gw_eventclosings;");
 	sqlUpdate(0, "DROP TABLE gw_eventtypes;");
@@ -275,6 +275,7 @@ int init_pgsql(void)
 	if (sqlUpdate(1, PGSQLDB_CALLACTIONS)<0)     { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
 	if (sqlUpdate(1, PGSQLDB_CONTACTS)<0)        { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
 	if (sqlUpdate(1, PGSQLDB_DOMAINS)<0)         { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, PGSQLDB_DOMAINALIASES)<0)   { printf("\r\nError inserting gw_domainaliases\r\n");   return -1; }
 	if (sqlUpdate(1, PGSQLDB_EVENTS)<0)          { printf("\r\nError inserting gw_events\r\n");          return -1; }
 	if (sqlUpdate(1, PGSQLDB_EVENTCLOSINGS)<0)   { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
 	if (sqlUpdate(1, PGSQLDB_EVENTTYPES)<0)      { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
@@ -339,6 +340,7 @@ int init_pgsqlseq(void)
 	pgsql_seqsync("gw_callactions",     "callactionid",   "calaid_seq");
 	pgsql_seqsync("gw_contacts",        "contactid",      "contid_seq");
 	pgsql_seqsync("gw_domains",         "domainid",       "domaid_seq");
+	pgsql_seqsync("gw_domainaliases",   "domainaliasid",  "domlid_seq");
 	pgsql_seqsync("gw_events",          "eventid",        "evenid_seq");
 	pgsql_seqsync("gw_eventclosings",   "eventclosingid", "ecloid_seq");
 	pgsql_seqsync("gw_eventtypes",      "eventtypeid",    "etypid_seq");
@@ -373,6 +375,7 @@ int init_sqlite(void)
 	sqlUpdate(0, "DROP TABLE gw_callactions;");
 	sqlUpdate(0, "DROP TABLE gw_contacts;");
 	sqlUpdate(0, "DROP TABLE gw_domains;");
+	sqlUpdate(0, "DROP TABLE gw_domainaliases;");
 	sqlUpdate(0, "DROP TABLE gw_events;");
 	sqlUpdate(0, "DROP TABLE gw_eventclosings;");
 	sqlUpdate(0, "DROP TABLE gw_eventtypes;");
@@ -403,6 +406,7 @@ int init_sqlite(void)
 	if (sqlUpdate(1, SQLITEDB_CALLACTIONS)<0)     { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
 	if (sqlUpdate(1, SQLITEDB_CONTACTS)<0)        { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
 	if (sqlUpdate(1, SQLITEDB_DOMAINS)<0)         { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, SQLITEDB_DOMAINALIASES)<0)   { printf("\r\nError inserting gw_domainaliases\r\n");   return -1; }
 	if (sqlUpdate(1, SQLITEDB_EVENTS)<0)          { printf("\r\nError inserting gw_events\r\n");          return -1; }
 	if (sqlUpdate(1, SQLITEDB_EVENTCLOSINGS)<0)   { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
 	if (sqlUpdate(1, SQLITEDB_EVENTTYPES)<0)      { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }

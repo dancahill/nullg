@@ -281,9 +281,9 @@ void wmaccount_save(CONN *sid)
 			unlink(tmpname);
 		}
 		closedir(handle);
-		if (sql_updatef("DELETE FROM gw_mailheaders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
-		if (sql_updatef("DELETE FROM gw_mailfolders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
-		if (sql_updatef("DELETE FROM gw_mailaccounts WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailheaders WHERE accountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailfolders WHERE accountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did)<0) return;
 		rmdir(dirname);
 		prints(sid, "<BR><CENTER>E-Mail account %d deleted successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "delete", "%s - %s deleted mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
@@ -292,8 +292,8 @@ void wmaccount_save(CONN *sid)
 		mailacct.mailaccountid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (mailacct.mailaccountid<1) mailacct.mailaccountid=1;
-		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, showdebug, signature) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", mailacct.mailaccountid, curdate, curdate, sid->dat->user_uid);
+		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, showdebug, signature) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", mailacct.mailaccountid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.accountname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.realname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.organization));
@@ -340,7 +340,7 @@ void wmaccount_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "remove = '%d', ",       mailacct.remove);
 		strncatf(query, sizeof(query)-strlen(query)-1, "showdebug = '%c', ",    mailacct.showdebug==0?'n':'y');
 		strncatf(query, sizeof(query)-strlen(query)-1, "signature = '%s'",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
-		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid);
+		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<BR><CENTER>E-mail account %d modified successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "modify", "%s - %s modified mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);

@@ -6,34 +6,30 @@
 # description: NullLogic Groupware Server Suite. \
 #	Starts and stops NullLogic Groupware services as requested.
 
-BASE_PATH="/usr/local/nullgroupware"
-
 # Source function library.
 if [ -x /etc/rc.d/init.d/functions ]; then
 	. /etc/rc.d/init.d/functions
 fi
-
 # Source networking configuration.
 if [ -x /etc/sysconfig/network ]; then
 	. /etc/sysconfig/network
 fi
 
+BASE_PATH="/usr/local/nullgroupware"
+PATH=$BASE_PATH/bin:$PATH
+
 groupware_start() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
 	then
 		echo "NullLogic Groupware appears to be running already."
 	else
 		echo -n "Starting NullLogic Groupware services: "
 		cd ${BASE_PATH}/bin
-		echo -n "httpd "
-		${BASE_PATH}/bin/nullgroupware httpd
-#		echo -n "pop3d "
-#		${BASE_PATH}/bin/nullgroupware pop3d
-#		echo -n "smtpd "
-#		${BASE_PATH}/bin/nullgroupware smtpd
-#		echo -n "smtpq "
-#		${BASE_PATH}/bin/nullgroupware smtpq
+		echo -n "httpd " ; nullgw-server httpd
+#		echo -n "pop3d " ; nullgw-server pop3d
+#		echo -n "smtpd " ; nullgw-server smtpd
+#		echo -n "smtpq " ; nullgw-server smtpq
 		echo ""
 	fi
 	rm -f /tmp/_gw_proclist
@@ -41,12 +37,12 @@ groupware_start() {
 
 groupware_stop() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
 	then
 		echo "Stopping NullLogic Groupware services"
-		killall -15 nullgroupware 2>/dev/null
+		killall -15 nullgw-server 2>/dev/null
 		sleep 2
-		killall -9 nullgroupware 2>/dev/null
+		killall -9 nullgw-server 2>/dev/null
 	else
 		echo "NullLogic Groupware does not appear to be running."
 	fi
@@ -55,7 +51,7 @@ groupware_stop() {
 
 groupware_status() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
 	then
 		echo "NullLogic Groupware appears to be running"
 	else

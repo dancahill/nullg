@@ -34,16 +34,15 @@ char *domain_getname(char *outstring, int outlen, int domainid)
 
 int domain_getid(char *domainname)
 {
-	int domainid;
+	int domainid=-1;
 	int sqr;
 
-	domainid=-1;
 	if ((sqr=sql_queryf("SELECT domainid FROM gw_domains WHERE domainname = '%s'", domainname))<0) return -1;
-	if (sql_numtuples(sqr)==1) {
-		domainid=atoi(sql_getvalue(sqr, 0, 0));
-		sql_freeresult(sqr);
-		return domainid;
-	}
+	if (sql_numtuples(sqr)==1) domainid=atoi(sql_getvalue(sqr, 0, 0));
 	sql_freeresult(sqr);
-	return -1;
+	if (domainid>0) return domainid;
+	if ((sqr=sql_queryf("SELECT domainid FROM gw_domainaliases WHERE domainname = '%s'", domainname))<0) return -1;
+	if (sql_numtuples(sqr)==1) domainid=atoi(sql_getvalue(sqr, 0, 0));
+	sql_freeresult(sqr);
+	return domainid;
 }

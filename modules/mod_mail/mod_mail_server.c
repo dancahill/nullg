@@ -1327,7 +1327,7 @@ cleanup:
 	for (i=0;i<numremote;i++) free(uidls[i]);
 	if (uidls!=NULL) free(uidls);
 	if (verbose) {
-		if ((sqr=sql_queryf("SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return -1;
+		if ((sqr=sql_queryf("SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND status != 'd' and folder = 2", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent))<0) return -1;
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
 		}

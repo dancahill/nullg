@@ -23,6 +23,7 @@ CREATE SEQUENCE callid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE calaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE contid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE domaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE domlid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE evenid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE ecloid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE etypid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -198,6 +199,21 @@ CREATE TABLE gw_domains (\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (domainid)\n\
+);\n\n"
+
+#define PGSQLDB_DOMAINALIASES "\
+CREATE TABLE gw_domainaliases (\n\
+	domainaliasid	int4		NOT NULL DEFAULT nextval('domlid_seq'::text),\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	domainid	int4		NOT NULL DEFAULT 0,\n\
+	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (domainaliasid)\n\
 );\n\n"
 
 #define PGSQLDB_EVENTS "\

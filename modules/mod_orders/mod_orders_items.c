@@ -207,7 +207,7 @@ void orderitemsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef("DELETE FROM gw_orderitems WHERE orderitemid = %d", orderitem.orderitemid)<0) return;
+		if (sql_updatef("DELETE FROM gw_orderitems WHERE orderitemid = %d AND obj_did = %d", orderitem.orderitemid, sid->dat->user_did)<0) return;
 		prints(sid, "<CENTER>Order item %d deleted successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "delete", "%s - %s deleted order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else if (orderitem.orderitemid==0) {
@@ -228,8 +228,8 @@ void orderitemsave(CONN *sid)
 		orderitem.orderitemid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (orderitem.orderitemid<1) orderitem.orderitemid=1;
-		strcpy(query, "INSERT INTO gw_orderitems (orderitemid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, orderid, productid, quantity, discount, unitprice, internalcost, tax1, tax2) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", orderitem.orderitemid, curdate, curdate, sid->dat->user_uid);
+		strcpy(query, "INSERT INTO gw_orderitems (orderitemid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, orderid, productid, quantity, discount, unitprice, internalcost, tax1, tax2) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", orderitem.orderitemid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", orderitem.orderid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", orderitem.productid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.quantity);

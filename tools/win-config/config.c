@@ -506,7 +506,7 @@ BOOL CALLBACK DbdumpDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return (TRUE);
 		case IDC_BUTTON1:
 			GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\dbutil dump \"%s\"", buffer);
+			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullgw-dbutil dump \"%s\"", buffer);
 			system(cmdbuffer);
 			return (TRUE);
 		case IDC_BUTTON2:
@@ -544,7 +544,7 @@ BOOL CALLBACK DbinitDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_BUTTON1:
 			if (MessageBox(0, "Initialising the database will destroy any previously stored data.  Are you sure you want to do this?", "Init confirmation", MB_YESNO)==IDYES) {
 				GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-				snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\dbutil init \"%s\"", buffer);
+				snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullgw-dbutil init \"%s\"", buffer);
 				system(cmdbuffer);
 			}
 			return (TRUE);
@@ -582,7 +582,7 @@ BOOL CALLBACK DbrestDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return (TRUE);
 		case IDC_BUTTON1:
 			GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\dbutil restore \"%s\"", buffer);
+			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullgw-dbutil restore \"%s\"", buffer);
 			system(cmdbuffer);
 			return (TRUE);
 		case IDC_BUTTON2:

@@ -75,9 +75,9 @@ int sanity_checkdb()
 		fixslashes(file);
 		if ((stat(file, &sb)!=0)||(sb.st_size==0)) {
 #ifdef WIN32
-			snprintf(commandline, sizeof(commandline)-1, "./dbutil.exe init");
+			snprintf(commandline, sizeof(commandline)-1, "./nullgw-dbutil.exe init");
 #else
-			snprintf(commandline, sizeof(commandline)-1, "./dbutil init");
+			snprintf(commandline, sizeof(commandline)-1, "./nullgw-dbutil init");
 #endif
 			fixslashes(commandline);
 #ifndef WIN32
@@ -139,6 +139,7 @@ int sanity_checkdb()
 	if (sanity_dbcheck_table("gw_calls",		"callid",		CALLFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_contacts",		"contactid",		CONTACTFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_domains",		"domainid",		DOMAINFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_domainaliases",	"domainaliasid",	DOMAINALIASFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_eventclosings",	"eventclosingid",	EVENTCLOSINGFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_events",		"eventid",		EVENTFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_eventtypes",	"eventtypeid",		EVENTTYPEFIELDS)==-1) checkerror++;

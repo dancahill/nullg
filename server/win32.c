@@ -100,7 +100,7 @@ short installService(short int service)
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgroupware.exe":"\\nullgroupware.exe");
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgw-server.exe":"\\nullgw-server.exe");
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) {
 		printf("Error in installService-OpenSCManager!\r\n");

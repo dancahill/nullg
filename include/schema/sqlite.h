@@ -169,6 +169,21 @@ CREATE TABLE gw_domains (\n\
 	PRIMARY KEY (domainid)\n\
 );"
 
+#define SQLITEDB_DOMAINALIASES "\
+CREATE TABLE gw_domainaliases (\n\
+	domainaliasid	INTEGER,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	domainid	int4		NOT NULL DEFAULT 0,\n\
+	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (domainaliasid)\n\
+);"
+
 #define SQLITEDB_EVENTS "\
 CREATE TABLE gw_events (\n\
 	eventid		INTEGER,\n\

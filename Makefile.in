@@ -17,10 +17,11 @@ all: _all
 	@echo ""
 
 _all: _sqlite _dbutil _server _server_modules _modules
-	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
-	@cp -p scripts/cron.daily distrib/bin/cron.daily
-	@cp -p scripts/configure distrib/bin/configure
 	@cp -p scripts/setup distrib/setup
+	@cp -p scripts/cron.daily distrib/bin/cron.daily
+	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
+	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
+	@chmod 0755 distrib/setup distrib/bin/cron.daily distrib/bin/nullgw-config distrib/bin/rc.groupware
 
 _dbutil:
 	@echo "dbutil"
@@ -71,17 +72,18 @@ distclean: clean
 	@autoconf
 	@echo "done."
 	@rm -rf autom4te.cache
+	@chown -R 0:0 *
 	@rm -f config.log config.status include/config.h Makefile Rules.mak
 
 install: _all
-	@chown -R root.root * 1>/dev/null 2>&1
+	@chown -R 0:0 *
 	@cd distrib;./setup
 
 upgrade: _all
-	@chown -R root.root * 1>/dev/null 2>&1
-	/etc/init.d/nullgw stop
+	@chown -R 0:0 *
+	/etc/init.d/nullgroupware stop
 	@cd distrib;./setup upgrade
-	/etc/init.d/nullgw start
+	/etc/init.d/nullgroupware start
 
 wc:
 	wc `find -name *.[ch]`

@@ -151,7 +151,7 @@ short installService(short int service)
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgroupware.exe":"\\nullgroupware.exe");
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgw-server.exe":"\\nullgw-server.exe");
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) return 1;
 	scServ=CreateService(scHndl,
@@ -308,7 +308,7 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;
 		case 1:
-			winsystem(SW_SHOW, ".\\config.exe");
+			winsystem(SW_SHOW, ".\\nullgw-config.exe");
 			break;
 		case 2:
 			snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", cfg.http_hostname, cfg.http_port);
@@ -320,7 +320,7 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				schService=OpenService(schSCManager, "nullgroupware", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				StartService(schService, 0, NULL);
 			} else {
-				winsystem(SW_HIDE, ".\\nullgroupware.exe");
+				winsystem(SW_HIDE, ".\\nullgw-server.exe");
 			}
 			break;
 		case 4:

@@ -1,5 +1,4 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.3.10"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..
@@ -50,7 +49,7 @@ read_config() {
 	if [ -r "$CFG_FILE" ]; then
 		HAVE_CONFIG="yes"
 		if [ "$HAVE_DIALOG" = "yes" ]; then
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --infobox "\nPrevious config found - importing settings..." 5 50
+			dialog --infobox "\nPrevious config found - importing settings..." 5 50
 		else
 			echo "Previous config found - importing settings..."
 		fi
@@ -238,7 +237,7 @@ setup_dialog_sql() {
 		MYSQL_STATUS="off"
 		PGSQL_STATUS="off"
 	fi
-	dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --radiolist \
+	dialog --radiolist \
 "
 Which SQL backend database will you be using?
 
@@ -278,7 +277,7 @@ Now we need the host name or IP address of the $SQL_TYPE server.
 
 What is the host name of the $SQL_TYPE server?
 EOF
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_HOSTNAME 2> $TMP/gw_tmpout
+			dialog --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_HOSTNAME 2> $TMP/gw_tmpout
 			if [ $? = 1 -o $? = 255 ]; then
 				rm -f $TMP/tempmsg $TMP/gw_tmpout
 				exit
@@ -298,7 +297,7 @@ Now we need the TCP/IP port of the $SQL_TYPE server.
 
 What TCP/IP port is the $SQL_TYPE server listening on?
 EOF
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_PORT 2> $TMP/gw_tmpout
+			dialog --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_PORT 2> $TMP/gw_tmpout
 			if [ $? = 1 -o $? = 255 ]; then
 				rm -f $TMP/tempmsg $TMP/gw_tmpout
 				exit
@@ -318,7 +317,7 @@ Now we need the name of the database which will contain your data.
 
 What is the name of the database NullLogic Groupware should use?
 EOF
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_DBNAME 2> $TMP/gw_tmpout
+			dialog --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_DBNAME 2> $TMP/gw_tmpout
 			if [ $? = 1 -o $? = 255 ]; then
 				rm -f $TMP/tempmsg $TMP/gw_tmpout
 				exit
@@ -338,7 +337,7 @@ Now we need the user name to use to connect to the $SQL_TYPE server.
 
 What username should be used to access the $SQL_SERVER database?
 EOF
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_USERNAME 2> $TMP/gw_tmpout
+			dialog --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_USERNAME 2> $TMP/gw_tmpout
 			if [ $? = 1 -o $? = 255 ]; then
 				rm -f $TMP/tempmsg $TMP/gw_tmpout
 				exit
@@ -358,7 +357,7 @@ Now we need the password to use to connect to the $SQL_TYPE server.
 
 What is the password for the '$SQL_USERNAME' account?
 EOF
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_PASSWORD 2> $TMP/gw_tmpout
+			dialog --inputbox "`cat $TMP/tempmsg`" 12 70 $SQL_PASSWORD 2> $TMP/gw_tmpout
 			if [ $? = 1 -o $? = 255 ]; then
 				rm -f $TMP/tempmsg $TMP/gw_tmpout
 				exit
@@ -374,7 +373,7 @@ EOF
 
 setup_dialog() {
 	if [ "`whoami`" != "root" ]; then
-		dialog --backtitle "$MAIN_TITLE" --title "WARNING" --yesno "
+		dialog --yesno "
 NullLogic Groupware should be installed by root.
 
 Do you want to continue with the installation?" 12 70
@@ -383,7 +382,7 @@ Do you want to continue with the installation?" 12 70
 			exit 1
 		fi
 		if [ $FLAG = 0 ]; then # yes
-			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --msgbox "\nYou've been warned." 12 70
+			dialog --msgbox "\nYou've been warned." 12 70
 		else
 			clear 2>/dev/null
 			exit
@@ -397,7 +396,7 @@ give you a basic working setup to start with.  You will be able to
 reconfigure your system at any time by editing 'etc/groupware.cfg'.
 
 EOF
-	dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --msgbox "`cat $TMP/tempmsg`" 12 74
+	dialog --msgbox "`cat $TMP/tempmsg`" 12 74
 	rm -f $TMP/SeThost $TMP/tempmsg
 	if [ $? = 1 -o $? = 255 ]; then
 		exit
@@ -408,8 +407,7 @@ EOF
 	setup_dialog_sql
 
 	if [ "$SQL_TYPE" != "SQLITE" ]; then
-		dialog --backtitle "$MAIN_TITLE" --title "NETWORK SETUP COMPLETE" --yesno "Your networking \
-system is now configured with these settings:
+		dialog --yesno "Your networking system is now configured with these settings:
 
 Install Path  : $SERVER_DIR_BASE
 SQL Host Type : $SQL_TYPE
@@ -442,6 +440,9 @@ upgrade)
 	if [ -x /bin/dialog ]; then
 		HAVE_DIALOG="yes"
 		setup_dialog
+	elif [ -x /usr/bin/dialog ]; then
+		HAVE_DIALOG="yes"
+		setup_dialog
 	else
 		setup_console
 	fi
@@ -457,7 +458,7 @@ if [ "$HAVE_CONFIG" = "no" ]; then
 		echo "SQL database $SQL_DBNAME as follows."
 		echo "  mysqladmin create $SQL_DBNAME"
 		echo
-		echo "After creating the database, please run $SERVER_DIR_BASE/bin/dbutil to"
+		echo "After creating the database, please run $SERVER_DIR_BASE/bin/nullgw-dbutil to"
 		echo "initialise the database."
 		echo
 		;;
@@ -466,7 +467,7 @@ if [ "$HAVE_CONFIG" = "no" ]; then
 		echo "SQL database $SQL_DBNAME as follows."
 		echo "  createdb $SQL_DBNAME"
 		echo
-		echo "After creating the database, please run $SERVER_DIR_BASE/bin/dbutil to"
+		echo "After creating the database, please run $SERVER_DIR_BASE/bin/nullgw-dbutil to"
 		echo "initialise the database."
 		echo
 		;;

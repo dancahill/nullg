@@ -1,6 +1,6 @@
 Summary: NullLogic Groupware
 Name: nullgroupware
-Version: 1.3.10
+Version: 1.3.11
 Release: 1
 License: GPL
 Packager: Dan Cahill <nulllogic@users.sourceforge.net>
@@ -23,26 +23,28 @@ make
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 mkdir -p $RPM_BUILD_ROOT/usr/local/nullgroupware
 cp -a distrib/* $RPM_BUILD_ROOT/usr/local/nullgroupware/
-install scripts/rc.groupware $RPM_BUILD_ROOT/etc/init.d/nullgw
+install scripts/rc.groupware $RPM_BUILD_ROOT/etc/init.d/nullgroupware
 
 %post
 /usr/sbin/groupadd nullgw 1>/dev/null 2>/dev/null
 /usr/sbin/useradd -c "NullLogic Groupware" -d /usr/local/nullgroupware/etc -g nullgw nullgw 1>/dev/null 2>&1
 chown -R nullgw:nullgw /usr/local/nullgroupware/etc /usr/local/nullgroupware/var 1>/dev/null 2>&1
 chmod go-rwx /usr/local/nullgroupware/etc /usr/local/nullgroupware/var 1>/dev/null 2>&1
-/sbin/chkconfig nullgw reset
+/sbin/chkconfig nullgroupware reset
 
 %preun
-/etc/init.d/nullgw stop
-/sbin/chkconfig --level 0123456 nullgw off
+/etc/init.d/nullgroupware stop
+/sbin/chkconfig --level 0123456 nullgroupware off
 
 %files
 %defattr(-,root,root)
 %doc COPYING COPYRIGHT distrib/README.txt Documentation/ChangeLog Documentation/CodingStyle distrib/var/htdocs/groupware/help/*
-/etc/init.d/nullgw
+/etc/init.d/nullgroupware
 /usr/local/nullgroupware/*
 
 %changelog
+* Mon May 03 2004 Dan Cahill <nulllogic@users.sourceforge.net>
+  - Release Version 1.3.11
 * Mon Apr 26 2004 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.3.10
 * Thu Apr 22 2004 Dan Cahill <nulllogic@users.sourceforge.net>

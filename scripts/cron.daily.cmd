@@ -7,7 +7,7 @@ SET CURDATE=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%
 
 mkdir "%BASEDIR%\var\backup" 2> NUL
 chdir "%BASEDIR%\bin"
-dbutil.exe dump "..\backup-%CURDATE%"
+nullgw-dbutil.exe dump "..\backup-%CURDATE%"
 cd "%BASEDIR%"
 gzip "backup-%CURDATE%"
 echo Archiving backup tarball...
