@@ -1,6 +1,6 @@
 #!/bin/sh
-OUTFILE=nullgroupware-1.2.0-x86-linux
-FILEDATE="2002-12-28 01:02"
+OUTFILE=nullgroupware-1.2.1-x86-linux
+FILEDATE="2003-03-15 01:02"
 
 build_clean() {
 	rm -f distrib/setup
@@ -10,12 +10,13 @@ build_clean() {
 build_pack() {
 	rm -rf ${OUTFILE}
 	rm -rf ${OUTFILE}.tar.gz
-	for i in linux/* ; do
-		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
-	done
-	cp -av linux/rc.groupware distrib/bin/rc.groupware
-	cp -av linux/setup distrib/setup
-	rm -rf distrib/etc/template.mdb
+	fromdos < other/rc.groupware > other/rc.groupware.dos ; mv other/rc.groupware.dos other/rc.groupware
+	fromdos < other/setup > other/setup.dos ; mv other/setup.dos other/setup
+	cp -av other/rc.groupware distrib/bin/rc.groupware
+	cp -av other/setup distrib/setup
+
+	cp -av other/sqlite.so distrib/lib/sqlite.so
+
 	fromdos < distrib/COPYRIGHT.txt > temp.dos ; mv temp.dos distrib/COPYRIGHT.txt
 	fromdos < distrib/README.txt > temp.dos    ; mv temp.dos distrib/README.txt
 	for i in distrib/cgi-bin/* ; do
@@ -24,16 +25,16 @@ build_pack() {
 	for i in distrib/etc/* ; do
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
-	for i in distrib/files/* ; do
+	for i in distrib/var/files/* ; do
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
-	for i in distrib/htdocs/groupware/css/* ; do
+	for i in distrib/var/htdocs/groupware/css/* ; do
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
-	for i in distrib/htdocs/groupware/help/* ; do
+	for i in distrib/var/htdocs/groupware/help/* ; do
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
-	for i in distrib/htdocs/groupware/javascript/* ; do
+	for i in distrib/var/htdocs/groupware/javascript/* ; do
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
 	chmod 0755 distrib -R
@@ -43,29 +44,31 @@ build_pack() {
 	chmod 0755 distrib/bin/*
 	chmod 0755 distrib/cgi-bin/*
 	chmod 0644 distrib/etc/*
-	chmod 0644 distrib/files/*
-	chmod 0644 distrib/htdocs/groupware/css/*
-	chmod 0644 distrib/htdocs/groupware/help/*
-	chmod 0644 distrib/htdocs/groupware/images/*
-	chmod 0755 distrib/htdocs/groupware/images/menu2
-	chmod 0644 distrib/htdocs/groupware/images/menu2/*
-	chmod 0644 distrib/htdocs/groupware/javascript/*
-	chmod 0644 distrib/htdocs/groupware/sounds/*
+	chmod 0755 distrib/lib/*
+	chmod 0644 distrib/var/files/*
+	chmod 0644 distrib/var/htdocs/groupware/css/*
+	chmod 0644 distrib/var/htdocs/groupware/help/*
+	chmod 0644 distrib/var/htdocs/groupware/images/*
+	chmod 0755 distrib/var/htdocs/groupware/images/menu2
+	chmod 0644 distrib/var/htdocs/groupware/images/menu2/*
+	chmod 0644 distrib/var/htdocs/groupware/javascript/*
+	chmod 0644 distrib/var/htdocs/groupware/sounds/*
 
 	touch --date="$FILEDATE" *
 	touch --date="$FILEDATE" distrib/*
 	touch --date="$FILEDATE" distrib/bin/*
 	touch --date="$FILEDATE" distrib/cgi-bin/*
 	touch --date="$FILEDATE" distrib/etc/*
-	touch --date="$FILEDATE" distrib/files/*
-	touch --date="$FILEDATE" distrib/htdocs/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/css/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/help/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/images/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/images/menu2/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/javascript/*
-	touch --date="$FILEDATE" distrib/htdocs/groupware/sounds/*
+	touch --date="$FILEDATE" distrib/lib/*
+	touch --date="$FILEDATE" distrib/var/files/*
+	touch --date="$FILEDATE" distrib/var/htdocs/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/css/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/help/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/images/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/images/menu2/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/javascript/*
+	touch --date="$FILEDATE" distrib/var/htdocs/groupware/sounds/*
 	cp -a distrib ${OUTFILE}
 	tar zcf ${OUTFILE}.tar.gz ${OUTFILE}
 	rm -rf ${OUTFILE}

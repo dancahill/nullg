@@ -62,19 +62,19 @@ int configread()
 			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
 			while (*pVal=='"') pVal++;
 			while (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
-			if (strcmp(pVar, "SQL_TYPE")==0) {
+			if (strcmp(pVar, "SQL.TYPE")==0) {
 				strncpy(sql.sql_type, pVal, sizeof(sql.sql_type)-1);
-			} else if (strcmp(pVar, "SQL_HOSTNAME")==0) {
+			} else if (strcmp(pVar, "SQL.HOSTNAME")==0) {
 				strncpy(sql.sql_hostname, pVal, sizeof(sql.sql_hostname)-1);
-			} else if (strcmp(pVar, "SQL_PORT")==0) {
+			} else if (strcmp(pVar, "SQL.PORT")==0) {
 				strncpy(sql.sql_port, pVal, sizeof(sql.sql_port)-1);
-			} else if (strcmp(pVar, "SQL_DBNAME")==0) {
+			} else if (strcmp(pVar, "SQL.DBNAME")==0) {
 				strncpy(sql.sql_dbname, pVal, sizeof(sql.sql_dbname)-1);
-			} else if (strcmp(pVar, "SQL_USERNAME")==0) {
+			} else if (strcmp(pVar, "SQL.USERNAME")==0) {
 				strncpy(sql.sql_username, pVal, sizeof(sql.sql_username)-1);
-			} else if (strcmp(pVar, "SQL_PASSWORD")==0) {
+			} else if (strcmp(pVar, "SQL.PASSWORD")==0) {
 				strncpy(sql.sql_password, pVal, sizeof(sql.sql_password)-1);
-			} else if (strcmp(pVar, "SQL_ODBC_DSN")==0) {
+			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
 				strncpy(sql.sql_odbc_dsn, pVal, sizeof(sql.sql_odbc_dsn)-1);
 			}
 			*pVal='\0';
@@ -89,7 +89,7 @@ void usage(char *arg0)
 {
 	char *progname;
 
-	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.0]\r\n");
+	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.1]\r\n");
 #ifdef WIN32
 	progname=strrchr(arg0, '\\');
 #else

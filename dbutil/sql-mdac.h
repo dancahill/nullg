@@ -25,6 +25,24 @@ CREATE TABLE gw_dbinfo (\n\
 	tax2percent	float		NOT NULL\n\
 );"
 
+#define MDB_ACTIVITY "\
+CREATE TABLE gw_activity (\n\
+	activityid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	userid		integer,\n\
+	clientip	varchar(50)	NOT NULL,\n\
+	category	varchar(50)	NOT NULL,\n\
+	indexid		integer,\n\
+	action		varchar(50)	NOT NULL,\n\
+	details		memo,\n\
+	PRIMARY KEY (activityid)\n\
+);"
+
 #define MDB_BOOKMARKS "\
 CREATE TABLE gw_bookmarks (\n\
 	bookmarkid	autoincrement,\n\
@@ -66,7 +84,8 @@ CREATE TABLE gw_calls (\n\
 	assignedby	integer,\n\
 	assignedto	integer,\n\
 	callname	varchar(50)	NOT NULL,\n\
-	calldate	datetime,\n\
+	callstart	datetime,\n\
+	callfinish	datetime,\n\
 	contactid	integer,\n\
 	action		integer,\n\
 	status		integer,\n\
@@ -288,6 +307,8 @@ CREATE TABLE gw_mailaccounts (\n\
 	poppassword	varchar(50)	NOT NULL,\n\
 	lastcount	integer,\n\
 	notify		integer,\n\
+	remove		integer,\n\
+	lastcheck	datetime	NOT NULL,\n\
 	signature	memo,\n\
 	PRIMARY KEY (mailaccountid)\n\
 );"
@@ -308,10 +329,11 @@ CREATE TABLE gw_mailheaders (\n\
 	uidl		varchar(80)	NOT NULL,\n\
 	hdr_from	varchar(100)	NOT NULL,\n\
 	hdr_replyto	varchar(100)	NOT NULL,\n\
-	hdr_to		varchar(100)	NOT NULL,\n\
-	hdr_date	datetime	NOT NULL,\n\
+	hdr_to		memo		NOT NULL,\n\
+	hdr_cc		memo		NOT NULL,\n\
+	hdr_bcc		memo		NOT NULL,\n\
 	hdr_subject	varchar(100)	NOT NULL,\n\
-	hdr_cc		varchar(100)	NOT NULL,\n\
+	hdr_date	datetime	NOT NULL,\n\
 	hdr_contenttype	varchar(100)	NOT NULL,\n\
 	hdr_boundary	varchar(100)	NOT NULL,\n\
 	hdr_encoding	varchar(100)	NOT NULL,\n\
@@ -330,7 +352,6 @@ CREATE TABLE gw_messages (\n\
 	sender		integer,\n\
 	rcpt		integer,\n\
 	status		integer		NOT NULL,\n\
-	subject		varchar(50)	NOT NULL,\n\
 	message		memo,\n\
 	PRIMARY KEY (messageid)\n\
 );"

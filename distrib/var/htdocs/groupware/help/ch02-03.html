@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic Groupware Documentation - The Configuration Editor</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-02.html>Error Log Viewer</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-04.html>The Group Editor</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>NullLogic Groupware</FONT></B><BR>
+Chapter 2. Administration<BR><BR>
+</CENTER>
+<HR>
+<H2>The Configuration Editor</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The configuration editor allows you to modify settings which control the basic
+operation of the server.  Optionally, you could modify the <I>groupware.cfg</I> file
+without the use of the configuration editor.  Care should be taken when
+modifying these settings, as a misconfigured server may be unable to run.
+</P>
+<H3>Server Base Directory - SERVER_BASE_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Base Directory' setting is used to specify the top level directory
+in which NullLogic Groupware was installed.  Normally, this will be
+<I>C:\Program Files\NullLogic Groupware</I> on Windows, and
+<I>/usr/local/groupware</I> on Linux.
+</P>
+<H3>Server BIN Directory - SERVER_BIN_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server BIN Directory' setting is used to specify the directory in which
+the NullLogic Groupware binaries are located.  Normally, this will be
+<I>C:\Program Files\NullLogic Groupware\bin</I> on Windows, and
+<I>/usr/local/groupware/bin</I> on Linux.
+</P>
+<H3>Server CGI Directory - SERVER_CGI_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server CGI Directory' setting is used to specify the directory in which
+the NullLogic Groupware CGI (Common Gateway Interface) binaries are located.
+Normally, this will be <I>C:\Program Files\NullLogic Groupware\cgi-bin</I> on
+Windows, and <I>/usr/local/groupware/cgi-bin</I> on Linux.
+</P>
+<H3>Server ETC Directory - SERVER_ETC_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server ETC Directory' setting is used to specify the directory in which
+the NullLogic Groupware log and data files are located.  Normally, this will be
+<I>C:\Program Files\NullLogic Groupware\etc</I> on Windows, and
+<I>/usr/local/groupware/etc</I> on Linux.
+</P>
+<H3>Server File Directory - SERVER_FILE_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server File Directory' setting is used to specify the directory in which
+the NullLogic Groupware file bases will be located.  Normally, this will be
+<I>C:\Program Files\NullLogic Groupware\files</I> on Windows, and
+<I>/usr/local/groupware/files</I> on Linux.
+</P>
+<H3>Server Htdocs Directory - SERVER_HTDOCS_DIR</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Htdocs Directory' setting is used to specify the directory in which
+the NullLogic Groupware documentation and images are located.  Normally, this will be
+<I>C:\Program Files\NullLogic Groupware\htdocs</I> on Windows, and
+<I>/usr/local/groupware/htdocs</I> on Linux.
+</P>
+<H3>Server Log Level - SERVER_LOGLEVEL</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Log Level' setting is used to specify the verbosity of the logs
+which NullLogic Groupware will keep.  The default is '1'.
+<DL>
+<DD>Level 0 - Minimal - Only server startups, shutdowns, logins and logouts are logged.</DD>
+<DD>Level 1 - Light - Logs level 0 events, and notifications when a resource is modified.</DD>
+<DD>Level 2 - Moderate - Logs level 1 and lower events, each requested resource, and all SQL UPDATE commands.</DD>
+<DD>Level 3 - Heavy - Logs level 2 and lower events, and all SQL SELECT commands.</DD>
+<DD>Level 4 - Debug - Logs everything that can be logged.</DD>
+</DL>
+</P>
+<H3>Server Host Address - SERVER_HOSTNAME</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Host Address' setting is used to specify the server name which
+the NullLogic Groupware server will bind itself.  This can be the server's fully
+qualified domain name, the host name, or the IP address of the server.  By
+default, this is set to <I>localhost</I> which will normally only allow requests
+originating from the same computer the server is installed on.
+</P>
+<H3>Server Port - SERVER_PORT</A></H1>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Port' setting is used to specify the TCP/IP port on which NullLogic
+Groupware will listen for requests.  The default is 4110.
+</P>
+<H3>Server Max Connections - SERVER_MAXCONN</A></H1>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Max Connections' setting is used to specify the limit on the number
+of simultaneous http connections.  If this number is set too low, clients may fail
+to connect to the server.  Setting this value too high may result in wasted system
+resources.  The default is 20.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Note that this setting only affects the maximum number of http connections, and in
+no way limits the number of users who can log on simultaneously.
+</P>
+<H3>Server Max Idle Time - SERVER_MAXIDLE</A></H1>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Server Max Idle Time' setting controls the amount of idle time (in seconds)
+which is allowed for an http connection before it is terminated. The default is 120.
+</P>
+<H3>SQL Server Type - SQL_TYPE</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Server Type' setting is used to specify whether MySQL, PostgreSQL or
+ODBC is to be used as the SQL data source.  Note that ODBC is currently only
+available on Windows.
+</P>
+<H3>SQL Server Host Address - SQL_HOSTNAME</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Server Host Address' setting is used to specify the server name on which
+the MySQL or PostgreSQL server is located.  This can be the server's fully qualified
+domain name, the host name, or the IP address of the server which is hosting the SQL
+server.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting is not used when ODBC is chosen as a data source.
+</P>
+<H3>SQL Server Port - SQL_PORT</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Server Port' setting is used to specify the TCP/IP port on which the SQL
+server is listening for requests.  The default for PostgreSQL is 5432, and the
+default for MySQL is 3306.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting is not used when ODBC is chosen as a data source.
+</P>
+<H3>SQL Database Name - SQL_DBNAME</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Database Name' setting is used to specify the name of the database which
+contains NullLogic Groupware's data.  This should normally be 'groupware' unless
+another name has been chosen at the time of installation.
+</P>
+<H3>SQL Database Username - SQL_USERNAME</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Database Username' setting is used to specify the user name to use when
+connecting to the SQL server.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting is not used when ODBC is chosen as a data source.
+</P>
+<H3>SQL Database Password - SQL_PASSWORD</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL Database Password' setting is used to specify the password to use when
+connecting to the SQL server.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting is not used when ODBC is chosen as a data source.
+</P>
+<H3>SQL ODBC Data Source - SQL_ODBC_DSN</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'SQL ODBC Data Source' setting is used to specify the Data Source Name (DSN)
+to use when connecting to the database through ODBC.  The default setting should
+be similar to the following (depending on where NullLogic Groupware was installed
+to):
+<PRE>
+	DRIVER={Microsoft Access Driver (*.mdb)};DBQ=C:\Program Files\NullLogic Groupware\var\db\groupware.mdb
+</PRE>
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+As an example, if you wanted to use MySQL through ODBC, you would create a System
+DSN called "MySQL" in the ODBC driver manager and use the following setting to
+connect to the database:
+<PRE>
+	DRIVER=MySQL;DBQ=MySQL;DATABASE=groupware
+</PRE>
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting is used only when ODBC is chosen as a data source.
+</P>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-02.html>Error Log Viewer</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-04.html>The Group Editor</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>

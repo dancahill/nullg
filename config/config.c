@@ -42,12 +42,12 @@
 
 typedef struct {
 	char config_filename[255];
-	char server_base_dir[255];
-	char server_bin_dir[255];
-	char server_cgi_dir[255];
-	char server_etc_dir[255];
-	char server_file_dir[255];
-	char server_htdocs_dir[255];
+	char server_dir_base[255];
+	char server_dir_bin[255];
+	char server_dir_cgi[255];
+	char server_dir_etc[255];
+	char server_dir_lib[255];
+	char server_dir_var[255];
 	char server_hostname[64];
 	short int server_port;
 	short int server_loglevel;
@@ -110,31 +110,31 @@ int config_read()
 	memset((char *)&config, 0, sizeof(config));
 	pVal=program_name;
 	if (*pVal=='\"') pVal++;
-	snprintf(config.server_base_dir, sizeof(config.server_base_dir)-1, "%s", pVal);
-	if (strrchr(config.server_base_dir, slash)!=NULL) {
-		pVal=strrchr(config.server_base_dir, slash);
+	snprintf(config.server_dir_base, sizeof(config.server_dir_base)-1, "%s", pVal);
+	if (strrchr(config.server_dir_base, slash)!=NULL) {
+		pVal=strrchr(config.server_dir_base, slash);
 		*pVal='\0';
-		chdir(config.server_base_dir);
-		if (strrchr(config.server_base_dir, slash)!=NULL) {
-			pVal=strrchr(config.server_base_dir, slash);
+		chdir(config.server_dir_base);
+		if (strrchr(config.server_dir_base, slash)!=NULL) {
+			pVal=strrchr(config.server_dir_base, slash);
 			*pVal='\0';
 			founddir=1;
 		}
 	}
 //	if (!founddir) {
-//		snprintf(config.server_base_dir, sizeof(config.server_base_dir)-1, "%s", DEFAULT_BASE_DIR);
+//		snprintf(config.server_dir_base, sizeof(config.server_dir_base)-1, "%s", DEFAULT_BASE_DIR);
 //	}
-	snprintf(config.server_bin_dir, sizeof(config.server_bin_dir)-1, "%s/bin", config.server_base_dir);
-	snprintf(config.server_cgi_dir, sizeof(config.server_cgi_dir)-1, "%s/cgi-bin", config.server_base_dir);
-	snprintf(config.server_etc_dir, sizeof(config.server_etc_dir)-1, "%s/etc", config.server_base_dir);
-	snprintf(config.server_file_dir, sizeof(config.server_file_dir)-1, "%s/files", config.server_base_dir);
-	snprintf(config.server_htdocs_dir, sizeof(config.server_htdocs_dir)-1, "%s/htdocs", config.server_base_dir);
-	fixslashes(config.server_base_dir);
-	fixslashes(config.server_bin_dir);
-	fixslashes(config.server_cgi_dir);
-	fixslashes(config.server_etc_dir);
-	fixslashes(config.server_file_dir);
-	fixslashes(config.server_htdocs_dir);
+	snprintf(config.server_dir_bin, sizeof(config.server_dir_bin)-1, "%s/bin", config.server_dir_base);
+	snprintf(config.server_dir_cgi, sizeof(config.server_dir_cgi)-1, "%s/cgi-bin", config.server_dir_base);
+	snprintf(config.server_dir_etc, sizeof(config.server_dir_etc)-1, "%s/etc", config.server_dir_base);
+	snprintf(config.server_dir_lib, sizeof(config.server_dir_lib)-1, "%s/lib", config.server_dir_base);
+	snprintf(config.server_dir_var, sizeof(config.server_dir_var)-1, "%s/var", config.server_dir_base);
+	fixslashes(config.server_dir_base);
+	fixslashes(config.server_dir_bin);
+	fixslashes(config.server_dir_cgi);
+	fixslashes(config.server_dir_etc);
+	fixslashes(config.server_dir_lib);
+	fixslashes(config.server_dir_var);
 	strncpy(config.sql_type, "SQLITE", sizeof(config.sql_type)-1);
 	config.server_loglevel=1;
 	config.server_port=4110;
@@ -153,7 +153,7 @@ int config_read()
 		fp=fopen(config.config_filename, "r");
 	}
 	if (fp==NULL) {
-		snprintf(config.config_filename, sizeof(config.config_filename)-1, "%s/groupware.cfg", config.server_etc_dir);
+		snprintf(config.config_filename, sizeof(config.config_filename)-1, "%s/groupware.cfg", config.server_dir_etc);
 		fixslashes(config.config_filename);
 		fp=fopen(config.config_filename, "r");
 	}
@@ -182,41 +182,41 @@ int config_read()
 			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
 			while (*pVal=='"') pVal++;
 			while (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
-			if (strcmp(pVar, "SERVER_BASE_DIR")==0) {
-				strncpy(config.server_base_dir, pVal, sizeof(config.server_base_dir)-1);
-			} else if (strcmp(pVar, "SERVER_BIN_DIR")==0) {
-				strncpy(config.server_bin_dir, pVal, sizeof(config.server_bin_dir)-1);
-			} else if (strcmp(pVar, "SERVER_CGI_DIR")==0) {
-				strncpy(config.server_cgi_dir, pVal, sizeof(config.server_cgi_dir)-1);
-			} else if (strcmp(pVar, "SERVER_ETC_DIR")==0) {
-				strncpy(config.server_etc_dir, pVal, sizeof(config.server_etc_dir)-1);
-			} else if (strcmp(pVar, "SERVER_FILE_DIR")==0) {
-				strncpy(config.server_file_dir, pVal, sizeof(config.server_file_dir)-1);
-			} else if (strcmp(pVar, "SERVER_HTDOCS_DIR")==0) {
-				strncpy(config.server_htdocs_dir, pVal, sizeof(config.server_htdocs_dir)-1);
-			} else if (strcmp(pVar, "SERVER_LOGLEVEL")==0) {
+			if (strcmp(pVar, "SERVER.DIR.BASE")==0) {
+				strncpy(config.server_dir_base, pVal, sizeof(config.server_dir_base)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.BIN")==0) {
+				strncpy(config.server_dir_bin, pVal, sizeof(config.server_dir_bin)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.CGI")==0) {
+				strncpy(config.server_dir_cgi, pVal, sizeof(config.server_dir_cgi)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.ETC")==0) {
+				strncpy(config.server_dir_etc, pVal, sizeof(config.server_dir_etc)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.LIB")==0) {
+				strncpy(config.server_dir_lib, pVal, sizeof(config.server_dir_lib)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.VAR")==0) {
+				strncpy(config.server_dir_var, pVal, sizeof(config.server_dir_var)-1);
+			} else if (strcmp(pVar, "SERVER.LOGLEVEL")==0) {
 				config.server_loglevel=atoi(pVal);
-			} else if (strcmp(pVar, "SERVER_HOSTNAME")==0) {
+			} else if (strcmp(pVar, "SERVER.HOSTNAME")==0) {
 				strncpy(config.server_hostname, pVal, sizeof(config.server_hostname)-1);
-			} else if (strcmp(pVar, "SERVER_MAXCONN")==0) {
+			} else if (strcmp(pVar, "SERVER.MAXCONN")==0) {
 				config.server_maxconn=atoi(pVal);
-			} else if (strcmp(pVar, "SERVER_PORT")==0) {
+			} else if (strcmp(pVar, "SERVER.PORT")==0) {
 				config.server_port=atoi(pVal);
-			} else if (strcmp(pVar, "SERVER_MAXIDLE")==0) {
+			} else if (strcmp(pVar, "SERVER.MAXIDLE")==0) {
 				config.server_maxidle=atoi(pVal);
-			} else if (strcmp(pVar, "SQL_TYPE")==0) {
+			} else if (strcmp(pVar, "SQL.TYPE")==0) {
 				strncpy(config.sql_type, pVal, sizeof(config.sql_type)-1);
-			} else if (strcmp(pVar, "SQL_HOSTNAME")==0) {
+			} else if (strcmp(pVar, "SQL.HOSTNAME")==0) {
 				strncpy(config.sql_hostname, pVal, sizeof(config.sql_hostname)-1);
-			} else if (strcmp(pVar, "SQL_PORT")==0) {
+			} else if (strcmp(pVar, "SQL.PORT")==0) {
 				config.sql_port=atoi(pVal);
-			} else if (strcmp(pVar, "SQL_DBNAME")==0) {
+			} else if (strcmp(pVar, "SQL.DBNAME")==0) {
 				strncpy(config.sql_dbname, pVal, sizeof(config.sql_dbname)-1);
-			} else if (strcmp(pVar, "SQL_USERNAME")==0) {
+			} else if (strcmp(pVar, "SQL.USERNAME")==0) {
 				strncpy(config.sql_username, pVal, sizeof(config.sql_username)-1);
-			} else if (strcmp(pVar, "SQL_PASSWORD")==0) {
+			} else if (strcmp(pVar, "SQL.PASSWORD")==0) {
 				strncpy(config.sql_password, pVal, sizeof(config.sql_password)-1);
-			} else if (strcmp(pVar, "SQL_ODBC_DSN")==0) {
+			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
 				strncpy(config.sql_odbc_dsn, pVal, sizeof(config.sql_odbc_dsn)-1);
 			}
 			*pVal='\0';
@@ -240,36 +240,36 @@ int config_write()
 	struct stat sb;
 	char slash='\\';
 
-	fixslashes(config.server_base_dir);
-	fixslashes(config.server_bin_dir);
-	fixslashes(config.server_cgi_dir);
-	fixslashes(config.server_etc_dir);
-	fixslashes(config.server_file_dir);
-	fixslashes(config.server_htdocs_dir);
-	if (stat(config.server_etc_dir, &sb)!=0) return -1;
-	snprintf(config.config_filename, sizeof(config.config_filename)-1, "%s/groupware.cfg", config.server_etc_dir);
+	fixslashes(config.server_dir_base);
+	fixslashes(config.server_dir_bin);
+	fixslashes(config.server_dir_cgi);
+	fixslashes(config.server_dir_etc);
+	fixslashes(config.server_dir_lib);
+	fixslashes(config.server_dir_var);
+	if (stat(config.server_dir_etc, &sb)!=0) return -1;
+	snprintf(config.config_filename, sizeof(config.config_filename)-1, "%s/groupware.cfg", config.server_dir_etc);
 	fixslashes(config.config_filename);
 	fp=fopen(config.config_filename, "w");
 	if (fp==NULL) return -1;
 	fprintf(fp, "# This file contains system settings for NullLogic Groupware.\n\n");
-	fprintf(fp, "SERVER_BASE_DIR   = \"%s\"\n", config.server_base_dir);
-	fprintf(fp, "SERVER_BIN_DIR    = \"%s\"\n", config.server_bin_dir);
-	fprintf(fp, "SERVER_CGI_DIR    = \"%s\"\n", config.server_cgi_dir);
-	fprintf(fp, "SERVER_ETC_DIR    = \"%s\"\n", config.server_etc_dir);
-	fprintf(fp, "SERVER_FILE_DIR   = \"%s\"\n", config.server_file_dir);
-	fprintf(fp, "SERVER_HTDOCS_DIR = \"%s\"\n", config.server_htdocs_dir);
-	fprintf(fp, "SERVER_LOGLEVEL   = \"%d\"\n", config.server_loglevel);
-	fprintf(fp, "SERVER_HOSTNAME   = \"%s\"\n", config.server_hostname);
-	fprintf(fp, "SERVER_PORT       = \"%d\"\n", config.server_port);
-	fprintf(fp, "SERVER_MAXCONN    = \"%d\"\n", config.server_maxconn);
-	fprintf(fp, "SERVER_MAXIDLE    = \"%d\"\n", config.server_maxidle);
-	fprintf(fp, "SQL_TYPE          = \"%s\"\n", config.sql_type);
-	fprintf(fp, "SQL_HOSTNAME      = \"%s\"\n", config.sql_hostname);
-	fprintf(fp, "SQL_PORT          = \"%d\"\n", config.sql_port);
-	fprintf(fp, "SQL_DBNAME        = \"%s\"\n", config.sql_dbname);
-	fprintf(fp, "SQL_USERNAME      = \"%s\"\n", config.sql_username);
-	fprintf(fp, "SQL_PASSWORD      = \"%s\"\n", config.sql_password);
-	fprintf(fp, "SQL_ODBC_DSN      = \"%s\"\n", config.sql_odbc_dsn);
+	fprintf(fp, "SERVER.DIR.BASE   = \"%s\"\n", config.server_dir_base);
+	fprintf(fp, "SERVER.DIR.BIN    = \"%s\"\n", config.server_dir_bin);
+	fprintf(fp, "SERVER.DIR.CGI    = \"%s\"\n", config.server_dir_cgi);
+	fprintf(fp, "SERVER.DIR.ETC    = \"%s\"\n", config.server_dir_etc);
+	fprintf(fp, "SERVER.DIR.LIB    = \"%s\"\n", config.server_dir_lib);
+	fprintf(fp, "SERVER.DIR.VAR    = \"%s\"\n", config.server_dir_var);
+	fprintf(fp, "SERVER.LOGLEVEL   = \"%d\"\n", config.server_loglevel);
+	fprintf(fp, "SERVER.HOSTNAME   = \"%s\"\n", config.server_hostname);
+	fprintf(fp, "SERVER.PORT       = \"%d\"\n", config.server_port);
+	fprintf(fp, "SERVER.MAXCONN    = \"%d\"\n", config.server_maxconn);
+	fprintf(fp, "SERVER.MAXIDLE    = \"%d\"\n", config.server_maxidle);
+	fprintf(fp, "SQL.TYPE          = \"%s\"\n", config.sql_type);
+	fprintf(fp, "SQL.HOSTNAME      = \"%s\"\n", config.sql_hostname);
+	fprintf(fp, "SQL.PORT          = \"%d\"\n", config.sql_port);
+	fprintf(fp, "SQL.DBNAME        = \"%s\"\n", config.sql_dbname);
+	fprintf(fp, "SQL.USERNAME      = \"%s\"\n", config.sql_username);
+	fprintf(fp, "SQL.PASSWORD      = \"%s\"\n", config.sql_password);
+	fprintf(fp, "SQL.ODBC_DSN      = \"%s\"\n", config.sql_odbc_dsn);
 	fclose(fp);
 	MessageBox(NULL, "Configuration file saved", "", MB_OK);
 	return 0;
@@ -306,12 +306,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			ComboBox_SetCurSel(hZBlist, 3);
 		}
 //		EnableWindow(hZBlist, 1);
-		SetDlgItemText(hDlg, IDC_EDIT1,  config.server_base_dir);
-		SetDlgItemText(hDlg, IDC_EDIT2,  config.server_bin_dir);
-		SetDlgItemText(hDlg, IDC_EDIT3,  config.server_cgi_dir);
-		SetDlgItemText(hDlg, IDC_EDIT4,  config.server_etc_dir);
-		SetDlgItemText(hDlg, IDC_EDIT5,  config.server_file_dir);
-		SetDlgItemText(hDlg, IDC_EDIT6,  config.server_htdocs_dir);
+		SetDlgItemText(hDlg, IDC_EDIT1,  config.server_dir_base);
+		SetDlgItemText(hDlg, IDC_EDIT2,  config.server_dir_bin);
+		SetDlgItemText(hDlg, IDC_EDIT3,  config.server_dir_cgi);
+		SetDlgItemText(hDlg, IDC_EDIT4,  config.server_dir_etc);
+		SetDlgItemText(hDlg, IDC_EDIT5,  config.server_dir_lib);
+		SetDlgItemText(hDlg, IDC_EDIT6,  config.server_dir_var);
 //		SetDlgItemText(hDlg, IDC_COMBO7, config.server_loglevel);
 		SetDlgItemText(hDlg, IDC_EDIT8,  config.server_hostname);
 		snprintf(buffer, sizeof(buffer)-1, "%d", config.server_port);
@@ -331,12 +331,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //			EndDialog(hDlg, 0);
 //			return (TRUE);
 		case IDC_BUTTON1:
-			GetDlgItemText(hDlg, IDC_EDIT1,   config.server_base_dir,   sizeof(config.server_base_dir)-1);
-			GetDlgItemText(hDlg, IDC_EDIT2,   config.server_bin_dir ,   sizeof(config.server_bin_dir)-1);
-			GetDlgItemText(hDlg, IDC_EDIT3,   config.server_cgi_dir,    sizeof(config.server_cgi_dir)-1);
-			GetDlgItemText(hDlg, IDC_EDIT4,   config.server_etc_dir,    sizeof(config.server_etc_dir)-1);
-			GetDlgItemText(hDlg, IDC_EDIT5,   config.server_file_dir,   sizeof(config.server_file_dir)-1);
-			GetDlgItemText(hDlg, IDC_EDIT6,   config.server_htdocs_dir, sizeof(config.server_htdocs_dir)-1);
+			GetDlgItemText(hDlg, IDC_EDIT1,   config.server_dir_base,   sizeof(config.server_dir_base)-1);
+			GetDlgItemText(hDlg, IDC_EDIT2,   config.server_dir_bin ,   sizeof(config.server_dir_bin)-1);
+			GetDlgItemText(hDlg, IDC_EDIT3,   config.server_dir_cgi,    sizeof(config.server_dir_cgi)-1);
+			GetDlgItemText(hDlg, IDC_EDIT4,   config.server_dir_etc,    sizeof(config.server_dir_etc)-1);
+			GetDlgItemText(hDlg, IDC_EDIT5,   config.server_dir_lib,    sizeof(config.server_dir_lib)-1);
+			GetDlgItemText(hDlg, IDC_EDIT6,   config.server_dir_var,    sizeof(config.server_dir_var)-1);
 			GetDlgItemText(hDlg, IDC_COMBO7,  buffer,                   sizeof(buffer)-1);
 			config.server_loglevel=atoi(buffer);
 			GetDlgItemText(hDlg, IDC_EDIT8,   config.server_hostname,   sizeof(config.server_hostname)-1);

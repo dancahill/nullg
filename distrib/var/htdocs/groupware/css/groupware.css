@@ -1,0 +1,105 @@
+A {
+	COLOR: #0000FF;
+	TEXT-DECORATION: none;
+}
+A:HOVER {
+	TEXT-DECORATION: underline;
+}
+
+BODY {
+	BACKGROUND-COLOR: rgb(255,255,255);
+	COLOR: #000000;
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+
+DIV {
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+
+FONT {
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+
+P {
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+
+TABLE {
+	BORDER-TOP-COLOR: #000000;
+	BORDER-LEFT-COLOR: #000000;
+	BORDER-BOTTOM-COLOR: #000000;
+	BORDER-RIGHT-COLOR: #000000;
+	COLOR: #000000;
+	TABLE-BORDER-COLOR-DARK: #000000;
+	TABLE-BORDER-COLOR-LIGHT: #000000;
+}
+TD {
+	BORDER-COLOR: #000000;
+	COLOR: #000000;
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+TH {
+	BORDER-COLOR: #000000;
+	BACKGROUND-COLOR: #0000A0;
+	COLOR: #FFFFFF;
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+	FONT-STYLE: normal;
+}
+
+FORM {
+	FONT-FAMILY: Arial, Helvetica;
+	FONT-SIZE: 12px;
+}
+INPUT {
+	FONT-SIZE: 12px;
+	FONT-FAMILY: Arial, Helvetica;
+	COLOR: #000000;
+}
+TEXTAREA {
+	BORDER: 1px solid;
+	BORDER-COLOR: #000000;
+}
+SELECT {
+	BORDER: 0px solid;
+	BORDER-COLOR: #000000;
+	FONT-SIZE: 12px;
+	FONT-FAMILY: Arial, Helvetica;
+	COLOR: #000000;
+}
+
+.butClass {
+	BORDER: 1px solid;
+	BORDER-COLOR: #F0F0F0;
+}
+
+.frmButton {
+	BORDER: 1px solid;
+	BORDER-COLOR: #000000;
+	FONT-SIZE: 12px;
+	FONT-FAMILY: Arial, Helvetica;
+	BACKGROUND-COLOR: #E0E0E0;
+	COLOR: #000000;
+	PADDING: 0px;
+}
+
+.JUSTIFY {
+	TEXT-ALIGN: justify;
+}
+
+.TBAR {
+	COLOR: #505050;
+	FONT-FAMILY: Geneva, Arial, Verdana;
+	FONT-SIZE: 9px;
+	TEXT-DECORATION: none;
+}

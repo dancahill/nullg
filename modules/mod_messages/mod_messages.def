@@ -1,0 +1,5 @@
+LIBRARY		mod_messages
+VERSION		1.2.1
+EXPORTS
+	mod_init
+	mod_main

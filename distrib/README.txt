@@ -122,5 +122,5 @@ already corrected bugs.
 If the bug you just found is not on the list, please send an e-mail to
 groupware@nulllogic.com with the Subject line 'NullLogic Groupware Bug'. In the
 body of the message please describe the bug, how it can be reproduced, the
-full version number (e.g. 1.2.0), the operating system of the server, and the
+full version number (e.g. 1.2.1), the operating system of the server, and the
 name and version number of your third party web server (if you are using one).

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on dbutil.dsp
 !IF "$(CFG)" == ""
 CFG=dbutil - Win32 Release
-!MESSAGE No configuration specified. Defaulting to dbutil - Win32 Release.
+!MESSAGE dbutil - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "dbutil - Win32 Release"
@@ -27,7 +27,7 @@ NULL=nul
 CPP=cl.exe
 RSC=rc.exe
 OUTDIR=.\..\distrib\bin
-INTDIR=.\obj
+INTDIR=.\..\obj\dbutil
 # Begin Custom Macros
 OutDir=.\..\distrib\bin
 # End Custom Macros
@@ -68,7 +68,7 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../groupware/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -99,15 +99,6 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../groupware/include" /D "WIN32" /D "NDEBUG
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("dbutil.dep")
-!INCLUDE "dbutil.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "dbutil.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "dbutil - Win32 Release"

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-for hackfile in * ; do
-	fromdos < $hackfile > ${hackfile}.dos
-	mv ${hackfile}.dos ${hackfile}
+for i in * ; do
+	if [ ! -d "$i" ]; then
+		fromdos < $i > ${i}.dos
+		mv ${i}.dos ${i}
+	fi
 done

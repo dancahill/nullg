@@ -120,6 +120,7 @@ fail:
 
 int SQLiteDLLInit()
 {
+	char libname[255];
 #ifdef HAVE_SQLITE
 	static int isloaded=0;
 #ifdef WIN32
@@ -129,17 +130,31 @@ int SQLiteDLLInit()
 #endif
 
 	if (isloaded) return 0;
+	memset(libname, 0, sizeof(libname));
 #ifdef WIN32
-	if ((hinstLib=dlopen("sqlite", RTLD_NOW))==NULL) goto fail;
+	snprintf(libname, sizeof(libname)-1, "..\\lib\\sqlite.dll");
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "sqlite.dll");
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
 #else
-	if ((hinstLib=dlopen("./sqlite.so", RTLD_NOW))==NULL) goto fail;
+	snprintf(libname, sizeof(libname)-1, "../lib/sqlite.so");
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "sqlite.so");
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
 #endif
+found:
 	if ((libsqlite.open=(SQLITE_OPEN)dlsym(hinstLib, "sqlite_open"))==NULL) goto fail;
 	if ((libsqlite.exec=(SQLITE_EXEC)dlsym(hinstLib, "sqlite_exec"))==NULL) goto fail;
 	if ((libsqlite.close=(SQLITE_CLOSE)dlsym(hinstLib, "sqlite_close"))==NULL) goto fail;
 	return 0;
 fail:
-	printf("ERROR: Failed to load sqlite");
+	printf("ERROR: Failed to load %s", libname);
 	memset((char *)&libsqlite, 0, sizeof(libsqlite));
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
@@ -304,7 +319,7 @@ int sqliteConnect()
 
 	if(SQLiteDLLInit()!=0) return -1;
 	if (Connected) return 0;
-	db=libsqlite.open("../etc/groupware.db", 0, &zErrMsg);
+	db=libsqlite.open("../var/db/groupware.db", 0, &zErrMsg);
 	if (db==0) {
 		printf("\nSQLite Connect - %s", zErrMsg);
 		return -1;

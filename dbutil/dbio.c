@@ -62,6 +62,7 @@ int dump_db(char *filename)
 		return -1;
 	}
 	if (dump_table(fp, "gw_dbinfo", "dbversion")<0)			printf("\r\nError dumping gw_dbinfo\r\n");
+	if (dump_table(fp, "gw_activity", "activityid")<0)		printf("\r\nError dumping gw_activity\r\n");
 	if (dump_table(fp, "gw_bookmarkfolders", "folderid")<0)		printf("\r\nError dumping gw_bookmarkfolders\r\n");
 	if (dump_table(fp, "gw_bookmarks", "bookmarkid")<0)		printf("\r\nError dumping gw_bookmarks\r\n");
 	if (dump_table(fp, "gw_calls", "callid")<0)			printf("\r\nError dumping gw_calls\r\n");
@@ -95,8 +96,9 @@ int dump_db(char *filename)
 #ifdef WIN32
 int init_mdb(void)
 {
-	if (makemdb("..\\etc\\groupware.mdb")<0) exit(0);
+	if (makemdb("..\\var\\db\\groupware.mdb")<0) exit(0);
 	if (sqlUpdate(1, MDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
 	if (sqlUpdate(1, MDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
 	if (sqlUpdate(1, MDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
 	if (sqlUpdate(1, MDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }
@@ -128,6 +130,7 @@ int init_mdb(void)
 int init_mysql(void)
 {
 	sqlUpdate(0, "DROP TABLE gw_dbinfo;");
+	sqlUpdate(0, "DROP TABLE gw_activity;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarkfolders;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarks;");
 	sqlUpdate(0, "DROP TABLE gw_calls;");
@@ -153,6 +156,7 @@ int init_mysql(void)
 	sqlUpdate(0, "DROP TABLE gw_users;");
 	sqlUpdate(0, "DROP TABLE gw_zones;");
 	if (sqlUpdate(1, MYSQLDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
 	if (sqlUpdate(1, MYSQLDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
 	if (sqlUpdate(1, MYSQLDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
 	if (sqlUpdate(1, MYSQLDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }
@@ -182,6 +186,7 @@ int init_mysql(void)
 
 int init_pgsql(void)
 {
+	sqlUpdate(0, "DROP SEQUENCE actiid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE bfldid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE bkmkid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE callid_seq;");
@@ -206,6 +211,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP SEQUENCE userid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE zoneid_seq;");
 	sqlUpdate(0, "DROP TABLE gw_dbinfo;");
+	sqlUpdate(0, "DROP TABLE gw_activity;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarkfolders;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarks;");
 	sqlUpdate(0, "DROP TABLE gw_calls;");
@@ -230,8 +236,10 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP TABLE gw_tasks;");
 	sqlUpdate(0, "DROP TABLE gw_users;");
 	sqlUpdate(0, "DROP TABLE gw_zones;");
-	if (sqlUpdate(1, PGSQLDB_SEQUENCES)<0)       { printf("\r\nError inserting sequences\r\n");          return -1; }
+	if (sqlUpdate(1, PGSQLDB_SEQUENCES1)<0)      { printf("\r\nError inserting sequences\r\n");          return -1; }
+	if (sqlUpdate(1, PGSQLDB_SEQUENCES2)<0)      { printf("\r\nError inserting sequences\r\n");          return -1; }
 	if (sqlUpdate(1, PGSQLDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, PGSQLDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
 	if (sqlUpdate(1, PGSQLDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
 	if (sqlUpdate(1, PGSQLDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
 	if (sqlUpdate(1, PGSQLDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }
@@ -291,6 +299,7 @@ int pgsql_seqsync(char *tablename, char *indexname, char *seqname)
 
 int init_pgsqlseq(void)
 {
+	pgsql_seqsync("gw_activity",        "activityid",     "actiid_seq");
 	pgsql_seqsync("gw_bookmarkfolders", "folderid",       "bfldid_seq");
 	pgsql_seqsync("gw_bookmarks",       "bookmarkid",     "bkmkid_seq");
 	pgsql_seqsync("gw_calls",           "callid",         "callid_seq");
@@ -320,6 +329,7 @@ int init_pgsqlseq(void)
 int init_sqlite(void)
 {
 	sqlUpdate(0, "DROP TABLE gw_dbinfo;");
+	sqlUpdate(0, "DROP TABLE gw_activity;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarkfolders;");
 	sqlUpdate(0, "DROP TABLE gw_bookmarks;");
 	sqlUpdate(0, "DROP TABLE gw_calls;");
@@ -345,6 +355,7 @@ int init_sqlite(void)
 	sqlUpdate(0, "DROP TABLE gw_users;");
 	sqlUpdate(0, "DROP TABLE gw_zones;");
 	if (sqlUpdate(1, SQLITEDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, SQLITEDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
 	if (sqlUpdate(1, SQLITEDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
 	if (sqlUpdate(1, SQLITEDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
 	if (sqlUpdate(1, SQLITEDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }

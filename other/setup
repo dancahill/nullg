@@ -1,0 +1,185 @@
+#!/bin/sh
+RUN_AS_USER="groupware"
+RUN_AS_GROUP="groupware"
+INSTALL_PATH="/usr/local/groupware"
+SERVER_LOGLEVEL="1"
+SERVER_HOSTNAME="localhost"
+SERVER_PORT="4110"
+SQL_TYPE="SQLITE"
+SQL_HOSTNAME="localhost"
+SQL_DBNAME="groupware"
+SQL_USERNAME="groupware"
+SQL_PASSWORD="password"
+
+clear 2>/dev/null
+echo "NullLogic Groupware Configuration"
+echo "================================="
+# Get config information
+echo -n "Install to what directory? [$INSTALL_PATH]: "
+read TMP
+if [ ! -z $TMP ]; then
+	INSTALL_PATH=$TMP
+fi
+echo -n "Will you be using SQLITE, MYSQL or PGSQL [$SQL_TYPE]: "
+read TMP
+if [ ! -z $TMP ]; then
+	SQL_TYPE=$TMP
+fi
+case "$SQL_TYPE" in
+	MYSQL)
+	SQL_PORT="3306"
+	SQL_USERNAME="mysql"
+	;;
+	PGSQL)
+	SQL_PORT="5432"
+	SQL_USERNAME="postgres"
+	;;
+	SQLITE)
+	SQL_PORT="0"
+	SQL_USERNAME=""
+	;;
+	*)
+	echo "Unknown SQL server type $SQL_TYPE. Exiting."
+	exit
+	;;
+esac
+
+case "$SQL_TYPE" in
+	SQLITE)
+	SQL_PORT="0"
+	SQL_USERNAME=""
+	SQL_HOSTNAME=""
+	SQL_DBNAME=""
+	SQL_USERNAME=""
+	SQL_PASSWORD=""
+	;;
+	*)
+	echo -n "What is the host name of the $SQL_TYPE server? [$SQL_HOSTNAME]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		SQL_HOSTNAME=$TMP
+	fi
+	echo -n "What TCP/IP port is the $SQL_TYPE server listening on? [$SQL_PORT]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		SQL_PORT=$TMP
+	fi
+	echo -n "What is the name of the database Null Groupware should use? [$SQL_DBNAME]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		SQL_DBNAME=$TMP
+	fi
+	echo -n "What username should Null Groupware use to access the database? [$SQL_USERNAME]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		SQL_USERNAME=$TMP
+	fi
+	echo -n "What is the password for the '$SQL_USERNAME' account? [$SQL_PASSWORD]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		SQL_PASSWORD=$TMP
+	fi
+	;;
+esac
+
+# Copy files to destination
+echo -n "Copy Null Groupware files to $INSTALL_PATH..."
+mkdir -p $INSTALL_PATH/bin
+mkdir -p $INSTALL_PATH/cgi-bin
+mkdir -p $INSTALL_PATH/etc
+mkdir -p $INSTALL_PATH/lib
+mkdir -p $INSTALL_PATH/var
+mkdir -p $INSTALL_PATH/var/backup
+mkdir -p $INSTALL_PATH/var/db
+mkdir -p $INSTALL_PATH/var/files
+mkdir -p $INSTALL_PATH/var/htdocs
+mkdir -p $INSTALL_PATH/var/log
+mkdir -p $INSTALL_PATH/var/mail
+cp -a bin/* $INSTALL_PATH/bin
+cp -a cgi-bin/* $INSTALL_PATH/cgi-bin
+cp -a etc/* $INSTALL_PATH/etc
+cp -a lib/* $INSTALL_PATH/lib
+cp -a var/* $INSTALL_PATH/var
+cp -a COPYRIGHT.txt $INSTALL_PATH
+cp -a README.txt $INSTALL_PATH
+touch $INSTALL_PATH/var/db/groupware.db
+touch $INSTALL_PATH/var/log/access.log
+touch $INSTALL_PATH/var/log/error.log
+
+
+
+
+
+# Write groupware.cfg configuration file
+echo -e "# This file contains settings for Null Groupware."	> $INSTALL_PATH/etc/groupware.cfg
+echo -e ""							>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.BASE   = \"$INSTALL_PATH\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.BIN    = \"$INSTALL_PATH/bin\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.CGI    = \"$INSTALL_PATH/cgi-bin\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.ETC    = \"$INSTALL_PATH/etc\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.LIB    = \"$INSTALL_PATH/lib\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.DIR.VAR    = \"$INSTALL_PATH/var\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.LOGLEVEL   = \"1\""				>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.HOSTNAME   = \"$SERVER_HOSTNAME\""		>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.PORT       = \"4110\""				>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.MAXCONN    = \"50\""				>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SERVER.MAXIDLE    = \"300\""				>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.TYPE          = \"$SQL_TYPE\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.HOSTNAME      = \"$SQL_HOSTNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.PORT          = \"$SQL_PORT\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.DBNAME        = \"$SQL_DBNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.USERNAME      = \"$SQL_USERNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
+echo -e "SQL.PASSWORD      = \"$SQL_PASSWORD\""			>> $INSTALL_PATH/etc/groupware.cfg
+chmod 0600 $INSTALL_PATH/etc/groupware.cfg
+
+chmod 0755 $INSTALL_PATH -R
+chmod 0644 $INSTALL_PATH/COPYRIGHT.txt
+chmod 0644 $INSTALL_PATH/README.txt
+chmod 0755 $INSTALL_PATH/bin/*
+chmod 0755 $INSTALL_PATH/cgi-bin/*
+chmod 0700 $INSTALL_PATH/etc
+chmod 0600 $INSTALL_PATH/etc/*
+chmod 0644 $INSTALL_PATH/lib/*
+chmod 0700 $INSTALL_PATH/var
+chmod 0600 $INSTALL_PATH/var/db/*
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/css/*
+chmod 0600 $INSTALL_PATH/var/files/*
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/help/*
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/images/*
+chmod 0755 $INSTALL_PATH/var/htdocs/groupware/images/menu2
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/images/menu2/*
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/javascript/*
+chmod 0644 $INSTALL_PATH/var/htdocs/groupware/sounds/*
+chmod 0600 $INSTALL_PATH/var/log/*
+chmod 0700 $INSTALL_PATH/var/mail
+
+useradd -c "Null Groupware" -d $INSTALL_PATH/bin $RUN_AS_USER 2>/dev/null
+groupadd $RUN_AS_GROUP 2>/dev/null
+chown $RUN_AS_USER.$RUN_AS_GROUP $INSTALL_PATH/etc -R
+chown $RUN_AS_USER.$RUN_AS_GROUP $INSTALL_PATH/var -R
+
+echo "done."
+echo
+echo "Press enter to read the README file."
+read TMP
+less README.txt
+clear 2>/dev/null
+echo "In order to complete the install, you will need to manually create the"
+echo "SQL database $SQL_DBNAME as follows."
+case "$SQL_TYPE" in
+	MYSQL)
+	echo "  mysqladmin create $SQL_DBNAME"
+	;;
+	PGSQL)
+	echo "  createdb $SQL_DBNAME"
+	;;
+	*)
+	echo
+	;;
+esac
+echo "After creating the database, please run $INSTALL_PATH/bin/dbutil to"
+echo "initialise the database."
+echo
+echo "To start the server, run '$INSTALL_PATH/bin/groupware'."
+echo
+cd ${INSTALL_PATH}/bin

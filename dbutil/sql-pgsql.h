@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#define PGSQLDB_SEQUENCES "\
+#define PGSQLDB_SEQUENCES1 "\
+CREATE SEQUENCE actiid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE bkmkid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE bfldid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE callid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -26,7 +27,8 @@ CREATE SEQUENCE ecloid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE etypid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE fileid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE foruid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE forgid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE forgid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\n"
+#define PGSQLDB_SEQUENCES2 "\
 CREATE SEQUENCE grouid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE mailid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE mhdrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -48,6 +50,24 @@ CREATE TABLE gw_dbinfo (\n\
 	tax1percent	numeric(9,2)	NOT NULL DEFAULT '0.08',\n\
 	tax2percent	numeric(9,2)	NOT NULL DEFAULT '0.07'\n\
 );\n\n"
+
+#define PGSQLDB_ACTIVITY "\
+CREATE TABLE gw_activity (\n\
+	activityid	int4		NOT NULL DEFAULT nextval('actiid_seq'::text),\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	userid		int4		NOT NULL DEFAULT 0,\n\
+	clientip	varchar(50)	NOT NULL DEFAULT '',\n\
+	category	varchar(50)	NOT NULL DEFAULT '',\n\
+	indexid		int4		NOT NULL DEFAULT 0,\n\
+	action		varchar(50)	NOT NULL DEFAULT '',\n\
+	details		text		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (activityid)\n\
+);"
 
 #define PGSQLDB_BOOKMARKS "\
 CREATE TABLE gw_bookmarks (\n\
@@ -90,7 +110,8 @@ CREATE TABLE gw_calls (\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
 	assignedto	int4		NOT NULL DEFAULT 0,\n\
 	callname	varchar(50)	NOT NULL DEFAULT '',\n\
-	calldate	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	callstart	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	callfinish	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	contactid	int4		NOT NULL DEFAULT 0,\n\
 	action		int4		NOT NULL DEFAULT 0,\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
@@ -312,6 +333,8 @@ CREATE TABLE gw_mailaccounts (\n\
 	poppassword	varchar(50)	NOT NULL DEFAULT '',\n\
 	lastcount	int4		NOT NULL DEFAULT 0,\n\
 	notify		int4		NOT NULL DEFAULT 0,\n\
+	remove		int4		NOT NULL DEFAULT 0,\n\
+	lastcheck	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	signature	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailaccountid)\n\
 );"
@@ -332,10 +355,11 @@ CREATE TABLE gw_mailheaders (\n\
 	uidl		varchar(80)	NOT NULL DEFAULT '',\n\
 	hdr_from	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_replyto	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_to		varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	hdr_to		text		NOT NULL DEFAULT '',\n\
+	hdr_cc		text		NOT NULL DEFAULT '',\n\
+	hdr_bcc		text		NOT NULL DEFAULT '',\n\
 	hdr_subject	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_cc		varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
@@ -354,7 +378,6 @@ CREATE TABLE gw_messages (\n\
 	sender		int4		NOT NULL DEFAULT 0,\n\
 	rcpt		int4		NOT NULL DEFAULT 0,\n\
 	status		int4		NOT NULL DEFAULT 2,\n\
-	subject		varchar(50)	NOT NULL DEFAULT '',\n\
 	message		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (messageid)\n\
 );\n\n"

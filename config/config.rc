@@ -62,8 +62,8 @@ BEGIN
     LTEXT           "Server Bin Directory",IDC_STATIC,7,20,64,8
     LTEXT           "Server cgi-bin Directory",IDC_STATIC,7,33,74,8
     LTEXT           "Server ETC Directory",IDC_STATIC,7,46,68,8
-    LTEXT           "Server Files Directory",IDC_STATIC,7,59,68,8
-    LTEXT           "Server htdocs Directory",IDC_STATIC,7,72,75,8
+    LTEXT           "Server LIB Directory",IDC_STATIC,7,59,68,8
+    LTEXT           "Server VAR Directory",IDC_STATIC,7,72,75,8
     LTEXT           "Server Log Level",IDC_STATIC,7,85,55,8
     LTEXT           "Server Host Address",IDC_STATIC,7,98,66,8
     LTEXT           "Server Port",IDC_STATIC,7,111,36,8

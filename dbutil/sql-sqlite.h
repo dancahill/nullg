@@ -25,6 +25,24 @@ CREATE TABLE gw_dbinfo (\n\
 	tax2percent	numeric(9,2)	NOT NULL DEFAULT '0.07'\n\
 );"
 
+#define SQLITEDB_ACTIVITY "\
+CREATE TABLE gw_activity (\n\
+	activityid	INTEGER,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	userid		int4		NOT NULL DEFAULT 0,\n\
+	clientip	varchar(50)	NOT NULL DEFAULT '',\n\
+	category	varchar(50)	NOT NULL DEFAULT '',\n\
+	indexid		int4		NOT NULL DEFAULT 0,\n\
+	action		varchar(50)	NOT NULL DEFAULT '',\n\
+	details		text		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (activityid)\n\
+);"
+
 #define SQLITEDB_BOOKMARKS "\
 CREATE TABLE gw_bookmarks (\n\
 	bookmarkid	INTEGER,\n\
@@ -66,7 +84,8 @@ CREATE TABLE gw_calls (\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
 	assignedto	int4		NOT NULL DEFAULT 0,\n\
 	callname	varchar(50)	NOT NULL DEFAULT '',\n\
-	calldate	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	callstart	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	callfinish	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	contactid	int4		NOT NULL DEFAULT 0,\n\
 	action		int4		NOT NULL DEFAULT 0,\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
@@ -288,6 +307,8 @@ CREATE TABLE gw_mailaccounts (\n\
 	poppassword	varchar(50)	NOT NULL DEFAULT '',\n\
 	lastcount	int4		NOT NULL DEFAULT 0,\n\
 	notify		int4		NOT NULL DEFAULT 0,\n\
+	remove		int4		NOT NULL DEFAULT 0,\n\
+	lastcheck	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	signature	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailaccountid)\n\
 );"
@@ -308,10 +329,11 @@ CREATE TABLE gw_mailheaders (\n\
 	uidl		varchar(80)	NOT NULL DEFAULT '',\n\
 	hdr_from	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_replyto	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_to		varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	hdr_to		text		NOT NULL DEFAULT '',\n\
+	hdr_cc		text		NOT NULL DEFAULT '',\n\
+	hdr_bcc		text		NOT NULL DEFAULT '',\n\
 	hdr_subject	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_cc		varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
@@ -330,7 +352,6 @@ CREATE TABLE gw_messages (\n\
 	sender		int4		NOT NULL DEFAULT 0,\n\
 	rcpt		int4		NOT NULL DEFAULT 0,\n\
 	status		int4		NOT NULL DEFAULT 2,\n\
-	subject		varchar(50)	NOT NULL DEFAULT '',\n\
 	message		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (messageid)\n\
 );"

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on config.dsp
 !IF "$(CFG)" == ""
 CFG=Config - Win32 Release
-!MESSAGE No configuration specified. Defaulting to Config - Win32 Release.
+!MESSAGE config - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "Config - Win32 Release"
@@ -28,7 +28,7 @@ CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 OUTDIR=.\..\distrib\bin
-INTDIR=.\obj
+INTDIR=.\..\obj\config
 # Begin Custom Macros
 OutDir=.\..\distrib\bin
 # End Custom Macros
@@ -97,14 +97,6 @@ CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTD
 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\config.res" /d "NDEBUG" 
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("config.dep")
-!INCLUDE "config.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "config.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "Config - Win32 Release"
