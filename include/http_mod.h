@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #define _MT 1
@@ -37,8 +39,6 @@
 #include <direct.h>
 #include <fcntl.h>
 #include <io.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #define strcasecmp stricmp

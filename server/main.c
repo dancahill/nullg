@@ -126,7 +126,6 @@ int main(int argc, char *argv[])
 	proc.stats.starttime=time(NULL);
 	snprintf(proc.program_name, sizeof(proc.program_name)-1, "%s", argv[0]);
 	if (getenv("REQUEST_METHOD")!=NULL) return 0;
-	umask(077);
 	init();
 	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
 	if (argc<2) {

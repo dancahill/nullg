@@ -97,23 +97,23 @@ void mod_html_topmenu(CONN *sid, int menu)
 	prints(sid, "{\r\n");
 	prints(sid, "	window.open('/groupware/help/%s/", sid->dat->user_language);
 	switch (menu) {
-		case MENU_ADMIN:     prints(sid, "ch02-00.html"); break;
-		case MENU_BOOKMARKS: prints(sid, "ch03-00.html"); break;
-		case MENU_CALENDAR:  prints(sid, "ch04-00.html"); break;
-		case MENU_CALLS:     prints(sid, "ch05-00.html"); break;
-		case MENU_CONTACTS:  prints(sid, "ch06-00.html"); break;
-		case MENU_WEBMAIL:   prints(sid, "ch07-00.html"); break;
-		case MENU_FILES:     prints(sid, "ch08-00.html"); break;
-		case MENU_FORUMS:    prints(sid, "ch09-00.html"); break;
+		case MENU_ADMIN:     prints(sid, "ch-02.html"); break;
+		case MENU_BOOKMARKS: prints(sid, "ch-03.html"); break;
+		case MENU_CALENDAR:  prints(sid, "ch-04.html"); break;
+		case MENU_CALLS:     prints(sid, "ch-05.html"); break;
+		case MENU_CONTACTS:  prints(sid, "ch-06.html"); break;
+		case MENU_WEBMAIL:   prints(sid, "ch-07.html"); break;
+		case MENU_FILES:     prints(sid, "ch-08.html"); break;
+		case MENU_FORUMS:    prints(sid, "ch-09.html"); break;
 		case MENU_MAIN:      prints(sid, "index.html"); break;
-		case MENU_NOTES:     prints(sid, "ch11-00.html"); break;
-		case MENU_ORDERS:    prints(sid, "ch12-00.html"); break;
-		case MENU_PROFILE:   prints(sid, "ch13-00.html"); break;
-		case MENU_SEARCHES:  prints(sid, "ch14-00.html"); break;
-		case MENU_TASKS:     prints(sid, "ch04-00.html"); break;
+		case MENU_NOTES:     prints(sid, "ch-11.html"); break;
+		case MENU_ORDERS:    prints(sid, "ch-12.html"); break;
+		case MENU_PROFILE:   prints(sid, "ch-13.html"); break;
+		case MENU_SEARCHES:  prints(sid, "ch-14.html"); break;
+		case MENU_TASKS:     prints(sid, "ch-04.html"); break;
 		default: prints(sid, "index.html"); break;
 	}
-	prints(sid, "','helpwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=450');\r\n");
+	prints(sid, "','helpwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=550');\r\n");
 	prints(sid, "}\r\n");
 	if ((menu==MENU_ADMIN)||(menu==MENU_CONTACTS)||(menu==MENU_SEARCHES)) {
 		prints(sid, "function MsgTo(msg) {\r\n");

@@ -347,14 +347,15 @@ static const tabledef sqlitedb_tables[] = {
 		"	obj_did		int4		NOT NULL DEFAULT 0,\n"
 		"	obj_gperm	int4		NOT NULL DEFAULT 0,\n"
 		"	obj_operm	int4		NOT NULL DEFAULT 0,\n"
-		"	filename	varchar(255)	NOT NULL DEFAULT '',\n"
 		"	filepath	varchar(255)	NOT NULL DEFAULT '',\n"
+		"	filename	varchar(255)	NOT NULL DEFAULT '',\n"
 		"	filetype	varchar(10)	NOT NULL DEFAULT '',\n"
 		"	uldate		datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n"
 		"	lastdldate	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n"
 		"	numdownloads	int4		NOT NULL DEFAULT 0,\n"
 		"	description	text		NOT NULL DEFAULT '',\n"
-		"	PRIMARY KEY (fileid)\n"
+		"	PRIMARY KEY (fileid),\n"
+		"	UNIQUE (obj_did, filepath, filename)\n"
 		")"
 	},
 	{

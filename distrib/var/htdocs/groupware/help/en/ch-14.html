@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic Groupware Documentation - Chapter 14 Index</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
+</HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<A HREF="ch-13.html"><IMG SRC ="../../images/help_previous.gif" ALT="Previous"></A>
+<A HREF="toc.html"><IMG SRC ="../../images/help_contents.gif" ALT="Contents"></A>
+<A HREF="ch-15.html"><IMG SRC ="../../images/help_next.gif" ALT="Next"></A>
+<HR>
+<H2>14 - Searches</H2>
+
+<A NAME="using"></A>
+<H3>14.1 - Queries</H3>
+<UL>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The Queries interface functionality provides an extremely powerful tool for
+viewing and manipulating your NullLogic Groupware database.  As such, it is
+very strongly recommended that only administrators be given access to add or
+edit queries.  It is also strongly recommended that those users with access
+to edit queries should take the time to learn the SQL syntax.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Update, Insert, and Delete SQL commands could corrupt or destroy your database
+if they are not used properly.
+</P>
+<H3>Listing and Running Queries</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The first page you'll see when you enter the Queries section is a complete
+list of all SQL queries which have been saved in the database.  To edit a
+query, click on 'edit' to the left of the query name.  To run one of the
+listed queries, simply click on the query name.
+</P>
+<H3>Adding Queries</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+To add a new query, click on 'ADD QUERY' on the top menu.  You will be given
+a form with two fields.  The Query Name is a brief but descriptive label for
+the query.  The Query is the actual SQL query text.  For information on SQL
+syntax, see <A HREF=ch-14.html#language>The SQL Language</A>.
+</P>
+</UL>
+
+<A NAME="language"></A>
+<H3>14.2 - The SQL Language</H3>
+<UL>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The name SQL is an abbreviation for <I>Structured Query Language</I>. The
+history of SQL goes back as far as 1974, with its initial development at IBM
+Research.  Over the years IBM and also a number of other vendors announced SQL
+products such as SQL/DS (IBM), DB2 (IBM), ORACLE (Oracle Corp.), and SYBASE
+(Sybase Inc.).
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+In 1986, SQL became an official ANSI standard.  This original standard version
+of SQL is often referred to as <I>SQL/86</I>.  In 1989 the original standard was
+extended and this new standard is often referred to as <I>SQL/89</I>.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The ISO and ANSI committees have been working for many years on the definition
+of a greatly expanded version of the original standard, referred to as <I>SQL2</I>
+or <I>SQL/92</I>. This version became a ratified standard in 1992.  SQL/92 is
+the version normally meant when people refer to "the SQL standard".
+</P>
+<H3>SELECT</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The most often used command in SQL is the SELECT statement, which is used to
+retrieve data. A simplified version of the syntax is:
+<PRE>
+   SELECT [ALL|DISTINCT] {* | <I>expr_1</I>
+      [, ... [, <I>expr_k</I> ]]}
+   FROM <I>table_name_1</I>
+      [, ... [, <I>table_name_n</I>]]
+   [WHERE <I>condition</I>] 
+   [ORDER BY <I>name_of_attr_i</I> [ASC|DESC]
+      [, ... [, <I>name_of_attr_j</I> [ASC|DESC]]]];
+</PRE>
+<BR>
+<P>Here are some examples using a SELECT statement:
+<P>To retrieve all tuples from the events table we formulate the following query:
+<PRE>
+   SELECT * FROM gw_events
+</PRE>
+and get the table:
+<PRE>
+    eventid | cdatetime           | mdatetime           | assignedby    | assignedto    | eventname | eventstatus | eventdate           | eventlength | contactid | ispublic | priority | reminder | repeat | repeatuntil         | eventnotes
+   ---------+---------------------+---------------------+---------------+---------------+-----------+-------------+---------------------+-------------+-----------+----------+----------+----------+--------+---------------------+---------------
+    1       | 2001-03-22 22:13:57 | 2001-04-04 08:54:22 | administrator | administrator | Event 1   | Done        | 2001-08-27 14:30:00 | 0           | 0         | 1        | 2        | 0        | 0      | 2000-01-01 00:00:00 | All went well
+    2       | 2001-03-22 22:14:07 | 2001-04-04 08:54:28 | administrator | joe           | Event 2   | Pending     | 2001-08-28 15:00:00 | 0           | 1         | 0        | 2        | 0        | 0      | 2000-01-01 00:00:00 |
+</PRE>
+</P>
+<P>Using "*" in the SELECT statement will deliver all attributes from a table.
+Obviously, in most cases, this is probably more data than you need at one time
+as well as being rather difficult to read.  To solve this, you can select only
+specific attributes that you wish to have displayed.  If you want to retrieve
+only the attributes <I>assignedto</I>, <I>eventstatus</I>, <I>eventdate</I>
+and <I>eventnotes</I> from the events table, you would use the statement:
+<PRE>
+   SELECT assignedto, eventstatus, eventdate, eventnotes FROM gw_events
+</PRE>
+In this case the result is:
+<PRE>
+    assignedto    | eventstatus | eventdate           | eventnotes
+   ---------------+-------------+---------------------+---------------
+    administrator | Done        | 2001-08-27 14:30:00 | All went well
+    joe           | Pending     | 2001-08-28 15:00:00 |
+</PRE>
+<P>The WHERE clause can be used to select rows whose fields meet a given
+criteria.  For example, the query:
+<PRE>
+   SELECT assignedto, eventstatus, eventdate, eventnotes FROM gw_events WHERE assignedto = 'joe'
+</PRE>
+will only return rows for events which are assigned to user 'joe'.
+<P>The qualifications in the WHERE clause can also be logically connected
+using the keywords OR, AND, and NOT:
+<PRE>
+   SELECT assignedto, eventstatus, eventdate, eventnotes FROM gw_events WHERE assignedto = 'joe' AND eventstatus <> 'Done'
+</PRE>
+</P>
+<H3>Aggregate Operators</H3>
+<P>SQL provides aggregate operators (e.g. AVG, COUNT, SUM, MIN, MAX) that take
+the name of an attribute as an argument. The value of the aggregate operator
+is calculated over all values of the specified attribute (column) of the whole
+table.
+<P>If we want to know the average cost of all products in the products table we use the
+following query:
+<PRE>
+   SELECT AVG(unitprice) FROM gw_products
+</PRE>
+</P>
+<P>The result is:
+<PRE>
+    AVG_PRICE
+   -----------
+      22.50
+</PRE>
+</P>
+<P>If we want to know how many products are stored in table products we use
+the statement:
+<PRE>
+   SELECT COUNT(productid) FROM gw_products
+</PRE>
+and get:
+<PRE>
+    COUNT
+   -------
+      4
+</PRE>
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SQL is a very powerful query language which extends far beyond the scope of
+this simple introduction.  If you want to learn more about SQL query syntax,
+there are several good books on the subject.  In addition, MySQL, PostgreSQL
+and ODBC are very well-documented by their authors.
+</P>
+</UL>
+
+<HR>
+<A HREF="ch-13.html"><IMG SRC ="../../images/help_previous.gif" ALT="Previous"></A>
+<A HREF="toc.html"><IMG SRC ="../../images/help_contents.gif" ALT="Contents"></A>
+<A HREF="ch-15.html"><IMG SRC ="../../images/help_next.gif" ALT="Next"></A>
+</BODY>
+</HTML>

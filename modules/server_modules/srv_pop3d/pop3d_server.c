@@ -276,7 +276,7 @@ static void pop3_local(CONN *sid)
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
-		if (mkdir(dirname, 0700)!=0) {
+		if (mkdir(dirname, ~config->umask&0777)!=0) {
 #endif
 			log_error("pop3d", __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
 			return;

@@ -349,7 +349,8 @@ int sqliteConnect()
 		return -1;
 	}
 	Connected=1;
-	libsqlite.exec(db, "PRAGMA default_synchronous = FALSE;", NULL, 0, &zErrMsg);
+	libsqlite.exec(db, "PRAGMA default_synchronous = OFF;", NULL, 0, &zErrMsg);
+	libsqlite.exec(db, "PRAGMA synchronous = OFF;", NULL, 0, &zErrMsg);
 	return 0;
 #else
 	return -1;

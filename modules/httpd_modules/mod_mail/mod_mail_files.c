@@ -32,7 +32,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
-		if (mkdir(dirname, 0700)!=0) {
+		if (mkdir(dirname, ~config->umask&0777)!=0) {
 #endif
 			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
 			return -1;
@@ -44,7 +44,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
-		if (mkdir(dirname, 0700)!=0) {
+		if (mkdir(dirname, ~config->umask&0777)!=0) {
 #endif
 			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
 			return -1;
@@ -56,7 +56,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
-		if (mkdir(dirname, 0700)!=0) {
+		if (mkdir(dirname, ~config->umask&0777)!=0) {
 #endif
 			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
 			return -1;
@@ -68,7 +68,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
-		if (mkdir(dirname, 0700)!=0) {
+		if (mkdir(dirname, ~config->umask&0777)!=0) {
 #endif
 			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
 			return -1;

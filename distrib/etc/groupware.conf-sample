@@ -3,6 +3,7 @@
 [global]
    uid               = nullgw
    gid               = nullgw
+   umask             = 007
    log level         = 1
 ;  host name         = fqdn.hostname.com
    base path         = /usr/local/nullgroupware

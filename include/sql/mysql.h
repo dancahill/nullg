@@ -16,5 +16,5 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* #include "mysql-3_23.h" */
-#include "mysql-4_0.h"
+/* #include "mysql-4_0.h" */
+#include "mysql-4_1.h"

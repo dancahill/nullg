@@ -72,6 +72,9 @@ int wmsearch_doquery(CONN *sid, const char *order_by, int folderid)
 		} else if (strcmp(ptemp1, "body")==0) {
 			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 			return sqr;
+		} else if (strcmp(ptemp1, "all")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' OR hdr_subject LIKE '%%%s%%' OR msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, ptemp2, ptemp2, order_by);
+			return sqr;
 		}
 	}
 	sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);

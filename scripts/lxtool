@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgroupware-1.3.22-x86
+OUTFILE=nullgroupware-1.3.23-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "OpenBSD" ]; then
@@ -17,47 +17,23 @@ fi
 
 set_perms() {
 	chown -R 0:0 distrib
+	chmod -R 0755 distrib
 	chmod 0644 distrib/COPYING
 	chmod 0644 distrib/COPYRIGHT
 	chmod 0644 distrib/README
 	chmod 0755 distrib/setup
-	chmod 0755 distrib/bin/*
-	chmod 0600 distrib/etc/*
-	chmod 0755 distrib/lib/*
-	chmod 0700 distrib/var/cgi-bin
-	chmod 0700 distrib/var/cgi-bin/*
-	chmod 0700 distrib/var/db
-#	chmod 0600 distrib/var/db/*
-#	chmod 0700 distrib/var/files
-#	chmod 0600 distrib/var/files/*
-	chmod 0755 distrib/var/htdocs
-	chmod 0755 distrib/var/htdocs/groupware
-	chmod 0755 distrib/var/htdocs/groupware/help
-	chmod 0755 distrib/var/htdocs/groupware/help/en
-	chmod 0644 distrib/var/htdocs/groupware/help/en/*
-	chmod 0755 distrib/var/htdocs/groupware/images
-	chmod 0644 distrib/var/htdocs/groupware/images/*
-	chmod 0755 distrib/var/htdocs/groupware/images/menu2
-	chmod 0644 distrib/var/htdocs/groupware/images/menu2/*
-	chmod 0755 distrib/var/htdocs/groupware/javascript
-	chmod 0644 distrib/var/htdocs/groupware/javascript/*
-	chmod 0755 distrib/var/htdocs/groupware/sounds
-	chmod 0644 distrib/var/htdocs/groupware/sounds/*
-	chmod 0755 distrib/var/htdocs/groupware/themes
-	chmod 0755 distrib/var/htdocs/groupware/themes/default
-	chmod 0644 distrib/var/htdocs/groupware/themes/default/*
-	chmod 0700 distrib/var/log
-#	chmod 0600 distrib/var/log/*
-	chmod 0700 distrib/var/spool
-	chmod 0700 distrib/var/spool/mqinfo
-#	chmod 0600 distrib/var/spool/mqinfo/*
-	chmod 0700 distrib/var/spool/mqueue
-#	chmod 0600 distrib/var/spool/mqueue/*
-	chmod 0700 distrib/var/tmp
-#	chmod 0600 distrib/var/tmp/*
+	chmod -R 0755 distrib/bin
+	chmod -R 0770 distrib/etc
+	chmod -R 0755 distrib/lib
+	chmod -R 0770 distrib/var
+	chmod -R 0755 distrib/var/htdocs
+	chmod -R 0660 `find distrib/etc -name '*' -type f`
+	chmod -R 0660 `find distrib/var -name '*' -type f`
+	chmod -R 0644 `find distrib/var/htdocs -name '*' -type f`
 }
 
 build_clean() {
+	set_perms
 	rm -f distrib/COPYING
 	rm -f distrib/COPYRIGHT
 	rm -f distrib/README

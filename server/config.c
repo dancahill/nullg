@@ -116,6 +116,7 @@ int config_write(GLOBAL_CONFIG *config)
 	fprintf(fp, "# %s\n\n", CONFIG_HEAD);
 	fprintf(fp, "[global]\n");
 	fprintf(fp, "   log level         = %d\n", config->loglevel);
+	fprintf(fp, "   umask             = %.3o\n", config->umask);
 	fprintf(fp, "   host name         = \"%s\"\n", config->hostname);
 	fprintf(fp, "   base path         = \"%s\"\n", config->dir_base);
 	fprintf(fp, "   bin path          = \"%s\"\n", config->dir_bin);
@@ -158,6 +159,9 @@ static void conf_callback(char *var, char *val)
 		strncpy(proc.config.uid, val, sizeof(proc.config.uid)-1);
 	} else if (strcmp(var, "gid")==0) {
 		strncpy(proc.config.gid, val, sizeof(proc.config.gid)-1);
+	} else if (strcmp(var, "umask")==0) {
+		sscanf(val, "%o", &proc.config.umask);
+		proc.config.umask=proc.config.umask&0777;
 	} else if (strcmp(var, "log level")==0) {
 		proc.config.loglevel=atoi(val);
 	} else if (strcmp(var, "host name")==0) {
@@ -263,6 +267,7 @@ int conf_read()
 	strncpy(proc.config.sql_type, "SQLITE", sizeof(proc.config.sql_type)-1);
 #endif
 	proc.config.loglevel=1;
+	proc.config.umask=0007;
 	proc.config.sql_maxconn=50;
 
 	config_read("global", conf_callback);

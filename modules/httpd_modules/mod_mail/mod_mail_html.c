@@ -78,7 +78,7 @@ void htselect_mailaccount(CONN *sid, int selected)
 	sql_freeresult(sqr);
 	return;
 }
-
+/*
 void htselect_mailjump(CONN *sid, int selected)
 {
 	int i;
@@ -121,13 +121,12 @@ void htselect_mailjump(CONN *sid, int selected)
 	sql_freeresult(sqr);
 	return;
 }
-
-/*
+*/
 void htselect_mailjump(CONN *sid, int accountid, int folderid)
 {
 	_btree *btree;
 	_ptree *ptree;
-	char curdate[32];
+//	char curdate[32];
 	int account;
 	int base;
 	int depth;
@@ -143,7 +142,7 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 	prints(sid, "function ChangeMail() {\r\n");
 	prints(sid, "	%slocation='%s/mail/%s?'+document.mailjump.accountid.options[document.mailjump.accountid.selectedIndex].value\r\n", sid->dat->user_menustyle>0?"top.gwmain.":"", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?"main":"list");
 	prints(sid, "}\r\n");
-	prints(sid, "document.write('<SELECT NAME=accountid style=\"width:180px\" onChange=\"ChangeMail()\">');\r\n");
+	prints(sid, "document.write('<SELECT NAME=accountid style=\"width:250px\" onChange=\"ChangeMail()\">');\r\n");
 	for (i=0;i<sql_numtuples(sqr1);i++) {
 		account=atoi(sql_getvalue(sqr1, i, 0));
 		base=0;
@@ -215,13 +214,13 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 	}
 	prints(sid, "</SELECT><INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit1 VALUE='GO'>\r\n");
 	prints(sid, "<SELECT NAME=folderid>\r\n");
-	htselect_mailfolder(sid, folderid, 0);
+//	void htselect_mailfolder(CONN *sid, int selected, short int allow_zero, short int show_root)
+	htselect_mailfolder(sid, folderid, 0, 0);
 	prints(sid, "</SELECT><INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit2 VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	sql_freeresult(sqr1);
 	return;
 }
-*/
 
 void htselect_mailfolderjump(CONN *sid, int selected)
 {

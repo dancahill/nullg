@@ -32,7 +32,7 @@ static int sanity_dircheck(const char *format, ...)
 #ifdef WIN32
 	if (mkdir(dirname)!=0) {
 #else
-	if (mkdir(dirname, 0700)!=0) {
+	if (mkdir(dirname, ~proc.config.umask&0777)!=0) {
 #endif
 		log_error("core", __FILE__, __LINE__, 1, "Error accessing directory '%s'", dirname);
 		return -1;

@@ -62,7 +62,9 @@
 	#include <dirent.h>
 	#include <dlfcn.h>
 	#include <netdb.h>
+#ifdef HAVE_PATHS_H
 	#include <paths.h>
+#endif
 #ifdef HAVE_PTHREAD_MIT_PTHREAD_H
 	#include <pthread/mit/pthread.h>
 #else

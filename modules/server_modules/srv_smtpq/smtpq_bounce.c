@@ -62,7 +62,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 #ifdef WIN32
 			if (mkdir(tmpname1)!=0) {
 #else
-			if (mkdir(tmpname1, 0700)!=0) {
+			if (mkdir(tmpname1, ~config->umask&0777)!=0) {
 #endif
 				log_error("smtpd", __FILE__, __LINE__, 0, "Error creating directory '%s'", tmpname1);
 				return -1;

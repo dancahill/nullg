@@ -186,15 +186,19 @@ void webmaillist(CONN *sid)
 			folderid=1;
 		}
 	}
-/*
+
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailjump ACTION=%s/mail/list onChange=\"mailjump()\">\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	htselect_mailjump(sid, sid->dat->user_mailcurrent, folderid);
 	prints(sid, "</TD></FORM>\r\n");
+	prints(sid, "<FORM METHOD=GET ACTION=%s/mail/list NAME=search>\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=HIDDEN NAME=c value=all>\n");
 	prints(sid, "<TD ALIGN=RIGHT>&nbsp;");
-	prints(sid, "</TD></TR></TABLE>\r\n");
-*/
+	prints(sid, "<INPUT TYPE=TEXT NAME=text value=\"\" SIZE=30 style='width:180px'>");
+	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Search'>\n");
+	prints(sid, "</TD></FORM>\n</TR></TABLE>\r\n");
+/*
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailmbox ACTION=%s/mail/list onChange=\"mailmbox()\">\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
@@ -204,7 +208,7 @@ void webmaillist(CONN *sid)
 	prints(sid, "<TD ALIGN=RIGHT>\r\n");
 	htselect_mailjump(sid, sid->dat->user_mailcurrent);
 	prints(sid, "</TD></FORM></TR></TABLE>\r\n");
-
+*/
 	flushbuffer(sid);
 	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
 	if ((sqr=wmsearch_doquery(sid, order_by[order], folderid))<0) return;

@@ -102,7 +102,7 @@ void *htloop(void *x)
 	pthread_detach(http_proc.conn[sid].id);
 #endif
 	/* setsockopt(http_proc.conn[sid].socket, SOL_SOCKET, SO_RCVLOWAT, (void *)&lowat, sizeof(lowat)); */
-	log_error("httpd", __FILE__, __LINE__, 4, "Opening connection thread [%u]", http_proc.conn[sid].socket);
+	log_error("httpd", __FILE__, __LINE__, 4, "Opening connection thread [%u]", http_proc.conn[sid].socket.socket);
 	proc->stats.http_conns++;
 	for (;;) {
 		if (http_proc.conn[sid].PostData!=NULL) { free(http_proc.conn[sid].PostData); http_proc.conn[sid].PostData=NULL; }

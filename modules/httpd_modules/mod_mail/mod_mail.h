@@ -94,7 +94,8 @@ void wmfolder_save(CONN *sid);
 void htselect_mailaccount(CONN *sid, int selected);
 void htselect_mailfolder(CONN *sid, int selected, short int allow_zero, short int show_root);
 void htselect_mailfolderjump(CONN *sid, int selected);
-void htselect_mailjump(CONN *sid, int selected);
+//void htselect_mailjump(CONN *sid, int selected);
+void htselect_mailjump(CONN *sid, int accountid, int folderid);
 /* mod_mail_main.c */
 void wmloginform(CONN *sid);
 /* mod_mail_mime.c */

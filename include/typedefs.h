@@ -101,6 +101,7 @@ typedef struct {
 typedef struct {
 	char      uid[33];
 	char      gid[33];
+	int       umask;
 	short int loglevel;
 	char      hostname[128];
 	char      dir_base[255];

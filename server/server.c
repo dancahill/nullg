@@ -135,11 +135,13 @@ void setsigs()
 
 void init()
 {
+	umask(007);
 	memset((char *)&proc.config, 0, sizeof(GLOBAL_CONFIG));
 	if (conf_read()!=0) {
 		printf("\r\nError reading configuration file\r\n");
 		exit(-2);
 	}
+	umask(proc.config.umask);
 #ifdef WIN32
 	if (WSAStartup(0x202, &proc.wsaData)) {
 		printf("\r\nWinsock 2 initialization failed.\r\n");
