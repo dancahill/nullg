@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct)
@@ -43,9 +43,9 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailaccounts where mailaccountid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_mailaccounts where mailaccountid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", index, sid->dat->user_uid))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", index, sid->dat->user_uid))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -86,18 +86,18 @@ int dbread_mailcurrent(CONN *sid, int mailcurrent)
 {
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
+	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
+		if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
 		if (sql_numtuples(sqr)<1) {
 			sql_freeresult(sqr);
 			return -1;
 		}
 		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
-		if (sql_updatef(sid, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
+		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
+		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
 	}
 	if (sql_numtuples(sqr)==1) {
 		strncpy(sid->dat->wm->realname,     sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);

@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_files.h"
 #ifndef WIN32
 #include <dirent.h>
@@ -95,11 +96,11 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	if ((perm==A_DELETE)&&(!auth_priv(sid, "files")&A_DELETE)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if ((strcmp(dir, "/files/")==0)&&((perm==A_INSERT)||(perm==A_DELETE))) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if (perm==A_READ) {
-		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
 	} else if (perm==A_MODIFY) {
-		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
 	} else if ((perm==A_INSERT)||(perm==A_DELETE)) {
@@ -114,7 +115,7 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 			snprintf(subfile, sizeof(subfile)-1, "%s", ptemp);
 			*ptemp='\0';
 		}
-		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
 	} else {
@@ -230,7 +231,7 @@ int dirlist(CONN *sid)
 	def_gid=1;
 	def_gperm=1;
 	def_operm=1;
-	if ((sqr2=sql_queryf(sid, "SELECT obj_uid, obj_gid, obj_gperm, obj_operm FROM gw_files WHERE filepath = '%s/' AND filename = '%s' AND filetype = 'dir'", uri2, ptemp))>-1) {
+	if ((sqr2=sql_queryf("SELECT obj_uid, obj_gid, obj_gperm, obj_operm FROM gw_files WHERE filepath = '%s/' AND filename = '%s' AND filetype = 'dir'", uri2, ptemp))>-1) {
 		if (sql_numtuples(sqr2)==1) {
 			def_uid=atoi(sql_getvalue(sqr2, 0, 0));
 			def_gid=atoi(sql_getvalue(sqr2, 0, 1));
@@ -240,7 +241,7 @@ int dirlist(CONN *sid)
 		sql_freeresult(sqr2);
 	}
 
-	if ((sqr=sql_queryf(sid, "SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
+	if ((sqr=sql_queryf("SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
 //	if (!RunAsCGI) pthread_mutex_lock(&Lock.FileList);
 	handle=opendir(filename);
 	while ((dentry=readdir(handle))!=NULL) {
@@ -253,7 +254,7 @@ int dirlist(CONN *sid)
 			if (strcmp(dentry->d_name, sql_getvalue(sqr, i, 1))==0) break;
 		}
 		if (i==sql_numtuples(sqr)) {
-			if ((sqr2=sql_query(sid, "SELECT max(fileid) FROM gw_files"))<0) {
+			if ((sqr2=sql_query("SELECT max(fileid) FROM gw_files"))<0) {
 				sql_freeresult(sqr);
 				closedir(handle);
 //				if (!RunAsCGI) pthread_mutex_unlock(&Lock.FileList);
@@ -265,12 +266,12 @@ int dirlist(CONN *sid)
 			strftime(timebuf, sizeof(timebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 			strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 			strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", fileid, timebuf, timebuf, def_uid, def_gid, def_gperm, def_operm);
-			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, dentry->d_name));
-			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, uri));
+			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, dentry->d_name));
+			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, uri));
 			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", sb.st_mode&S_IFDIR?"dir":"file");
 			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '')", timebuf, timebuf);
-			if (sql_update(sid, query)<0) {
-				logerror(sid, __FILE__, __LINE__, 1, "%s - ERROR: Cannot upload file [%s].", sid->dat->in_RemoteAddr, dentry->d_name);
+			if (sql_update(query)<0) {
+				log_error("mod_files", __FILE__, __LINE__, 1, "%s - ERROR: Cannot upload file [%s].", sid->dat->in_RemoteAddr, dentry->d_name);
 			} else {
 //				db_log_activity(sid, 1, "files", fileid, "insert", "%s - system uploaded file %d %s", sid->dat->in_RemoteAddr, fileid, dentry->d_name);
 			}
@@ -281,13 +282,13 @@ int dirlist(CONN *sid)
 //	if (!RunAsCGI) pthread_mutex_unlock(&Lock.FileList);
 	if (!isvalid) {
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
+		if ((sqr=sql_queryf("SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
 	}
 	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 	i=4;
 	if (auth_priv(sid, "files")&A_MODIFY) i++;
 	if (strlen(config->util_scanfile)) i++;
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, i);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, i);
 	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
 	memset(uri2, 0, sizeof(uri2));
 	i=0;
@@ -306,7 +307,7 @@ int dirlist(CONN *sid)
 		prints(sid, "%s", uri);
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldname);
 	if (auth_priv(sid, "files")&A_MODIFY) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
@@ -316,7 +317,7 @@ int dirlist(CONN *sid)
 	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
 	prints(sid, "<TD width=10%% STYLE='border-style:solid'><B>&nbsp;Size&nbsp;</B></TD><TD width=60%% STYLE='border-style:solid'><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
 	if ((strncmp(uri, "/files/", 7)==0)&&(strlen(file.filepath)>1)) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
@@ -338,7 +339,7 @@ int dirlist(CONN *sid)
 		if (isvalid) strftime(timebuf, sizeof(timebuf)-1, "%b %d %Y %H:%M", localtime(&sb.st_mtime));
 		memset(showfile, 0, sizeof(showfile));
 		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(sqr, i, 1));
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
@@ -438,26 +439,26 @@ int fileul(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filerecv NAME=filesend ENCTYPE=multipart/form-data onSubmit=waitForCompletion();>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=location value='%s'>\n", location);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Uploading new file to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>Uploading new file to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", file.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", file.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", file.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", file.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", file.obj_operm==2?" CHECKED":"");
@@ -510,26 +511,26 @@ int filemkdir(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave?location=\"%s\" NAME=filedirsave>\n", sid->dat->in_ScriptName, directory);
 //	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave NAME=filedirsave>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=filepath value='%s'>\n", location);
-	prints(sid, "<TR><TH BGCOLOR=%s COLSPAN=2><FONT COLOR=%s>Adding folder to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
-	prints(sid, "<TR BGCOLOR=%s><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR><TH BGCOLOR=\"%s\" COLSPAN=2><FONT COLOR=%s>Adding folder to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", file.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", file.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", file.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", file.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", file.obj_operm==2?" CHECKED":"");
@@ -569,27 +570,27 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "<CENTER>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/fileinfosave NAME=fileedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=fileid VALUE='%d'>\n", file.fileid);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>File %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, fileid);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Name    </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filename));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Location</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filepath     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filepath));
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>File %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, fileid);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>File Name    </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filename));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>File Location</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filepath     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filepath));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, file.obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_group(sid, file.obj_gid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) editperms=1;
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", file.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", file.obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\n", file.obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\n", file.obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\n", file.obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", file.obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
@@ -650,7 +651,7 @@ int filerecv(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TD STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n", config->colour_topmenu);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n", config->colour_topmenu);
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n<BR>\n");
 	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		DEBUG_OUT(sid, "filerecv()");
@@ -757,7 +758,7 @@ int filerecv(CONN *sid)
 			fixslashes(file);
 			fp=fopen(file, "wb");
 			if (fp==NULL) {
-				logerror(sid, __FILE__, __LINE__, 1, "ERROR: Cannot create file [%s].", file);
+				log_error("mod_files", __FILE__, __LINE__, 1, "ERROR: Cannot create file [%s].", file);
 				DEBUG_OUT(sid, "filerecv()");
 				return -1;
 			}
@@ -773,23 +774,23 @@ int filerecv(CONN *sid)
 		strncpy(description, ptemp, sizeof(description)-1);
 		if (mimesize<strlen(description)) description[mimesize]='\0';
 	}
-	if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(sid, filename), str2sql(sid, location)))<0) return -1;
+	if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, location)))<0) return -1;
 	if (sql_numtuples(sqr)>0) {
-		sql_updatef(sid, "DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
+		sql_updatef("DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
 	}
 	sql_freeresult(sqr);
-	if ((sqr=sql_query(sid, "SELECT max(fileid) FROM gw_files"))<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
+	if ((sqr=sql_query("SELECT max(fileid) FROM gw_files"))<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
 	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
 	sql_freeresult(sqr);
 	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", fileid, datebuf, datebuf, filerec.obj_uid, filerec.obj_gid, filerec.obj_gperm, filerec.obj_operm);
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, filename));
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, location));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filename));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, location));
 	strncatf(query, sizeof(query)-strlen(query)-1, "'file', '%s', '%s', '0', ", datebuf, datebuf);
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, description));
-	if (sql_update(sid, query)<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, description));
+	if (sql_update(query)<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
 	db_log_activity(sid, 1, "files", fileid, "insert", "%s - %s uploaded file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, filename);
 	prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
 	prints(sid, "<CENTER>\nFile '%s%s' has been received.<BR>\n", location, filename);
@@ -863,22 +864,22 @@ int filedirsave(CONN *sid)
 		prints(sid, "<BR><CENTER>Error creating folder.</CENTER><BR>\n");
 		return -1;
 	}
-	if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(sid, filerec.filename), str2sql(sid, filerec.filepath)))<0) return -1;
+	if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filepath)))<0) return -1;
 	if (sql_numtuples(sqr)>0) {
-		sql_updatef(sid, "DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
+		sql_updatef("DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
 	}
 	sql_freeresult(sqr);
-	if ((sqr=sql_query(sid, "SELECT max(fileid) FROM gw_files"))<0) return -1;
+	if ((sqr=sql_query("SELECT max(fileid) FROM gw_files"))<0) return -1;
 	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
 	sql_freeresult(sqr);
 	strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", fileid, datebuf, datebuf, filerec.obj_uid, filerec.obj_gid, filerec.obj_gperm, filerec.obj_operm);
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, filerec.filename));
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, filerec.filepath));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filename));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filepath));
 	strncatf(query, sizeof(query)-strlen(query)-1, "'dir', '%s', '%s', '0', ", datebuf, datebuf);
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, filerec.description));
-	if (sql_update(sid, query)<0) return -1;
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.description));
+	if (sql_update(query)<0) return -1;
 	db_log_activity(sid, 1, "filefolders", fileid, "insert", "%s - %s created file folder %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, file);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "File folder '%s%s' has been created.", filerec.filepath, filerec.filename);
@@ -957,7 +958,7 @@ void fileinfosave(CONN *sid)
 				}
 			}
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_files WHERE fileid = %d", file.fileid)<0) return;
+		if (sql_updatef("DELETE FROM gw_files WHERE fileid = %d", file.fileid)<0) return;
 		prints(sid, "<CENTER>file %d deleted successfully</CENTER><BR>\n", file.fileid);
 		db_log_activity(sid, 1, "files", file.fileid, "delete", "%s - %s deleted file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	} else {
@@ -976,14 +977,14 @@ void fileinfosave(CONN *sid)
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_files SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, file.obj_uid, file.obj_gid, file.obj_gperm, file.obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "filename = '%s', ", str2sql(sid, file.filename));
-		strncatf(query, sizeof(query)-strlen(query)-1, "filepath = '%s', ", str2sql(sid, file.filepath));
-		strncatf(query, sizeof(query)-strlen(query)-1, "uldate = '%s', ", time_unix2sql(sid, file.uldate));
-		strncatf(query, sizeof(query)-strlen(query)-1, "lastdldate = '%s', ", time_unix2sql(sid, file.lastdldate));
+		strncatf(query, sizeof(query)-strlen(query)-1, "filename = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, file.filename));
+		strncatf(query, sizeof(query)-strlen(query)-1, "filepath = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, file.filepath));
+		strncatf(query, sizeof(query)-strlen(query)-1, "uldate = '%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, file.uldate));
+		strncatf(query, sizeof(query)-strlen(query)-1, "lastdldate = '%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, file.lastdldate));
 		strncatf(query, sizeof(query)-strlen(query)-1, "numdownloads = '%d', ", file.numdownloads);
-		strncatf(query, sizeof(query)-strlen(query)-1, "description = '%s'", str2sql(sid, file.description));
+		strncatf(query, sizeof(query)-strlen(query)-1, "description = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, file.description));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE fileid = %d", file.fileid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>file %d modified successfully</CENTER><BR>\n", file.fileid);
 		db_log_activity(sid, 1, "files", file.fileid, "modify", "%s - %s modified file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	}
@@ -1027,13 +1028,13 @@ void fileedit(CONN *sid)
 	prints(sid, "<CENTER>\n<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filesave NAME=fileedit ENCTYPE=multipart/form-data>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=fileid VALUE='%d'>\n", file.fileid);
-	prints(sid, "<TR BGCOLOR=%s><TH><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	prints(sid, "<A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, fileid, config->colour_thtext, fileid);
 	printhex(sid, "%s", file.filepath);
 	prints(sid, " STYLE='color: %s'>File %d - ", config->colour_thtext, fileid);
 	prints(sid, "%s%s", str2html(sid, file.filepath), str2html(sid, file.filename));
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>", config->colour_editform);
 	directory=file.filepath+7;
 	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
 	fixslashes(filename);
@@ -1096,7 +1097,7 @@ void filesave(CONN *sid)
 	fixslashes(filename);
 	fp=fopen(filename, "wb");
 	if (fp==NULL) {
-		logerror(sid, __FILE__, __LINE__, 1, "ERROR: Cannot write to file [%s].", filename);
+		log_error("mod_files", __FILE__, __LINE__, 1, "ERROR: Cannot write to file [%s].", filename);
 		prints(sid, "<BR><CENTER>Error writing to file %s</CENTER><BR>\n", filename);
 		return;
 	}
@@ -1215,7 +1216,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_files",		// mod_name
@@ -1229,6 +1230,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

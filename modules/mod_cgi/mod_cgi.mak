@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_cgi.dsp
 !IF "$(CFG)" == ""
 CFG=mod_cgi - Win32 Release
-!MESSAGE mod_cgi - Win32 Release.
+!MESSAGE No configuration specified. Defaulting to mod_cgi - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_cgi - Win32 Release"
@@ -24,9 +24,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
 OUTDIR=.\..\..\obj\mod_cgi
 INTDIR=.\..\..\obj\mod_cgi
 
@@ -43,22 +40,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_cgi.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_cgi.pdb" /machine:I386 /def:".\mod_cgi.def" /out:"..\..\distrib\lib\mod_cgi.dll" /implib:"$(OUTDIR)\mod_cgi.lib" 
-DEF_FILE= \
-	".\mod_cgi.def"
-LINK32_OBJS= \
-	"$(INTDIR)\mod_cgi.obj"
-
-"..\..\distrib\lib\mod_cgi.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
+CPP=cl.exe
 CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
@@ -91,7 +73,33 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /
    $(CPP_PROJ) $< 
 <<
 
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_cgi.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_cgi.pdb" /machine:I386 /def:".\mod_cgi.def" /out:"..\..\distrib\lib\mod_cgi.dll" /implib:"$(OUTDIR)\mod_cgi.lib" 
+DEF_FILE= \
+	".\mod_cgi.def"
+LINK32_OBJS= \
+	"$(INTDIR)\mod_cgi.obj"
+
+"..\..\distrib\lib\mod_cgi.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("mod_cgi.dep")
+!INCLUDE "mod_cgi.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "mod_cgi.dep"
+!ENDIF 
+!ENDIF 
 
 
 !IF "$(CFG)" == "mod_cgi - Win32 Release"

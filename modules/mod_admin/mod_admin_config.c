@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_admin.h"
 
 void adminconfigedit(CONN *sid)
@@ -88,67 +88,67 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/configsave NAME=configedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TR><TD ALIGN=LEFT COLSPAN=2>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ID=page1tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SERVER</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>PATHS</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>COLOURS</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page4tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>SQL</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:3px'>", config->colour_editform);
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_hostname   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHOST, str2html(sid, cfg.http_hostname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_port       VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVPORT, cfg.http_port);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=server_loglevel STYLE='width:255px'>", config->colour_editform, ADM_CFG_SRVLOG);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_hostname   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHOST, str2html(sid, cfg.http_hostname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_port       VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVPORT, cfg.http_port);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=server_loglevel STYLE='width:255px'>", config->colour_editform, ADM_CFG_SRVLOG);
 	htselect_number(sid, cfg.server_loglevel, 0, 4, 1);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Connections</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxconn STYLE='width:255px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Max Connections</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxconn STYLE='width:255px'>", config->colour_editform);
 	htselect_number(sid, cfg.http_maxconn, 5, 200, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Idle Time</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxidle STYLE='width:255px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Max Idle Time</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxidle STYLE='width:255px'>", config->colour_editform);
 	htselect_number(sid, cfg.http_maxidle, 5, 300, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>File Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanfile VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanfile));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Mail Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanmail VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanmail));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>File Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanfile VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanfile));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Mail Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_scanmail VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_scanmail));
 	prints(sid, "</TABLE>");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_base       VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBASE, str2html(sid, cfg.server_dir_base));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_bin        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBIN,  str2html(sid, cfg.server_dir_bin));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_cgi        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVCGI,  str2html(sid, cfg.server_dir_cgi));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_etc        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVETC,  str2html(sid, cfg.server_dir_etc));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_lib        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVLIB,  str2html(sid, cfg.server_dir_lib));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVVAR,  str2html(sid, cfg.server_dir_var));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_backup VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBAK,  str2html(sid, cfg.server_dir_var_backup));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_db     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVDB,   str2html(sid, cfg.server_dir_var_db));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_files  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVFILE, str2html(sid, cfg.server_dir_var_files));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_htdocs VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHDOC, str2html(sid, cfg.server_dir_var_htdocs));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_log    VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVLOG,  str2html(sid, cfg.server_dir_var_log));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_mail   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVMAIL, str2html(sid, cfg.server_dir_var_mail));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Server Temp Directory</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_tmp    VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.server_dir_var_tmp));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_base       VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBASE, str2html(sid, cfg.server_dir_base));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_bin        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBIN,  str2html(sid, cfg.server_dir_bin));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_cgi        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVCGI,  str2html(sid, cfg.server_dir_cgi));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_etc        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVETC,  str2html(sid, cfg.server_dir_etc));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_lib        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVLIB,  str2html(sid, cfg.server_dir_lib));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVVAR,  str2html(sid, cfg.server_dir_var));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_backup VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVBAK,  str2html(sid, cfg.server_dir_var_backup));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_db     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVDB,   str2html(sid, cfg.server_dir_var_db));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_files  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVFILE, str2html(sid, cfg.server_dir_var_files));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_htdocs VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHDOC, str2html(sid, cfg.server_dir_var_htdocs));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_log    VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVLOG,  str2html(sid, cfg.server_dir_var_log));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_mail   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVMAIL, str2html(sid, cfg.server_dir_var_mail));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Server Temp Directory</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_tmp    VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.server_dir_var_tmp));
 	prints(sid, "</TABLE>");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Edit Form Background</B>&nbsp;</TD>   <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_editform      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Field Name Background</B>&nbsp;</TD>  <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldname     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldname);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Field Name Text</B>&nbsp;</TD>        <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldnametext VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldnametext);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Field Value Background</B>&nbsp;</TD> <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldval      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldval);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Field Value Text</B>&nbsp;</TD>       <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldvaltext  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldvaltext);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Hyperlinks</B>&nbsp;</TD>             <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_links         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_links);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Table Trim</B>&nbsp;</TD>             <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_tabletrim     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_tabletrim);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Table Header Background</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_th            VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_th);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Table Header Hyperlinks</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_thlink        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_thlink);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Table Header Text</B>&nbsp;</TD>      <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_thtext        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Top Menu</B>&nbsp;</TD>               <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_topmenu       VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_topmenu);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Edit Form Background</B>&nbsp;</TD>   <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_editform      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Field Name Background</B>&nbsp;</TD>  <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldname     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Field Name Text</B>&nbsp;</TD>        <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldnametext VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldnametext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Field Value Background</B>&nbsp;</TD> <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldval      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldval);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Field Value Text</B>&nbsp;</TD>       <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_fieldvaltext  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_fieldvaltext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Hyperlinks</B>&nbsp;</TD>             <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_links         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_links);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Table Trim</B>&nbsp;</TD>             <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_tabletrim     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_tabletrim);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Table Header Background</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_th            VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Table Header Hyperlinks</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_thlink        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_thlink);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Table Header Text</B>&nbsp;</TD>      <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_thtext        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>Top Menu</B>&nbsp;</TD>               <TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=colour_topmenu       VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, cfg.colour_topmenu);
 	prints(sid, "</TABLE>");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT>", config->colour_editform, ADM_CFG_SQLTYPE);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT>", config->colour_editform, ADM_CFG_SQLTYPE);
 	prints(sid, "<SELECT NAME=sql_type onchange=FormUpdate(); STYLE='width:255px'>\n");
 #ifdef HAVE_MYSQL
 	prints(sid, "<OPTION VALUE='MYSQL'%s>MYSQL\n", strcmp(cfg.sql_type, "MYSQL")==0?" SELECTED":"");
@@ -163,13 +163,13 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "<OPTION VALUE='SQLITE'%s>SQLITE\n", strcmp(cfg.sql_type, "SQLITE")==0?" SELECTED":"");
 #endif
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_hostname      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLHOST, str2html(sid, cfg.sql_hostname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_port          VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLPORT, cfg.sql_port);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_dbname        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLNAME, str2html(sid, cfg.sql_dbname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_username      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLUSER, str2html(sid, cfg.sql_username));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=sql_password  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLPASS, str2html(sid, cfg.sql_password));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_hostname      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLHOST, str2html(sid, cfg.sql_hostname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_port          VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLPORT, cfg.sql_port);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_dbname        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLNAME, str2html(sid, cfg.sql_dbname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_username      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLUSER, str2html(sid, cfg.sql_username));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=sql_password  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLPASS, str2html(sid, cfg.sql_password));
 #ifdef WIN32
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_odbc_dsn      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLODBC, str2html(sid, cfg.sql_odbc_dsn));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sql_odbc_dsn      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SQLODBC, str2html(sid, cfg.sql_odbc_dsn));
 #endif
 	prints(sid, "</TABLE>");
 	prints(sid, "</DIV>\r\n");
@@ -244,7 +244,7 @@ void adminconfigsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "UTIL_SCANFILE"))!=NULL)         strncpy(cfg.util_scanfile,         ptemp, sizeof(cfg.util_scanfile)-1);
 	if ((ptemp=getpostenv(sid, "UTIL_SCANMAIL"))!=NULL)         strncpy(cfg.util_scanmail,         ptemp, sizeof(cfg.util_scanmail)-1);
 	if (config_write(&cfg)!=0) {
-		logerror(sid, __FILE__, __LINE__, 1, ADM_CFG_NOFILE, proc->config_filename);
+		log_error("mod_admin", __FILE__, __LINE__, 1, ADM_CFG_NOFILE, proc->config_filename);
 		prints(sid, ADM_CFG_NOFILE, proc->config_filename);
 		return;
 	}

@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_orders.h"
 
 void htselect_product(CONN *sid, int selected)
@@ -23,7 +23,7 @@ void htselect_product(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_query(sid, "SELECT productid, productname FROM gw_products order by productname ASC"))<0) return;
+	if ((sqr=sql_query("SELECT productid, productname FROM gw_products order by productname ASC"))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\r\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -38,7 +38,7 @@ char *htview_product(CONN *sid, int selected)
 	char *buffer=getbuffer(sid);
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT productid, productname FROM gw_products WHERE productid = %d", selected))<0) return buffer;
+	if ((sqr=sql_queryf("SELECT productid, productname FROM gw_products WHERE productid = %d", selected))<0) return buffer;
 	if (sql_numtuples(sqr)==1) {
 		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
 	}
@@ -89,22 +89,22 @@ void orderitemedit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=orderitemid VALUE='%d'>\n", orderitem.orderitemid);
 	prints(sid, "<INPUT TYPE=hidden NAME=orderid VALUE='%d'>\n", orderitem.orderid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A> - ", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, orderitem.orderid, config->colour_thtext, orderitem.orderid);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A> - ", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, orderitem.orderid, config->colour_thtext, orderitem.orderid);
 	if (orderitemid>0) {
 		prints(sid, "Item %d</FONT></TH></TR>\n", orderitem.orderitemid);
 	} else {
 		prints(sid, "New Item</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Product&nbsp;      </B></TD><TD ALIGN=RIGHT><SELECT NAME=productid style='width:217px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Product&nbsp;      </B></TD><TD ALIGN=RIGHT><SELECT NAME=productid style='width:217px'>", config->colour_editform);
 	htselect_product(sid, orderitem.productid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Quantity&nbsp;     </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=quantity     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.quantity);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Quantity&nbsp;     </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=quantity     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.quantity);
 	if (strncmp(sid->dat->in_RequestURI, "/orders/itemeditnew", 17)!=0) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Discount&nbsp;     </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.discount*100.0F);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.unitprice);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.internalcost);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1*100.0F);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2*100.0F);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Discount&nbsp;     </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.discount*100.0F);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.unitprice);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.internalcost);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1*100.0F);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2*100.0F);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
@@ -130,11 +130,11 @@ void orderitemlist(CONN *sid, int orderid)
 	int i;
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_fieldname);
+	if ((sqr=sql_queryf("SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_fieldname);
 	prints(sid, "<TD NOWRAP STYLE='border-style:solid'><B>Product</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Quantity</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Unit Price</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Discount</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Extended</B></TD></TR>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", config->colour_editform, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "<TR BGCOLOR=\"%s\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", config->colour_editform, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>");
 		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
@@ -148,7 +148,7 @@ void orderitemlist(CONN *sid, int orderid)
 	}
 	sql_freeresult(sqr);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
-		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", config->colour_editform, sid->dat->in_ScriptName, orderid);
+		prints(sid, "<TR BGCOLOR=\"%s\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", config->colour_editform, sid->dat->in_ScriptName, orderid);
 		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
@@ -207,7 +207,7 @@ void orderitemsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_orderitems WHERE orderitemid = %d", orderitem.orderitemid)<0) return;
+		if (sql_updatef("DELETE FROM gw_orderitems WHERE orderitemid = %d", orderitem.orderitemid)<0) return;
 		prints(sid, "<CENTER>Order item %d deleted successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "delete", "%s - %s deleted order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else if (orderitem.orderitemid==0) {
@@ -224,7 +224,7 @@ void orderitemsave(CONN *sid)
 		orderitem.internalcost=product.internalcost;
 		orderitem.tax1=product.tax1;
 		orderitem.tax2=product.tax2;
-		if ((sqr=sql_query(sid, "SELECT max(orderitemid) FROM gw_orderitems"))<0) return;
+		if ((sqr=sql_query("SELECT max(orderitemid) FROM gw_orderitems"))<0) return;
 		orderitem.orderitemid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (orderitem.orderitemid<1) orderitem.orderitemid=1;
@@ -238,7 +238,7 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", orderitem.internalcost);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", orderitem.tax1);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f')", orderitem.tax2);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order item %d added successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "insert", "%s - %s added order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else {
@@ -256,12 +256,12 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "tax1 = '%1.3f', ", orderitem.tax1);
 		strncatf(query, sizeof(query)-strlen(query)-1, "tax2 = '%1.3f'", orderitem.tax2);
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE orderitemid = %d", orderitem.orderitemid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order item %d modified successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "modify", "%s - %s modified order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	}
 	totaldue=0;
-	if ((sqr=sql_queryf(sid, "SELECT quantity, unitprice, discount, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderitem.orderid))<0) return;
+	if ((sqr=sql_queryf("SELECT quantity, unitprice, discount, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderitem.orderid))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			subtotal=(float)(atof(sql_getvalue(sqr, i, 0))*atof(sql_getvalue(sqr, i, 1)));
@@ -274,7 +274,7 @@ void orderitemsave(CONN *sid)
 		totaldue=(int)totaldue/100.0f;
 	}
 	sql_freeresult(sqr);
-	sql_updatef(sid, "UPDATE gw_orders SET obj_mtime = '%s', paymentdue = '%1.2f' WHERE orderid = %d", curdate, totaldue, orderitem.orderid);
+	sql_updatef("UPDATE gw_orders SET obj_mtime = '%s', paymentdue = '%1.2f' WHERE orderid = %d", curdate, totaldue, orderitem.orderid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/orders/view?orderid=%d\");\n", sid->dat->in_ScriptName, orderitem.orderid);
 	prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");

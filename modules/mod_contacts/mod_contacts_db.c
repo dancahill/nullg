@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_contacts.h"
 
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
@@ -38,9 +38,9 @@ int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_contacts where contactid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_contacts where contactid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_contacts where contactid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_contacts where contactid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -102,79 +102,79 @@ int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact)
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
 	memset(curdate, 0, sizeof(curdate));
 	memset(query, 0, sizeof(query));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query(sid, "SELECT max(contactid) FROM gw_contacts"))<0) return -1;
+		if ((sqr=sql_query("SELECT max(contactid) FROM gw_contacts"))<0) return -1;
 		contact->contactid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (contact->contactid<1) contact->contactid=1;
 		strcpy(query, "INSERT INTO gw_contacts (contactid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, enabled, geozone, timezone, surname, givenname, salutation, contacttype, referredby, altcontact, prefbilling, email, homenumber, worknumber, faxnumber, mobilenumber, jobtitle, organization, homeaddress, homelocality, homeregion, homecountry, homepostalcode, workaddress, worklocality, workregion, workcountry, workpostalcode) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", contact->contactid, curdate, curdate, contact->obj_uid, contact->obj_gid, contact->obj_gperm, contact->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->username));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->password));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->username));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->password));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", contact->enabled);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", contact->geozone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", contact->timezone);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->surname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->givenname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->salutation));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->contacttype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->referredby));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->altcontact));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->prefbilling));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->email));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->worknumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->faxnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->mobilenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->jobtitle));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->organization));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homeaddress));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homelocality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homeregion));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homecountry));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->homepostalcode));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->workaddress));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->worklocality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->workregion));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, contact->workcountry));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, contact->workpostalcode));
-		if (sql_update(sid, query)<0) return -1;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->surname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->givenname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->salutation));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->contacttype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->referredby));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->altcontact));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->prefbilling));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->email));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->worknumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->faxnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->mobilenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->jobtitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->organization));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homeaddress));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homelocality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homeregion));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homecountry));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homepostalcode));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workaddress));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->worklocality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workregion));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workcountry));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workpostalcode));
+		if (sql_update(query)<0) return -1;
 		return contact->contactid;
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_contacts SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, contact->obj_uid, contact->obj_gid, contact->obj_gperm, contact->obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "username = '%s', ", str2sql(sid, contact->username));
-		strncatf(query, sizeof(query)-strlen(query)-1, "password = '%s', ", str2sql(sid, contact->password));
-		strncatf(query, sizeof(query)-strlen(query)-1, "enabled = '%d', ", contact->enabled);
-		strncatf(query, sizeof(query)-strlen(query)-1, "geozone = '%d', ", contact->geozone);
-		strncatf(query, sizeof(query)-strlen(query)-1, "timezone = '%d', ", contact->timezone);
-		strncatf(query, sizeof(query)-strlen(query)-1, "surname = '%s', ", str2sql(sid, contact->surname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "givenname = '%s', ", str2sql(sid, contact->givenname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "salutation = '%s', ", str2sql(sid, contact->salutation));
-		strncatf(query, sizeof(query)-strlen(query)-1, "contacttype = '%s', ", str2sql(sid, contact->contacttype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "referredby = '%s', ", str2sql(sid, contact->referredby));
-		strncatf(query, sizeof(query)-strlen(query)-1, "altcontact = '%s', ", str2sql(sid, contact->altcontact));
-		strncatf(query, sizeof(query)-strlen(query)-1, "prefbilling = '%s', ", str2sql(sid, contact->prefbilling));
-		strncatf(query, sizeof(query)-strlen(query)-1, "email = '%s', ", str2sql(sid, contact->email));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homenumber = '%s', ", str2sql(sid, contact->homenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "worknumber = '%s', ", str2sql(sid, contact->worknumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "faxnumber = '%s', ", str2sql(sid, contact->faxnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "mobilenumber = '%s', ", str2sql(sid, contact->mobilenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "jobtitle = '%s', ", str2sql(sid, contact->jobtitle));
-		strncatf(query, sizeof(query)-strlen(query)-1, "organization = '%s', ", str2sql(sid, contact->organization));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homeaddress = '%s', ", str2sql(sid, contact->homeaddress));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homelocality = '%s', ", str2sql(sid, contact->homelocality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homeregion = '%s', ", str2sql(sid, contact->homeregion));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homecountry = '%s', ", str2sql(sid, contact->homecountry));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homepostalcode = '%s', ", str2sql(sid, contact->homepostalcode));
-		strncatf(query, sizeof(query)-strlen(query)-1, "workaddress = '%s', ", str2sql(sid, contact->workaddress));
-		strncatf(query, sizeof(query)-strlen(query)-1, "worklocality = '%s', ", str2sql(sid, contact->worklocality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "workregion = '%s', ", str2sql(sid, contact->workregion));
-		strncatf(query, sizeof(query)-strlen(query)-1, "workcountry = '%s', ", str2sql(sid, contact->workcountry));
-		strncatf(query, sizeof(query)-strlen(query)-1, "workpostalcode = '%s'", str2sql(sid, contact->workpostalcode));
+		strncatf(query, sizeof(query)-strlen(query)-1, "username = '%s', ",       str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->username));
+		strncatf(query, sizeof(query)-strlen(query)-1, "password = '%s', ",       str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->password));
+		strncatf(query, sizeof(query)-strlen(query)-1, "enabled = '%d', ",        contact->enabled);
+		strncatf(query, sizeof(query)-strlen(query)-1, "geozone = '%d', ",        contact->geozone);
+		strncatf(query, sizeof(query)-strlen(query)-1, "timezone = '%d', ",       contact->timezone);
+		strncatf(query, sizeof(query)-strlen(query)-1, "surname = '%s', ",        str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->surname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "givenname = '%s', ",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->givenname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "salutation = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->salutation));
+		strncatf(query, sizeof(query)-strlen(query)-1, "contacttype = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->contacttype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "referredby = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->referredby));
+		strncatf(query, sizeof(query)-strlen(query)-1, "altcontact = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->altcontact));
+		strncatf(query, sizeof(query)-strlen(query)-1, "prefbilling = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->prefbilling));
+		strncatf(query, sizeof(query)-strlen(query)-1, "email = '%s', ",          str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->email));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homenumber = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "worknumber = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->worknumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "faxnumber = '%s', ",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->faxnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "mobilenumber = '%s', ",   str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->mobilenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "jobtitle = '%s', ",       str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->jobtitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "organization = '%s', ",   str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->organization));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homeaddress = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homeaddress));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homelocality = '%s', ",   str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homelocality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homeregion = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homeregion));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homecountry = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homecountry));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homepostalcode = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->homepostalcode));
+		strncatf(query, sizeof(query)-strlen(query)-1, "workaddress = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workaddress));
+		strncatf(query, sizeof(query)-strlen(query)-1, "worklocality = '%s', ",   str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->worklocality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "workregion = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workregion));
+		strncatf(query, sizeof(query)-strlen(query)-1, "workcountry = '%s', ",    str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workcountry));
+		strncatf(query, sizeof(query)-strlen(query)-1, "workpostalcode = '%s'",   str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, contact->workpostalcode));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE contactid = %d", contact->contactid);
-		if (sql_update(sid, query)<0) return -1;
+		if (sql_update(query)<0) return -1;
 		return contact->contactid;
 	}
 	return -1;

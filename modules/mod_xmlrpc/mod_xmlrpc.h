@@ -29,3 +29,6 @@ void xmlrpc_contactwrite(CONN *sid);
 /* mod_xmlrpc_main.c */
 void xmlrpc_addmember(CONN *sid, char *name, char *type, const char *format, ...);
 void xmlrpc_fault(CONN *sid, int faultid, char *fault);
+
+typedef	int (*HTMOD_CONTACTS_READ)(CONN *, short int, int, REC_CONTACT *);
+typedef	int (*HTMOD_CONTACTS_WRITE)(CONN *, int, REC_CONTACT *);

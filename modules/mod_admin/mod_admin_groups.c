@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_admin.h"
 
 void admingroupedit(CONN *sid)
@@ -48,16 +48,16 @@ void admingroupedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/groupsave NAME=groupedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", group.groupid);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (groupid!=0) {
 		prints(sid, "Group %d</FONT></TH></TR>\n", groupid);
 	} else {
 		prints(sid, "New Group</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>Group Name    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=groupname   value=\"%s\" SIZE=50></TD></TR>\n", config->colour_editform, str2html(sid, group.groupname));
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>Message of the Day</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, group.motd));
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>Group Name    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=groupname   value=\"%s\" SIZE=50></TD></TR>\n", config->colour_editform, str2html(sid, group.groupname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>Message of the Day</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, group.motd));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "admin")&A_ADMIN)&&(groupid>1)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
@@ -83,13 +83,13 @@ void admingrouplist(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_query(sid, "SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) return;
+	if ((sqr=sql_query("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) return;
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
@@ -134,11 +134,11 @@ void admingroupsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_groups WHERE groupid = %d", group.groupid)<0) return;
+		if (sql_updatef("DELETE FROM gw_groups WHERE groupid = %d", group.groupid)<0) return;
 		prints(sid, "<CENTER>Group %d deleted successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "delete", "%s - %s deleted group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else if (group.groupid==0) {
-		if ((sqr=sql_queryf(sid, "SELECT groupname FROM gw_groups where groupname = '%s'", group.groupname))<0) return;
+		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s'", group.groupname))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER>Group %s already exists</CENTER><BR>\n", group.groupname);
 			sql_freeresult(sqr);
@@ -149,17 +149,17 @@ void admingroupsave(CONN *sid)
 			prints(sid, "<CENTER>Group name is too short</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_query(sid, "SELECT max(groupid) FROM gw_groups"))<0) return;
+		if ((sqr=sql_query("SELECT max(groupid) FROM gw_groups"))<0) return;
 		group.groupid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (group.groupid<1) group.groupid=1;
 		strcpy(query, "INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, groupname, availability, motd, members) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", group.groupid, curdate, curdate, group.obj_uid, group.obj_gid, group.obj_gperm, group.obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, group.groupname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, group.availability));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, group.motd));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, group.members));
-		if (sql_update(sid, query)<0) return;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.groupname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.availability));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.motd));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.members));
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Group %d added successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "insert", "%s - %s added group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else {
@@ -168,11 +168,11 @@ void admingroupsave(CONN *sid)
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_groups SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, group.obj_uid, group.obj_gid, group.obj_gperm, group.obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "groupname = '%s', ", str2sql(sid, group.groupname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "motd = '%s', ", str2sql(sid, group.motd));
-		strncatf(query, sizeof(query)-strlen(query)-1, "members = '%s'", str2sql(sid, group.members));
+		strncatf(query, sizeof(query)-strlen(query)-1, "groupname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.groupname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "motd = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.motd));
+		strncatf(query, sizeof(query)-strlen(query)-1, "members = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.members));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE groupid = %d", group.groupid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Group %d modified successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "modify", "%s - %s modified group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	}
@@ -251,13 +251,13 @@ void admingrouptimeedit(CONN *sid)
 	for (i=0;i<24;i++) {
 		prints(sid, "<input type='hidden' name='t%d' value='true'>\n", i);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Group availability for <A HREF=%s/admin/groupedit?groupid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, groupid, config->colour_thlink, group.groupname);
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Group availability for <A HREF=%s/admin/groupedit?groupid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, groupid, config->colour_thlink, group.groupname);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
@@ -265,8 +265,8 @@ void admingrouptimeedit(CONN *sid)
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
-		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
+		prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldval);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=\"%s\" STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
 		for (j=0;j<24;j++) {
 			prints(sid, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\n", i, j, i, j, availability[i*24+j]=='1'?"checked":"");
 		}
@@ -318,7 +318,7 @@ void admingrouptimesave(CONN *sid)
 	}
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (sql_updatef(sid, "UPDATE gw_groups SET obj_mtime = '%s', availability = '%s' WHERE groupid = %d", curdate, availability, groupid)<0) return;
+	if (sql_updatef("UPDATE gw_groups SET obj_mtime = '%s', availability = '%s' WHERE groupid = %d", curdate, availability, groupid)<0) return;
 	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR>\n");
 	db_log_activity(sid, 1, "groups", groupid, "modify", "%s - %s modified availability for group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");

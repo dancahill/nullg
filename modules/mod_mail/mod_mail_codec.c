@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -340,10 +340,10 @@ int DecodeBase64(CONN *sid, char *src, char *ctype)
 	} else if (strncasecmp(ctype, "text/plain", 10)==0) {
 		prints(sid, "%s", dest);
 	} else {
-		if (proc->RunAsCGI) {
+		if (http_proc->RunAsCGI) {
 			fwrite(dest, sizeof(char), destidx, stdout);
 		} else {
-			if (send(sid->socket, dest, destidx, 0)<0) return -1;
+			if (tcp_send(&sid->socket, dest, destidx, 0)<0) return -1;
 		}
 		sid->dat->out_bytecount+=destidx;
 	}

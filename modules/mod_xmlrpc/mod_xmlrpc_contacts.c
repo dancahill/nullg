@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_xmlrpc.h"
 
 void xmlrpc_contact_newstruct(CONN *sid)
@@ -129,9 +129,9 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 		prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
 		return;
 	} else if (auth_priv(sid, "contacts")&A_ADMIN) {
-		sqr=sql_queryf(sid, "SELECT * from gw_contacts where contactid = %d ORDER BY contactid ASC", contactid);
+		sqr=sql_queryf("SELECT * from gw_contacts where contactid = %d ORDER BY contactid ASC", contactid);
 	} else {
-		sqr=sql_queryf(sid, "SELECT * from gw_contacts WHERE contactid = %d  AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", contactid, sid->dat->user_uid, sid->dat->user_gid);
+		sqr=sql_queryf("SELECT * from gw_contacts WHERE contactid = %d  AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", contactid, sid->dat->user_uid, sid->dat->user_gid);
 	}
 	if (sqr<0) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
@@ -161,9 +161,9 @@ void xmlrpc_contactlist(CONN *sid)
 		return;
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		sqr=sql_queryf(sid, "SELECT * from gw_contacts ORDER BY contactid ASC");
+		sqr=sql_queryf("SELECT * from gw_contacts ORDER BY contactid ASC");
 	} else {
-		sqr=sql_queryf(sid, "SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
+		sqr=sql_queryf("SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
 	}
 	if (sqr<0) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
@@ -183,8 +183,8 @@ void xmlrpc_contactlist(CONN *sid)
 
 void xmlrpc_contactwrite(CONN *sid)
 {
-	MOD_CONTACTS_READ mod_contacts_read;
-	MOD_CONTACTS_WRITE mod_contacts_write;
+	HTMOD_CONTACTS_READ mod_contacts_read;
+	HTMOD_CONTACTS_WRITE mod_contacts_write;
 	REC_CONTACT contact;
 	char opassword[50];
 	char *ptemp;

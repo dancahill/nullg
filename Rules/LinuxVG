@@ -8,6 +8,10 @@ BIN_LDFLAGS   = -ldl
 BIN_LDFLAGS_T = -ldl -lpthread
 BIN_TARGETDIR = ../distrib/bin
 
+SRVMOD_CFLAGS    = -Wall -O -g -fPIC -DLINUX -I../../include
+SRVMOD_LDFLAGS   = -shared
+SRVMOD_TARGETDIR = ../../distrib/lib
+
 MOD_CFLAGS    = -Wall -O -g -fPIC -DLINUX -I../../include
 MOD_LDFLAGS   = -shared
 MOD_TARGETDIR = ../../distrib/lib

@@ -146,29 +146,12 @@ short installService(short int service)
 	SC_HANDLE scHndl;
 	SC_HANDLE scServ;
 	char cCurDir[256];
-	char *svcname=NULL;
-	char *svctitle=NULL;
+	char *svcname="nullgroupware";
+	char *svctitle="NullLogic Groupware";
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	switch (service) {
-	case SVC_HTTPD:
-		strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgw-httpd.exe":"\\nullgw-httpd.exe");
-		svcname="nullgw-httpd";
-		svctitle="NullLogic Groupware HTTPd";
-		break;
-	case SVC_POP3D:
-		strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgw-pop3d.exe":"\\nullgw-pop3d.exe");
-		svcname="nullgw-pop3d";
-		svctitle="NullLogic Groupware POP3d";
-		break;
-	case SVC_SMTPD:
-		strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgw-smtpd.exe":"\\nullgw-smtpd.exe");
-		svcname="nullgw-smtpd";
-		svctitle="NullLogic Groupware SMTPd";
-		break;
-	}
-	if (svcname==NULL) return 1;
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgroupware.exe":"\\nullgroupware.exe");
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) return 1;
 	scServ=CreateService(scHndl,
@@ -269,52 +252,26 @@ BOOL APIENTRY HandlePopupMenu(POINT point)
 	bRet=AppendMenu(hMenu, MF_SEPARATOR, 0, "");
 	if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 		if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-		schService=OpenService(schSCManager, "nullgw-httpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+		schService=OpenService(schSCManager, "nullgroupware", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 		if (schService==NULL) {
-			AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+4, "Install HTTP Server");
+			AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+4, "Install Groupware Server");
 		} else {
 			QueryServiceStatus(schService, &schSStatus);
 			if (schSStatus.dwCurrentState!=SERVICE_RUNNING) {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+3, "Start HTTP Server");
+				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+3, "Start Groupware Server");
 			} else {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+5, "Stop HTTP Server");
+				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+5, "Stop Groupware Server");
 			}
 		}
-		if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-		schService=OpenService(schSCManager, "nullgw-pop3d", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-		if (schService==NULL) {
-//			AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+7, "Install POP3 Server");
-		} else {
-			QueryServiceStatus(schService, &schSStatus);
-			if (schSStatus.dwCurrentState!=SERVICE_RUNNING) {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+6, "Start POP3 Server");
-			} else {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+8, "Stop POP3 Server");
-			}
-		}
-		if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-		schService=OpenService(schSCManager, "nullgw-smtpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-		if (schService==NULL) {
-//			AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+10, "Install SMTP Server");
-		} else {
-			QueryServiceStatus(schService, &schSStatus);
-			if (schSStatus.dwCurrentState!=SERVICE_RUNNING) {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+9, "Start SMTP Server");
-			} else {
-				AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+11, "Stop SMTP Server");
-			}
-		}
-		bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+12, "Services");
+		bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+6, "Services");
 	} else {
-		AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+3, "Start HTTP Server");
-		AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+6, "Start POP3 Server");
-		AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+9, "Start SMTP Server");
+		AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+3, "Start Groupware Server");
 	}
 	bRet=AppendMenu(hMenu, MF_SEPARATOR, 0, "");
 	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+1, "Configuration");
 	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+0, "Help");
 	bRet=AppendMenu(hMenu, MF_SEPARATOR, 0, "");
-	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+13, "Exit");
+	bRet=AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+7, "Exit");
 	if (!bRet) {
 		DestroyMenu(hMenu);
 		return (FALSE);
@@ -360,80 +317,34 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case 3:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-httpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullgroupware", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				StartService(schService, 0, NULL);
 			} else {
-				winsystem(SW_HIDE, ".\\nullgw-httpd.exe");
+				winsystem(SW_HIDE, ".\\nullgroupware.exe");
 			}
 			break;
 		case 4:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-httpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullgroupware", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				installService(SVC_HTTPD);
 			}
 			break;
 		case 5:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-httpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullgroupware", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				ControlService(schService, SERVICE_CONTROL_STOP, &schSStatus);
 			}
 			break;
 		case 6:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-pop3d", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				StartService(schService, 0, NULL);
-			} else {
-				winsystem(SW_HIDE, ".\\nullgw-pop3d.exe");
-			}
-			break;
-		case 7:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-pop3d", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				installService(SVC_POP3D);
-			}
-			break;
-		case 8:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-pop3d", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				ControlService(schService, SERVICE_CONTROL_STOP, &schSStatus);
-			}
-			break;
-		case 9:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-smtpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				StartService(schService, 0, NULL);
-			} else {
-				winsystem(SW_HIDE, ".\\nullgw-smtpd.exe");
-			}
-			break;
-		case 10:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-smtpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				installService(SVC_SMTPD);
-			}
-			break;
-		case 11:
-			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
-				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgw-smtpd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
-				ControlService(schService, SERVICE_CONTROL_STOP, &schSStatus);
-			}
-			break;
-		case 12:
 			if (g_dwOSVersion>=OS_WIN2K) {
 				ShellExecute(NULL, "open", "services.msc", "/s", NULL, SW_NORMAL);
 			} else {
 				winsystem(SW_SHOW, "Control.exe SrvMgr.cpl Services");
 			}
 			break;
-		case 13:
+		case 7:
 			PostMessage(hDLG, WM_CLOSE, 0, 0);
 			break;
 		}

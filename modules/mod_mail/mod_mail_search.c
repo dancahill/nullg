@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 char *search_makestring(CONN *sid)
@@ -42,11 +42,11 @@ int search_doquery(CONN *sid, const char *order_by, int folderid)
 	if ((ptemp=getgetenv(sid, "C"))!=NULL) {
 		if (strcmp(ptemp, "addr")==0) {
 			if ((ptemp=getgetenv(sid, "ADDR"))!=NULL) {
-				sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, ptemp, ptemp, order_by);
+				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, ptemp, ptemp, order_by);
 				return sqr;
 			}
 		}
 	}
-	sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);
+	sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);
 	return sqr;
 }

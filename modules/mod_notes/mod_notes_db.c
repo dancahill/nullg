@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_notes.h"
 
 int dbread_note(CONN *sid, short int perm, int index, REC_NOTE *note)
@@ -40,9 +40,9 @@ int dbread_note(CONN *sid, short int perm, int index, REC_NOTE *note)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_notes where noteid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_notes where noteid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_notes where noteid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_notes where noteid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -80,32 +80,32 @@ int dbwrite_note(CONN *sid, int index, REC_NOTE *note)
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
 	memset(curdate, 0, sizeof(curdate));
 	memset(query, 0, sizeof(query));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query(sid, "SELECT max(noteid) FROM gw_notes"))<0) return -1;
+		if ((sqr=sql_query("SELECT max(noteid) FROM gw_notes"))<0) return -1;
 		note->noteid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (note->noteid<1) note->noteid=1;
 		strcpy(query, "INSERT INTO gw_notes (noteid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, tablename, tableindex, notetitle, notetext) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", note->noteid, curdate, curdate, note->obj_uid, note->obj_gid, note->obj_gperm, note->obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, note->tablename));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, note->tablename));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", note->tableindex);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, note->notetitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, note->notetitle));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'");
 		strncat(query, note->notetext, sizeof(query)-strlen(query)-3);
 		strncat(query, "')", sizeof(query)-strlen(query)-1);
-		if (sql_update(sid, query)<0) return -1;
+		if (sql_update(query)<0) return -1;
 		return note->noteid;
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_notes SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, note->obj_uid, note->obj_gid, note->obj_gperm, note->obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "tablename = '%s', ", str2sql(sid, note->tablename));
+		strncatf(query, sizeof(query)-strlen(query)-1, "tablename = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, note->tablename));
 		strncatf(query, sizeof(query)-strlen(query)-1, "tableindex = '%d', ", note->tableindex);
-		strncatf(query, sizeof(query)-strlen(query)-1, "notetitle = '%s', ", str2sql(sid, note->notetitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "notetitle = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, note->notetitle));
 		strncatf(query, sizeof(query)-strlen(query)-1, "notetext = '");
 		strncat(query, note->notetext, sizeof(query)-strlen(query)-3);
 		strncat(query, "'", sizeof(query)-strlen(query)-27);
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE noteid = %d", note->noteid);
-		if (sql_update(sid, query)<0) return -1;
+		if (sql_update(query)<0) return -1;
 		return note->noteid;
 	}
 	return -1;

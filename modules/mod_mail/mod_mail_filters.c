@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 #ifdef WIN32
@@ -57,57 +57,45 @@ stuff:
 }
 #endif
 
-int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid, int messageid)
-{
-	FILE *fp;
-	struct stat sb;
-	char cmdline[512];
-	short int err=0;
-
-	if (strlen(config->util_scanmail)<1) return 0;
-	memset(cmdline, 0, sizeof(cmdline));
-	snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
-#ifdef WIN32
-	err=winsystem(cmdline);
-#else
-	err=system(cmdline);
-#endif
-	if (err>255) err=err>>8;
-	if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
-		sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
-	}
-	if ((err==1)||(err==2)||(err==3)) {
-		fp=fopen(msgfilename, "r");
-		if (fp!=NULL) {
-			webmailheader(sid, header, &fp);
-		}
-		if (fp!=NULL) fclose(fp);
-		if (err==1) prints(sid, "[SPAM]");
-		if (err==2) prints(sid, "[VIRUS]");
-		if (err==3) prints(sid, "[VIRUS+SPAM]");
-		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
-		return 7;
-	}
-	return 0;
-}
-
 int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 {
+	char cmdline[512];
 	char msgfilename[512];
 	char *hptr;
 	int dstmbox;
 	int i;
 	int match;
 	int sqr1;
-	int rc;
+	short int err=0;
+	struct stat sb;
 
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, messageid);
 	fixslashes(msgfilename);
-	rc=wmfilter_scan(sid, header, msgfilename, accountid, messageid);
-	if (rc>0) return rc;
+	if (strlen(config->util_scanmail)>0) {
+		memset(cmdline, 0, sizeof(cmdline));
+		snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
+//		logerror(sid, __FILE__, __LINE__, 0, "[%s]", cmdline);
+#ifdef WIN32
+		err=winsystem(cmdline);
+#else
+		err=system(cmdline);
+#endif
+		if (err>255) err=err>>8;
+		if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
+			sql_updatef("UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
+		}
+	}
+//	prints(sid, "[%d]", err);
+	if ((err==1)||(err==2)||(err==3)) {
+		if (err==1) prints(sid, "[SPAM]");
+		if (err==2) prints(sid, "[VIRUS]");
+		if (err==3) prints(sid, "[VIRUS+SPAM]");
+		sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o' WHERE mailheaderid = %d AND accountid = %d", messageid, accountid);
+		return 7;
+	}
 	dstmbox=1;
-	if ((sqr1=sql_queryf(sid, "SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return -1;
+	if ((sqr1=sql_queryf("SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return -1;
 	if (sql_numtuples(sqr1)<1) {
 		sql_freeresult(sqr1);
 		return 1;
@@ -152,12 +140,12 @@ int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 	}
 testrule:
 	sql_freeresult(sqr1);
-	if ((sqr1=sql_queryf(sid, "SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND mailfolderid = %d", sid->dat->user_uid, accountid, dstmbox))<0) return -1;
+	if ((sqr1=sql_queryf("SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND mailfolderid = %d", sid->dat->user_uid, accountid, dstmbox))<0) return -1;
 	if (sql_numtuples(sqr1)<1) {
 		dstmbox=-1;
 	}
 	sql_freeresult(sqr1);
-	sql_updatef(sid, "UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d", dstmbox, messageid, accountid);
+	sql_updatef("UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d", dstmbox, messageid, accountid);
 	return dstmbox;
 }
 
@@ -198,7 +186,7 @@ void wmfilter_edit(CONN *sid)
 	} else {
 		if ((ptemp=getgetenv(sid, "FILTERID"))==NULL) return;
 		filterid=atoi(ptemp);
-		if ((sqr=sql_queryf(sid, "SELECT mailfilterid, accountid, filtername, header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d AND mailfilterid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid, filterid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailfilterid, accountid, filtername, header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d AND mailfilterid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid, filterid))<0) return;
 		if (sql_numtuples(sqr)==1) {
 			filterid=atoi(sql_getvalue(sqr, 0, 0));
 			accountid=atoi(sql_getvalue(sqr, 0, 1));
@@ -221,16 +209,16 @@ void wmfilter_edit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<INPUT TYPE=hidden NAME=accountid VALUE='%d'>\n", accountid);
 	prints(sid, "<INPUT TYPE=hidden NAME=filterid VALUE='%d'>\n", filterid);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (filterid!=0) {
 		prints(sid, "Mail Filter '%s'</FONT></TH></TR>\n", filtername);
 	} else {
 		prints(sid, "New Mail Filter</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Filter Name   &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=filtername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, filtername));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Filter Header &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=header style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Name   &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=filtername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, filtername));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Header &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=header style='width:217px'>\n", config->colour_editform);
 	hdrfound=0;
 	if (strcasecmp(header, "from")==0) hdrfound=1;
 	else if (strcasecmp(header, "reply-to")==0) hdrfound=2;
@@ -248,16 +236,16 @@ void wmfilter_edit(CONN *sid)
 //	prints(sid, "<OPTION VALUE='bcc'%s>BCC:\n",           hdrfound==5?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='subject'%s>Subject:\n",   hdrfound==6?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Filter String &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=string value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, string));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Filter Rule &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=rule style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter String &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=string value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, string));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Rule &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=rule style='width:217px'>\n", config->colour_editform);
 	prints(sid, "<OPTION VALUE='exact'%s>Exact match\n", strcasecmp(rule, "exact")==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='substr'%s>Substring match\n", strcasecmp(rule, "substr")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Filter Action &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=action style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Action &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=action style='width:217px'>\n", config->colour_editform);
 	prints(sid, "<OPTION VALUE='move'%s>Move to folder\n", strcasecmp(action, "move")==0?" SELECTED":"");
 //	prints(sid, "<OPTION VALUE='delete'%s>Delete from server\n", strcasecmp(action, "delete")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Move to Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=dstfolderid style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Move to Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=dstfolderid style='width:217px'>\n", config->colour_editform);
 	htselect_mailfolder(sid, dstfolderid, 1, 0);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
@@ -281,7 +269,7 @@ void wmfilter_list(CONN *sid, int accountid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr1=sql_queryf(sid, "SELECT mailfilterid, filtername FROM gw_mailfilters WHERE obj_uid = %d and accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr1=sql_queryf("SELECT mailfilterid, filtername FROM gw_mailfilters WHERE obj_uid = %d and accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return;
 	prints(sid, "<CENTER>");
 	if (sql_numtuples(sqr1)>0) {
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
@@ -339,7 +327,7 @@ void wmfilter_save(CONN *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (sql_updatef(sid, "DELETE FROM gw_mailfilters WHERE accountid = %d AND mailfilterid = %d", accountid, filterid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailfilters WHERE accountid = %d AND mailfilterid = %d", accountid, filterid)<0) return;
 		prints(sid, "<CENTER>Mail Filter %d deleted successfully</CENTER><BR>\n", filterid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	} else if (filterid==0) {
@@ -347,31 +335,31 @@ void wmfilter_save(CONN *sid)
 			prints(sid, "<CENTER>Filter name cannot be blank</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_queryf(sid, "SELECT max(mailfilterid) FROM gw_mailfilters where accountid = %d", accountid))<0) return;
+		if ((sqr=sql_queryf("SELECT max(mailfilterid) FROM gw_mailfilters where accountid = %d", accountid))<0) return;
 		filterid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (filterid<1) filterid=1;
 		strcpy(query, "INSERT INTO gw_mailfilters (mailfilterid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, filtername, header, string, rule, action, dstfolderid) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', '%d', ", filterid, curdate, curdate, sid->dat->user_uid, accountid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, filtername));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, header));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, string));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, rule));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, action));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filtername));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, rule));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, action));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d')", dstfolderid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Mail filter %d added successfully</CENTER><BR>\n", filterid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_mailfilters SET obj_mtime = '%s', ", curdate);
-		strncatf(query, sizeof(query)-strlen(query)-1, "filtername = '%s', ", str2sql(sid, filtername));
-		strncatf(query, sizeof(query)-strlen(query)-1, "header = '%s', ", str2sql(sid, header));
-		strncatf(query, sizeof(query)-strlen(query)-1, "string = '%s', ", str2sql(sid, string));
-		strncatf(query, sizeof(query)-strlen(query)-1, "rule = '%s', ",   str2sql(sid, rule));
-		strncatf(query, sizeof(query)-strlen(query)-1, "action = '%s', ", str2sql(sid, action));
+		strncatf(query, sizeof(query)-strlen(query)-1, "filtername = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filtername));
+		strncatf(query, sizeof(query)-strlen(query)-1, "header = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header));
+		strncatf(query, sizeof(query)-strlen(query)-1, "string = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string));
+		strncatf(query, sizeof(query)-strlen(query)-1, "rule = '%s', ",       str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, rule));
+		strncatf(query, sizeof(query)-strlen(query)-1, "action = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, action));
 		strncatf(query, sizeof(query)-strlen(query)-1, "dstfolderid = '%d'", dstfolderid);
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailfilterid = %d AND obj_uid = %d AND accountid = %d", filterid, sid->dat->user_uid, accountid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Mail filter %d modified successfully</CENTER><BR>\n", filterid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	}

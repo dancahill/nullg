@@ -15,10 +15,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
-int webmailheader(CONN *sid, wmheader *header, FILE **fp)
+int webmailheader(CONN *sid, wmheader *header)
 {
 	char inbuffer[1024];
 	char *prevheader=NULL;
@@ -26,14 +26,8 @@ int webmailheader(CONN *sid, wmheader *header, FILE **fp)
 	int prevheadersize=0;
 
 	header->status[0]='n';
-	memset(header->boundary, 0, sizeof(header->boundary));
 	for (;;) {
-		if (fp!=NULL) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
-			if (*fp==NULL) break;
-		} else {
-			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
-		}
+		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, &sid->dat->wm->socket)<0) return -1;
 		striprn(inbuffer);
 		if (strcmp(inbuffer, "")==0) break;
 		if (strncasecmp(inbuffer, "Reply-To:", 9)==0) {
@@ -371,7 +365,7 @@ void webmailfiledl(CONN *sid)
 	strncpy(filename, pQueryString, sizeof(filename)-1);
 	decodeurl(filename);
 	memset((char *)&header, 0, sizeof(header));
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		send_error(sid, 400, "Bad Request", "No such message.");
 		sql_freeresult(sqr);

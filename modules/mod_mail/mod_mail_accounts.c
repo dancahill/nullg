@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 void wmaccount_edit(CONN *sid)
@@ -76,7 +76,7 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/accounts/save NAME=profilemailedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=mailaccountid VALUE='%d'>\n", mailacct.mailaccountid);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>" MOD_MAIL_TAB_GEN "</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>" MOD_MAIL_TAB_SER "</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>" MOD_MAIL_TAB_ADV "</A>&nbsp;</TD>\n");
@@ -87,29 +87,29 @@ void wmaccount_edit(CONN *sid)
 	}
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Account Name   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=accountname  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.accountname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Real Name      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=realname     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.realname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Organization   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.organization));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;E-Mail Address </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.address));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Reply Address  </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=replyto      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.replyto));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Account Name   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=accountname  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.accountname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Real Name      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=realname     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.realname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Organization   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.organization));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;E-Mail Address </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.address));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Reply Address  </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=replyto      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.replyto));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Host Type      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Host Type      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=hosttype style='width:217px' onchange=PortUpdate();>\n");
 	prints(sid, "<OPTION VALUE='POP3'%s>POP3\n", strcasecmp(mailacct.hosttype, "POP3")==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='IMAP'%s>IMAP\n", strcasecmp(mailacct.hosttype, "IMAP")==0?" SELECTED":"");
 	prints(sid, "</SELECT>\n</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype1>%s</SPAN> Host </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pophost VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", str2html(sid, mailacct.pophost));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;SMTP Host      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtphost     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.smtphost));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Username       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popusername  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.popusername));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=poppassword  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.poppassword));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;SMTP Auth      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype1>%s</SPAN> Host </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pophost VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", str2html(sid, mailacct.pophost));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Host      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtphost     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.smtphost));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Username       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popusername  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.popusername));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Password       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=poppassword  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.poppassword));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Auth      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=smtpauth style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='n'%s>No\n", mailacct.smtpauth[0]=='n'?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='y'%s>Yes\n", mailacct.smtpauth[0]!='n'?" SELECTED":"");
@@ -118,16 +118,16 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype2>%s</SPAN> Port </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popport      VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", mailacct.popport);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;SMTP Port      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtpport     VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, mailacct.smtpport);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Check for new mail</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype2>%s</SPAN> Port </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popport      VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", mailacct.popport);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Port      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtpport     VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, mailacct.smtpport);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Check for new mail</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=notify style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='0'%s>never\n", mailacct.notify==0?" SELECTED":"");
 	for (i=1;i<61;i++) {
 		prints(sid, "<OPTION VALUE='%d'%s>every %d minute%s\n", i, i==mailacct.notify?" SELECTED":"", i, i!=1?"s":"");
 	}
 	prints(sid, "</SELECT>\n</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Remove messages from server</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Remove messages from server</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=remove style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='0'%s>never\n", mailacct.remove==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='1'%s>when retrieved\n",  mailacct.remove==1?" SELECTED":"");
@@ -137,20 +137,20 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Signature&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER><TEXTAREA WRAP=VIRTUAL NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.signature));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Signature&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><TEXTAREA WRAP=VIRTUAL NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.signature));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	if (mailacct.mailaccountid!=0) {
 		prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD>", config->colour_editform);
 		wmfolder_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");
 		prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD>", config->colour_editform);
 		wmfilter_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");
@@ -185,12 +185,12 @@ void wmaccount_list(CONN *sid)
 	}
 	prints(sid, "<BR><CENTER>\n");
 	if (auth_priv(sid, "webmail")>0) {
-		if ((sqr=sql_queryf(sid, "SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=300 STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Mail Accounts</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Mail Accounts</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "<A HREF=%s/mail/accounts/edit?account=%d>%s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 				prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/mail/purge?accountid=%d>purge</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "</TR>\n");
@@ -253,7 +253,7 @@ void wmaccount_save(CONN *sid)
 	if ((ptemp=getpostenv(sid, "REMOVE"))!=NULL) mailacct.remove=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "SIGNATURE"))!=NULL) snprintf(mailacct.signature, sizeof(mailacct.signature)-1, "%s", ptemp);
 	memset(curdate, 0, sizeof(curdate));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
@@ -275,37 +275,37 @@ void wmaccount_save(CONN *sid)
 			unlink(tmpname);
 		}
 		closedir(handle);
-		if (sql_updatef(sid, "DELETE FROM gw_mailheaders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
-		if (sql_updatef(sid, "DELETE FROM gw_mailfolders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
-		if (sql_updatef(sid, "DELETE FROM gw_mailaccounts WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailheaders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailfolders WHERE accountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailaccounts WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid)<0) return;
 		rmdir(dirname);
 		prints(sid, "<BR><CENTER>E-Mail account %d deleted successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "delete", "%s - %s deleted mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else if (mailacct.mailaccountid==0) {
-		if ((sqr=sql_query(sid, "SELECT max(mailaccountid) FROM gw_mailaccounts"))<0) return;
+		if ((sqr=sql_query("SELECT max(mailaccountid) FROM gw_mailaccounts"))<0) return;
 		mailacct.mailaccountid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (mailacct.mailaccountid<1) mailacct.mailaccountid=1;
 		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, signature) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", mailacct.mailaccountid, curdate, curdate, sid->dat->user_uid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.accountname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.realname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.organization));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.address));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.replyto));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.hosttype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.pophost));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.accountname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.realname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.organization));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.address));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.replyto));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.hosttype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.pophost));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.popport);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.smtphost));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.smtphost));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.smtpport);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.popusername));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, EncodeBase64string(sid, mailacct.poppassword)));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, mailacct.smtpauth));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.popusername));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, EncodeBase64string(sid, mailacct.poppassword)));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.smtpauth));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.lastcount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.notify);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.remove);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, mailacct.signature));
-		if (sql_update(sid, query)<0) return;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
+		if (sql_update(query)<0) return;
 		memset(dirname, 0, sizeof(dirname));
 		snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->server_dir_var_mail, mailacct.mailaccountid);
 		fixslashes(dirname);
@@ -314,16 +314,16 @@ void wmaccount_save(CONN *sid)
 #else
 		if (mkdir(dirname, 0700)!=0) {
 #endif
-			logerror(sid, __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
+			log_error("mod_mail", __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
 			return;
 		}
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
 		prints(sid, "<BR><CENTER>E-Mail account %d added successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {
@@ -332,25 +332,25 @@ void wmaccount_save(CONN *sid)
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_mailaccounts SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, mailacct.obj_uid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "accountname = '%s', ", str2sql(sid, mailacct.accountname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "realname = '%s', ", str2sql(sid, mailacct.realname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "organization = '%s', ", str2sql(sid, mailacct.organization));
-		strncatf(query, sizeof(query)-strlen(query)-1, "address = '%s', ", str2sql(sid, mailacct.address));
-		strncatf(query, sizeof(query)-strlen(query)-1, "replyto = '%s', ", str2sql(sid, mailacct.replyto));
-		strncatf(query, sizeof(query)-strlen(query)-1, "hosttype = '%s', ", str2sql(sid, mailacct.hosttype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "pophost = '%s', ", str2sql(sid, mailacct.pophost));
-		strncatf(query, sizeof(query)-strlen(query)-1, "popport = '%d', ", mailacct.popport);
-		strncatf(query, sizeof(query)-strlen(query)-1, "smtphost = '%s', ", str2sql(sid, mailacct.smtphost));
-		strncatf(query, sizeof(query)-strlen(query)-1, "smtpport = '%d', ", mailacct.smtpport);
-		strncatf(query, sizeof(query)-strlen(query)-1, "popusername = '%s', ", str2sql(sid, mailacct.popusername));
-		strncatf(query, sizeof(query)-strlen(query)-1, "poppassword = '%s', ", str2sql(sid, EncodeBase64string(sid, mailacct.poppassword)));
-		strncatf(query, sizeof(query)-strlen(query)-1, "smtpauth = '%s', ", str2sql(sid, mailacct.smtpauth));
-		strncatf(query, sizeof(query)-strlen(query)-1, "lastcount = '%d', ", mailacct.lastcount);
-		strncatf(query, sizeof(query)-strlen(query)-1, "notify = '%d', ", mailacct.notify);
-		strncatf(query, sizeof(query)-strlen(query)-1, "remove = '%d', ", mailacct.remove);
-		strncatf(query, sizeof(query)-strlen(query)-1, "signature = '%s'", str2sql(sid, mailacct.signature));
+		strncatf(query, sizeof(query)-strlen(query)-1, "accountname = '%s', ",  str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.accountname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "realname = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.realname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "organization = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.organization));
+		strncatf(query, sizeof(query)-strlen(query)-1, "address = '%s', ",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.address));
+		strncatf(query, sizeof(query)-strlen(query)-1, "replyto = '%s', ",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.replyto));
+		strncatf(query, sizeof(query)-strlen(query)-1, "hosttype = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.hosttype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "pophost = '%s', ",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.pophost));
+		strncatf(query, sizeof(query)-strlen(query)-1, "popport = '%d', ",      mailacct.popport);
+		strncatf(query, sizeof(query)-strlen(query)-1, "smtphost = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.smtphost));
+		strncatf(query, sizeof(query)-strlen(query)-1, "smtpport = '%d', ",     mailacct.smtpport);
+		strncatf(query, sizeof(query)-strlen(query)-1, "popusername = '%s', ",  str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.popusername));
+		strncatf(query, sizeof(query)-strlen(query)-1, "poppassword = '%s', ",  str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, EncodeBase64string(sid, mailacct.poppassword)));
+		strncatf(query, sizeof(query)-strlen(query)-1, "smtpauth = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.smtpauth));
+		strncatf(query, sizeof(query)-strlen(query)-1, "lastcount = '%d', ",    mailacct.lastcount);
+		strncatf(query, sizeof(query)-strlen(query)-1, "notify = '%d', ",       mailacct.notify);
+		strncatf(query, sizeof(query)-strlen(query)-1, "remove = '%d', ",       mailacct.remove);
+		strncatf(query, sizeof(query)-strlen(query)-1, "signature = '%s'",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<BR><CENTER>E-mail account %d modified successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "modify", "%s - %s modified mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	}

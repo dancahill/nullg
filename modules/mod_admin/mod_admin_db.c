@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_admin.h"
 
 int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
@@ -38,9 +38,9 @@ int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_groups where groupid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_groups where groupid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -106,9 +106,9 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_users where userid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_users where userid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -210,9 +210,9 @@ int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_zones where zoneid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_zones where zoneid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);

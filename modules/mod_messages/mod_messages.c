@@ -15,18 +15,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_messages.h"
-
-#ifdef WIN32
-unsigned sleep(unsigned seconds)
-{
-	Sleep(1000*seconds);
-	return 0;
-}
-#else
-#include <unistd.h>
-#endif
 
 void htselect_groupfilter(CONN *sid, int groupid, char *baseuri)
 {
@@ -42,7 +33,7 @@ void htselect_groupfilter(CONN *sid, int groupid, char *baseuri)
 	prints(sid, "	location=document.groupfilter.groupid.options[document.groupfilter.groupid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=groupid onChange=\"go2()\">');\r\n");
-	if ((sqr=sql_queryf(sid, "SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(sqr, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -79,7 +70,7 @@ void messagestatus(CONN *sid, int messageid, char status)
 	if ((messageid==0)&&((ptemp=getgetenv(sid, "MESSAGEID"))!=NULL)) {
 		messageid=atoi(ptemp);
 	}
-	if ((sqr=sql_queryf(sid, "SELECT messageid FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
+	if ((sqr=sql_queryf("SELECT messageid FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		sql_freeresult(sqr);
 		return;
@@ -88,9 +79,9 @@ void messagestatus(CONN *sid, int messageid, char status)
 	t=time(NULL);
 	strftime(timebuffer, sizeof(timebuffer), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (status=='0') {
-		sql_updatef(sid, "DELETE FROM gw_messages WHERE obj_uid = %d and messageid = %d", sid->dat->user_uid, messageid);
+		sql_updatef("DELETE FROM gw_messages WHERE obj_uid = %d and messageid = %d", sid->dat->user_uid, messageid);
 	} else {
-		sql_updatef(sid, "UPDATE gw_messages SET obj_mtime = '%s', status = %c WHERE obj_uid = %d AND messageid = %d", timebuffer, status, sid->dat->user_uid, messageid);
+		sql_updatef("UPDATE gw_messages SET obj_mtime = '%s', status = %c WHERE obj_uid = %d AND messageid = %d", timebuffer, status, sid->dat->user_uid, messageid);
 	}
 	return;
 }
@@ -113,7 +104,7 @@ void messages_userlist(CONN *sid)
 		groupid=sid->dat->user_gid;
 	}
 	htselect_groupfilter(sid, groupid, "/messages/userlist");
-	if ((sqr=sql_queryf(sid, "SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d AND groupid = %d ORDER BY username ASC", sid->dat->user_uid, groupid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d AND groupid = %d ORDER BY username ASC", sid->dat->user_uid, groupid))<0) return;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
 	prints(sid, "function ViewHistory(userid, username)\r\n");
 	prints(sid, "{\r\n");
@@ -126,9 +117,9 @@ void messages_userlist(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='cursor:hand; border-style:solid' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='cursor:hand; border-style:solid' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;<A HREF=\"javascript:ViewHistory('%d', '%s')\">history</A>&nbsp;</TD></TR>\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1));
 	}
 	prints(sid, "</TABLE></CENTER>\n");
@@ -149,7 +140,7 @@ void messages_frameset(CONN *sid)
 	}
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -181,7 +172,7 @@ void messages_white(CONN *sid)
 	}
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -217,14 +208,14 @@ void messages_send(CONN *sid)
 		memset(message, 0, sizeof(message));
 		if ((ptemp=getpostenv(sid, "MESSAGE"))!=NULL) snprintf(message, sizeof(message)-1, "%s", ptemp);
 		if (strlen(message)>0) {
-			snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
-			if (sql_updatef(sid, "INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, userid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
-			if (sql_updatef(sid, "INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, sid->dat->user_uid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
+			time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, userid, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
+			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, sid->dat->user_uid, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
 		}
 	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/messages/send?userid=%d NAME=msgcompose>\n", sid->dat->in_ScriptName, userid);
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_editform);
 	prints(sid, "<TD WIDTH=100%%><INPUT TYPE=TEXT NAME=message WIDTH=50 STYLE='width:100%%'></TD>\n");
 	prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Send VALUE='Send'></TD>\n");
 	prints(sid, "</TR></FORM></TABLE>\n");
@@ -244,7 +235,7 @@ void messages_reload(CONN *sid)
 	if (!auth_priv(sid, "messages")&A_READ) return;
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -262,13 +253,13 @@ void messages_reload(CONN *sid)
 	prints(sid, "}\r\n");
 	flushbuffer(sid);
 	for (retry=0;retry<10;retry++) {
-		if ((sqr=sql_queryf(sid, "SELECT messageid, sender, rcpt, message FROM gw_messages WHERE obj_uid = %d AND status > 2 AND (rcpt = %d OR sender = %d) ORDER BY obj_ctime, messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
+		if ((sqr=sql_queryf("SELECT messageid, sender, rcpt, message FROM gw_messages WHERE obj_uid = %d AND status > 2 AND (rcpt = %d OR sender = %d) ORDER BY obj_ctime, messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				if (atoi(sql_getvalue(sqr, i, 1))==sid->dat->user_uid) {
-					if (raw_prints(sid, "WriteTop(\"<B><FONT COLOR=black>%s: </FONT></B>%s<BR>\");\r\n", sid->dat->user_username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
+					if (tcp_fprintf(&sid->socket, "WriteTop(\"<B><FONT COLOR=black>%s: </FONT></B>%s<BR>\");\r\n", sid->dat->user_username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
 				} else {
-					if (raw_prints(sid, "WriteTop(\"<B><FONT COLOR=blue>%s: </FONT></B>%s<BR>\");\r\n", username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
+					if (tcp_fprintf(&sid->socket, "WriteTop(\"<B><FONT COLOR=blue>%s: </FONT></B>%s<BR>\");\r\n", username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
 				}
 				messagestatus(sid, atoi(sql_getvalue(sqr, i, 0)), '2');
 			}
@@ -303,7 +294,7 @@ void messages_history(CONN *sid)
 	}
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -318,7 +309,7 @@ void messages_history(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<BR><B>Message history for %s</B><BR>\n", username);
-	if ((sqr=sql_queryf(sid, "SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
+	if ((sqr=sql_queryf("SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<BR><B>No Messages</B><BR>\n");
 		sql_freeresult(sqr);
@@ -330,10 +321,10 @@ void messages_history(CONN *sid)
 		msgdate=time_sql2unix(sql_getvalue(sqr, i, 1));
 		msgdate+=time_tzoffset(sid, msgdate);
 		if (lastdate+86399<msgdate) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP><B>%s</B></TD></TR>\r\n", config->colour_fieldval, time_unix2datetext(sid, msgdate));
+			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP><B>%s</B></TD></TR>\r\n", config->colour_fieldval, time_unix2datetext(sid, msgdate));
 			lastdate=(int)(msgdate/86400)*86400;
 		}
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		prints(sid, "<TD NOWRAP VALIGN=TOP><A HREF=%s/messages/delete?userid=%d&messageid=%s>delete</A></TD>", sid->dat->in_ScriptName, userid, sql_getvalue(sqr, i, 0));
 		prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=%s>", atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid?"black":"blue");
 		if (atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid) {
@@ -370,7 +361,7 @@ void mod_main(CONN *sid)
 	}
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_messages",		// mod_name
@@ -384,6 +375,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

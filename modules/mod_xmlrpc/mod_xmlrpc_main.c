@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_xmlrpc.h"
 #include <stdarg.h>
 
@@ -115,7 +116,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_xmlrpc",		// mod_name
@@ -129,6 +130,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

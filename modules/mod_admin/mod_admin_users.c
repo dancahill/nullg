@@ -15,12 +15,12 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_admin.h"
 
 void adminuseredit(CONN *sid, REC_USER *user)
 {
-	MOD_NOTES_SUBLIST mod_notes_sublist;
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_USER userrec;
 	char maddr[250];
 	char *ptemp;
@@ -66,7 +66,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/usersave NAME=useredit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", user->userid);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>USER</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>NAME</A>&nbsp;</TD>\n");
@@ -75,16 +75,16 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=javascript:showpage(6)>PERMISSIONS</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
 	prints(sid, "%s%s", str2html(sid, user->givenname), strlen(user->givenname)?" ":"");
 	prints(sid, "%s%s", str2html(sid, user->surname), strlen(user->surname)?" ":"");
 	prints(sid, " (%s)", str2html(sid, user->username));
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
 	if (strlen(user->email)==0) {
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (sid->dat->user_maildefault==0) {
@@ -108,21 +108,21 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		ptemp++;
 	}
 	if (strlen(maddr)) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, maddr);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, maddr);
 	}
 	if (tz1!=tz2) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\n", config->colour_editform);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Username&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->username));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->password));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Username&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->username));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Password&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->password));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n", config->colour_editform);
 	htselect_group(sid, user->groupid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", config->colour_editform, user->userid==1?" DISABLED":"");
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", config->colour_editform, user->userid==1?" DISABLED":"");
 	if ((user->userid==1)||(user->enabled)) {
 		prints(sid, "<OPTION VALUE=0>No\n<OPTION VALUE=1 SELECTED>Yes\n");
 	} else {
@@ -133,12 +133,12 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Surname&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->surname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Given Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->givenname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle     value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->jobtitle));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Division&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=division      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->division));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Supervisor&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=supervisor  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->supervisor));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Date of Birth&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Surname&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->surname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Given Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->givenname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle     value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->jobtitle));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Division&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=division      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->division));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Supervisor&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=supervisor  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->supervisor));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Date of Birth&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=birthdate2>\n");
 	htselect_month(sid, user->birthdate);
 	prints(sid, "</SELECT>");
@@ -148,7 +148,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<SELECT NAME=birthdate3>\n");
 	htselect_year(sid, 1900, user->birthdate);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Hire Date&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Hire Date&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=hiredate2>\n");
 	htselect_month(sid, user->hiredate);
 	prints(sid, "</SELECT>");
@@ -158,50 +158,50 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<SELECT NAME=hiredate3>\n");
 	htselect_year(sid, 1900, user->hiredate);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;S.I.N.&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sin         value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->sin));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Active&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=isactive    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->isactive));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;S.I.N.&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sin         value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->sin));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Active&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=isactive    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->isactive));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->homenumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->worknumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;FAX&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->faxnumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Cell Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=cellnumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->cellnumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Pager&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pagernumber      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->pagernumber));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;E-Mail&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email           value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->email));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->address));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;City&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=locality          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->locality));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Province&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=region        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->region));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Country&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=country        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->country));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=postalcode value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->postalcode));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->homenumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->worknumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;FAX&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->faxnumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Cell Phone&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=cellnumber  value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->cellnumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Pager&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pagernumber      value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->pagernumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;E-Mail&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email           value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->email));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->address));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;City&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=locality          value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->locality));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Province&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=region        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->region));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Country&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=country        value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->country));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=postalcode value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, user->postalcode));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (module_exists(sid, "mod_calendar")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:255px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:255px'>\n", config->colour_editform);
 		htselect_hour(sid, user->prefdaystart);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:255px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:255px'>\n", config->colour_editform);
 		htselect_number(sid, user->prefdaylength, 0, 24, 1);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Max Results/Page&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefmaxlist style='width:255px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Max Results/Page&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefmaxlist style='width:255px'>\n", config->colour_editform);
 	htselect_number(sid, user->prefmaxlist, 5, 200, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preftimezone style='width:255px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Time Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preftimezone style='width:255px'>\n", config->colour_editform);
 	htselect_timezone(sid, user->preftimezone);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n", config->colour_editform);
 	htselect_zone(sid, user->prefgeozone);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Administration&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Administration&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -213,7 +213,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	}
 	prints(sid, "</TR>\n");
 	if (module_exists(sid, "mod_bookmarks")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_i VALUE='1' %s></TD>", (user->authbookmarks&A_INSERT)?"checked":"");
@@ -222,7 +222,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_calendar")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_i VALUE='1' %s></TD>", (user->authcalendar&A_INSERT)?"checked":"");
@@ -231,7 +231,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_calls")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_i VALUE='1' %s></TD>", (user->authcalls&A_INSERT)?"checked":"");
@@ -240,7 +240,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_contacts")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_i VALUE='1' %s></TD>", (user->authcontacts&A_INSERT)?"checked":"");
@@ -249,7 +249,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_mail")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_i VALUE='1' %s></TD>", (user->authwebmail&A_INSERT)?"checked":"");
@@ -258,7 +258,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_files")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_i VALUE='1' %s></TD>", (user->authfiles&A_INSERT)?"checked":"");
@@ -267,7 +267,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_forums")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_i VALUE='1' %s></TD>", (user->authforums&A_INSERT)?"checked":"");
@@ -276,7 +276,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_messages")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_i VALUE='1' %s></TD>", (user->authmessages&A_INSERT)?"checked":"");
@@ -285,7 +285,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_orders")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_i VALUE='1' %s></TD>", (user->authorders&A_INSERT)?"checked":"");
@@ -294,7 +294,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_profile")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -303,7 +303,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "</TR>\n");
 	}
 	if (module_exists(sid, "mod_searches")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -318,7 +318,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TD NOWRAP COLSPAN=2>");
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=users&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, user->userid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "users", user->userid, 1);
@@ -378,25 +378,25 @@ void adminuserlist(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr1=sql_query(sid, "SELECT userid, username, surname, givenname, groupid, prefgeozone FROM gw_users ORDER BY userid ASC"))<0) return;
-	if ((sqr2=sql_query(sid, "SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) {
+	if ((sqr1=sql_query("SELECT userid, username, surname, givenname, groupid, prefgeozone FROM gw_users ORDER BY userid ASC"))<0) return;
+	if ((sqr2=sql_query("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) {
 		sql_freeresult(sqr1);
 		return;
 	}
-	if ((sqr3=sql_query(sid, "SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC"))<0) {
+	if ((sqr3=sql_query("SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC"))<0) {
 		sql_freeresult(sqr1);
 		sql_freeresult(sqr2);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Real Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Group&nbsp;</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	if (sql_numtuples(sqr3)>0) {
 		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Zone&nbsp;</FONT></TH>", config->colour_thtext);
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<sql_numtuples(sqr1);i++) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 1)));
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(sqr1, i, 2)));
@@ -602,12 +602,12 @@ void adminusersave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_users WHERE userid = %d", user.userid)<0) return;
+		if (sql_updatef("DELETE FROM gw_users WHERE userid = %d", user.userid)<0) return;
 		prints(sid, "<CENTER>User %d deleted successfully</CENTER><BR>\n", userid);
 		db_log_activity(sid, 1, "users", user.userid, "delete", "%s - %s deleted user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else if (user.userid==0) {
-		if ((sqr=sql_queryf(sid, "SELECT username FROM gw_users where username = '%s'", user.username))<0) return;
+		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s'", user.username))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
 			sql_freeresult(sqr);
@@ -621,14 +621,14 @@ void adminusersave(CONN *sid)
 			return;
 		}
 		snprintf(user.password, sizeof(user.password)-1, "%s", auth_setpass(sid, user.password));
-		if ((sqr=sql_query(sid, "SELECT max(userid) FROM gw_users"))<0) return;
+		if ((sqr=sql_query("SELECT max(userid) FROM gw_users"))<0) return;
 		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (user.userid<1) user.userid=1;
 		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, enabled, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", user.userid, curdate, curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.username));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.password);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.groupid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.enabled);
@@ -653,27 +653,27 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.preftimezone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.prefgeozone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.availability);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.surname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.givenname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.jobtitle));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.division));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.supervisor));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.address));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.locality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.region));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.country));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.postalcode));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.homenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.worknumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.faxnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.cellnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.pagernumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.email));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.surname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.givenname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.jobtitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.division));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.supervisor));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.address));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.locality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.region));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.country));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.postalcode));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.homenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.worknumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.faxnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.cellnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.pagernumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.email));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.birthdate);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.hiredate);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, user.sin));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, user.isactive));
-		if (sql_update(sid, query)<0) return;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.sin));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.isactive));
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>User added successfully</CENTER><BR>\n");
 		db_log_activity(sid, 1, "users", user.userid, "insert", "%s - %s added user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
@@ -682,7 +682,7 @@ void adminusersave(CONN *sid)
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((sqr=sql_queryf(sid, "SELECT username FROM gw_users where username = '%s' and userid <> %d", user.username, user.userid))<0) return;
+		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' and userid <> %d", user.username, user.userid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
 			sql_freeresult(sqr);
@@ -699,7 +699,7 @@ void adminusersave(CONN *sid)
 			snprintf(user.password, sizeof(user.password)-1, "%s", auth_setpass(sid, user.password));
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_users SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
-		strncatf(query, sizeof(query)-strlen(query)-1, "username = '%s', ", str2sql(sid, user.username));
+		strncatf(query, sizeof(query)-strlen(query)-1, "username = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
 		strncatf(query, sizeof(query)-strlen(query)-1, "password = '%s', ", user.password);
 		strncatf(query, sizeof(query)-strlen(query)-1, "groupid = '%d', ", user.groupid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "enabled = '%d', ", user.enabled);
@@ -724,28 +724,28 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "preftimezone = '%d', ", user.preftimezone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "prefgeozone = '%d', ", user.prefgeozone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "availability = '%s', ", user.availability);
-		strncatf(query, sizeof(query)-strlen(query)-1, "surname = '%s', ", str2sql(sid, user.surname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "givenname = '%s', ", str2sql(sid, user.givenname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "jobtitle = '%s', ", str2sql(sid, user.jobtitle));
-		strncatf(query, sizeof(query)-strlen(query)-1, "division = '%s', ", str2sql(sid, user.division));
-		strncatf(query, sizeof(query)-strlen(query)-1, "supervisor = '%s', ", str2sql(sid, user.supervisor));
-		strncatf(query, sizeof(query)-strlen(query)-1, "address = '%s', ", str2sql(sid, user.address));
-		strncatf(query, sizeof(query)-strlen(query)-1, "locality = '%s', ", str2sql(sid, user.locality));
-		strncatf(query, sizeof(query)-strlen(query)-1, "region = '%s', ", str2sql(sid, user.region));
-		strncatf(query, sizeof(query)-strlen(query)-1, "country = '%s', ", str2sql(sid, user.country));
-		strncatf(query, sizeof(query)-strlen(query)-1, "postalcode = '%s', ", str2sql(sid, user.postalcode));
-		strncatf(query, sizeof(query)-strlen(query)-1, "homenumber = '%s', ", str2sql(sid, user.homenumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "worknumber = '%s', ", str2sql(sid, user.worknumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "faxnumber = '%s', ", str2sql(sid, user.faxnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "cellnumber = '%s', ", str2sql(sid, user.cellnumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "pagernumber = '%s', ", str2sql(sid, user.pagernumber));
-		strncatf(query, sizeof(query)-strlen(query)-1, "email = '%s', ", str2sql(sid, user.email));
+		strncatf(query, sizeof(query)-strlen(query)-1, "surname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.surname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "givenname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.givenname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "jobtitle = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.jobtitle));
+		strncatf(query, sizeof(query)-strlen(query)-1, "division = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.division));
+		strncatf(query, sizeof(query)-strlen(query)-1, "supervisor = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.supervisor));
+		strncatf(query, sizeof(query)-strlen(query)-1, "address = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.address));
+		strncatf(query, sizeof(query)-strlen(query)-1, "locality = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.locality));
+		strncatf(query, sizeof(query)-strlen(query)-1, "region = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.region));
+		strncatf(query, sizeof(query)-strlen(query)-1, "country = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.country));
+		strncatf(query, sizeof(query)-strlen(query)-1, "postalcode = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.postalcode));
+		strncatf(query, sizeof(query)-strlen(query)-1, "homenumber = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.homenumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "worknumber = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.worknumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "faxnumber = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.faxnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "cellnumber = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.cellnumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "pagernumber = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.pagernumber));
+		strncatf(query, sizeof(query)-strlen(query)-1, "email = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.email));
 		strncatf(query, sizeof(query)-strlen(query)-1, "birthdate = '%s', ", user.birthdate);
 		strncatf(query, sizeof(query)-strlen(query)-1, "hiredate = '%s', ", user.hiredate);
-		strncatf(query, sizeof(query)-strlen(query)-1, "sin = '%s', ", str2sql(sid, user.sin));
-		strncatf(query, sizeof(query)-strlen(query)-1, "isactive = '%s'", str2sql(sid, user.isactive));
+		strncatf(query, sizeof(query)-strlen(query)-1, "sin = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.sin));
+		strncatf(query, sizeof(query)-strlen(query)-1, "isactive = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.isactive));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", user.userid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>User %d modified successfully</CENTER><BR>\n", userid);
 		db_log_activity(sid, 1, "users", user.userid, "modify", "%s - %s modified user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 	}
@@ -775,7 +775,7 @@ void adminusertimeedit(CONN *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 		return;
 	}
-	if ((sqr=sql_queryf(sid, "SELECT availability FROM gw_users WHERE userid = %d", user.userid))<0) return;
+	if ((sqr=sql_queryf("SELECT availability FROM gw_users WHERE userid = %d", user.userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for %s</CENTER>\n", user.userid);
 		sql_freeresult(sqr);
@@ -789,7 +789,7 @@ void adminusertimeedit(CONN *sid)
 			uavailability[i]='0';
 		}
 	}
-	if ((sqr=sql_queryf(sid, "SELECT availability FROM gw_groups WHERE groupid = %d", user.groupid))<0) return;
+	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", user.groupid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\n", user.groupid);
 		sql_freeresult(sqr);
@@ -852,13 +852,13 @@ void adminusertimeedit(CONN *sid)
 	for (i=0;i<24;i++) {
 		prints(sid, "<input type='hidden' name='t%d' value='true'>\n", i);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Availability for <A HREF=%s/admin/useredit?userid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, userid, config->colour_thlink, user.username);
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=25 STYLE='border-style:solid'><FONT COLOR=%s>Availability for <A HREF=%s/admin/useredit?userid=%d STYLE='color: %s'>%s</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, userid, config->colour_thlink, user.username);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
@@ -866,8 +866,8 @@ void adminusertimeedit(CONN *sid)
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
-		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
+		prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldval);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=\"%s\" STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\n", config->colour_fieldname, i, dow[i]);
 		for (j=0;j<24;j++) {
 			if (uavailability[i*24+j]=='X') {
 				prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\n");
@@ -924,7 +924,7 @@ void adminusertimesave(CONN *sid)
 	}
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (sql_updatef(sid, "UPDATE gw_users SET obj_mtime = '%s', availability = '%s' WHERE userid = %d", curdate, availability, userid)<0) return;
+	if (sql_updatef("UPDATE gw_users SET obj_mtime = '%s', availability = '%s' WHERE userid = %d", curdate, availability, userid)<0) return;
 	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR>\n");
 	db_log_activity(sid, 1, "users", userid, "modify", "%s - %s modified availability for user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, userid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");

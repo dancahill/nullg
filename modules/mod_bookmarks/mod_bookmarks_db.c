@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_bookmarks.h"
 
 int dbread_bookmark(CONN *sid, short int perm, int index, REC_BOOKMARK *bookmark)
@@ -37,9 +37,9 @@ int dbread_bookmark(CONN *sid, short int perm, int index, REC_BOOKMARK *bookmark
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_bookmarks where bookmarkid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarks where bookmarkid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_bookmarks where bookmarkid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarks where bookmarkid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -80,9 +80,9 @@ int dbread_bookmarkfolder(CONN *sid, short int perm, int index, REC_BOOKMARKFOLD
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_bookmarkfolders where folderid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarkfolders where folderid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_bookmarkfolders where folderid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarkfolders where folderid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -115,26 +115,26 @@ int dbwrite_bookmark(CONN *sid, int index, REC_BOOKMARK *bookmark)
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
 	memset(curdate, 0, sizeof(curdate));
 	memset(query, 0, sizeof(query));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query(sid, "SELECT max(bookmarkid) FROM gw_bookmarks"))<0) return -1;
+		if ((sqr=sql_query("SELECT max(bookmarkid) FROM gw_bookmarks"))<0) return -1;
 		bookmark->bookmarkid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (bookmark->bookmarkid<1) bookmark->bookmarkid=1;
 		strcpy(query, "INSERT INTO gw_bookmarks (bookmarkid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, folderid, bookmarkname, bookmarkurl) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", bookmark->bookmarkid, curdate, curdate, bookmark->obj_uid, bookmark->obj_gid, bookmark->obj_gperm, bookmark->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", bookmark->folderid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, bookmark->bookmarkname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, bookmark->bookmarkurl));
-		if (sql_update(sid, query)<0) return -1;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmark->bookmarkname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmark->bookmarkurl));
+		if (sql_update(query)<0) return -1;
 		return bookmark->bookmarkid;
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_bookmarks SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, bookmark->obj_uid, bookmark->obj_gid, bookmark->obj_gperm, bookmark->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "folderid = '%d', ", bookmark->folderid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "bookmarkname = '%s', ", str2sql(sid, bookmark->bookmarkname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "bookmarkurl = '%s'", str2sql(sid, bookmark->bookmarkurl));
+		strncatf(query, sizeof(query)-strlen(query)-1, "bookmarkname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmark->bookmarkname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "bookmarkurl = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmark->bookmarkurl));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE bookmarkid = %d", bookmark->bookmarkid);
-		if (sql_update(sid, query)<0) return -1;
+		if (sql_update(query)<0) return -1;
 		return bookmark->bookmarkid;
 	}
 	return -1;

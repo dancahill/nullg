@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_searches.h"
 
 /****************************************************************************
@@ -56,30 +56,30 @@ void searchsqladd(CONN *sid)
 	prints(sid, "<INPUT TYPE=HIDDEN NAME=queryid VALUE=%d>\n", queryid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	if (queryid!=0) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Query Number %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, query.queryid);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>Query Number %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, query.queryid);
 	} else {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>New Query</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>New Query</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", config->colour_editform, str2html(sid, query.queryname));
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", config->colour_editform, str2html(sid, query.queryname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
 	if ((query.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "query")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, query.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, query.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", query.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", query.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", query.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", query.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", query.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", query.obj_operm==2?" CHECKED":"");
@@ -125,20 +125,20 @@ void searchsqlrun(CONN *sid)
 	}
 	if (queryid==0) {
 		if (auth_priv(sid, "query")&A_ADMIN) {
-			if ((sqr=sql_queryf(sid, "SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC"))<0) return;
+			if ((sqr=sql_queryf("SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC"))<0) return;
 		} else {
-			if ((sqr=sql_queryf(sid, "SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr=sql_queryf("SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
 		}
 		prints(sid, "<CENTER>\n");
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "Saved queries<BR>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>\n", config->colour_th);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">\n", config->colour_th);
 			if (auth_priv(sid, "query")&A_ADMIN) {
 				prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 			}
 			prints(sid, "<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Query Name</FONT></TH></TR>\n", config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+				prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 				if (auth_priv(sid, "query")&A_ADMIN) {
 					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 				}
@@ -179,31 +179,31 @@ void searchsqlrun(CONN *sid)
 		ptemp++;
 	}
 	if (strcmp(querytype, "SELECT")==0) {
-		if ((sqr=sql_query(sid, query.query))<0) {
+		if ((sqr=sql_query(query.query))<0) {
 			prints(sid, "<CENTER>SQL query failed.</CENTER>\n");
 			return;
 		}
 	} else if (strcmp(querytype, "SHOW")==0) {
-		if ((sqr=sql_query(sid, query.query))<0) {
+		if ((sqr=sql_query(query.query))<0) {
 			prints(sid, "<CENTER>SQL query failed.</CENTER>\n");
 			return;
 		}
 	} else if (strcmp(querytype, "DELETE")==0) {
-		if (sql_update(sid, query.query)<0) {
+		if (sql_update(query.query)<0) {
 			prints(sid, "<CENTER>SQL delete failed.</CENTER>\n");
 		} else {
 			prints(sid, "<CENTER>SQL delete successful.</CENTER>\n");
 		}
 		return;
 	} else if (strcmp(querytype, "INSERT")==0) {
-		if (sql_update(sid, query.query)<0) {
+		if (sql_update(query.query)<0) {
 			prints(sid, "<CENTER>SQL insert failed.</CENTER>\n");
 		} else {
 			prints(sid, "<CENTER>SQL insert successful.</CENTER>\n");
 		}
 		return;
 	} else if (strcmp(querytype, "UPDATE")==0) {
-		if (sql_update(sid, query.query)<0) {
+		if (sql_update(query.query)<0) {
 			prints(sid, "<CENTER>SQL update failed.</CENTER>\n");
 		} else {
 			prints(sid, "<CENTER>SQL update successful.</CENTER>\n");
@@ -247,7 +247,7 @@ void searchsqlrun(CONN *sid)
 	}
 	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(sqr));
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_th);
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
 		offset=atoi(ptemp);
 	} else {
@@ -258,7 +258,7 @@ void searchsqlrun(CONN *sid)
 	}
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		for (j=0;j<sql_numfields(sqr);j++)
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, j)));
 		prints(sid, "</TR>\n");
@@ -337,7 +337,7 @@ void searchsqlsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_queries WHERE queryid = %d", queryid)<0) return;
+		if (sql_updatef("DELETE FROM gw_queries WHERE queryid = %d", queryid)<0) return;
 		prints(sid, "<CENTER>Query %d deleted successfully</CENTER><BR>\n", queryid);
 		db_log_activity(sid, 1, "queries", query.queryid, "delete", "%s - %s deleted query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else if (query.queryid==0) {

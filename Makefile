@@ -2,7 +2,7 @@
 
 include Rules.mak
 
-all: _sqlite _dbutil _httpd _modules
+all: _dbutil _server _server_modules _modules _sqlite
 	@cp -p other/rc.groupware distrib/bin/rc.groupware
 	@cp -p other/cron.daily distrib/bin/cron.daily
 	@cp -p other/configure distrib/bin/configure
@@ -20,43 +20,38 @@ freebsd:
 	@ln -sf Rules/FreeBSD Rules.mak
 	@make all
 
-_sqlite:
-	@echo "sqlite"
-	@cd contrib;./make_sqlite build
-
 _dbutil:
 	@echo "dbutil"
 	@cd dbutil;$(MAKE)
 
-_httpd:
-	@echo "httpd"
-	@cd httpd;$(MAKE)
+_server:
+	@echo "server"
+	@cd server;$(MAKE)
 
-_pop3d:
-	@echo "pop3d"
-	@cd pop3d;$(MAKE)
-
-_smtpd:
-	@echo "smtpd"
-	@cd smtpd;$(MAKE)
+_server_modules:
+	@echo "server_modules"
+	@cd server_modules;$(MAKE)
 
 _modules:
 	@echo "modules"
 	@cd modules;$(MAKE)
 
+_sqlite:
+	@echo "sqlite"
+	@cd contrib;./make_sqlite build
+
 clean:
 	@echo -n "Cleaning..."
 	@chmod 0755 other/lxtool
 	@cd dbutil;$(MAKE) clean
-	@cd httpd;$(MAKE) clean
-	@cd pop3d;$(MAKE) clean
-	@cd smtpd;$(MAKE) clean
+	@cd server;$(MAKE) clean
+	@cd server_modules;$(MAKE) clean
 	@cd modules;$(MAKE) clean
 	@./other/lxtool clean
 	@rm -f distrib/bin/* distrib/lib/* *~
 	@echo "done."
 
-distclean: clean
+mrclean: clean
 	@ln -sf Rules/Linux Rules.mak
 	@cd contrib;./make_sqlite clean
 
@@ -64,9 +59,9 @@ install: all
 	@cd distrib;./setup
 
 install2: all
-	/etc/rc.d/init.d/nullgroupware stop
+	/etc/rc.d/init.d/nullgw stop
 	@cd distrib;./setup
-	/etc/rc.d/init.d/nullgroupware start
+	/etc/rc.d/init.d/nullgw start
 
 wc:
 	wc `find -name *.[ch]`

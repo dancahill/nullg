@@ -17,3 +17,6 @@
 */
 
 #include "i18n/mod_messages.h"
+#ifndef WIN32
+#include <unistd.h>
+#endif

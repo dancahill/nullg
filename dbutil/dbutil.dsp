@@ -52,9 +52,37 @@ LINK32=link.exe
 # Begin Target
 
 # Name "dbutil - Win32 Release"
+# Begin Group "Schema"
+
+# PROP Default_Filter "*.h"
+# Begin Source File
+
+SOURCE=..\include\schema\mysql.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\schema\odbc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\schema\pgsql.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\schema\sqlite.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\dbio.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\icons\dbutil.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\dbutil.rc
 # End Source File
 # Begin Source File
 
@@ -68,17 +96,5 @@ SOURCE=.\md5.c
 
 SOURCE=.\sql.c
 # End Source File
-
-
-# Begin Source File
-
-SOURCE=..\win32\icons\dbutil.ico
-# End Source File
-# Begin Source File
-
-SOURCE=.\dbutil.rc
-# End Source File
-
-
 # End Target
 # End Project

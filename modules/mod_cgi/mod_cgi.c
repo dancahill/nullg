@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #ifndef WIN32
 #include <unistd.h>
 #endif
@@ -253,7 +254,7 @@ void mod_main(CONN *sid)
 		CloseHandle((HANDLE)local.out);
 		CloseHandle((HANDLE)remote.in);
 		CloseHandle((HANDLE)remote.out);
-		logerror(sid, __FILE__, __LINE__, 1, "CGI failed. [%s]", Command);
+		log_error("mod_cgi", __FILE__, __LINE__, 1, "CGI failed. [%s]", Command);
 		send_error(sid, 500, "Internal Server Error", "There was a problem running the requested CGI.");
 		return;
 	}
@@ -266,16 +267,16 @@ void mod_main(CONN *sid)
 		for (i=0;i<50;i++) free(env[i]);
 		close(pset1[0]);
 		close(pset1[1]);
-		logerror(sid, __FILE__, __LINE__, 1, "pipe() error");
+		log_error("mod_cgi", __FILE__, __LINE__, 1, "pipe() error");
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
 		return;
 	}
 	local.in=pset1[0]; remote.out=pset1[1];
 	remote.in=pset2[0]; local.out=pset2[1];
-	logerror(sid, __FILE__, __LINE__, 2, "Executing CGI [%s %s]", args[0], args[1]);
+	log_error("mod_cgi", __FILE__, __LINE__, 2, "Executing CGI [%s %s]", args[0], args[1]);
 	pid=fork();
 	if (pid<0) {
-		logerror(sid, __FILE__, __LINE__, 1, "fork() error");
+		log_error("mod_cgi", __FILE__, __LINE__, 1, "fork() error");
 		return;
 	} else if (pid==0) {
 		close(local.in);
@@ -283,11 +284,11 @@ void mod_main(CONN *sid)
 		dup2(remote.in, fileno(stdin));
 		dup2(remote.out, fileno(stdout));
 //		if ((dup2(remote.in, fileno(stdin))!=0)||(dup2(remote.out, fileno(stdout))!=0)) {
-//			logerror(sid, __FILE__, __LINE__, 1, "dup2() error");
+//			log_error("mod_cgi", __FILE__, __LINE__, 1, "dup2() error");
 //			exit(0);
 //		}
 		execve(args[0], &args[0], &env[0]);
-		logerror(sid, __FILE__, __LINE__, 1, "execve() error [%s][%s]", args[0], args[1]);
+		log_error("mod_cgi", __FILE__, __LINE__, 1, "execve() error [%s][%s]", args[0], args[1]);
 		exit(0);
 	} else {
 		close(remote.in);
@@ -297,7 +298,7 @@ void mod_main(CONN *sid)
 	if (sid->dat->in_ContentLength>0) {
 		bytesleft=sid->dat->in_ContentLength;
 		ptemp=sid->PostData;
-//		logerror(sid, __FILE__, __LINE__, 1, "--[%d][%s]", bytesleft, ptemp);
+//		log_error("mod_cgi", __FILE__, __LINE__, 1, "--[%d][%s]", bytesleft, ptemp);
 		while (bytesleft>0) {
 #ifdef WIN32
 			i=WriteFile((HANDLE)local.out, ptemp, bytesleft, &nOutRead, NULL);
@@ -320,7 +321,7 @@ void mod_main(CONN *sid)
 		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
 	}
 	snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
-	if (!proc->RunAsCGI) {
+	if (!http_proc->RunAsCGI) {
 		prints(sid, "%s %d OK\r\n", sid->dat->out_Protocol, sid->dat->out_status);
 		prints(sid, "Connection: %s\r\n", sid->dat->out_Connection);
 	}
@@ -333,12 +334,11 @@ void mod_main(CONN *sid)
 		nOutRead=read(local.in, szBuffer, BUFF_SIZE-1);
 #endif
 		if (nOutRead>0) {
-			if (proc->RunAsCGI) {
+			if (http_proc->RunAsCGI) {
 				fwrite(szBuffer, sizeof(char), nOutRead, stdout);
 			} else {
-				tcp_send(sid, sid->socket, szBuffer, nOutRead, 0);
+				tcp_send(&sid->socket, szBuffer, nOutRead, 0);
 			}
-			sid->atime=time(NULL);
 			sid->dat->out_bytecount+=nOutRead;
 		};
 	} while (nOutRead>0);
@@ -363,7 +363,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_cgi",		// mod_name
@@ -377,10 +377,10 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }
-

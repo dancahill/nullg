@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_calendar.h"
 
 /****************************************************************************
@@ -28,7 +28,7 @@
  ***************************************************************************/
 void calendarlistweek(CONN *sid)
 {
-	MOD_TASKS_LIST mod_tasks_list;
+	HTMOD_TASKS_LIST mod_tasks_list;
 	char *ptemp1, *ptemp2;
 	char posttime1[32];
 	char posttime2[32];
@@ -109,7 +109,7 @@ void calendarlistweek(CONN *sid)
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
 	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
@@ -117,7 +117,7 @@ void calendarlistweek(CONN *sid)
 		t=unixdate+(i*86400);
 		strftime(showtime, sizeof(showtime), "%Y-%m-%d", gmtime(&t));
 		t-=time_tzoffset(sid, t);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>", config->colour_th);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>", config->colour_th);
 		prints(sid, "<FONT SIZE=2><B><A HREF=%s/calendar/list?day=%d", sid->dat->in_ScriptName, (int)(t/86400));
 		if (userid>0) prints(sid, "&userid=%d", userid);
 		if (groupid>0) prints(sid, "&groupid=%d", groupid);
@@ -137,7 +137,7 @@ void calendarlistweek(CONN *sid)
 				}
 				if (k==sql_numtuples(sqr2)) continue;
 			}
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
@@ -150,7 +150,7 @@ void calendarlistweek(CONN *sid)
 			if (line>0) line--;
 		}
 		while (line>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
 			line--;
 		}
 	}

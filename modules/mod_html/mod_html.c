@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_html.h"
 
 void mod_html_header(CONN *sid, char *title)
@@ -150,20 +151,20 @@ domenu:
 	prints(sid, "<CENTER>\r\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	if (sid->dat->user_menustyle==0) {
-		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", proc->config.colour_topmenu);
+		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", proc->config.colour_topmenu);
 		for (i=0;;i++) {
-			if (strlen(proc->mod_menuitems[i].mod_name)==0) break;
-			if (strlen(proc->mod_menuitems[i].mod_menuname)==0) continue;
-			if (strlen(proc->mod_menuitems[i].mod_menuperm)!=0) {
-				if (!auth_priv(sid, proc->mod_menuitems[i].mod_menuperm)) continue;
+			if (strlen(http_proc->mod_menuitems[i].mod_name)==0) break;
+			if (strlen(http_proc->mod_menuitems[i].mod_menuname)==0) continue;
+			if (strlen(http_proc->mod_menuitems[i].mod_menuperm)!=0) {
+				if (!auth_priv(sid, http_proc->mod_menuitems[i].mod_menuperm)) continue;
 			}
 			prints(sid, "%s<A CLASS='TBAR' HREF=", dot?"&nbsp;&middot;&nbsp;":"");
-			if (strncasecmp(proc->mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
-				prints(sid, "%s", proc->mod_menuitems[i].mod_menuuri);
+			if (strncasecmp(http_proc->mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
+				prints(sid, "%s", http_proc->mod_menuitems[i].mod_menuuri);
 			} else {
-				prints(sid, "\"%s%s\"", sid->dat->in_ScriptName, proc->mod_menuitems[i].mod_menuuri);
+				prints(sid, "\"%s%s\"", sid->dat->in_ScriptName, http_proc->mod_menuitems[i].mod_menuuri);
 			}
-			prints(sid, ">%s</A>", proc->mod_menuitems[i].mod_menuname);
+			prints(sid, ">%s</A>", http_proc->mod_menuitems[i].mod_menuname);
 			dot=1;
 		}
 		prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
@@ -175,7 +176,7 @@ domenu:
 		prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 		prints(sid, "</TR></TABLE>\r\n</TD></TR>\r\n");
 	}
-	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=%s>\r\n", proc->config.colour_topmenu);
+	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\">\r\n", proc->config.colour_topmenu);
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
@@ -351,7 +352,7 @@ void mod_html_login(CONN *sid)
 	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='padding:1px'><FONT COLOR=%s>NullLogic Groupware Login</FONT></TH></TR>\r\n", proc->config.colour_th, proc->config.colour_thtext);
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
-	if ((sqr=sql_query(sid, "SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;
+	if ((sqr=sql_query("SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strcmp("$1$0hs2u/6B$KxBgAAw59fBu/DyHA/Vor/", sql_getvalue(sqr, 0, 1))==0) {
 			snprintf(username, sizeof(username)-1, "%s", sql_getvalue(sqr, 0, 0));
@@ -391,8 +392,8 @@ void mod_html_logout(CONN *sid)
 	mod_html_header(sid, "NullLogic Groupware Logout");
 	prints(sid, "<CENTER>\r\n<BR><BR>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH><FONT COLOR=%s>NullLogic Groupware Logout</FONT></TH></TR>\r\n", proc->config.colour_th, proc->config.colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD>\r\n", proc->config.colour_fieldval);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH><FONT COLOR=%s>NullLogic Groupware Logout</FONT></TH></TR>\r\n", proc->config.colour_th, proc->config.colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD>\r\n", proc->config.colour_fieldval);
 	prints(sid, "You have successfully logged out.\r\n");
 	prints(sid, "</TD></TR>\r\n");
 	prints(sid, "</TABLE>\r\n");
@@ -404,7 +405,7 @@ void mod_html_logout(CONN *sid)
 
 void mod_html_motd(CONN *sid)
 {
-	MOD_TASKS_LIST mod_tasks_list;
+	HTMOD_TASKS_LIST mod_tasks_list;
 	char posttime1[32];
 	char posttime2[32];
 	char showtime[32];
@@ -420,16 +421,16 @@ void mod_html_motd(CONN *sid)
 	mod_html_topmenu(sid, MENU_MAIN);
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\r\n<TABLE WIDTH=90%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR><TD COLSPAN=2>\r\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TH BGCOLOR=%s STYLE='border-style:solid'>\n", proc->config.colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TH BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", proc->config.colour_th);
 	prints(sid, "<TABLE WIDTH=100%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>\r\n");
 	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left><FONT COLOR=%s>Welcome, %s.&nbsp;</FONT></TH>\r\n", proc->config.colour_thtext, str2html(sid, sid->dat->user_username));
 	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right><FONT COLOR=%s>&nbsp;%s</FONT></TH>\r\n", proc->config.colour_thtext, showtime);
 	prints(sid, "</TR></TABLE>\r\n");
 	prints(sid, "</TH></TR>\r\n");
-	if ((sqr=sql_queryf(sid, "SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
+	if ((sqr=sql_queryf("SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>\r\n", proc->config.colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='border-style:solid'>\r\n", proc->config.colour_fieldval);
 			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
@@ -451,12 +452,12 @@ void mod_html_motd(CONN *sid)
 	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	t=unixdate+172800;
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid))<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'><FONT COLOR=%s>Calendar</FONT></TH></TR>\n", proc->config.colour_th, proc->config.colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'><FONT COLOR=%s>Calendar</FONT></TH></TR>\n", proc->config.colour_th, proc->config.colour_thtext);
 	for (i=0;i<2;i++) {
 		t=unixdate+(i*86400);
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><B><A HREF=%s/calendar/list?day=%d>", proc->config.colour_fieldval, sid->dat->in_ScriptName, (int)(t/86400));
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><B><A HREF=%s/calendar/list?day=%d>", proc->config.colour_fieldval, sid->dat->in_ScriptName, (int)(t/86400));
 		if (i==0) {
 			prints(sid, "Today");
 		} else if (i==1) {
@@ -467,7 +468,7 @@ void mod_html_motd(CONN *sid)
 		for (j=0;j<sql_numtuples(sqr);j++) {
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
 			if ((t2<t)||(t2>=t+86400)) continue;
-			prints(sid, "<TR BGCOLOR=%s>", proc->config.colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", proc->config.colour_fieldval);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
@@ -478,7 +479,7 @@ void mod_html_motd(CONN *sid)
 			if (k>0) k--;
 		}
 		while (k>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", proc->config.colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", proc->config.colour_fieldval);
 			k--;
 		}
 	}
@@ -486,17 +487,17 @@ void mod_html_motd(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
-		if ((sqr=sql_queryf(sid, "SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>", proc->config.colour_th);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>", proc->config.colour_th);
 			prints(sid, "<FONT SIZE=2 COLOR=%s>&nbsp;E-Mail</FONT></TH></TR>\n", proc->config.colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				if ((sqr2=sql_queryf(sid, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
+				if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
 				newmessages=atoi(sql_getvalue(sqr2, 0, 0));
 				sql_freeresult(sqr2);
-				prints(sid, "<TR BGCOLOR=%s><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", proc->config.colour_fieldval);
-				prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT NOWRAP>", proc->config.colour_fieldval);
+				prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", proc->config.colour_fieldval);
+				prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=LEFT NOWRAP>", proc->config.colour_fieldval);
 				if (sid->dat->user_menustyle>0) {
 					prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 				} else {
@@ -601,19 +602,19 @@ void mod_html_menuframe(CONN *sid)
 		prints(sid, "<A HREF=%s/frames/motd target='gwmain' onclick=\"window.open('%s/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/groupware/images/groupware.gif HEIGHT=50 WIDTH=125 ALT='%s logged in'></A><BR><BR>\r\n", sid->dat->in_ScriptName, sid->dat->in_ScriptName, sid->dat->user_username);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");
 		for (i=0;;i++) {
-			if (strlen(proc->mod_menuitems[i].mod_name)==0) break;
-			if (strlen(proc->mod_menuitems[i].mod_menuname)==0) continue;
-			if (strlen(proc->mod_menuitems[i].mod_menuperm)!=0) {
-				if (!auth_priv(sid, proc->mod_menuitems[i].mod_menuperm)) continue;
+			if (strlen(http_proc->mod_menuitems[i].mod_name)==0) break;
+			if (strlen(http_proc->mod_menuitems[i].mod_menuname)==0) continue;
+			if (strlen(http_proc->mod_menuitems[i].mod_menuperm)!=0) {
+				if (!auth_priv(sid, http_proc->mod_menuitems[i].mod_menuperm)) continue;
 			}
 			// Mozilla treats this as double click.  Bad gecko.
 			prints(sid, "<TR><TD style=\"cursor:hand\" onClick=");
-			if (strncasecmp(proc->mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
-				prints(sid, "%s><A HREF=%s>", proc->mod_menuitems[i].mod_menuuri, proc->mod_menuitems[i].mod_menuuri);
+			if (strncasecmp(http_proc->mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
+				prints(sid, "%s><A HREF=%s>", http_proc->mod_menuitems[i].mod_menuuri, http_proc->mod_menuitems[i].mod_menuuri);
 			} else {
-				prints(sid, "\"parent.gwmain.location.href='%s%s'\"><A HREF=%s%s TARGET=gwmain>", sid->dat->in_ScriptName, proc->mod_menuitems[i].mod_menuuri, sid->dat->in_ScriptName, proc->mod_menuitems[i].mod_menuuri);
+				prints(sid, "\"parent.gwmain.location.href='%s%s'\"><A HREF=%s%s TARGET=gwmain>", sid->dat->in_ScriptName, http_proc->mod_menuitems[i].mod_menuuri, sid->dat->in_ScriptName, http_proc->mod_menuitems[i].mod_menuuri);
 			}
-			prints(sid, "<FONT SIZE=2><B>%s</B></FONT></A></TD></TR>\r\n", proc->mod_menuitems[i].mod_menuname);
+			prints(sid, "<FONT SIZE=2><B>%s</B></FONT></A></TD></TR>\r\n", http_proc->mod_menuitems[i].mod_menuname);
 		}
 		prints(sid, "</TABLE>\r\n");
 		prints(sid, "</CENTER>\r\n</BODY>\r\n</HTML>\r\n");
@@ -634,27 +635,27 @@ void mod_html_menuframe(CONN *sid)
 				prints(sid, "p = new createPanel('r','Resources');\n");
 			}
 			for (j=0;;j++) {
-				if (strlen(proc->mod_menuitems[j].mod_name)==0) break;
-				if (proc->mod_menuitems[j].mod_submenu!=i) continue;
-				if (strlen(proc->mod_menuitems[j].mod_menuname)==0) continue;
-				if (strlen(proc->mod_menuitems[j].mod_menuperm)!=0) {
-					if (!auth_priv(sid, proc->mod_menuitems[j].mod_menuperm)) continue;
+				if (strlen(http_proc->mod_menuitems[j].mod_name)==0) break;
+				if (http_proc->mod_menuitems[j].mod_submenu!=i) continue;
+				if (strlen(http_proc->mod_menuitems[j].mod_menuname)==0) continue;
+				if (strlen(http_proc->mod_menuitems[j].mod_menuperm)!=0) {
+					if (!auth_priv(sid, http_proc->mod_menuitems[j].mod_menuperm)) continue;
 				}
 				prints(sid, "p.addButton('/groupware/images/menu2/");
-				if (strcmp(proc->mod_menuitems[j].mod_name, "mod_admin")==0)          prints(sid, "admin.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_bookmarks")==0) prints(sid, "bookmarks.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_calendar")==0)  prints(sid, "calendar.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_calls")==0)     prints(sid, "default.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_contacts")==0)  prints(sid, "contacts.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_mail")==0)      prints(sid, "email.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_forums")==0)    prints(sid, "default.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_messages")==0)  prints(sid, "messenger.gif");
-				else if (strcmp(proc->mod_menuitems[j].mod_name, "mod_orders")==0)    prints(sid, "orders.gif");
+				if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_admin")==0)          prints(sid, "admin.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_bookmarks")==0) prints(sid, "bookmarks.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calendar")==0)  prints(sid, "calendar.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calls")==0)     prints(sid, "default.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_contacts")==0)  prints(sid, "contacts.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_mail")==0)      prints(sid, "email.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_forums")==0)    prints(sid, "default.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_messages")==0)  prints(sid, "messenger.gif");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_orders")==0)    prints(sid, "orders.gif");
 				else prints(sid, "default.gif");
-				if (strncasecmp(proc->mod_menuitems[j].mod_menuuri, "javascript:", 11)==0) {
-					prints(sid, "', '%s', '%s');\n", proc->mod_menuitems[j].mod_menuname, proc->mod_menuitems[j].mod_menuuri);
+				if (strncasecmp(http_proc->mod_menuitems[j].mod_menuuri, "javascript:", 11)==0) {
+					prints(sid, "', '%s', '%s');\n", http_proc->mod_menuitems[j].mod_menuname, http_proc->mod_menuitems[j].mod_menuuri);
 				} else {
-					prints(sid, "', '%s', 'parent.gwmain.location=\"%s%s\"');\n", proc->mod_menuitems[j].mod_menuname, sid->dat->in_ScriptName, proc->mod_menuitems[j].mod_menuuri);
+					prints(sid, "', '%s', 'parent.gwmain.location=\"%s%s\"');\n", http_proc->mod_menuitems[j].mod_menuname, sid->dat->in_ScriptName, http_proc->mod_menuitems[j].mod_menuuri);
 				}
 			}
 		}
@@ -671,7 +672,7 @@ void mod_html_menuframe(CONN *sid)
 
 void mod_html_reloadframe(CONN *sid)
 {
-	MOD_MAIL_SYNC mod_mail_sync;
+	HTMOD_MAIL_SYNC mod_mail_sync;
 	char posttime[32];
 	int isreminder;
 	int i, j;
@@ -688,7 +689,7 @@ void mod_html_reloadframe(CONN *sid)
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf(sid, "SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
 			b=a-atoi(sql_getvalue(sqr1, i, 1))*60;
@@ -703,7 +704,7 @@ void mod_html_reloadframe(CONN *sid)
 	}
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf(sid, "SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
 			a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr1, i, 0)));
@@ -720,9 +721,9 @@ void mod_html_reloadframe(CONN *sid)
 	if (auth_priv(sid, "messages")&A_READ) {
 		t=time(NULL)-10;
 		strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-		if ((sqr1=sql_queryf(sid, "SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s'", sid->dat->user_uid, sid->dat->user_uid, posttime))<0) return;
+		if ((sqr1=sql_queryf("SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s'", sid->dat->user_uid, sid->dat->user_uid, posttime))<0) return;
 		if (sql_numtuples(sqr1)>0) {
-			if ((sqr2=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) {
+			if ((sqr2=sql_queryf("SELECT userid, username FROM gw_users"))<0) {
 				sql_freeresult(sqr1);
 				return;
 			}
@@ -741,14 +742,14 @@ void mod_html_reloadframe(CONN *sid)
 	}
 	if ((mod_mail_sync=module_call(sid, "mod_mail_sync"))!=NULL) {
 		notice=0;
-		if ((sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
 			j=time_sql2unix(sql_getvalue(sqr1, i, 5));
 			if ((strlen(sql_getvalue(sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(sqr1, i, 4))*60)<time(NULL))) {
 				mod_mail_sync(sid, 0);
 			}
-			if ((sqr2=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) break;
+			if ((sqr2=sql_queryf("SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) break;
 			if (sql_numtuples(sqr2)>0) notice=1;
 			sql_freeresult(sqr2);
 		}
@@ -776,7 +777,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_html",		// mod_name
@@ -790,6 +791,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on gwmon.dsp
 !IF "$(CFG)" == ""
 CFG=gwmon - Win32 Release
-!MESSAGE gwmon - Win32 Release.
+!MESSAGE No configuration specified. Defaulting to gwmon - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "gwmon - Win32 Release"
@@ -24,9 +24,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
 OUTDIR=.\..\..\distrib\bin
 INTDIR=.\..\..\obj\gwmon
 # Begin Custom Macros
@@ -48,21 +45,7 @@ CLEAN :
 "$(INTDIR)" :
     if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\gwmon.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"$(OUTDIR)\gwmon.exe" 
-LINK32_OBJS= \
-	"$(INTDIR)\gwmon.obj" \
-	"$(INTDIR)\gwmon.res"
-
-"$(OUTDIR)\gwmon.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
+CPP=cl.exe
 CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
@@ -95,8 +78,33 @@ CPP_PROJ=/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTD
    $(CPP_PROJ) $< 
 <<
 
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\gwmon.res" /d "NDEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\gwmon.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"$(OUTDIR)\gwmon.exe" 
+LINK32_OBJS= \
+	"$(INTDIR)\gwmon.obj" \
+	"$(INTDIR)\gwmon.res"
+
+"$(OUTDIR)\gwmon.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("gwmon.dep")
+!INCLUDE "gwmon.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "gwmon.dep"
+!ENDIF 
+!ENDIF 
 
 
 !IF "$(CFG)" == "gwmon - Win32 Release"

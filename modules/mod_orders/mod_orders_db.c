@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_orders.h"
 
 union rec_u {
@@ -111,13 +111,13 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 	}
 	switch (table) {
 	case DB_ORDERS:
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_orders where orderid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_orders where orderid = %d", index))<0) return -1;
 		break;
 	case DB_ORDERITEMS:
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_orderitems where orderitemid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_orderitems where orderitemid = %d", index))<0) return -1;
 		break;
 	case DB_PRODUCTS:
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_products where productid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_products where productid = %d", index))<0) return -1;
 		break;
 	default:
 		return -1;

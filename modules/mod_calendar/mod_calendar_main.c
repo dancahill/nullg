@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_calendar.h"
 
 void htselect_eventclosingstatus(CONN *sid, int selected)
@@ -23,7 +24,7 @@ void htselect_eventclosingstatus(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT eventclosingid, closingname FROM gw_eventclosings ORDER BY closingname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT eventclosingid, closingname FROM gw_eventclosings ORDER BY closingname ASC"))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -64,8 +65,8 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "	location=document.eventfilter.status.options[document.eventfilter.status.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	if ((sqr=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users order by username ASC"))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, groupid, username FROM gw_users order by username ASC"))<0) return;
+	if ((sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
 	for (i=0;i<sql_numtuples(sqr2);i++) {
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr2, i, 0)));
 		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
@@ -155,7 +156,7 @@ void htselect_eventtype(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT eventtypeid, eventtypename FROM gw_eventtypes ORDER BY eventtypename ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT eventtypeid, eventtypename FROM gw_eventtypes ORDER BY eventtypename ASC"))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -181,7 +182,7 @@ void calendarreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf(sid, "SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", CAL_EVENT_TITLE);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
@@ -191,9 +192,9 @@ void calendarreminders(CONN *sid)
 			if (reminders==1) {
 				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
 				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
-				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", config->colour_th, CAL_EVENT_NAME);
+				prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", config->colour_th, CAL_EVENT_NAME);
 			}
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), CAL_EVENT_RESET);
 			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
 			eventdate=time_sql2unix(sql_getvalue(sqr, i, 2));
@@ -228,7 +229,7 @@ void reminderstatus(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
 	eventid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d", eventid, sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d", eventid, sid->dat->user_uid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -236,7 +237,7 @@ void reminderstatus(CONN *sid)
 	reminder=atoi(sql_getvalue(sqr, 0, 0));
 	eventstart=time_sql2unix(sql_getvalue(sqr, 0, 1));
 	now=time(NULL);
-	snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, now));
+	time_unix2sql(timebuffer, sizeof(timebuffer)-1, now);
 	sql_freeresult(sqr);
 	eventstart=(eventstart-now)/60;
 	if (eventstart<0) {
@@ -290,7 +291,7 @@ void reminderstatus(CONN *sid)
 		reminder=0;
 		break;
 	}
-	sql_updatef(sid, "UPDATE gw_events SET obj_mtime = '%s', reminder = %d WHERE eventid = %d", timebuffer, reminder, eventid);
+	sql_updatef("UPDATE gw_events SET obj_mtime = '%s', reminder = %d WHERE eventid = %d", timebuffer, reminder, eventid);
 	return;
 }
 
@@ -376,36 +377,36 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/calendar/save NAME=eventedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=eventid VALUE='%d'>\n", event->eventid);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (event->eventid>0) {
 		prints(sid, "<A HREF=%s/calendar/view?eventid=%d STYLE='color: %s'>Calendar Event %d</FONT></TH></TR>\n", sid->dat->in_ScriptName, event->eventid, config->colour_thtext, event->eventid);
 	} else {
 		prints(sid, "New Calendar Event</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP>\n", config->colour_editform);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Event Name&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Event Name&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=eventname value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", str2html(sid, event->eventname));
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:182px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:182px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, event->assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Event Type&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventtype style='width:182px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Event Type&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventtype style='width:182px'>\n", config->colour_editform);
 	htselect_eventtype(sid, event->eventtype);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if (module_exists(sid, "mod_contacts")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n", config->colour_editform, config->colour_fieldnametext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n", config->colour_editform, config->colour_fieldnametext);
 		htselect_contact(sid, event->contactid);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:182px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:182px'>\n", config->colour_editform);
 	htselect_priority(sid, event->priority);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Reminder&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Reminder&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=reminder style='width:182px'>\n");
 	htselect_reminder(sid, event->reminder);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventstart2>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventstart2>\n", config->colour_editform);
 	htselect_month(sid, startdate);
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=eventstart1>\n");
@@ -414,50 +415,50 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<SELECT NAME=eventstart3>\n");
 	htselect_year(sid, 2000, startdate);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Start Time&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Start Time&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=starttime style='width:182px'>\n");
 	htselect_time(sid, event->eventstart);
 	prints(sid, "</SELECT></TD></TR>\n");
 	duration=event->eventfinish-event->eventstart;
 	if (duration<0) duration=0;
 	duration/=60;
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Duration&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Duration&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=duration1 style='width:91px'>\n");
 	htselect_qhours(sid, duration/60);
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=duration2 style='width:91px'>\n");
 	htselect_qminutes(sid, duration%60);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Availability&nbsp;</B></TD><TD ALIGN=RIGHT>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Availability&nbsp;</B></TD><TD ALIGN=RIGHT>", config->colour_editform);
 	prints(sid, "<SELECT NAME=busy style='width:182px'>\n");
 	prints(sid, "<OPTION VALUE=0%s>Available\n", event->busy==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE=1%s>Busy\n", event->busy!=0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:182px' onchange=CloseUpdate();>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:182px' onchange=CloseUpdate();>\n", config->colour_editform);
 	htselect_eventstatus(sid, event->status);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Closing Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=closingstatus style='width:182px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Closing Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=closingstatus style='width:182px'>\n", config->colour_editform);
 	htselect_eventclosingstatus(sid, event->closingstatus);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=4 COLS=60 style='width:100%%'>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, event->details));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=4 COLS=60 style='width:100%%'>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, event->details));
 	if ((event->obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, event->obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, event->obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", event->obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", event->obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", event->obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", event->obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", event->obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", event->obj_operm==2?" CHECKED":"");
@@ -492,7 +493,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
  ***************************************************************************/
 void calendarview(CONN *sid)
 {
-	MOD_NOTES_SUBLIST mod_notes_sublist;
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_EVENT event;
 	char *ptemp;
 	int eventid;
@@ -513,7 +514,7 @@ void calendarview(CONN *sid)
 	event.eventstart+=time_tzoffset(sid, event.eventstart);
 	event.eventfinish+=time_tzoffset(sid, event.eventfinish);
 	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, event.eventname));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, event.eventname));
 	if (auth_priv(sid, "calendar")&A_MODIFY) {
 		if (auth_priv(sid, "contacts")&A_ADMIN) {
 			prints(sid, " [<A HREF=%s/calendar/edit?eventid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
@@ -522,16 +523,16 @@ void calendarview(CONN *sid)
 		}
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) return;
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users"))<0) return;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedby) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD>\n");
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Date        </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100 STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, event.eventstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Date        </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100 STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, event.eventstart));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -539,11 +540,11 @@ void calendarview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD>\n");
 	sql_freeresult(sqr);
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Start Time  </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventstart));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Event Type  </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_eventtype(sid, event.eventtype));
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Finish Time </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventfinish));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
-	if ((sqr=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", event.contactid))<0) return;
+	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Start Time  </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventstart));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Event Type  </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_eventtype(sid, event.eventtype));
+	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Finish Time </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, event.eventfinish));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", event.contactid))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
 		prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
@@ -552,25 +553,25 @@ void calendarview(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	prints(sid, "&nbsp;</TD>\n", sql_getvalue(sqr, 0, 2));
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Availability</B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, event.busy>0?"Busy":"Available");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Priority    </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Availability</B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, event.busy>0?"Busy":"Available");
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Priority    </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	if (event.priority==0) prints(sid, "Lowest");
 	else if (event.priority==1) prints(sid, "Low");
 	else if (event.priority==2) prints(sid, "Normal");
 	else if (event.priority==3) prints(sid, "High");
 	else if (event.priority==4) prints(sid, "Highest");
 	prints(sid, "&nbsp;</TD>\n");
-	prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, event.status));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Reminder    </B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, event.reminder));
+	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, event.status));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Reminder    </B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, event.reminder));
 	if (event.status) {
-		prints(sid, "    <TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Closing Status</B></TD><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventclosingstatus(sid, event.closingstatus));
+		prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Closing Status</B></TD><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventclosingstatus(sid, event.closingstatus));
 	} else {
-		prints(sid, "    <TD BGCOLOR=%s STYLE='border-style:solid'>&nbsp;</TD><TD BGCOLOR=%s STYLE='border-style:solid'>&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval);
+		prints(sid, "    <TD BGCOLOR=\"%s\" STYLE='border-style:solid'>&nbsp;</TD><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval);
 	}
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, event.details));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, event.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=events&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "events", event.eventid, 4);
@@ -664,7 +665,7 @@ void calendarsave(CONN *sid)
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Autoassign")==0)) {
 		if ((ptemp=getpostenv(sid, "AUTOGROUP"))==NULL) return;
 		zoneid=0;
-		if ((sqr=sql_queryf(sid, "SELECT geozone FROM gw_contacts where contactid = %d", event.contactid))<0) return;
+		if ((sqr=sql_queryf("SELECT geozone FROM gw_contacts where contactid = %d", event.contactid))<0) return;
 		if (sql_numtuples(sqr)==1) {
 			zoneid=atoi(sql_getvalue(sqr, 0, 0));
 		}
@@ -686,7 +687,7 @@ void calendarsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_events WHERE eventid = %d", event.eventid)<0) return;
+		if (sql_updatef("DELETE FROM gw_events WHERE eventid = %d", event.eventid)<0) return;
 		prints(sid, "<CENTER>Calendar event %d deleted successfully</CENTER><BR>\n", event.eventid);
 		db_log_activity(sid, 1, "events", event.eventid, "delete", "%s - %s deleted calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/list\">\n", sid->dat->in_ScriptName);
@@ -790,7 +791,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_calendar",		// mod_name
@@ -804,6 +805,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

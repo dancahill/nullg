@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_searches.h"
 
 int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query)
@@ -36,9 +36,9 @@ int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_queries where queryid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_queries where queryid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_queries where queryid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_queries where queryid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -70,24 +70,24 @@ int dbwrite_query(CONN *sid, int index, REC_QUERY *query)
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
 	memset(curdate, 0, sizeof(curdate));
 	memset(querybuf, 0, sizeof(querybuf));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query(sid, "SELECT max(queryid) FROM gw_queries"))<0) return -1;
+		if ((sqr=sql_query("SELECT max(queryid) FROM gw_queries"))<0) return -1;
 		query->queryid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (query->queryid<1) query->queryid=1;
 		strcpy(querybuf, "INSERT INTO gw_queries (queryid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, queryname, query) values (");
 		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", query->queryid, curdate, curdate, query->obj_uid, query->obj_gid, query->obj_gperm, query->obj_operm);
-		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s', ", str2sql(sid, query->queryname));
-		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s')", str2sql(sid, query->query));
-		if (sql_update(sid, querybuf)<0) return -1;
+		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->queryname));
+		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->query));
+		if (sql_update(querybuf)<0) return -1;
 		return query->queryid;
 	} else {
 		snprintf(querybuf, sizeof(querybuf)-1, "UPDATE gw_queries SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, query->obj_uid, query->obj_gid, query->obj_gperm, query->obj_operm);
-		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "queryname = '%s', ", str2sql(sid, query->queryname));
-		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "query = '%s'", str2sql(sid, query->query));
+		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "queryname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->queryname));
+		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "query = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->query));
 		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, " WHERE queryid = %d", query->queryid);
-		if (sql_update(sid, querybuf)<0) return -1;
+		if (sql_update(querybuf)<0) return -1;
 		return query->queryid;
 	}
 	return -1;

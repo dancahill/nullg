@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_mail.h"
 
 void wmfolder_edit(CONN *sid)
@@ -42,7 +42,7 @@ void wmfolder_edit(CONN *sid)
 	} else {
 		if ((ptemp=getgetenv(sid, "FOLDERID"))==NULL) return;
 		folderid=atoi(ptemp);
-		if ((sqr=sql_queryf(sid, "SELECT mailfolderid, accountid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d and mailfolderid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid, folderid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailfolderid, accountid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d and mailfolderid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid, folderid))<0) return;
 		if (sql_numtuples(sqr)==1) {
 			folderid=atoi(sql_getvalue(sqr, 0, 0));
 			accountid=atoi(sql_getvalue(sqr, 0, 1));
@@ -61,18 +61,18 @@ void wmfolder_edit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<INPUT TYPE=hidden NAME=accountid VALUE='%d'>\n", accountid);
 	prints(sid, "<INPUT TYPE=hidden NAME=folderid VALUE='%d'>\n", folderid);
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (folderid!=0) {
 		prints(sid, "Mail Folder '%s'</FONT></TH></TR>\n", foldername);
 	} else {
 		prints(sid, "New Mail Folder</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'%s>\n", config->colour_editform, (folderid<1)||(folderid>5)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'%s>\n", config->colour_editform, (folderid<1)||(folderid>5)?"":" DISABLED");
 	htselect_mailfolder(sid, parentid, 1, 1);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'%s></TD></TR>\n", config->colour_editform, str2html(sid, foldername), (folderid<1)||(folderid>5)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'%s></TD></TR>\n", config->colour_editform, str2html(sid, foldername), (folderid<1)||(folderid>5)?"":" DISABLED");
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	if ((folderid<1)||(folderid>5)) {
@@ -104,12 +104,12 @@ void wmfolder_list(CONN *sid, int accountid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr1=sql_queryf(sid, "SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr1=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid))<0) return;
 	if (sql_numtuples(sqr1)<1) {
 		sql_freeresult(sqr1);
 		return;
 	}
-	if ((sqr2=sql_queryf(sid, "SELECT folder, COUNT(mailheaderid), SUM(size) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status != 'd' GROUP BY folder", sid->dat->user_uid, accountid))<0) {
+	if ((sqr2=sql_queryf("SELECT folder, COUNT(mailheaderid), SUM(size) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status != 'd' GROUP BY folder", sid->dat->user_uid, accountid))<0) {
 		sql_freeresult(sqr1);
 		return;
 	}
@@ -262,21 +262,21 @@ void wmfolder_save(CONN *sid)
 			prints(sid, "<CENTER><B>This folder cannot be deleted.</B></CENTER>\n");
 			return;
 		}
-		if ((sqr=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = %d", sid->dat->user_uid, accountid, folderid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = %d", sid->dat->user_uid, accountid, folderid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
 			sql_freeresult(sqr);
 			return;
 		}
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND parentfolderid = %d", sid->dat->user_uid, accountid, folderid))<0) return;
+		if ((sqr=sql_queryf("SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND parentfolderid = %d", sid->dat->user_uid, accountid, folderid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
 			sql_freeresult(sqr);
 			return;
 		}
 		sql_freeresult(sqr);
-		if (sql_updatef(sid, "DELETE FROM gw_mailfolders WHERE accountid = %d AND mailfolderid = %d", accountid, folderid)<0) return;
+		if (sql_updatef("DELETE FROM gw_mailfolders WHERE accountid = %d AND mailfolderid = %d", accountid, folderid)<0) return;
 		prints(sid, "<CENTER>Mail Folder %d deleted successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	} else if (folderid==0) {
@@ -284,24 +284,24 @@ void wmfolder_save(CONN *sid)
 			prints(sid, "<CENTER>Folder name cannot be blank</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_queryf(sid, "SELECT max(mailfolderid) FROM gw_mailfolders where accountid = %d", accountid))<0) return;
+		if ((sqr=sql_queryf("SELECT max(mailfolderid) FROM gw_mailfolders where accountid = %d", accountid))<0) return;
 		folderid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (folderid<11) folderid=11;
 		strcpy(query, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', '%d', ", folderid, curdate, curdate, sid->dat->user_uid, accountid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", parentid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, foldername));
-		if (sql_update(sid, query)<0) return;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, foldername));
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Mail folder %d added successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	} else {
 		if (folderid>5) {
 			snprintf(query, sizeof(query)-1, "UPDATE gw_mailfolders SET obj_mtime = '%s', ", curdate);
 			strncatf(query, sizeof(query)-strlen(query)-1, "parentfolderid = '%d', ", parentid);
-			strncatf(query, sizeof(query)-strlen(query)-1, "foldername = '%s'", str2sql(sid, foldername));
+			strncatf(query, sizeof(query)-strlen(query)-1, "foldername = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, foldername));
 			strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailfolderid = %d AND obj_uid = %d AND accountid = %d", folderid, sid->dat->user_uid, accountid);
-			if (sql_update(sid, query)<0) return;
+			if (sql_update(query)<0) return;
 		}
 		prints(sid, "<CENTER>Mail folder %d modified successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);

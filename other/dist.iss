@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.2.7
+AppVerName=NullLogic Groupware 1.3.0
 AppPublisher=NullLogic
 AppPublisherURL=http://nullgroupware.sf.net/
 AppSupportURL=http://nullgroupware.sf.net/
@@ -19,12 +19,11 @@ Source: "..\distrib\*.*"; Flags: ignoreversion recursesubdirs; DestDir: "{app}"
 Name: "{group}\Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\config.exe"
 Name: "{group}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 Name: "{group}\Groupware Help"; Filename: "{app}\var\htdocs\groupware\help\en\index.html"
-Name: "{group}\Groupware Online"; Filename: "http://nullgroupware.sourceforge.net/"
+Name: "{group}\Groupware Online"; Filename: "http://nullgroupware.sf.net/"
 Name: "{commonstartup}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 [Run]
 Filename: "{app}\bin\config.exe"; Workingdir: "{app}\bin"; Description: "Edit Groupware Configuration"; Flags: postinstall skipifsilent unchecked
 Filename: "{app}\bin\gwmon.exe"; Workingdir: "{app}\bin"; Description: "Launch Groupware Monitor"; Flags: nowait postinstall skipifsilent
 [UninstallRun]
-Filename: "net.exe"; Parameters: "stop nullgw-httpd"; Flags: runminimized
-Filename: "{app}\bin\nullgw-httpd.exe"; Parameters: "remove"; Workingdir: "{app}\bin"; Flags: runminimized
-
+Filename: "net.exe"; Parameters: "stop nullgroupware"; Flags: runminimized
+Filename: "{app}\bin\nullgroupware.exe"; Parameters: "remove"; Workingdir: "{app}\bin"; Flags: runminimized

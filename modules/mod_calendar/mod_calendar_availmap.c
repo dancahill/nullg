@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_calendar.h"
 
 void calendar_availmap(CONN *sid)
@@ -107,7 +107,7 @@ void calendar_availmap(CONN *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	if ((sqr=sql_queryf(sid, "SELECT groupid, availability FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT groupid, availability FROM gw_users WHERE userid = %d", userid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for %s</CENTER>\n", userid);
 		sql_freeresult(sqr);
@@ -122,7 +122,7 @@ void calendar_availmap(CONN *sid)
 			uavailability[i]='0';
 		}
 	}
-	if ((sqr=sql_queryf(sid, "SELECT availability FROM gw_groups WHERE groupid = %d", usergroupid))<0) return;
+	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", usergroupid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\n", usergroupid);
 		sql_freeresult(sqr);
@@ -142,18 +142,18 @@ void calendar_availmap(CONN *sid)
 		}
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' ORDER BY eventfinish ASC", posttime1, posttime2))<0) return;
+		if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' ORDER BY eventfinish ASC", posttime1, posttime2))<0) return;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventfinish ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventfinish ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
@@ -162,7 +162,7 @@ void calendar_availmap(CONN *sid)
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
 		prints(sid, "<TR BGCOLOR=#F0F0F0>\n");
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=%s STYLE='border-style:solid'><B>&nbsp;%s&nbsp;</B></TD>\n", config->colour_fieldname, dow[i]);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=\"%s\" STYLE='border-style:solid'><B>&nbsp;%s&nbsp;</B></TD>\n", config->colour_fieldname, dow[i]);
 		for (j=0;j<24;j++) {
 			prints(sid, "<TD STYLE='border-style:solid'>");
 			for (k=0;k<4;k++) {

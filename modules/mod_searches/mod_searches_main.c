@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_searches.h"
 
 void searchform(CONN *sid)
@@ -54,10 +55,10 @@ void searchform(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	if (auth_priv(sid, "contacts")&A_READ) {
 		prints(sid, "<FORM METHOD=GET ACTION=%s/search/contacts NAME=contactsearch>\n", sid->dat->in_ScriptName);
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD><SELECT NAME=column>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD><SELECT NAME=column>\n", config->colour_editform);
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr=sql_query(sid, "SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
+		if ((sqr=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
 		for (i=0;i<sql_numfields(sqr);i++) {
 			if (strcmp(sql_getname(sqr, i), "obj_ctime")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_mtime")==0) continue;
@@ -83,8 +84,8 @@ void searchform(CONN *sid)
 		prints(sid, "<TR><TD COLSPAN=3>&nbsp;</TD></TR>\n");
 	}
 	prints(sid, "<FORM NAME='searchForm' ACTION=javascript:startSearch()>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Internet Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Internet Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD>\n", config->colour_editform);
 	prints(sid, "<SELECT name='whichEngine'>\n");
 	prints(sid, "<OPTION>Altavista\n");
 	prints(sid, "<OPTION>AOL Netfind\n");
@@ -136,7 +137,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_searches",		// mod_name
@@ -150,6 +151,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

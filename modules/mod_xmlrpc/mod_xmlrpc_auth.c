@@ -15,18 +15,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_xmlrpc.h"
 
 int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 {
 	char cpassword[64];
+	char cpass[64];
 	char salt[10];
+	short int i;
 	int contactid;
 	int sqr;
 
 	if ((strlen(sid->dat->user_username)==0)||(strlen(password)==0)) return -1;
-	if ((sqr=sql_queryf(sid, "SELECT contactid, password FROM gw_contacts WHERE username = '%s' and enabled > 0", username))<0) return -1;
+	if ((sqr=sql_queryf("SELECT contactid, password FROM gw_contacts WHERE username = '%s' and enabled > 0", username))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return -1;
@@ -35,16 +37,11 @@ int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 	strncpy(cpassword, sql_getvalue(sqr, 0, 1), sizeof(cpassword)-1);
 	sql_freeresult(sqr);
 	memset(salt, 0, sizeof(salt));
+	memset(cpass, 0, sizeof(cpass));
 	if (strncmp(cpassword, "$1$", 3)==0) {
-		salt[0]=cpassword[3];
-		salt[1]=cpassword[4];
-		salt[2]=cpassword[5];
-		salt[3]=cpassword[6];
-		salt[4]=cpassword[7];
-		salt[5]=cpassword[8];
-		salt[6]=cpassword[9];
-		salt[7]=cpassword[10];
-		if (strcmp(cpassword, md5_crypt(sid, password, salt))!=0) return -1;
+		for (i=0;i<8;i++) salt[i]=cpassword[i+3];
+		md5_crypt(cpass, password, salt);
+		if (strcmp(cpassword, cpass)!=0) return -1;
 	} else {
 		return -1;
 	}
@@ -86,7 +83,7 @@ int xmlrpc_auth_login(CONN *sid)
 		strncpy(raddress, getxmlparam(sid, 5, "string"), sizeof(raddress)-1);
 		if (strlen(password)==32) {
 			if ((strlen(username)==0)||(strlen(sid->dat->user_token)!=32)) return -1;
-			if ((sqr=sql_queryf(sid, "SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s'", username))<0) {
+			if ((sqr=sql_queryf("SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s'", username))<0) {
 				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
@@ -119,14 +116,14 @@ int xmlrpc_auth_login(CONN *sid)
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
-			snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, time(NULL)));
+			time_unix2sql(timebuffer, sizeof(timebuffer)-1, time(NULL));
 			md5_init(&c);
 			md5_update(&c, username, strlen(username));
 			md5_update(&c, timebuffer, strlen(timebuffer));
 			md5_final(&(md[0]),&c);
 			memset(token, 0, sizeof(token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(token, sizeof(token)-strlen(token)-1, "%02x", md[i]);
-			sql_updatef(sid, "UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", raddress, timebuffer, token, username);
+			sql_updatef("UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", raddress, timebuffer, token, username);
 			memset(password, 0, sizeof(password));
 			return contactid;
 		}
@@ -141,7 +138,7 @@ void xmlrpc_auth_logout(CONN *sid)
 	time_t t;
 	char timebuffer[100];
 
-	sql_updatef(sid, "UPDATE gw_contacts SET logintoken='NULL' WHERE username = '%s'", sid->dat->user_username);
+	sql_updatef("UPDATE gw_contacts SET logintoken='NULL' WHERE username = '%s'", sid->dat->user_username);
 	t=time(NULL)+604800;
 	strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
 	snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s; expires=%s; path=/", sid->dat->user_username, timebuffer);

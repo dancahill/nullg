@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_calendar.h"
 
 void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
@@ -58,7 +58,7 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	if (userid>0) prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", userid);
 	if (groupid>0) prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
 	prints(sid, "<INPUT TYPE=hidden NAME=status VALUE='%d'>\n", status);
-	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='font-weight:normal; border-style:solid''><NOBR><FONT SIZE=2>", config->colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH NOWRAP STYLE='font-weight:normal; border-style:solid''><NOBR><FONT SIZE=2>", config->colour_th);
 	prints(sid, "<SELECT NAME=month>\n");
 	htselect_month(sid, posttime1);
 	prints(sid, "</SELECT>");
@@ -69,7 +69,7 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	prints(sid, "</FONT></NOBR></TH></TR>\n");
 	prints(sid, "</FORM>\n");
 	prints(sid, "<TR><TD WIDTH=100%% STYLE='border-style:solid'>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_th);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>S</FONT></TH><TH><FONT COLOR=%s SIZE=2>M</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>W</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>F</FONT></TH>", config->colour_thtext, config->colour_thtext);
@@ -84,9 +84,9 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid FROM gw_users"))<0) return;
+	if ((sqr2=sql_queryf("SELECT userid, groupid FROM gw_users"))<0) return;
 	for (;;) {
-		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldval);
 		for (i=0;i<7;i++) {
 			prints(sid, "<TD ALIGN=CENTER><FONT SIZE=2>");
 			t=unixdate*86400;
@@ -172,13 +172,13 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 	}
 	strftime(posttime1, sizeof(posttime1), "%B", gmtime(&unixdate));
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='border-style:solid'><FONT SIZE=2>", config->colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH NOWRAP STYLE='border-style:solid'><FONT SIZE=2>", config->colour_th);
 	prints(sid, "<A HREF=%s/calendar/mlist?month=%d&year=%d", sid->dat->in_ScriptName, today.tm_mon, today.tm_year);
 	if (userid>0) prints(sid, "&userid=%d", userid);
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, "&status=%d style='color: %s'>%s</A></FONT></TH></TR>\n", status, config->colour_thtext, posttime1);
 	prints(sid, "<TR><TD WIDTH=100%% STYLE='border-style:solid'>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_th);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>S</FONT></TH><TH><FONT COLOR=%s SIZE=2>M</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>W</FONT></TH>", config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH><FONT COLOR=%s SIZE=2>T</FONT></TH><TH><FONT COLOR=%s SIZE=2>F</FONT></TH>", config->colour_thtext, config->colour_thtext);
@@ -193,9 +193,9 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid FROM gw_users"))<0) return;
+	if ((sqr2=sql_queryf("SELECT userid, groupid FROM gw_users"))<0) return;
 	for (;;) {
-		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldval);
 		for (i=0;i<7;i++) {
 			prints(sid, "<TD ALIGN=CENTER><FONT SIZE=2>");
 			t=unixdate*86400;

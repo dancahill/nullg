@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_searches.h"
 
 void searchcontacts(CONN *sid)
@@ -47,7 +47,7 @@ void searchcontacts(CONN *sid)
 		if (*ptemp=='?') *ptemp='_';
 		ptemp++;
 	}
-	if ((sqr1=sql_query(sid, "SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
+	if ((sqr1=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
 	strcpy(query, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (");
 	if (strcmp(column, "All Columns")==0) {
 		for (i=0;i<sql_numfields(sqr1);i++) {
@@ -58,17 +58,17 @@ void searchcontacts(CONN *sid)
 			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), str2sql(sid, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 			} else {
-				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(sid, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 			}
 		}
-		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(sid, string2));
+		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 	} else {
 		if (strcmp(config->sql_type, "ODBC")==0) {
-			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(sid, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		} else {
-			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(sid, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		}
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
@@ -78,7 +78,7 @@ void searchcontacts(CONN *sid)
 	}
 	sql_freeresult(sqr1);
 	prints(sid, "<CENTER>\n");
-	if ((sqr1=sql_query(sid, query))<0) return;
+	if ((sqr1=sql_query(query))<0) return;
 	if (sql_numtuples(sqr1)<1) {
 		prints(sid, "<B>Found %d matching contact%s</B></CENTER>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
 		sql_freeresult(sqr1);
@@ -187,9 +187,9 @@ void searchcontacts(CONN *sid)
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
 		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");

@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_orders.h"
 
 /****************************************************************************
@@ -46,8 +47,8 @@ void orderedit(CONN *sid)
 		prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/orders/save NAME=orderedit>\n", sid->dat->in_ScriptName);
 		prints(sid, "<INPUT TYPE=hidden NAME=orderid VALUE='%d'>\n", order.orderid);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>New Order</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>Customer</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:217px'>", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>New Order</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>Customer</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:217px'>", config->colour_editform);
 		htselect_contact(sid, order.contactid);
 		prints(sid, "</SELECT></TD></TR>\n</TABLE>\n");
 		prints(sid, "<INPUT TYPE=SUBMIT  CLASS=frmButtonNAME=Submit VALUE='Save'>\n</FORM>\n");
@@ -68,37 +69,37 @@ void orderedit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=orderid VALUE='%d'>\n", order.orderid);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", order.userid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, order.orderid, config->colour_thtext, order.orderid);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Order Date      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=orderdate       value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, time_unix2sql(sid, order.orderdate));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Customer        &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:217px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A></FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, order.orderid, config->colour_thtext, order.orderid);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Order Date      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=orderdate       value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.orderdate));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Customer        &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:217px'>", config->colour_editform);
 	htselect_contact(sid, order.contactid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Employee        &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=userid style='width:217px'%s>\n", config->colour_editform, (auth_priv(sid, "orders")&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Employee        &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=userid style='width:217px'%s>\n", config->colour_editform, (auth_priv(sid, "orders")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, order.userid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Order Type      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=ordertype style='width:217px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Order Type      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=ordertype style='width:217px'>", config->colour_editform);
 	prints(sid, "<OPTION%s>Sale", strcmp(order.ordertype, "Sale")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>AR Payment", strcmp(order.ordertype, "AR Payment")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>Quote", strcmp(order.ordertype, "Quote")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Method of Payment&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=paymentmethod style='width:217px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Method of Payment&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=paymentmethod style='width:217px'>", config->colour_editform);
 	prints(sid, "<OPTION%s>Cash", strcmp(order.paymentmethod, "Cash")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>Cheque", strcmp(order.paymentmethod, "Cheque")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>Credit Card", strcmp(order.paymentmethod, "Credit Card")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>Debit Card", strcmp(order.paymentmethod, "Debit Card")==0?" SELECTED":"");
 	prints(sid, "<OPTION%s>Money Order", strcmp(order.paymentmethod, "Money Order")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:217px'>\n", config->colour_editform);
 	htselect_eventstatus(sid, order.status);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, order.details));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, order.details));
 	prints(sid, "<TR><TD ALIGN=center COLSPAN=2>\n");
 	orderitemlist(sid, orderid);
 	prints(sid, "</TD></TR>");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;SubTotal&nbsp;$</B><INPUT TYPE=TEXT NAME=subtotal        value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentdue);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;Net Due&nbsp;$</B><INPUT  TYPE=TEXT NAME=paymentdue      value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentdue);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;Received&nbsp;$</B><INPUT TYPE=TEXT NAME=paymentreceived value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentreceived);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;SubTotal&nbsp;$</B><INPUT TYPE=TEXT NAME=subtotal        value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentdue);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;Net Due&nbsp;$</B><INPUT  TYPE=TEXT NAME=paymentdue      value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentdue);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=right COLSPAN=2 NOWRAP><B>&nbsp;Received&nbsp;$</B><INPUT TYPE=TEXT NAME=paymentreceived value=\"%1.2f\" SIZE=10 style='width:76px'></TD></TR>\n", config->colour_editform, order.paymentreceived);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -117,7 +118,7 @@ void orderedit(CONN *sid)
  ***************************************************************************/
 void orderview(CONN *sid)
 {
-	MOD_NOTES_SUBLIST mod_notes_sublist;
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_ORDER order;
 	char *ptemp;
 	int orderid;
@@ -136,30 +137,30 @@ void orderview(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400><TR><TD><CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Order %d", config->colour_th, config->colour_thtext, orderid);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Order %d", config->colour_th, config->colour_thtext, orderid);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
 		prints(sid, " [<A HREF=%s/orders/edit?orderid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, orderid, config->colour_thlink);
 	}
 	prints(sid, "</TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Order Date</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
-	prints(sid, "<TR><TD BGCOLOR=%s STYLE='border-style:solid'><B>Customer</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Order Date</B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Customer  </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 	prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, order.contactid);
 	prints(sid, "%s</A>&nbsp;</TD></TR>\n", htview_contact(sid, order.contactid));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Employee         </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Order Type       </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Method of Payment</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Employee         </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Order Type       </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
+	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Method of Payment</B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
 	if (strlen(order.details)) {
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
-		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
+		prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
+		prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
 	}
 	prints(sid, "<TR STYLE='spacing:0px'><TD NOWRAP COLSPAN=2 STYLE='padding:0px; border-style:solid'>");
 	orderitemlist(sid, orderid);
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
-	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentreceived);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=\"%s\" COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=\"%s\" COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=\"%s\" COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentreceived);
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 		prints(sid, " [<A HREF=%s/notes/editnew?table=orders&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, order.orderid, config->colour_thlink);
 		prints(sid, "</FONT></TH></TR>\n");
 		mod_notes_sublist(sid, "orders", order.orderid, 2);
@@ -199,10 +200,10 @@ void orderlist(CONN *sid)
 		prints(sid, "<CENTER>\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 		prints(sid, "<FORM METHOD=POST ACTION=%s/orders/list NAME=ordersearch>\n", sid->dat->in_ScriptName);
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Order System Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD><SELECT NAME=column>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Order System Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD><SELECT NAME=column>\n", config->colour_editform);
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr1=sql_query(sid, "SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
+		if ((sqr1=sql_query("SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
 		for (i=0;i<sql_numfields(sqr1);i++) {
 			if (strcmp(sql_getname(sqr1, i), "obj_ctime")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
@@ -235,7 +236,7 @@ void orderlist(CONN *sid)
 		if (*ptemp=='?') *ptemp='_';
 		ptemp++;
 	}
-	if ((sqr1=sql_query(sid, "SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
+	if ((sqr1=sql_query("SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
 	strcpy(query, "SELECT orderid, contactid, orderdate, paymentdue, paymentreceived from gw_orders WHERE (");
 	memset(column, 0, sizeof(column));
 	if ((ptemp=getpostenv(sid, "COLUMN"))!=NULL) {
@@ -271,7 +272,7 @@ void orderlist(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY orderdate DESC");
 	sql_freeresult(sqr1);
 	prints(sid, "<CENTER>\n");
-	if ((sqr1=sql_query(sid, query))<0) return;
+	if ((sqr1=sql_query(query))<0) return;
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
 	prints(sid, "Found %d matching orders<BR>\n", sql_numtuples(sqr1));
 	if (sql_numtuples(sqr1)<1) {
@@ -280,11 +281,11 @@ void orderlist(CONN *sid)
 		sql_freeresult(sqr1);
 		return;
 	}
-	if ((sqr2=sql_query(sid, "SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+	if ((sqr2=sql_query("SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
 	prints(sid, "<TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Order ID</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Customer Name</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Order Date</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Amount Due</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Amount Received</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		prints(sid, "<TD ALIGN=right NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%d'\"><A HREF=%s/orders/view?orderid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
 		for (j=0;j<sql_numtuples(sqr2);j++) {
 			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
@@ -371,7 +372,7 @@ void ordersave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_orders WHERE orderid = %d", order.orderid)<0) return;
+		if (sql_updatef("DELETE FROM gw_orders WHERE orderid = %d", order.orderid)<0) return;
 		prints(sid, "<CENTER>Order %d deleted successfully</CENTER><BR>\n", order.orderid);
 		db_log_activity(sid, 1, "orders", order.orderid, "delete", "%s - %s deleted order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else if (order.orderid==0) {
@@ -379,7 +380,7 @@ void ordersave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((sqr=sql_query(sid, "SELECT max(orderid) FROM gw_orders"))<0) return;
+		if ((sqr=sql_query("SELECT max(orderid) FROM gw_orders"))<0) return;
 		order.orderid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (order.orderid<1) order.orderid=1;
@@ -387,14 +388,14 @@ void ordersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", order.orderid, curdate, curdate, sid->dat->user_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", order.contactid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", order.userid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(sid, order.orderdate));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, order.ordertype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, order.paymentmethod));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.orderdate));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.ordertype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.paymentmethod));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", order.paymentdue);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.2f', ", order.paymentreceived);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", order.status);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, order.details));
-		if (sql_update(sid, query)<0) return;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.details));
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order %d added successfully</CENTER><BR>\n", order.orderid);
 		db_log_activity(sid, 1, "orders", order.orderid, "insert", "%s - %s added order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else {
@@ -405,15 +406,15 @@ void ordersave(CONN *sid)
 		snprintf(query, sizeof(query)-1, "UPDATE gw_orders SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, order.obj_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "contactid = '%d', ", order.contactid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "userid = %d, ", order.userid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "orderdate = '%s', ", time_unix2sql(sid, order.orderdate));
-		strncatf(query, sizeof(query)-strlen(query)-1, "ordertype = '%s', ", str2sql(sid, order.ordertype));
-		strncatf(query, sizeof(query)-strlen(query)-1, "paymentmethod = '%s', ", str2sql(sid, order.paymentmethod));
+		strncatf(query, sizeof(query)-strlen(query)-1, "orderdate = '%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.orderdate));
+		strncatf(query, sizeof(query)-strlen(query)-1, "ordertype = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.ordertype));
+		strncatf(query, sizeof(query)-strlen(query)-1, "paymentmethod = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.paymentmethod));
 		strncatf(query, sizeof(query)-strlen(query)-1, "paymentdue = '%1.2f', ", order.paymentdue);
 		strncatf(query, sizeof(query)-strlen(query)-1, "paymentreceived = '%1.2f', ", order.paymentreceived);
 		strncatf(query, sizeof(query)-strlen(query)-1, "status = %d, ", order.status);
-		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(sid, order.details));
+		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.details));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE orderid = %d", order.orderid);
-		if (sql_update(sid, query)<0) return;
+		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order %d modified successfully</CENTER><BR>\n", order.orderid);
 		db_log_activity(sid, 1, "orders", order.orderid, "modify", "%s - %s modified order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	}
@@ -467,7 +468,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_orders",		// mod_name
@@ -481,6 +482,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_stub.h"
+#define SRVMOD_MAIN 1
+#include "http_mod.h"
 #include "mod_contacts.h"
 
 void contactsearch1(CONN *sid)
@@ -33,10 +34,10 @@ void contactsearch1(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	if (auth_priv(sid, "contacts")&A_READ) {
 		prints(sid, "<FORM METHOD=GET ACTION=%s/contacts/search2 NAME=contactsearch>\n", sid->dat->in_ScriptName);
-		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD><SELECT NAME=column>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD><SELECT NAME=column>\n", config->colour_editform);
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr=sql_query(sid, "SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
+		if ((sqr=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
 		for (i=0;i<sql_numfields(sqr);i++) {
 			if (strcmp(sql_getname(sqr, i), "obj_ctime")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_mtime")==0) continue;
@@ -96,7 +97,7 @@ void contactsearch2(CONN *sid)
 		if (*ptemp=='?') *ptemp='_';
 		ptemp++;
 	}
-	if ((sqr1=sql_query(sid, "SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
+	if ((sqr1=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
 	strcpy(query, "SELECT contactid, surname, givenname, organization, worknumber, homenumber from gw_contacts WHERE (");
 	if (strcmp(column, "All Columns")==0) {
 		for (i=0;i<sql_numfields(sqr1);i++) {
@@ -114,17 +115,17 @@ void contactsearch2(CONN *sid)
 			if (strcmp(sql_getname(sqr1, i), "geozone")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "timezone")==0) continue;
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), str2sql(sid, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 			} else {
-				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(sid, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 			}
 		}
-		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(sid, string2));
+		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 	} else {
 		if (strcmp(config->sql_type, "ODBC")==0) {
-			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(sid, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		} else {
-			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(sid, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		}
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
@@ -144,7 +145,7 @@ void contactsearch2(CONN *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	if ((sqr1=sql_query(sid, query))<0) return;
+	if ((sqr1=sql_query(query))<0) return;
 	if (sql_numtuples(sqr1)<1) {
 		prints(sid, "<B>Found %d matching contact%s</B></CENTER>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
 		sql_freeresult(sqr1);
@@ -153,9 +154,9 @@ void contactsearch2(CONN *sid)
 	prints(sid, "<B>Found %d matching contact%s</B>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Home Number&nbsp;</FONT></TH><TH STYLE='border-style:solid'>&nbsp;</TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Home Number&nbsp;</FONT></TH><TH STYLE='border-style:solid'>&nbsp;</TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr1);i++) {
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
 		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");
@@ -175,7 +176,7 @@ void contactsearch2(CONN *sid)
 
 void contactview(CONN *sid, REC_CONTACT *contact)
 {
-	MOD_NOTES_SUBLIST mod_notes_sublist;
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_CONTACT contactrec;
 	char *ptemp;
 	char *greytoggle;
@@ -275,7 +276,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		prints(sid, "<INPUT TYPE=hidden NAME=callset VALUE='1'>\n");
 	}
 	prints(sid, "<TR><TD ALIGN=LEFT>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
 	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>NAME</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>HOME</A>&nbsp;</TD>\n");
@@ -285,11 +286,11 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<TD ID=page7tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=7 HREF=javascript:showpage(7)>OTHER</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
 	prints(sid, "%s%s", str2html(sid, contact->salutation), strlen(contact->salutation)?" ":"");
 	prints(sid, "%s%s", str2html(sid, contact->givenname), strlen(contact->givenname)?" ":"");
 	prints(sid, "%s%s", str2html(sid, contact->surname), strlen(contact->surname)?" ":"");
@@ -303,7 +304,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		prints(sid, "<TD ALIGN=right>&nbsp;</TD>\n");
 	}
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>", config->colour_editform);
 	if (strlen(contact->email)==0) {
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (sid->dat->user_maildefault==0) {
@@ -317,94 +318,94 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			prints(sid, "<A HREF=\"mailwrite?to=%s\">%s</A>&nbsp;</TD></TR>\n", contact->email, str2html(sid, contact->email));
 		}
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->homenumber));
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->mobilenumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->homenumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->mobilenumber));
 	if (strlen(maddr)) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, maddr);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, maddr);
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Organization&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->organization));
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->jobtitle));
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->worknumber));
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;FAX Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->faxnumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Organization&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->organization));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->jobtitle));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->worknumber));
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;FAX Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_editform, str2html(sid, contact->faxnumber));
 	if (strlen(baddr)) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, baddr);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\n", config->colour_editform, baddr);
 	}
 	if (tz1!=tz2) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\n", config->colour_editform);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Surname           &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname      value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->surname), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Given Name        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->givenname), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Title             &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=salutation   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->salutation), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Contact Type      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=contacttype  value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->contacttype), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Referred By       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=referredby   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->referredby), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Alternate Contact &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=altcontact   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->altcontact), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Surname           &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname      value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->surname), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Given Name        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->givenname), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Title             &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=salutation   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->salutation), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Contact Type      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=contacttype  value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->contacttype), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Referred By       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=referredby   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->referredby), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Alternate Contact &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=altcontact   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->altcontact), greytoggle);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homenumber), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Mobile Number   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mobilenumber   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->mobilenumber), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email          value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->email), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeaddress    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homeaddress), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homelocality   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homelocality), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeregion     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homeregion), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Country    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homecountry    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homecountry), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Home Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homepostalcode value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homepostalcode), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homenumber), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Mobile Number   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mobilenumber   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->mobilenumber), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email          value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->email), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeaddress    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homeaddress), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homelocality   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homelocality), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeregion     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homeregion), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Country    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homecountry    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homecountry), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Home Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homepostalcode value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->homepostalcode), greytoggle);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Organization    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->organization), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Job Title       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle       value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->jobtitle), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->worknumber), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Fax Number      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber      value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->faxnumber), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workaddress    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workaddress), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worklocality   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->worklocality), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workregion     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workregion), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Country    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workcountry    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workcountry), greytoggle);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workpostalcode value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workpostalcode), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Organization    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->organization), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Job Title       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=jobtitle       value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->jobtitle), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worknumber     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->worknumber), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Fax Number      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=faxnumber      value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->faxnumber), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workaddress    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workaddress), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worklocality   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->worklocality), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workregion     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workregion), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Country    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workcountry    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workcountry), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Work Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workpostalcode value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->workpostalcode), greytoggle);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (module_exists(sid, "mod_xmlrpc")) {
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->username), greytoggle);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->password), greytoggle);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Allow Login       &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", config->colour_editform, greytoggle);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->username), greytoggle);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->password), greytoggle);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Allow Login       &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", config->colour_editform, greytoggle);
 		prints(sid, "<OPTION VALUE=0%s>No\n", contact->enabled?"":" SELECTED");
 		prints(sid, "<OPTION VALUE=1%s>Yes\n", contact->enabled?" SELECTED":"");
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=geozone style='width:255px'%s>\n", config->colour_editform, greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=geozone style='width:255px'%s>\n", config->colour_editform, greytoggle);
 	htselect_zone(sid, contact->geozone);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Time Zone      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=timezone style='width:255px'%s>\n", config->colour_editform, greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Time Zone      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=timezone style='width:255px'%s>\n", config->colour_editform, greytoggle);
 	htselect_timezone(sid, contact->timezone);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Billing Method &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=prefbilling    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->prefbilling), greytoggle);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Billing Method &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=prefbilling    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", config->colour_editform, str2html(sid, contact->prefbilling), greytoggle);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((contact->obj_uid==sid->dat->user_uid)||(auth_priv(sid, "contacts")&A_ADMIN)) editperms=1;
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, contact->obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
 	htselect_group(sid, contact->obj_gid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", contact->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", contact->obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\n", contact->obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\n", contact->obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\n", contact->obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", contact->obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
@@ -415,8 +416,8 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (contact->contactid>0) {
 		if (module_exists(sid, "mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
-			if ((sqr=sql_queryf(sid, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_editform);
+			if ((sqr=sql_queryf("SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_editform);
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Calls</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");
 			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
@@ -428,8 +429,8 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			sql_freeresult(sqr);
 		}
 		if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
-			if ((sqr=sql_queryf(sid, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_editform);
+			if ((sqr=sql_queryf("SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_editform);
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Events</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");
 			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
@@ -441,8 +442,8 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			sql_freeresult(sqr);
 		}
 		if (module_exists(sid, "mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
-			if ((sqr=sql_queryf(sid, "SELECT count(orderid) FROM gw_orders WHERE contactid = %d", contact->contactid))<0) return;
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_editform);
+			if ((sqr=sql_queryf("SELECT count(orderid) FROM gw_orders WHERE contactid = %d", contact->contactid))<0) return;
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_editform);
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Orders</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");
 			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
@@ -455,8 +456,8 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		}
 	}
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
-		if ((sqr=sql_queryf(sid, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->user_uid, contact->email, contact->email, contact->email))<0) return;
-		prints(sid, "<TR BGCOLOR=%s>", config->colour_editform);
+		if ((sqr=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->user_uid, contact->email, contact->email, contact->email))<0) return;
+		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_editform);
 		prints(sid, "<TD NOWRAP WIDTH=100%%>%d E-Mails</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 		prints(sid, "<TD>");
 		if (atoi(sql_getvalue(sqr, 0, 0))>0) {
@@ -484,7 +485,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		sql_freeresult(sqr);
 	}
 	prints(sid, "<TD COLSPAN=3><BR></TD>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=3><A HREF=javascript:vcardImport();>Import vCard</A></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=3><A HREF=javascript:vcardImport();>Import vCard</A></TD></TR>\n", config->colour_editform);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<HR>\r\n");
@@ -493,7 +494,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
 			prints(sid, "<TR><TD NOWRAP>");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR BGCOLOR=\"%s\"><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
 			prints(sid, " [<A HREF=%s/notes/editnew?table=contacts&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, contact->contactid, config->colour_thlink);
 			prints(sid, "</FONT></TH></TR>\n");
 			mod_notes_sublist(sid, "contacts", contact->contactid, 1);
@@ -580,7 +581,7 @@ void contact_mailview(CONN *sid)
 			surname[strlen(surname)]=*ptemp++;
 		}
 	}
-	if ((sqr=sql_queryf(sid, "SELECT contactid FROM gw_contacts WHERE email = '%s'", str2sql(sid, email)))<0) return;
+	if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE email = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, email)))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		contactid=atoi(sql_getvalue(sqr, 0, 0));
 		sql_freeresult(sqr);
@@ -688,22 +689,22 @@ void contactlist(CONN *sid)
 	strncpy(searchstring, ptemp, sizeof(searchstring)-1);
 	if (strcasecmp(searchstring, "All")==0) {
 		if (auth_priv(sid, "contacts")&A_ADMIN) {
-			if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts ORDER BY surname, givenname ASC", searchstring))<0) return;
+			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts ORDER BY surname, givenname ASC", searchstring))<0) return;
 		} else {
-			if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
 		}
 	} else {
 		if (auth_priv(sid, "contacts")&A_ADMIN) {
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') ORDER BY surname, givenname ASC", searchstring))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') ORDER BY surname, givenname ASC", searchstring))<0) return;
 			} else {
-				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%')) ORDER BY surname, givenname ASC", searchstring))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%')) ORDER BY surname, givenname ASC", searchstring))<0) return;
 			}
 		} else {
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%')  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%')  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 			} else {
-				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%'))  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%'))  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 			}
 		}
 	}
@@ -718,9 +719,9 @@ void contactlist(CONN *sid)
 		prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=125 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 			prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
 			if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");
@@ -779,11 +780,11 @@ void contactlist(CONN *sid)
 		prints(sid, "</TABLE>\n");
 	}
 	sql_freeresult(sqr1);
-	prints(sid, "</TD><TD BGCOLOR=%s VALIGN=TOP>\n", config->colour_fieldname);
+	prints(sid, "</TD><TD BGCOLOR=\"%s\" VALIGN=TOP>\n", config->colour_fieldname);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER><FONT SIZE=2><B><A HREF=%s/contacts/list?s=all>&nbsp;All&nbsp;</A></B></FONT></TD></TR>\n", config->colour_fieldname, sid->dat->in_ScriptName);
+	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><FONT SIZE=2><B><A HREF=%s/contacts/list?s=all>&nbsp;All&nbsp;</A></B></FONT></TD></TR>\n", config->colour_fieldname, sid->dat->in_ScriptName);
 	for (i=65;i<91;i++) {
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER><FONT SIZE=2><B><A HREF=%s/contacts/list?s=%c>&nbsp;%c&nbsp;</A></B></FONT></TD></TR>\n", config->colour_fieldname, sid->dat->in_ScriptName, i, i);
+		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><FONT SIZE=2><B><A HREF=%s/contacts/list?s=%c>&nbsp;%c&nbsp;</A></B></FONT></TD></TR>\n", config->colour_fieldname, sid->dat->in_ScriptName, i, i);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD></TR></TABLE>\n");
@@ -825,8 +826,8 @@ void contactcallslist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf(sid, "SELECT callid, contactid, action, callstart, callfinish, status FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
+	if ((sqr=sql_queryf("SELECT callid, contactid, action, callstart, callfinish, status FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
 		sql_freeresult(sqr);
 		return;
 	}
@@ -835,10 +836,10 @@ void contactcallslist(CONN *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Call ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Duration&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calls/view?callid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 0));
 			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(sqr, i, 2))));
@@ -894,8 +895,8 @@ void contacteventlist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf(sid, "SELECT eventid, eventname, eventstart, status, priority, contactid FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
+	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, status, priority, contactid FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
 		sql_freeresult(sqr);
 		return;
 	}
@@ -904,10 +905,10 @@ void contacteventlist(CONN *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Event ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Priority&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/view?eventid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -956,8 +957,8 @@ void contactorderlist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf(sid, "SELECT orderid, orderdate, paymentdue, paymentreceived from gw_orders WHERE contactid = %d ORDER BY orderdate DESC", contactid))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
+	if ((sqr=sql_queryf("SELECT orderid, orderdate, paymentdue, paymentreceived from gw_orders WHERE contactid = %d ORDER BY orderdate DESC", contactid))<0) return;
+	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
 		sql_freeresult(sqr);
 		return;
 	}
@@ -966,10 +967,10 @@ void contactorderlist(CONN *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Order ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Order Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Amount Due&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Amount Received&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
+			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			prints(sid, "&nbsp;<A HREF=%s/orders/view?orderid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 0));
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr, i, 1)));
@@ -1048,7 +1049,7 @@ void contactsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (sql_updatef(sid, "DELETE FROM gw_contacts WHERE contactid = %d", contact.contactid)<0) return;
+		if (sql_updatef("DELETE FROM gw_contacts WHERE contactid = %d", contact.contactid)<0) return;
 		prints(sid, "<CENTER>Contact %d deleted successfully</CENTER><BR>\n", contactid);
 		db_log_activity(sid, 1, "contacts", contact.contactid, "delete", "%s - %s deleted contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/list\">\n", sid->dat->in_ScriptName);
@@ -1064,9 +1065,9 @@ void contactsave(CONN *sid)
 			return;
 		}
 		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s'", contact.surname, contact.givenname))<0) return;
+			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s'", contact.surname, contact.givenname))<0) return;
 		} else {
-			if ((sqr=sql_queryf(sid, "SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s')", contact.surname, contact.givenname))<0) return;
+			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s')", contact.surname, contact.givenname))<0) return;
 		}
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>This contact appears to be a duplicate of <A HREF=%s/contacts/view?contactid=%d>contact #%d</A>.</B></CENTER>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)), atoi(sql_getvalue(sqr, 0, 0)));
@@ -1175,7 +1176,7 @@ void mod_main(CONN *sid)
 	return;
 }
 
-DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
 		"mod_contacts",		// mod_name
@@ -1189,6 +1190,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	};
 
 	proc=_proc;
+	http_proc=_http_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;

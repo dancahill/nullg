@@ -90,8 +90,9 @@ void htselect_mailfolderjump(CONN *sid, int selected);
 void htselect_mailjump(CONN *sid, int selected);
 /* mod_mail_main.c */
 void wmloginform(CONN *sid);
+int  webmailheader(CONN *sid, wmheader *header);
 /* mod_mail_mime.c */
-int  webmailheader(CONN *sid, wmheader *header, FILE **fp);
+int webmailheader(CONN *sid, wmheader *header);
 void webmailfiledl(CONN *sid);
 char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
 int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth);
@@ -100,7 +101,7 @@ char *search_makestring(CONN *sid);
 int search_doquery(CONN *sid, const char *order_by, int folderid);
 /* mod_mail_server.c */
 int  wmprints(CONN *sid, const char *format, ...);
-int  wmfgets(CONN *sid, char *buffer, int max, int fd);
+int  wmfgets(CONN *sid, char *buffer, int max, TCP_SOCKET *sock);
 int  wmffgets(CONN *sid, char *buffer, int max, FILE **fp);
 void wmclose(CONN *sid);
 int  wmserver_smtpconnect(CONN *sid);

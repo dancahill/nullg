@@ -17,32 +17,19 @@
 */
 #define SERVER_NAME	"NullLogic Groupware"
 #define SERVER_BASENAME	"groupware"
+#define SERVICE_NAME	"nullgroupware"
 
 #ifdef WIN32
 #define DEFAULT_BASE_DIR "C:\\Program Files\\NullLogic Groupware"
 #else
 #define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
-#define DEFAULT_COLOUR_TOPMENU		"#C0C0C0" // "#C0C0C0"
-#define DEFAULT_COLOUR_EDITFORM		"#F0F0F0" // "#F0F0F0"
-#define DEFAULT_COLOUR_FIELDNAME	"#E0E0E0" // "#E0E0E0"
-#define DEFAULT_COLOUR_FIELDNAMETEXT	"#000000" // "#000000"
-#define DEFAULT_COLOUR_FIELDVAL		"#F0F0F0" // "#F0F0F0"
-#define DEFAULT_COLOUR_FIELDVALTEXT	"#000000" // "#000000"
-#define DEFAULT_COLOUR_TABLETRIM	"#000000" // "#000000"
-#define DEFAULT_COLOUR_TH		"#0000A0" // "#00A5D0"
-#define DEFAULT_COLOUR_THTEXT		"#FFFFFF" // "#000000"
-#define DEFAULT_COLOUR_THLINK		"#E0E0FF" // "#0000FF"
-#define DEFAULT_COLOUR_LINKS		"#0000FF" // "#0000FF"
 #define DEFAULT_SERVER_USERNAME		"nullgw"
 
 #define MAX_REPLYSIZE		16384 /* arbitrary 16 KB limit for reply buffering */
 
 #define MAX_MOD_MENUITEMS	25
 #define MAX_MOD_FUNCTIONS	50
-
-#define MAX_AUTH_FIELDS		16
-#define MAX_PREF_FIELDS		16
 
 /* SQL limits */
 #define MAX_TUPLE_SIZE		16384
@@ -51,30 +38,6 @@
 #define IMAP_PORT		143
 #define POP3_PORT		110
 #define SMTP_PORT		25
-
-#define A_READ			1
-#define A_MODIFY		2
-#define A_INSERT		4
-#define A_DELETE		8
-#define A_ADMIN			16
-
-#define MENU_ADMIN		1
-#define MENU_ACCOUNTING		2
-#define MENU_BOOKMARKS		3
-#define MENU_CALENDAR		4
-#define MENU_CALLS		5
-#define MENU_CONTACTS		6
-#define MENU_FILES		7
-#define MENU_FORUMS		8
-#define MENU_MAIN		9
-#define MENU_MESSAGES		10
-#define MENU_NOTES		11
-#define MENU_ORDERS		12
-#define MENU_PROFILE		13
-#define MENU_SEARCHES		14
-#define MENU_TASKS		15
-#define MENU_WEBMAIL		16
-#define MENU_XMLRPC		17
 
 #define ACTIVITYFIELDS		14
 #define BOOKMARKFOLDERFIELDS	10
@@ -145,10 +108,14 @@
 
 #ifdef WIN32
 #define DllExport __declspec(dllexport)
+#define OS_WIN9X 1
+#define OS_WINNT 2
+#define OS_WIN2K 3
 #else
 #define DllExport
 #define O_BINARY 0
 #endif
 
-/* MD5 */
-#define MD5_SIZE 16
+#define SVC_HTTPD 1
+#define SVC_POP3D 2
+#define SVC_SMTPD 3

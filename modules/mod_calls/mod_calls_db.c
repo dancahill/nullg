@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_calls.h"
 
 int dbread_call(CONN *sid, short int perm, int index, REC_CALL *call)
@@ -41,9 +41,9 @@ int dbread_call(CONN *sid, short int perm, int index, REC_CALL *call)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_calls where callid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_calls where callid = %d", index))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_calls where callid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_calls where callid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -83,9 +83,9 @@ int dbwrite_call(CONN *sid, int index, REC_CALL *call)
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
 	memset(curdate, 0, sizeof(curdate));
 	memset(query, 0, sizeof(query));
-	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query(sid, "SELECT max(callid) FROM gw_calls"))<0) return -1;
+		if ((sqr=sql_query("SELECT max(callid) FROM gw_calls"))<0) return -1;
 		call->callid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (call->callid<1) call->callid=1;
@@ -93,28 +93,28 @@ int dbwrite_call(CONN *sid, int index, REC_CALL *call)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", call->callid, curdate, curdate, call->obj_uid, call->obj_gid, call->obj_gperm, call->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", call->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", call->assignedto);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, call->callname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(sid, call->callstart));
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(sid, call->callfinish));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callstart));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callfinish));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", call->contactid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", call->action);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", call->status);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(sid, call->details));
-		if (sql_update(sid, query)<0) return -1;
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->details));
+		if (sql_update(query)<0) return -1;
 		return call->callid;
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_calls SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, call->obj_uid, call->obj_gid, call->obj_gperm, call->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "assignedby = '%d', ", call->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "assignedto = '%d', ", call->assignedto);
-		strncatf(query, sizeof(query)-strlen(query)-1, "callname = '%s', ", str2sql(sid, call->callname));
-		strncatf(query, sizeof(query)-strlen(query)-1, "callstart = '%s', ", time_unix2sql(sid, call->callstart));
-		strncatf(query, sizeof(query)-strlen(query)-1, "callfinish = '%s', ", time_unix2sql(sid, call->callfinish));
+		strncatf(query, sizeof(query)-strlen(query)-1, "callname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "callstart = '%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callstart));
+		strncatf(query, sizeof(query)-strlen(query)-1, "callfinish = '%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->callfinish));
 		strncatf(query, sizeof(query)-strlen(query)-1, "contactid = '%d', ", call->contactid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "action = '%d', ", call->action);
 		strncatf(query, sizeof(query)-strlen(query)-1, "status = '%d', ", call->status);
-		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(sid, call->details));
+		strncatf(query, sizeof(query)-strlen(query)-1, "details = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, call->details));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE callid = %d", call->callid);
-		if (sql_update(sid, query)<0) return -1;
+		if (sql_update(query)<0) return -1;
 		return call->callid;
 	}
 	return -1;

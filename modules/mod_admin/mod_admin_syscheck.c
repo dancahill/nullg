@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mod_substub.h"
+#include "http_mod.h"
 #include "mod_admin.h"
 
 void admin_syscheck(CONN *sid)
@@ -31,17 +31,17 @@ void admin_syscheck(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr1=sql_query(sid, "SELECT * FROM gw_users"))<0) {
+	if ((sqr1=sql_query("SELECT * FROM gw_users"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_users!</B><BR>");
 		errors++;
 		goto cleanup;
 	}
-	if ((sqr2=sql_query(sid, "SELECT * FROM gw_groups"))<0) {
+	if ((sqr2=sql_query("SELECT * FROM gw_groups"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_groups!</B><BR>");
 		errors++;
 		goto cleanup;
 	}
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_zones"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_zones"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_zones!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -74,7 +74,7 @@ void admin_syscheck(CONN *sid)
 	// KEEP THE USER AND GROUP TABLES LOADED.  WE'LL BE USING THEM QUITE A BIT
 
 	// CHECK ACTIVITY
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_activity"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_activity"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_activity!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -90,7 +90,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK BOOKMARKFOLDERS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_bookmarkfolders"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_bookmarkfolders"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_bookmarkfolders!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -113,7 +113,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK BOOKMARKS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_bookmarks"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_bookmarks"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_bookmarks!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -136,7 +136,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK CALLS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_calls"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_calls"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_calls!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -166,7 +166,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK CONTACTS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_contacts"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_contacts"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_contacts!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -189,7 +189,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK EVENTS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_events"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_events"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_events!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -219,7 +219,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK FILES
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_files"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_files"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_files!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -242,7 +242,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK MAILACCOUNTS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_mailaccounts"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_mailaccounts"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_mailaccounts!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -258,7 +258,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK MAILHEADERS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_mailheaders"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_mailheaders"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_mailheaders!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -274,7 +274,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK MESSAGES
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_messages"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_messages"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_messages!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -304,7 +304,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK NOTES
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_notes"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_notes"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_notes!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -327,7 +327,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK ORDERS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_orders"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_orders"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_orders!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -350,7 +350,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK QUERIES
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_queries"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_queries"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_queries!</B><BR>");
 		errors++;
 		goto cleanup;
@@ -373,7 +373,7 @@ void admin_syscheck(CONN *sid)
 	}
 	sql_freeresult(sqr3); sqr3=-1;
 	// CHECK TASKS
-	if ((sqr3=sql_query(sid, "SELECT * FROM gw_tasks"))<0) {
+	if ((sqr3=sql_query("SELECT * FROM gw_tasks"))<0) {
 		prints(sid, "<B>ERROR: could not query gw_tasks!</B><BR>");
 		errors++;
 		goto cleanup;

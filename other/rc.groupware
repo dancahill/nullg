@@ -14,18 +14,18 @@ fi
 
 groupware_start() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
 	then
 		echo "NullLogic Groupware appears to be running already."
 	else
 		echo -n "Starting NullLogic Groupware services: "
 		cd ${BASE_PATH}/bin
 		echo -n "httpd "
-		${BASE_PATH}/bin/nullgw-httpd
+		${BASE_PATH}/bin/nullgroupware httpd
 #		echo -n "pop3d "
-#		${BASE_PATH}/bin/nullgw-pop3d
+#		${BASE_PATH}/bin/nullgroupware pop3d
 #		echo -n "smtpd "
-#		${BASE_PATH}/bin/nullgw-smtpd
+#		${BASE_PATH}/bin/nullgroupware smtpd
 		echo ""
 	fi
 	rm -f /tmp/_gw_proclist
@@ -33,16 +33,12 @@ groupware_start() {
 
 groupware_stop() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
 	then
 		echo "Stopping NullLogic Groupware services"
-		killall -15 nullgw-httpd 2>/dev/null
-#		killall -15 nullgw-pop3d 2>/dev/null
-#		killall -15 nullgw-smtpd 2>/dev/null
+		killall -15 nullgroupware 2>/dev/null
 		sleep 2
-		killall -9 nullgw-httpd 2>/dev/null
-#		killall -9 nullgw-pop3d 2>/dev/null
-#		killall -9 nullgw-smtpd 2>/dev/null
+		killall -9 nullgroupware 2>/dev/null
 	else
 		echo "NullLogic Groupware does not appear to be running."
 	fi
@@ -51,23 +47,11 @@ groupware_stop() {
 
 groupware_status() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
+	if test `grep -c nullgroupware /tmp/_gw_proclist` -gt 0
 	then
-		echo "NullLogic Groupware httpd appears to be running"
+		echo "NullLogic Groupware appears to be running"
 	else
-		echo "NullLogic Groupware httpd does not appear to be running."
-	fi
-	if test `grep -c nullgw-pop3d /tmp/_gw_proclist` -gt 0
-	then
-		echo "NullLogic Groupware pop3d appears to be running"
-	else
-		echo "NullLogic Groupware pop3d does not appear to be running."
-	fi
-	if test `grep -c nullgw-smtpd /tmp/_gw_proclist` -gt 0
-	then
-		echo "NullLogic Groupware smtpd appears to be running"
-	else
-		echo "NullLogic Groupware smtpd does not appear to be running."
+		echo "NullLogic Groupware does not appear to be running."
 	fi
 	rm -f /tmp/_gw_proclist
 }

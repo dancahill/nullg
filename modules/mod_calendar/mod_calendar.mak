@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_calendar.dsp
 !IF "$(CFG)" == ""
 CFG=mod_calendar - Win32 Release
-!MESSAGE mod_calendar - Win32 Release.
+!MESSAGE No configuration specified. Defaulting to mod_calendar - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_calendar - Win32 Release"
@@ -35,8 +35,8 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_calendar_availmap.obj"
 	-@erase "$(INTDIR)\mod_calendar_db.obj"
 	-@erase "$(INTDIR)\mod_calendar_listd.obj"
-	-@erase "$(INTDIR)\mod_calendar_listw.obj"
 	-@erase "$(INTDIR)\mod_calendar_listm.obj"
+	-@erase "$(INTDIR)\mod_calendar_listw.obj"
 	-@erase "$(INTDIR)\mod_calendar_listy.obj"
 	-@erase "$(INTDIR)\mod_calendar_main.obj"
 	-@erase "$(INTDIR)\mod_calendar_mini.obj"
@@ -109,6 +109,15 @@ LINK32_OBJS= \
 <<
 
 
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("mod_calendar.dep")
+!INCLUDE "mod_calendar.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "mod_calendar.dep"
+!ENDIF 
+!ENDIF 
+
+
 !IF "$(CFG)" == "mod_calendar - Win32 Release"
 SOURCE=.\mod_calendar_assign.c
 
@@ -130,14 +139,14 @@ SOURCE=.\mod_calendar_listd.c
 "$(INTDIR)\mod_calendar_listd.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\mod_calendar_listw.c
-
-"$(INTDIR)\mod_calendar_listw.obj" : $(SOURCE) "$(INTDIR)"
-
-
 SOURCE=.\mod_calendar_listm.c
 
 "$(INTDIR)\mod_calendar_listm.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_calendar_listw.c
+
+"$(INTDIR)\mod_calendar_listw.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_calendar_listy.c

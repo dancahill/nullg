@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_profile.dsp
 !IF "$(CFG)" == ""
 CFG=mod_profile - Win32 Release
-!MESSAGE mod_profile - Win32 Release.
+!MESSAGE No configuration specified. Defaulting to mod_profile - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_profile - Win32 Release"
@@ -93,6 +93,15 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("mod_profile.dep")
+!INCLUDE "mod_profile.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "mod_profile.dep"
+!ENDIF 
+!ENDIF 
 
 
 !IF "$(CFG)" == "mod_profile - Win32 Release"

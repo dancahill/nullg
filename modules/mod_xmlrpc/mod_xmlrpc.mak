@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_xmlrpc.dsp
 !IF "$(CFG)" == ""
 CFG=mod_xmlrpc - Win32 Release
-!MESSAGE mod_xmlrpc - Win32 Release.
+!MESSAGE No configuration specified. Defaulting to mod_xmlrpc - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_xmlrpc - Win32 Release"
@@ -95,6 +95,15 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("mod_xmlrpc.dep")
+!INCLUDE "mod_xmlrpc.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "mod_xmlrpc.dep"
+!ENDIF 
+!ENDIF 
 
 
 !IF "$(CFG)" == "mod_xmlrpc - Win32 Release"
