@@ -191,7 +191,6 @@ int sanity_checkdirs()
 	if (sanity_dircheck("%s", proc.config.dir_var_domains)!=0) exit(-2);
 	if (sanity_dircheck("%s", proc.config.dir_var_log)!=0) exit(-2);
 	if (sanity_dircheck("%s", proc.config.dir_var_spool)!=0) exit(-2);
-	if (sanity_dircheck("%s/mail", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s/mqueue", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s/mqinfo", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s", proc.config.dir_var_tmp)!=0) exit(-2);
@@ -211,7 +210,7 @@ int sanity_checkdirs()
 		if (sanity_dircheck("%s/%04d/files",       proc.config.dir_var_domains, domainid)!=0) exit(-2);
 		if (sanity_dircheck("%s/%04d/htdocs",      proc.config.dir_var_domains, domainid)!=0) exit(-2);
 		if (sanity_dircheck("%s/%04d/mail",        proc.config.dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/mail/%04d",        proc.config.dir_var_spool,   domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/mailspool",   proc.config.dir_var_domains, domainid)!=0) exit(-2);
 	}
 	sql_freeresult(sqr);
 	return 0;

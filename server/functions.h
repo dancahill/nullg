@@ -59,6 +59,7 @@ int     config_read(char *section, void *callback);
 //int     config_read(GLOBAL_CONFIG *config);
 int     config_write(GLOBAL_CONFIG *config);
 int     conf_read(void);
+int     conf_read_modules(void);
 /* dns.c functions */
 char   *dns_getmxbyname(char *dest, int destlen, char *domain);
 /* domains.c functions */
@@ -78,7 +79,7 @@ time_t  time_sql2unix(char *sqldate);
 char   *time_unix2sql(char *outstring, int outlen, time_t unixdate);
 /* io.c functions */
 int     tcp_bind(char *ifname, unsigned short port);
-int     tcp_accept(int listensock, struct sockaddr *addr);
+int     tcp_accept(int listensock, struct sockaddr_in *addr);
 int     tcp_fgets(char *buffer, int max, TCP_SOCKET *socket);
 int     tcp_fprintf(TCP_SOCKET *socket, const char *format, ...);
 int     tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags);

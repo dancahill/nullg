@@ -15,39 +15,47 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#define PGSQLDB_SEQUENCES1 "\
-CREATE SEQUENCE actiid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE bkmkid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE bfldid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE callid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE calaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE contid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE domaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE domlid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE evenid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE ecloid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE etypid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE fileid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE foruid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE forgid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n"
-#define PGSQLDB_SEQUENCES2 "\
-CREATE SEQUENCE grouid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE grpmid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE mailid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE mfilid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE mfdrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE mhdrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE messid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE noteid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE ordeid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE ordiid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE prodid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE projid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE querid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE smtrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE taskid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE userid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE zoneid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\n"
+typedef struct {
+	char *tablename;
+	char *tableindex;
+	char *seqname;
+} PGSEQ;
+static PGSEQ pgseq[]={
+	{ "gw_accounting_accounts",	"accountid",		"accaid_seq" },
+	{ "gw_accounting_journal",	"journalentryid",	"accjid_seq" },
+	{ "gw_activity",		"activityid",		"actiid_seq" },
+	{ "gw_bookmarkfolders",		"folderid",		"bfldid_seq" },
+	{ "gw_bookmarks",		"bookmarkid",		"bkmkid_seq" },
+	{ "gw_calls",			"callid",		"callid_seq" },
+	{ "gw_callactions",		"callactionid",		"calaid_seq" },
+	{ "gw_contacts",		"contactid",		"contid_seq" },
+	{ "gw_domains",			"domainid",		"domaid_seq" },
+	{ "gw_domainaliases",		"domainaliasid",	"domlid_seq" },
+	{ "gw_events",			"eventid",		"evenid_seq" },
+	{ "gw_eventclosings",		"eventclosingid",	"ecloid_seq" },
+	{ "gw_eventtypes",		"eventtypeid",		"etypid_seq" },
+	{ "gw_files",			"fileid",		"fileid_seq" },
+	{ "gw_forums",			"forumid",		"foruid_seq" },
+	{ "gw_forumgroups",		"forumgroupid",		"forgid_seq" },
+	{ "gw_groups",			"groupid",		"grouid_seq" },
+	{ "gw_groupmembers",		"groupmemberid",	"grpmid_seq" },
+	{ "gw_mailaccounts",		"mailaccountid",	"mailid_seq" },
+	{ "gw_mailfilters",		"mailfilterid",		"mfilid_seq" },
+	{ "gw_mailfolders",		"mailfolderid",		"mfdrid_seq" },
+	{ "gw_mailheaders",		"mailheaderid",		"mhdrid_seq" },
+	{ "gw_messages",		"messageid",		"messid_seq" },
+	{ "gw_notes",			"noteid",		"noteid_seq" },
+	{ "gw_orders",			"orderid",		"ordeid_seq" },
+	{ "gw_orderitems",		"orderitemid",		"ordiid_seq" },
+	{ "gw_products",		"productid",		"prodid_seq" },
+	{ "gw_projects",		"projectid",		"projid_seq" },
+	{ "gw_queries",			"queryid",		"querid_seq" },
+	{ "gw_smtp_relayrules",		"relayruleid",		"smtrid_seq" },
+	{ "gw_tasks",			"taskid",		"taskid_seq" },
+	{ "gw_users",			"userid",		"userid_seq" },
+	{ "gw_zones",			"zoneid",		"zoneid_seq" },
+	{ NULL,				NULL,			NULL         }
+};
 
 #define PGSQLDB_DBINFO "\
 CREATE TABLE gw_dbinfo (\n\
@@ -56,7 +64,39 @@ CREATE TABLE gw_dbinfo (\n\
 	tax2name	varchar(20)	NOT NULL,\n\
 	tax1percent	numeric(9,3)	NOT NULL DEFAULT '0.08',\n\
 	tax2percent	numeric(9,3)	NOT NULL DEFAULT '0.07'\n\
-);\n\n"
+);"
+
+#define PGSQLDB_ACCOUNTING_ACCOUNTS "\
+CREATE TABLE gw_accounting_accounts (\n\
+	accountid	int4		NOT NULL DEFAULT nextval('accaid_seq'::text),\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	accountname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (accountid)\n\
+);"
+
+#define PGSQLDB_ACCOUNTING_JOURNAL "\
+CREATE TABLE gw_accounting_journal (\n\
+	journalentryid	int4		NOT NULL DEFAULT nextval('accjid_seq'::text),\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	entrydate	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	accountid	int4		NOT NULL DEFAULT 0,\n\
+	debit		numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
+	credit		numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
+	details		varchar(250)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (journalentryid)\n\
+);"
 
 #define PGSQLDB_ACTIVITY "\
 CREATE TABLE gw_activity (\n\
@@ -91,7 +131,7 @@ CREATE TABLE gw_bookmarks (\n\
 	bookmarkname	varchar(50)	NOT NULL DEFAULT '',\n\
 	bookmarkurl	varchar(255)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (bookmarkid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_BOOKMARKFOLDERS "\
 CREATE TABLE gw_bookmarkfolders (\n\
@@ -128,7 +168,7 @@ CREATE TABLE gw_calls (\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (callid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_CALLACTIONS "\
 CREATE TABLE gw_callactions (\n\
@@ -189,7 +229,7 @@ CREATE TABLE gw_contacts (\n\
 	workcountry	varchar(50)	NOT NULL DEFAULT '',\n\
 	workpostalcode	varchar(10)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (contactid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_DOMAINS "\
 CREATE TABLE gw_domains (\n\
@@ -203,7 +243,7 @@ CREATE TABLE gw_domains (\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (domainid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_DOMAINALIASES "\
 CREATE TABLE gw_domainaliases (\n\
@@ -218,7 +258,7 @@ CREATE TABLE gw_domainaliases (\n\
 	domainid	int4		NOT NULL DEFAULT 0,\n\
 	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (domainaliasid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_EVENTS "\
 CREATE TABLE gw_events (\n\
@@ -245,7 +285,7 @@ CREATE TABLE gw_events (\n\
 	closingstatus	int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (eventid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_EVENTCLOSINGS "\
 CREATE TABLE gw_eventclosings (\n\
@@ -293,7 +333,7 @@ CREATE TABLE gw_files (\n\
 	numdownloads	int4		NOT NULL DEFAULT 0,\n\
 	description	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (fileid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_FORUMS "\
 CREATE TABLE gw_forums (\n\
@@ -311,7 +351,7 @@ CREATE TABLE gw_forums (\n\
 	subject		varchar(50)	NOT NULL DEFAULT '',\n\
 	message		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (forumid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_FORUMGROUPS "\
 CREATE TABLE gw_forumgroups (\n\
@@ -345,7 +385,7 @@ CREATE TABLE gw_forumposts (\n\
 	subject		varchar(50)	NOT NULL DEFAULT '',\n\
 	message		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (messageid, forumid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_GROUPS "\
 CREATE TABLE gw_groups (\n\
@@ -362,7 +402,7 @@ CREATE TABLE gw_groups (\n\
 	motd		text		NOT NULL DEFAULT '',\n\
 	members		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (groupid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_GROUPMEMBERS "\
 CREATE TABLE gw_groupmembers (\n\
@@ -377,7 +417,7 @@ CREATE TABLE gw_groupmembers (\n\
 	userid		int4		NOT NULL DEFAULT 0,\n\
 	groupid		int4		NOT NULL DEFAULT 0,\n\
 	PRIMARY KEY (groupmemberid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_MAILACCOUNTS "\
 CREATE TABLE gw_mailaccounts (\n\
@@ -409,7 +449,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	showdebug	varchar(10)	NOT NULL DEFAULT 'n',\n\
 	signature	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailaccountid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_MAILFILTERS "\
 CREATE TABLE gw_mailfilters (\n\
@@ -429,7 +469,7 @@ CREATE TABLE gw_mailfilters (\n\
 	action		varchar(10)	NOT NULL DEFAULT '',\n\
 	dstfolderid	int4		NOT NULL DEFAULT 1,\n\
 	PRIMARY KEY (mailfilterid, accountid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_MAILFOLDERS "\
 CREATE TABLE gw_mailfolders (\n\
@@ -445,7 +485,7 @@ CREATE TABLE gw_mailfolders (\n\
 	parentfolderid	int4		NOT NULL DEFAULT 0,\n\
 	foldername	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailfolderid, accountid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_MAILHEADERS "\
 CREATE TABLE gw_mailheaders (\n\
@@ -477,7 +517,7 @@ CREATE TABLE gw_mailheaders (\n\
 	hdr_scanresult	varchar(100)	NOT NULL DEFAULT '',\n\
 	msg_text	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailheaderid, accountid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_MESSAGES "\
 CREATE TABLE gw_messages (\n\
@@ -494,7 +534,7 @@ CREATE TABLE gw_messages (\n\
 	status		int4		NOT NULL DEFAULT 2,\n\
 	message		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (messageid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_NOTES "\
 CREATE TABLE gw_notes (\n\
@@ -511,7 +551,7 @@ CREATE TABLE gw_notes (\n\
 	notetitle	varchar(50)	NOT NULL DEFAULT '',\n\
 	notetext	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (noteid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_ORDERS "\
 CREATE TABLE gw_orders (\n\
@@ -533,7 +573,7 @@ CREATE TABLE gw_orders (\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (orderid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_ORDERITEMS "\
 CREATE TABLE gw_orderitems (\n\
@@ -554,7 +594,7 @@ CREATE TABLE gw_orderitems (\n\
 	tax1		numeric(9,3)	NOT NULL DEFAULT '0.08',\n\
 	tax2		numeric(9,3)	NOT NULL DEFAULT '0.07',\n\
 	PRIMARY KEY (orderitemid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_PRODUCTS "\
 CREATE TABLE gw_products (\n\
@@ -575,7 +615,7 @@ CREATE TABLE gw_products (\n\
 	tax2		numeric(9,3)	NOT NULL DEFAULT '0.07',\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (productid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_PROJECTS "\
 CREATE TABLE gw_projects (\n\
@@ -594,7 +634,7 @@ CREATE TABLE gw_projects (\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (projectid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_QUERIES "\
 CREATE TABLE gw_queries (\n\
@@ -609,7 +649,7 @@ CREATE TABLE gw_queries (\n\
 	queryname	varchar(50)	NOT NULL DEFAULT '',\n\
 	query		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (queryid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_SMTP_RELAYRULES "\
 CREATE TABLE gw_smtp_relayrules (\n\
@@ -624,7 +664,7 @@ CREATE TABLE gw_smtp_relayrules (\n\
 	persistence	varchar(8)		NOT NULL DEFAULT '',\n\
 	ipaddress	varchar(16)		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (relayruleid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_TASKS "\
 CREATE TABLE gw_tasks (\n\
@@ -647,7 +687,7 @@ CREATE TABLE gw_tasks (\n\
 	status		int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (taskid)\n\
-);\n\n"
+);"
 
 #define PGSQLDB_USERS1 "\
 CREATE TABLE gw_users ( \
@@ -730,4 +770,4 @@ CREATE TABLE gw_zones (\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	zonename	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (zoneid)\n\
-);\n\n"
+);"

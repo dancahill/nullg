@@ -12,13 +12,13 @@ BIN_LDFLAGS   = -s @UTIL_LIBS@
 BIN_LDFLAGS_T = -s @LIBS@
 BIN_TARGETDIR = ../distrib/bin
 
-LIB_CFLAGS    = -Wall -O2 -fPIC -I../../include
+LIB_CFLAGS    = -Wall -O2 -fPIC -I../../../include
 LIB_LDFLAGS   = -s -shared
-LIB_TARGETDIR = ../../distrib/lib
+LIB_TARGETDIR = ../../../distrib/lib
 
-MOD_CFLAGS    = -Wall -O2 -fPIC -I../../include
+MOD_CFLAGS    = -Wall -O2 -fPIC -I../../../include
 MOD_LDFLAGS   = -s -shared
-MOD_TARGETDIR = ../../distrib/lib
+MOD_TARGETDIR = ../../../distrib/lib
 
 .c.o:
 	@echo "  CC $@" ; $(CC) $(CFLAGS) -c $< -o $@

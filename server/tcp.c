@@ -61,15 +61,17 @@ int tcp_bind(char *ifname, unsigned short port)
 	return sock;
 }
 
-int tcp_accept(int listensock, struct sockaddr *addr)
+int tcp_accept(int listensock, struct sockaddr_in *addr)
 {
+	struct sockaddr_in peer;
 	int clientsock;
-	int fromlen;
+	int fromlen=sizeof(struct sockaddr_in);
 //	int timeout=500;	// 0.5 seconds
 
-	fromlen=sizeof(struct sockaddr);
-	clientsock=accept(listensock, addr, &fromlen);
+	clientsock=accept(listensock, (struct sockaddr *)&addr, &fromlen);
+	getpeername(clientsock, (struct sockaddr *)&peer, &fromlen);
 //	setsockopt(clientsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout));
+	log_error("tcp", __FILE__, __LINE__, 5, "tcp_accept: connection from %s", inet_ntoa(peer.sin_addr));
 	return clientsock;
 }
 
@@ -96,10 +98,38 @@ int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 		socket->atime=time(NULL);
 		socket->bytes_in+=rc;
 	}
+	log_error("tcp", __FILE__, __LINE__, 5, "tcp_recv: %d bytes of binary data", rc);
 	return rc;
 }
 
 int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
+{
+	int rc;
+
+	if (socket->socket==-1) return -1;
+	if (socket->want_close) {
+		tcp_close(socket, 1);
+		return -1;
+	}
+#ifdef HAVE_SSL
+	if (socket->ssl) {
+		rc=ssl_write(socket->ssl, buffer, len);
+	} else {
+		rc=send(socket->socket, buffer, len, flags);
+	}
+#else
+	rc=send(socket->socket, buffer, len, flags);
+#endif
+	if (rc>0) {
+		socket->atime=time(NULL);
+		socket->bytes_out+=rc;
+	}
+	log_error("tcp", __FILE__, __LINE__, 5, "tcp_send: %d bytes of binary data", rc);
+//	log_error("tcp", __FILE__, __LINE__, 5, "tcp_send: %s", buffer);
+	return rc;
+}
+
+int tcp_send_nolog(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 {
 	int rc;
 
@@ -128,12 +158,15 @@ int tcp_fprintf(TCP_SOCKET *socket, const char *format, ...)
 {
 	unsigned char buffer[2048];
 	va_list ap;
+	int rc;
 
 	memset(buffer, 0, sizeof(buffer));
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof(buffer)-1, format, ap);
 	va_end(ap);
-	return tcp_send(socket, buffer, strlen(buffer), 0);
+	log_error("tcp", __FILE__, __LINE__, 5, "tcp_fprintf: %s", buffer);
+	rc=tcp_send_nolog(socket, buffer, strlen(buffer), 0);
+	return rc;
 }
 
 int tcp_fgets(char *buffer, int max, TCP_SOCKET *socket)
@@ -174,7 +207,10 @@ retry:
 		if ((lf)||(*obuffer=='\0')) break;
 	}
 	*pbuffer='\0';
-	if (n>max-1) return n;
+	if (n>max-1) {
+		log_error("tcp", __FILE__, __LINE__, 5, "tcp_fgets: %s", buffer);
+		return n;
+	}
 	if (!lf) {
 		if (socket->recvbufsize>0) {
 			memmove(socket->recvbuf, socket->recvbuf+socket->recvbufoffset, socket->recvbufsize);
@@ -187,6 +223,7 @@ retry:
 		}
 		goto retry;
 	}
+	log_error("tcp", __FILE__, __LINE__, 5, "tcp_fgets: %s", buffer);
 	return n;
 }
 

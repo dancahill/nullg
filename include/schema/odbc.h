@@ -24,6 +24,38 @@ CREATE TABLE gw_dbinfo (\n\
 	tax2percent	float		NOT NULL\n\
 );"
 
+#define MDB_ACCOUNTING_ACCOUNTS "\
+CREATE TABLE gw_accounting_accounts (\n\
+	accountid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	accountname	varchar(50)	NOT NULL,\n\
+	PRIMARY KEY (accountid)\n\
+);"
+
+#define MDB_ACCOUNTING_JOURNAL "\
+CREATE TABLE gw_accounting_journal (\n\
+	journalentryid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	entrydate	datetime	NOT NULL,\n\
+	accountid	integer,\n\
+	debit		currency	NOT NULL,\n\
+	credit		currency	NOT NULL,\n\
+	details		varchar(250)	NOT NULL,\n\
+	PRIMARY KEY (journalentryid)\n\
+);"
+
 #define MDB_ACTIVITY "\
 CREATE TABLE gw_activity (\n\
 	activityid	autoincrement,\n\

@@ -86,7 +86,7 @@ typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
 typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
 typedef	int   (*MAIN_SYS_SYSTEM)(const char *, ...);
 typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
-typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr *);
+typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr_in *);
 typedef	int   (*MAIN_TCP_FGETS)(char *, int, TCP_SOCKET *);
 typedef	int   (*MAIN_TCP_FPRINTF)(TCP_SOCKET *, const char *, ...);
 typedef	int   (*MAIN_TCP_RECV)(TCP_SOCKET *, char *, int, int);

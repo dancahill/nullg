@@ -245,6 +245,14 @@ static void conf_callback(char *var, char *val)
 	return;
 }
 
+static void conf_callback_modules(char *var, char *val)
+{
+	if (strcmp(var, "load module")==0) {
+		module_load(val);
+	}
+	return;
+}
+
 int conf_read()
 {
 #ifdef WIN32
@@ -330,5 +338,11 @@ int conf_read()
 	fixslashes(proc.config.dir_var_spool);
 	fixslashes(proc.config.dir_var_tmp);
 
+	return 0;
+}
+
+int conf_read_modules()
+{
+	config_read("global", conf_callback_modules);
 	return 0;
 }

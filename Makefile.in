@@ -16,12 +16,12 @@ all: _all
 	@echo "The next step is to run 'make install'."
 	@echo ""
 
-_all: _sqlite _dbutil _server _server_modules _modules
+_all: _sqlite _dbutil _server _server_modules _httpd_modules
 	@cp -p scripts/setup distrib/setup
-	@cp -p scripts/cron.daily distrib/bin/cron.daily
+	@cp -p scripts/nullgw-backup distrib/bin/nullgw-backup
 	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
 	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
-	@chmod 0755 distrib/setup distrib/bin/cron.daily distrib/bin/nullgw-config distrib/bin/rc.groupware
+	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/rc.groupware
 
 _dbutil:
 	@echo "dbutil"
@@ -33,11 +33,12 @@ _server:
 
 _server_modules:
 	@echo "server_modules"
-	@cd server_modules;$(MAKE)
+	@cd modules/server_modules;$(MAKE)
 
-_modules:
-	@echo "modules"
-	@cd modules;$(MAKE)
+_httpd_modules:
+	@echo "httpd_modules"
+	@mkdir -p distrib/lib/httpd
+	@cd modules/httpd_modules;$(MAKE)
 
 _sqlite:
 	@echo "sqlite"
@@ -58,10 +59,10 @@ clean:
 	@chmod 0755 scripts/lxtool
 	@cd dbutil;$(MAKE) clean
 	@cd server;$(MAKE) clean
-	@cd server_modules;$(MAKE) clean
-	@cd modules;$(MAKE) clean
+	@cd modules/server_modules;$(MAKE) clean
+	@cd modules/httpd_modules;$(MAKE) clean
 	@./scripts/lxtool clean
-	@rm -f distrib/bin/* distrib/lib/* *~
+	@rm -f distrib/bin/* distrib/lib/*.so distrib/lib/httpd/*.so *~
 	@rm -f distrib/etc/ssl-cert.pem distrib/etc/ssl-priv.pem
 	@echo "done."
 

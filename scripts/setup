@@ -27,9 +27,6 @@ do_copying() {
 	cp -pR etc/* $SERVER_DIR_BASE/etc		1>>$LOGFILE 2>>$LOGFILE
 	cp -pR lib/* $SERVER_DIR_BASE/lib		1>>$LOGFILE 2>>$LOGFILE
 	cp -pR var/* $SERVER_DIR_BASE/var		1>>$LOGFILE 2>>$LOGFILE
-	cp -pR COPYING $SERVER_DIR_BASE			1>>$LOGFILE 2>>$LOGFILE
-	cp -pR COPYRIGHT.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
-	cp -pR README.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/db/groupware.db	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/core-access.log	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/core-error.log	1>>$LOGFILE 2>>$LOGFILE
@@ -40,9 +37,6 @@ do_copying() {
 	touch $SERVER_DIR_BASE/var/log/smtpd-access.log	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/smtpd-error.log	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/sql-error.log	1>>$LOGFILE 2>>$LOGFILE
-	chmod 0644 $SERVER_DIR_BASE/COPYING		1>>$LOGFILE 2>>$LOGFILE
-	chmod 0644 $SERVER_DIR_BASE/COPYRIGHT.txt	1>>$LOGFILE 2>>$LOGFILE
-	chmod 0644 $SERVER_DIR_BASE/README.txt		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/bin			1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/bin/*		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/etc			1>>$LOGFILE 2>>$LOGFILE

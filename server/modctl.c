@@ -82,6 +82,7 @@ void *cronloop(void *x)
 {
 	int i;
 
+	log_error("core", __FILE__, __LINE__, 2, "Starting cronloop() thread");
 	for (;;) {
 		sleep(1);
 		for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
@@ -187,44 +188,8 @@ fail:
 
 int modules_init()
 {
-	FILE *fp=NULL;
-	char line[512];
-	char file[256];
-	int i;
-
-	snprintf(file, sizeof(file)-1, "%s/servers.cfg", proc.config.dir_etc);
-	fixslashes(file);
-	fp=fopen(file, "r");
-	if (fp==NULL) {
-		fp=fopen(file, "w");
-		if (fp==NULL) {
-			log_error("core", __FILE__, __LINE__, 0, "ERROR: Failed to create servers.cfg");
-			return -1;
-		}
-		fprintf(fp, "# This file specifies which servers NullLogic Groupware should load.\n\n");
-		fprintf(fp, "srv_httpd\n");
-		fprintf(fp, "#srv_pop3d\n");
-		fprintf(fp, "#srv_smtpd\n");
-		fprintf(fp, "#srv_smtpq\n");
-		fclose(fp);
-		fp=fopen(file, "r");
-	}
-	if (fp==NULL) {
-		log_error("core", __FILE__, __LINE__, 0, "ERROR: Failed to read servers.cfg");
-		return -1;
-	}
-	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
-		while (1) {
-			i=strlen(line);
-			if (i<1) break;
-			if (line[i-1]=='\r') { line[i-1]='\0'; continue; }
-			if (line[i-1]=='\n') { line[i-1]='\0'; continue; }
-			break;
-		};
-		if (isalpha(line[0])) {
-			module_load(line);
-		}
-	}
-	fclose(fp);
+//	memset((char *)&http_proc.mod_menuitems, 0, sizeof(MODULE_MENU));
+//	memset((char *)&http_proc.mod_functions, 0, sizeof(MODULE_FUNC));
+	conf_read_modules();
 	return 0;
 }

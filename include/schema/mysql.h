@@ -24,6 +24,38 @@ CREATE TABLE gw_dbinfo (\n\
 	tax2percent	numeric(9,3)	NOT NULL DEFAULT '0.07'\n\
 );"
 
+#define MYSQLDB_ACCOUNTING_ACCOUNTS "\
+CREATE TABLE gw_accounting_accounts (\n\
+	accountid	int4		NOT NULL auto_increment,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	accountname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (accountid)\n\
+);"
+
+#define MYSQLDB_ACCOUNTING_JOURNAL "\
+CREATE TABLE gw_accounting_journal (\n\
+	journalentryid	int4		NOT NULL auto_increment,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	entrydate	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	accountid	int4		NOT NULL DEFAULT 0,\n\
+	debit		numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
+	credit		numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
+	details		varchar(250)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (journalentryid)\n\
+);"
+
 #define MYSQLDB_ACTIVITY "\
 CREATE TABLE gw_activity (\n\
 	activityid	int4		NOT NULL auto_increment,\n\

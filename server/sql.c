@@ -860,7 +860,7 @@ void sql_freeresult(int sqr)
 	sqlreply[sqr].NumFields=0;
 	sqlreply[sqr].NumTuples=0;
 	proc.stats.sql_handlecount--;
-//	log_error("sql", __FILE__, __LINE__, 3, "SQL query [%d] freed", sqr);
+	log_error("sql", __FILE__, __LINE__, 4, "SQL query [%d] freed", sqr);
 	pthread_mutex_unlock(&Lock.SQL);
 	return;
 }

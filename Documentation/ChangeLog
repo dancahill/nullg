@@ -1,3 +1,16 @@
+1.3.19
+------
+- added logging of newly created threads and their pids
+- removed servers.cfg usage
+- fixed smtpd welcome banner
+- reorganized module source tree
+- added mod_accounting and mod_php skeleton modules
+- fixed unclean disconnects in pop3d and smtpd
+- added better logging of raw tcp io
+- added basic message header parsing to smtpd
+- fixed broken contact sql inserts
+- added selectable themes to mod_profile
+
 1.3.18
 ------
 - enforce \r\n line endings for smtp spool client

@@ -66,7 +66,11 @@ void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *
 		if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;
 		if ((ptemp=strrchr(srcfile, '\\'))!=NULL) srcfile=ptemp+1;
 		if (proc.config.loglevel>1) {
-			fprintf(fp, "%s - [%d] %s %d %s\n", timebuffer, loglevel, srcfile, line, logbuffer);
+#ifdef WIN32
+			fprintf(fp, "%s - [%d][PID=?] %s %d %s\n", timebuffer, loglevel, srcfile, line, logbuffer);
+#else
+			fprintf(fp, "%s - [%d][PID=%d] %s %d %s\n", timebuffer, loglevel, getpid(), srcfile, line, logbuffer);
+#endif
 		} else {
 			fprintf(fp, "%s - [%d] %s\n", timebuffer, loglevel, logbuffer);
 		}

@@ -122,7 +122,7 @@ typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
 typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
 typedef	int   (*MAIN_SYS_SYSTEM)(const char *, ...);
 //typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
-//typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr *);
+//typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr_in *);
 typedef	int   (*MAIN_TCP_FGETS)(char *, int, TCP_SOCKET *);
 typedef	int   (*MAIN_TCP_FPRINTF)(TCP_SOCKET *, const char *, ...);
 typedef	int   (*MAIN_TCP_RECV)(TCP_SOCKET *, char *, int, int);
@@ -462,7 +462,9 @@ int mod_export_main(MODULE_MENU *newmod)
 	for (i=0;i<50;i++) {
 		if (strlen(http_proc->mod_menuitems[i].mod_name)>0) continue;
 		if (strlen(http_proc->mod_menuitems[i].mod_menuname)>0) continue;
-		if (http_proc->mod_menuitems[i].fn_ptr!=NULL) continue;
+		if (http_proc->mod_menuitems[i].fn_init!=NULL) continue;
+		if (http_proc->mod_menuitems[i].fn_main!=NULL) continue;
+		if (http_proc->mod_menuitems[i].fn_exit!=NULL) continue;
 		http_proc->mod_menuitems[i].mod_submenu=newmod->mod_submenu;
 		snprintf(http_proc->mod_menuitems[i].mod_name, sizeof(http_proc->mod_menuitems[i].mod_name)-1, "%s", newmod->mod_name);
 		snprintf(http_proc->mod_menuitems[i].mod_menuname, sizeof(http_proc->mod_menuitems[i].mod_menuname)-1, "%s", newmod->mod_menuname);
@@ -470,7 +472,9 @@ int mod_export_main(MODULE_MENU *newmod)
 		snprintf(http_proc->mod_menuitems[i].mod_menuuri, sizeof(http_proc->mod_menuitems[i].mod_menuuri)-1, "%s", newmod->mod_menuuri);
 		snprintf(http_proc->mod_menuitems[i].fn_name, sizeof(http_proc->mod_menuitems[i].fn_name)-1, "%s", newmod->fn_name);
 		snprintf(http_proc->mod_menuitems[i].fn_uri, sizeof(http_proc->mod_menuitems[i].fn_uri)-1, "%s", newmod->fn_uri);
-		http_proc->mod_menuitems[i].fn_ptr=newmod->fn_ptr;
+		http_proc->mod_menuitems[i].fn_init=newmod->fn_init;
+		http_proc->mod_menuitems[i].fn_main=newmod->fn_main;
+		http_proc->mod_menuitems[i].fn_exit=newmod->fn_exit;
 		return 0;
 	}
 	__log_error("httpmod", __FILE__, __LINE__, 0, "ERROR: Failed to export function %s", newmod->fn_name);

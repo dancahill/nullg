@@ -185,7 +185,9 @@ typedef struct {
 	char mod_menuperm[40];
 	char fn_name[40];
 	char fn_uri[40];
-	void *fn_ptr;
+	void *fn_init;
+	void *fn_main;
+	void *fn_exit;
 } MODULE_MENU;
 typedef struct {
 	char mod_name[40];
@@ -194,9 +196,9 @@ typedef struct {
 } MODULE_FUNC;
 
 typedef struct {
-	int ListenSocket;
+	int ListenSocketSTD;
 	int ListenSocketSSL;
-	pthread_t ListenThread;
+	pthread_t ListenThreadSTD;
 	pthread_t ListenThreadSSL;
 	unsigned short RunAsCGI;
 	MODULE_MENU mod_menuitems[MAX_MOD_MENUITEMS+1];
@@ -204,7 +206,8 @@ typedef struct {
 } HTTP_PROC;
 
 typedef	int  (*HTMOD_INIT)(_PROC *, HTTP_PROC *, FUNCTION *);
-typedef	void (*HTMOD_MAIN)(CONN *);
+typedef	int  (*HTMOD_MAIN)(CONN *);
+typedef	int  (*HTMOD_EXIT)(void);
 
 typedef	void (*HTMOD_HTML_HEADER)(CONN *, char *);
 typedef	void (*HTMOD_HTML_FOOTER)(CONN *);
