@@ -105,8 +105,8 @@ forums to see if anyone else is having the same problem, or if the
 problem has already been fixed.
 
 If the bug you just found is not on the list, please send an e-mail to
-groupware@nulllogic.com with the Subject line 'NullLogic Groupware Bug'.
-In the body of the message please describe the bug, how it can be
+nulllogic@users.sourceforge.net with the Subject line 'NullLogic Groupware
+Bug'.  In the body of the message please describe the bug, how it can be
 reproduced, the full version number (e.g. 1.2.3), the operating system
 of the server, and the name and version number of your third party web
 server (if you are using one).

@@ -1,5 +1,5 @@
 LIBRARY		mod_orders
-VERSION		1.2.5
+VERSION		1.2.6
 EXPORTS
 	mod_init
 	mod_main

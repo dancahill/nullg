@@ -7,5 +7,5 @@ the GNU GPL has been included with this release, and can be found in the file
 COPYING.
 
 NullLogic Groupware is also available under commercial non-GPL license.  For
-pricing and ordering information, visit our site at http://www.nulllogic.com/
-or e-mail groupware@nulllogic.com.
+pricing and ordering information, visit our site at http://nullgroupware.sf.net/
+or e-mail nulllogic@users.sourceforge.net.

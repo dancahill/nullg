@@ -2,11 +2,11 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.2.5
+AppVerName=NullLogic Groupware 1.2.6
 AppPublisher=NullLogic
-AppPublisherURL=http://www.nulllogic.com/
-AppSupportURL=http://www.nulllogic.com/
-AppUpdatesURL=http://www.nulllogic.com/
+AppPublisherURL=http://nullgroupware.sf.net/
+AppSupportURL=http://nullgroupware.sf.net/
+AppUpdatesURL=http://nullgroupware.sf.net/
 DefaultDirName={pf}\NullLogic Groupware
 DefaultGroupName=NullLogic Groupware
 LicenseFile=..\distrib\COPYRIGHT.txt
@@ -19,7 +19,7 @@ Source: "..\distrib\*.*"; Flags: ignoreversion recursesubdirs; DestDir: "{app}"
 Name: "{group}\Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\config.exe"
 Name: "{group}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 Name: "{group}\Groupware Help"; Filename: "{app}\var\htdocs\groupware\help\en\index.html"
-Name: "{group}\Groupware Online"; Filename: "http://www.nulllogic.com/"
+Name: "{group}\Groupware Online"; Filename: "http://nullgroupware.sourceforge.net/"
 Name: "{commonstartup}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 [Run]
 Filename: "{app}\bin\config.exe"; Workingdir: "{app}\bin"; Description: "Edit Groupware Configuration"; Flags: postinstall skipifsilent unchecked

@@ -64,9 +64,9 @@ install: all
 	@cd distrib;./setup
 
 install2: all
-	/usr/local/nullgroupware/bin/rc.groupware stop
+	/etc/rc.d/init.d/nullgroupware stop
 	@cd distrib;./setup
-	/usr/local/nullgroupware/bin/rc.groupware start
+	/etc/rc.d/init.d/nullgroupware start
 
 wc:
 	wc `find -name *.[ch]`

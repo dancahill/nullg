@@ -1,8 +1,9 @@
 Summary: NullLogic Groupware
 Name: nullgroupware
-Version: 1.2.5rc2
+Version: 1.2.6
+Release: 1
 License: GPL
-Packager: Dan Cahill <cahill@nulllogic.com>
+Packager: Dan Cahill <nulllogic@users.sourceforge.net>
 Group: Networking/Daemons
 URL: http://nullgroupware.sourceforge.net/groupware/
 Source: http://prdownloads.sourceforge.net/nullgroupware/nullgroupware-%{PACKAGE_VERSION}.tar.gz
@@ -44,16 +45,18 @@ chmod go-rwx /usr/local/nullgroupware/etc /usr/local/nullgroupware/var 1>/dev/nu
 /usr/local/nullgroupware/var/*
 
 %changelog
-* Fri Feb 06 2004 Dan Cahill <cahill@nulllogic.com>
+* Tue Feb 24 2004 Dan Cahill <nulllogic@users.sourceforge.net>
+  - Release Version 1.2.6
+* Fri Feb 06 2004 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.5
-* Mon Dec 01 2003 Dan Cahill <cahill@nulllogic.com>
+* Mon Dec 01 2003 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.4
-* Sat Aug 02 2003 Dan Cahill <cahill@nulllogic.com>
+* Sat Aug 02 2003 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.3
-* Wed May 07 2003 Dan Cahill <cahill@nulllogic.com>
+* Wed May 07 2003 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.2
-* Tue Mar 18 2003 Dan Cahill <cahill@nulllogic.com>
+* Tue Mar 18 2003 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.1
-* Sat Dec 28 2002 Dan Cahill <cahill@nulllogic.com>
+* Sat Dec 28 2002 Dan Cahill <nulllogic@users.sourceforge.net>
   - Release Version 1.2.0
   - Initial 1.2.x release
