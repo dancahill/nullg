@@ -75,7 +75,7 @@ void htselect_year(CONN *sid, int startyear, char *selected);
 void htselect_contact(CONN *sid, int selected);
 void htselect_domain(CONN *sid, int selected);
 void htselect_eventstatus(CONN *sid, int selected);
-void htselect_group(CONN *sid, short int perm, int selected, int domainid);
+void htselect_group(CONN *sid, int perm, int selected, int domainid);
 void htselect_number(CONN *sid, int selected, int start, int end, int increment);
 void htselect_priority(CONN *sid, int selected);
 void htselect_reminder(CONN *sid, int selected);

@@ -75,14 +75,7 @@
 	#include <sys/wait.h>
 	#define closesocket close
 #endif
-#ifdef HAVE_LIBSSL
-	#include <openssl/rsa.h>
-	#include <openssl/crypto.h>
-	#include <openssl/x509.h>
-	#include <openssl/pem.h>
-	#include <openssl/ssl.h>
-	#include <openssl/err.h>
-#endif
+#include "ssl.h"
 
 #ifdef HAVE_MYSQL
 	#ifdef HAVE_MYSQL_MYSQL_H

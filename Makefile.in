@@ -84,6 +84,7 @@ upgrade: _all
 	/etc/init.d/nullgroupware stop
 	@cd distrib;./setup upgrade
 	/etc/init.d/nullgroupware start
+	@sync
 
 wc:
 	wc `find -name *.[ch]`

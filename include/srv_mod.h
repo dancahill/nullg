@@ -57,14 +57,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #endif
-#ifdef HAVE_LIBSSL
-#include <openssl/rsa.h>
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
+#include "ssl.h"
 
 #include "defines.h"
 #include "typedefs.h"
@@ -106,10 +99,8 @@ typedef	void  (*MAIN_STRIPRN)(char *);
 typedef	void  (*MAIN_FIXSLASHES)(char *);
 typedef	char *(*MAIN_STR2SQL)(char *, int, char *);
 typedef	char *(*MAIN_P_STRCASESTR)(char *, char *);
-#ifdef HAVE_LIBSSL
 typedef	int   (*MAIN_SSL_ACCEPT)(TCP_SOCKET *);
 typedef	int   (*MAIN_SSL_CLOSE)(TCP_SOCKET *);
-#endif
 #ifdef WIN32
 typedef	int   (*MAIN_GETTIMEOFDAY)(struct timeval *, struct timezone *);
 typedef	DIR  *(*MAIN_OPENDIR)(char *);
@@ -167,10 +158,8 @@ EXTERN MAIN_STRIPRN			striprn;
 EXTERN MAIN_FIXSLASHES			fixslashes;
 EXTERN MAIN_STR2SQL			str2sql;
 EXTERN MAIN_P_STRCASESTR		p_strcasestr;
-#ifdef HAVE_LIBSSL
 EXTERN MAIN_SSL_ACCEPT			ssl_accept;
 EXTERN MAIN_SSL_CLOSE			ssl_close;
-#endif
 #ifdef WIN32
 EXTERN MAIN_GETTIMEOFDAY		gettimeofday;
 EXTERN MAIN_OPENDIR			opendir;
@@ -259,10 +248,8 @@ int mod_import()
 	if (_get_func((void *)&fixslashes,		"fixslashes"		)!=0) return -1;
 	if (_get_func((void *)&str2sql,			"str2sql"		)!=0) return -1;
 	if (_get_func((void *)&p_strcasestr,		"p_strcasestr"		)!=0) return -1;
-#ifdef HAVE_LIBSSL
 	if (_get_func((void *)&ssl_accept,		"ssl_accept"		)!=0) return -1;
 	if (_get_func((void *)&ssl_close,		"ssl_close"		)!=0) return -1;
-#endif
 #ifdef WIN32
 	if (_get_func((void *)&gettimeofday,		"gettimeofday"		)!=0) return -1;
 	if (_get_func((void *)&opendir,			"opendir"		)!=0) return -1;

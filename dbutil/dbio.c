@@ -441,6 +441,67 @@ int init_sqlite(void)
 	return 0;
 }
 
+int table_check()
+{
+	int sqr;
+	int i;
+	int x;
+
+	/* CHECK gw_dbinfo TABLE */
+	if ((sqr=sqlQuery("SELECT count(*) FROM gw_dbinfo"))<0) return -1;
+	x=atoi(sqlGetvalue(sqr, 0, 0));
+	sqlFreeconnect(sqr);
+	if (x==0) {
+		for (i=0;sqldata_new[i]!=NULL;i++) {
+			if (sqlUpdate(1, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
+		}
+	}
+	/* CHECK gw_callactions TABLE */
+	if ((sqr=sqlQuery("SELECT count(*) FROM gw_callactions"))<0) return -1;
+	x=atoi(sqlGetvalue(sqr, 0, 0));
+	sqlFreeconnect(sqr);
+	if (x==0) {
+		for (i=0;sqldata_callactions[i]!=NULL;i++) {
+			if (sqlUpdate(1, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
+		}
+	}
+	/* CHECK gw_domains TABLE */
+	if ((sqr=sqlQuery("SELECT count(*) FROM gw_domains"))<0) return -1;
+	x=atoi(sqlGetvalue(sqr, 0, 0));
+	sqlFreeconnect(sqr);
+	if (x==0) {
+		for (i=0;sqldata_domains[i]!=NULL;i++) {
+			if (sqlUpdate(1, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
+		}
+	}
+	/* CHECK gw_eventclosings TABLE */
+	if ((sqr=sqlQuery("SELECT count(*) FROM gw_eventclosings"))<0) return -1;
+	x=atoi(sqlGetvalue(sqr, 0, 0));
+	sqlFreeconnect(sqr);
+	if (x==0) {
+		for (i=0;sqldata_eventclosings[i]!=NULL;i++) {
+			if (sqlUpdate(1, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
+		}
+	}
+	/* CHECK gw_eventtypes TABLE */
+	if ((sqr=sqlQuery("SELECT count(*) FROM gw_eventtypes"))<0) return -1;
+	x=atoi(sqlGetvalue(sqr, 0, 0));
+	sqlFreeconnect(sqr);
+	if (x==0) {
+		for (i=0;sqldata_eventtypes[i]!=NULL;i++) {
+			if (sqlUpdate(1, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
+		}
+	}
+
+	/* Assign all orphaned records to domain 1 */
+
+	sqlUpdatef(1, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
+	sqlUpdatef(1, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
+
+	sqlUpdatef(1, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
+	return 0;
+}
+
 int init_db(void)
 {
 	if (strcasecmp(config.sql_type, "MYSQL")==0) {
@@ -458,28 +519,7 @@ int init_db(void)
 		printf("Initialising SQLite database...");
 		if (init_sqlite()<0) return -1;
 	}
-	if (sqlUpdate(1, DBDATA_01)<0) { printf("\r\nError inserting dbdata_01\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_02)<0) { printf("\r\nError inserting dbdata_02\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_03)<0) { printf("\r\nError inserting dbdata_03\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_04)<0) { printf("\r\nError inserting dbdata_04\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_05)<0) { printf("\r\nError inserting dbdata_05\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_06)<0) { printf("\r\nError inserting dbdata_06\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_07)<0) { printf("\r\nError inserting dbdata_07\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_08)<0) { printf("\r\nError inserting dbdata_08\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_09)<0) { printf("\r\nError inserting dbdata_09\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_10)<0) { printf("\r\nError inserting dbdata_10\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_11)<0) { printf("\r\nError inserting dbdata_11\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_12)<0) { printf("\r\nError inserting dbdata_12\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_13)<0) { printf("\r\nError inserting dbdata_13\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_14)<0) { printf("\r\nError inserting dbdata_14\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_15)<0) { printf("\r\nError inserting dbdata_15\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_16)<0) { printf("\r\nError inserting dbdata_16\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_17)<0) { printf("\r\nError inserting dbdata_17\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_18)<0) { printf("\r\nError inserting dbdata_18\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_19)<0) { printf("\r\nError inserting dbdata_19\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_20)<0) { printf("\r\nError inserting dbdata_20\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_21)<0) { printf("\r\nError inserting dbdata_21\r\n"); return -1; }
-	if (sqlUpdate(1, DBDATA_22)<0) { printf("\r\nError inserting dbdata_22\r\n"); return -1; }
+	table_check();
 	if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		init_pgsqlseq();
 	}
@@ -540,6 +580,7 @@ int restore_db(char *filename)
 		init_pgsqlseq();
 	}
 	fclose(fp);
+	table_check();
 	printf("done.\r\n");
 	sqlDisconnect();
 	return 0;

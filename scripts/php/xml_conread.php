@@ -17,7 +17,7 @@ print "enter a contact number to retrieve its record<BR>\n";
 print "<INPUT NAME=\"contactid\" VALUE=\"${contactid}\">\n";
 print "<input type=\"submit\" value=\"go\" name=\"submit\"></FORM>\n";
 if ($contactid!=0) {
-	$f=new xmlrpcmsg('contacts.read', array(new xmlrpcval($sys_username, "string"), new xmlrpcval($sys_password, "string"), new xmlrpcval($contactid, "int")));
+	$f=new xmlrpcmsg('contacts.read', array(new xmlrpcval($sys_username, "string"), new xmlrpcval($sys_password, "string"), new xmlrpcval($sys_domain, "string"), new xmlrpcval($contactid, "int")));
 	$c=new xmlrpc_client("/xml-rpc/", $sys_host, $sys_port);
 	$c->setDebug(0);
 	$r=$c->send($f);

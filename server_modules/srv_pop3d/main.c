@@ -184,7 +184,6 @@ void *pop3_accept_loop(void *x)
 	return 0;
 }
 
-#ifdef HAVE_LIBSSL
 #ifdef WIN32
 unsigned _stdcall pop3_accept_loop_ssl(void *x)
 #else
@@ -215,7 +214,7 @@ void *pop3_accept_loop_ssl(void *x)
  		if (ListenSocketSSL==-1) return 0;
 		conn[sid].socket.socket=socket;
 #ifdef WIN32
-		if (conn[i].socket.socket==INVALID_SOCKET) {
+		if (conn[sid].socket.socket==INVALID_SOCKET) {
 			log_error("pop3d", __FILE__, __LINE__, 2, "pop3_accept_loop_ssl() shutting down...");
 			return 0;
 #else
@@ -232,7 +231,6 @@ void *pop3_accept_loop_ssl(void *x)
 	}
 	return 0;
 }
-#endif // HAVE_LIBSSL
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
@@ -250,11 +248,9 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	if (mod_config.pop3_port) {
 		if ((ListenSocket=tcp_bind(mod_config.pop3_interface, mod_config.pop3_port))<0) return -1;
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.pop3_sslport)) {
 		if ((ListenSocketSSL=tcp_bind(mod_config.pop3_interface, mod_config.pop3_sslport))<0) return -1;
 	}
-#endif
 	if ((conn=calloc(mod_config.pop3_maxconn, sizeof(CONN)))==NULL) {
 		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.pop3_maxconn, sizeof(CONN));
 		return -1;
@@ -277,14 +273,12 @@ DllExport int mod_exec()
 			return -2;
 		}
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.pop3_sslport)) {
 		if (pthread_create(&ListenThreadSSL, &thr_attr, pop3_accept_loop_ssl, NULL)==-1) {
 			log_error("pop3d", __FILE__, __LINE__, 0, "pop3_accept_loop_ssl() failed...");
 			return -2;
 		}
 	}
-#endif
 	return 0;
 }
 

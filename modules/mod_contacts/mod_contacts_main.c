@@ -43,6 +43,7 @@ void contactsearch1(CONN *sid)
 			if (strcmp(sql_getname(sqr, i), "obj_mtime")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_uid")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(sqr, i), "obj_did")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_gperm")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "obj_operm")==0) continue;
 			if (strcmp(sql_getname(sqr, i), "loginip")==0) continue;
@@ -114,19 +115,11 @@ void contactsearch2(CONN *sid)
 			if (strcmp(sql_getname(sqr1, i), "enabled")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "geozone")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "timezone")==0) continue;
-			if (strcmp(config->sql_type, "ODBC")==0) {
-				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
-			} else {
-				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
-			}
+			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		}
 		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
-		} else {
-			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
-		}
+		strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did);

@@ -273,7 +273,7 @@ void webmaillist(CONN *sid)
 		prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	}
 	neworder=(order==3?2:3);
-	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=120 style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
 	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_FROM);
 	neworder=(order==5?4:5);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\" WIDTH=100%%>", sid->dat->in_ScriptName, folderid, neworder, searchstring);
@@ -293,17 +293,17 @@ void webmaillist(CONN *sid)
 			prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>\r\n", header.localid, header.uidl);
 		}
 		prints(sid, "<TD NOWRAP TITLE=\"%s\" STYLE='border-style:solid'>", str2html(sid, header.From));
-		prints(sid, "<SPAN STYLE='width:120px;overflow:hidden'>%s&nbsp;</SPAN></TD>\r\n", str2html(sid, header.FromName));
+		prints(sid, "<DIV STYLE='width:120px;overflow:hidden'>%s&nbsp;</DIV></TD>\r\n", str2html(sid, header.FromName));
 		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"");
 		if (sid->dat->user_menustyle>0) {
 			prints(sid, "window.parent.wmread.location.href='%s/mail/read?msg=%d&order=%d%s'\" ", sid->dat->in_ScriptName, header.localid, order, searchstring);
 		} else {
 			prints(sid, "window.location.href='%s/mail/read?msg=%d&order=%d%s'\" ", sid->dat->in_ScriptName, header.localid, order, searchstring);
 		}
-		prints(sid, "TITLE=\"%s\"><SPAN STYLE='width:315px;overflow:hidden'>", str2html(sid, header.Subject));
+		prints(sid, "TITLE=\"%s\"><DIV STYLE='width:315px;overflow:hidden'>", str2html(sid, header.Subject));
 		prints(sid, "<A HREF=%s/mail/read?msg=%d&order=%d%s", sid->dat->in_ScriptName, header.localid, order, searchstring);
 		prints(sid, "%s TITLE=\"%s\">", sid->dat->user_menustyle>0?" TARGET=wmread":"", str2html(sid, header.Subject));
-		prints(sid, "%s</A>&nbsp;</SPAN></TD>\r\n", str2html(sid, header.Subject));
+		prints(sid, "%s</A>&nbsp;</DIV></TD>\r\n", str2html(sid, header.Subject));
 		unixdate=time_sql2unix(header.Date);
 		unixdate+=time_tzoffset(sid, unixdate);
 		if (unixdate<0) unixdate=0;

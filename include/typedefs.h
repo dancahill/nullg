@@ -78,11 +78,7 @@ typedef struct {
 typedef struct {
 	short int socket;
 	struct sockaddr_in ClientAddr;
-#ifdef HAVE_LIBSSL
 	SSL *ssl;
-#else
-	void *ssl;
-#endif
 	time_t ctime; // Creation time
 	time_t atime; // Last Access time
 	unsigned int bytes_in;
@@ -174,13 +170,8 @@ typedef struct {
 	STATS stats;
 	SRVMOD srvmod[MAX_MOD_FUNCTIONS+1];
 	unsigned short ssl_is_loaded;
-#ifdef HAVE_LIBSSL
 	SSL_CTX *ssl_ctx;
 	SSL_METHOD *ssl_meth;
-#else
-	void *ssl_ctx;
-	void *ssl_meth;
-#endif
 #ifdef WIN32
 	HINSTANCE hInst;
 	WSADATA wsaData;

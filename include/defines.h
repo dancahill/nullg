@@ -113,6 +113,8 @@
 #define HAVE_PGSQL
 #define HAVE_SQLITE
 
+#define HAVE_SSL
+
 #ifdef WIN32
 #define DllExport __declspec(dllexport)
 #define OS_WIN9X 1

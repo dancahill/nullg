@@ -82,9 +82,9 @@ int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 		tcp_close(socket, 1);
 		return -1;
 	}
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 	if (socket->ssl) {
-		rc=SSL_read(socket->ssl, buffer, len);
+		rc=ssl_read(socket->ssl, buffer, len);
 		if (rc==0) rc=-1;
 	} else {
 		rc=recv(socket->socket, buffer, len, flags);
@@ -108,9 +108,9 @@ int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 		tcp_close(socket, 1);
 		return -1;
 	}
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 	if (socket->ssl) {
-		rc=SSL_write(socket->ssl, buffer, len);
+		rc=ssl_write(socket->ssl, buffer, len);
 	} else {
 		rc=send(socket->socket, buffer, len, flags);
 	}
@@ -196,7 +196,7 @@ int tcp_close(TCP_SOCKET *socket, short int owner_killed)
 		socket->want_close=1;
 	} else {
 		socket->want_close=0;
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 		if (socket->ssl!=NULL) ssl_close(socket);
 #endif
 	}

@@ -219,7 +219,6 @@ void *http_accept_loop(void *x)
 	return 0;
 }
 
-#ifdef HAVE_LIBSSL
 #ifdef WIN32
 unsigned _stdcall http_accept_loop_ssl(void *x)
 #else
@@ -272,7 +271,6 @@ void *http_accept_loop_ssl(void *x)
 	DEBUG_OUT(NULL, "http_accept_loop_ssl()");
 	return 0;
 }
-#endif // HAVE_LIBSSL
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
@@ -290,11 +288,9 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	if (mod_config.http_port) {
 		if ((http_proc.ListenSocket=tcp_bind(mod_config.http_interface, mod_config.http_port))<0) return -1;
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.http_sslport)) {
 		if ((http_proc.ListenSocketSSL=tcp_bind(mod_config.http_interface, mod_config.http_sslport))<0) return -1;
 	}
-#endif
 	if ((conn=calloc(mod_config.http_maxconn, sizeof(CONN)))==NULL) {
 		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.http_maxconn, sizeof(CONN));
 		return -1;
@@ -318,14 +314,12 @@ DllExport int mod_exec()
 			return -2;
 		}
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.http_sslport)) {
 		if (pthread_create(&http_proc.ListenThreadSSL, &thr_attr, http_accept_loop_ssl, NULL)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "http_accept_loop_ssl() failed...");
 			return -2;
 		}
 	}
-#endif
 	return 0;
 }
 

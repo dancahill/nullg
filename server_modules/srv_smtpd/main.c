@@ -184,7 +184,6 @@ void *smtp_accept_loop(void *x)
 	return 0;
 }
 
-#ifdef HAVE_LIBSSL
 #ifdef WIN32
 unsigned _stdcall smtp_accept_loop_ssl(void *x)
 #else
@@ -232,7 +231,6 @@ void *smtp_accept_loop_ssl(void *x)
 	}
 	return 0;
 }
-#endif // HAVE_LIBSSL
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
@@ -250,11 +248,9 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	if (mod_config.smtp_port) {
 		if ((ListenSocket=tcp_bind(mod_config.smtp_interface, mod_config.smtp_port))<0) return -1;
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.smtp_sslport)) {
 		if ((ListenSocketSSL=tcp_bind(mod_config.smtp_interface, mod_config.smtp_sslport))<0) return -1;
 	}
-#endif
 	if ((conn=calloc(mod_config.smtp_maxconn, sizeof(CONN)))==NULL) {
 		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.smtp_maxconn, sizeof(CONN));
 		return -1;
@@ -277,7 +273,6 @@ DllExport int mod_exec()
 			return -2;
 		}
 	}
-#ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(mod_config.smtp_sslport)) {
 		if (pthread_attr_init(&thr_attr)) return -2;
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
@@ -288,7 +283,6 @@ DllExport int mod_exec()
 			return -2;
 		}
 	}
-#endif
 	return 0;
 }
 

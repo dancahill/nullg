@@ -167,7 +167,7 @@ void init()
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
 		exit(-2);
 	}
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 	ssl_init();
 #endif
 	return;

@@ -118,13 +118,13 @@ void    init(void);
 #ifdef WIN32
 unsigned _stdcall conn_reaper(void *x);
 unsigned _stdcall accept_loop(void *x);
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 unsigned _stdcall accept_loop_ssl(void *x);
 #endif
 #else
 void   *conn_reaper(void *x);
 void   *accept_loop(void *x);
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 void *accept_loop_ssl(void *x);
 #endif
 #endif
@@ -143,9 +143,11 @@ char   *sql_getvaluebyname(int sqr, int tuple, char *fieldname);
 int     sql_numfields(int sqr);
 int     sql_numtuples(int sqr);
 /* ssl.c functions */
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 int     ssl_init();
 int     ssl_accept(TCP_SOCKET *sock);
+int     ssl_read(SSL *ssl, void *buf, int len);
+int     ssl_write(SSL *ssl, const void *buf, int len);
 int     ssl_close(TCP_SOCKET *sock);
 int     ssl_shutdown();
 #endif

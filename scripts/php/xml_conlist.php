@@ -5,7 +5,7 @@
 require("_xmlrpc.php");
 require("_global.php");
 
-$f=new xmlrpcmsg('contacts.list', array(new xmlrpcval($sys_username, "string"), new xmlrpcval($sys_password, "string")));
+$f=new xmlrpcmsg('contacts.list', array(new xmlrpcval($sys_username, "string"), new xmlrpcval($sys_password, "string"), new xmlrpcval($sys_domain, "string")));
 $c=new xmlrpc_client("/xml-rpc/", $sys_host, $sys_port);
 $c->setDebug(0);
 $r=$c->send($f);

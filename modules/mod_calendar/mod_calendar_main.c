@@ -428,7 +428,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	htselect_eventtype(sid, event->eventtype);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if (module_exists(sid, "mod_contacts")) {
-		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView()>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n");
 		htselect_contact(sid, event->contactid);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
@@ -440,7 +440,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	htselect_reminder(sid, event->reminder);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD><TD><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;<A HREF=javascript:ShowCalendar()>Date</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventstart2>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;<A HREF=javascript:ShowCalendar() CLASS=\"EDITFORM\">Date</A>&nbsp;</B></TD><TD ALIGN=RIGHT NOWRAP><SELECT NAME=eventstart2>\n");
 	htselect_month(sid, startdate);
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=eventstart1>\n");

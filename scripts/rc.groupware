@@ -1,6 +1,9 @@
 #!/bin/sh
 # Init script to start/stop/restart the NullLogic Groupware servers.
 #
+# On SYSV init systems, this script is usually called 'nullgroupware',
+# and located in '/etc/init.d'.
+#
 # basic IRIX-style chkconfig (RedHat uses this)
 # chkconfig: 2345 85 10
 # description: NullLogic Groupware Server Suite. \

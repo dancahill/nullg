@@ -1,3 +1,13 @@
+1.3.17
+------
+- fixed a heap overflow in mod_mail caused by large message bodies
+- fixed overflowing text formatting in Mozilla and Konqueror
+- added smarter db upgrade code to dbutil
+- fixed xml-rpc domain auth and sample php scripts
+- fixed annoying _getshort compile warnings
+- use dynamic linking at runtime to load OpenSSL
+- added SSL support for win32
+
 1.3.16
 ------
 - fixed Received: headers in outgoing mail

@@ -1059,7 +1059,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	dbread_getheader(sid, sqr, 0, &header);
 	sql_freeresult(sqr);
 	if (wmserver_smtpconnect(sid)!=0) return -1;
-	snprintf(outbuffer, sizeof(outbuffer)-1, "HELO %s\r\n", sid->dat->wm->smtpserver);
+	snprintf(outbuffer, sizeof(outbuffer)-1, "HELO %s\r\n", config->hostname);
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));

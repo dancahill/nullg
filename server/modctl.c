@@ -55,7 +55,7 @@ static FUNCTION functions[]={
 	{ "fixslashes",			fixslashes			},
 	{ "str2sql",			str2sql				},
 	{ "p_strcasestr",		p_strcasestr			},
-#ifdef HAVE_LIBSSL
+#ifdef HAVE_SSL
 	{ "ssl_accept",			ssl_accept			},
 	{ "ssl_close",			ssl_close			},
 	{ "ssl_shutdown",		ssl_shutdown			},

@@ -1,5 +1,5 @@
 LIBRARY		mod_messages
-VERSION		1.3.16
+VERSION		1.3.17
 EXPORTS
 	mod_init
 	mod_main

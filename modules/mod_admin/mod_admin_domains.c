@@ -54,7 +54,7 @@ void admindomainedit(CONN *sid)
 		prints(sid, "<TR><TH COLSPAN=2>New Domain</TH></TR>\n");
 	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>Domain Name    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=domainname   value=\"%s\" SIZE=50></TD></TR>\n", str2html(sid, domain.domainname));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2>\n");
+	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "admin")&A_ADMIN)&&(domainid>1)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");

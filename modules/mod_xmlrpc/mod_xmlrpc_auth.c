@@ -28,7 +28,7 @@ int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 	int sqr;
 
 	if ((strlen(sid->dat->user_username)==0)||(strlen(password)==0)) return -1;
-	if ((sqr=sql_queryf("SELECT contactid, password FROM gw_contacts WHERE username = '%s' and enabled > 0", username))<0) return -1;
+	if ((sqr=sql_queryf("SELECT contactid, password FROM gw_contacts WHERE username = '%s' AND obj_did = %d AND enabled > 0", username, sid->dat->user_did))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return -1;
@@ -77,13 +77,13 @@ int xmlrpc_auth_login(CONN *sid)
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
 	memset(raddress, 0, sizeof(raddress));
-	if ((getxmlparam(sid, 3, "string")!=NULL)&&(getxmlparam(sid, 4, "string")!=NULL)) {
+	if ((getxmlparam(sid, 3, "string")!=NULL)&&(getxmlparam(sid, 4, "string")!=NULL)&&(getxmlparam(sid, 5, "string")!=NULL)) {
 		strncpy(username, getxmlparam(sid, 3, "string"), sizeof(username)-1);
 		strncpy(password, getxmlparam(sid, 4, "string"), sizeof(password)-1);
 		strncpy(raddress, getxmlparam(sid, 5, "string"), sizeof(raddress)-1);
 		if (strlen(password)==32) {
 			if ((strlen(username)==0)||(strlen(sid->dat->user_token)!=32)) return -1;
-			if ((sqr=sql_queryf("SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s'", username))<0) {
+			if ((sqr=sql_queryf("SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s' AND obj_did = %d", username, sid->dat->user_did))<0) {
 				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
@@ -123,7 +123,7 @@ int xmlrpc_auth_login(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(token, 0, sizeof(token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(token, sizeof(token)-strlen(token)-1, "%02x", md[i]);
-			sql_updatef("UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", raddress, timebuffer, token, username);
+			sql_updatef("UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s' AND obj_did = %d", raddress, timebuffer, token, username, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			return contactid;
 		}

@@ -49,14 +49,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #endif
-#ifdef HAVE_LIBSSL
-#include <openssl/rsa.h>
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
+#include "ssl.h"
 #include "defines.h"
 #include "typedefs.h"
 #include "http_errno.h"
@@ -86,7 +79,7 @@ typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_DAY)(CONN *, char *);
 typedef	void  (*MAIN_HTSELECT_DOMAIN)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_EVENTSTATUS)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, short int, int, int);
+typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, int, int, int);
 typedef	void  (*MAIN_HTSELECT_HOUR)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_MINUTES)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_MONTH)(CONN *, char *);

@@ -236,9 +236,21 @@ int auth_setcookie(CONN *sid)
 	memset(password, 0, sizeof(password));
 	gettimeofday(&ttime, &tzone);
 	time_unix2sql(timebuffer, sizeof(timebuffer)-1, ttime.tv_sec);
-	if ((getxmlparam(sid, 1, "string")!=NULL)&&(getxmlparam(sid, 2, "string")!=NULL)) {
+	if ((getxmlparam(sid, 1, "string")!=NULL)&&(getxmlparam(sid, 2, "string")!=NULL)&&(getxmlparam(sid, 3, "string")!=NULL)) {
 		strncpy(sid->dat->user_username, getxmlparam(sid, 1, "string"), sizeof(sid->dat->user_username)-1);
 		strncpy(password, getxmlparam(sid, 2, "string"), sizeof(password)-1);
+		strncpy(domain, getxmlparam(sid, 3, "string"), sizeof(domain)-1);
+		domainid=domain_getid(domain);
+		if (domainid<0) {
+			sid->dat->user_did=1;
+		} else {
+			sid->dat->user_did=domainid;
+		}
+		if ((ptemp=domain_getname(domain, sizeof(domain)-1, sid->dat->user_did))!=NULL) {
+			strncpy(sid->dat->user_domainname, ptemp, sizeof(sid->dat->user_domainname)-1);
+		} else {
+			strncpy(sid->dat->user_domainname, "NULL", sizeof(sid->dat->user_domainname)-1);
+		}
 		result=auth_checkpass(sid, password);
 		if (result==0) {
 			md5_init(&c);

@@ -616,7 +616,7 @@ void htselect_eventstatus(CONN *sid, int selected)
 	return;
 }
 
-void htselect_group(CONN *sid, short int perm, int selected, int domainid)
+void htselect_group(CONN *sid, int perm, int selected, int domainid)
 {
 	int i, j;
 	int sqr;

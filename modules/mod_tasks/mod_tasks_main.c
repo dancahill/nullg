@@ -383,17 +383,17 @@ void tasks_list(CONN *sid, int userid, int groupid)
 			if (j==sql_numtuples(sqr2)) continue;
 		}
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "<SPAN STYLE='width:196px;overflow:hidden'>&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 		if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
-		prints(sid, "%s\">%s</A>&nbsp;</SPAN></TD></TR>\n", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
+		prints(sid, "%s\">%s</A>&nbsp;</DIV></TD></TR>\n", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
 		tcount++;
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
 		if (atoi(sql_getvalue(sqr, i, 2))!=0) continue;
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "<SPAN STYLE='width:196px;overflow:hidden'>&nbsp;*&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"[UNASSIGNED] %s\">%s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
-		prints(sid, "</A>&nbsp;</SPAN></TD></TR>\n");
+		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;*&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"[UNASSIGNED] %s\">%s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
+		prints(sid, "</A>&nbsp;</DIV></TD></TR>\n");
 		tcount++;
 	}
 	sql_freeresult(sqr2);

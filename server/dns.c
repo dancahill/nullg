@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <resolv.h>
 #include <arpa/nameser.h>
+#include <arpa/nameser_compat.h>
 #define MAXPACKET	8192	/* max size of packet */
 #define MAXMXHOSTS	20	/* max num of mx records we want to see */
 #define MAXBUF		512
@@ -63,7 +64,7 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 	HEADER *hp;			/* answer buffer header */
 	int ancount, qdcount;		/* answer count and query count */
 	u_char *msg, *eom, *cp;		/* answer buffer positions */
-	int type, class, dlen;		/* record type, class and length */
+	int type, class, ttl, dlen;	/* record type, class, ttl and length */
 	u_short pref;			/* mx preference value */
 	u_short prefer[MAXMXHOSTS];	/* saved preferences of mx records */
 	u_char *bp;			/* hostbuf pointer */
@@ -102,20 +103,20 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 		n=dn_expand(msg, eom, cp, (u_char *)bp, MAXBUF);
 		if (n < 0) break;
 		cp += n;
-		type = _getshort(cp);
-		cp += INT16SZ;
-		class = _getshort(cp);
-		cp += INT16SZ;
-		/* ttl = _getlong(cp); */
-		cp += INT32SZ;
-		dlen = _getshort(cp);
-		cp += INT16SZ;
+		GETSHORT(type, cp);
+		//cp += INT16SZ;
+		GETSHORT(class, cp);
+		//cp += INT16SZ;
+		GETLONG(ttl, cp);
+		//cp += INT32SZ;
+		GETSHORT(dlen, cp);
+		//cp += INT16SZ;
 		if (type != T_MX || class != C_IN) {
 			cp += dlen;
 			continue;
 		}
-		pref = _getshort(cp);
-		cp += INT16SZ;
+		GETSHORT(pref, cp);
+		//cp += INT16SZ;
 		n = dn_expand(msg, eom, cp, (u_char *)bp, MAXBUF);
 		if (n < 0) break;
 		cp += n;

@@ -510,11 +510,11 @@ int webmailmime_line(CONN *sid, char *bodytemp, int szbodytemp, char *inbuffer, 
 	}
 	if (strncasecmp(ctype, "text/html", 9)==0) {
 		DecodeHTML(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1, reply);
-		strncat(bodytemp, outbuffer2, szbodytemp);
+		strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
 		bytes=strlen(outbuffer2);
 	} else {
 		DecodeText(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1);
-		strncat(bodytemp, outbuffer2, szbodytemp);
+		strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
 		bytes=strlen(outbuffer2);
 	}
 	return bytes;
@@ -527,11 +527,11 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 	char ctype[200];
 	char cbound[100];
 	char tbound[100];
+	char *ptemp;
 	char *bodytemp;
 	char *sqltemp;
 	int szbodytemp=65536;
 	int bodysize;
-	char *ptemp;
 	int file=0;
 	int head=0;
 	int msgdone=0;

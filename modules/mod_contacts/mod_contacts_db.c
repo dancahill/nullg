@@ -18,6 +18,21 @@
 #include "http_mod.h"
 #include "mod_contacts.h"
 
+int user_in_group(CONN *sid, int groupid)
+{
+	int rc=0;
+	int sqr;
+
+	if (sid->dat->user_gid==groupid) {
+		rc=1;
+	} else {
+		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers WHERE userid = %d AND groupid = %d AND obj_did = %d", sid->dat->user_uid, groupid, sid->dat->user_did))<0) return 0;
+		if (sql_numtuples(sqr)>0) rc=1;
+		sql_freeresult(sqr);
+	}
+	return rc;
+}
+
 int dblist_contacts(CONN *sid, char *searchfield, char *searchstring)
 {
 	char query[2048];
@@ -121,21 +136,13 @@ int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
 	if (approved==0) {
 		if (contact->obj_uid==sid->dat->user_uid) approved=2;
 	}
-	if (approved==0) {
-		if (contact->obj_gperm>=perm) {
-			if (contact->obj_gid==sid->dat->user_gid) {
-				approved=contact->obj_gperm;
-			} else {
-				if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers WHERE userid = %d AND groupid = %d AND obj_did = %d", sid->dat->user_uid, contact->obj_gid, sid->dat->user_did))<0) return EC_UNKNOWN;
-				if (sql_numtuples(sqr)>0) approved=contact->obj_gperm;
-				sql_freeresult(sqr);
-			}
+	if ((approved==0)&&(contact->obj_gperm>=perm)) {
+		if (user_in_group(sid, contact->obj_gid)) {
+			approved=contact->obj_gperm;
 		}
 	}
-	if (approved==0) {
-		if (contact->obj_operm>=perm) {
-			approved=contact->obj_operm;
-		}
+	if ((approved==0)&&(contact->obj_operm>=perm)) {
+		approved=contact->obj_operm;
 	}
 	if (approved==0) {
 		memset(contact, 0, sizeof(REC_CONTACT));
