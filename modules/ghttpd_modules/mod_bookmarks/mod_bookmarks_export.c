@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "ghttpd/mod.h"
 #include "mod_bookmarks.h"
 
-static int bookmarks_export_r(CONN *sid, int sqr1, int sqr2, int depth, int parentid, int selected)
+static int bookmarks_export_r(CONN *sid, SQLRES *sqr1, SQLRES *sqr2, int depth, int parentid, int selected)
 {
 	char indent[256];
 	int foldercount=0;
@@ -46,18 +46,19 @@ static int bookmarks_export_r(CONN *sid, int sqr1, int sqr2, int depth, int pare
 
 void bookmarks_export(CONN *sid)
 {
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
+	short int rc1, rc2;
 	int j;
 
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		sqr1=sql_queryf("SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_did);
-		sqr2=sql_queryf("SELECT bookmarkid, folderid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE obj_did = %d ORDER BY bookmarkname ASC", sid->dat->user_did);
+		rc1=sql_queryf(&sqr1, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_did);
+		rc2=sql_queryf(&sqr2, "SELECT bookmarkid, folderid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE obj_did = %d ORDER BY bookmarkname ASC", sid->dat->user_did);
 	} else {
-		sqr1=sql_queryf("SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
-		sqr2=sql_queryf("SELECT bookmarkid, folderid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
+		rc1=sql_queryf(&sqr1, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
+		rc2=sql_queryf(&sqr2, "SELECT bookmarkid, folderid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
 	}
-	if ((sqr1<0)||(sqr2<0)) {
+	if ((rc1<0)||(rc2<0)) {
 		return;
 	}
 	prints(sid, "<!DOCTYPE NETSCAPE-Bookmark-file-1>\r\n");
@@ -68,13 +69,13 @@ void bookmarks_export(CONN *sid)
 	prints(sid, "<TITLE>Bookmarks</TITLE>\r\n");
 	prints(sid, "<H1>Bookmarks</H1>\r\n\r\n");
 	prints(sid, "<DL><P>\r\n");
-	bookmarks_export_r(sid, sqr1, sqr2, 1, 0, 0);
-	for (j=0;j<sql_numtuples(sqr2);j++) {
-		if (atoi(sql_getvalue(sqr2, j, 1))!=0) continue;
-		prints(sid, "    <DT><A HREF=\"%s\" ADD_DATE=\"1093977127\" LAST_CHARSET=\"ISO-8859-1\">%s</A>\r\n", sql_getvalue(sqr2, j, 3), sql_getvalue(sqr2, j, 2));
+	bookmarks_export_r(sid, &sqr1, &sqr2, 1, 0, 0);
+	for (j=0;j<sql_numtuples(&sqr2);j++) {
+		if (atoi(sql_getvalue(&sqr2, j, 1))!=0) continue;
+		prints(sid, "    <DT><A HREF=\"%s\" ADD_DATE=\"1093977127\" LAST_CHARSET=\"ISO-8859-1\">%s</A>\r\n", sql_getvalue(&sqr2, j, 3), sql_getvalue(&sqr2, j, 2));
 	}
 	prints(sid, "</DL><P>\r\n");
-	sql_freeresult(sqr1);
-	sql_freeresult(sqr2);
+	sql_freeresult(&sqr1);
+	sql_freeresult(&sqr2);
 	return;
 }

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -136,16 +136,16 @@ void *accept_loop_ssl(void *x);
 /* sql.c functions */
 void    sql_disconnect(void);
 void    sql_unsafedisconnect(void);
-void    sql_freeresult(int sqr);
+void    sql_freeresult(SQLRES *sqr);
 int     sql_update(char *sqlquery);
 int     sql_updatef(char *format, ...);
-int     sql_query(char *query);
-int     sql_queryf(char *format, ...);
-char   *sql_getname(int sqr, int field);
-char   *sql_getvalue(int sqr, int tuple, int field);
-char   *sql_getvaluebyname(int sqr, int tuple, char *fieldname);
-int     sql_numfields(int sqr);
-int     sql_numtuples(int sqr);
+int     sql_query(SQLRES *sqr, char *query);
+int     sql_queryf(SQLRES *sqr, char *format, ...);
+char   *sql_getname(SQLRES *sqr, int field);
+char   *sql_getvalue(SQLRES *sqr, int tuple, int field);
+char   *sql_getvaluebyname(SQLRES *sqr, int tuple, char *fieldname);
+int     sql_numfields(SQLRES *sqr);
+int     sql_numtuples(SQLRES *sqr);
 /* ssl.c functions */
 #ifdef HAVE_SSL
 int     ssl_init();

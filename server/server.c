@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -166,12 +166,6 @@ void init()
 	pthread_mutex_init(&Lock.DB_mheader, NULL);
 	pthread_mutex_init(&Lock.FileList, NULL);
 	pthread_mutex_init(&Lock.SQL, NULL);
-
-	sqlreply=calloc(proc.config.sql_maxconn, sizeof(SQLRES));
-	if (sqlreply==NULL) {
-		printf("\r\nsqlreply calloc(%d, %d) failed\r\n", proc.config.sql_maxconn, sizeof(SQLRES));
-		exit(-2);
-	}
 	if (sanity_checkdb()==-1) {
 		log_error("core", __FILE__, __LINE__, 0, "SQL subsystem failed sanity check");
 		printf("\r\nSQL subsystem failed sanity check.\r\n");

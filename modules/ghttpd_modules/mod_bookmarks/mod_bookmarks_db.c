@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int dbread_bookmark(CONN *sid, short int perm, int index, REC_BOOKMARK *bookmark)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(bookmark, 0, sizeof(REC_BOOKMARK));
 	authlevel=auth_priv(sid, "bookmarks");
@@ -38,34 +38,34 @@ int dbread_bookmark(CONN *sid, short int perm, int index, REC_BOOKMARK *bookmark
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarks where bookmarkid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_bookmarks where bookmarkid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarks where bookmarkid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_bookmarks where bookmarkid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	bookmark->bookmarkid = atoi(sql_getvalue(sqr, 0, 0));
-	bookmark->obj_ctime  = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	bookmark->obj_mtime  = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	bookmark->obj_uid    = atoi(sql_getvalue(sqr, 0, 3));
-	bookmark->obj_gid    = atoi(sql_getvalue(sqr, 0, 4));
-	bookmark->obj_did    = atoi(sql_getvalue(sqr, 0, 5));
-	bookmark->obj_gperm  = atoi(sql_getvalue(sqr, 0, 6));
-	bookmark->obj_operm  = atoi(sql_getvalue(sqr, 0, 7));
-	bookmark->folderid=atoi(sql_getvalue(sqr, 0, 8));
-	strncpy(bookmark->bookmarkname,	sql_getvalue(sqr, 0, 9), sizeof(bookmark->bookmarkname)-1);
-	strncpy(bookmark->bookmarkurl,	sql_getvalue(sqr, 0, 10), sizeof(bookmark->bookmarkurl)-1);
+	bookmark->bookmarkid = atoi(sql_getvalue(&sqr, 0, 0));
+	bookmark->obj_ctime  = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	bookmark->obj_mtime  = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	bookmark->obj_uid    = atoi(sql_getvalue(&sqr, 0, 3));
+	bookmark->obj_gid    = atoi(sql_getvalue(&sqr, 0, 4));
+	bookmark->obj_did    = atoi(sql_getvalue(&sqr, 0, 5));
+	bookmark->obj_gperm  = atoi(sql_getvalue(&sqr, 0, 6));
+	bookmark->obj_operm  = atoi(sql_getvalue(&sqr, 0, 7));
+	bookmark->folderid=atoi(sql_getvalue(&sqr, 0, 8));
+	strncpy(bookmark->bookmarkname,	sql_getvalue(&sqr, 0, 9), sizeof(bookmark->bookmarkname)-1);
+	strncpy(bookmark->bookmarkurl,	sql_getvalue(&sqr, 0, 10), sizeof(bookmark->bookmarkurl)-1);
 	if (strlen(bookmark->bookmarkname)==0) strncpy(bookmark->bookmarkname, "unnamed", sizeof(bookmark->bookmarkname)-1);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int dbread_bookmarkfolder(CONN *sid, short int perm, int index, REC_BOOKMARKFOLDER *bookmarkfolder)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(bookmarkfolder, 0, sizeof(REC_BOOKMARKFOLDER));
 	authlevel=auth_priv(sid, "bookmarks");
@@ -82,26 +82,26 @@ int dbread_bookmarkfolder(CONN *sid, short int perm, int index, REC_BOOKMARKFOLD
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarkfolders where folderid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_bookmarkfolders where folderid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_bookmarkfolders where folderid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_bookmarkfolders where folderid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	bookmarkfolder->folderid   = atoi(sql_getvalue(sqr, 0, 0));
-	bookmarkfolder->obj_ctime  = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	bookmarkfolder->obj_mtime  = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	bookmarkfolder->obj_uid    = atoi(sql_getvalue(sqr, 0, 3));
-	bookmarkfolder->obj_gid    = atoi(sql_getvalue(sqr, 0, 4));
-	bookmarkfolder->obj_did    = atoi(sql_getvalue(sqr, 0, 5));
-	bookmarkfolder->obj_gperm  = atoi(sql_getvalue(sqr, 0, 6));
-	bookmarkfolder->obj_operm  = atoi(sql_getvalue(sqr, 0, 7));
-	bookmarkfolder->parentid=atoi(sql_getvalue(sqr, 0, 8));
-	strncpy(bookmarkfolder->foldername,	sql_getvalue(sqr, 0, 9), sizeof(bookmarkfolder->foldername)-1);
+	bookmarkfolder->folderid   = atoi(sql_getvalue(&sqr, 0, 0));
+	bookmarkfolder->obj_ctime  = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	bookmarkfolder->obj_mtime  = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	bookmarkfolder->obj_uid    = atoi(sql_getvalue(&sqr, 0, 3));
+	bookmarkfolder->obj_gid    = atoi(sql_getvalue(&sqr, 0, 4));
+	bookmarkfolder->obj_did    = atoi(sql_getvalue(&sqr, 0, 5));
+	bookmarkfolder->obj_gperm  = atoi(sql_getvalue(&sqr, 0, 6));
+	bookmarkfolder->obj_operm  = atoi(sql_getvalue(&sqr, 0, 7));
+	bookmarkfolder->parentid=atoi(sql_getvalue(&sqr, 0, 8));
+	strncpy(bookmarkfolder->foldername,	sql_getvalue(&sqr, 0, 9), sizeof(bookmarkfolder->foldername)-1);
 	if (strlen(bookmarkfolder->foldername)==0) strncpy(bookmarkfolder->foldername, "unnamed", sizeof(bookmarkfolder->foldername)-1);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
@@ -110,7 +110,7 @@ int dbwrite_bookmark(CONN *sid, int index, REC_BOOKMARK *bookmark)
 	char curdate[32];
 	char query[12288];
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	authlevel=auth_priv(sid, "bookmarks");
 	if (authlevel<2) return -1;
@@ -119,9 +119,9 @@ int dbwrite_bookmark(CONN *sid, int index, REC_BOOKMARK *bookmark)
 	memset(query, 0, sizeof(query));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query("SELECT max(bookmarkid) FROM gw_bookmarks"))<0) return -1;
-		bookmark->bookmarkid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(bookmarkid) FROM gw_bookmarks")<0) return -1;
+		bookmark->bookmarkid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (bookmark->bookmarkid<1) bookmark->bookmarkid=1;
 		strcpy(query, "INSERT INTO gw_bookmarks (bookmarkid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, folderid, bookmarkname, bookmarkurl) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", bookmark->bookmarkid, curdate, curdate, bookmark->obj_uid, bookmark->obj_gid, bookmark->obj_did, bookmark->obj_gperm, bookmark->obj_operm);

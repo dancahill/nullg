@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ void journal_listraw(CONN *sid)
 {
 	char monstr[8];
 	int i;
-	int sqr;
+	SQLRES sqr;
 	float balance, credit, debit;
 	float mbalance, mcredit, mdebit;
 	float tbalance, tcredit, tdebit;
@@ -32,29 +32,29 @@ void journal_listraw(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)>0) {
+	if (sql_queryf(&sqr, "SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH STYLE='border-style:solid'>id</TH><TH STYLE='border-style:solid'>date</TH><TH STYLE='border-style:solid'>accountid</TH><TH STYLE='border-style:solid'>details</TH><TH STYLE='border-style:solid'>debit</TH><TH STYLE='border-style:solid'>credit</TH><TH STYLE='border-style:solid'>balance</TH></TR>\n");
 		balance=0;
 		memset(monstr, 0, sizeof(monstr));
-		strncpy(monstr, sql_getvalue(sqr, 0, 1), sizeof(monstr)-1);
+		strncpy(monstr, sql_getvalue(&sqr, 0, 1), sizeof(monstr)-1);
 		mbalance=0;
 		mcredit=0;
 		mdebit=0;
 		tbalance=0;
 		tcredit=0;
 		tdebit=0;
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 0)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 5)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 3)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 4)));
-			debit=(float)(atof(sql_getvalue(sqr, i, 3)));
-			credit=(float)(atof(sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr, i, 0)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(&sqr, i, 1)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr, i, 2)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr, i, 5)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(&sqr, i, 3)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(&sqr, i, 4)));
+			debit=(float)(atof(sql_getvalue(&sqr, i, 3)));
+			credit=(float)(atof(sql_getvalue(&sqr, i, 4)));
 			mdebit+=debit;
 			mcredit+=credit;
 			tdebit+=debit;
@@ -63,7 +63,7 @@ void journal_listraw(CONN *sid)
 			balance+=credit;
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", balance);
 			prints(sid, "</TR>\n");
-			if (i+1>=sql_numtuples(sqr)) {
+			if (i+1>=sql_numtuples(&sqr)) {
 				mbalance=mcredit-mdebit;
 				tbalance=tcredit-tdebit;
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
@@ -78,7 +78,7 @@ void journal_listraw(CONN *sid)
 				prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><B>$%1.2f</B></TD>", tcredit);
 				prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><B>$%1.2f</B></TD>", tbalance);
 				prints(sid, "</TR>\n");
-			} else if (strncmp(monstr, sql_getvalue(sqr, i+1, 1), 7)!=0) {
+			} else if (strncmp(monstr, sql_getvalue(&sqr, i+1, 1), 7)!=0) {
 				mbalance=mcredit-mdebit;
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid' COLSPAN=4>&nbsp;</TD>");
@@ -90,14 +90,14 @@ void journal_listraw(CONN *sid)
 				mcredit=0;
 				mdebit=0;
 				memset(monstr, 0, sizeof(monstr));
-				strncpy(monstr, sql_getvalue(sqr, i+1, 1), sizeof(monstr)-1);
+				strncpy(monstr, sql_getvalue(&sqr, i+1, 1), sizeof(monstr)-1);
 			}
 		}
 		prints(sid, "</TABLE>\n");
 	} else {
 		prints(sid, "There are no journal entries<BR>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "</CENTER>\n");
 	return;
 }
@@ -109,8 +109,8 @@ void journal_list(CONN *sid)
 	char monstr[8];
 	char *ptemp;
 	int i;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	float balance, credit, debit;
 	float mbalance, mcredit, mdebit;
 	float tbalance, tcredit, tdebit;
@@ -133,14 +133,14 @@ void journal_list(CONN *sid)
 	snprintf(curdate2, sizeof(curdate2)-1, "%04d-%02d-%02d 23:59:59", e3, e1, e2);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "%.10s - %.10s<BR>\n", curdate1, curdate2);
-	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d AND entrydate >= '%s' AND entrydate <= '%s' ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did, curdate1, curdate2))<0) return;
-	if ((sqr2=sql_queryf("SELECT SUM(debit), SUM(credit) FROM gw_accounting_journal WHERE obj_did = %d AND entrydate < '%s' ORDER BY entrydate ASC", sid->dat->user_did, curdate1))<0) return;
-	if (sql_numtuples(sqr)>0) {
+	if (sql_queryf(&sqr1, "SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d AND entrydate >= '%s' AND entrydate <= '%s' ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did, curdate1, curdate2)<0) return;
+	if (sql_queryf(&sqr2, "SELECT SUM(debit), SUM(credit) FROM gw_accounting_journal WHERE obj_did = %d AND entrydate < '%s' ORDER BY entrydate ASC", sid->dat->user_did, curdate1)<0) return;
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH STYLE='border-style:solid'>id</TH><TH STYLE='border-style:solid'>date</TH><TH STYLE='border-style:solid'>accountid</TH><TH STYLE='border-style:solid'>details</TH><TH STYLE='border-style:solid'>debit</TH><TH STYLE='border-style:solid'>credit</TH><TH STYLE='border-style:solid'>balance</TH></TR>\n");
 		balance=0;
 		memset(monstr, 0, sizeof(monstr));
-		strncpy(monstr, sql_getvalue(sqr, 0, 1), sizeof(monstr)-1);
+		strncpy(monstr, sql_getvalue(&sqr1, 0, 1), sizeof(monstr)-1);
 		mbalance=0;
 		mcredit=0;
 		mdebit=0;
@@ -148,8 +148,8 @@ void journal_list(CONN *sid)
 		tcredit=0;
 		tdebit=0;
 
-		debit=(float)(atof(sql_getvalue(sqr2, 0, 0)));
-		credit=(float)(atof(sql_getvalue(sqr2, 0, 1)));
+		debit=(float)(atof(sql_getvalue(&sqr2, 0, 0)));
+		credit=(float)(atof(sql_getvalue(&sqr2, 0, 1)));
 		balance-=debit;
 		balance+=credit;
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
@@ -159,16 +159,16 @@ void journal_list(CONN *sid)
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><B>$%1.2f</B></TD>", balance);
 		prints(sid, "</TR>\n");
 
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 0)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 5)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 3)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 4)));
-			debit=(float)(atof(sql_getvalue(sqr, i, 3)));
-			credit=(float)(atof(sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr1, i, 2)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr1, i, 5)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(&sqr1, i, 3)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(&sqr1, i, 4)));
+			debit=(float)(atof(sql_getvalue(&sqr1, i, 3)));
+			credit=(float)(atof(sql_getvalue(&sqr1, i, 4)));
 			mdebit+=debit;
 			mcredit+=credit;
 			tdebit+=debit;
@@ -178,7 +178,7 @@ void journal_list(CONN *sid)
 //			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", balance);
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			prints(sid, "</TR>\n");
-			if (i+1>=sql_numtuples(sqr)) {
+			if (i+1>=sql_numtuples(&sqr1)) {
 				mbalance=mcredit-mdebit;
 				tbalance=tcredit-tdebit;
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
@@ -193,7 +193,7 @@ void journal_list(CONN *sid)
 				prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><B>$%1.2f</B></TD>", tcredit);
 				prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><B>$%1.2f</B></TD>", tbalance);
 				prints(sid, "</TR>\n");
-			} else if (strncmp(monstr, sql_getvalue(sqr, i+1, 1), 7)!=0) {
+			} else if (strncmp(monstr, sql_getvalue(&sqr1, i+1, 1), 7)!=0) {
 				mbalance=mcredit-mdebit;
 				tbalance=tcredit-tdebit;
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
@@ -210,15 +210,15 @@ void journal_list(CONN *sid)
 				mcredit=0;
 				mdebit=0;
 				memset(monstr, 0, sizeof(monstr));
-				strncpy(monstr, sql_getvalue(sqr, i+1, 1), sizeof(monstr)-1);
+				strncpy(monstr, sql_getvalue(&sqr1, i+1, 1), sizeof(monstr)-1);
 			}
 		}
 		prints(sid, "</TABLE>\n");
 	} else {
 		prints(sid, "There are no journal entries<BR>\n");
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	prints(sid, "</CENTER>\n");
 	return;
 }

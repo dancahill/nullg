@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ int db_autoassign(u_avail *uavail, int groupid, int zoneid, int record, int busy
 /* mod_calendar_availmap.c */
 void calendar_availmap(CONN *sid);
 /* mod_calendar_db.c */
-int dblist_events(CONN *sid, char *startdate, char *enddate);
+int dblist_events(CONN *sid, SQLRES *sqr, char *startdate, char *enddate);
 int dbread_event(CONN *sid, short int perm, int index, REC_EVENT *event);
 int dbwrite_event(CONN *sid, int index, REC_EVENT *event);
 /* mod_calendar_lang.c */

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,15 +20,15 @@
 
 void admin_syscheck(CONN *sid)
 {
-	int errors=0;
+/*	int errors=0;
 	int warnings=0;
 	int i, j;
 	int recordid;
-	int sqr1=-1;
-	int sqr2=-1;
-	int sqr3=-1;
-	int sqr4=-1;
-	int sqr5=-1;
+	SQLRES sqr1=-1;
+	SQLRES sqr2=-1;
+	SQLRES sqr3=-1;
+	SQLRES sqr4=-1;
+	SQLRES sqr5=-1;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -555,5 +555,5 @@ cleanup:
 	if (sqr3>-1) sql_freeresult(sqr3);
 	if (sqr2>-1) sql_freeresult(sqr2);
 	if (sqr1>-1) sql_freeresult(sqr1);
-	return;
+*/	return;
 }

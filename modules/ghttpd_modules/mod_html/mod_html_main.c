@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -294,7 +294,7 @@ domenu:
 				if (sid->dat->user_mailcurrent>0) {
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/main TARGET=gwmain>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 					prints(sid, "<A CLASS='TBAR' HREF=javascript:ComposeMail()>COMPOSE</A>&nbsp;&middot;&nbsp;");
-					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain onClick=\"parent.location.replace('%s/mail/sync');return false;\">SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->in_ScriptName);
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/search TARGET=gwmain>SEARCH</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				}
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list TARGET=gwmain>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
@@ -339,7 +339,7 @@ void mod_html_login(CONN *sid)
 	char *ptemp;
 	FILE *fp;
 	int ich;
-	int sqr;
+	SQLRES sqr;
 
 	memset(pageuri, 0, sizeof(pageuri));
 	memset(domain, 0, sizeof(domain));
@@ -371,14 +371,14 @@ void mod_html_login(CONN *sid)
 	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>%s Login</TH></TR>\r\n", SERVER_NAME);
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
-	if ((sqr=sql_query("SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;
-	if (sql_numtuples(sqr)==1) {
-		if (strcmp("$1$0hs2u/6B$KxBgAAw59fBu/DyHA/Vor/", sql_getvalue(sqr, 0, 1))==0) {
-			snprintf(username, sizeof(username)-1, "%s", sql_getvalue(sqr, 0, 0));
+	if (sql_query(&sqr, "SELECT username, password FROM gw_users WHERE userid = 1")<0) return;
+	if (sql_numtuples(&sqr)==1) {
+		if (strcmp("$1$0hs2u/6B$KxBgAAw59fBu/DyHA/Vor/", sql_getvalue(&sqr, 0, 1))==0) {
+			snprintf(username, sizeof(username)-1, "%s", sql_getvalue(&sqr, 0, 0));
 			snprintf(password, sizeof(password)-1, "visual");
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (strlen(username)==0) {
 		snprintf(username, sizeof(username)-1, "%s", sid->dat->user_username);
 	}
@@ -391,13 +391,13 @@ void mod_html_login(CONN *sid)
 	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
-	if ((sqr=sql_query("SELECT COUNT(*) FROM gw_domains"))<0) return;
-	if (atoi(sql_getvalue(sqr, 0, 0))>1) {
+	if (sql_query(&sqr, "SELECT COUNT(*) FROM gw_domains")<0) return;
+	if (atoi(sql_getvalue(&sqr, 0, 0))>1) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", domain);
 	} else {
 		prints(sid, "<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><INPUT TYPE=SUBMIT VALUE='Login'></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
@@ -444,7 +444,8 @@ void mod_html_motd(CONN *sid)
 	time_t unixdate;
 	int newmessages;
 	int i, j, k;
-	int sqr, sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	t=(time(NULL)+time_tzoffset(sid, time(NULL)));
 	strftime(showtime, sizeof(showtime), "%A, %B %d, %Y", gmtime(&t));
@@ -458,15 +459,15 @@ void mod_html_motd(CONN *sid)
 	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right>&nbsp;%s</TH>\r\n", showtime);
 	prints(sid, "</TR></TABLE>\r\n");
 	prints(sid, "</TH></TR>\r\n");
-	if ((sqr=sql_queryf("SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
-	if (sql_numtuples(sqr)==1) {
-		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
+	if (sql_queryf(&sqr1, "SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid)<0) return;
+	if (sql_numtuples(&sqr1)==1) {
+		if (strlen(sql_getvalue(&sqr1, 0, 0))>0) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\r\n");
-			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
+			prints(sid, "%s", sql_getvalue(&sqr1, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE></TD></TR>\r\n");
 	if ((auth_priv(sid, "calendar")&A_READ)<1) {
 		prints(sid, "</TABLE>\r\n</CENTER>\r\n");
@@ -483,7 +484,7 @@ void mod_html_motd(CONN *sid)
 	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	t=unixdate+172800;
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid))<0) return;
+	if (sql_queryf(&sqr1, "SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid)<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'>Calendar</TH></TR>\n");
 	for (i=0;i<2;i++) {
@@ -496,16 +497,16 @@ void mod_html_motd(CONN *sid)
 		}
 		prints(sid, "</A></B></TD></TR>\n");
 		k=1;
-		for (j=0;j<sql_numtuples(sqr);j++) {
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
+		for (j=0;j<sql_numtuples(&sqr1);j++) {
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 1));
 			if ((t2<t)||(t2>=t+86400)) continue;
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
-			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
-			t2=time_sql2unix(sql_getvalue(sqr, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 2)));
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, j, 1)));
+			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(&sqr1, j, 0), time_unix2timetext(sid, t2));
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, j, 2)));
 			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>", time_unix2timetext(sid, t2));
-			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), str2html(sid, sql_getvalue(sqr, j, 3)));
+			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(&sqr1, j, 0), str2html(sid, sql_getvalue(&sqr1, j, 3)));
 			prints(sid, "</FONT></TD></TR>\n");
 			if (k>0) k--;
 		}
@@ -514,31 +515,31 @@ void mod_html_motd(CONN *sid)
 			k--;
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
 	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")>0)) {
-		if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr1, "SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid)<0) return;
+		if (sql_numtuples(&sqr1)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
 			prints(sid, "<FONT SIZE=2>&nbsp;E-Mail</FONT></TH></TR>\n");
-			for (i=0;i<sql_numtuples(sqr);i++) {
-				if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
-				newmessages=atoi(sql_getvalue(sqr2, 0, 0));
-				sql_freeresult(sqr2);
+			for (i=0;i<sql_numtuples(&sqr1);i++) {
+				if (sql_queryf(&sqr2, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(&sqr1, i, 0)))<0) continue;
+				newmessages=atoi(sql_getvalue(&sqr2, 0, 0));
+				sql_freeresult(&sqr2);
 				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP>");
 				if (sid->dat->user_menustyle>0) {
-					prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+					prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), str2html(sid, sql_getvalue(&sqr1, i, 1)));
 				} else {
-					prints(sid, "<A HREF=%s/mail/list?accountid=%d>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+					prints(sid, "<A HREF=%s/mail/list?accountid=%d>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), str2html(sid, sql_getvalue(&sqr1, i, 1)));
 				}
 				prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s%d New%s</TD></TR>\n</TABLE></TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"");
 			}
 			prints(sid, "</TABLE>\n<BR>\n");
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr1);
 	}
 	if ((mod_tasks_list=module_call("mod_tasks_list"))!=NULL) {
 		mod_tasks_list(sid, sid->dat->user_uid, -1);
@@ -552,7 +553,7 @@ void mod_html_frameset(CONN *sid)
 {
 //	MOD_MAIL_SYNC mod_mail_sync;
 //	int i, j;
-//	int sqr1;
+//	SQLRES sqr1;
 
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Frameset//EN\">\r\n");
@@ -573,15 +574,15 @@ void mod_html_frameset(CONN *sid)
 	prints(sid, "<!--\r\n");
 /*
 	if ((mod_mail_sync=module_call("mod_mail_sync"))!=NULL) {
-		if ((sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))>-1) {
-			for (i=0;i<sql_numtuples(sqr1);i++) {
-				sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
-				j=time_sql2unix(sql_getvalue(sqr1, i, 5));
-				if ((strlen(sql_getvalue(sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(sqr1, i, 4))*60)<time(NULL))) {
+		if ((&sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))>-1) {
+			for (i=0;i<sql_numtuples(&sqr1);i++) {
+				sid->dat->user_mailcurrent=atoi(sql_getvalue(&sqr1, i, 0));
+				j=time_sql2unix(sql_getvalue(&sqr1, i, 5));
+				if ((strlen(sql_getvalue(&sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(&sqr1, i, 4))*60)<time(NULL))) {
 					mod_mail_sync(sid, 0);
 				}
 			}
-			sql_freeresult(sqr1);
+			sql_freeresult(&sqr1);
 		}
 	}
 */
@@ -709,7 +710,8 @@ void mod_html_reloadframe(CONN *sid)
 	int isreminder;
 	int i, j;
 	int a, b;
-	int sqr1, sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	time_t t;
 	int notice=0;
 
@@ -724,10 +726,10 @@ void mod_html_reloadframe(CONN *sid)
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf("SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
-		for (i=0;i<sql_numtuples(sqr1);i++) {
-			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
-			b=a-atoi(sql_getvalue(sqr1, i, 1))*60;
+		if (sql_queryf(&sqr1, "SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did)<0) return;
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			a=time_sql2unix(sql_getvalue(&sqr1, i, 0))-time(NULL);
+			b=a-atoi(sql_getvalue(&sqr1, i, 1))*60;
 			if (b<0) isreminder=1;
 		}
 		if (isreminder) {
@@ -735,15 +737,15 @@ void mod_html_reloadframe(CONN *sid)
 			prints(sid, "window.open('%s/calendar/reminders','calendarwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\n", sid->dat->in_ScriptName);
 			prints(sid, "// -->\n</SCRIPT>\n");
 		}
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 	}
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf("SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY duedate ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
-		for (i=0;i<sql_numtuples(sqr1);i++) {
-			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
-			a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr1, i, 0)));
-			b=a-atoi(sql_getvalue(sqr1, i, 1))*60;
+		if (sql_queryf(&sqr1, "SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY duedate ASC", posttime, sid->dat->user_uid, sid->dat->user_did)<0) return;
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			a=time_sql2unix(sql_getvalue(&sqr1, i, 0))-time(NULL);
+			a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, i, 0)));
+			b=a-atoi(sql_getvalue(&sqr1, i, 1))*60;
 			if (b<0) isreminder=1;
 		}
 		if (isreminder) {
@@ -751,44 +753,44 @@ void mod_html_reloadframe(CONN *sid)
 			prints(sid, "window.open('%s/tasks/reminders','taskwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\n", sid->dat->in_ScriptName);
 			prints(sid, "// -->\n</SCRIPT>\n");
 		}
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 	}
 	if (auth_priv(sid, "messages")&A_READ) {
 		t=time(NULL)-10;
 		strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-		if ((sqr1=sql_queryf("SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s' AND obj_did = %d", sid->dat->user_uid, sid->dat->user_uid, posttime, sid->dat->user_did))<0) return;
-		if (sql_numtuples(sqr1)>0) {
-			if ((sqr2=sql_queryf("SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) {
-				sql_freeresult(sqr1);
+		if (sql_queryf(&sqr1, "SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s' AND obj_did = %d", sid->dat->user_uid, sid->dat->user_uid, posttime, sid->dat->user_did)<0) return;
+		if (sql_numtuples(&sqr1)>0) {
+			if (sql_queryf(&sqr2, "SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did)<0) {
+				sql_freeresult(&sqr1);
 				return;
 			}
-			for (i=0;i<sql_numtuples(sqr2);i++) {
-				for (j=0;j<sql_numtuples(sqr1);j++) {
-					if (atoi(sql_getvalue(sqr2, i, 0))==atoi(sql_getvalue(sqr1, j, 1))) {
+			for (i=0;i<sql_numtuples(&sqr2);i++) {
+				for (j=0;j<sql_numtuples(&sqr1);j++) {
+					if (atoi(sql_getvalue(&sqr2, i, 0))==atoi(sql_getvalue(&sqr1, j, 1))) {
 						prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-						prints(sid, "window.open('%s/messages/frame?userid=%d','msgwin_%s','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=yes,width=400,height=200');\r\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr2, i, 0)), sql_getvalue(sqr2, i, 1));
+						prints(sid, "window.open('%s/messages/frame?userid=%d','msgwin_%s','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=yes,width=400,height=200');\r\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr2, i, 0)), sql_getvalue(&sqr2, i, 1));
 						prints(sid, "// -->\n</SCRIPT>\n");
 					}
 				}
 			}
-			sql_freeresult(sqr2);
+			sql_freeresult(&sqr2);
 		}
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 	}
 	if ((mod_mail_sync=module_call("mod_mail_sync"))!=NULL) {
 		notice=0;
-		if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0 AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did))<0) return;
-		for (i=0;i<sql_numtuples(sqr1);i++) {
-			sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
-			j=time_sql2unix(sql_getvalue(sqr1, i, 5));
-			if ((strlen(sql_getvalue(sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(sqr1, i, 4))*60)<time(NULL))) {
+		if (sql_queryf(&sqr1, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0 AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did)<0) return;
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			sid->dat->user_mailcurrent=atoi(sql_getvalue(&sqr1, i, 0));
+			j=time_sql2unix(sql_getvalue(&sqr1, i, 5));
+			if ((strlen(sql_getvalue(&sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(&sqr1, i, 4))*60)<time(NULL))) {
 				mod_mail_sync(sid, 0);
 			}
-			if ((sqr2=sql_queryf("SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND obj_did = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent))<0) break;
-			if (sql_numtuples(sqr2)>0) notice=1;
-			sql_freeresult(sqr2);
+			if (sql_queryf(&sqr2, "SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND obj_did = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent)<0) break;
+			if (sql_numtuples(&sqr2)>0) notice=1;
+			sql_freeresult(&sqr2);
 		}
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 		if (notice) {
 			prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 			prints(sid, "window.open('%s/mail/notice','mailwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\n", sid->dat->in_ScriptName);

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ void admingroupmemberedit(CONN *sid)
 void admingroupmemberlist(CONN *sid, int domainid, int groupid)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -92,22 +92,22 @@ void admingroupmemberlist(CONN *sid, int domainid, int groupid)
 		}
 	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\r\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE groupid = %d AND domainid = %d ORDER BY username ASC", groupid, domainid))<0) return;
-	for (i=0;i<sql_numtuples(sqr);i++) {
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE groupid = %d AND domainid = %d ORDER BY username ASC", groupid, domainid)<0) return;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
 		prints(sid, "<TR><TD>&nbsp;</TD>");
-		prints(sid, "<TD COLSPAN=2 WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+		prints(sid, "<TD COLSPAN=2 WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
-	if ((sqr=sql_queryf("SELECT gw_groupmembers.groupmemberid, gw_users.userid, gw_users.username FROM gw_users, gw_groupmembers WHERE gw_users.userid = gw_groupmembers.userid AND gw_groupmembers.groupid = %d AND gw_users.domainid = %d ORDER BY username ASC", groupid, domainid))<0) return;
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR><TD><A HREF=%s/admin/groupmemberedit?groupmemberid=%d>edit</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-		prints(sid, "<TD WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 1)));
-		prints(sid, "+<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 1)));
-		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(sqr, i, 2)));
+	sql_freeresult(&sqr);
+	if (sql_queryf(&sqr, "SELECT gw_groupmembers.groupmemberid, gw_users.userid, gw_users.username FROM gw_users, gw_groupmembers WHERE gw_users.userid = gw_groupmembers.userid AND gw_groupmembers.groupid = %d AND gw_users.domainid = %d ORDER BY username ASC", groupid, domainid)<0) return;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		prints(sid, "<TR><TD><A HREF=%s/admin/groupmemberedit?groupmemberid=%d>edit</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+		prints(sid, "<TD WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 1)));
+		prints(sid, "+<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 1)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(&sqr, i, 2)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "</TABLE>\r\n");
 	return;
 }
@@ -234,66 +234,68 @@ void admingrouplist(CONN *sid)
 	int i, j;
 	int lastdomain;
 	int thisdomain;
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr1=sql_queryf("SELECT groupid, obj_did, groupname FROM gw_groups ORDER BY obj_did, groupname ASC"))<0) return;
+		if (sql_queryf(&sqr1, "SELECT groupid, obj_did, groupname FROM gw_groups ORDER BY obj_did, groupname ASC")<0) return;
 	} else {
-		if ((sqr1=sql_queryf("SELECT groupid, obj_did, groupname FROM gw_groups WHERE obj_did = %d ORDER BY obj_did, groupname ASC", sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr1, "SELECT groupid, obj_did, groupname FROM gw_groups WHERE obj_did = %d ORDER BY obj_did, groupname ASC", sid->dat->user_did)<0) return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
+		if (sql_queryf(&sqr2, "SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC")<0) {
+			sql_freeresult(&sqr1);
+			return;
+		}
 	} else {
-		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
-	}
-	if (sqr2<0) {
-		sql_freeresult(sqr1);
-		return;
+		if (sql_queryf(&sqr2, "SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did)<0) {
+			sql_freeresult(&sqr1);
+			return;
+		}
 	}
 	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr1)<1) {
+	if (sql_numtuples(&sqr1)<1) {
 		prints(sid, "There are no groups<BR>\n");
 		prints(sid, "<A HREF=%s/admin/groupeditnew>New Group</A>\n", sid->dat->in_ScriptName);
 		prints(sid, "</CENTER>\n");
-		sql_freeresult(sqr2);
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr2);
+		sql_freeresult(&sqr1);
 		return;
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=200 STYLE='border-style:solid'>&nbsp;Group Name&nbsp;</TH></TR>\n");
 	lastdomain=-1;
-	if (sql_numtuples(sqr2)<2) {
-		lastdomain=atoi(sql_getvalue(sqr1, 0, 1));
+	if (sql_numtuples(&sqr2)<2) {
+		lastdomain=atoi(sql_getvalue(&sqr1, 0, 1));
 	}
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		thisdomain=atoi(sql_getvalue(sqr1, i, 1));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		thisdomain=atoi(sql_getvalue(&sqr1, i, 1));
 		if (lastdomain!=thisdomain) {
 			lastdomain=thisdomain;
 			prints(sid, "<TR CLASS=\"FIELDNAME\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
-			for (j=0;j<sql_numtuples(sqr2);j++) {
-				if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
-					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
+			for (j=0;j<sql_numtuples(&sqr2);j++) {
+				if (atoi(sql_getvalue(&sqr2, j, 0))==atoi(sql_getvalue(&sqr1, i, 1))) {
+					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(&sqr2, j, 1)));
 					break;
 				}
 			}
-			if (j==sql_numtuples(sqr2)) {
+			if (j==sql_numtuples(&sqr2)) {
 				prints(sid, "&nbsp;</TD>");
 			}
 		}
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr1, i, 2)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(&sqr1, i, 2)));
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<A HREF=%s/admin/groupeditnew>New Group</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -305,7 +307,7 @@ void admingroupsave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int groupid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -332,20 +334,20 @@ void admingroupsave(CONN *sid)
 		prints(sid, "<CENTER>Group %d deleted successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, "groups", group.groupid, "delete", "%s - %s deleted group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else if (group.groupid==0) {
-		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND obj_did = %d", group.groupname, group.obj_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT groupname FROM gw_groups where groupname = '%s' AND obj_did = %d", group.groupname, group.obj_did)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Group %s already exists</CENTER><BR>\n", group.groupname);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(group.groupname)<1) {
 			prints(sid, "<CENTER>Group name is too short</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(groupid) FROM gw_groups"))<0) return;
-		group.groupid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(groupid) FROM gw_groups")<0) return;
+		group.groupid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (group.groupid<1) group.groupid=1;
 		strcpy(query, "INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupname, availability, motd, members) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", group.groupid, curdate, curdate, group.obj_uid, group.obj_gid, group.obj_did, group.obj_gperm, group.obj_operm);
@@ -361,13 +363,13 @@ void admingroupsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND groupid <> %d AND obj_did = %d", group.groupname, group.groupid, group.obj_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT groupname FROM gw_groups where groupname = '%s' AND groupid <> %d AND obj_did = %d", group.groupname, group.groupid, group.obj_did)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Group %s already exists</CENTER><BR>\n", group.groupname);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(group.groupname)<1) {
 			prints(sid, "<CENTER>Group name is too short</CENTER><BR>\n");
 			return;

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(query, 0, sizeof(REC_QUERY));
 	authlevel=auth_priv(sid, "query");
@@ -37,25 +37,25 @@ int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_queries where queryid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_queries where queryid = %d", index)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_queries where queryid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_queries where queryid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	query->queryid   = atoi(sql_getvalue(sqr, 0, 0));
-	query->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	query->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	query->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	query->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	query->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	query->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	query->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(query->queryname, sql_getvalue(sqr, 0, 8), sizeof(query->queryname)-1);
-	strncpy(query->query,     sql_getvalue(sqr, 0, 9), sizeof(query->query)-1);
-	sql_freeresult(sqr);
+	query->queryid   = atoi(sql_getvalue(&sqr, 0, 0));
+	query->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	query->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	query->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	query->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	query->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	query->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	query->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(query->queryname, sql_getvalue(&sqr, 0, 8), sizeof(query->queryname)-1);
+	strncpy(query->query,     sql_getvalue(&sqr, 0, 9), sizeof(query->query)-1);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
@@ -64,7 +64,7 @@ int dbwrite_query(CONN *sid, int index, REC_QUERY *query)
 	char curdate[32];
 	char querybuf[12288];
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	authlevel=auth_priv(sid, "query");
 	if (authlevel<2) return -1;
@@ -73,9 +73,9 @@ int dbwrite_query(CONN *sid, int index, REC_QUERY *query)
 	memset(querybuf, 0, sizeof(querybuf));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query("SELECT max(queryid) FROM gw_queries"))<0) return -1;
-		query->queryid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(queryid) FROM gw_queries")<0) return -1;
+		query->queryid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (query->queryid<1) query->queryid=1;
 		strcpy(querybuf, "INSERT INTO gw_queries (queryid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, queryname, query) values (");
 		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", query->queryid, curdate, curdate, query->obj_uid, query->obj_gid, query->obj_did, query->obj_gperm, query->obj_operm);

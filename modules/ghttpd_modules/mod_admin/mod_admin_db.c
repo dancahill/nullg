@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(domain, 0, sizeof(REC_DOMAIN));
 	authlevel=auth_priv(sid, "admin");
@@ -41,31 +41,31 @@ int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_domains where domainid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_domains where domainid = %d", index)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_domains where domainid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_domains where domainid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	domain->domainid  = atoi(sql_getvalue(sqr, 0, 0));
-	domain->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	domain->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	domain->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	domain->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	domain->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	domain->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	domain->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(domain->domainname, sql_getvalue(sqr, 0, 8), sizeof(domain->domainname)-1);
-	sql_freeresult(sqr);
+	domain->domainid  = atoi(sql_getvalue(&sqr, 0, 0));
+	domain->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	domain->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	domain->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	domain->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	domain->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	domain->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	domain->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(domain->domainname, sql_getvalue(&sqr, 0, 8), sizeof(domain->domainname)-1);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(group, 0, sizeof(REC_GROUP));
 	authlevel=auth_priv(sid, "admin");
@@ -85,39 +85,39 @@ int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 		return 0;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groups where groupid = %d", index)<0) return -1;
 	} else if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groups where groupid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groups where groupid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	group->groupid   = atoi(sql_getvalue(sqr, 0, 0));
-	group->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	group->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	group->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	group->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	group->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	group->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	group->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(group->groupname,	sql_getvalue(sqr, 0, 8), sizeof(group->groupname)-1);
-	strncpy(group->availability,	sql_getvalue(sqr, 0, 9), sizeof(group->availability)-1);
-	strncpy(group->motd,		sql_getvalue(sqr, 0, 10), sizeof(group->motd)-1);
-	strncpy(group->members,		sql_getvalue(sqr, 0, 11), sizeof(group->members)-1);
+	group->groupid   = atoi(sql_getvalue(&sqr, 0, 0));
+	group->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	group->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	group->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	group->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	group->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	group->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	group->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(group->groupname,	sql_getvalue(&sqr, 0, 8), sizeof(group->groupname)-1);
+	strncpy(group->availability,	sql_getvalue(&sqr, 0, 9), sizeof(group->availability)-1);
+	strncpy(group->motd,		sql_getvalue(&sqr, 0, 10), sizeof(group->motd)-1);
+	strncpy(group->members,		sql_getvalue(&sqr, 0, 11), sizeof(group->members)-1);
 	if (strlen(group->availability)==0) {
 		strncpy(group->availability, "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(group->availability)-1);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int dbread_groupmember(CONN *sid, short int perm, int index, REC_GROUPMEMBER *groupmember)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(groupmember, 0, sizeof(REC_GROUPMEMBER));
 	authlevel=auth_priv(sid, "admin");
@@ -136,34 +136,34 @@ int dbread_groupmember(CONN *sid, short int perm, int index, REC_GROUPMEMBER *gr
 		return 0;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groupmembers where groupmemberid = %d", index)<0) return -1;
 	} else if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	groupmember->groupmemberid = atoi(sql_getvalue(sqr, 0, 0));
-	groupmember->obj_ctime     = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	groupmember->obj_mtime     = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	groupmember->obj_uid       = atoi(sql_getvalue(sqr, 0, 3));
-	groupmember->obj_gid       = atoi(sql_getvalue(sqr, 0, 4));
-	groupmember->obj_did       = atoi(sql_getvalue(sqr, 0, 5));
-	groupmember->obj_gperm     = atoi(sql_getvalue(sqr, 0, 6));
-	groupmember->obj_operm     = atoi(sql_getvalue(sqr, 0, 7));
-	groupmember->userid        = atoi(sql_getvalue(sqr, 0, 8));
-	groupmember->groupid       = atoi(sql_getvalue(sqr, 0, 9));
-	sql_freeresult(sqr);
+	groupmember->groupmemberid = atoi(sql_getvalue(&sqr, 0, 0));
+	groupmember->obj_ctime     = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	groupmember->obj_mtime     = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	groupmember->obj_uid       = atoi(sql_getvalue(&sqr, 0, 3));
+	groupmember->obj_gid       = atoi(sql_getvalue(&sqr, 0, 4));
+	groupmember->obj_did       = atoi(sql_getvalue(&sqr, 0, 5));
+	groupmember->obj_gperm     = atoi(sql_getvalue(&sqr, 0, 6));
+	groupmember->obj_operm     = atoi(sql_getvalue(&sqr, 0, 7));
+	groupmember->userid        = atoi(sql_getvalue(&sqr, 0, 8));
+	groupmember->groupid       = atoi(sql_getvalue(&sqr, 0, 9));
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(user, 0, sizeof(REC_USER));
 	authlevel=auth_priv(sid, "admin");
@@ -206,74 +206,74 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 		return 0;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_users where userid = %d", index)<0) return -1;
 	} else if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d AND domainid = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_users where userid = %d AND domainid = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d AND domainid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_users where userid = %d AND domainid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	user->userid   = atoi(sql_getvalue(sqr, 0, 0));
-	user->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	user->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	user->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	user->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	user->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	user->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	user->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(user->username,         sql_getvalue(sqr, 0, 8), sizeof(user->username)-1);
-	strncpy(user->password,         sql_getvalue(sqr, 0, 9), sizeof(user->password)-1);
-	user->groupid		= atoi(sql_getvalue(sqr, 0, 10));
-	user->domainid		= atoi(sql_getvalue(sqr, 0, 11));
-	user->enabled		= atoi(sql_getvalue(sqr, 0, 12));
-	user->authdomainadmin	= atoi(sql_getvalue(sqr, 0, 13));
-	user->authadmin		= atoi(sql_getvalue(sqr, 0, 14));
-	user->authbookmarks	= atoi(sql_getvalue(sqr, 0, 15));
-	user->authcalendar	= atoi(sql_getvalue(sqr, 0, 16));
-	user->authcalls		= atoi(sql_getvalue(sqr, 0, 17));
-	user->authcontacts	= atoi(sql_getvalue(sqr, 0, 18));
-	user->authfiles		= atoi(sql_getvalue(sqr, 0, 19));
-	user->authforums	= atoi(sql_getvalue(sqr, 0, 20));
-	user->authmessages	= atoi(sql_getvalue(sqr, 0, 21));
-	user->authorders	= atoi(sql_getvalue(sqr, 0, 22));
-	user->authprofile	= atoi(sql_getvalue(sqr, 0, 23));
-	user->authprojects	= atoi(sql_getvalue(sqr, 0, 24));
-	user->authquery		= atoi(sql_getvalue(sqr, 0, 25));
-	user->authwebmail	= atoi(sql_getvalue(sqr, 0, 26));
-	user->prefdaystart	= atoi(sql_getvalue(sqr, 0, 27));
-	user->prefdaylength	= atoi(sql_getvalue(sqr, 0, 28));
-	user->prefmailcurrent	= atoi(sql_getvalue(sqr, 0, 29));
-	user->prefmaildefault	= atoi(sql_getvalue(sqr, 0, 30));
-	user->prefmaxlist	= atoi(sql_getvalue(sqr, 0, 31));
-	user->prefmenustyle	= atoi(sql_getvalue(sqr, 0, 32));
-	user->preftimezone	= atoi(sql_getvalue(sqr, 0, 33));
-	user->prefgeozone	= atoi(sql_getvalue(sqr, 0, 34));
-	strncpy(user->preflanguage,     sql_getvalue(sqr, 0, 35), sizeof(user->preflanguage)-1);
-	strncpy(user->preftheme,        sql_getvalue(sqr, 0, 36), sizeof(user->preftheme)-1);
-	strncpy(user->availability,     sql_getvalue(sqr, 0, 37), sizeof(user->availability)-1);
-	strncpy(user->surname,          sql_getvalue(sqr, 0, 38), sizeof(user->surname)-1);
-	strncpy(user->givenname,        sql_getvalue(sqr, 0, 39), sizeof(user->givenname)-1);
-	strncpy(user->jobtitle,         sql_getvalue(sqr, 0, 40), sizeof(user->jobtitle)-1);
-	strncpy(user->division,         sql_getvalue(sqr, 0, 41), sizeof(user->division)-1);
-	strncpy(user->supervisor,       sql_getvalue(sqr, 0, 42), sizeof(user->supervisor)-1);
-	strncpy(user->address,          sql_getvalue(sqr, 0, 43), sizeof(user->address)-1);
-	strncpy(user->locality,         sql_getvalue(sqr, 0, 44), sizeof(user->locality)-1);
-	strncpy(user->region,           sql_getvalue(sqr, 0, 45), sizeof(user->region)-1);
-	strncpy(user->country,          sql_getvalue(sqr, 0, 46), sizeof(user->country)-1);
-	strncpy(user->postalcode,       sql_getvalue(sqr, 0, 47), sizeof(user->postalcode)-1);
-	strncpy(user->homenumber,       sql_getvalue(sqr, 0, 48), sizeof(user->homenumber)-1);
-	strncpy(user->worknumber,       sql_getvalue(sqr, 0, 49), sizeof(user->worknumber)-1);
-	strncpy(user->faxnumber,        sql_getvalue(sqr, 0, 50), sizeof(user->faxnumber)-1);
-	strncpy(user->cellnumber,       sql_getvalue(sqr, 0, 51), sizeof(user->cellnumber)-1);
-	strncpy(user->pagernumber,      sql_getvalue(sqr, 0, 52), sizeof(user->pagernumber)-1);
-	strncpy(user->email,            sql_getvalue(sqr, 0, 53), sizeof(user->email)-1);
-	strncpy(user->birthdate,        sql_getvalue(sqr, 0, 54), 10);
-	strncpy(user->hiredate,         sql_getvalue(sqr, 0, 55), 10);
-	strncpy(user->sin,              sql_getvalue(sqr, 0, 56), sizeof(user->sin)-1);
-	strncpy(user->isactive,         sql_getvalue(sqr, 0, 57), sizeof(user->isactive)-1);
+	user->userid   = atoi(sql_getvalue(&sqr, 0, 0));
+	user->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	user->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	user->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	user->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	user->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	user->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	user->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(user->username,         sql_getvalue(&sqr, 0, 8), sizeof(user->username)-1);
+	strncpy(user->password,         sql_getvalue(&sqr, 0, 9), sizeof(user->password)-1);
+	user->groupid		= atoi(sql_getvalue(&sqr, 0, 10));
+	user->domainid		= atoi(sql_getvalue(&sqr, 0, 11));
+	user->enabled		= atoi(sql_getvalue(&sqr, 0, 12));
+	user->authdomainadmin	= atoi(sql_getvalue(&sqr, 0, 13));
+	user->authadmin		= atoi(sql_getvalue(&sqr, 0, 14));
+	user->authbookmarks	= atoi(sql_getvalue(&sqr, 0, 15));
+	user->authcalendar	= atoi(sql_getvalue(&sqr, 0, 16));
+	user->authcalls		= atoi(sql_getvalue(&sqr, 0, 17));
+	user->authcontacts	= atoi(sql_getvalue(&sqr, 0, 18));
+	user->authfiles		= atoi(sql_getvalue(&sqr, 0, 19));
+	user->authforums	= atoi(sql_getvalue(&sqr, 0, 20));
+	user->authmessages	= atoi(sql_getvalue(&sqr, 0, 21));
+	user->authorders	= atoi(sql_getvalue(&sqr, 0, 22));
+	user->authprofile	= atoi(sql_getvalue(&sqr, 0, 23));
+	user->authprojects	= atoi(sql_getvalue(&sqr, 0, 24));
+	user->authquery		= atoi(sql_getvalue(&sqr, 0, 25));
+	user->authwebmail	= atoi(sql_getvalue(&sqr, 0, 26));
+	user->prefdaystart	= atoi(sql_getvalue(&sqr, 0, 27));
+	user->prefdaylength	= atoi(sql_getvalue(&sqr, 0, 28));
+	user->prefmailcurrent	= atoi(sql_getvalue(&sqr, 0, 29));
+	user->prefmaildefault	= atoi(sql_getvalue(&sqr, 0, 30));
+	user->prefmaxlist	= atoi(sql_getvalue(&sqr, 0, 31));
+	user->prefmenustyle	= atoi(sql_getvalue(&sqr, 0, 32));
+	user->preftimezone	= atoi(sql_getvalue(&sqr, 0, 33));
+	user->prefgeozone	= atoi(sql_getvalue(&sqr, 0, 34));
+	strncpy(user->preflanguage,     sql_getvalue(&sqr, 0, 35), sizeof(user->preflanguage)-1);
+	strncpy(user->preftheme,        sql_getvalue(&sqr, 0, 36), sizeof(user->preftheme)-1);
+	strncpy(user->availability,     sql_getvalue(&sqr, 0, 37), sizeof(user->availability)-1);
+	strncpy(user->surname,          sql_getvalue(&sqr, 0, 38), sizeof(user->surname)-1);
+	strncpy(user->givenname,        sql_getvalue(&sqr, 0, 39), sizeof(user->givenname)-1);
+	strncpy(user->jobtitle,         sql_getvalue(&sqr, 0, 40), sizeof(user->jobtitle)-1);
+	strncpy(user->division,         sql_getvalue(&sqr, 0, 41), sizeof(user->division)-1);
+	strncpy(user->supervisor,       sql_getvalue(&sqr, 0, 42), sizeof(user->supervisor)-1);
+	strncpy(user->address,          sql_getvalue(&sqr, 0, 43), sizeof(user->address)-1);
+	strncpy(user->locality,         sql_getvalue(&sqr, 0, 44), sizeof(user->locality)-1);
+	strncpy(user->region,           sql_getvalue(&sqr, 0, 45), sizeof(user->region)-1);
+	strncpy(user->country,          sql_getvalue(&sqr, 0, 46), sizeof(user->country)-1);
+	strncpy(user->postalcode,       sql_getvalue(&sqr, 0, 47), sizeof(user->postalcode)-1);
+	strncpy(user->homenumber,       sql_getvalue(&sqr, 0, 48), sizeof(user->homenumber)-1);
+	strncpy(user->worknumber,       sql_getvalue(&sqr, 0, 49), sizeof(user->worknumber)-1);
+	strncpy(user->faxnumber,        sql_getvalue(&sqr, 0, 50), sizeof(user->faxnumber)-1);
+	strncpy(user->cellnumber,       sql_getvalue(&sqr, 0, 51), sizeof(user->cellnumber)-1);
+	strncpy(user->pagernumber,      sql_getvalue(&sqr, 0, 52), sizeof(user->pagernumber)-1);
+	strncpy(user->email,            sql_getvalue(&sqr, 0, 53), sizeof(user->email)-1);
+	strncpy(user->birthdate,        sql_getvalue(&sqr, 0, 54), 10);
+	strncpy(user->hiredate,         sql_getvalue(&sqr, 0, 55), 10);
+	strncpy(user->sin,              sql_getvalue(&sqr, 0, 56), sizeof(user->sin)-1);
+	strncpy(user->isactive,         sql_getvalue(&sqr, 0, 57), sizeof(user->isactive)-1);
 	if (strlen(user->availability)==0) {
 		strncpy(user->availability, "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(user->availability)-1);
 	}
@@ -291,7 +291,7 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	if (user->authquery&A_ADMIN) user->authquery=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 	if (user->authwebmail&A_ADMIN) user->authwebmail=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 	if (user->prefdaylength+user->prefdaystart>24) user->prefdaylength=24-user->prefdaystart;
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (strlen(user->preflanguage)==0) {
 		snprintf(user->preflanguage, sizeof(user->preflanguage)-1, "%s", config->langcode);
 	}
@@ -304,7 +304,7 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(zone, 0, sizeof(REC_ZONE));
 	authlevel=auth_priv(sid, "admin");
@@ -324,25 +324,25 @@ int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone)
 		return 0;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_zones where zoneid = %d", index)<0) return -1;
 	} else if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	zone->zoneid    = atoi(sql_getvalue(sqr, 0, 0));
-	zone->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	zone->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	zone->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	zone->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	zone->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	zone->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	zone->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(zone->zonename, sql_getvalue(sqr, 0, 8), sizeof(zone->zonename)-1);
-	sql_freeresult(sqr);
+	zone->zoneid    = atoi(sql_getvalue(&sqr, 0, 0));
+	zone->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	zone->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	zone->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	zone->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	zone->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	zone->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	zone->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(zone->zonename, sql_getvalue(&sqr, 0, 8), sizeof(zone->zonename)-1);
+	sql_freeresult(&sqr);
 	return 0;
 }

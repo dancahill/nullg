@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -181,8 +181,9 @@ void wmaccount_edit(CONN *sid)
 
 void wmaccount_list(CONN *sid)
 {
+	int accountid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -190,22 +191,23 @@ void wmaccount_list(CONN *sid)
 	}
 	prints(sid, "<BR><CENTER>\n");
 	if (auth_priv(sid, "webmail")>0) {
-		if ((sqr=sql_queryf("SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=300 STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;Mail Accounts</TH></TR>\n");
-			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, "<A HREF=%s/mail/accounts/edit?account=%d>%s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
-				prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/mail/purge?accountid=%d>purge</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			for (i=0;i<sql_numtuples(&sqr);i++) {
+				accountid=atoi(sql_getvalue(&sqr, i, 0));
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", sid->dat->in_ScriptName, accountid);
+				prints(sid, "<A HREF=%s/mail/accounts/edit?account=%d>%s</A>&nbsp;</TD>", sid->dat->in_ScriptName, accountid, str2html(sid, sql_getvalue(&sqr, i, 1)));
+				prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/mail/purge?accountid=%d onClick=\"location.replace('%s/mail/purge?accountid=%d');return false;\">purge</A></TD>", sid->dat->in_ScriptName, accountid, sid->dat->in_ScriptName, accountid);
 				prints(sid, "</TR>\n");
 			}
 			prints(sid, "</TABLE>\n");
 		}
-		if (sql_numtuples(sqr)<10) {
+		if (sql_numtuples(&sqr)<10) {
 			prints(sid, "[<A HREF=%s/mail/accounts/editnew>Add Mail Account</A>]\n", sid->dat->in_ScriptName);
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	prints(sid, "</TD></TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
@@ -228,7 +230,7 @@ void wmaccount_save(CONN *sid)
 	char curdate[40];
 	char *ptemp;
 	int accountid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -288,9 +290,9 @@ void wmaccount_save(CONN *sid)
 		prints(sid, "<BR><CENTER>E-Mail account %d deleted successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "delete", "%s - %s deleted mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else if (mailacct.mailaccountid==0) {
-		if ((sqr=sql_query("SELECT max(mailaccountid) FROM gw_mailaccounts"))<0) return;
-		mailacct.mailaccountid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(mailaccountid) FROM gw_mailaccounts")<0) return;
+		mailacct.mailaccountid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (mailacct.mailaccountid<1) mailacct.mailaccountid=1;
 		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, showdebug, signature) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", mailacct.mailaccountid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);

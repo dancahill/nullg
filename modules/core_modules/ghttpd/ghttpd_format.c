@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -469,16 +469,16 @@ int time_tzoffset(CONN *sid, time_t unixdate)
 
 int time_tzoffset2(time_t unixdate, int userid)
 {
-	int sqr;
+	SQLRES sqr;
 	int tz=-1;
 	time_t tzoffset;
 	struct tm *today;
 
-	if ((sqr=sql_queryf("SELECT preftimezone FROM gw_users where userid = %d", userid))<0) return 0;
-	if (sql_numtuples(sqr)==1) {
-		tz=atoi(sql_getvalue(sqr, 0, 0));
+	if (sql_queryf(&sqr, "SELECT preftimezone FROM gw_users where userid = %d", userid)<0) return 0;
+	if (sql_numtuples(&sqr)==1) {
+		tz=atoi(sql_getvalue(&sqr, 0, 0));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if ((tz<0)||(tz>61)) return 0;
 	tzoffset=timezones[tz].minutes*60;
 	today=localtime(&unixdate);
@@ -490,16 +490,16 @@ int time_tzoffset2(time_t unixdate, int userid)
 
 int time_tzoffsetcon(time_t unixdate, int contactid)
 {
-	int sqr;
+	SQLRES sqr;
 	int tz=-1;
 	time_t tzoffset;
 	struct tm *today;
 
-	if ((sqr=sql_queryf("SELECT timezone FROM gw_contacts where contactid = %d", contactid))<0) return 0;
-	if (sql_numtuples(sqr)==1) {
-		tz=atoi(sql_getvalue(sqr, 0, 0));
+	if (sql_queryf(&sqr, "SELECT timezone FROM gw_contacts where contactid = %d", contactid)<0) return 0;
+	if (sql_numtuples(&sqr)==1) {
+		tz=atoi(sql_getvalue(&sqr, 0, 0));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if ((tz<0)||(tz>61)) return 0;
 	tzoffset=timezones[tz].minutes*60;
 	today=localtime(&unixdate);

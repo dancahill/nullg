@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,8 @@ void wmnotice(CONN *sid)
 	int i;
 	int newmessages;
 	int nummessages;
-	int sqr1, sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -38,20 +39,20 @@ void wmnotice(CONN *sid)
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Groupware E-Mail Notice</FONT></B>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'>Account Name</TH><TH STYLE='border-style:solid'>New</TH><TH STYLE='border-style:solid'>Total</TH></TR>\n");
-	if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
-		if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 1", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) continue;
-		nummessages=atoi(sql_getvalue(sqr2, 0, 0));
-		sql_freeresult(sqr2);
-		if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 1 AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) continue;
-		newmessages=atoi(sql_getvalue(sqr2, 0, 0));
-		sql_freeresult(sqr2);
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.opener.top.gwmain.location.href='%s/mail/main?accountid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sql_getvalue(sqr1, i, 1));
+	if (sql_queryf(&sqr1, "SELECT mailaccountid, accountname, poppassword FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid)<0) return;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		sid->dat->user_mailcurrent=atoi(sql_getvalue(&sqr1, i, 0));
+		if (sql_queryf(&sqr2, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 1", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) continue;
+		nummessages=atoi(sql_getvalue(&sqr2, 0, 0));
+		sql_freeresult(&sqr2);
+		if (sql_queryf(&sqr2, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 1 AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) continue;
+		newmessages=atoi(sql_getvalue(&sqr2, 0, 0));
+		sql_freeresult(&sqr2);
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.opener.top.gwmain.location.href='%s/mail/main?accountid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), sql_getvalue(&sqr1, i, 1));
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s%d%s</TD><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%d</TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"", nummessages);
 	}
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE></CENTER>\n");
 	prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 	return;
@@ -61,18 +62,18 @@ void wmloginform(CONN *sid)
 {
 	char msgto[512];
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 
 	memset(msgto, 0, sizeof(msgto));
 	if ((ptemp=getgetenv(sid, "MSGTO"))!=NULL) {
 		strncpy(msgto, ptemp, sizeof(msgto)-1);
 	}
-	if ((sqr=sql_queryf("SELECT popusername, poppassword FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->username)-1);
-		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 1)), sizeof(sid->dat->wm->password)-1);
+	if (sql_queryf(&sqr, "SELECT popusername, poppassword FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid)<0) return;
+	if (sql_numtuples(&sqr)==1) {
+		strncpy(sid->dat->wm->username, sql_getvalue(&sqr, 0, 0), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(&sqr, 0, 1)), sizeof(sid->dat->wm->password)-1);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<BR><CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/sync AUTOCOMPLETE=OFF NAME=wmlogin>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE CELLPADDING=0 CELLSPACING=0 BORDER=0>\n");
@@ -106,19 +107,19 @@ void webmailraw(CONN *sid)
 	char *ptemp;
 	int folderid;
 	int msgnum=0;
-	int sqr;
+	SQLRES sqr;
 
 	send_header(sid, 1, 200, "1", "text/plain", -1, -1);
 	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) msgnum=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		prints(sid, "No such message.<BR>");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	} else {
-		folderid=atoi(sql_getvalue(sqr, 0, 1));
+		folderid=atoi(sql_getvalue(&sqr, 0, 1));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
 	fixslashes(msgfilename);
@@ -157,22 +158,22 @@ void webmaillist(CONN *sid)
 	int nummessages;
 	int offset=0;
 	int i;
-	int sqr;
+	SQLRES sqr;
 	time_t unixdate;
 
 	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
 	if (order<0) order=0;
 	if (order>7) order=7;
-	if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)<1) {
+	if (sql_queryf(&sqr, "SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid)<0) return;
+	if (sql_numtuples(&sqr)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/mail/accounts/editnew\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n");
 		prints(sid, "<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/accounts/editnew\"></NOSCRIPT>\n", sid->dat->in_ScriptName);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if ((ptemp=getgetenv(sid, "FOLDERID"))!=NULL) {
 		folderid=atoi(ptemp);
 	} else {
@@ -211,11 +212,11 @@ void webmaillist(CONN *sid)
 */
 	flushbuffer(sid);
 	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
-	if ((sqr=wmsearch_doquery(sid, order_by[order], folderid))<0) return;
-	nummessages=sql_numtuples(sqr);
+	if (wmsearch_doquery(sid, &sqr, order_by[order], folderid)<0) return;
+	nummessages=sql_numtuples(&sqr);
 	if (nummessages<1) {
 		prints(sid, "<BR><CENTER><B>You have no messages in this mailbox</B></CENTER><BR>\n");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
@@ -291,7 +292,7 @@ void webmaillist(CONN *sid)
 	prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<nummessages)&&(i<offset+sid->dat->user_maxlist);i++) {
-		dbread_getheader(sid, sqr, i, &header);
+		dbread_getheader(sid, &sqr, i, &header);
 		prints(sid, "<TR BGCOLOR=\"%s\">", strcmp(header.status, "r")!=0?"#D0D0FF":"#F0F0F0");
 		if (searchstring[0]=='\0') {
 			prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>\r\n", header.localid, header.uidl);
@@ -357,7 +358,7 @@ void webmaillist(CONN *sid)
 		}
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -378,7 +379,7 @@ void webmailread(CONN *sid)
 	int localid=0;
 	int remoteid=-1;
 	int i;
-	int sqr;
+	SQLRES sqr;
 	time_t unixdate;
 
 	memset((char *)&header, 0, sizeof(header));
@@ -386,24 +387,24 @@ void webmailread(CONN *sid)
 	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
 	if (order<0) order=0;
 	if (order>7) order=7;
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, localid))<0) return;
-	if (sql_numtuples(sqr)==1) {
-		folderid=atoi(sql_getvalue(sqr, 0, 1));
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, localid)<0) return;
+	if (sql_numtuples(&sqr)==1) {
+		folderid=atoi(sql_getvalue(&sqr, 0, 1));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
-	if ((sqr=wmsearch_doquery(sid, order_by[order], folderid))<0) return;
-	nummessages=sql_numtuples(sqr);
+	if (wmsearch_doquery(sid, &sqr, order_by[order], folderid)<0) return;
+	nummessages=sql_numtuples(&sqr);
 	for (i=0;i<nummessages;i++) {
-		if (localid==atoi(sql_getvalue(sqr, i, 0))) {
-			dbread_getheader(sid, sqr, i, &header);
+		if (localid==atoi(sql_getvalue(&sqr, i, 0))) {
+			dbread_getheader(sid, &sqr, i, &header);
 			remoteid=i+1;
 			break;
 		}
 	}
 	if (remoteid==-1) {
 		prints(sid, "No such message.<BR>");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
@@ -425,7 +426,7 @@ void webmailread(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\r\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
 	} else {
 		prints(sid, "[%s]\n", lang.mail_prev);
 	}
@@ -440,7 +441,7 @@ void webmailread(CONN *sid)
 	}
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, lang.mail_next);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid, 0)), order, searchstring, lang.mail_next);
 	} else {
 		prints(sid, "[%s]\n", lang.mail_next);
 	}
@@ -507,7 +508,7 @@ void webmailread(CONN *sid)
 	}
 	prints(sid, "</TD></TR></TABLE>\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
 	} else {
 		prints(sid, "[%s]\n", lang.mail_prev);
 	}
@@ -522,12 +523,12 @@ void webmailread(CONN *sid)
 	}
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, lang.mail_next);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid, 0)), order, searchstring, lang.mail_next);
 	} else {
 		prints(sid, "[%s]\n", lang.mail_next);
 	}
 	prints(sid, "<BR>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -548,7 +549,7 @@ void webmailwrite(CONN *sid)
 	short int replyall=0;
 	short int forward=0;
 	short int msgnum=0;
-	int sqr;
+	SQLRES sqr;
 
 	memset(msgto, 0, sizeof(msgto));
 	memset(msgcc, 0, sizeof(msgcc));
@@ -570,15 +571,15 @@ void webmailwrite(CONN *sid)
 		msgnum=0;
 	}
 	if (msgnum) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, accountid, msgnum))<0) return;
-		if (sql_numtuples(sqr)!=1) {
-			sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, accountid, msgnum)<0) return;
+		if (sql_numtuples(&sqr)!=1) {
+			sql_freeresult(&sqr);
 			return;
 		} else {
-			folderid=atoi(sql_getvaluebyname(sqr, 0, "folder"));
+			folderid=atoi(sql_getvaluebyname(&sqr, 0, "folder"));
 		}
-		dbread_getheader(sid, sqr, 0, &header);
-		sql_freeresult(sqr);
+		dbread_getheader(sid, &sqr, 0, &header);
+		sql_freeresult(&sqr);
 		if (replyto>0) {
 			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(header.Subject, "RE:", 3)==0)?"":"Re: ", header.Subject);
 		} else if (forward>0) {
@@ -699,7 +700,7 @@ void webmailwrite(CONN *sid)
 void webmailframeset(CONN *sid)
 {
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<HTML>\n<HEAD>\n<TITLE>NullLogic Groupware Webmail</TITLE>\n</HEAD>\n");
@@ -708,8 +709,8 @@ void webmailframeset(CONN *sid)
 			sid->dat->user_mailcurrent=atoi(ptemp);
 		}
 	}
-	if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)<1) {
+	if (sql_queryf(&sqr, "SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid)<0) return;
+	if (sql_numtuples(&sqr)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/mail/accounts/editnew\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -733,7 +734,7 @@ void webmailframeset(CONN *sid)
 		prints(sid, "To view this page, you need a web browser capable of displaying frames.\n");
 		prints(sid, "</HTML>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 

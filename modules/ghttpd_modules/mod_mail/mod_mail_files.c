@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -144,7 +144,7 @@ void webmailsave(CONN *sid)
 	struct timeval ttime;
 	struct timezone tzone;
 	unsigned int mimesize;
-	int sqr;
+	SQLRES sqr;
 	int forward;
 	int fwdacct;
 	int headerid;
@@ -231,9 +231,9 @@ void webmailsave(CONN *sid)
 	} else {
 		snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", msgctype);
 	}
-	if ((sqr=sql_queryf("SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent))<0) return;
-	headerid=atoi(sql_getvalue(sqr, 0, 0))+1;
-	sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent)<0) return;
+	headerid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+	sql_freeresult(&sqr);
 	if (headerid<1) headerid=1;
 	memset(query, 0, sizeof(query));
 	strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_messageid, hdr_inreplyto, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
@@ -343,15 +343,15 @@ void webmailsave(CONN *sid)
 		EncodeBase64file(fp, filebody, filesize);
 	}
 	if (forward>0) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, fwdacct, forward))<0) goto stuff;
-		if (sql_numtuples(sqr)!=1) {
-			sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, fwdacct, forward)<0) goto stuff;
+		if (sql_numtuples(&sqr)!=1) {
+			sql_freeresult(&sqr);
 			goto stuff;
 		} else {
-			folderid=atoi(sql_getvaluebyname(sqr, 0, "folder"));
+			folderid=atoi(sql_getvaluebyname(&sqr, 0, "folder"));
 		}
-		dbread_getheader(sid, sqr, 0, &header);
-		sql_freeresult(sqr);
+		dbread_getheader(sid, &sqr, 0, &header);
+		sql_freeresult(&sqr);
 		memset(msgfilename, 0, sizeof(msgfilename));
 		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, fwdacct, folderid, forward);
 		fixslashes(msgfilename);
@@ -392,7 +392,7 @@ void webmailmove(CONN *sid)
 	int offset=0;
 //	int deleted=0;
 	int i;
-	int sqr;
+	SQLRES sqr;
 	int move=0;
 	int purge=0;
 
@@ -421,29 +421,29 @@ void webmailmove(CONN *sid)
 	} else {
 		folderid=4;
 	}
-	if ((sqr=sql_queryf("SELECT mailheaderid, uidl, status, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return;
-	nummessages=sql_numtuples(sqr);
+	if (sql_queryf(&sqr, "SELECT mailheaderid, uidl, status, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) return;
+	nummessages=sql_numtuples(&sqr);
 	if (nummessages<1) {
 		prints(sid, "<CENTER><B>You have no messages in this mailbox</B></CENTER><BR>\n");
 	}
 	for (i=0;i<nummessages;i++) {
 		memset(msgnum, 0, sizeof(msgnum));
-		snprintf(msgnum, sizeof(msgnum)-1, "%d", atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(msgnum, sizeof(msgnum)-1, "%d", atoi(sql_getvalue(&sqr, i, 0)));
 		ptemp1=getpostenv(sid, msgnum);
 		ptemp2=getgetenv(sid, msgnum);
 		if (ptemp1==NULL) ptemp1=ptemp2;
 		if (ptemp1==NULL) continue;
-		if (strcmp(ptemp1, sql_getvalue(sqr, i, 1))!=0) continue;
+		if (strcmp(ptemp1, sql_getvalue(&sqr, i, 1))!=0) continue;
 		if (folderid>0) {
-			prints(sid, "%s message %d...", move?"Moving":"Deleting", atoi(sql_getvalue(sqr, i, 0)));
-			oldfolderid=atoi(sql_getvalue(sqr, i, 3));
+			prints(sid, "%s message %d...", move?"Moving":"Deleting", atoi(sql_getvalue(&sqr, i, 0)));
+			oldfolderid=atoi(sql_getvalue(&sqr, i, 3));
 			if ((oldfolderid==4)&&(folderid==4)) {
-				sql_updatef("UPDATE gw_mailheaders SET status = 'd' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0)));
+				sql_updatef("UPDATE gw_mailheaders SET status = 'd' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, atoi(sql_getvalue(&sqr, i, 0)));
 				purge=1;
 			} else {
-				sql_updatef("UPDATE gw_mailheaders SET folder = '%d' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", folderid, sid->dat->user_mailcurrent, sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0)));
+				sql_updatef("UPDATE gw_mailheaders SET folder = '%d' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", folderid, sid->dat->user_mailcurrent, sid->dat->user_uid, atoi(sql_getvalue(&sqr, i, 0)));
 			}
-			wmfolder_msgmove(sid, sid->dat->user_mailcurrent, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 3)), folderid);
+			wmfolder_msgmove(sid, sid->dat->user_mailcurrent, atoi(sql_getvalue(&sqr, i, 0)), atoi(sql_getvalue(&sqr, i, 3)), folderid);
 			prints(sid, "success.<BR>\n");
 		}
 //		deleted=i;
@@ -452,7 +452,7 @@ void webmailmove(CONN *sid)
 	if (purge) {
 		wmserver_purge(sid);
 		if (sid->dat->wm->showdebug) {
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
 	}
@@ -475,7 +475,7 @@ void webmailmove(CONN *sid)
 //			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/read?msg=%d\">\n", sid->dat->in_ScriptName, deleted);
 //		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -489,18 +489,18 @@ void webmailpurge(CONN *sid)
 	int err;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 
 	if ((ptemp=getgetenv(sid, "ACCOUNTID"))==NULL) return;
 	accountid=atoi(ptemp);
 	prints(sid, "<BR><B>Purging and re-indexing account %d ... </B>", accountid);
 	flushbuffer(sid);
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid))<0) return;
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid)<0) return;
 	err=0;
 	memset(msgfilename, 0, sizeof(msgfilename));
 	memset(newfilename, 0, sizeof(newfilename));
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(&sqr, i, 1)), atoi(sql_getvalue(&sqr, i, 0)));
 		if (stat(msgfilename, &sb)==0) {
 			if (unlink(msgfilename)!=0) {
 				prints(sid, "<BR><B>'%s' could not be deleted.</B>\n", msgfilename);
@@ -508,17 +508,17 @@ void webmailpurge(CONN *sid)
 			}
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (err==0) {
 		sql_updatef("DELETE FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d and status = 'd'", sid->dat->user_uid, sid->dat->user_did, accountid);
 	}
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid))<0) return;
-	for (i=0,j=1;i<sql_numtuples(sqr);i++) {
-		if (j==atoi(sql_getvalue(sqr, i, 0))) { j++; continue; }
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
-		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), j);
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid)<0) return;
+	for (i=0,j=1;i<sql_numtuples(&sqr);i++) {
+		if (j==atoi(sql_getvalue(&sqr, i, 0))) { j++; continue; }
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(&sqr, i, 1)), atoi(sql_getvalue(&sqr, i, 0)));
+		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(&sqr, i, 1)), j);
 		if (rename(msgfilename, newfilename)==0) {
-			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailheaderid = %d", j, sid->dat->user_uid, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 0)))<0) {
+			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailheaderid = %d", j, sid->dat->user_uid, sid->dat->user_did, accountid, atoi(sql_getvalue(&sqr, i, 0)))<0) {
 				prints(sid, "<BR><B>'%s' could not be moved to '%s'</B>\n", msgfilename, newfilename);
 				rename(newfilename, msgfilename);
 				break;
@@ -526,7 +526,13 @@ void webmailpurge(CONN *sid)
 			j++;
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<B>done.</B><BR>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
+	prints(sid, "window.setTimeout('location.replace(\"%s/mail/accounts/list\")', 2000);\n", sid->dat->in_ScriptName);
+	prints(sid, "// -->\n</SCRIPT>\n");
+	prints(sid, "<NOSCRIPT>\n");
+	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/accounts/list\">\n", sid->dat->in_ScriptName);
+	prints(sid, "</NOSCRIPT>\n");
 	return;
 }

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ void taskreminders(CONN *sid)
 	int a, b;
 	int i;
 	int reminders=0;
-	int sqr;
+	SQLRES sqr;
 	time_t duedate;
 	time_t t;
 
@@ -35,12 +35,12 @@ void taskreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf("SELECT taskid, taskname, duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
+	if (sql_queryf(&sqr, "SELECT taskid, taskname, duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid)<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Due Tasks</FONT></B>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
-		a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, i, 2)));
-		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		a=time_sql2unix(sql_getvalue(&sqr, i, 2))-time(NULL);
+		a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr, i, 2)));
+		b=a-atoi(sql_getvalue(&sqr, i, 3))*60;
 		if (b<0) {
 			reminders++;
 			if (reminders==1) {
@@ -49,15 +49,15 @@ void taskreminders(CONN *sid)
 				prints(sid, "<TR><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;Task Name&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH></TR>\n");
 			}
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/tasks/reminderreset?taskid=%s>reset</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
-			duedate=time_sql2unix(sql_getvalue(sqr, i, 2));
+			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/tasks/reminderreset?taskid=%s>reset</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0));
+			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0), str2html(sid, sql_getvalue(&sqr, i, 1)));
+			duedate=time_sql2unix(sql_getvalue(&sqr, i, 2));
 /*			duedate+=time_tzoffset(sid, duedate); */
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, duedate));
 			prints(sid, "</TR>\n");
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (reminders==0) {
 		prints(sid, "<BR>No approaching due tasks\n</CENTER>\n");
 /*		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n"); */
@@ -73,7 +73,7 @@ void taskreminderstatus(CONN *sid)
 	char *ptemp;
 	int taskid;
 	int reminder;
-	int sqr;
+	SQLRES sqr;
 	time_t duedate;
 	time_t now;
 
@@ -82,17 +82,17 @@ void taskreminderstatus(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
 	taskid=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT reminder, duedate FROM gw_tasks where taskid = %d and assignedto = %d", taskid, sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT reminder, duedate FROM gw_tasks where taskid = %d and assignedto = %d", taskid, sid->dat->user_uid)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return;
 	}
-	reminder=atoi(sql_getvalue(sqr, 0, 0));
-	duedate=time_sql2unix(sql_getvalue(sqr, 0, 1));
+	reminder=atoi(sql_getvalue(&sqr, 0, 0));
+	duedate=time_sql2unix(sql_getvalue(&sqr, 0, 1));
 	duedate-=time_tzoffset(sid, duedate);
 	now=time(NULL);
 	time_unix2sql(timebuffer, sizeof(timebuffer)-1, now);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	duedate=(duedate-now)/60;
 	if (duedate<0) {
 		duedate=0;
@@ -300,7 +300,7 @@ void taskview(CONN *sid)
 	char *ptemp;
 	int taskid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -322,40 +322,40 @@ void taskview(CONN *sid)
 		}
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users"))<0) return;
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users")<0) return;
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned By&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedby) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==task.assignedby) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned To&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedto) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==task.assignedto) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
-	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", task.contactid))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
-		prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
-		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) prints(sid, ", ");
-		prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 2)));
+	if (sql_queryf(&sqr, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", task.contactid)<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 0)));
+		prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, 0, 1)));
+		if (strlen(sql_getvalue(&sqr, 0, 1))&&strlen(sql_getvalue(&sqr, 0, 2))) prints(sid, ", ");
+		prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 2)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	if ((module_exists("mod_projects"))&&(task.projectid>0)) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Project&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", task.projectid))<0) return;
-		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<A HREF=%s/projects/view?projectid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		if (sql_queryf(&sqr, "SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", task.projectid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
+			prints(sid, "<A HREF=%s/projects/view?projectid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 0)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Priority&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
@@ -384,8 +384,8 @@ void tasks_list(CONN *sid, int userid, int groupid)
 	char *ptemp;
 	int i;
 	int j=0;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 	int tcount=0;
 	
@@ -399,43 +399,43 @@ void tasks_list(CONN *sid, int userid, int groupid)
 		status=0;
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr1, "SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr1, "SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr2, "SELECT userid, groupid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did)<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH  ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;Tasks</FONT></TH></TR>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
-		if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, i, 2)))) continue;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, i, 1)))) continue;
+		if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, i, 2)))) continue;
 		if (groupid>0) {
-			for (j=0;j<sql_numtuples(sqr2);j++) {
-				if (atoi(sql_getvalue(sqr, i, 2))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
-				if (groupid!=atoi(sql_getvalue(sqr2, j, 1))) continue;
+			for (j=0;j<sql_numtuples(&sqr2);j++) {
+				if (atoi(sql_getvalue(&sqr1, i, 2))!=atoi(sql_getvalue(&sqr2, j, 0))) continue;
+				if (groupid!=atoi(sql_getvalue(&sqr2, j, 1))) continue;
 				break;
 			}
-			if (j==sql_numtuples(sqr2)) continue;
+			if (j==sql_numtuples(&sqr2)) continue;
 		}
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
-		prints(sid, "%s\">%s</A>&nbsp;</DIV></TD></TR>\n", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
+		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
+		if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(&sqr2, j, 2)));
+		prints(sid, "%s\">%s</A>&nbsp;</DIV></TD></TR>\n", sql_getvalue(&sqr1, i, 3), str2html(sid, sql_getvalue(&sqr1, i, 3)));
 		tcount++;
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
-		if (atoi(sql_getvalue(sqr, i, 2))!=0) continue;
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;*&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"[UNASSIGNED] %s\">%s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, i, 1)))) continue;
+		if (atoi(sql_getvalue(&sqr1, i, 2))!=0) continue;
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/edit?taskid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
+		prints(sid, "<DIV STYLE='width:196px;overflow:hidden'>&nbsp;*&nbsp;<A HREF=%s/tasks/edit?taskid=%s TITLE=\"[UNASSIGNED] %s\">%s", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0), sql_getvalue(&sqr1, i, 3), str2html(sid, sql_getvalue(&sqr1, i, 3)));
 		prints(sid, "</A>&nbsp;</DIV></TD></TR>\n");
 		tcount++;
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	if (!tcount) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD WIDTH=100%% STYLE='border-style:solid'>&nbsp;No tasks assigned&nbsp;</TD></TR>\n");
 	}

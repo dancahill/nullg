@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int dbread_project(CONN *sid, short int perm, int index, REC_PROJECT *project)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(project, 0, sizeof(REC_PROJECT));
 	authlevel=auth_priv(sid, "projects");
@@ -41,30 +41,30 @@ int dbread_project(CONN *sid, short int perm, int index, REC_PROJECT *project)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_projects where projectid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_projects where projectid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_projects where projectid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_projects where projectid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	project->projectid     = atoi(sql_getvalue(sqr, 0, 0));
-	project->obj_ctime     = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	project->obj_mtime     = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	project->obj_uid       = atoi(sql_getvalue(sqr, 0, 3));
-	project->obj_gid       = atoi(sql_getvalue(sqr, 0, 4));
-	project->obj_did       = atoi(sql_getvalue(sqr, 0, 5));
-	project->obj_gperm     = atoi(sql_getvalue(sqr, 0, 6));
-	project->obj_operm     = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(project->projectname,	sql_getvalue(sqr, 0, 8), sizeof(project->projectname)-1);
-	project->projectadmin  = atoi(sql_getvalue(sqr, 0, 9));
-	project->projectstart  = time_sql2unix(sql_getvalue(sqr, 0, 10));
-	project->projectfinish = time_sql2unix(sql_getvalue(sqr, 0, 11));
-	project->status        = atoi(sql_getvalue(sqr, 0, 12));
-	strncpy(project->details,	sql_getvalue(sqr, 0, 13), sizeof(project->details)-1);
+	project->projectid     = atoi(sql_getvalue(&sqr, 0, 0));
+	project->obj_ctime     = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	project->obj_mtime     = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	project->obj_uid       = atoi(sql_getvalue(&sqr, 0, 3));
+	project->obj_gid       = atoi(sql_getvalue(&sqr, 0, 4));
+	project->obj_did       = atoi(sql_getvalue(&sqr, 0, 5));
+	project->obj_gperm     = atoi(sql_getvalue(&sqr, 0, 6));
+	project->obj_operm     = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(project->projectname,	sql_getvalue(&sqr, 0, 8), sizeof(project->projectname)-1);
+	project->projectadmin  = atoi(sql_getvalue(&sqr, 0, 9));
+	project->projectstart  = time_sql2unix(sql_getvalue(&sqr, 0, 10));
+	project->projectfinish = time_sql2unix(sql_getvalue(&sqr, 0, 11));
+	project->status        = atoi(sql_getvalue(&sqr, 0, 12));
+	strncpy(project->details,	sql_getvalue(&sqr, 0, 13), sizeof(project->details)-1);
 	if (project->projectfinish<project->projectstart) project->projectfinish=project->projectstart;
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
@@ -73,7 +73,7 @@ int dbwrite_project(CONN *sid, int index, REC_PROJECT *project)
 	char curdate[32];
 	char query[12288];
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	authlevel=auth_priv(sid, "projects");
 	if (authlevel<2) return -1;
@@ -82,9 +82,9 @@ int dbwrite_project(CONN *sid, int index, REC_PROJECT *project)
 	memset(query, 0, sizeof(query));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query("SELECT max(projectid) FROM gw_projects"))<0) return -1;
-		project->projectid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(projectid) FROM gw_projects")<0) return -1;
+		project->projectid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (project->projectid<1) project->projectid=1;
 		strcpy(query, "INSERT INTO gw_projects (projectid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, projectname, projectadmin, projectstart, projectfinish, status, details) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", project->projectid, curdate, curdate, project->obj_uid, project->obj_gid, project->obj_did, project->obj_gperm, project->obj_operm);

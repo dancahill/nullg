@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,30 +19,30 @@
 
 char *domain_getname(char *outstring, int outlen, int domainid)
 {
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT domainname FROM gw_domains WHERE domainid = %d", domainid))<0) return NULL;
-	if (sql_numtuples(sqr)==1) {
-		snprintf(outstring, outlen, "%s", sql_getvalue(sqr, 0, 0));
+	if (sql_queryf(&sqr, "SELECT domainname FROM gw_domains WHERE domainid = %d", domainid)<0) return NULL;
+	if (sql_numtuples(&sqr)==1) {
+		snprintf(outstring, outlen, "%s", sql_getvalue(&sqr, 0, 0));
 		outstring[outlen-1]='\0';
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return outstring;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return NULL;
 }
 
 int domain_getid(char *domainname)
 {
 	int domainid=-1;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT domainid FROM gw_domains WHERE domainname = '%s'", domainname))<0) return -1;
-	if (sql_numtuples(sqr)==1) domainid=atoi(sql_getvalue(sqr, 0, 0));
-	sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT domainid FROM gw_domains WHERE domainname = '%s'", domainname)<0) return -1;
+	if (sql_numtuples(&sqr)==1) domainid=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (domainid>0) return domainid;
-	if ((sqr=sql_queryf("SELECT domainid FROM gw_domainaliases WHERE domainname = '%s'", domainname))<0) return -1;
-	if (sql_numtuples(sqr)==1) domainid=atoi(sql_getvalue(sqr, 0, 0));
-	sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT domainid FROM gw_domainaliases WHERE domainname = '%s'", domainname)<0) return -1;
+	if (sql_numtuples(&sqr)==1) domainid=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	return domainid;
 }

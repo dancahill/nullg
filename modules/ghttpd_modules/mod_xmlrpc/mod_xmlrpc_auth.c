@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,17 +25,17 @@ int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 	char salt[10];
 	short int i;
 	int contactid;
-	int sqr;
+	SQLRES sqr;
 
 	if ((strlen(sid->dat->user_username)==0)||(strlen(password)==0)) return -1;
-	if ((sqr=sql_queryf("SELECT contactid, password FROM gw_contacts WHERE username = '%s' AND obj_did = %d AND enabled > 0", username, sid->dat->user_did))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT contactid, password FROM gw_contacts WHERE username = '%s' AND obj_did = %d AND enabled > 0", username, sid->dat->user_did)<0) return -1;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -1;
 	}
-	contactid=atoi(sql_getvalue(sqr, 0, 0));
-	strncpy(cpassword, sql_getvalue(sqr, 0, 1), sizeof(cpassword)-1);
-	sql_freeresult(sqr);
+	contactid=atoi(sql_getvalue(&sqr, 0, 0));
+	strncpy(cpassword, sql_getvalue(&sqr, 0, 1), sizeof(cpassword)-1);
+	sql_freeresult(&sqr);
 	memset(salt, 0, sizeof(salt));
 	memset(cpass, 0, sizeof(cpass));
 	if (strncmp(cpassword, "$1$", 3)==0) {
@@ -59,7 +59,7 @@ int xmlrpc_auth_login(CONN *sid)
 	char token[64];
 	int contactid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (getxmlparam(sid, 3, "string")==NULL) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
@@ -83,31 +83,31 @@ int xmlrpc_auth_login(CONN *sid)
 		strncpy(raddress, getxmlparam(sid, 5, "string"), sizeof(raddress)-1);
 		if (strlen(password)==32) {
 			if ((strlen(username)==0)||(strlen(sid->dat->user_token)!=32)) return -1;
-			if ((sqr=sql_queryf("SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s' AND obj_did = %d", username, sid->dat->user_did))<0) {
+			if (sql_queryf(&sqr, "SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s' AND obj_did = %d", username, sid->dat->user_did)<0) {
 				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
-			if (sql_numtuples(sqr)!=1) {
-				sql_freeresult(sqr);
+			if (sql_numtuples(&sqr)!=1) {
+				sql_freeresult(&sqr);
 				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
-			if (strcmp(raddress, sql_getvalue(sqr, 0, 0))!=0) {
-				sql_freeresult(sqr);
+			if (strcmp(raddress, sql_getvalue(&sqr, 0, 0))!=0) {
+				sql_freeresult(&sqr);
 				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
-			if (strcmp(password, sql_getvalue(sqr, 0, 1))!=0) {
-				sql_freeresult(sqr);
+			if (strcmp(password, sql_getvalue(&sqr, 0, 1))!=0) {
+				sql_freeresult(&sqr);
 				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
-			contactid=atoi(sql_getvalue(sqr, 0, 2));
-			sql_freeresult(sqr);
+			contactid=atoi(sql_getvalue(&sqr, 0, 2));
+			sql_freeresult(&sqr);
 			memset(password, 0, sizeof(password));
 			return contactid;
 		} else {

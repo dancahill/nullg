@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -188,8 +188,8 @@ void orderlist(CONN *sid)
 	int offset=0;
 	int i;
 	int j;
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -203,18 +203,18 @@ void orderlist(CONN *sid)
 		prints(sid, "<TR><TH COLSPAN=3>Order System Search Form</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n");
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr1=sql_query("SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
-		for (i=0;i<sql_numfields(sqr1);i++) {
-			if (strcmp(sql_getname(sqr1, i), "obj_ctime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_uid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_did")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
-			prints(sid, "<OPTION>%s\n", sql_getname(sqr1, i));
+		if (sql_query(&sqr1, "SELECT * FROM gw_orders WHERE orderid = 1")<0) return;
+		for (i=0;i<sql_numfields(&sqr1);i++) {
+			if (strcmp(sql_getname(&sqr1, i), "obj_ctime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_mtime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_uid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_did")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gperm")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_operm")==0) continue;
+			prints(sid, "<OPTION>%s\n", sql_getname(&sqr1, i));
 		}
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 		prints(sid, "</SELECT></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=TEXT NAME=searchstring value='*' SIZE=20></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n");
@@ -236,29 +236,29 @@ void orderlist(CONN *sid)
 		if (*ptemp=='?') *ptemp='_';
 		ptemp++;
 	}
-	if ((sqr1=sql_query("SELECT * FROM gw_orders WHERE orderid = 1"))<0) return;
+	if (sql_query(&sqr1, "SELECT * FROM gw_orders WHERE orderid = 1")<0) return;
 	strcpy(query, "SELECT orderid, contactid, orderdate, paymentdue, paymentreceived from gw_orders WHERE (");
 	memset(column, 0, sizeof(column));
 	if ((ptemp=getpostenv(sid, "COLUMN"))!=NULL) {
 		snprintf(column, sizeof(column)-1, "%s", ptemp);
 	}
 	if (strcmp(ptemp, "All Columns")==0) {
-		for (i=0;i<sql_numfields(sqr1);i++) {
-			if (strcmp(sql_getname(sqr1, i), "obj_ctime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_uid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_did")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
+		for (i=0;i<sql_numfields(&sqr1);i++) {
+			if (strcmp(sql_getname(&sqr1, i), "obj_ctime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_mtime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_uid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_did")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gperm")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_operm")==0) continue;
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), searchstring);
-			} else if (strcmp(sql_getname(sqr1, i), "paymentdue")==0) {
-//				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), searchstring);
-			} else if (strcmp(sql_getname(sqr1, i), "paymentreceived")==0) {
-//				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(sqr1, i), searchstring);
+				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(&sqr1, i), searchstring);
+			} else if (strcmp(sql_getname(&sqr1, i), "paymentdue")==0) {
+//				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(&sqr1, i), searchstring);
+			} else if (strcmp(sql_getname(&sqr1, i), "paymentreceived")==0) {
+//				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(&sqr1, i), searchstring);
 			} else {
-				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), searchstring);
+				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(&sqr1, i), searchstring);
 			}
 		}
 		strncatf(query, sizeof(query)-strlen(query)-1, "orderid like '%s'", searchstring);
@@ -270,37 +270,37 @@ void orderlist(CONN *sid)
 		}
 	}
 	strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY orderdate DESC", sid->dat->user_did);
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	prints(sid, "<CENTER>\n");
-	if ((sqr1=sql_query(query))<0) return;
+	if (sql_query(&sqr1, query)<0) return;
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
-	prints(sid, "Found %d matching orders<BR>\n", sql_numtuples(sqr1));
-	if (sql_numtuples(sqr1)<1) {
+	prints(sid, "Found %d matching orders<BR>\n", sql_numtuples(&sqr1));
+	if (sql_numtuples(&sqr1)<1) {
 		prints(sid, "<A HREF=%s/orders/editnew>New Order</A>\n", sid->dat->in_ScriptName);
 		prints(sid, "</CENTER>\n");
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr1);
 		return;
 	}
-	if ((sqr2=sql_query("SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
+	if (sql_query(&sqr2, "SELECT contactid, surname, givenname FROM gw_contacts")<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n<TR>");
 	prints(sid, "<TH NOWRAP STYLE='border-style:solid'>Order ID</TH><TH NOWRAP STYLE='border-style:solid'>Customer Name</TH><TH NOWRAP STYLE='border-style:solid'>Order Date</TH><TH NOWRAP STYLE='border-style:solid'>Amount Due</TH><TH NOWRAP STYLE='border-style:solid'>Amount Received</TH></TR>\n");
-	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
+	for (i=offset;(i<sql_numtuples(&sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
-		prints(sid, "<TD ALIGN=right NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%d'\"><A HREF=%s/orders/view?orderid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
-		for (j=0;j<sql_numtuples(sqr2);j++) {
-			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
-				if (strlen(sql_getvalue(sqr2, j, 1))&&strlen(sql_getvalue(sqr2, j, 2))) prints(sid, ", ");
-				prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr2, j, 2)));
+		prints(sid, "<TD ALIGN=right NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%d'\"><A HREF=%s/orders/view?orderid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), atoi(sql_getvalue(&sqr1, i, 0)));
+		for (j=0;j<sql_numtuples(&sqr2);j++) {
+			if (atoi(sql_getvalue(&sqr2, j, 0))==atoi(sql_getvalue(&sqr1, i, 1))) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(&sqr2, j, 0), str2html(sid, sql_getvalue(&sqr2, j, 1)));
+				if (strlen(sql_getvalue(&sqr2, j, 1))&&strlen(sql_getvalue(&sqr2, j, 2))) prints(sid, ", ");
+				prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr2, j, 2)));
 				break;
 			}
 		}
-		if (j==sql_numtuples(sqr2)) {
+		if (j==sql_numtuples(&sqr2)) {
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
-		prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr1, i, 2)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr1, i, 3)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr1, i, 4)));
+		prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(&sqr1, i, 2)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr1, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr1, i, 4)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE>\n<TABLE><TR>\n");
@@ -311,7 +311,7 @@ void orderlist(CONN *sid)
 		prints(sid, "<INPUT TYPE=SUBMIT VALUE='Previous %d'>\n", sid->dat->user_maxlist);
 		prints(sid, "</TD></FORM>\n");
 	}
-	if (offset+sid->dat->user_maxlist<sql_numtuples(sqr1)) {
+	if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr1)) {
 		prints(sid, "<FORM METHOD=POST ACTION=%s/orders/list?offset=%d><TD>\n", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist);
 		prints(sid, "<INPUT TYPE=HIDDEN NAME=column VALUE='%s'>\n", column);
 		prints(sid, "<INPUT TYPE=HIDDEN NAME=searchstring VALUE='%s'>\n", searchstring);
@@ -321,8 +321,8 @@ void orderlist(CONN *sid)
 	prints(sid, "</TR></TABLE>\n");
 	prints(sid, "<A HREF=%s/orders/editnew>New Order</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr1);
-	sql_freeresult(sqr2);
+	sql_freeresult(&sqr1);
+	sql_freeresult(&sqr2);
 	return;
 }
 
@@ -342,7 +342,7 @@ void ordersave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int orderid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -380,9 +380,9 @@ void ordersave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(orderid) FROM gw_orders"))<0) return;
-		order.orderid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(orderid) FROM gw_orders")<0) return;
+		order.orderid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (order.orderid<1) order.orderid=1;
 		strcpy(query, "INSERT INTO gw_orders (orderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, contactid, userid, orderdate, ordertype, paymentmethod, paymentdue, paymentreceived, status, details) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", order.orderid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);

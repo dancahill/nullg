@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -280,10 +280,8 @@ int conf_read()
 #endif
 	proc.config.loglevel=1;
 	proc.config.umask=0007;
-	proc.config.sql_maxconn=50;
 
 	config_read("global", conf_callback);
-
 
 	if (!strlen(proc.config.dir_var_backup)) {
 		snprintf(proc.config.dir_var_backup,  sizeof(proc.config.dir_var_backup)-1,  "%s/backup", proc.config.dir_var);

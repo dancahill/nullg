@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,28 +21,28 @@
 void htselect_product(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_query("SELECT productid, productname FROM gw_products order by productname ASC"))<0) return;
+	if (sql_query(&sqr, "SELECT productid, productname FROM gw_products order by productname ASC")<0) return;
 	prints(sid, "<OPTION VALUE='0'>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
 char *htview_product(CONN *sid, int selected)
 {
 	char *buffer=getbuffer(sid);
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT productid, productname FROM gw_products WHERE productid = %d", selected))<0) return buffer;
-	if (sql_numtuples(sqr)==1) {
-		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
+	if (sql_queryf(&sqr, "SELECT productid, productname FROM gw_products WHERE productid = %d", selected)<0) return buffer;
+	if (sql_numtuples(&sqr)==1) {
+		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return buffer;
 }
 
@@ -128,25 +128,25 @@ void orderitemedit(CONN *sid)
 void orderitemlist(CONN *sid, int orderid)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
+	if (sql_queryf(&sqr, "SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid)<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">");
 	prints(sid, "<TD NOWRAP STYLE='border-style:solid'><B>Product</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Quantity</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Unit Price</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Discount</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Extended</B></TD></TR>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>");
-		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
+		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(&sqr, i, 1))));
 		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "</A>");
 		prints(sid, "&nbsp;</TD>");
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 4))*100.0);
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2))*atof(sql_getvalue(sqr, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr, i, 2)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(&sqr, i, 4))*100.0);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr, i, 2))*atof(sql_getvalue(&sqr, i, 3)));
 		prints(sid, "</TR>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
 		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", sid->dat->in_ScriptName, orderid);
 		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
@@ -179,7 +179,7 @@ void orderitemsave(CONN *sid)
 	float totaldue;
 	int i;
 	int orderitemid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -224,9 +224,9 @@ void orderitemsave(CONN *sid)
 		orderitem.internalcost=product.internalcost;
 		orderitem.tax1=product.tax1;
 		orderitem.tax2=product.tax2;
-		if ((sqr=sql_query("SELECT max(orderitemid) FROM gw_orderitems"))<0) return;
-		orderitem.orderitemid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(orderitemid) FROM gw_orderitems")<0) return;
+		orderitem.orderitemid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (orderitem.orderitemid<1) orderitem.orderitemid=1;
 		strcpy(query, "INSERT INTO gw_orderitems (orderitemid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, orderid, productid, quantity, discount, unitprice, internalcost, tax1, tax2) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", orderitem.orderitemid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);
@@ -261,19 +261,19 @@ void orderitemsave(CONN *sid)
 		db_log_activity(sid, "orderitems", orderitem.orderitemid, "modify", "%s - %s modified order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	}
 	totaldue=0;
-	if ((sqr=sql_queryf("SELECT quantity, unitprice, discount, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderitem.orderid))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			subtotal=(float)(atof(sql_getvalue(sqr, i, 0))*atof(sql_getvalue(sqr, i, 1)));
-			subtotal=(float)(subtotal-subtotal*atof(sql_getvalue(sqr, i, 2)));
-			subtotal=(float)(subtotal+subtotal*atof(sql_getvalue(sqr, i, 3))+subtotal*atof(sql_getvalue(sqr, i, 4)));
+	if (sql_queryf(&sqr, "SELECT quantity, unitprice, discount, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderitem.orderid)<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
+			subtotal=(float)(atof(sql_getvalue(&sqr, i, 0))*atof(sql_getvalue(&sqr, i, 1)));
+			subtotal=(float)(subtotal-subtotal*atof(sql_getvalue(&sqr, i, 2)));
+			subtotal=(float)(subtotal+subtotal*atof(sql_getvalue(&sqr, i, 3))+subtotal*atof(sql_getvalue(&sqr, i, 4)));
 			totaldue+=subtotal;
 		}
 		totaldue*=100.0f;
 		if ((float)totaldue-(int)totaldue>0.5) totaldue++;
 		totaldue=(int)totaldue/100.0f;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	sql_updatef("UPDATE gw_orders SET obj_mtime = '%s', paymentdue = '%1.2f' WHERE orderid = %d", curdate, totaldue, orderitem.orderid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/orders/view?orderid=%d\");\n", sid->dat->in_ScriptName, orderitem.orderid);

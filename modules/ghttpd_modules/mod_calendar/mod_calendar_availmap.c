@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@ void calendar_availmap(CONN *sid)
 	int k=0;
 	int x;
 	int busyevent;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 	int userid=-1;
 	int groupid=-1;
@@ -107,30 +107,30 @@ void calendar_availmap(CONN *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	if ((sqr=sql_queryf("SELECT groupid, availability FROM gw_users WHERE userid = %d", userid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr1, "SELECT groupid, availability FROM gw_users WHERE userid = %d", userid)<0) return;
+	if (sql_numtuples(&sqr1)!=1) {
 		prints(sid, "<CENTER>No matching record found for %s</CENTER>\n", userid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr1);
 		return;
 	}
 	memset(uavailability, 0, sizeof(uavailability));
-	usergroupid=atoi(sql_getvalue(sqr, 0, 0));
-	strncpy(uavailability, sql_getvalue(sqr, 0, 1), sizeof(uavailability)-1);
-	sql_freeresult(sqr);
+	usergroupid=atoi(sql_getvalue(&sqr1, 0, 0));
+	strncpy(uavailability, sql_getvalue(&sqr1, 0, 1), sizeof(uavailability)-1);
+	sql_freeresult(&sqr1);
 	if (strlen(uavailability)!=168) {
 		for (i=0;i<168;i++) {
 			uavailability[i]='0';
 		}
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", usergroupid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr1, "SELECT availability FROM gw_groups WHERE groupid = %d", usergroupid)<0) return;
+	if (sql_numtuples(&sqr1)!=1) {
 		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\n", usergroupid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr1);
 		return;
 	}
 	memset(gavailability, 0, sizeof(gavailability));
-	strncpy(gavailability, sql_getvalue(sqr, 0, 0), sizeof(gavailability)-1);
-	sql_freeresult(sqr);
+	strncpy(gavailability, sql_getvalue(&sqr1, 0, 0), sizeof(gavailability)-1);
+	sql_freeresult(&sqr1);
 	if (strlen(gavailability)!=168) {
 		for (i=0;i<168;i++) {
 			gavailability[i]='0';
@@ -142,11 +142,11 @@ void calendar_availmap(CONN *sid)
 		}
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' ORDER BY eventfinish ASC", posttime1, posttime2))<0) return;
+		if (sql_queryf(&sqr1, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' ORDER BY eventfinish ASC", posttime1, posttime2)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventfinish ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if (sql_queryf(&sqr1, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where busy > 0 and eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventfinish ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid)<0) return;
 	}
-	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if (sql_queryf(&sqr2, "SELECT userid, groupid, username FROM gw_users")<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR CLASS=\"FIELDNAME\">\n");
 	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
@@ -170,14 +170,14 @@ void calendar_availmap(CONN *sid)
 				t1=t;
 				t-=time_tzoffset(sid, t);
 				busyevent=0;
-				for (x=0;x<sql_numtuples(sqr);x++) {
-					t2=time_sql2unix(sql_getvalue(sqr, x, 1));
-					t3=time_sql2unix(sql_getvalue(sqr, x, 2));
+				for (x=0;x<sql_numtuples(&sqr1);x++) {
+					t2=time_sql2unix(sql_getvalue(&sqr1, x, 1));
+					t3=time_sql2unix(sql_getvalue(&sqr1, x, 2));
 					if (t2>t) continue;
 					if (t3<=t) continue;
-					if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, x, 3)))) continue;
-					if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, x, 4)))) continue;
-					busyevent=atoi(sql_getvalue(sqr, x, 0));
+					if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, x, 3)))) continue;
+					if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, x, 4)))) continue;
+					busyevent=atoi(sql_getvalue(&sqr1, x, 0));
 					break;
 				}
 				if (busyevent) {
@@ -196,7 +196,7 @@ void calendar_availmap(CONN *sid)
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }

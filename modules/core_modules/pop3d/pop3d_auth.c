@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox
 {
 	int domainid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (strlen(username)==0) return -1;
 
@@ -50,30 +50,30 @@ int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox
 	if (domainid<0) domainid=1;
 	sid->dat->user_did=domainid;
 
-	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d", username, domainid))<0) {
+	if (sql_queryf(&sqr, "SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d", username, domainid)<0) {
 		return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -1;
 	}
-	if (auth_checkpass(password, sql_getvaluebyname(sqr, 0, "password"))!=0) {
-		sql_freeresult(sqr);
+	if (auth_checkpass(password, sql_getvaluebyname(&sqr, 0, "password"))!=0) {
+		sql_freeresult(&sqr);
 		return -1;
 	}
-	sid->dat->user_uid = atoi(sql_getvaluebyname(sqr, 0, "userid"));
-	sid->dat->user_gid = atoi(sql_getvaluebyname(sqr, 0, "groupid"));
-	sql_freeresult(sqr);
+	sid->dat->user_uid = atoi(sql_getvaluebyname(&sqr, 0, "userid"));
+	sid->dat->user_gid = atoi(sql_getvaluebyname(&sqr, 0, "groupid"));
+	sql_freeresult(&sqr);
 	if (mbox==0) {
 		snprintf(sid->dat->user_username, sizeof(sid->dat->user_username)-1, "%s", username);
 		sid->dat->user_mailcurrent=0;
 		return 0;
 	}
-	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d ORDER BY mailaccountid ASC", mbox, sid->dat->user_uid, sid->dat->user_did))<0) {
+	if (sql_queryf(&sqr, "SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d ORDER BY mailaccountid ASC", mbox, sid->dat->user_uid, sid->dat->user_did)<0) {
 		return -1;
 	}
-	i=sql_numtuples(sqr);
-	sql_freeresult(sqr);
+	i=sql_numtuples(&sqr);
+	sql_freeresult(&sqr);
 	if (i!=1) {
 		return -1;
 	}

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 int dbread_note(CONN *sid, short int perm, int index, REC_NOTE *note)
 {
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(note, 0, sizeof(REC_NOTE));
 	authlevel=A_READ+A_MODIFY+A_INSERT+A_DELETE;
@@ -41,28 +41,28 @@ int dbread_note(CONN *sid, short int perm, int index, REC_NOTE *note)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_notes where noteid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_notes where noteid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_notes where noteid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_notes where noteid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	note->noteid     = atoi(sql_getvalue(sqr, 0, 0));
-	note->obj_ctime  = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	note->obj_mtime  = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	note->obj_uid    = atoi(sql_getvalue(sqr, 0, 3));
-	note->obj_gid    = atoi(sql_getvalue(sqr, 0, 4));
-	note->obj_did    = atoi(sql_getvalue(sqr, 0, 5));
-	note->obj_gperm  = atoi(sql_getvalue(sqr, 0, 6));
-	note->obj_operm  = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(note->tablename,		sql_getvalue(sqr, 0, 8), sizeof(note->tablename)-1);
-	note->tableindex=atoi(sql_getvalue(sqr, 0, 9));
-	strncpy(note->notetitle,		sql_getvalue(sqr, 0, 10), sizeof(note->notetitle)-1);
-	strncpy(note->notetext,		sql_getvalue(sqr, 0, 11), sizeof(note->notetext)-1);
+	note->noteid     = atoi(sql_getvalue(&sqr, 0, 0));
+	note->obj_ctime  = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	note->obj_mtime  = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	note->obj_uid    = atoi(sql_getvalue(&sqr, 0, 3));
+	note->obj_gid    = atoi(sql_getvalue(&sqr, 0, 4));
+	note->obj_did    = atoi(sql_getvalue(&sqr, 0, 5));
+	note->obj_gperm  = atoi(sql_getvalue(&sqr, 0, 6));
+	note->obj_operm  = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(note->tablename,		sql_getvalue(&sqr, 0, 8), sizeof(note->tablename)-1);
+	note->tableindex=atoi(sql_getvalue(&sqr, 0, 9));
+	strncpy(note->notetitle,		sql_getvalue(&sqr, 0, 10), sizeof(note->notetitle)-1);
+	strncpy(note->notetext,		sql_getvalue(&sqr, 0, 11), sizeof(note->notetext)-1);
 	if (strlen(note->notetitle)==0) strncpy(note->notetitle, "unnamed", sizeof(note->notetitle)-1);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
@@ -71,7 +71,7 @@ int dbwrite_note(CONN *sid, int index, REC_NOTE *note)
 	char curdate[32];
 	char query[12288];
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	authlevel=A_READ+A_MODIFY+A_INSERT+A_DELETE;
 	if (auth_priv(sid, "admin")&A_ADMIN) {
@@ -83,9 +83,9 @@ int dbwrite_note(CONN *sid, int index, REC_NOTE *note)
 	memset(query, 0, sizeof(query));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query("SELECT max(noteid) FROM gw_notes"))<0) return -1;
-		note->noteid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(noteid) FROM gw_notes")<0) return -1;
+		note->noteid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (note->noteid<1) note->noteid=1;
 		strcpy(query, "INSERT INTO gw_notes (noteid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, tablename, tableindex, notetitle, notetext) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", note->noteid, curdate, curdate, note->obj_uid, note->obj_gid, note->obj_did, note->obj_gperm, note->obj_operm);

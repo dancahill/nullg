@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -357,27 +357,27 @@ static void pop3_remote(CONN *sid)
 {
 	MDIR mdir;
 	char line[128];
-	int sqr;
+	SQLRES sqr;
 	int i;
 
-	if ((sqr=sql_queryf("SELECT mailheaderid, size, uidl FROM gw_mailheaders WHERE accountid = %d AND obj_uid = %d AND folder = 1 ORDER BY hdr_date ASC", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
-	mdir.mboxtotal=sql_numtuples(sqr);
+	if (sql_queryf(&sqr, "SELECT mailheaderid, size, uidl FROM gw_mailheaders WHERE accountid = %d AND obj_uid = %d AND folder = 1 ORDER BY hdr_date ASC", sid->dat->user_mailcurrent, sid->dat->user_uid)<0) return;
+	mdir.mboxtotal=sql_numtuples(&sqr);
 	if ((mdir.msg=calloc(mdir.mboxtotal, sizeof(MDIRENT *)))==NULL) {
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
+	for (i=0;i<sql_numtuples(&sqr);i++) {
 		if ((mdir.msg[i]=calloc(1, sizeof(MDIRENT)))==NULL) break;
-		mdir.msg[i]->localid=atoi(sql_getvalue(sqr, i, 0));
+		mdir.msg[i]->localid=atoi(sql_getvalue(&sqr, i, 0));
 		mdir.msg[i]->deleted=0;
-		mdir.msg[i]->filesize=atoi(sql_getvalue(sqr, i, 1));
+		mdir.msg[i]->filesize=atoi(sql_getvalue(&sqr, i, 1));
 		memset(mdir.msg[i]->filename, 0, sizeof(mdir.msg[i]->filename));
 		snprintf(mdir.msg[i]->filename, sizeof(mdir.msg[i]->filename)-1, "%s/%04d/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, mdir.msg[i]->localid);
 		fixslashes(mdir.msg[i]->filename);
 		memset(mdir.msg[i]->uidl, 0, sizeof(mdir.msg[i]->uidl));
-		decode_base64(mdir.msg[i]->uidl, sizeof(mdir.msg[i]->uidl)-1, sql_getvalue(sqr, i, 2));
+		decode_base64(mdir.msg[i]->uidl, sizeof(mdir.msg[i]->uidl)-1, sql_getvalue(&sqr, i, 2));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	mdir.mboxcount=mdir.mboxtotal;
 	mdir.lastmsg=0;
 	do {

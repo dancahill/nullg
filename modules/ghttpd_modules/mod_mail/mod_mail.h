@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ int conf_read(void);
 /* mod_mail_db.c */
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);
 int dbread_mailcurrent(CONN *sid, int mailcurrent);
-int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header);
+int dbread_getheader(CONN *sid, SQLRES *sqr, int tuple, wmheader *header);
 /* mod_mail_files.c */
 void webmailsave(CONN *sid);
 void webmailmove(CONN *sid);
@@ -107,7 +107,7 @@ char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
 int   webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth);
 /* mod_mail_search.c */
 char *wmsearch_makestring(CONN *sid);
-int   wmsearch_doquery(CONN *sid, const char *order_by, int folderid);
+int   wmsearch_doquery(CONN *sid, SQLRES *sqr, const char *order_by, int folderid);
 void  wmsearch_form(CONN *sid);
 /* mod_mail_server.c */
 int  wmfolder_makedefaults(CONN *sid, int accountid);

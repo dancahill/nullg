@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid,
 	err=sys_system("%s %s", mod_config.filter_program, msgfilename);
 	if (err>255) err=err>>8;
 	if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
-		sql_updatef("UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
+		sql_updatef("UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d AND obj_did = %d", (int)sb.st_size, messageid, accountid, sid->dat->user_did);
 	}
 	if ((err==1)||(err==2)||(err==3)) {
 		fp=fopen(msgfilename, "r");
@@ -39,13 +39,13 @@ int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid,
 		}
 		if (fp!=NULL) fclose(fp);
 		if (err==1) {
-			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[SPAM]' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
+			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[SPAM]' WHERE mailheaderid = %d AND accountid = %d AND obj_did = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid, sid->dat->user_did);
 			prints(sid, "[SPAM]");
 		} else if (err==2) {
-			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[VIRUS]' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
+			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[VIRUS]' WHERE mailheaderid = %d AND accountid = %d AND obj_did = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid, sid->dat->user_did);
 			prints(sid, "[VIRUS]");
 		} else if (err==3) {
-			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[VIRUS+SPAM]' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
+			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[VIRUS+SPAM]' WHERE mailheaderid = %d AND accountid = %d AND obj_did = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid, sid->dat->user_did);
 			prints(sid, "[VIRUS+SPAM]");
 		}
 		wmfolder_msgmove(sid, accountid, messageid, 1, 7);
@@ -61,7 +61,7 @@ int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 	int dstmbox;
 	int i;
 	int match;
-	int sqr1;
+	SQLRES sqr1;
 	int rc;
 
 	memset(msgfilename, 0, sizeof(msgfilename));
@@ -70,57 +70,57 @@ int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 	rc=wmfilter_scan(sid, header, msgfilename, accountid, messageid);
 	if (rc>0) return rc;
 	dstmbox=1;
-	if ((sqr1=sql_queryf("SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return -1;
-	if (sql_numtuples(sqr1)<1) {
-		sql_freeresult(sqr1);
+	if (sql_queryf(&sqr1, "SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d AND obj_did = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid, sid->dat->user_did)<0) return -1;
+	if (sql_numtuples(&sqr1)<1) {
+		sql_freeresult(&sqr1);
 		return 1;
 	}
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		if (strlen(sql_getvalue(sqr1, i, 0))<1) continue;
-		if (strlen(sql_getvalue(sqr1, i, 1))<1) continue;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if (strlen(sql_getvalue(&sqr1, i, 0))<1) continue;
+		if (strlen(sql_getvalue(&sqr1, i, 1))<1) continue;
 		hptr=NULL;
-		if (strcasecmp(sql_getvalue(sqr1, i, 0), "from")==0) {
+		if (strcasecmp(sql_getvalue(&sqr1, i, 0), "from")==0) {
 			hptr=header->From;
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 0), "reply-to")==0) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 0), "reply-to")==0) {
 			hptr=header->ReplyTo;
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 0), "to")==0) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 0), "to")==0) {
 			hptr=header->To;
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 0), "cc")==0) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 0), "cc")==0) {
 			hptr=header->CC;
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 0), "bcc")==0) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 0), "bcc")==0) {
 			hptr=header->BCC;
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 0), "subject")==0) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 0), "subject")==0) {
 			hptr=header->Subject;
 		}
 		if (hptr==NULL) continue;
 		match=0;
-		if (strcasecmp(sql_getvalue(sqr1, i, 2), "exact")==0) {
-			if (strcasecmp(hptr, sql_getvalue(sqr1, i, 1))==0) {
+		if (strcasecmp(sql_getvalue(&sqr1, i, 2), "exact")==0) {
+			if (strcasecmp(hptr, sql_getvalue(&sqr1, i, 1))==0) {
 				match=1;
 			}
-		} else if (strcasecmp(sql_getvalue(sqr1, i, 2), "substr")==0) {
-			if (p_strcasestr(hptr, sql_getvalue(sqr1, i, 1))!=NULL) {
+		} else if (strcasecmp(sql_getvalue(&sqr1, i, 2), "substr")==0) {
+			if (p_strcasestr(hptr, sql_getvalue(&sqr1, i, 1))!=NULL) {
 				match=1;
 			}
 		}
 		if (match) {
-			if (strcasecmp(sql_getvalue(sqr1, i, 3), "delete")==0) {
-				sql_freeresult(sqr1);
+			if (strcasecmp(sql_getvalue(&sqr1, i, 3), "delete")==0) {
+				sql_freeresult(&sqr1);
 				return -2;
-			} else if (strcasecmp(sql_getvalue(sqr1, i, 3), "move")==0) {
-				dstmbox=atoi(sql_getvalue(sqr1, i, 4));
+			} else if (strcasecmp(sql_getvalue(&sqr1, i, 3), "move")==0) {
+				dstmbox=atoi(sql_getvalue(&sqr1, i, 4));
 				goto testrule;
 			}
 		}
 	}
 testrule:
-	sql_freeresult(sqr1);
-	if ((sqr1=sql_queryf("SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND mailfolderid = %d", sid->dat->user_uid, accountid, dstmbox))<0) return -1;
-	if (sql_numtuples(sqr1)<1) {
+	sql_freeresult(&sqr1);
+	if (sql_queryf(&sqr1, "SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailfolderid = %d", sid->dat->user_uid, sid->dat->user_did, accountid, dstmbox)<0) return -1;
+	if (sql_numtuples(&sqr1)<1) {
 		dstmbox=-1;
 	}
-	sql_freeresult(sqr1);
-	sql_updatef("UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d", dstmbox, messageid, accountid);
+	sql_freeresult(&sqr1);
+	sql_updatef("UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d AND obj_did = %d", dstmbox, messageid, accountid, sid->dat->user_did);
 	wmfolder_msgmove(sid, accountid, messageid, 1, dstmbox);
 	return dstmbox;
 }
@@ -137,7 +137,7 @@ void wmfilter_edit(CONN *sid)
 	int dstfolderid;
 	int filterid;
 	int hdrfound;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -162,18 +162,18 @@ void wmfilter_edit(CONN *sid)
 	} else {
 		if ((ptemp=getgetenv(sid, "FILTERID"))==NULL) return;
 		filterid=atoi(ptemp);
-		if ((sqr=sql_queryf("SELECT mailfilterid, accountid, filtername, header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d AND mailfilterid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid, filterid))<0) return;
-		if (sql_numtuples(sqr)==1) {
-			filterid=atoi(sql_getvalue(sqr, 0, 0));
-			accountid=atoi(sql_getvalue(sqr, 0, 1));
-			snprintf(filtername, sizeof(filtername)-1, "%s", sql_getvalue(sqr, 0, 2));
-			snprintf(header, sizeof(header)-1, "%s", sql_getvalue(sqr, 0, 3));
-			snprintf(string, sizeof(string)-1, "%s", sql_getvalue(sqr, 0, 4));
-			snprintf(rule,   sizeof(rule)-1,   "%s", sql_getvalue(sqr, 0, 5));
-			snprintf(action, sizeof(action)-1, "%s", sql_getvalue(sqr, 0, 6));
-			dstfolderid=atoi(sql_getvalue(sqr, 0, 7));
+		if (sql_queryf(&sqr, "SELECT mailfilterid, accountid, filtername, header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailfilterid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, sid->dat->user_did, accountid, filterid)<0) return;
+		if (sql_numtuples(&sqr)==1) {
+			filterid=atoi(sql_getvalue(&sqr, 0, 0));
+			accountid=atoi(sql_getvalue(&sqr, 0, 1));
+			snprintf(filtername, sizeof(filtername)-1, "%s", sql_getvalue(&sqr, 0, 2));
+			snprintf(header, sizeof(header)-1, "%s", sql_getvalue(&sqr, 0, 3));
+			snprintf(string, sizeof(string)-1, "%s", sql_getvalue(&sqr, 0, 4));
+			snprintf(rule,   sizeof(rule)-1,   "%s", sql_getvalue(&sqr, 0, 5));
+			snprintf(action, sizeof(action)-1, "%s", sql_getvalue(&sqr, 0, 6));
+			dstfolderid=atoi(sql_getvalue(&sqr, 0, 7));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
@@ -238,26 +238,26 @@ void wmfilter_edit(CONN *sid)
 void wmfilter_list(CONN *sid, int accountid)
 {
 	int i;
-	int sqr1;
+	SQLRES sqr1;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr1=sql_queryf("SELECT mailfilterid, filtername FROM gw_mailfilters WHERE obj_uid = %d and accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return;
+	if (sql_queryf(&sqr1, "SELECT mailfilterid, filtername FROM gw_mailfilters WHERE obj_uid = %d AND obj_did = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, sid->dat->user_did, accountid)<0) return;
 	prints(sid, "<CENTER>");
-	if (sql_numtuples(sqr1)>0) {
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
-		for (i=0; i<sql_numtuples(sqr1); i++) {
+		for (i=0; i<sql_numtuples(&sqr1); i++) {
 			prints(sid, "<TR><TD NOWRAP WIDTH=100%%>");
-			prints(sid, "<A HREF=%s/mail/filters/edit?accountid=%d&filterid=%d>", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(sqr1, i, 0)));
-			prints(sid, "<B>%s</B></A></TD></TR>\n", str2html(sid, sql_getvalue(sqr1, i, 1)));
+			prints(sid, "<A HREF=%s/mail/filters/edit?accountid=%d&filterid=%d>", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "<B>%s</B></A></TD></TR>\n", str2html(sid, sql_getvalue(&sqr1, i, 1)));
 		}
 		prints(sid, "</TABLE>\n");
 	}
 	prints(sid, "<A HREF=%s/mail/filters/editnew?accountid=%d><B>New Filter</B></A>", sid->dat->in_ScriptName, accountid);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -274,7 +274,7 @@ void wmfilter_save(CONN *sid)
 	int accountid;
 	int dstfolderid;
 	int filterid;
-	int sqr;
+	SQLRES sqr;
 	time_t t;
 
 	prints(sid, "<BR>\n");
@@ -310,12 +310,12 @@ void wmfilter_save(CONN *sid)
 			prints(sid, "<CENTER>Filter name cannot be blank</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT max(mailfilterid) FROM gw_mailfilters where accountid = %d", accountid))<0) return;
-		filterid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT max(mailfilterid) FROM gw_mailfilters where accountid = %d", accountid)<0) return;
+		filterid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (filterid<1) filterid=1;
-		strcpy(query, "INSERT INTO gw_mailfilters (mailfilterid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, filtername, header, string, rule, action, dstfolderid) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', '%d', ", filterid, curdate, curdate, sid->dat->user_uid, accountid);
+		strcpy(query, "INSERT INTO gw_mailfilters (mailfilterid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, filtername, header, string, rule, action, dstfolderid) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', ", filterid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filtername));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string));
@@ -333,7 +333,7 @@ void wmfilter_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "rule = '%s', ",       str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, rule));
 		strncatf(query, sizeof(query)-strlen(query)-1, "action = '%s', ",     str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, action));
 		strncatf(query, sizeof(query)-strlen(query)-1, "dstfolderid = '%d'", dstfolderid);
-		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailfilterid = %d AND obj_uid = %d AND accountid = %d", filterid, sid->dat->user_uid, accountid);
+		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailfilterid = %d AND obj_uid = %d AND obj_did = %d AND accountid = %d", filterid, sid->dat->user_uid, sid->dat->user_did, accountid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Mail filter %d modified successfully</CENTER><BR>\n", filterid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);

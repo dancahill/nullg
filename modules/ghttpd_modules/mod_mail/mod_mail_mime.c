@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -358,7 +358,7 @@ void webmailfiledl(CONN *sid)
 	char msgfilename[256];
 	int msgnum=0;
 	int folderid=0;
-	int sqr;
+	SQLRES sqr;
 
 	memset(filename, 0, sizeof(filename));
 	pQueryString=strstr(sid->dat->in_RequestURI, "/mail/file/");
@@ -373,17 +373,17 @@ void webmailfiledl(CONN *sid)
 	strncpy(filename, pQueryString, sizeof(filename)-1);
 	decodeurl(filename);
 	memset((char *)&header, 0, sizeof(header));
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		send_error(sid, 400, "Bad Request", "No such message.");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
-	folderid=atoi(sql_getvalue(sqr, 0, 1));
-	snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(sqr, 0, 2));
-	snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(sqr, 0, 3));
-	snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(sqr, 0, 4));
-	sql_freeresult(sqr);
+	folderid=atoi(sql_getvalue(&sqr, 0, 1));
+	snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(&sqr, 0, 2));
+	snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(&sqr, 0, 3));
+	snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(&sqr, 0, 4));
+	sql_freeresult(&sqr);
 	if (p_strcasestr(header.contenttype, "multipart")==NULL) {
 		send_error(sid, 400, "Bad Request", "No files are attached to this message.");
 		return;

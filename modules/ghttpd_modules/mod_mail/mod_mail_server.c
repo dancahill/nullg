@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -217,47 +217,47 @@ int wmserver_connect(CONN *sid, int verbose)
 	char inbuffer[1024];
 	char timebuffer[100];
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 
 	if (sid->dat->wm->connected) return 0;
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
-		if (sql_numtuples(sqr)<1) {
-			sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid)<0) return -1;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid)<0) return -1;
+		if (sql_numtuples(&sqr)<1) {
+			sql_freeresult(&sqr);
 			return -1;
 		}
-		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
+		sid->dat->user_mailcurrent=atoi(sql_getvalue(&sqr, 0, 0));
 		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid)<0) return -1;
 	}
-	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->wm->realname,     sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
-		strncpy(sid->dat->wm->organization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
-		strncpy(sid->dat->wm->username,     sql_getvalue(sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
-		strncpy(sid->dat->wm->password,     DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
-		strncpy(sid->dat->wm->smtpauth,     sql_getvalue(sqr, 0, 4), sizeof(sid->dat->wm->smtpauth)-1);
-		strncpy(sid->dat->wm->servertype,   sql_getvalue(sqr, 0, 5), sizeof(sid->dat->wm->servertype)-1);
-		strncpy(sid->dat->wm->popserver,    sql_getvalue(sqr, 0, 6), sizeof(sid->dat->wm->popserver)-1);
-		sid->dat->wm->popport=atoi(sql_getvalue(sqr, 0, 7));
-		strncpy(sid->dat->wm->smtpserver,   sql_getvalue(sqr, 0, 8), sizeof(sid->dat->wm->smtpserver)-1);
-		sid->dat->wm->smtpport=atoi(sql_getvalue(sqr, 0, 9));
-		strncpy(sid->dat->wm->address,      sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
-		strncpy(sid->dat->wm->replyto,      sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
-		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 12));
-		ptemp=sql_getvalue(sqr, 0, 13);
+	if (sql_numtuples(&sqr)==1) {
+		strncpy(sid->dat->wm->realname,     sql_getvalue(&sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
+		strncpy(sid->dat->wm->organization, sql_getvalue(&sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
+		strncpy(sid->dat->wm->username,     sql_getvalue(&sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password,     DecodeBase64string(sid, sql_getvalue(&sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
+		strncpy(sid->dat->wm->smtpauth,     sql_getvalue(&sqr, 0, 4), sizeof(sid->dat->wm->smtpauth)-1);
+		strncpy(sid->dat->wm->servertype,   sql_getvalue(&sqr, 0, 5), sizeof(sid->dat->wm->servertype)-1);
+		strncpy(sid->dat->wm->popserver,    sql_getvalue(&sqr, 0, 6), sizeof(sid->dat->wm->popserver)-1);
+		sid->dat->wm->popport=atoi(sql_getvalue(&sqr, 0, 7));
+		strncpy(sid->dat->wm->smtpserver,   sql_getvalue(&sqr, 0, 8), sizeof(sid->dat->wm->smtpserver)-1);
+		sid->dat->wm->smtpport=atoi(sql_getvalue(&sqr, 0, 9));
+		strncpy(sid->dat->wm->address,      sql_getvalue(&sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
+		strncpy(sid->dat->wm->replyto,      sql_getvalue(&sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
+		sid->dat->wm->remove=atoi(sql_getvalue(&sqr, 0, 12));
+		ptemp=sql_getvalue(&sqr, 0, 13);
 		if ((tolower(ptemp[0])=='y')&&(verbose)) {
 			sid->dat->wm->showdebug=1;
 		}
-		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
+		strncpy(sid->dat->wm->signature,    sql_getvalue(&sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (strcmp(sid->dat->in_RequestMethod,"POST")==0) {
 		if ((ptemp=getpostenv(sid, "WMUSERNAME"))!=NULL) {
 			strncpy(sid->dat->wm->username, ptemp, sizeof(sid->dat->wm->username)-1);
@@ -674,28 +674,28 @@ int wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose)
 	FILE *fp;
 	struct stat sb;
 	int folderid;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT mailheaderid, size, folder FROM gw_mailheaders where accountid = %d and obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, localid))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT mailheaderid, size, folder FROM gw_mailheaders where accountid = %d and obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, localid)<0) return -1;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -1;
 	}
-	folderid=atoi(sql_getvalue(sqr, 0, 2));
+	folderid=atoi(sql_getvalue(&sqr, 0, 2));
 	if (wmfolder_testcreate(sid, sid->dat->user_mailcurrent, 1)<0) {
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return -1;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, localid);
 	fixslashes(msgfilename);
 	if (stat(msgfilename, &sb)==0) {
-		if (atoi(sql_getvalue(sqr, 0, 1))==sb.st_size) {
-			sql_freeresult(sqr);
+		if (atoi(sql_getvalue(&sqr, 0, 1))==sb.st_size) {
+			sql_freeresult(&sqr);
 			return 0;
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (verbose) {
 		prints(sid, ".");
 		flushbuffer(sid);
@@ -780,8 +780,8 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 	int i, j;
 	int found;
 	int nummessages;
-	int sqr1=-1;
-	int sqr2=-1;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int headerid;
 	int dstmbox;
 	time_t t;
@@ -892,26 +892,26 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		nummessages=-1;
 		goto cleanup;
 	}
-	if ((sqr1=sql_queryf("SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) {
+	if (sql_queryf(&sqr1, "SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) {
 		nummessages=-1;
 		goto cleanup;
 	}
 	for (i=0;i<nummessages;i++) {
 		found=-1;
-		for (j=0;j<sql_numtuples(sqr1);j++) {
-			if (strcmp((char *)uidls[i], sql_getvalue(sqr1, j, 1))==0) {
+		for (j=0;j<sql_numtuples(&sqr1);j++) {
+			if (strcmp((char *)uidls[i], sql_getvalue(&sqr1, j, 1))==0) {
 				found=j;
 				break;
 			}
 		}
 		if (found>-1) continue;
-		if ((sqr2=sql_queryf("SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent))<0) {
+		if (sql_queryf(&sqr2, "SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent)<0) {
+			sql_freeresult(&sqr1);
 			nummessages=-1;
 			goto cleanup;
 		}
-		headerid=atoi(sql_getvalue(sqr2, 0, 0))+1;
-		sql_freeresult(sqr2);
-		sqr2=-1;
+		headerid=atoi(sql_getvalue(&sqr2, 0, 0))+1;
+		sql_freeresult(&sqr2);
 		if (headerid<1) headerid=1;
 		wmserver_msghead(sid, i+1);
 		memset((char *)&header, 0, sizeof(header));
@@ -970,8 +970,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		if (dstmbox<1) dstmbox=1;
 		flushbuffer(sid);
 	}
-	sql_freeresult(sqr1);
-	sqr1=-1;
+	sql_freeresult(&sqr1);
 cleanup:
 #ifdef WIN32
 	fclose(fp);
@@ -980,8 +979,6 @@ cleanup:
 	close(fp);
 #endif
 	unlink(lockfile);
-	if (sqr1>=0) sql_freeresult(sqr1);
-	if (sqr2>=0) sql_freeresult(sqr2);
 	DEBUG_OUT(sid, "wmserver_mlistsync()");
 	return nummessages;
 }
@@ -992,7 +989,7 @@ void wmserver_purge(CONN *sid)
 	int numlocal;
 	int numremote;
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
 	if (sid->dat->wm==NULL) {
 		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return;
@@ -1012,23 +1009,23 @@ void wmserver_purge(CONN *sid)
 		return;
 	}
 	if (sid->dat->wm->remove==1) {
-		if ((sqr=sql_queryf("SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
+		if (sql_queryf(&sqr, "SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) goto cleanup;
 	} else if (sid->dat->wm->remove==2) {
-		if ((sqr=sql_queryf("SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status = 'd' ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
+		if (sql_queryf(&sqr, "SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status = 'd' ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) goto cleanup;
 	} else {
 		goto cleanup;
 	}
-	numlocal=sql_numtuples(sqr);
+	numlocal=sql_numtuples(&sqr);
 	for (i=numlocal-1;i>-1;i--) {
 		for (j=numremote-1;j>-1;j--) {
-			if (strlen(sql_getvalue(sqr, i, 1))<1) continue;
-			if (strcmp(sql_getvalue(sqr, i, 1), uidls[j])==0) {
+			if (strlen(sql_getvalue(&sqr, i, 1))<1) continue;
+			if (strcmp(sql_getvalue(&sqr, i, 1), uidls[j])==0) {
 				wmserver_msgdele(sid, j+1);
 				break;
 			}
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 cleanup:
 	wmserver_disconnect(sid);
 	for (i=0;i<numremote;i++) free(uidls[i]);
@@ -1047,17 +1044,17 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	char msgaddr[128];
 	int outlen;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	memset((char *)&header, 0, sizeof(header));
 	memset(outbuffer, 0, sizeof(outbuffer));
-	if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid)<0) return -1;
+	if (sql_numtuples(&sqr)!=1) {
 		if (verbose) prints(sid, "<BR>%s", lang.mail_err_nomsg);
 		return -1;
 	}
-	dbread_getheader(sid, sqr, 0, &header);
-	sql_freeresult(sqr);
+	dbread_getheader(sid, &sqr, 0, &header);
+	sql_freeresult(&sqr);
 	if (wmserver_smtpconnect(sid)!=0) return -1;
 	snprintf(outbuffer, sizeof(outbuffer)-1, "HELO %s\r\n", config->hostname);
 	wmprints(sid, "%s", outbuffer);
@@ -1185,7 +1182,7 @@ int wmsync(CONN *sid, int verbose)
 	int numremote;
 	int numlocal;
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 	int smtperror=0;
 
 	if (sid->dat->wm==NULL) {
@@ -1207,17 +1204,17 @@ int wmsync(CONN *sid, int verbose)
 	}
 	sql_updatef("UPDATE gw_mailaccounts SET lastcount = %d, lastcheck = '%s' WHERE obj_uid = %d AND mailaccountid = %d", numremote, time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, time(NULL)), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	if (numremote<1) goto cleanup;
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' ORDER BY hdr_date ASC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
-	numlocal=sql_numtuples(sqr);
+	if (sql_queryf(&sqr, "SELECT mailheaderid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' ORDER BY hdr_date ASC", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) goto cleanup;
+	numlocal=sql_numtuples(&sqr);
 	for (i=0;i<numlocal;i++) {
 		for (j=0;j<numremote;j++) {
-			if (strcmp(uidls[j], sql_getvalue(sqr, i, 4))==0) {
-				wmserver_msgsync(sid, j+1, atoi(sql_getvalue(sqr, i, 0)), verbose);
+			if (strcmp(uidls[j], sql_getvalue(&sqr, i, 4))==0) {
+				wmserver_msgsync(sid, j+1, atoi(sql_getvalue(&sqr, i, 0)), verbose);
 				break;
 			}
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 cleanup:
 	if (verbose) {
 		prints(sid, " %s.</B>\r\n", lang.mail_ok);
@@ -1227,14 +1224,19 @@ cleanup:
 	for (i=0;i<numremote;i++) free(uidls[i]);
 	if (uidls!=NULL) free(uidls);
 	if (verbose) {
-		if ((sqr=sql_queryf("SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND status != 'd' and folder = 2", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent))<0) return -1;
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
+		if (sql_queryf(&sqr, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND status != 'd' and folder = 2", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent)<0) return -1;
+		for (i=0;i<sql_numtuples(&sqr);i++) {
+			if (wmserver_send(sid, atoi(sql_getvalue(&sqr, i, 0)), verbose)!=0) smtperror=1;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if ((!smtperror)&&(!sid->dat->wm->showdebug)) {
 			if (sid->dat->user_menustyle>0) {
-				prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/main\">\r\n", sid->dat->in_ScriptName);
+				prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
+				prints(sid, "window.setTimeout('location.replace(\"%s/mail/main\")', 2000);\n", sid->dat->in_ScriptName);
+				prints(sid, "// -->\n</SCRIPT>\n");
+				prints(sid, "<NOSCRIPT>\n");
+				prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/main\">\n", sid->dat->in_ScriptName);
+				prints(sid, "</NOSCRIPT>\n");
 			} else {
 				prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/list\">\r\n", sid->dat->in_ScriptName);
 			}

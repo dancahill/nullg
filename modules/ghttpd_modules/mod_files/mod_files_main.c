@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	char subdir[512];
 	char subfile[512];
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 	int tuples;
 	int x;
 
@@ -57,13 +57,13 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	if ((perm==A_DELETE)&&(!auth_priv(sid, "files")&A_DELETE)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if ((strcmp(dir, "/files/")==0)&&((perm==A_INSERT)||(perm==A_DELETE))) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if (perm==A_READ) {
-		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1) AND obj_did = %d", file, dir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-		tuples=sql_numtuples(sqr);
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1) AND obj_did = %d", file, dir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		tuples=sql_numtuples(&sqr);
+		sql_freeresult(&sqr);
 	} else if (perm==A_MODIFY) {
-		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2) AND obj_did = %d", file, dir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-		tuples=sql_numtuples(sqr);
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2) AND obj_did = %d", file, dir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		tuples=sql_numtuples(&sqr);
+		sql_freeresult(&sqr);
 	} else if ((perm==A_INSERT)||(perm==A_DELETE)) {
 		memset(subdir, 0, sizeof(subdir));
 		memset(subfile, 0, sizeof(subfile));
@@ -76,9 +76,9 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 			snprintf(subfile, sizeof(subfile)-1, "%s", ptemp);
 			*ptemp='\0';
 		}
-		if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2) AND obj_did = %d", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-		tuples=sql_numtuples(sqr);
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2) AND obj_did = %d", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		tuples=sql_numtuples(&sqr);
+		sql_freeresult(&sqr);
 	} else {
 		tuples=0;
 	}
@@ -111,8 +111,8 @@ int dirlist(CONN *sid)
 	int i;
 	int isvalid;
 	int rc;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int def_uid;
 	int def_gid;
 	int def_gperm;
@@ -193,17 +193,17 @@ int dirlist(CONN *sid)
 	def_gperm=1;
 	def_operm=1;
 	strftime(timebuf, sizeof(timebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
-	if ((sqr2=sql_queryf("SELECT obj_uid, obj_gid, obj_gperm, obj_operm FROM gw_files WHERE obj_did = %d AND filepath = '%s/' AND filename = '%s' AND filetype = 'dir'", sid->dat->user_did, uri2, ptemp))>-1) {
-		if (sql_numtuples(sqr2)==1) {
-			def_uid=atoi(sql_getvalue(sqr2, 0, 0));
-			def_gid=atoi(sql_getvalue(sqr2, 0, 1));
-			def_gperm=atoi(sql_getvalue(sqr2, 0, 2));
-			def_operm=atoi(sql_getvalue(sqr2, 0, 3));
+	if (sql_queryf(&sqr2, "SELECT obj_uid, obj_gid, obj_gperm, obj_operm FROM gw_files WHERE obj_did = %d AND filepath = '%s/' AND filename = '%s' AND filetype = 'dir'", sid->dat->user_did, uri2, ptemp)>-1) {
+		if (sql_numtuples(&sqr2)==1) {
+			def_uid=atoi(sql_getvalue(&sqr2, 0, 0));
+			def_gid=atoi(sql_getvalue(&sqr2, 0, 1));
+			def_gperm=atoi(sql_getvalue(&sqr2, 0, 2));
+			def_operm=atoi(sql_getvalue(&sqr2, 0, 3));
 		}
-		sql_freeresult(sqr2);
+		sql_freeresult(&sqr2);
 	}
 
-	if ((sqr=sql_queryf("SELECT fileid, filename, filetype, lastdldate, numdownloads, description FROM gw_files WHERE obj_did = %d AND filepath = '%s' ORDER BY filetype, filename ASC", sid->dat->user_did, uri))<0) return -1;
+	if (sql_queryf(&sqr1, "SELECT fileid, filename, filetype, lastdldate, numdownloads, description FROM gw_files WHERE obj_did = %d AND filepath = '%s' ORDER BY filetype, filename ASC", sid->dat->user_did, uri)<0) return -1;
 //	if (!RunAsCGI) pthread_mutex_lock(&Lock.FileList);
 	handle=opendir(filename);
 	while ((dentry=readdir(handle))!=NULL) {
@@ -213,8 +213,8 @@ int dirlist(CONN *sid)
 		fixslashes(filename);
 		stat(filename, &sb);
 		found=0;
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			if (strcmp(dentry->d_name, sql_getvalue(sqr, i, 1))==0) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			if (strcmp(dentry->d_name, sql_getvalue(&sqr1, i, 1))==0) {
 				found=1;
 				break;
 			}
@@ -237,8 +237,8 @@ int dirlist(CONN *sid)
 	closedir(handle);
 //	if (!RunAsCGI) pthread_mutex_unlock(&Lock.FileList);
 	if (!isvalid) {
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT fileid, filename, filetype, lastdldate, numdownloads, description FROM gw_files WHERE obj_did = %d AND filepath = '%s' ORDER BY filetype, filename ASC", sid->dat->user_did, uri))<0) return -1;
+		sql_freeresult(&sqr1);
+		if (sql_queryf(&sqr1, "SELECT fileid, filename, filetype, lastdldate, numdownloads, description FROM gw_files WHERE obj_did = %d AND filepath = '%s' ORDER BY filetype, filename ASC", sid->dat->user_did, uri)<0) return -1;
 	}
 	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 	i=4;
@@ -284,8 +284,8 @@ int dirlist(CONN *sid)
 		printhex(sid, "%s", file.filepath);
 		prints(sid, "><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16> Parent Directory</A></TD>\n");
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, sql_getvalue(sqr, i, 1));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, sql_getvalue(&sqr1, i, 1));
 		fixslashes(filename);
 		isvalid=1;
 		if (stat(filename, &sb)!=0) isvalid=0;
@@ -294,17 +294,17 @@ int dirlist(CONN *sid)
 		memset(timebuf, 0, sizeof(timebuf));
 		if (isvalid) strftime(timebuf, sizeof(timebuf)-1, "%b %d %Y %H:%M", localtime(&sb.st_mtime));
 		memset(showfile, 0, sizeof(showfile));
-		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(sqr, i, 1));
+		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(&sqr1, i, 1));
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		if (auth_priv(sid, "files")&A_MODIFY) {
-			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
 		}
 		if (strlen(mod_config.filter_program)) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>");
 			if (!(sb.st_mode & S_IFDIR)) {
-				prints(sid, "<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
 				printhex(sid, "%s", sid->dat->in_RequestURI);
 				prints(sid, ">scan</A></TD>\n");
 			} else {
@@ -313,15 +313,15 @@ int dirlist(CONN *sid)
 		}
 		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style='cursor:hand; border-style:solid' onClick=window.location.href=\"");
 		printhex(sid, "%s", showfile);
-		prints(sid, "%s\" TITLE=\"%s\">", (strcmp(sql_getvalue(sqr, i, 2), "dir")==0)?"/":"", showfile);
+		prints(sid, "%s\" TITLE=\"%s\">", (strcmp(sql_getvalue(&sqr1, i, 2), "dir")==0)?"/":"", showfile);
 		prints(sid, "<A HREF=");
 		printhex(sid, "%s", showfile);
-		if (strcmp(sql_getvalue(sqr, i, 2), "dir")==0) {
+		if (strcmp(sql_getvalue(&sqr1, i, 2), "dir")==0) {
 			prints(sid, "/ TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.png HEIGHT=16 WIDTH=16>", showfile);
 		} else {
 			prints(sid, " TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-default.png HEIGHT=16 WIDTH=16>", showfile);
 		}
-		prints(sid, " %.25s%s</A></TD>", sql_getvalue(sqr, i, 1), strlen(sql_getvalue(sqr, i, 1))>25?"..":"");
+		prints(sid, " %.25s%s</A></TD>", sql_getvalue(&sqr1, i, 1), strlen(sql_getvalue(&sqr1, i, 1))>25?"..":"");
 		if (isvalid) {
 			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>%s</TD>", timebuf);
 			if (sb.st_size>1048576) {
@@ -334,13 +334,13 @@ int dirlist(CONN *sid)
 			prints(sid, "<TD ALIGN=right VALIGN=top NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		if (i>-1) {
-			prints(sid, "<TD ALIGN=left VALIGN=top STYLE='border-style:solid'><PRE>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 5)));
+			prints(sid, "<TD ALIGN=left VALIGN=top STYLE='border-style:solid'><PRE>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 5)));
 		} else {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		prints(sid, "</TR>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE>\n</CENTER>\n</BODY></HTML>\n");
 	return 0;
 }
@@ -583,7 +583,7 @@ int filerecv(CONN *sid)
 	char query[2048];
 	char datebuf[40];
 	char description[255];
-	int sqr;
+	SQLRES sqr;
 	int fileid;
 	unsigned int mimesize;
 	time_t t=time(NULL);
@@ -730,15 +730,15 @@ int filerecv(CONN *sid)
 		strncpy(description, ptemp, sizeof(description)-1);
 		if (mimesize<strlen(description)) description[mimesize]='\0';
 	}
-	if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, location)))<0) return -1;
-	if (sql_numtuples(sqr)>0) {
-		sql_updatef("DELETE FROM gw_files WHERE fileid = %d AND obj_did = %d", atoi(sql_getvalue(sqr, 0, 0)), sid->dat->user_did);
+	if (sql_queryf(&sqr, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, location))<0) return -1;
+	if (sql_numtuples(&sqr)>0) {
+		sql_updatef("DELETE FROM gw_files WHERE fileid = %d AND obj_did = %d", atoi(sql_getvalue(&sqr, 0, 0)), sid->dat->user_did);
 	}
-	sql_freeresult(sqr);
-	if ((sqr=sql_query("SELECT max(fileid) FROM gw_files"))<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
-	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
+	sql_freeresult(&sqr);
+	if (sql_query(&sqr, "SELECT max(fileid) FROM gw_files")<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
+	fileid=atoi(sql_getvalue(&sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", fileid, datebuf, datebuf, filerec.obj_uid, filerec.obj_gid, filerec.obj_did, filerec.obj_gperm, filerec.obj_operm);
@@ -766,7 +766,7 @@ int filedirsave(CONN *sid)
 	char datebuf[40];
 	char *ptemp;
 	int rc;
-	int sqr;
+	SQLRES sqr;
 	int fileid;
 	time_t t;
 
@@ -820,15 +820,15 @@ int filedirsave(CONN *sid)
 		prints(sid, "<BR><CENTER>Error creating folder.</CENTER><BR>\n");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filepath)))<0) return -1;
-	if (sql_numtuples(sqr)>0) {
-		sql_updatef("DELETE FROM gw_files WHERE fileid = %d AND obj_did = %d", atoi(sql_getvalue(sqr, 0, 0)), sid->dat->user_did);
+	if (sql_queryf(&sqr, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filename), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filepath))<0) return -1;
+	if (sql_numtuples(&sqr)>0) {
+		sql_updatef("DELETE FROM gw_files WHERE fileid = %d AND obj_did = %d", atoi(sql_getvalue(&sqr, 0, 0)), sid->dat->user_did);
 	}
-	sql_freeresult(sqr);
-	if ((sqr=sql_query("SELECT max(fileid) FROM gw_files"))<0) return -1;
-	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
+	sql_freeresult(&sqr);
+	if (sql_query(&sqr, "SELECT max(fileid) FROM gw_files")<0) return -1;
+	fileid=atoi(sql_getvalue(&sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", fileid, datebuf, datebuf, filerec.obj_uid, filerec.obj_gid, filerec.obj_did, filerec.obj_gperm, filerec.obj_operm);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.filename));

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@ void admindomainedit(CONN *sid)
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
+		return;
+	}
+	if (!(auth_priv(sid, "domainadmin")&A_ADMIN)) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/admin/domaineditnew")==0) {
@@ -70,30 +74,49 @@ void admindomainedit(CONN *sid)
 
 void admindomainlist(CONN *sid)
 {
-	int i;
-	int sqr;
+	int i, j;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) return;
-	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'>&nbsp;Domain Name&nbsp;</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/domainedit?domainid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<A HREF=%s/admin/domainedit?domainid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
-		}
-		prints(sid, "</TABLE>\n");
-	} else {
-		prints(sid, "There are no domains<BR>\n");
+	if (!(auth_priv(sid, "domainadmin")&A_ADMIN)) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
+		return;
 	}
-	sql_freeresult(sqr);
+	if (sql_query(&sqr1, "SELECT domainid, domainname FROM gw_domains ORDER BY domainname ASC")<0) return;
+	if (sql_numtuples(&sqr1)<1) {
+		sql_freeresult(&sqr1);
+		prints(sid, "There are no domains<BR>\n");
+		prints(sid, "<A HREF=%s/admin/domaineditnew>New Domain</A>\n", sid->dat->in_ScriptName);
+		prints(sid, "</CENTER>\n");
+		return;
+	}
+	if (sql_queryf(&sqr2, "SELECT domainaliasid, domainid, domainname FROM gw_domainaliases ORDER BY domainname ASC")<0) {
+		sql_freeresult(&sqr1);
+		return;
+	}
+	prints(sid, "<CENTER>\n");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=200 STYLE='border-style:solid'>&nbsp;Domain Name&nbsp;</TH></TR>\n");
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		prints(sid, "<TR CLASS=\"FIELDNAME\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/domainedit?domainid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<B><A HREF=%s/admin/domainedit?domainid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "%s</A></B>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+		for (j=0;j<sql_numtuples(&sqr2);j++) {
+			if (atoi(sql_getvalue(&sqr2, j, 1))==atoi(sql_getvalue(&sqr1, i, 0))) {
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
+				prints(sid, "&nbsp;&nbsp;&nbsp;%s</TD>", str2html(sid, sql_getvalue(&sqr2, j, 2)));
+			}
+		}
+	}
+	prints(sid, "</TABLE>\n");
 	prints(sid, "<A HREF=%s/admin/domaineditnew>New Domain</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -105,9 +128,13 @@ void admindomainsave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int domainid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
+		return;
+	}
+	if (!(auth_priv(sid, "domainadmin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
@@ -130,20 +157,20 @@ void admindomainsave(CONN *sid)
 		prints(sid, "<CENTER>Domain %d deleted successfully</CENTER><BR>\n", domain.domainid);
 		db_log_activity(sid, "domains", domain.domainid, "delete", "%s - %s deleted domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
 	} else if (domain.domainid==0) {
-		if ((sqr=sql_queryf("SELECT domainname FROM gw_domains where domainname = '%s'", domain.domainname))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT domainname FROM gw_domains where domainname = '%s'", domain.domainname)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Domain %s already exists</CENTER><BR>\n", domain.domainname);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(domain.domainname)<1) {
 			prints(sid, "<CENTER>Domain name is too short</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(domainid) FROM gw_domains"))<0) return;
-		domain.domainid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(domainid) FROM gw_domains")<0) return;
+		domain.domainid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (domain.domainid<1) domain.domainid=1;
 		strcpy(query, "INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, domainname) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", domain.domainid, curdate, curdate, domain.obj_uid, domain.obj_gid, domain.obj_gperm, domain.obj_operm);
@@ -156,13 +183,13 @@ void admindomainsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT domainname FROM gw_domains where domainname = '%s' AND domainid <> %d", domain.domainname, domain.domainid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT domainname FROM gw_domains where domainname = '%s' AND domainid <> %d", domain.domainname, domain.domainid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Domain %s already exists</CENTER><BR>\n", domain.domainname);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(domain.domainname)<1) {
 			prints(sid, "<CENTER>Domain name is too short</CENTER><BR>\n");
 			return;

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "ghttpd/mod.h"
 #include "mod_bookmarks.h"
 
-static int htselect_bookmarkfolder_r(CONN *sid, int sqr, int depth, int parentid, int selected)
+static int htselect_bookmarkfolder_r(CONN *sid, SQLRES *sqr, int depth, int parentid, int selected)
 {
 	int foldercount=0;
 	int fid, pid;
@@ -40,20 +40,20 @@ static int htselect_bookmarkfolder_r(CONN *sid, int sqr, int depth, int parentid
 
 void htselect_bookmarkfolder(CONN *sid, int selected)
 {
-	int sqr;
+	SQLRES sqr;
 
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		if ((sqr=sql_queryf("SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY parentid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
 	prints(sid, "<OPTION VALUE='0'>Root Folder\n");
-	if (sql_numtuples(sqr)<1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)<1) {
+		sql_freeresult(&sqr);
 		return;
 	}
-	htselect_bookmarkfolder_r(sid, sqr, 1, 0, selected);
-	sql_freeresult(sqr);
+	htselect_bookmarkfolder_r(sid, &sqr, 1, 0, selected);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -160,7 +160,7 @@ void bookmarkfoldersave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int folderid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -191,20 +191,20 @@ void bookmarkfoldersave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT folderid FROM gw_bookmarkfolders where parentid = %d", bookmarkfolder.folderid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT folderid FROM gw_bookmarkfolders where parentid = %d", bookmarkfolder.folderid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT bookmarkid FROM gw_bookmarks where folderid = %d", bookmarkfolder.folderid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT bookmarkid FROM gw_bookmarks where folderid = %d", bookmarkfolder.folderid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (sql_updatef("DELETE FROM gw_bookmarkfolders WHERE folderid = %d", bookmarkfolder.folderid)<0) return;
 		prints(sid, "<CENTER>Bookmark Folder %d deleted successfully</CENTER><BR>\n", bookmarkfolder.folderid);
 		db_log_activity(sid, "bookmarkfolders", bookmarkfolder.folderid, "delete", "%s - %s deleted bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
@@ -214,9 +214,9 @@ void bookmarkfoldersave(CONN *sid)
 			prints(sid, "<CENTER>Folder name is too short</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(folderid) FROM gw_bookmarkfolders"))<0) return;
-		bookmarkfolder.folderid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(folderid) FROM gw_bookmarkfolders")<0) return;
+		bookmarkfolder.folderid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (bookmarkfolder.folderid<1) bookmarkfolder.folderid=1;
 		strcpy(query, "INSERT INTO gw_bookmarkfolders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", bookmarkfolder.folderid, curdate, curdate, bookmarkfolder.obj_uid, bookmarkfolder.obj_gid, bookmarkfolder.obj_did, bookmarkfolder.obj_gperm, bookmarkfolder.obj_operm);
@@ -362,7 +362,7 @@ void bookmarkslist(CONN *sid)
 	int folderid=0;
 	int i;
 	int numfolders=0;
-	int sqr;
+	SQLRES sqr;
 	int modify=0;
 	
 	if (!(auth_priv(sid, "bookmarks")&A_READ)) {
@@ -372,70 +372,70 @@ void bookmarkslist(CONN *sid)
 	if ((ptemp=getgetenv(sid, "FOLDER"))!=NULL) folderid=atoi(ptemp);
 	prints(sid, "<CENTER>\n");
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		if ((sqr=sql_queryf("SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
 	modify=auth_priv(sid, "bookmarks")&A_MODIFY;
-	if (sql_numtuples(sqr)>0) {
+	if (sql_numtuples(&sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR><TH%s STYLE='border-style:solid'>%s</TH></TR>\n", modify?" COLSPAN=2":"", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		prints(sid, "<TR><TH%s STYLE='border-style:solid'>%s</TH></TR>\n", modify?" COLSPAN=2":"", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD%s WIDTH=300 STYLE='border-style:solid'>", modify?" COLSPAN=2":"");
-		prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
+		prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 2)), sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 2)));
 		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16>");
 		prints(sid, "&nbsp;Parent Directory</A></TD></TR>\n");
 		numfolders++;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		if ((sqr=sql_queryf("SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if (sql_numtuples(sqr)>0) {
+	if (sql_numtuples(&sqr)>0) {
 		if (numfolders==0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH%s STYLE='border-style:solid'>Bookmarks</TH></TR>\n", modify?" COLSPAN=2":"");
 		}
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
 			}
 			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR>");
-			prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
 			prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.png HEIGHT=16 WIDTH=16>&nbsp;");
-			prints(sid, "%s</A>&nbsp;</NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+			prints(sid, "%s</A>&nbsp;</NOBR></TD></TR>\n", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 		numfolders++;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		if ((sqr=sql_queryf("SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND obj_did = %d ORDER BY bookmarkname ASC", folderid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND obj_did = %d ORDER BY bookmarkname ASC", folderid, sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if (sql_numtuples(sqr)>0) {
+	if (sql_numtuples(&sqr)>0) {
 		if (numfolders==0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>");
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, "<TH STYLE='border-style:solid'>&nbsp;</TH>");
 			prints(sid, "<TH ALIGN=left WIDTH=250 STYLE='border-style:solid'>Name</TH></TR>\n");
 		}
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/edit?bookmarkid=%s>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/edit?bookmarkid=%s>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=\"%s\" TARGET=_blank>", sql_getvalue(sqr, i, 2));
-			prints(sid, "%s</A></NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=\"%s\" TARGET=_blank>", sql_getvalue(&sqr, i, 2));
+			prints(sid, "%s</A></NOBR></TD></TR>\n", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
-	if ((numfolders>0)||(sql_numtuples(sqr)>0)) {
+	if ((numfolders>0)||(sql_numtuples(&sqr)>0)) {
 		prints(sid, "</TABLE>\n");
 	} else {
 		prints(sid, "There are no saved bookmarks<BR>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "</CENTER><BR>\n");
 	return;
 }

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ void contactsearch1(CONN *sid)
 {
 	char *ptemp;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
@@ -37,25 +37,25 @@ void contactsearch1(CONN *sid)
 		prints(sid, "<TR><TH COLSPAN=3>Contact Search Form</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n");
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
-		for (i=0;i<sql_numfields(sqr);i++) {
-			if (strcmp(sql_getname(sqr, i), "obj_ctime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_mtime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_uid")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_gid")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_did")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_gperm")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_operm")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "loginip")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "logintime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "logintoken")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "password")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "enabled")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "geozone")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "timezone")==0) continue;
-			prints(sid, "<OPTION>%s\n", sql_getname(sqr, i));
+		if (sql_query(&sqr, "SELECT * FROM gw_contacts WHERE contactid = 1")<0) return;
+		for (i=0;i<sql_numfields(&sqr);i++) {
+			if (strcmp(sql_getname(&sqr, i), "obj_ctime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_mtime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_uid")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_did")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_gperm")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_operm")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "loginip")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "logintime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "logintoken")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "password")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "enabled")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "geozone")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "timezone")==0) continue;
+			prints(sid, "<OPTION>%s\n", sql_getname(&sqr, i));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "</SELECT></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=TEXT NAME=string value='%s' SIZE=20></TD>\n", (ptemp=getgetenv(sid, "STRING"))!=NULL?ptemp:"");
 		prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n");
@@ -77,7 +77,7 @@ void contactsearch2(CONN *sid)
 	char *ptemp;
 	int offset=0;
 	int i;
-	int sqr1;
+	SQLRES sqr1;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -98,24 +98,24 @@ void contactsearch2(CONN *sid)
 		if (*ptemp=='?') *ptemp='_';
 		ptemp++;
 	}
-	if ((sqr1=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
+	if (sql_query(&sqr1, "SELECT * FROM gw_contacts WHERE contactid = 1")<0) return;
 	strcpy(query, "SELECT contactid, surname, givenname, organization, worknumber, homenumber from gw_contacts WHERE (");
 	if (strcmp(column, "All Columns")==0) {
-		for (i=0;i<sql_numfields(sqr1);i++) {
-			if (strcmp(sql_getname(sqr1, i), "obj_ctime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_uid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gid")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "loginip")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "logintime")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "logintoken")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "password")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "enabled")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "geozone")==0) continue;
-			if (strcmp(sql_getname(sqr1, i), "timezone")==0) continue;
-			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+		for (i=0;i<sql_numfields(&sqr1);i++) {
+			if (strcmp(sql_getname(&sqr1, i), "obj_ctime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_mtime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_uid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_gperm")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "obj_operm")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "loginip")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "logintime")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "logintoken")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "password")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "enabled")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "geozone")==0) continue;
+			if (strcmp(sql_getname(&sqr1, i), "timezone")==0) continue;
+			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(&sqr1, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 		}
 		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
 	} else {
@@ -126,7 +126,7 @@ void contactsearch2(CONN *sid)
 	} else {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
 	}
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ContactSync(contactid) {\r\n");
 	prints(sid, "	if (window.opener.document.calledit) {\r\n");
@@ -140,32 +140,32 @@ void contactsearch2(CONN *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	if ((sqr1=sql_query(query))<0) return;
-	if (sql_numtuples(sqr1)<1) {
-		prints(sid, "<B>Found %d matching contact%s</B></CENTER>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
-		sql_freeresult(sqr1);
+	if (sql_query(&sqr1, query)<0) return;
+	if (sql_numtuples(&sqr1)<1) {
+		prints(sid, "<B>Found %d matching contact%s</B></CENTER>\n", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s");
+		sql_freeresult(&sqr1);
 		return;
 	}
-	prints(sid, "<B>Found %d matching contact%s</B>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
+	prints(sid, "<B>Found %d matching contact%s</B>\n", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Contact Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Company Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Work Number&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Home Number&nbsp;</TH><TH STYLE='border-style:solid'>&nbsp;</TH></TR>\n");
-	for (i=0;i<sql_numtuples(sqr1);i++) {
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
-		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
-		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");
-		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 2)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 4)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=javascript:ContactSync('%d')>&gt;&gt;</A></TD>", atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), str2html(sid, sql_getvalue(&sqr1, i, 1)));
+		if (strlen(sql_getvalue(&sqr1, i, 1))&&strlen(sql_getvalue(&sqr1, i, 2))) prints(sid, ", ");
+		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 2)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 3)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 4)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 5)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=javascript:ContactSync('%d')>&gt;&gt;</A></TD>", atoi(sql_getvalue(&sqr1, i, 0)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</FORM>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -182,7 +182,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	int is_recycled=0;
 	int editperms=0;
 	int contactid;
-	int sqr;
+	SQLRES sqr;
 	int tz1;
 	int tz2;
 	time_t t;
@@ -411,51 +411,51 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (contact->contactid>0) {
 		if (module_exists("mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
-			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Calls</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Calls</TD>\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			prints(sid, "<TD>");
-			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
+			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				prints(sid, "<A HREF=%s/contacts/callslist?contactid=%d>list</A>", sid->dat->in_ScriptName, contact->contactid);
 			}
 			prints(sid, "&nbsp;</TD>\n");
 			prints(sid, "<TD><A HREF=%s/calls/editnew?contactid=%d>new</A></TD>\n", sid->dat->in_ScriptName, contact->contactid);
 			prints(sid, "</TR>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 		}
 		if (module_exists("mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
-			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Events</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Events</TD>\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			prints(sid, "<TD>");
-			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
+			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				prints(sid, "<A HREF=%s/contacts/eventlist?contactid=%d>list</A>", sid->dat->in_ScriptName, contact->contactid);
 			}
 			prints(sid, "&nbsp;</TD>\n");
 			prints(sid, "<TD><A HREF=%s/calendar/editnew?contactid=%d>new</A></TD>\n", sid->dat->in_ScriptName, contact->contactid);
 			prints(sid, "</TR>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 		}
 		if (module_exists("mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(orderid) FROM gw_orders WHERE contactid = %d AND obj_did = %d", contact->contactid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT count(orderid) FROM gw_orders WHERE contactid = %d AND obj_did = %d", contact->contactid, sid->dat->user_did)<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
-			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Orders</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Orders</TD>\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			prints(sid, "<TD>");
-			if (atoi(sql_getvalue(sqr, 0, 0))>0) {
+			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				prints(sid, "<A HREF=%s/contacts/orderlist?contactid=%d>list</A>", sid->dat->in_ScriptName, contact->contactid);
 			}
 			prints(sid, "&nbsp;</TD>\n");
 			prints(sid, "<TD><A HREF=%s/orders/editnew?contactid=%d>new</A></TD>\n", sid->dat->in_ScriptName, contact->contactid);
 			prints(sid, "</TR>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 		}
 	}
 	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
-		if ((sqr=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->user_uid, contact->email, contact->email, contact->email))<0) return;
+		if (sql_queryf(&sqr, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->user_uid, contact->email, contact->email, contact->email)<0) return;
 		prints(sid, "<TR CLASS=\"EDITFORM\">");
-		prints(sid, "<TD NOWRAP WIDTH=100%%>%d E-Mails</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
+		prints(sid, "<TD NOWRAP WIDTH=100%%>%d E-Mails</TD>\n", atoi(sql_getvalue(&sqr, 0, 0)));
 		prints(sid, "<TD>");
-		if (atoi(sql_getvalue(sqr, 0, 0))>0) {
+		if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 			if (sid->dat->user_menustyle>0) {
 				prints(sid, "<A HREF=%s/mail/main?c=addr&text=%s TARGET=gwmain>list</A>", sid->dat->in_ScriptName, contact->email);
 			} else {
@@ -477,7 +477,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			}
 		}
 		prints(sid, "</TR>\n");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	prints(sid, "<TD COLSPAN=3><BR></TD>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=3><A HREF=javascript:vcardImport();>Import vCard</A></TD></TR>\n");
@@ -553,7 +553,7 @@ void contact_mailview(CONN *sid)
 	char surname[100];
 	char *ptemp;
 	int contactid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -576,17 +576,17 @@ void contact_mailview(CONN *sid)
 			surname[strlen(surname)]=*ptemp++;
 		}
 	}
-	if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE email = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, email)))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		contactid=atoi(sql_getvalue(sqr, 0, 0));
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT contactid FROM gw_contacts WHERE email = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, email))<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		contactid=atoi(sql_getvalue(&sqr, 0, 0));
+		sql_freeresult(&sqr);
 		if (dbread_contact(sid, 1, contactid, &contactrec)<0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", contactid);
 			return;
 		}
 	} else {
 		contactid=0;
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (dbread_contact(sid, 2, 0, &contactrec)<0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
@@ -605,7 +605,7 @@ void contactlist(CONN *sid)
 	char searchstring[10];
 	int offset=0;
 	int i;
-	int sqr1;
+	SQLRES sqr1;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -682,47 +682,47 @@ void contactlist(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR><TD ALIGN=CENTER VALIGN=TOP WIDTH=100%%>\n");
 	if ((ptemp=getgetenv(sid, "S"))==NULL) ptemp="All";
 	strncpy(searchstring, ptemp, sizeof(searchstring)-1);
-	if ((sqr1=dblist_contacts(sid, "surname", searchstring))<0) return;
+	if (dblist_contacts(sid, &sqr1, "surname", searchstring)<0) return;
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
 	prints(sid, "<CENTER><BR>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\n");
 	prints(sid, "<TD ALIGN=LEFT NOWRAP WIDTH=125>&nbsp;</TD>\n");
-	prints(sid, "<TD ALIGN=CENTER NOWRAP><B>Found %d matching contact%s</B></TD>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
+	prints(sid, "<TD ALIGN=CENTER NOWRAP><B>Found %d matching contact%s</B></TD>\n", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s");
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP WIDTH=125>&nbsp;</TD>\n");
 	prints(sid, "</TR>\n");
-	if (sql_numtuples(sqr1)>0) {
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'>&nbsp;Contact Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'>&nbsp;Company Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=125 STYLE='border-style:solid'>&nbsp;Work Number&nbsp;</TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=125 STYLE='border-style:solid'>&nbsp;E-Mail&nbsp;</TH></TR>\n");
-		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
+		for (i=offset;(i<sql_numtuples(&sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-			prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), str2html(sid, sql_getvalue(sqr1, i, 1)));
-			if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) prints(sid, ", ");
-			if (strlen(sql_getvalue(sqr1, i, 1))==0&&strlen(sql_getvalue(sqr1, i, 2))==0) prints(sid, "&nbsp;");
-			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 2)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 4)));
+			prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/contacts/view?contactid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "<A HREF=%s/contacts/view?contactid=%d>%s", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), str2html(sid, sql_getvalue(&sqr1, i, 1)));
+			if (strlen(sql_getvalue(&sqr1, i, 1))&&strlen(sql_getvalue(&sqr1, i, 2))) prints(sid, ", ");
+			if (strlen(sql_getvalue(&sqr1, i, 1))==0&&strlen(sql_getvalue(&sqr1, i, 2))==0) prints(sid, "&nbsp;");
+			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 2)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 3)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 4)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid;border-right-width:0px'>");
-			if (strlen(sql_getvalue(sqr1, i, 5))==0) {
+			if (strlen(sql_getvalue(&sqr1, i, 5))==0) {
 				prints(sid, "&nbsp;</TD>");
 			} else if (sid->dat->user_maildefault==0) {
-				prints(sid, "<A HREF=\"mailto:%s\">%s</A>&nbsp;</TD>", sql_getvalue(sqr1, i, 5), sql_getvalue(sqr1, i, 5));
+				prints(sid, "<A HREF=\"mailto:%s\">%s</A>&nbsp;</TD>", sql_getvalue(&sqr1, i, 5), sql_getvalue(&sqr1, i, 5));
 			} else {
 				if (sid->dat->user_menustyle>0) {
 					prints(sid, "<A HREF=\"javascript:MsgTo('&quot;");
-					prints(sid, "%s%s%s", str2html(sid, sql_getvalue(sqr1, i, 2)), strlen(sql_getvalue(sqr1, i, 2))?" ":"", str2html(sid, sql_getvalue(sqr1, i, 1)));
-					prints(sid, "&quot; <%s>')\">", sql_getvalue(sqr1, i, 5));
+					prints(sid, "%s%s%s", str2html(sid, sql_getvalue(&sqr1, i, 2)), strlen(sql_getvalue(&sqr1, i, 2))?" ":"", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+					prints(sid, "&quot; <%s>')\">", sql_getvalue(&sqr1, i, 5));
 				} else {
-					prints(sid, "<A HREF=\"%s/mail/write?to=%s\">", sid->dat->in_ScriptName, sql_getvalue(sqr1, i, 5));
+					prints(sid, "<A HREF=\"%s/mail/write?to=%s\">", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 5));
 				}
-				prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)));
+				prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 5)));
 			}
-			prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", i-offset, sql_getvalue(sqr1, i, 5));
+			prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", i-offset, sql_getvalue(&sqr1, i, 5));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='padding:0px; border-style:solid'><SELECT NAME=option%d onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>", i-offset);
 			prints(sid, "<OPTION VALUE=''>");
-			if (strchr(sql_getvalue(sqr1, i, 5), '@')) {
+			if (strchr(sql_getvalue(&sqr1, i, 5), '@')) {
 				prints(sid, "<OPTION VALUE='TO'>TO");
 				prints(sid, "<OPTION VALUE='CC'>CC");
 				prints(sid, "<OPTION VALUE='BCC'>BCC");
@@ -733,13 +733,13 @@ void contactlist(CONN *sid)
 		prints(sid, "</TABLE>\n</TD></TR>\n");
 		prints(sid, "<TR>\n<TD ALIGN=LEFT NOWRAP WIDTH=125>&nbsp;</TD>\n");
 		prints(sid, "<TD ALIGN=CENTER NOWRAP>");
-		if (sql_numtuples(sqr1)>sid->dat->user_maxlist) {
+		if (sql_numtuples(&sqr1)>sid->dat->user_maxlist) {
 			if (offset>sid->dat->user_maxlist-1) {
 				prints(sid, "[<A HREF=%s/contacts/list?s=%s&offset=%d>Previous Page</A>]", sid->dat->in_ScriptName, searchstring, offset-sid->dat->user_maxlist);
 			} else {
 				prints(sid, "[Previous Page]");
 			}
-			if (offset+sid->dat->user_maxlist<sql_numtuples(sqr1)) {
+			if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr1)) {
 				prints(sid, "[<A HREF=%s/contacts/list?s=%s&offset=%d>Next Page</A>]", sid->dat->in_ScriptName, searchstring, offset+sid->dat->user_maxlist);
 			} else {
 				prints(sid, "[Next Page]");
@@ -754,7 +754,7 @@ void contactlist(CONN *sid)
 		prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3 WIDTH=100%%>&nbsp;</TD></TR>\n");
 		prints(sid, "</TABLE>\n");
 	}
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TD><TD CLASS=\"FIELDNAME\" VALIGN=TOP>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
 	prints(sid, "<TR CLASS=\"FIELDNAME\"><TD ALIGN=CENTER><FONT SIZE=2><B><A HREF=%s/contacts/list?s=all>&nbsp;All&nbsp;</A></B></FONT></TD></TR>\n", sid->dat->in_ScriptName);
@@ -781,8 +781,8 @@ void contactcallslist(CONN *sid)
 	int contactid=0;
 	int duration;
 	int i;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	time_t calldate;
 
 	prints(sid, "<BR>\r\n");
@@ -801,39 +801,39 @@ void contactcallslist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf("SELECT callid, contactid, action, callstart, callfinish, status FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr1, "SELECT callid, contactid, action, callstart, callfinish, status FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid)<0) return;
+	if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid)<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
-	prints(sid, "Found %d call%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(sqr), sql_numtuples(sqr)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(sqr2, 0, 0), str2html(sid, sql_getvalue(sqr2, 0, 1)));
-	if (strlen(sql_getvalue(sqr2, 0, 1))&&strlen(sql_getvalue(sqr2, 0, 2))) prints(sid, ", ");
-	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
-	sql_freeresult(sqr2);
-	if (sql_numtuples(sqr)>0) {
+	prints(sid, "Found %d call%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(&sqr2, 0, 0), str2html(sid, sql_getvalue(&sqr2, 0, 1)));
+	if (strlen(sql_getvalue(&sqr2, 0, 1))&&strlen(sql_getvalue(&sqr2, 0, 2))) prints(sid, ", ");
+	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(&sqr2, 0, 2)));
+	sql_freeresult(&sqr2);
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR>");
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Call ID&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Action&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Time&nbsp;<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Duration&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Status&nbsp;</TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calls/view?callid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 0));
-			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(sqr, i, 2))));
-			calldate=time_sql2unix(sql_getvalue(sqr, i, 3));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calls/view?callid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
+			prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0), sql_getvalue(&sqr1, i, 0));
+			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(&sqr1, i, 2))));
+			calldate=time_sql2unix(sql_getvalue(&sqr1, i, 3));
 			calldate+=time_tzoffset(sid, calldate);
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, calldate));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2timetext(sid, calldate));
-			duration=time_sql2unix(sql_getvalue(sqr, i, 4))-time_sql2unix(sql_getvalue(sqr, i, 3));
+			duration=time_sql2unix(sql_getvalue(&sqr1, i, 4))-time_sql2unix(sql_getvalue(&sqr1, i, 3));
 			if (duration<0) duration=0;
 			duration/=60;
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%d Minutes</TD>", duration);
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(sqr, i, 5))==1?"Closed":"Open");
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(&sqr1, i, 5))==1?"Closed":"Open");
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
 	}
 	prints(sid, "<A HREF=%s/calls/editnew?contactid=%d>New Call</A>\n", sid->dat->in_ScriptName, contactid);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -851,8 +851,8 @@ void contacteventlist(CONN *sid)
 	char *ptemp;
 	int contactid=0;
 	int i;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	prints(sid, "<BR>\r\n");
 	if (!module_exists("mod_calendar")) {
@@ -870,33 +870,33 @@ void contacteventlist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, status, priority, contactid FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr1, "SELECT eventid, eventname, eventstart, status, priority, contactid FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart DESC", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid)<0) return;
+	if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid)<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
-	prints(sid, "Found %d event%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(sqr), sql_numtuples(sqr)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(sqr2, 0, 0), str2html(sid, sql_getvalue(sqr2, 0, 1)));
-	if (strlen(sql_getvalue(sqr2, 0, 1))&&strlen(sql_getvalue(sqr2, 0, 2))) prints(sid, ", ");
-	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
-	sql_freeresult(sqr2);
-	if (sql_numtuples(sqr)>0) {
+	prints(sid, "Found %d event%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(&sqr2, 0, 0), str2html(sid, sql_getvalue(&sqr2, 0, 1)));
+	if (strlen(sql_getvalue(&sqr2, 0, 1))&&strlen(sql_getvalue(&sqr2, 0, 2))) prints(sid, ", ");
+	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(&sqr2, 0, 2)));
+	sql_freeresult(&sqr2);
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR>");
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Event ID&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Event Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Status&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Priority&nbsp;</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/view?eventid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_eventstatus(atoi(sql_getvalue(sqr, i, 3))));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", priority[atoi(sql_getvalue(sqr, i, 4))]);
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/view?eventid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), atoi(sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(&sqr1, i, 2)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_eventstatus(atoi(sql_getvalue(&sqr1, i, 3))));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", priority[atoi(sql_getvalue(&sqr1, i, 4))]);
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
 	}
 	prints(sid, "<A HREF=%s/calendar/editnew?contactid=%d>New Event</A>\n", sid->dat->in_ScriptName, contactid);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -913,8 +913,8 @@ void contactorderlist(CONN *sid)
 	char *ptemp;
 	int contactid=0;
 	int i;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	prints(sid, "<BR>\r\n");
 	if (!module_exists("mod_orders")) {
@@ -932,32 +932,32 @@ void contactorderlist(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf("SELECT orderid, orderdate, paymentdue, paymentreceived from gw_orders WHERE contactid = %d ORDER BY orderdate DESC", contactid))<0) return;
-	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid))<0) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr1, "SELECT orderid, orderdate, paymentdue, paymentreceived from gw_orders WHERE contactid = %d ORDER BY orderdate DESC", contactid)<0) return;
+	if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", contactid)<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
-	prints(sid, "Found %d order%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(sqr), sql_numtuples(sqr)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(sqr2, 0, 0), str2html(sid, sql_getvalue(sqr2, 0, 1)));
-	if (strlen(sql_getvalue(sqr2, 0, 1))&&strlen(sql_getvalue(sqr2, 0, 2))) prints(sid, ", ");
-	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
-	sql_freeresult(sqr2);
-	if (sql_numtuples(sqr)>0) {
+	prints(sid, "Found %d order%s for <A HREF=%s/contacts/view?contactid=%s>%s", sql_numtuples(&sqr1), sql_numtuples(&sqr1)==1?"":"s", sid->dat->in_ScriptName, sql_getvalue(&sqr2, 0, 0), str2html(sid, sql_getvalue(&sqr2, 0, 1)));
+	if (strlen(sql_getvalue(&sqr2, 0, 1))&&strlen(sql_getvalue(&sqr2, 0, 2))) prints(sid, ", ");
+	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(&sqr2, 0, 2)));
+	sql_freeresult(&sqr2);
+	if (sql_numtuples(&sqr1)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350 STYLE='border-style:solid'>\r\n<TR>");
 		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Order ID&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Order Date&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Amount Due&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Amount Received&nbsp;</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			prints(sid, "&nbsp;<A HREF=%s/orders/view?orderid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 0));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/orders/view?orderid=%s'\">", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
+			prints(sid, "&nbsp;<A HREF=%s/orders/view?orderid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0), sql_getvalue(&sqr1, i, 0));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(&sqr1, i, 1)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr1, i, 2)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr1, i, 3)));
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
 	}
 	prints(sid, "<A HREF=%s/orders/editnew?contactid=%d>New Order</A>\n", sid->dat->in_ScriptName, contactid);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -967,7 +967,7 @@ void contactsave(CONN *sid)
 	char opassword[50];
 	char *ptemp;
 	int contactid;
-	int sqr;
+	SQLRES sqr;
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
@@ -1046,17 +1046,17 @@ void contactsave(CONN *sid)
 			return;
 		}
 		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s' AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s' AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did)<0) return;
 		} else {
-			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s') AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s') AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did)<0) return;
 		}
-		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<CENTER><B>This contact appears to be a duplicate of <A HREF=%s/contacts/view?contactid=%d>contact #%d</A>.</B></CENTER>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)), atoi(sql_getvalue(sqr, 0, 0)));
-			sql_freeresult(sqr);
+		if (sql_numtuples(&sqr)>0) {
+			prints(sid, "<CENTER><B>This contact appears to be a duplicate of <A HREF=%s/contacts/view?contactid=%d>contact #%d</A>.</B></CENTER>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 0)), atoi(sql_getvalue(&sqr, 0, 0)));
+			sql_freeresult(&sqr);
 			contactview(sid, &contact);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 skipcheck1:
 		snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		if ((contact.contactid=dbwrite_contact(sid, 0, &contact))<1) {

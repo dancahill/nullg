@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,21 +23,21 @@ static char *db_avail_getweek(int userid, char *availability)
 	char availbuff[170];
 	char gavailability[673];
 	char uavailability[673];
-	int sqr;
+	SQLRES sqr;
 	int groupid;
 	int i;
 
-	if ((sqr=sql_queryf("SELECT groupid, availability FROM gw_users WHERE userid = %d", userid))<0) return NULL;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT groupid, availability FROM gw_users WHERE userid = %d", userid)<0) return NULL;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return NULL;
 	}
 	memset(gavailability, 0, sizeof(gavailability));
 	memset(uavailability, 0, sizeof(uavailability));
-	groupid=atoi(sql_getvalue(sqr, 0, 0));
+	groupid=atoi(sql_getvalue(&sqr, 0, 0));
 	memset(availbuff, 0, sizeof(availbuff));
-	strncpy(availbuff, sql_getvalue(sqr, 0, 1), sizeof(availbuff)-1);
-	sql_freeresult(sqr);
+	strncpy(availbuff, sql_getvalue(&sqr, 0, 1), sizeof(availbuff)-1);
+	sql_freeresult(&sqr);
 	if (strlen(availbuff)!=168) {
 		for (i=0;i<672;i++) {
 			uavailability[i]='0';
@@ -47,14 +47,14 @@ static char *db_avail_getweek(int userid, char *availability)
 			uavailability[i]=availbuff[(int)(i/4)];
 		}
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", groupid))<0) return NULL;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT availability FROM gw_groups WHERE groupid = %d", groupid)<0) return NULL;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return NULL;
 	}
 	memset(availbuff, 0, sizeof(availbuff));
-	strncpy(availbuff, sql_getvalue(sqr, 0, 0), sizeof(availbuff)-1);
-	sql_freeresult(sqr);
+	strncpy(availbuff, sql_getvalue(&sqr, 0, 0), sizeof(availbuff)-1);
+	sql_freeresult(&sqr);
 	if (strlen(availbuff)!=168) {
 		for (i=0;i<672;i++) {
 			gavailability[i]='0';
@@ -78,7 +78,7 @@ char *db_avail_getfullweek(int userid, int record, time_t eventstart, char *avai
 	char timebuf1[40];
 	char timebuf2[40];
 	int i, i2, j, k;
-	int sqr;
+	SQLRES sqr;
 	struct tm t1;
 	struct tm t2;
 	time_t eventfinish;
@@ -92,11 +92,11 @@ char *db_avail_getfullweek(int userid, int record, time_t eventstart, char *avai
 	eventfinish=eventstart+604800;
 	strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
 	strftime(timebuf2, sizeof(timebuf2)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventfinish));
-	if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return NULL;
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		eventstart=time_sql2unix(sql_getvalue(sqr, i, 1));
+	if (sql_queryf(&sqr, "SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid)<0) return NULL;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		eventstart=time_sql2unix(sql_getvalue(&sqr, i, 1));
 		eventstart+=time_tzoffset2(eventstart, userid);
-		eventfinish=time_sql2unix(sql_getvalue(sqr, i, 2));
+		eventfinish=time_sql2unix(sql_getvalue(&sqr, i, 2));
 		eventfinish+=time_tzoffset2(eventfinish, userid);
 		strftime(timebuf1, sizeof(timebuf1), "%w %H %M", gmtime(&eventstart));
 		sscanf(timebuf1, "%d %d %d", &t1.tm_wday, &t1.tm_hour, &t1.tm_min);
@@ -108,7 +108,7 @@ char *db_avail_getfullweek(int userid, int record, time_t eventstart, char *avai
 		if (k==j) k++;
 		for (i2=j;i2<k;i2++) availability[i2]='0';
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 //	logerror(sid, __FILE__, __LINE__, "================================================================================================");
 //	logerror(sid, __FILE__, __LINE__, "000011112222333344445555666677778888999900001111222233334444555566667777888899990000111122223333");
 //	for (i=0;i<7;i++) { ptemp=availability+(i*96); logerror(sid, __FILE__, __LINE__, "%.96s", ptemp); }
@@ -124,7 +124,7 @@ int db_availcheck(int userid, int record, int busy, time_t eventstart, time_t ev
 	char *ptemp;
 	int i, j, k;
 	int ret;
-	int sqr;
+	SQLRES sqr;
 	time_t ts, tf;
 	struct tm t1;
 	struct tm t2;
@@ -150,10 +150,10 @@ int db_availcheck(int userid, int record, int busy, time_t eventstart, time_t ev
 		if (availability[i]=='1') continue;
 		strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
 		strftime(timebuf2, sizeof(timebuf2)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventfinish));
-		if ((sqr=sql_queryf("SELECT eventid FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return -1;
-		if (sql_numtuples(sqr)>0) {
-			ret=atoi(sql_getvalue(sqr, 0, 0));
-			sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT eventid FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid)<0) return -1;
+		if (sql_numtuples(&sqr)>0) {
+			ret=atoi(sql_getvalue(&sqr, 0, 0));
+			sql_freeresult(&sqr);
 			return ret;
 		}
 	}
@@ -223,24 +223,24 @@ int db_autoassign(u_avail *uavail, int groupid, int zoneid, int record, int busy
 	int i;
 	int j;
 	int rc;
-	int sqr;
+	SQLRES sqr;
 
 	uavail->userid=0;
 	uavail->time=0;
 	if (zoneid==0) {
-		if ((sqr=sql_queryf("SELECT userid FROM gw_users where groupid = %d", groupid))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT userid FROM gw_users where groupid = %d", groupid)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT userid FROM gw_users where groupid = %d and prefgeozone = %d", groupid, zoneid))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT userid FROM gw_users where groupid = %d and prefgeozone = %d", groupid, zoneid)<0) return -1;
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
 		if ((rc=db_autoschedule(j, record, busy, eventstart, eventfinish))<0) continue;
 		if ((rc<uavail->time)||(uavail->time==0)) {
 			uavail->userid=j;
 			uavail->time=rc;
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (uavail->userid<=0) return -1;
 	if (uavail->time<=0) return -1;
 	return 0;

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -459,51 +459,52 @@ void adminuseredit(CONN *sid, REC_USER *user)
 void adminuserlist(CONN *sid)
 {
 	int i, j;
+	int rc;
 	int lastdomain;
 	int thisdomain;
-	int sqr1;
-	int sqr2;
-	int sqr3;
-	int sqr4;
+	SQLRES sqr1;
+	SQLRES sqr2;
+	SQLRES sqr3;
+	SQLRES sqr4;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr1=sql_queryf("SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users ORDER BY domainid, username ASC");
+		rc=sql_queryf(&sqr1, "SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users ORDER BY domainid, username ASC");
 	} else {
-		sqr1=sql_queryf("SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users WHERE domainid = %d ORDER BY domainid, username ASC", sid->dat->user_did);
+		rc=sql_queryf(&sqr1, "SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users WHERE domainid = %d ORDER BY domainid, username ASC", sid->dat->user_did);
 	}
-	if (sqr1<0) return;
+	if (rc<0) return;
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC");
+		rc=sql_queryf(&sqr2, "SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC");
 	} else {
-		sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d ORDER BY groupid ASC", sid->dat->user_did);
+		rc=sql_queryf(&sqr2, "SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d ORDER BY groupid ASC", sid->dat->user_did);
 	}
-	if (sqr2<0) {
-		sql_freeresult(sqr1);
+	if (rc<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr3=sql_queryf("SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC");
+		rc=sql_queryf(&sqr3, "SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC");
 	} else {
-		sqr3=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d ORDER BY zoneid ASC", sid->dat->user_did);
+		rc=sql_queryf(&sqr3, "SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d ORDER BY zoneid ASC", sid->dat->user_did);
 	}
-	if (sqr3<0) {
-		sql_freeresult(sqr1);
-		sql_freeresult(sqr2);
+	if (rc<0) {
+		sql_freeresult(&sqr1);
+		sql_freeresult(&sqr2);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr4=sql_queryf("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
+		rc=sql_queryf(&sqr4, "SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
 	} else {
-		sqr4=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
+		rc=sql_queryf(&sqr4, "SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
 	}
-	if (sqr4<0) {
-		sql_freeresult(sqr1);
-		sql_freeresult(sqr2);
-		sql_freeresult(sqr3);
+	if (rc<0) {
+		sql_freeresult(&sqr1);
+		sql_freeresult(&sqr2);
+		sql_freeresult(&sqr3);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
@@ -514,46 +515,46 @@ void adminuserlist(CONN *sid)
 	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Zone&nbsp;</TH>");
 	prints(sid, "</TR>\n");
 	lastdomain=-1;
-	if (sql_numtuples(sqr4)<2) {
-		lastdomain=atoi(sql_getvalue(sqr1, 0, 2));
+	if (sql_numtuples(&sqr4)<2) {
+		lastdomain=atoi(sql_getvalue(&sqr1, 0, 2));
 	}
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		thisdomain=atoi(sql_getvalue(sqr1, i, 2));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		thisdomain=atoi(sql_getvalue(&sqr1, i, 2));
 		if (lastdomain!=thisdomain) {
 			lastdomain=thisdomain;
 			prints(sid, "<TR CLASS=\"FIELDNAME\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
-			for (j=0;j<sql_numtuples(sqr4);j++) {
-				if (atoi(sql_getvalue(sqr4, j, 0))==atoi(sql_getvalue(sqr1, i, 2))) {
-					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(sqr4, j, 1)));
+			for (j=0;j<sql_numtuples(&sqr4);j++) {
+				if (atoi(sql_getvalue(&sqr4, j, 0))==atoi(sql_getvalue(&sqr1, i, 2))) {
+					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(&sqr4, j, 1)));
 					break;
 				}
 			}
-			if (j==sql_numtuples(sqr4)) {
+			if (j==sql_numtuples(&sqr4)) {
 				prints(sid, "&nbsp;</TD>");
 			}
 		}
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(sqr1, i, 4)));
-		if (strlen(sql_getvalue(sqr1, i, 4))&&strlen(sql_getvalue(sqr1, i, 5))) prints(sid, ", ");
-		prints(sid, "%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)));
-		for (j=0;j<sql_numtuples(sqr2);j++) {
-			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 3)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(&sqr1, i, 4)));
+		if (strlen(sql_getvalue(&sqr1, i, 4))&&strlen(sql_getvalue(&sqr1, i, 5))) prints(sid, ", ");
+		prints(sid, "%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr1, i, 5)));
+		for (j=0;j<sql_numtuples(&sqr2);j++) {
+			if (atoi(sql_getvalue(&sqr2, j, 0))==atoi(sql_getvalue(&sqr1, i, 1))) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr2, j, 1)));
 				break;
 			}
 		}
-		if (j==sql_numtuples(sqr2)) {
+		if (j==sql_numtuples(&sqr2)) {
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
-		for (j=0;j<sql_numtuples(sqr3);j++) {
-			if (atoi(sql_getvalue(sqr3, j, 0))==atoi(sql_getvalue(sqr1, i, 6))) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr3, j, 1)));
+		for (j=0;j<sql_numtuples(&sqr3);j++) {
+			if (atoi(sql_getvalue(&sqr3, j, 0))==atoi(sql_getvalue(&sqr1, i, 6))) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(&sqr3, j, 1)));
 				break;
 			}
 		}
-		if (j==sql_numtuples(sqr3)) {
+		if (j==sql_numtuples(&sqr3)) {
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		prints(sid, "</TR>\n");
@@ -561,10 +562,10 @@ void adminuserlist(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<A HREF=%s/admin/usereditnew>New User</A>", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>");
-	sql_freeresult(sqr1);
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr3);
-	sql_freeresult(sqr4);
+	sql_freeresult(&sqr1);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr3);
+	sql_freeresult(&sqr4);
 	return;
 }
 
@@ -577,7 +578,7 @@ void adminusersave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int userid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -764,23 +765,23 @@ void adminusersave(CONN *sid)
 		db_log_activity(sid, "users", user.userid, "delete", "%s - %s deleted user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else if (user.userid==0) {
-		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' AND domainid = %d", user.username, user.domainid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT username FROM gw_users where username = '%s' AND domainid = %d", user.username, user.domainid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			adminuseredit(sid, &user);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(user.username)<1) {
 			prints(sid, "<CENTER><B>Username is too short</B></CENTER>\n");
 			adminuseredit(sid, &user);
 			return;
 		}
 		snprintf(user.password, sizeof(user.password)-1, "%s", auth_setpass(sid, user.password));
-		if ((sqr=sql_query("SELECT max(userid) FROM gw_users"))<0) return;
-		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(userid) FROM gw_users")<0) return;
+		user.userid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (user.userid<1) user.userid=1;
 		memset(query, 0, sizeof(query));
 		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authprojects, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
@@ -871,14 +872,14 @@ void adminusersave(CONN *sid)
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", user.username, user.userid, user.domainid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", user.username, user.userid, user.domainid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			adminuseredit(sid, &user);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(user.username)<1) {
 			prints(sid, "<CENTER><B>Username is too short</B></CENTER>\n");
 			adminuseredit(sid, &user);
@@ -957,7 +958,7 @@ void adminusertimeedit(CONN *sid)
 	int userid;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -969,29 +970,29 @@ void adminusertimeedit(CONN *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_users WHERE userid = %d", user.userid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT availability FROM gw_users WHERE userid = %d", user.userid)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for %s</CENTER>\n", user.userid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	memset(uavailability, 0, sizeof(uavailability));
-	strncpy(uavailability, sql_getvalue(sqr, 0, 0), sizeof(uavailability)-1);
-	sql_freeresult(sqr);
+	strncpy(uavailability, sql_getvalue(&sqr, 0, 0), sizeof(uavailability)-1);
+	sql_freeresult(&sqr);
 	if (strlen(uavailability)!=168) {
 		for (i=0;i<168;i++) {
 			uavailability[i]='0';
 		}
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", user.groupid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT availability FROM gw_groups WHERE groupid = %d", user.groupid)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\n", user.groupid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	memset(gavailability, 0, sizeof(gavailability));
-	strncpy(gavailability, sql_getvalue(sqr, 0, 0), sizeof(gavailability)-1);
-	sql_freeresult(sqr);
+	strncpy(gavailability, sql_getvalue(&sqr, 0, 0), sizeof(gavailability)-1);
+	sql_freeresult(&sqr);
 	if (strlen(gavailability)!=168) {
 		for (i=0;i<168;i++) {
 			gavailability[i]='0';

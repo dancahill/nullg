@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -125,7 +125,6 @@ typedef struct {
 	char      sql_dbname[32];
 	char      sql_username[32];
 	char      sql_password[32];
-	short int sql_maxconn;
 	char      ssl_cert[255];
 	char      ssl_key[255];
 } GLOBAL_CONFIG;

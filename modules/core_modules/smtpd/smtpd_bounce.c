@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 	int br;
 	int localdomainid;
 	int userid;
-	int sqr;
+	SQLRES sqr;
 	int is_remote;
 	struct timeval ttime;
 	struct timezone tzone;
@@ -48,9 +48,9 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 	localdomainid=domain_getid(host);
 	if (localdomainid>0) {
 		userid=0;
-		if ((sqr=sql_queryf("SELECT userid FROM gw_users WHERE username = '%s' AND domainid = %d", tmpaddr, localdomainid))<0) return -1;
-		if (sql_numtuples(sqr)==1) userid=atoi(sql_getvalue(sqr, 0, 0));
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT userid FROM gw_users WHERE username = '%s' AND domainid = %d", tmpaddr, localdomainid)<0) return -1;
+		if (sql_numtuples(&sqr)==1) userid=atoi(sql_getvalue(&sqr, 0, 0));
+		sql_freeresult(&sqr);
 		if (userid<1) {
 			log_error("smtpd", __FILE__, __LINE__, 1, "no such mailbox: '%s', sent from MAILER-DAEMON", from);
 			return -1;

@@ -1,6 +1,5 @@
 /*
-    Null httpd -- simple http server
-    Copyright (C) 2001-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

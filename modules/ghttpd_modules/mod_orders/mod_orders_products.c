@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,24 +111,24 @@ void productview(CONN *sid)
 void productlist(CONN *sid)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT productid, productname, category, unitprice, internalcost FROM gw_products WHERE obj_did = %d ORDER BY productname ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT productid, productname, category, unitprice, internalcost FROM gw_products WHERE obj_did = %d ORDER BY productname ASC", sid->dat->user_did)<0) return;
 	prints(sid, "<CENTER>\n");
-	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(sqr));
-	if (sql_numtuples(sqr)>0) {
+	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(&sqr));
+	if (sql_numtuples(&sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>");
 		prints(sid, "<TH NOWRAP STYLE='border-style:solid'>Product Name</TH><TH NOWRAP STYLE='border-style:solid'>Category</TH><TH NOWRAP STYLE='border-style:solid'>Unit Price</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/productview?productid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/productview?productid=%s>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0));
+			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr, i, 1)));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr, i, 2)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f&nbsp;</TD>", atof(sql_getvalue(&sqr, i, 3)));
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
@@ -137,7 +137,7 @@ void productlist(CONN *sid)
 		prints(sid, "<A HREF=%s/orders/producteditnew>New Product</A>\n", sid->dat->in_ScriptName);
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -149,7 +149,7 @@ void productsave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int productid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -185,9 +185,9 @@ void productsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(productid) FROM gw_products"))<0) return;
-		product.productid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(productid) FROM gw_products")<0) return;
+		product.productid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (product.productid<1) product.productid=1;
 		strcpy(query, "INSERT INTO gw_products (productid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, productname, category, discount, unitprice, internalcost, tax1, tax2, details) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", product.productid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);

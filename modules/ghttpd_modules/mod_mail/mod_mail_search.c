@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,40 +45,31 @@ char *wmsearch_makestring(CONN *sid)
 	return searchstring;
 }
 
-int wmsearch_doquery(CONN *sid, const char *order_by, int folderid)
+int wmsearch_doquery(CONN *sid, SQLRES *sqr, const char *order_by, int folderid)
 {
 	char *ptemp1;
 	char *ptemp2;
-	int sqr;
 
 	ptemp1=getgetenv(sid, "C");
 	ptemp2=getgetenv(sid, "TEXT");
 	if ((ptemp1!=NULL)&&(ptemp2!=NULL)) {
 		if (strcmp(ptemp1, "addr")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "from")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "to")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_to LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_to LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "cc")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "subject")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_subject LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_subject LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "body")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
 		} else if (strcmp(ptemp1, "all")==0) {
-			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' OR hdr_subject LIKE '%%%s%%' OR msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, ptemp2, ptemp2, order_by);
-			return sqr;
+			return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' OR hdr_subject LIKE '%%%s%%' OR msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, ptemp2, ptemp2, order_by);
 		}
 	}
-	sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);
-	return sqr;
+	return sql_queryf(sqr, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);
 }
 
 void wmsearch_form(CONN *sid)

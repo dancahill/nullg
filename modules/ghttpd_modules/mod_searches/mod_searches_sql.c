@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ void searchsqlrun(CONN *sid)
 	int queryid;
 	int offset;
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 	int min, max;
 
 	if (!(auth_priv(sid, "query")&A_READ)) {
@@ -134,12 +134,12 @@ void searchsqlrun(CONN *sid)
 	}
 	if (queryid==0) {
 		if (auth_priv(sid, "query")&A_ADMIN) {
-			if ((sqr=sql_queryf("SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC"))<0) return;
+			if (sql_queryf(&sqr, "SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC")<0) return;
 		} else {
-			if ((sqr=sql_queryf("SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if (sql_queryf(&sqr, "SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->user_uid, sid->dat->user_gid)<0) return;
 		}
 		prints(sid, "<CENTER>\n");
-		if (sql_numtuples(sqr)>0) {
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "Saved queries<BR>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>\n");
 			if (auth_priv(sid, "query")&A_ADMIN) {
@@ -159,15 +159,15 @@ void searchsqlrun(CONN *sid)
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>\n");
 				prints(sid, "</TR>\n");
 			}
-			for (i=0;i<sql_numtuples(sqr);i++) {
+			for (i=0;i<sql_numtuples(&sqr);i++) {
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 				if (auth_priv(sid, "query")&A_ADMIN) {
-					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0));
 				}
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-				prints(sid, "%s</A>&nbsp;</TD>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
-				if (strncasecmp("SELECT", sql_getvalue(sqr, i, 2), 6)==0) {
-					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%d&format=csv>CSV</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0));
+				prints(sid, "%s</A>&nbsp;</TD>\n", str2html(sid, sql_getvalue(&sqr, i, 1)));
+				if (strncasecmp("SELECT", sql_getvalue(&sqr, i, 2), 6)==0) {
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%d&format=csv>CSV</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
 				} else {
 					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>\n");
 				}
@@ -177,7 +177,7 @@ void searchsqlrun(CONN *sid)
 		} else {
 			prints(sid, "There are no saved queries<BR>\n");
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (auth_priv(sid, "query")&A_ADMIN) {
 			prints(sid, "<A HREF=%s/search/sqladd>New Query</A>\n", sid->dat->in_ScriptName);
 		}
@@ -202,12 +202,12 @@ void searchsqlrun(CONN *sid)
 		ptemp++;
 	}
 	if (strcmp(querytype, "SELECT")==0) {
-		if ((sqr=sql_query(query.query))<0) {
+		if (sql_query(&sqr, query.query)<0) {
 			prints(sid, "<CENTER>SQL query failed.</CENTER>\n");
 			return;
 		}
 	} else if (strcmp(querytype, "SHOW")==0) {
-		if ((sqr=sql_query(query.query))<0) {
+		if (sql_query(&sqr, query.query)<0) {
 			prints(sid, "<CENTER>SQL query failed.</CENTER>\n");
 			return;
 		}
@@ -240,33 +240,33 @@ void searchsqlrun(CONN *sid)
 		snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=query.csv");
 		send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
 		flushbuffer(sid);
-		for (i=0;i<sql_numfields(sqr);i++) {
-			prints(sid, "\"%s\"", sql_getname(sqr, i));
-			if (i<sql_numfields(sqr)-1) {
+		for (i=0;i<sql_numfields(&sqr);i++) {
+			prints(sid, "\"%s\"", sql_getname(&sqr, i));
+			if (i<sql_numfields(&sqr)-1) {
 				prints(sid, ",");
 			} else {
 				prints(sid, "\r\n");
 			}
 		}
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			for (j=0;j<sql_numfields(sqr);j++) {
-				prints(sid, "\"%s\"", str2html(sid, sql_getvalue(sqr, i, j)));
-				if (j<sql_numfields(sqr)-1) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
+			for (j=0;j<sql_numfields(&sqr);j++) {
+				prints(sid, "\"%s\"", str2html(sid, sql_getvalue(&sqr, i, j)));
+				if (j<sql_numfields(&sqr)-1) {
 					prints(sid, ",");
 				} else {
 					prints(sid, "\r\n");
 				}
 			}
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
-	if (sql_numtuples(sqr)<1) {
+	if (sql_numtuples(&sqr)<1) {
 		prints(sid, "<CENTER>Query [%s] returned no results.</CENTER>\n", query.queryname);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
-	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(sqr));
+	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(&sqr));
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR>");
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
@@ -274,19 +274,19 @@ void searchsqlrun(CONN *sid)
 	} else {
 		offset=0;
 	}
-	for (i=0;i<sql_numfields(sqr);i++) {
-		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TH>", str2html(sid, sql_getname(sqr, i)));
+	for (i=0;i<sql_numfields(&sqr);i++) {
+		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TH>", str2html(sid, sql_getname(&sqr, i)));
 	}
 	prints(sid, "</TR>\n");
-	for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
+	for (i=offset;(i<sql_numtuples(&sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
-		for (j=0;j<sql_numfields(sqr);j++)
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, j)));
+		for (j=0;j<sql_numfields(&sqr);j++)
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr, i, j)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE></CENTER>\n");
 	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr)>sid->dat->user_maxlist) {
+	if (sql_numtuples(&sqr)>sid->dat->user_maxlist) {
 		if (offset>(sid->dat->user_maxlist-1)) {
 			if (queryid>-1) {
 				prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset-sid->dat->user_maxlist);
@@ -296,14 +296,14 @@ void searchsqlrun(CONN *sid)
 			min=offset-sid->dat->user_maxlist+1;
 			max=offset;
 			if (min<0) min=0;
-			if (min>sql_numtuples(sqr)) min=sql_numtuples(sqr);
+			if (min>sql_numtuples(&sqr)) min=sql_numtuples(&sqr);
 			if (max<0) max=0;
-			if (max>sql_numtuples(sqr)) max=sql_numtuples(sqr);
+			if (max>sql_numtuples(&sqr)) max=sql_numtuples(&sqr);
 			prints(sid, "Previous (%d to %d)</A>]\n", min, max);
 		} else {
 			prints(sid, "[Previous]\n");
 		}
-		if (offset+sid->dat->user_maxlist<sql_numtuples(sqr)) {
+		if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr)) {
 			if (queryid>-1) {
 				prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset+sid->dat->user_maxlist);
 			} else {
@@ -312,16 +312,16 @@ void searchsqlrun(CONN *sid)
 			min=offset+sid->dat->user_maxlist+1;
 			max=offset+sid->dat->user_maxlist+sid->dat->user_maxlist;
 			if (min<0) min=0;
-			if (min>sql_numtuples(sqr)) min=sql_numtuples(sqr);
+			if (min>sql_numtuples(&sqr)) min=sql_numtuples(&sqr);
 			if (max<0) max=0;
-			if (max>sql_numtuples(sqr)) max=sql_numtuples(sqr);
+			if (max>sql_numtuples(&sqr)) max=sql_numtuples(&sqr);
 			prints(sid, "Next (%d to %d)</A>]\n", min, max);
 		} else {
 			prints(sid, "[Next]\n");
 		}
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 

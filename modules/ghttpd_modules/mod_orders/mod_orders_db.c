@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 {
 	union rec_u rec;
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	rec.head=record;
 	rec.bookmark=record;
@@ -112,65 +112,65 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 	}
 	switch (table) {
 	case DB_ORDERS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_orders where orderid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_orders where orderid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 		break;
 	case DB_ORDERITEMS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_orderitems where orderitemid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_orderitems where orderitemid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 		break;
 	case DB_PRODUCTS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_products where productid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_products where productid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return -1;
 		break;
 	default:
 		return -1;
 		break;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	rec.head->recordid  = atoi(sql_getvalue(sqr, 0, 0));
-	rec.head->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	rec.head->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	rec.head->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	rec.head->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	rec.head->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	rec.head->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	rec.head->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
+	rec.head->recordid  = atoi(sql_getvalue(&sqr, 0, 0));
+	rec.head->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	rec.head->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	rec.head->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	rec.head->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	rec.head->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	rec.head->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	rec.head->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
 	switch (table) {
 	case DB_ORDERS:
-		rec.order->contactid=atoi(sql_getvalue(sqr, 0, 8));
-		rec.order->userid=atoi(sql_getvalue(sqr, 0, 9));
-		rec.order->orderdate=time_sql2unix(sql_getvalue(sqr, 0, 10));
-		strncpy(rec.order->ordertype,		sql_getvalue(sqr, 0, 11), sizeof(rec.order->ordertype)-1);
-		strncpy(rec.order->paymentmethod,	sql_getvalue(sqr, 0, 12), sizeof(rec.order->paymentmethod)-1);
-		rec.order->paymentdue=(float)atof(sql_getvalue(sqr, 0, 13));
-		rec.order->paymentreceived=(float)atof(sql_getvalue(sqr, 0, 14));
-		rec.order->status=atoi(sql_getvalue(sqr, 0, 15));
-		strncpy(rec.order->details,		sql_getvalue(sqr, 0, 16), sizeof(rec.order->details)-1);
+		rec.order->contactid=atoi(sql_getvalue(&sqr, 0, 8));
+		rec.order->userid=atoi(sql_getvalue(&sqr, 0, 9));
+		rec.order->orderdate=time_sql2unix(sql_getvalue(&sqr, 0, 10));
+		strncpy(rec.order->ordertype,		sql_getvalue(&sqr, 0, 11), sizeof(rec.order->ordertype)-1);
+		strncpy(rec.order->paymentmethod,	sql_getvalue(&sqr, 0, 12), sizeof(rec.order->paymentmethod)-1);
+		rec.order->paymentdue=(float)atof(sql_getvalue(&sqr, 0, 13));
+		rec.order->paymentreceived=(float)atof(sql_getvalue(&sqr, 0, 14));
+		rec.order->status=atoi(sql_getvalue(&sqr, 0, 15));
+		strncpy(rec.order->details,		sql_getvalue(&sqr, 0, 16), sizeof(rec.order->details)-1);
 		break;
 	case DB_ORDERITEMS:
-		rec.orderitem->orderid=atoi(sql_getvalue(sqr, 0, 8));
-		rec.orderitem->productid=atoi(sql_getvalue(sqr, 0, 9));
-		rec.orderitem->quantity=(float)atof(sql_getvalue(sqr, 0, 10));
-		rec.orderitem->discount=(float)atof(sql_getvalue(sqr, 0, 11));
-		rec.orderitem->unitprice=(float)atof(sql_getvalue(sqr, 0, 12));
-		rec.orderitem->internalcost=(float)atof(sql_getvalue(sqr, 0, 13));
-		rec.orderitem->tax1=(float)atof(sql_getvalue(sqr, 0, 14));
-		rec.orderitem->tax2=(float)atof(sql_getvalue(sqr, 0, 15));
+		rec.orderitem->orderid=atoi(sql_getvalue(&sqr, 0, 8));
+		rec.orderitem->productid=atoi(sql_getvalue(&sqr, 0, 9));
+		rec.orderitem->quantity=(float)atof(sql_getvalue(&sqr, 0, 10));
+		rec.orderitem->discount=(float)atof(sql_getvalue(&sqr, 0, 11));
+		rec.orderitem->unitprice=(float)atof(sql_getvalue(&sqr, 0, 12));
+		rec.orderitem->internalcost=(float)atof(sql_getvalue(&sqr, 0, 13));
+		rec.orderitem->tax1=(float)atof(sql_getvalue(&sqr, 0, 14));
+		rec.orderitem->tax2=(float)atof(sql_getvalue(&sqr, 0, 15));
 		break;
 	case DB_PRODUCTS:
-		strncpy(rec.product->productname,	sql_getvalue(sqr, 0, 8), sizeof(rec.product->productname)-1);
-		strncpy(rec.product->category,		sql_getvalue(sqr, 0, 9), sizeof(rec.product->category)-1);
-		rec.product->discount=(float)atof(sql_getvalue(sqr, 0, 10));
-		rec.product->unitprice=(float)atof(sql_getvalue(sqr, 0, 11));
-		rec.product->internalcost=(float)atof(sql_getvalue(sqr, 0, 12));
-		rec.product->tax1=(float)atof(sql_getvalue(sqr, 0, 13));
-		rec.product->tax2=(float)atof(sql_getvalue(sqr, 0, 14));
-		strncpy(rec.product->details,		sql_getvalue(sqr, 0, 15), sizeof(rec.product->details)-1);
+		strncpy(rec.product->productname,	sql_getvalue(&sqr, 0, 8), sizeof(rec.product->productname)-1);
+		strncpy(rec.product->category,		sql_getvalue(&sqr, 0, 9), sizeof(rec.product->category)-1);
+		rec.product->discount=(float)atof(sql_getvalue(&sqr, 0, 10));
+		rec.product->unitprice=(float)atof(sql_getvalue(&sqr, 0, 11));
+		rec.product->internalcost=(float)atof(sql_getvalue(&sqr, 0, 12));
+		rec.product->tax1=(float)atof(sql_getvalue(&sqr, 0, 13));
+		rec.product->tax2=(float)atof(sql_getvalue(&sqr, 0, 14));
+		strncpy(rec.product->details,		sql_getvalue(&sqr, 0, 15), sizeof(rec.product->details)-1);
 		break;
 	default:
 		break;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }

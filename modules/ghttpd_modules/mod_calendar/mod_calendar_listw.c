@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@ void calendarlistweek(CONN *sid)
 	int i, j;
 	int k=0;
 	int line;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 	int userid=-1;
 	int groupid=-1;
@@ -108,8 +108,8 @@ void calendarlistweek(CONN *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if (dblist_events(sid, &sqr1, posttime1, posttime2)<0) return;
+	if (sql_queryf(&sqr2, "SELECT userid, groupid, username FROM gw_users")<0) return;
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
 	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
@@ -124,28 +124,28 @@ void calendarlistweek(CONN *sid)
 		prints(sid, "&status=%d", status);
 		prints(sid, ">%s</A></B></TH></TR>\n", time_sql2datetext(sid, showtime));
 		line=1;
-		for (j=0;j<sql_numtuples(sqr);j++) {
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
+		for (j=0;j<sql_numtuples(&sqr1);j++) {
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 1));
 			if ((t2<t)||(t2>t+86399)) continue;
-			if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, j, 3)))) continue;
-			if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, j, 4)))) continue;
+			if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, j, 3)))) continue;
+			if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, j, 4)))) continue;
 			if (groupid>0) {
-				for (k=0;k<sql_numtuples(sqr2);k++) {
-					if (atoi(sql_getvalue(sqr, j, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-					if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
+				for (k=0;k<sql_numtuples(&sqr2);k++) {
+					if (atoi(sql_getvalue(&sqr1, j, 4))!=atoi(sql_getvalue(&sqr2, k, 0))) continue;
+					if (groupid!=atoi(sql_getvalue(&sqr2, k, 1))) continue;
 					break;
 				}
-				if (k==sql_numtuples(sqr2)) continue;
+				if (k==sql_numtuples(&sqr2)) continue;
 			}
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
-			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
-			t2=time_sql2unix(sql_getvalue(sqr, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 2)));
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, j, 1)));
+			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(&sqr1, j, 0), time_unix2timetext(sid, t2));
+			t2=time_sql2unix(sql_getvalue(&sqr1, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, j, 2)));
 			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>", time_unix2timetext(sid, t2));
-			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, k, 2)));
-			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0));
-			prints(sid, "%s</A>&nbsp;", str2html(sid, sql_getvalue(sqr, j, 5)));
+			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(&sqr2, k, 2)));
+			prints(sid, "<A HREF=%s/calendar/edit?eventid=%s>", sid->dat->in_ScriptName, sql_getvalue(&sqr1, j, 0));
+			prints(sid, "%s</A>&nbsp;", str2html(sid, sql_getvalue(&sqr1, j, 5)));
 			prints(sid, "</FONT></TD></TR>\n");
 			if (line>0) line--;
 		}
@@ -154,8 +154,8 @@ void calendarlistweek(CONN *sid)
 			line--;
 		}
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
 	calendarmini(sid, unixdate, userid, groupid);

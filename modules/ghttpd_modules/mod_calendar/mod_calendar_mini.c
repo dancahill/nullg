@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	int i, j, k;
 	int printdate;
 	time_t t, t2;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
@@ -83,8 +83,8 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	t=(unixdate+42)*86400;
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf("SELECT userid, groupid FROM gw_users"))<0) return;
+	if (dblist_events(sid, &sqr1, posttime1, posttime2)<0) return;
+	if (sql_queryf(&sqr2, "SELECT userid, groupid FROM gw_users")<0) return;
 	for (;;) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">\n");
 		for (i=0;i<7;i++) {
@@ -92,18 +92,18 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 			t=unixdate*86400;
 			strftime(showtime, sizeof(showtime), "%d", gmtime(&t));
 			t-=time_tzoffset(sid, t);
-			for (j=0,b=0;j<sql_numtuples(sqr);j++) {
-				t2=time_sql2unix(sql_getvalue(sqr, j, 1));
+			for (j=0,b=0;j<sql_numtuples(&sqr1);j++) {
+				t2=time_sql2unix(sql_getvalue(&sqr1, j, 1));
 				if ((t2<t)||(t2>t+86399)) continue;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, j, 3)))) continue;
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, j, 4)))) continue;
+				if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, j, 3)))) continue;
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, j, 4)))) continue;
 				if (groupid>0) {
-					for (k=0;k<sql_numtuples(sqr2);k++) {
-						if (atoi(sql_getvalue(sqr, j, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-						if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
+					for (k=0;k<sql_numtuples(&sqr2);k++) {
+						if (atoi(sql_getvalue(&sqr1, j, 4))!=atoi(sql_getvalue(&sqr2, k, 0))) continue;
+						if (groupid!=atoi(sql_getvalue(&sqr2, k, 1))) continue;
 						break;
 					}
-					if (k==sql_numtuples(sqr2)) continue;
+					if (k==sql_numtuples(&sqr2)) continue;
 				}
 				b=1;
 			}
@@ -129,8 +129,8 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 		prints(sid, "</TR>\n");
 		if (printdate>dim[today.tm_mon-1]) break;
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n");
 	return;
 }
@@ -148,8 +148,8 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 	int index=0;
 	int printdate;
 	time_t t, t2;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
@@ -192,8 +192,8 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 	t=(unixdate+42)*86400;
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf("SELECT userid, groupid FROM gw_users"))<0) return;
+	if (dblist_events(sid, &sqr1, posttime1, posttime2)<0) return;
+	if (sql_queryf(&sqr2, "SELECT userid, groupid FROM gw_users")<0) return;
 	for (;;) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">\n");
 		for (i=0;i<7;i++) {
@@ -202,19 +202,19 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 			strftime(showtime, sizeof(showtime), "%d", gmtime(&t));
 			t-=time_tzoffset(sid, t);
 			b=0;
-			while (index<sql_numtuples(sqr)) {
-				t2=time_sql2unix(sql_getvalue(sqr, index, 1));
+			while (index<sql_numtuples(&sqr1)) {
+				t2=time_sql2unix(sql_getvalue(&sqr1, index, 1));
 				if (t2<t) { index++; continue; }
 				if (t2>t+86399) break;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
+				if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, index, 3)))) { index++; continue; }
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, index, 4)))) { index++; continue; }
 				if (groupid>0) {
-					for (j=0;j<sql_numtuples(sqr2);j++) {
-						if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
-						if (groupid!=atoi(sql_getvalue(sqr2, j, 1))) continue;
+					for (j=0;j<sql_numtuples(&sqr2);j++) {
+						if (atoi(sql_getvalue(&sqr1, index, 4))!=atoi(sql_getvalue(&sqr2, j, 0))) continue;
+						if (groupid!=atoi(sql_getvalue(&sqr2, j, 1))) continue;
 						break;
 					}
-					if (j==sql_numtuples(sqr2)) { index++; continue; }
+					if (j==sql_numtuples(&sqr2)) { index++; continue; }
 				}
 				b=1;
 				index++;
@@ -236,8 +236,8 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 		prints(sid, "</TR>\n");
 		if (printdate>dim[today.tm_mon-1]) break;
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n");
 	return;
 }

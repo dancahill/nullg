@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,16 +79,16 @@ typedef	void  (*MAIN_MD5_INIT)(struct MD5Context *);
 typedef	void  (*MAIN_MD5_UPDATE)(struct MD5Context *, unsigned char const *, unsigned);
 typedef	void  (*MAIN_MD5_FINAL)(unsigned char*, struct MD5Context *);
 typedef	char *(*MAIN_MD5_CRYPT)(char *, char *, char *);
-typedef	void  (*MAIN_SQL_FREERESULT)(int);
+typedef	void  (*MAIN_SQL_FREERESULT)(SQLRES *);
 typedef	int   (*MAIN_SQL_UPDATE)(char *);
 typedef	int   (*MAIN_SQL_UPDATEF)(const char *, ...);
-typedef	int   (*MAIN_SQL_QUERY)(char *);
-typedef	int   (*MAIN_SQL_QUERYF)(char *, ...);
-typedef	char *(*MAIN_SQL_GETNAME)(int, int);
-typedef	char *(*MAIN_SQL_GETVALUE)(int, int, int);
-typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(int, int, char *);
-typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
-typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
+typedef	int   (*MAIN_SQL_QUERY)(SQLRES *, char *);
+typedef	int   (*MAIN_SQL_QUERYF)(SQLRES *, char *, ...);
+typedef	char *(*MAIN_SQL_GETNAME)(SQLRES *, int);
+typedef	char *(*MAIN_SQL_GETVALUE)(SQLRES *, int, int);
+typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(SQLRES *, int, char *);
+typedef	int   (*MAIN_SQL_NUMFIELDS)(SQLRES *);
+typedef	int   (*MAIN_SQL_NUMTUPLES)(SQLRES *);
 typedef	int   (*MAIN_SYS_SYSTEM)(const char *, ...);
 typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
 typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr_in *);

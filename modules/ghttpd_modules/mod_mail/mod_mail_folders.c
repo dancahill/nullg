@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ void wmfolder_edit(CONN *sid)
 	int accountid;
 	int parentid;
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -42,14 +42,14 @@ void wmfolder_edit(CONN *sid)
 	} else {
 		if ((ptemp=getgetenv(sid, "FOLDERID"))==NULL) return;
 		folderid=atoi(ptemp);
-		if ((sqr=sql_queryf("SELECT mailfolderid, accountid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d and mailfolderid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid, folderid))<0) return;
-		if (sql_numtuples(sqr)==1) {
-			folderid=atoi(sql_getvalue(sqr, 0, 0));
-			accountid=atoi(sql_getvalue(sqr, 0, 1));
-			parentid=atoi(sql_getvalue(sqr, 0, 2));
-			snprintf(foldername, sizeof(foldername)-1, "%s", sql_getvalue(sqr, 0, 3));
+		if (sql_queryf(&sqr, "SELECT mailfolderid, accountid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d and mailfolderid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid, folderid)<0) return;
+		if (sql_numtuples(&sqr)==1) {
+			folderid=atoi(sql_getvalue(&sqr, 0, 0));
+			accountid=atoi(sql_getvalue(&sqr, 0, 1));
+			parentid=atoi(sql_getvalue(&sqr, 0, 2));
+			snprintf(foldername, sizeof(foldername)-1, "%s", sql_getvalue(&sqr, 0, 3));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
@@ -97,32 +97,33 @@ void wmfolder_list(CONN *sid, int accountid)
 	int indent=0;
 	int i, j, k;
 	int x;
-	int sqr1, sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr1=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid))<0) return;
-	if (sql_numtuples(sqr1)<1) {
-		sql_freeresult(sqr1);
+	if (sql_queryf(&sqr1, "SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid)<0) return;
+	if (sql_numtuples(&sqr1)<1) {
+		sql_freeresult(&sqr1);
 		return;
 	}
-	if ((sqr2=sql_queryf("SELECT folder, COUNT(mailheaderid), SUM(size) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status != 'd' GROUP BY folder", sid->dat->user_uid, accountid))<0) {
-		sql_freeresult(sqr1);
+	if (sql_queryf(&sqr2, "SELECT folder, COUNT(mailheaderid), SUM(size) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status != 'd' GROUP BY folder", sid->dat->user_uid, accountid)<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
-	btree=calloc(sql_numtuples(sqr1)+2, sizeof(_btree));
-	ptree=calloc(sql_numtuples(sqr1)+2, sizeof(_ptree));
+	btree=calloc(sql_numtuples(&sqr1)+2, sizeof(_btree));
+	ptree=calloc(sql_numtuples(&sqr1)+2, sizeof(_ptree));
 	j=0;
 	widthloop:
-	for (i=base;i<sql_numtuples(sqr1);i++) {
+	for (i=base;i<sql_numtuples(&sqr1);i++) {
 		if (btree[i].printed) continue;
-		if (atoi(sql_getvalue(sqr1, i, 1))==btree[depth].lastref) {
+		if (atoi(sql_getvalue(&sqr1, i, 1))==btree[depth].lastref) {
 			ptree[j].id=i;
 			ptree[j].depth=depth-1;
 			j++;
-			btree[depth+1].lastref=atoi(sql_getvalue(sqr1, i, 0));
+			btree[depth+1].lastref=atoi(sql_getvalue(&sqr1, i, 0));
 			btree[i].printed=1;
 			depth++;
 		}
@@ -134,21 +135,21 @@ void wmfolder_list(CONN *sid, int accountid)
 	base++;
 	btree[depth].lastref=0;
 	depth=0;
-	if (base<sql_numtuples(sqr1)) {
+	if (base<sql_numtuples(&sqr1)) {
 		goto widthloop;
 	}
-	for (i=0; i<sql_numtuples(sqr1); i++) {
-		for (j=i+1; j<sql_numtuples(sqr1); j++) {
+	for (i=0; i<sql_numtuples(&sqr1); i++) {
+		for (j=i+1; j<sql_numtuples(&sqr1); j++) {
 			if (ptree[j].depth<ptree[i].depth+1) break;
 			if (ptree[j].depth>ptree[i].depth+1) continue;
 			ptree[i].numchildren++;
 		}
 	}
 	prints(sid, "<CENTER><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
-	for (i=0; i<sql_numtuples(sqr1); i++) {
+	for (i=0; i<sql_numtuples(&sqr1); i++) {
 		j=ptree[i].id;
 		prints(sid, "<TR><TD NOWRAP WIDTH=100%%>");
-		prints(sid, "&nbsp;<A HREF=%s/mail/folders/edit?accountid=%d&folderid=%d>edit</A>&nbsp;", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(sqr1, j, 0)));
+		prints(sid, "&nbsp;<A HREF=%s/mail/folders/edit?accountid=%d&folderid=%d>edit</A>&nbsp;", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(&sqr1, j, 0)));
 		for (indent=0;indent<ptree[i].depth;indent++) {
 			x=0;
 			for (k=i-1;k>-1;k--) {
@@ -186,13 +187,13 @@ void wmfolder_list(CONN *sid, int accountid)
 			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-c.png HEIGHT=21 WIDTH=9>");
 		}
 		prints(sid, "&nbsp;<A HREF=%s/mail/%s", sid->dat->in_ScriptName, (sid->dat->user_menustyle>0)?"main":"list");
-		prints(sid, "?accountid=%d&folderid=%d><B>%s</B></A> ", accountid, atoi(sql_getvalue(sqr1, j, 0)), str2html(sid, sql_getvalue(sqr1, j, 2)));
+		prints(sid, "?accountid=%d&folderid=%d><B>%s</B></A> ", accountid, atoi(sql_getvalue(&sqr1, j, 0)), str2html(sid, sql_getvalue(&sqr1, j, 2)));
 		prints(sid, "</TD><TD ALIGN=right NOWRAP>");
-		for (k=0;k<sql_numtuples(sqr2);k++) {
-			if (atoi(sql_getvalue(sqr2, k, 0))==atoi(sql_getvalue(sqr1, j, 0))) {
-				prints(sid, "(%d)", atoi(sql_getvalue(sqr2, k, 1)));
+		for (k=0;k<sql_numtuples(&sqr2);k++) {
+			if (atoi(sql_getvalue(&sqr2, k, 0))==atoi(sql_getvalue(&sqr1, j, 0))) {
+				prints(sid, "(%d)", atoi(sql_getvalue(&sqr2, k, 1)));
 				prints(sid, "</TD><TD ALIGN=right NOWRAP>");
-				prints(sid, "(%1.1f M)", atof(sql_getvalue(sqr2, k, 2))/1048576.0f);
+				prints(sid, "(%1.1f M)", atof(sql_getvalue(&sqr2, k, 2))/1048576.0f);
 				k=-1;
 				break;
 			}
@@ -204,13 +205,13 @@ void wmfolder_list(CONN *sid, int accountid)
 	}
 	prints(sid, "<TR><TD></TD><TD ALIGN=right NOWRAP>");
 	x=0;
-	for (i=0;i<sql_numtuples(sqr2);i++) {
-		x+=atoi(sql_getvalue(sqr2, i, 1));
+	for (i=0;i<sql_numtuples(&sqr2);i++) {
+		x+=atoi(sql_getvalue(&sqr2, i, 1));
 	}
 	prints(sid, "<B>(%d)</B></TD><TD ALIGN=right NOWRAP>", x);
 	x=0;
-	for (i=0;i<sql_numtuples(sqr2);i++) {
-		x+=atoi(sql_getvalue(sqr2, i, 2));
+	for (i=0;i<sql_numtuples(&sqr2);i++) {
+		x+=atoi(sql_getvalue(&sqr2, i, 2));
 	}
 	prints(sid, "<B>(%1.1f M)</B></TD></TR>\n", x/1048576.0f);
 	prints(sid, "</TABLE>\n");
@@ -218,8 +219,8 @@ void wmfolder_list(CONN *sid, int accountid)
 	prints(sid, "</CENTER>\n");
 	free(ptree);
 	free(btree);
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -233,7 +234,7 @@ void wmfolder_save(CONN *sid)
 	int accountid;
 	int folderid;
 	int parentid;
-	int sqr;
+	SQLRES sqr;
 
 	prints(sid, "<BR>\n");
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
@@ -261,20 +262,20 @@ void wmfolder_save(CONN *sid)
 			prints(sid, "<CENTER><B>This folder cannot be deleted.</B></CENTER>\n");
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = %d", sid->dat->user_uid, accountid, folderid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = %d", sid->dat->user_uid, accountid, folderid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND parentfolderid = %d", sid->dat->user_uid, accountid, folderid))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT mailfolderid FROM gw_mailfolders WHERE obj_uid = %d AND accountid = %d AND parentfolderid = %d", sid->dat->user_uid, accountid, folderid)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER><B>This folder cannot be deleted unless it is empty.</B></CENTER>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (sql_updatef("DELETE FROM gw_mailfolders WHERE accountid = %d AND mailfolderid = %d", accountid, folderid)<0) return;
 		prints(sid, "<CENTER>Mail Folder %d deleted successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
@@ -283,9 +284,9 @@ void wmfolder_save(CONN *sid)
 			prints(sid, "<CENTER>Folder name cannot be blank</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT max(mailfolderid) FROM gw_mailfolders where accountid = %d", accountid))<0) return;
-		folderid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT max(mailfolderid) FROM gw_mailfolders where accountid = %d", accountid)<0) return;
+		folderid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (folderid<11) folderid=11;
 		strcpy(query, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', ", folderid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);

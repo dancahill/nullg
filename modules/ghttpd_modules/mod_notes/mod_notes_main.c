@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	char *ptemp;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 	int table;
 
 	if (selected<1) {
@@ -40,14 +40,14 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
 	prints(sid, "<!--\r\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d ORDER BY username ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE domainid = %d ORDER BY username ASC", sid->dat->user_did)<0) return;
 	prints(sid, "function go1() {\r\n");
 	prints(sid, "	location=document.notefilter.userid.options[document.notefilter.userid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d&table=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)), table);
-		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d&table=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr, i, 0)), table);
+		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(&sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "document.write('</SELECT>');\r\n");
 	prints(sid, "function go2() {\r\n");
@@ -63,9 +63,9 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "</SCRIPT>\r\n");
 	prints(sid, "<NOSCRIPT>\r\n");
 	prints(sid, "<SELECT NAME=userid>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "</SELECT>\r\n");
 	prints(sid, "<SELECT NAME=table>\r\n");
@@ -83,29 +83,29 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
 void notes_sublist(CONN *sid, char *table, int index, int colspan)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (auth_priv(sid, "admin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if (sql_numtuples(sqr)>0) {
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=%d NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", colspan, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "&nbsp;<A HREF=%s/notes/view?noteid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+	if (sql_numtuples(&sqr)>0) {
+		for (i=0;i<sql_numtuples(&sqr);i++) {
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=%d NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", colspan, sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+			prints(sid, "&nbsp;<A HREF=%s/notes/view?noteid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)), str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	} else {
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=%d NOWRAP STYLE='border-style:solid'>&nbsp;</TD></TR>\n", colspan);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -192,7 +192,7 @@ void notesview(CONN *sid)
 	REC_NOTE note;
 	char *ptemp;
 	int noteid;
-	int sqr;
+	SQLRES sqr;
 	time_t mdate;
 
 	if ((ptemp=getgetenv(sid, "NOTEID"))==NULL) return;
@@ -213,77 +213,77 @@ void notesview(CONN *sid)
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Note Title</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", str2html(sid, note.notetitle));
 	if (strcmp(note.tablename, "calls")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT callid, callname FROM gw_calls WHERE callid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<A HREF=%s/calls/view?callid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		if (sql_queryf(&sqr, "SELECT callid, callname FROM gw_calls WHERE callid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
+			prints(sid, "<A HREF=%s/calls/view?callid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 0)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "contacts")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<A HREF=%s/contacts/view?contactid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, 0, 0));
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
-			if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) prints(sid, ", ");
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 2)));
+		if (sql_queryf(&sqr, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
+			prints(sid, "<A HREF=%s/contacts/view?contactid=%s>", sid->dat->in_ScriptName, sql_getvalue(&sqr, 0, 0));
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, 0, 1)));
+			if (strlen(sql_getvalue(&sqr, 0, 1))&&strlen(sql_getvalue(&sqr, 0, 2))) prints(sid, ", ");
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 2)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "events")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Event </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT eventid, eventname FROM gw_events WHERE eventid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT eventid, eventname FROM gw_events WHERE eventid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "notes")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Note </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT noteid, notetitle FROM gw_notes WHERE noteid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT noteid, notetitle FROM gw_notes WHERE noteid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/notes/view?noteid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "orders")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Order </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT orderid, contactid FROM gw_orders WHERE orderid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT orderid, contactid FROM gw_orders WHERE orderid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/orders/view?orderid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", htview_contact(sid, atoi(sql_getvalue(sqr, 0, 1))));
+			prints(sid, "%s</A>", htview_contact(sid, atoi(sql_getvalue(&sqr, 0, 1))));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "projects")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/projects/view?projectid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "tasks")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT taskid, taskname FROM gw_tasks WHERE taskid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT taskid, taskname FROM gw_tasks WHERE taskid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/tasks/view?taskid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "users")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>User </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
-		if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", note.tableindex))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE userid = %d", note.tableindex)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, note.tableindex);
-			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 1)));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
 	mdate=note.obj_mtime;
@@ -307,7 +307,7 @@ void noteslist(CONN *sid)
 	int i;
 	int userid;
 	int offset=0;
-	int sqr;
+	SQLRES sqr;
 	int table;
 	time_t mdate;
 
@@ -340,49 +340,49 @@ void noteslist(CONN *sid)
 		case 9: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
 	}
 	if (auth_priv(sid, "admin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr, "SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if (sql_numtuples(sqr)>0) {
+	if (sql_numtuples(&sqr)>0) {
 		prints(sid, "<BR>\r\n");
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=450 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Note Title&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Reference&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Last Modified&nbsp;</TH></TR>\n");
-		for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
+		for (i=offset;(i<sql_numtuples(&sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD ALIGN=LEFT NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<A HREF=%s/notes/view?noteid=%d>%s</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
-			if (strcasecmp(sql_getvalue(sqr, i, 3), "calls")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "contacts")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "events")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "notes")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "orders")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/view?orderid=%d>Order</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "projects")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/projects/view?projectid=%d>Project</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "tasks")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
-			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "users")==0) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD ALIGN=LEFT NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/notes/view?noteid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+			prints(sid, "<A HREF=%s/notes/view?noteid=%d>%s</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)), str2html(sid, sql_getvalue(&sqr, i, 1)));
+			if (strcasecmp(sql_getvalue(&sqr, i, 3), "calls")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calls/view?callid=%d>Call</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "contacts")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>Contact</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "events")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "notes")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "orders")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/view?orderid=%d>Order</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "projects")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/projects/view?projectid=%d>Project</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "tasks")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(&sqr, i, 3), "users")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/admin/useredit?userid=%d>User</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 4)));
 			} else {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>None</TD>");
 			}
-			mdate=time_sql2unix(sql_getvalue(sqr, i, 2));
+			mdate=time_sql2unix(sql_getvalue(&sqr, i, 2));
 			mdate+=time_tzoffset(sid, mdate);
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s</TD></TR>\n", time_unix2datetext(sid, mdate));
 		}
 		prints(sid, "</TABLE>\n");
-		if (sql_numtuples(sqr)>sid->dat->user_maxlist) {
+		if (sql_numtuples(&sqr)>sid->dat->user_maxlist) {
 			if (offset>sid->dat->user_maxlist-1) {
 				prints(sid, "[<A HREF=%s/notes/list?offset=%d&table=%d&userid=%d>Previous Page</A>]\n", sid->dat->in_ScriptName, offset-sid->dat->user_maxlist, table, userid);
 			} else {
 				prints(sid, "[Previous Page]\n");
 			}
-			if (offset+sid->dat->user_maxlist<sql_numtuples(sqr)) {
+			if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr)) {
 				prints(sid, "[<A HREF=%s/notes/list?offset=%d&table=%d&userid=%d>Next Page</A>]\n", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist, table, userid);
 			} else {
 				prints(sid, "[Next Page]\n");
@@ -392,7 +392,7 @@ void noteslist(CONN *sid)
 		prints(sid, "<B>No Notes found</B>\n");
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 

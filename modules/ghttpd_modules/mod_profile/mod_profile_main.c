@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,14 +63,14 @@ void htselect_layout(CONN *sid, int selected)
 void htselect_mailaccount(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d order by mailaccountid ASC", sid->dat->user_uid))<0) return;
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	if (sql_queryf(&sqr, "SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d order by mailaccountid ASC", sid->dat->user_uid)<0) return;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -246,35 +246,35 @@ void profiletimeedit(CONN *sid)
 	char uavailability[170];
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_users WHERE userid = %d", sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT availability FROM gw_users WHERE userid = %d", sid->dat->user_uid)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for %s</CENTER>\n", sid->dat->user_uid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	memset(uavailability, 0, sizeof(uavailability));
-	strncpy(uavailability, sql_getvalue(sqr, 0, 0), sizeof(uavailability)-1);
-	sql_freeresult(sqr);
+	strncpy(uavailability, sql_getvalue(&sqr, 0, 0), sizeof(uavailability)-1);
+	sql_freeresult(&sqr);
 	if (strlen(uavailability)!=168) {
 		for (i=0;i<168;i++) {
 			uavailability[i]='0';
 		}
 	}
-	if ((sqr=sql_queryf("SELECT availability FROM gw_groups WHERE groupid = %d", sid->dat->user_gid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_queryf(&sqr, "SELECT availability FROM gw_groups WHERE groupid = %d", sid->dat->user_gid)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
 		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\n", sid->dat->user_gid);
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	memset(gavailability, 0, sizeof(gavailability));
-	strncpy(gavailability, sql_getvalue(sqr, 0, 0), sizeof(gavailability)-1);
-	sql_freeresult(sqr);
+	strncpy(gavailability, sql_getvalue(&sqr, 0, 0), sizeof(gavailability)-1);
+	sql_freeresult(&sqr);
 	if (strlen(gavailability)!=168) {
 		for (i=0;i<168;i++) {
 			gavailability[i]='0';

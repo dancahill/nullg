@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,52 +21,52 @@
 int user_in_group(CONN *sid, int groupid)
 {
 	int rc=0;
-	int sqr;
+	SQLRES sqr;
 
 	if (sid->dat->user_gid==groupid) {
 		rc=1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers WHERE userid = %d AND groupid = %d AND obj_did = %d", sid->dat->user_uid, groupid, sid->dat->user_did))<0) return 0;
-		if (sql_numtuples(sqr)>0) rc=1;
-		sql_freeresult(sqr);
+		if (sql_queryf(&sqr, "SELECT * FROM gw_groupmembers WHERE userid = %d AND groupid = %d AND obj_did = %d", sid->dat->user_uid, groupid, sid->dat->user_did)<0) return 0;
+		if (sql_numtuples(&sqr)>0) rc=1;
+		sql_freeresult(&sqr);
 	}
 	return rc;
 }
 
-int dblist_contacts(CONN *sid, char *searchfield, char *searchstring)
+int dblist_contacts(CONN *sid, SQLRES *sqr2, char *searchfield, char *searchstring)
 {
 	char query[2048];
 	int i;
-	int sqr1;
-	int sqr2;
+	int rc;
+	SQLRES sqr1;
 
 	memset(query, 0, sizeof(query));
-	if ((sqr1=sql_queryf("SELECT groupid FROM gw_groupmembers where userid = %d AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did))<0) return EC_UNKNOWN;
+	if (sql_queryf(&sqr1, "SELECT groupid FROM gw_groupmembers where userid = %d AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did)<0) return EC_UNKNOWN;
 	snprintf(query, sizeof(query)-1, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE ");
 	if (strcasecmp(searchstring, "All")!=0) {
 		strncatf(query, sizeof(query)-strlen(query)-1, "(lower(%s) like lower('%s%%')) AND ", searchfield, searchstring);
 	}
 	if (!(auth_priv(sid, "contacts")&A_ADMIN)) {
 		strncatf(query, sizeof(query)-strlen(query)-1, "(obj_uid = %d or (obj_gperm>=1 AND (obj_gid = %d", sid->dat->user_uid, sid->dat->user_gid);
-		for (i=0;i<sql_numtuples(sqr1);i++) {
-			strncatf(query, sizeof(query)-strlen(query)-1, " or obj_gid = %d", atoi(sql_getvalue(sqr1, i, 0)));
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			strncatf(query, sizeof(query)-strlen(query)-1, " or obj_gid = %d", atoi(sql_getvalue(&sqr1, i, 0)));
 		}
 		strncatf(query, sizeof(query)-strlen(query)-1, ")) or obj_operm>=1) AND ");
 	}
 	strncatf(query, sizeof(query)-strlen(query)-1, "obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did);
-	if ((sqr2=sql_query(query))<0) {
-		sql_freeresult(sqr1);
+	if ((rc=sql_query(sqr2, query))<0) {
+		sql_freeresult(&sqr1);
 		return EC_UNKNOWN;
 	}
-	sql_freeresult(sqr1);
-	return sqr2;
+	sql_freeresult(&sqr1);
+	return rc;
 }
 
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
 {
 	short int approved;
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(contact, 0, sizeof(REC_CONTACT));
 	authlevel=auth_priv(sid, "contacts");
@@ -83,51 +83,51 @@ int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
 		contact->timezone=sid->dat->user_timezone;
 		return EC_NOERROR;
 	}
-	if ((sqr=sql_queryf("SELECT * FROM gw_contacts where contactid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return EC_UNKNOWN;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT * FROM gw_contacts where contactid = %d AND obj_did = %d", index, sid->dat->user_did)<0) return EC_UNKNOWN;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return EC_NORECORD;
 	}
-	contact->contactid = atoi(sql_getvalue(sqr, 0, 0));
-	contact->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	contact->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	contact->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
-	contact->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
-	contact->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
-	contact->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
-	contact->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
-	contact->folderid=atoi(sql_getvalue(sqr, 0, 8));
-	strncpy(contact->username,		sql_getvalue(sqr, 0, 9), sizeof(contact->username)-1);
-	strncpy(contact->password,		sql_getvalue(sqr, 0, 10), sizeof(contact->password)-1);
-	contact->enabled=atoi(sql_getvalue(sqr, 0, 11));
-	contact->geozone=atoi(sql_getvalue(sqr, 0, 12));
-	contact->timezone=atoi(sql_getvalue(sqr, 0, 13));
-	strncpy(contact->surname,		sql_getvalue(sqr, 0, 14), sizeof(contact->surname)-1);
-	strncpy(contact->givenname,		sql_getvalue(sqr, 0, 15), sizeof(contact->givenname)-1);
-	strncpy(contact->salutation,		sql_getvalue(sqr, 0, 16), sizeof(contact->salutation)-1);
-	strncpy(contact->contacttype,		sql_getvalue(sqr, 0, 17), sizeof(contact->contacttype)-1);
-	strncpy(contact->referredby,		sql_getvalue(sqr, 0, 18), sizeof(contact->referredby)-1);
-	strncpy(contact->altcontact,		sql_getvalue(sqr, 0, 19), sizeof(contact->altcontact)-1);
-	strncpy(contact->prefbilling,		sql_getvalue(sqr, 0, 20), sizeof(contact->prefbilling)-1);
-	strncpy(contact->website,		sql_getvalue(sqr, 0, 21), sizeof(contact->website)-1);
-	strncpy(contact->email,			sql_getvalue(sqr, 0, 22), sizeof(contact->email)-1);
-	strncpy(contact->homenumber,		sql_getvalue(sqr, 0, 23), sizeof(contact->homenumber)-1);
-	strncpy(contact->worknumber,		sql_getvalue(sqr, 0, 24), sizeof(contact->worknumber)-1);
-	strncpy(contact->faxnumber,		sql_getvalue(sqr, 0, 25), sizeof(contact->faxnumber)-1);
-	strncpy(contact->mobilenumber,		sql_getvalue(sqr, 0, 26), sizeof(contact->mobilenumber)-1);
-	strncpy(contact->jobtitle,		sql_getvalue(sqr, 0, 27), sizeof(contact->jobtitle)-1);
-	strncpy(contact->organization,		sql_getvalue(sqr, 0, 28), sizeof(contact->organization)-1);
-	strncpy(contact->homeaddress,		sql_getvalue(sqr, 0, 29), sizeof(contact->homeaddress)-1);
-	strncpy(contact->homelocality,		sql_getvalue(sqr, 0, 30), sizeof(contact->homelocality)-1);
-	strncpy(contact->homeregion,		sql_getvalue(sqr, 0, 31), sizeof(contact->homeregion)-1);
-	strncpy(contact->homecountry,		sql_getvalue(sqr, 0, 32), sizeof(contact->homecountry)-1);
-	strncpy(contact->homepostalcode,	sql_getvalue(sqr, 0, 33), sizeof(contact->homepostalcode)-1);
-	strncpy(contact->workaddress,		sql_getvalue(sqr, 0, 34), sizeof(contact->workaddress)-1);
-	strncpy(contact->worklocality,		sql_getvalue(sqr, 0, 35), sizeof(contact->worklocality)-1);
-	strncpy(contact->workregion,		sql_getvalue(sqr, 0, 36), sizeof(contact->workregion)-1);
-	strncpy(contact->workcountry,		sql_getvalue(sqr, 0, 37), sizeof(contact->workcountry)-1);
-	strncpy(contact->workpostalcode,	sql_getvalue(sqr, 0, 38), sizeof(contact->workpostalcode)-1);
-	sql_freeresult(sqr);
+	contact->contactid = atoi(sql_getvalue(&sqr, 0, 0));
+	contact->obj_ctime = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	contact->obj_mtime = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	contact->obj_uid   = atoi(sql_getvalue(&sqr, 0, 3));
+	contact->obj_gid   = atoi(sql_getvalue(&sqr, 0, 4));
+	contact->obj_did   = atoi(sql_getvalue(&sqr, 0, 5));
+	contact->obj_gperm = atoi(sql_getvalue(&sqr, 0, 6));
+	contact->obj_operm = atoi(sql_getvalue(&sqr, 0, 7));
+	contact->folderid=atoi(sql_getvalue(&sqr, 0, 8));
+	strncpy(contact->username,		sql_getvalue(&sqr, 0, 9), sizeof(contact->username)-1);
+	strncpy(contact->password,		sql_getvalue(&sqr, 0, 10), sizeof(contact->password)-1);
+	contact->enabled=atoi(sql_getvalue(&sqr, 0, 11));
+	contact->geozone=atoi(sql_getvalue(&sqr, 0, 12));
+	contact->timezone=atoi(sql_getvalue(&sqr, 0, 13));
+	strncpy(contact->surname,		sql_getvalue(&sqr, 0, 14), sizeof(contact->surname)-1);
+	strncpy(contact->givenname,		sql_getvalue(&sqr, 0, 15), sizeof(contact->givenname)-1);
+	strncpy(contact->salutation,		sql_getvalue(&sqr, 0, 16), sizeof(contact->salutation)-1);
+	strncpy(contact->contacttype,		sql_getvalue(&sqr, 0, 17), sizeof(contact->contacttype)-1);
+	strncpy(contact->referredby,		sql_getvalue(&sqr, 0, 18), sizeof(contact->referredby)-1);
+	strncpy(contact->altcontact,		sql_getvalue(&sqr, 0, 19), sizeof(contact->altcontact)-1);
+	strncpy(contact->prefbilling,		sql_getvalue(&sqr, 0, 20), sizeof(contact->prefbilling)-1);
+	strncpy(contact->website,		sql_getvalue(&sqr, 0, 21), sizeof(contact->website)-1);
+	strncpy(contact->email,			sql_getvalue(&sqr, 0, 22), sizeof(contact->email)-1);
+	strncpy(contact->homenumber,		sql_getvalue(&sqr, 0, 23), sizeof(contact->homenumber)-1);
+	strncpy(contact->worknumber,		sql_getvalue(&sqr, 0, 24), sizeof(contact->worknumber)-1);
+	strncpy(contact->faxnumber,		sql_getvalue(&sqr, 0, 25), sizeof(contact->faxnumber)-1);
+	strncpy(contact->mobilenumber,		sql_getvalue(&sqr, 0, 26), sizeof(contact->mobilenumber)-1);
+	strncpy(contact->jobtitle,		sql_getvalue(&sqr, 0, 27), sizeof(contact->jobtitle)-1);
+	strncpy(contact->organization,		sql_getvalue(&sqr, 0, 28), sizeof(contact->organization)-1);
+	strncpy(contact->homeaddress,		sql_getvalue(&sqr, 0, 29), sizeof(contact->homeaddress)-1);
+	strncpy(contact->homelocality,		sql_getvalue(&sqr, 0, 30), sizeof(contact->homelocality)-1);
+	strncpy(contact->homeregion,		sql_getvalue(&sqr, 0, 31), sizeof(contact->homeregion)-1);
+	strncpy(contact->homecountry,		sql_getvalue(&sqr, 0, 32), sizeof(contact->homecountry)-1);
+	strncpy(contact->homepostalcode,	sql_getvalue(&sqr, 0, 33), sizeof(contact->homepostalcode)-1);
+	strncpy(contact->workaddress,		sql_getvalue(&sqr, 0, 34), sizeof(contact->workaddress)-1);
+	strncpy(contact->worklocality,		sql_getvalue(&sqr, 0, 35), sizeof(contact->worklocality)-1);
+	strncpy(contact->workregion,		sql_getvalue(&sqr, 0, 36), sizeof(contact->workregion)-1);
+	strncpy(contact->workcountry,		sql_getvalue(&sqr, 0, 37), sizeof(contact->workcountry)-1);
+	strncpy(contact->workpostalcode,	sql_getvalue(&sqr, 0, 38), sizeof(contact->workpostalcode)-1);
+	sql_freeresult(&sqr);
 	approved=0;
 	if (auth_priv(sid, "contacts")&A_ADMIN) approved=2;
 	if (approved==0) {
@@ -153,7 +153,7 @@ int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact)
 	char curdate[32];
 	char query[12288];
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	authlevel=auth_priv(sid, "contacts");
 	if (authlevel<2) return -1;
@@ -162,9 +162,9 @@ int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact)
 	memset(query, 0, sizeof(query));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (index==0) {
-		if ((sqr=sql_query("SELECT max(contactid) FROM gw_contacts"))<0) return -1;
-		contact->contactid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(contactid) FROM gw_contacts")<0) return -1;
+		contact->contactid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (contact->contactid<1) contact->contactid=1;
 		strcpy(query, "INSERT INTO gw_contacts (contactid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, folderid, username, password, enabled, geozone, timezone, surname, givenname, salutation, contacttype, referredby, altcontact, prefbilling, website, email, homenumber, worknumber, faxnumber, mobilenumber, jobtitle, organization, homeaddress, homelocality, homeregion, homecountry, homepostalcode, workaddress, worklocality, workregion, workcountry, workpostalcode) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", contact->contactid, curdate, curdate, contact->obj_uid, contact->obj_gid, contact->obj_did, contact->obj_gperm, contact->obj_operm);

@@ -1,3 +1,10 @@
+1.3.27
+------
+- fixed zero domain ownership on newly created mail filters
+- added ClamAV support to sample scanner script
+- cleaned up some of the page transitions in mod_mail
+- SQL subsystem was rewritten to handle an arbitrary number of cached queries
+
 1.3.26
 ------
 - renamed httpd module to ghttpd

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,15 +22,15 @@
 void htselect_callaction(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT callactionid, actionname FROM gw_callactions ORDER BY actionname ASC"))<0) return;
+	if (sql_queryf(&sqr, "SELECT callactionid, actionname FROM gw_callactions ORDER BY actionname ASC")<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -40,7 +40,7 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	char *ptemp;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 	int status;
 
 	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
@@ -51,7 +51,7 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	if (selected<1) {
 		selected=sid->dat->user_uid;
 	}
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did)<0) return;
 	prints(sid, "<FORM METHOD=GET NAME=callfilter ACTION=%s%s>\r\n", sid->dat->in_ScriptName, baseuri);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
@@ -60,10 +60,10 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "	location=document.callfilter.userid.options[document.callfilter.userid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr, i, 0)));
 		prints(sid, "&status=%d", status);
-		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(&sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "document.write('</SELECT>');\r\n");
 	prints(sid, "function go2() {\r\n");
@@ -80,9 +80,9 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "</SCRIPT>\r\n");
 	prints(sid, "<NOSCRIPT>\r\n");
 	prints(sid, "<SELECT NAME=userid>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=status>\r\n");
@@ -93,7 +93,7 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -320,7 +320,7 @@ void callview(CONN *sid)
 	char *ptemp;
 	int callid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "calls")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -335,13 +335,13 @@ void callview(CONN *sid)
 	call.callstart+=time_tzoffset(sid, call.callstart);
 	call.callfinish+=time_tzoffset(sid, call.callfinish);
 	memset(contactname, 0, sizeof(contactname));
-	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d AND obj_did = %d", call.contactid, sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		snprintf(contactname, sizeof(contactname)-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
-		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) strncat(contactname, ", ", sizeof(contactname)-strlen(contactname)-1);
-		strncat(contactname, str2html(sid, sql_getvalue(sqr, 0, 2)), sizeof(contactname)-strlen(contactname)-1);
+	if (sql_queryf(&sqr, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d AND obj_did = %d", call.contactid, sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		snprintf(contactname, sizeof(contactname)-1, "%s", str2html(sid, sql_getvalue(&sqr, 0, 1)));
+		if (strlen(sql_getvalue(&sqr, 0, 1))&&strlen(sql_getvalue(&sqr, 0, 2))) strncat(contactname, ", ", sizeof(contactname)-strlen(contactname)-1);
+		strncat(contactname, str2html(sid, sql_getvalue(&sqr, 0, 2)), sizeof(contactname)-strlen(contactname)-1);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>%s", str2html(sid, call.callname));
@@ -353,23 +353,23 @@ void callview(CONN *sid)
 		}
 	}
 	prints(sid, "</TH></TR>\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did)<0) return;
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedby) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==call.assignedby) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</NOBR></TD>\n");
 	prints(sid, "<TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Date       </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2datetext(sid, call.callstart));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedto) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==call.assignedto) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Start  </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", time_unix2timetext(sid, call.callstart));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact Name</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, call.contactid, contactname);
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Finish </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2timetext(sid, call.callfinish));
@@ -392,8 +392,8 @@ void calllist(CONN *sid)
 	int i;
 	int j;
 	int offset=0;
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int total;
 	int userid=-1;
 	int status;
@@ -423,21 +423,21 @@ void calllist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	if (status==2) {
 		if (auth_priv(sid, "calls")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_did)<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 		}
 	} else {
 		if (auth_priv(sid, "calls")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_did)<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 		}
 	}
-	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d", sid->dat->user_did)<0) return;
 	total=0;
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		if (atoi(sql_getvalue(sqr1, i, 6))==userid) total++;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if (atoi(sql_getvalue(&sqr1, i, 6))==userid) total++;
 	}
 	if (total>0) {
 		prints(sid, "Found %d matching calls<BR>\n", total);
@@ -447,49 +447,49 @@ void calllist(CONN *sid)
 			prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Status&nbsp;</TH>");
 		}
 		prints(sid, "</TR>\n");
-		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
-			if (atoi(sql_getvalue(sqr1, i, 6))!=userid) continue;
+		for (i=offset;(i<sql_numtuples(&sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
+			if (atoi(sql_getvalue(&sqr1, i, 6))!=userid) continue;
 			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' ");
-			if ((userid==sid->dat->user_uid)&&(atoi(sql_getvalue(sqr1, i, 5))==0)) {
-				prints(sid, "onClick=\"window.location.href='%s/calls/edit?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-				prints(sid, "&nbsp;<A HREF=%s/calls/edit?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
+			if ((userid==sid->dat->user_uid)&&(atoi(sql_getvalue(&sqr1, i, 5))==0)) {
+				prints(sid, "onClick=\"window.location.href='%s/calls/edit?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+				prints(sid, "&nbsp;<A HREF=%s/calls/edit?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), atoi(sql_getvalue(&sqr1, i, 0)));
 			} else {
-				prints(sid, "onClick=\"window.location.href='%s/calls/view?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-				prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));
+				prints(sid, "onClick=\"window.location.href='%s/calls/view?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+				prints(sid, "&nbsp;<A HREF=%s/calls/view?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), atoi(sql_getvalue(&sqr1, i, 0)));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(sqr1, i, 1))));
-			for (j=0;j<sql_numtuples(sqr2);j++) {
-				if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 2))) {
-					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr2, j, 0), str2html(sid, sql_getvalue(sqr2, j, 1)));
-					if (strlen(sql_getvalue(sqr2, j, 1))&&strlen(sql_getvalue(sqr2, j, 2))) prints(sid, ", ");
-					prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr2, j, 2)));
+			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", htview_callaction(sid, atoi(sql_getvalue(&sqr1, i, 1))));
+			for (j=0;j<sql_numtuples(&sqr2);j++) {
+				if (atoi(sql_getvalue(&sqr2, j, 0))==atoi(sql_getvalue(&sqr1, i, 2))) {
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(&sqr2, j, 0), str2html(sid, sql_getvalue(&sqr2, j, 1)));
+					if (strlen(sql_getvalue(&sqr2, j, 1))&&strlen(sql_getvalue(&sqr2, j, 2))) prints(sid, ", ");
+					prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(&sqr2, j, 2)));
 					break;
 				}
 			}
-			if (j==sql_numtuples(sqr2)) {
+			if (j==sql_numtuples(&sqr2)) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			}
-			callstart=time_sql2unix(sql_getvalue(sqr1, i, 3));
+			callstart=time_sql2unix(sql_getvalue(&sqr1, i, 3));
 			callstart+=time_tzoffset(sid, callstart);
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, callstart));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2timetext(sid, callstart));
-			duration=time_sql2unix(sql_getvalue(sqr1, i, 4))-time_sql2unix(sql_getvalue(sqr1, i, 3));
+			duration=time_sql2unix(sql_getvalue(&sqr1, i, 4))-time_sql2unix(sql_getvalue(&sqr1, i, 3));
 			if (duration<0) duration=0;
 			duration/=60;
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%d Minutes</TD>", duration);
 			if (status==2) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(sqr1, i, 5))==1?"Closed":"Open");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(&sqr1, i, 5))==1?"Closed":"Open");
 			}
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
-		if (sql_numtuples(sqr1)>sid->dat->user_maxlist) {
+		if (sql_numtuples(&sqr1)>sid->dat->user_maxlist) {
 			if (offset>sid->dat->user_maxlist-1) {
 				prints(sid, "[<A HREF=%s/calls/list?offset=%d&status=%d&userid=%d>Previous Page</A>]\n", sid->dat->in_ScriptName, offset-sid->dat->user_maxlist, status, userid);
 			} else {
 				prints(sid, "[Previous Page]\n");
 			}
-			if (offset+sid->dat->user_maxlist<sql_numtuples(sqr1)) {
+			if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr1)) {
 				prints(sid, "[<A HREF=%s/calls/list?offset=%d&status=%d&userid=%d>Next Page</A>]\n", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist, status, userid);
 			} else {
 				prints(sid, "[Next Page]\n");
@@ -505,8 +505,8 @@ void calllist(CONN *sid)
 		prints(sid, " calls found</B>\n");
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 

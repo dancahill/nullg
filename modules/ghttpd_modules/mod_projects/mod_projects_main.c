@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ void htselect_projectfilter(CONN *sid, int selected, char *baseuri)
 	char *ptemp;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 	int status;
 
 	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
@@ -36,7 +36,7 @@ void htselect_projectfilter(CONN *sid, int selected, char *baseuri)
 	if (selected<1) {
 		selected=sid->dat->user_uid;
 	}
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did)<0) return;
 	prints(sid, "<FORM METHOD=GET NAME=projectfilter ACTION=%s%s>\r\n", sid->dat->in_ScriptName, baseuri);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
@@ -45,10 +45,10 @@ void htselect_projectfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "	location=document.projectfilter.userid.options[document.projectfilter.userid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr, i, 0)));
 		prints(sid, "&status=%d", status);
-		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+		prints(sid, "\"%s>%s');\n", atoi(sql_getvalue(&sqr, i, 0))==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "document.write('</SELECT>');\r\n");
 	prints(sid, "function go2() {\r\n");
@@ -65,9 +65,9 @@ void htselect_projectfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "</SCRIPT>\r\n");
 	prints(sid, "<NOSCRIPT>\r\n");
 	prints(sid, "<SELECT NAME=userid>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=status>\r\n");
@@ -78,7 +78,7 @@ void htselect_projectfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -231,7 +231,7 @@ void projectview(CONN *sid)
 	char *ptemp;
 	int projectid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "projects")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -268,38 +268,38 @@ void projectview(CONN *sid)
 		prints(sid, " [<A HREF=%s/calendar/editnew?projectid=%d>new</A>]", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "</TH></TR>\n");
 //		if (auth_priv(sid, "admin")&A_ADMIN) {
-			if ((sqr=sql_queryf("SELECT eventid, eventname FROM gw_events WHERE projectid = %d AND obj_did = %d ORDER BY eventid ASC", project.projectid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT eventid, eventname FROM gw_events WHERE projectid = %d AND obj_did = %d ORDER BY eventid ASC", project.projectid, sid->dat->user_did)<0) return;
 //		} else {
-//			if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+//			if (sql_queryf(&sqr, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 //		}
-		if (sql_numtuples(sqr)>0) {
-			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/view?eventid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+		if (sql_numtuples(&sqr)>0) {
+			for (i=0;i<sql_numtuples(&sqr);i++) {
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/view?eventid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+				prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)), str2html(sid, sql_getvalue(&sqr, i, 1)));
 			}
 		} else {
 			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;</TD></TR>\n");
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	if (module_exists("mod_tasks")) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Tasks");
 		prints(sid, " [<A HREF=%s/tasks/editnew?projectid=%d>new</A>]", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "</TH></TR>\n");
 //		if (auth_priv(sid, "admin")&A_ADMIN) {
-			if ((sqr=sql_queryf("SELECT taskid, taskname FROM gw_tasks WHERE projectid = %d AND obj_did = %d ORDER BY taskid ASC", project.projectid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr, "SELECT taskid, taskname FROM gw_tasks WHERE projectid = %d AND obj_did = %d ORDER BY taskid ASC", project.projectid, sid->dat->user_did)<0) return;
 //		} else {
-//			if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+//			if (sql_queryf(&sqr, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 //		}
-		if (sql_numtuples(sqr)>0) {
-			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, "&nbsp;<A HREF=%s/tasks/view?taskid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+		if (sql_numtuples(&sqr)>0) {
+			for (i=0;i<sql_numtuples(&sqr);i++) {
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+				prints(sid, "&nbsp;<A HREF=%s/tasks/view?taskid=%d>%s</A>&nbsp;</TD></TR>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)), str2html(sid, sql_getvalue(&sqr, i, 1)));
 			}
 		} else {
 			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;</TD></TR>\n");
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 	}
 	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Notes");
@@ -315,7 +315,7 @@ void projectlist(CONN *sid)
 	char *ptemp;
 	int i;
 	int offset=0;
-	int sqr1;
+	SQLRES sqr1;
 	int total;
 	int userid=-1;
 	int status;
@@ -344,20 +344,20 @@ void projectlist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	if (status==2) {
 		if (auth_priv(sid, "projects")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND obj_did = %d ORDER BY projectid DESC", userid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND obj_did = %d ORDER BY projectid DESC", userid, sid->dat->user_did)<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND (projectadmin = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY projectid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND (projectadmin = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY projectid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 		}
 	} else {
 		if (auth_priv(sid, "projects")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND status = %d AND obj_did = %d ORDER BY projectid DESC", userid, status, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND status = %d AND obj_did = %d ORDER BY projectid DESC", userid, status, sid->dat->user_did)<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND status = %d AND (projectadmin = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY projectid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+			if (sql_queryf(&sqr1, "SELECT projectid, projectname, projectstart, projectfinish, status, projectadmin FROM gw_projects where projectadmin = %d AND status = %d AND (projectadmin = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY projectid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 		}
 	}
 	total=0;
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		if (atoi(sql_getvalue(sqr1, i, 5))==userid) total++;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if (atoi(sql_getvalue(&sqr1, i, 5))==userid) total++;
 	}
 	if (total>0) {
 		prints(sid, "Found %d matching projects<BR>\n", total);
@@ -367,28 +367,28 @@ void projectlist(CONN *sid)
 			prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Status&nbsp;</TH>");
 		}
 		prints(sid, "</TR>\n");
-		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
-			if (atoi(sql_getvalue(sqr1, i, 5))!=userid) continue;
+		for (i=offset;(i<sql_numtuples(&sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
+			if (atoi(sql_getvalue(&sqr1, i, 5))!=userid) continue;
 			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' ");
-			prints(sid, "onClick=\"window.location.href='%s/projects/view?projectid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-			prints(sid, "&nbsp;<A HREF=%s/projects/view?projectid=%d>%s</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sql_getvalue(sqr1, i, 1));
-//			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", sql_getvalue(sqr1, i, 5));
-			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_user(sid, atoi(sql_getvalue(sqr1, i, 5))));
-			projectstart=time_sql2unix(sql_getvalue(sqr1, i, 2));
+			prints(sid, "onClick=\"window.location.href='%s/projects/view?projectid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+			prints(sid, "&nbsp;<A HREF=%s/projects/view?projectid=%d>%s</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)), sql_getvalue(&sqr1, i, 1));
+//			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", sql_getvalue(&sqr1, i, 5));
+			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_user(sid, atoi(sql_getvalue(&sqr1, i, 5))));
+			projectstart=time_sql2unix(sql_getvalue(&sqr1, i, 2));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, projectstart));
 			if (status==2) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(sqr1, i, 4))==1?"Closed":"Open");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", atoi(sql_getvalue(&sqr1, i, 4))==1?"Closed":"Open");
 			}
 			prints(sid, "</TR>\n");
 		}
 		prints(sid, "</TABLE>\n");
-		if (sql_numtuples(sqr1)>sid->dat->user_maxlist) {
+		if (sql_numtuples(&sqr1)>sid->dat->user_maxlist) {
 			if (offset>sid->dat->user_maxlist-1) {
 				prints(sid, "[<A HREF=%s/projects/list?offset=%d&status=%d&userid=%d>Previous Page</A>]\n", sid->dat->in_ScriptName, offset-sid->dat->user_maxlist, status, userid);
 			} else {
 				prints(sid, "[Previous Page]\n");
 			}
-			if (offset+sid->dat->user_maxlist<sql_numtuples(sqr1)) {
+			if (offset+sid->dat->user_maxlist<sql_numtuples(&sqr1)) {
 				prints(sid, "[<A HREF=%s/projects/list?offset=%d&status=%d&userid=%d>Next Page</A>]\n", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist, status, userid);
 			} else {
 				prints(sid, "[Next Page]\n");
@@ -404,7 +404,7 @@ void projectlist(CONN *sid)
 		prints(sid, " projects found</B>\n");
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr1);
 	return;
 }
 

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ void wmaddr_list(CONN *sid)
 	char realname1[80];
 	char realname2[80];
 	int i, j;
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -73,15 +73,15 @@ void wmaddr_list(CONN *sid)
 	prints(sid, "	window.close();\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "//--></SCRIPT>\r\n");
-	if ((sqr1=sql_queryf("SELECT userid, surname, givenname, email from gw_users WHERE domainid = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr1, "SELECT userid, surname, givenname, email from gw_users WHERE domainid = %d ORDER BY surname, givenname ASC", sid->dat->user_did)<0) return;
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts WHERE obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname, email from gw_contacts WHERE obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did)<0) return;
 	} else {
-		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr2, "SELECT contactid, surname, givenname, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did)<0) return;
 	}
-	if ((sql_numtuples(sqr1)<1)&&(sql_numtuples(sqr2)<1)) {
-		sql_freeresult(sqr1);
-		sql_freeresult(sqr2);
+	if ((sql_numtuples(&sqr1)<1)&&(sql_numtuples(&sqr2)<1)) {
+		sql_freeresult(&sqr1);
+		sql_freeresult(&sqr2);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
@@ -92,25 +92,25 @@ void wmaddr_list(CONN *sid)
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	j=0;
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;E-Mail&nbsp;</TH></TR>\n");
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		if (strlen(sql_getvalue(sqr1, i, 3))<1) continue;
-		if (strchr(sql_getvalue(sqr1, i, 3), '@')==NULL) continue;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		if (strlen(sql_getvalue(&sqr1, i, 3))<1) continue;
+		if (strchr(sql_getvalue(&sqr1, i, 3), '@')==NULL) continue;
 		memset(realname1, 0, sizeof(realname1));
 		memset(realname2, 0, sizeof(realname2));
-		strncpy(realname1, sql_getvalue(sqr1, i, 1), sizeof(realname1)-1);
-		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) strncat(realname1, ", ", sizeof(realname1)-strlen(realname1)-1);
-		strncat(realname1, sql_getvalue(sqr1, i, 2), sizeof(realname1)-strlen(realname1)-1);
-		strncpy(realname2, sql_getvalue(sqr1, i, 2), sizeof(realname2)-1);
-		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
-		strncat(realname2, sql_getvalue(sqr1, i, 1), sizeof(realname2)-strlen(realname2)-1);
+		strncpy(realname1, sql_getvalue(&sqr1, i, 1), sizeof(realname1)-1);
+		if (strlen(sql_getvalue(&sqr1, i, 1))&&strlen(sql_getvalue(&sqr1, i, 2))) strncat(realname1, ", ", sizeof(realname1)-strlen(realname1)-1);
+		strncat(realname1, sql_getvalue(&sqr1, i, 2), sizeof(realname1)-strlen(realname1)-1);
+		strncpy(realname2, sql_getvalue(&sqr1, i, 2), sizeof(realname2)-1);
+		if (strlen(sql_getvalue(&sqr1, i, 1))&&strlen(sql_getvalue(&sqr1, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
+		strncat(realname2, sql_getvalue(&sqr1, i, 1), sizeof(realname2)-strlen(realname2)-1);
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, realname1));
-		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(sqr1, i, 3), str2html(sid, sql_getvalue(sqr1, i, 3)));
+		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(&sqr1, i, 3), str2html(sid, sql_getvalue(&sqr1, i, 3)));
 		prints(sid, "<INPUT TYPE=hidden NAME=name%d VALUE=\"%s\">", j, realname2);
-		prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", j, sql_getvalue(sqr1, i, 3));
+		prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", j, sql_getvalue(&sqr1, i, 3));
 		prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><SELECT NAME=option%d STYLE='font-size:10px; width:44px'>", j);
 		prints(sid, "<OPTION VALUE=''>");
-		if (strchr(sql_getvalue(sqr1, i, 3), '@')) {
+		if (strchr(sql_getvalue(&sqr1, i, 3), '@')) {
 			prints(sid, "<OPTION VALUE='TO'>TO");
 			prints(sid, "<OPTION VALUE='CC'>CC");
 			prints(sid, "<OPTION VALUE='BCC'>BCC");
@@ -119,25 +119,25 @@ void wmaddr_list(CONN *sid)
 		j++;
 	}
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Contact Name&nbsp;</TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;E-Mail&nbsp;</TH></TR>\n");
-	for (i=0;i<sql_numtuples(sqr2);i++) {
-		if (strlen(sql_getvalue(sqr2, i, 3))<1) continue;
-		if (strchr(sql_getvalue(sqr2, i, 3), '@')==NULL) continue;
+	for (i=0;i<sql_numtuples(&sqr2);i++) {
+		if (strlen(sql_getvalue(&sqr2, i, 3))<1) continue;
+		if (strchr(sql_getvalue(&sqr2, i, 3), '@')==NULL) continue;
 		memset(realname1, 0, sizeof(realname1));
 		memset(realname2, 0, sizeof(realname2));
-		strncpy(realname1, sql_getvalue(sqr2, i, 1), sizeof(realname1)-1);
-		if (strlen(sql_getvalue(sqr2, i, 1))&&strlen(sql_getvalue(sqr2, i, 2))) strncat(realname1, ", ", sizeof(realname1)-strlen(realname1)-1);
-		strncat(realname1, sql_getvalue(sqr2, i, 2), sizeof(realname1)-strlen(realname1)-1);
-		strncpy(realname2, sql_getvalue(sqr2, i, 2), sizeof(realname2)-1);
-		if (strlen(sql_getvalue(sqr2, i, 1))&&strlen(sql_getvalue(sqr2, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
-		strncat(realname2, sql_getvalue(sqr2, i, 1), sizeof(realname2)-strlen(realname2)-1);
+		strncpy(realname1, sql_getvalue(&sqr2, i, 1), sizeof(realname1)-1);
+		if (strlen(sql_getvalue(&sqr2, i, 1))&&strlen(sql_getvalue(&sqr2, i, 2))) strncat(realname1, ", ", sizeof(realname1)-strlen(realname1)-1);
+		strncat(realname1, sql_getvalue(&sqr2, i, 2), sizeof(realname1)-strlen(realname1)-1);
+		strncpy(realname2, sql_getvalue(&sqr2, i, 2), sizeof(realname2)-1);
+		if (strlen(sql_getvalue(&sqr2, i, 1))&&strlen(sql_getvalue(&sqr2, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
+		strncat(realname2, sql_getvalue(&sqr2, i, 1), sizeof(realname2)-strlen(realname2)-1);
 		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, realname1));
-		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(sqr2, i, 3), str2html(sid, sql_getvalue(sqr2, i, 3)));
+		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(&sqr2, i, 3), str2html(sid, sql_getvalue(&sqr2, i, 3)));
 		prints(sid, "<INPUT TYPE=hidden NAME=name%d VALUE=\"%s\">", j, realname2);
-		prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", j, sql_getvalue(sqr2, i, 3));
+		prints(sid, "<INPUT TYPE=hidden NAME=addr%d VALUE=\"%s\">", j, sql_getvalue(&sqr2, i, 3));
 		prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><SELECT NAME=option%d STYLE='font-size:10px; width:44px'>", j);
 		prints(sid, "<OPTION VALUE=''>");
-		if (strchr(sql_getvalue(sqr2, i, 3), '@')) {
+		if (strchr(sql_getvalue(&sqr2, i, 3), '@')) {
 			prints(sid, "<OPTION VALUE='TO'>TO");
 			prints(sid, "<OPTION VALUE='CC'>CC");
 			prints(sid, "<OPTION VALUE='BCC'>BCC");
@@ -150,7 +150,7 @@ void wmaddr_list(CONN *sid)
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP><A HREF=\"javascript:SendToAll()\">Add Recipients</A></TD>");
 	prints(sid, "</TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr1);
-	sql_freeresult(sqr2);
+	sql_freeresult(&sqr1);
+	sql_freeresult(&sqr2);
 	return;
 }

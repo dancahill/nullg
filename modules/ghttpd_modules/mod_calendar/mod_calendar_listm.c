@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,8 +55,8 @@ void calendarlistmonth(CONN *sid)
 	int k=0;
 	int lines;
 	int index=0;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 	int userid=-1;
 	int groupid=-1;
@@ -161,8 +161,8 @@ void calendarlistmonth(CONN *sid)
 	t=(unixdate+j)*86400;
 	t-=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE groupid = %d ORDER BY userid ASC", groupid))<0) return;
+	if (dblist_events(sid, &sqr1, posttime1, posttime2)<0) return;
+	if (sql_queryf(&sqr2, "SELECT userid, groupid, username FROM gw_users WHERE groupid = %d ORDER BY userid ASC", groupid)<0) return;
 	for (i=printdate;i<dim[today.month-1]+1;i+=7) {
 		prints(sid, "<TR CLASS=\"FIELDVAL\">\n");
 		for (j=0;j<7;j++) {
@@ -190,35 +190,35 @@ void calendarlistmonth(CONN *sid)
 			}
 			prints(sid, "</FONT></NOBR><BR>");
 			lines=3;
-			while (index<sql_numtuples(sqr)) {
-				t2=time_sql2unix(sql_getvalue(sqr, index, 1));
+			while (index<sql_numtuples(&sqr1)) {
+				t2=time_sql2unix(sql_getvalue(&sqr1, index, 1));
 				if (t2<t) { index++; continue; }
 				if (t2>=t+86400) break;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
+				if ((status!=2)&&(status!=atoi(sql_getvalue(&sqr1, index, 3)))) { index++; continue; }
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(&sqr1, index, 4)))) { index++; continue; }
 				colour="#000000";
 				if (groupid>0) {
-					for (k=0;k<sql_numtuples(sqr2);k++) {
-						if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-						if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
+					for (k=0;k<sql_numtuples(&sqr2);k++) {
+						if (atoi(sql_getvalue(&sqr1, index, 4))!=atoi(sql_getvalue(&sqr2, k, 0))) continue;
+						if (groupid!=atoi(sql_getvalue(&sqr2, k, 1))) continue;
 						break;
 					}
-					if (k==sql_numtuples(sqr2)) { index++; continue; }
+					if (k==sql_numtuples(&sqr2)) { index++; continue; }
 					if (k<colours) {
 						colour=colourkey[k];
 					}
 				}
-//				t2=time_sql2unix(sql_getvalue(sqr, index, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
+//				t2=time_sql2unix(sql_getvalue(&sqr1, index, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(&sqr1, index, 1)));
 				t2+=time_tzoffset(sid, t2);
 				prints(sid, "<FONT SIZE=1 STYLE='font-size:10px'><NOBR>%s ", time_unix2lotimetext(sid, t2));
-				prints(sid, "<A HREF=%s/calendar/edit?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, index, 0)));
+				prints(sid, "<A HREF=%s/calendar/edit?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, index, 0)));
 				if (groupid>0) {
-					prints(sid, "[%s] %s\" STYLE='color:%s'>", sql_getvalue(sqr2, k, 2), sql_getvalue(sqr, index, 5), colour);
+					prints(sid, "[%s] %s\" STYLE='color:%s'>", sql_getvalue(&sqr2, k, 2), sql_getvalue(&sqr1, index, 5), colour);
 				} else {
-					prints(sid, "%s\">", sql_getvalue(sqr, index, 5));
+					prints(sid, "%s\">", sql_getvalue(&sqr1, index, 5));
 				}
-				prints(sid, "%-.15s", str2html(sid, sql_getvalue(sqr, index, 5)));
-				if (strlen(sql_getvalue(sqr, index, 5))>15) prints(sid, "..");
+				prints(sid, "%-.15s", str2html(sid, sql_getvalue(&sqr1, index, 5)));
+				if (strlen(sql_getvalue(&sqr1, index, 5))>15) prints(sid, "..");
 				prints(sid, "</A>&nbsp;</NOBR></FONT><BR>\n");
 				index++;
 				if (lines>0) lines--;
@@ -233,17 +233,17 @@ void calendarlistmonth(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
 	prints(sid, "</CENTER>\n");
-	if ((groupid>0)&&(sql_numtuples(sqr2)>0)) {
+	if ((groupid>0)&&(sql_numtuples(&sqr2)>0)) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH STYLE='border-style:solid'>&nbsp;Colour Key&nbsp;</TH></TR>");
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP STYLE='border-style:solid'>");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\r\n");
 		j=0;
-		for (i=0;i<sql_numtuples(sqr2);i++) {
+		for (i=0;i<sql_numtuples(&sqr2);i++) {
 			if (j==0) prints(sid, "<TR>");
 			colour="#000000";
 			if (i<colours) colour=colourkey[i];
-			prints(sid, "<TD style='width:20%%'><FONT COLOR=%s><NOBR>%s</NOBR></FONT></TD>\n", colour, sql_getvalue(sqr2, i, 2));
+			prints(sid, "<TD style='width:20%%'><FONT COLOR=%s><NOBR>%s</NOBR></FONT></TD>\n", colour, sql_getvalue(&sqr2, i, 2));
 			j++;
 			if (j>4) {
 				prints(sid, "</TR>\n");
@@ -253,7 +253,7 @@ void calendarlistmonth(CONN *sid)
 		prints(sid, "</TABLE>");
 		prints(sid, "</TD></TR></TABLE>");
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }

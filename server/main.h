@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,13 +89,9 @@
 #ifdef MAIN_GLOBALS
 	LOCKS   Lock;
 	_PROC   proc;
-/*	CONN   *conn; */
-	SQLRES *sqlreply;
 	pthread_t CronThread;
 #else
 	extern LOCKS   Lock;
 	extern _PROC   proc;
-/*	extern CONN   *conn; */
-	extern SQLRES *sqlreply;
 	extern pthread_t CronThread;
 #endif

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,7 +78,6 @@ typedef struct {
 	char      sql_odbc_dsn[200];
 	char      sql_hostname[128];
 	short int sql_port;
-	short int sql_maxconn;
 	char      util_virusscan[255];
 } CONFIG;
 CONFIG cfg;
@@ -178,7 +177,6 @@ int config_read(CONFIG *config)
 	config->smtp_port=25;
 	config->smtp_maxconn=50;
 	config->smtp_maxidle=120;
-	config->sql_maxconn=config->http_maxconn*2;
 	/* try to open the config file */
 	/* try the current directory first, then ../etc/, then the default etc/ */
 	if (fp==NULL) {
@@ -316,7 +314,6 @@ int config_read(CONFIG *config)
 	if (config->smtp_maxconn>1000) config->smtp_maxconn=1000;
 	if (config->smtp_maxidle<15) config->smtp_maxidle=15;
 	if (strlen(config->smtp_hostname)==0) strncpy(config->smtp_hostname, "INADDR_ANY", sizeof(config->smtp_hostname)-1);
-	config->sql_maxconn=config->http_maxconn*2;
 	return 0;
 }
 
@@ -342,7 +339,6 @@ int config_write(CONFIG *config)
 	if (config->smtp_maxidle<15) config->smtp_maxidle=15;
 	if (config->smtp_maxconn>1000) config->smtp_maxconn=1000;
 	if (strlen(config->smtp_hostname)==0) strncpy(config->smtp_hostname, "INADDR_ANY", sizeof(config->smtp_hostname)-1);
-	config->sql_maxconn=config->http_maxconn*2;
 	fixslashes(config_filename);
 	if ((fp=fopen(config_filename, "w"))==NULL) return -1;
 	fprintf(fp, "# This file contains system settings for NullLogic Groupware.\n\n");

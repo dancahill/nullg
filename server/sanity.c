@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,29 +42,29 @@ static int sanity_dircheck(const char *format, ...)
 
 static int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
 {
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT * FROM %s WHERE %s = 1", tablename, indexname))<0) {
+	if (sql_queryf(&sqr, "SELECT * FROM %s WHERE %s = 1", tablename, indexname)<0) {
 		log_error("core", __FILE__, __LINE__, 0, "ERROR: Could not access %s table!", tablename);
 		exit(-2);
 	}
-	if (sql_numfields(sqr)!=numfields) {
-		log_error("core", __FILE__, __LINE__, 0, "ERROR: %s has %d fields, but it should have %d!", tablename, sql_numfields(sqr), numfields);
-		sql_freeresult(sqr);
+	if (sql_numfields(&sqr)!=numfields) {
+		log_error("core", __FILE__, __LINE__, 0, "ERROR: %s has %d fields, but it should have %d!", tablename, sql_numfields(&sqr), numfields);
+		sql_freeresult(&sqr);
 		return -1;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int sanity_checkdb()
 {
+	SQLRES sqr;
 	char commandline[200];
 	char file[100];
 	struct stat sb;
 	char msgbuffer[200];
 	int i;
-	int sqr;
 	int checkerror=0;
 //	struct timeval ttime;
 //	struct timezone tzone;
@@ -90,7 +90,7 @@ int sanity_checkdb()
 
 	}
 	i=0;
-	while ((sqr=sql_query("SELECT count(username) FROM gw_users"))<0) {
+	while (sql_query(&sqr, "SELECT count(username) FROM gw_users")<0) {
 		sleep(5);
 		i++;
 		if (i>6) {
@@ -115,22 +115,22 @@ int sanity_checkdb()
 			exit(-1);
 		}
 	}
-	sql_freeresult(sqr);
-	if ((sqr=sql_query("SELECT dbversion, tax1name, tax2name, tax1percent, tax2percent FROM gw_dbinfo"))<0) {
+	sql_freeresult(&sqr);
+	if (sql_query(&sqr, "SELECT dbversion, tax1name, tax2name, tax1percent, tax2percent FROM gw_dbinfo")<0) {
 		log_error("core", __FILE__, __LINE__, 0, "Could not read dbinfo from database");
 		exit(-1);
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		log_error("core", __FILE__, __LINE__, 0, "Missing dbinfo data");
 		exit(-1);
 	}
-	snprintf(proc.info.version, sizeof(proc.info.version)-1, "%s", sql_getvalue(sqr, 0, 0));
-	snprintf(proc.info.tax1name, sizeof(proc.info.tax1name)-1, "%s", sql_getvalue(sqr, 0, 1));
-	snprintf(proc.info.tax2name, sizeof(proc.info.tax2name)-1, "%s", sql_getvalue(sqr, 0, 2));
-	proc.info.tax1percent=(float)atof(sql_getvalue(sqr, 0, 3));
-	proc.info.tax2percent=(float)atof(sql_getvalue(sqr, 0, 4));
-	sql_freeresult(sqr);
+	snprintf(proc.info.version, sizeof(proc.info.version)-1, "%s", sql_getvalue(&sqr, 0, 0));
+	snprintf(proc.info.tax1name, sizeof(proc.info.tax1name)-1, "%s", sql_getvalue(&sqr, 0, 1));
+	snprintf(proc.info.tax2name, sizeof(proc.info.tax2name)-1, "%s", sql_getvalue(&sqr, 0, 2));
+	proc.info.tax1percent=(float)atof(sql_getvalue(&sqr, 0, 3));
+	proc.info.tax2percent=(float)atof(sql_getvalue(&sqr, 0, 4));
+	sql_freeresult(&sqr);
 //	if (proc.RunAsCGI) return 0;
 	// The rest of the sanity checking is for SAS mode only.
 //	if ((!proc.RunAsCGI)&&(strcasecmp(proc.config.sql_type, "SQLITE")!=0)) {
@@ -186,8 +186,8 @@ int sanity_checkdb()
 
 int sanity_checkdirs()
 {
+	SQLRES sqr;
 	int i;
-	int sqr;
 	int domainid;
 
 	if (sanity_dircheck("%s", proc.config.dir_var)!=0) exit(-2);
@@ -198,16 +198,16 @@ int sanity_checkdirs()
 	if (sanity_dircheck("%s/mqueue", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s/mqinfo", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s", proc.config.dir_var_tmp)!=0) exit(-2);
-	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains"))<0) {
+	if (sql_query(&sqr, "SELECT domainid, domainname FROM gw_domains")<0) {
 		log_error("core", __FILE__, __LINE__, 0, "Could not read retrieve domain list");
 		exit(-1);
 	}
-	if (sql_numtuples(sqr)<1) {
+	if (sql_numtuples(&sqr)<1) {
 		log_error("core", __FILE__, __LINE__, 0, "no domains exist"); exit(-1);
 		sql_update("INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2004-01-01 00:00:00', '2004-01-01 00:00:00', '0', '0', '0', '0', '0', 'default');");
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		domainid=atoi(sql_getvalue(sqr, i, 0));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		domainid=atoi(sql_getvalue(&sqr, i, 0));
 		if (sanity_dircheck("%s/%04d",             proc.config.dir_var_domains, domainid)!=0) exit(-2);
 		if (sanity_dircheck("%s/%04d/attachments", proc.config.dir_var_domains, domainid)!=0) exit(-2);
 		if (sanity_dircheck("%s/%04d/cgi-bin",     proc.config.dir_var_domains, domainid)!=0) exit(-2);
@@ -216,6 +216,6 @@ int sanity_checkdirs()
 		if (sanity_dircheck("%s/%04d/mail",        proc.config.dir_var_domains, domainid)!=0) exit(-2);
 		if (sanity_dircheck("%s/%04d/mailspool",   proc.config.dir_var_domains, domainid)!=0) exit(-2);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }

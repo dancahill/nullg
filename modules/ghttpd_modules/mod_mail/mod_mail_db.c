@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 {
 	char *ptemp;
 	int authlevel;
-	int sqr;
+	SQLRES sqr;
 
 	memset(mailacct, 0, sizeof(REC_MAILACCT));
 	authlevel=auth_priv(sid, "webmail");
@@ -45,92 +45,92 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_mailaccounts where mailaccountid = %d", index))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_mailaccounts where mailaccountid = %d", index)<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", index, sid->dat->user_uid))<0) return -1;
+		if (sql_queryf(&sqr, "SELECT * FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", index, sid->dat->user_uid)<0) return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return -2;
 	}
-	mailacct->mailaccountid = atoi(sql_getvalue(sqr, 0, 0));
-	mailacct->obj_ctime     = time_sql2unix(sql_getvalue(sqr, 0, 1));
-	mailacct->obj_mtime     = time_sql2unix(sql_getvalue(sqr, 0, 2));
-	mailacct->obj_uid       = atoi(sql_getvalue(sqr, 0, 3));
-	mailacct->obj_gid       = atoi(sql_getvalue(sqr, 0, 4));
-	mailacct->obj_did       = atoi(sql_getvalue(sqr, 0, 5));
-	mailacct->obj_gperm     = atoi(sql_getvalue(sqr, 0, 6));
-	mailacct->obj_operm     = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(mailacct->accountname,	sql_getvalue(sqr, 0, 8), sizeof(mailacct->accountname)-1);
-	strncpy(mailacct->realname,	sql_getvalue(sqr, 0, 9), sizeof(mailacct->realname)-1);
-	strncpy(mailacct->organization,	sql_getvalue(sqr, 0, 10), sizeof(mailacct->organization)-1);
-	strncpy(mailacct->address,	sql_getvalue(sqr, 0, 11), sizeof(mailacct->address)-1);
-	strncpy(mailacct->replyto,	sql_getvalue(sqr, 0, 12), sizeof(mailacct->replyto)-1);
-	strncpy(mailacct->hosttype,	sql_getvalue(sqr, 0, 13), sizeof(mailacct->hosttype)-1);
-	strncpy(mailacct->pophost,	sql_getvalue(sqr, 0, 14), sizeof(mailacct->pophost)-1);
-	mailacct->popport=atoi(sql_getvalue(sqr, 0, 15));
-	strncpy(mailacct->smtphost,	sql_getvalue(sqr, 0, 16), sizeof(mailacct->smtphost)-1);
-	mailacct->smtpport=atoi(sql_getvalue(sqr, 0, 17));
-	strncpy(mailacct->popusername,	sql_getvalue(sqr, 0, 18), sizeof(mailacct->popusername)-1);
-//	strncpy(mailacct->poppassword,	decode_b64s(sid, sql_getvalue(sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
-	strncpy(mailacct->poppassword,  DecodeBase64string(sid, sql_getvalue(sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
-	strncpy(mailacct->smtpauth,	sql_getvalue(sqr, 0, 20), sizeof(mailacct->smtpauth)-1);
-	mailacct->lastcount=atoi(sql_getvalue(sqr, 0, 21));
-	mailacct->notify=atoi(sql_getvalue(sqr, 0, 22));
-	mailacct->remove=atoi(sql_getvalue(sqr, 0, 23));
-	mailacct->lastcheck=time_sql2unix(sql_getvalue(sqr, 0, 24));
-	ptemp=sql_getvalue(sqr, 0, 25);
+	mailacct->mailaccountid = atoi(sql_getvalue(&sqr, 0, 0));
+	mailacct->obj_ctime     = time_sql2unix(sql_getvalue(&sqr, 0, 1));
+	mailacct->obj_mtime     = time_sql2unix(sql_getvalue(&sqr, 0, 2));
+	mailacct->obj_uid       = atoi(sql_getvalue(&sqr, 0, 3));
+	mailacct->obj_gid       = atoi(sql_getvalue(&sqr, 0, 4));
+	mailacct->obj_did       = atoi(sql_getvalue(&sqr, 0, 5));
+	mailacct->obj_gperm     = atoi(sql_getvalue(&sqr, 0, 6));
+	mailacct->obj_operm     = atoi(sql_getvalue(&sqr, 0, 7));
+	strncpy(mailacct->accountname,	sql_getvalue(&sqr, 0, 8), sizeof(mailacct->accountname)-1);
+	strncpy(mailacct->realname,	sql_getvalue(&sqr, 0, 9), sizeof(mailacct->realname)-1);
+	strncpy(mailacct->organization,	sql_getvalue(&sqr, 0, 10), sizeof(mailacct->organization)-1);
+	strncpy(mailacct->address,	sql_getvalue(&sqr, 0, 11), sizeof(mailacct->address)-1);
+	strncpy(mailacct->replyto,	sql_getvalue(&sqr, 0, 12), sizeof(mailacct->replyto)-1);
+	strncpy(mailacct->hosttype,	sql_getvalue(&sqr, 0, 13), sizeof(mailacct->hosttype)-1);
+	strncpy(mailacct->pophost,	sql_getvalue(&sqr, 0, 14), sizeof(mailacct->pophost)-1);
+	mailacct->popport=atoi(sql_getvalue(&sqr, 0, 15));
+	strncpy(mailacct->smtphost,	sql_getvalue(&sqr, 0, 16), sizeof(mailacct->smtphost)-1);
+	mailacct->smtpport=atoi(sql_getvalue(&sqr, 0, 17));
+	strncpy(mailacct->popusername,	sql_getvalue(&sqr, 0, 18), sizeof(mailacct->popusername)-1);
+//	strncpy(mailacct->poppassword,	decode_b64s(sid, sql_getvalue(&sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
+	strncpy(mailacct->poppassword,  DecodeBase64string(sid, sql_getvalue(&sqr, 0, 19)), sizeof(mailacct->poppassword)-1);
+	strncpy(mailacct->smtpauth,	sql_getvalue(&sqr, 0, 20), sizeof(mailacct->smtpauth)-1);
+	mailacct->lastcount=atoi(sql_getvalue(&sqr, 0, 21));
+	mailacct->notify=atoi(sql_getvalue(&sqr, 0, 22));
+	mailacct->remove=atoi(sql_getvalue(&sqr, 0, 23));
+	mailacct->lastcheck=time_sql2unix(sql_getvalue(&sqr, 0, 24));
+	ptemp=sql_getvalue(&sqr, 0, 25);
 	if (tolower(ptemp[0])=='y') {
 		mailacct->showdebug=1;
 	}
-	strncpy(mailacct->signature,	sql_getvalue(sqr, 0, 26), sizeof(mailacct->signature)-1);
-	sql_freeresult(sqr);
+	strncpy(mailacct->signature,	sql_getvalue(&sqr, 0, 26), sizeof(mailacct->signature)-1);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int dbread_mailcurrent(CONN *sid, int mailcurrent)
 {
 	char *ptemp;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
-		if (sql_numtuples(sqr)<1) {
-			sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid)<0) return -1;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid)<0) return -1;
+		if (sql_numtuples(&sqr)<1) {
+			sql_freeresult(&sqr);
 			return -1;
 		}
-		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
+		sid->dat->user_mailcurrent=atoi(sql_getvalue(&sqr, 0, 0));
 		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid)<0) return -1;
 	}
-	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->wm->realname,     sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
-		strncpy(sid->dat->wm->organization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
-		strncpy(sid->dat->wm->username,     sql_getvalue(sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
-		strncpy(sid->dat->wm->password,     DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
-		strncpy(sid->dat->wm->smtpauth,     sql_getvalue(sqr, 0, 4), sizeof(sid->dat->wm->smtpauth)-1);
-		strncpy(sid->dat->wm->servertype,   sql_getvalue(sqr, 0, 5), sizeof(sid->dat->wm->servertype)-1);
-		strncpy(sid->dat->wm->popserver,    sql_getvalue(sqr, 0, 6), sizeof(sid->dat->wm->popserver)-1);
-		sid->dat->wm->popport=atoi(sql_getvalue(sqr, 0, 7));
-		strncpy(sid->dat->wm->smtpserver,   sql_getvalue(sqr, 0, 8), sizeof(sid->dat->wm->smtpserver)-1);
-		sid->dat->wm->smtpport=atoi(sql_getvalue(sqr, 0, 9));
-		strncpy(sid->dat->wm->address,      sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
-		strncpy(sid->dat->wm->replyto,      sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
-		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 12));
-		ptemp=sql_getvalue(sqr, 0, 13);
+	if (sql_numtuples(&sqr)==1) {
+		strncpy(sid->dat->wm->realname,     sql_getvalue(&sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
+		strncpy(sid->dat->wm->organization, sql_getvalue(&sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
+		strncpy(sid->dat->wm->username,     sql_getvalue(&sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password,     DecodeBase64string(sid, sql_getvalue(&sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
+		strncpy(sid->dat->wm->smtpauth,     sql_getvalue(&sqr, 0, 4), sizeof(sid->dat->wm->smtpauth)-1);
+		strncpy(sid->dat->wm->servertype,   sql_getvalue(&sqr, 0, 5), sizeof(sid->dat->wm->servertype)-1);
+		strncpy(sid->dat->wm->popserver,    sql_getvalue(&sqr, 0, 6), sizeof(sid->dat->wm->popserver)-1);
+		sid->dat->wm->popport=atoi(sql_getvalue(&sqr, 0, 7));
+		strncpy(sid->dat->wm->smtpserver,   sql_getvalue(&sqr, 0, 8), sizeof(sid->dat->wm->smtpserver)-1);
+		sid->dat->wm->smtpport=atoi(sql_getvalue(&sqr, 0, 9));
+		strncpy(sid->dat->wm->address,      sql_getvalue(&sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
+		strncpy(sid->dat->wm->replyto,      sql_getvalue(&sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
+		sid->dat->wm->remove=atoi(sql_getvalue(&sqr, 0, 12));
+		ptemp=sql_getvalue(&sqr, 0, 13);
 		if (tolower(ptemp[0])=='y') {
 			sid->dat->wm->showdebug=1;
 		}
-		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
+		strncpy(sid->dat->wm->signature,    sql_getvalue(&sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
-int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header)
+int dbread_getheader(CONN *sid, SQLRES *sqr, int tuple, wmheader *header)
 {
 	char *ptemp;
 

@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,25 +23,25 @@ static int auth_checkpass(CONN *sid, char *password)
 	char cpass[64];
 	char salt[10];
 	short int i;
-	int sqr;
+	SQLRES sqr;
 
 	DEBUG_IN(sid, "auth_checkpass()");
 	if ((strlen(sid->dat->user_username)==0)||(strlen(password)==0)) {
 		DEBUG_OUT(sid, "auth_checkpass()");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT userid, password FROM gw_users WHERE username = '%s' AND domainid = %d AND enabled > 0", sid->dat->user_username, sid->dat->user_did))<0) {
+	if (sql_queryf(&sqr, "SELECT userid, password FROM gw_users WHERE username = '%s' AND domainid = %d AND enabled > 0", sid->dat->user_username, sid->dat->user_did)<0) {
 		DEBUG_OUT(sid, "auth_checkpass()");
 		return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		DEBUG_OUT(sid, "auth_checkpass()");
 		return -1;
 	}
-	sid->dat->user_uid=atoi(sql_getvalue(sqr, 0, 0));
-	strncpy(cpassword, sql_getvalue(sqr, 0, 1), sizeof(cpassword)-1);
-	sql_freeresult(sqr);
+	sid->dat->user_uid=atoi(sql_getvalue(&sqr, 0, 0));
+	strncpy(cpassword, sql_getvalue(&sqr, 0, 1), sizeof(cpassword)-1);
+	sql_freeresult(&sqr);
 	memset(salt, 0, sizeof(salt));
 	memset(cpass, 0, sizeof(cpass));
 	if (strncmp(cpassword, "$1$", 3)==0) {
@@ -72,7 +72,7 @@ static int auth_renewcookie(CONN *sid, int settoken)
 {
 	char timebuffer[100];
 	time_t t;
-	int sqr;
+	SQLRES sqr;
 	int i, j;
 
 	int userid=0;
@@ -85,48 +85,48 @@ static int auth_renewcookie(CONN *sid, int settoken)
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT userid, domainid FROM gw_usersessions WHERE remoteip = '%s' AND token = '%s'", sid->dat->in_RemoteAddr, sid->dat->user_token))<0) {
+	if (sql_queryf(&sqr, "SELECT userid, domainid FROM gw_usersessions WHERE remoteip = '%s' AND token = '%s'", sid->dat->in_RemoteAddr, sid->dat->user_token)<0) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	userid   = atoi(sql_getvalue(sqr, 0, 0));
-	domainid = atoi(sql_getvalue(sqr, 0, 1));
-	sql_freeresult(sqr);
-	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE userid = %d AND domainid = %d AND enabled > 0", userid, domainid))<0) {
+	userid   = atoi(sql_getvalue(&sqr, 0, 0));
+	domainid = atoi(sql_getvalue(&sqr, 0, 1));
+	sql_freeresult(&sqr);
+	if (sql_queryf(&sqr, "SELECT * FROM gw_users WHERE userid = %d AND domainid = %d AND enabled > 0", userid, domainid)<0) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	sid->dat->user_uid = atoi(sql_getvaluebyname(sqr, 0, "userid"));
-	sid->dat->user_gid = atoi(sql_getvaluebyname(sqr, 0, "groupid"));
-	sid->dat->user_did = atoi(sql_getvaluebyname(sqr, 0, "domainid"));
-	snprintf(sid->dat->user_username, sizeof(sid->dat->user_username)-1, "%s", sql_getvaluebyname(sqr, 0, "username"));
+	sid->dat->user_uid = atoi(sql_getvaluebyname(&sqr, 0, "userid"));
+	sid->dat->user_gid = atoi(sql_getvaluebyname(&sqr, 0, "groupid"));
+	sid->dat->user_did = atoi(sql_getvaluebyname(&sqr, 0, "domainid"));
+	snprintf(sid->dat->user_username, sizeof(sid->dat->user_username)-1, "%s", sql_getvaluebyname(&sqr, 0, "username"));
 	/* memset((char *)&sid->dat->auth, 0, sizeof(sid->dat->auth)); */
-	for (i=0,j=0;i<sql_numfields(sqr);i++) {
-		if (strncmp(sql_getname(sqr, i), "auth", 4)!=0) continue;
-		strncpy(sid->dat->auth[j].name, sql_getname(sqr, i)+4, sizeof(sid->dat->auth[j].name)-1);
-		sid->dat->auth[j].val=atoi(sql_getvalue(sqr, 0, i));
+	for (i=0,j=0;i<sql_numfields(&sqr);i++) {
+		if (strncmp(sql_getname(&sqr, i), "auth", 4)!=0) continue;
+		strncpy(sid->dat->auth[j].name, sql_getname(&sqr, i)+4, sizeof(sid->dat->auth[j].name)-1);
+		sid->dat->auth[j].val=atoi(sql_getvalue(&sqr, 0, i));
 		j++;
 		if (j>=MAX_AUTH_FIELDS) break;
 	}
-	sid->dat->user_daystart      = atoi(sql_getvaluebyname(sqr, 0, "prefdaystart"));
-	sid->dat->user_daylength     = atoi(sql_getvaluebyname(sqr, 0, "prefdaylength"));
-	sid->dat->user_mailcurrent   = atoi(sql_getvaluebyname(sqr, 0, "prefmailcurrent"));
-	sid->dat->user_maildefault   = atoi(sql_getvaluebyname(sqr, 0, "prefmaildefault"));
-	sid->dat->user_maxlist       = atoi(sql_getvaluebyname(sqr, 0, "prefmaxlist"));
-	sid->dat->user_menustyle     = atoi(sql_getvaluebyname(sqr, 0, "prefmenustyle"));
-	sid->dat->user_timezone      = atoi(sql_getvaluebyname(sqr, 0, "preftimezone"));
-	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "%s", sql_getvaluebyname(sqr, 0, "preflanguage"));
-	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "%s", sql_getvaluebyname(sqr, 0, "preftheme"));
+	sid->dat->user_daystart      = atoi(sql_getvaluebyname(&sqr, 0, "prefdaystart"));
+	sid->dat->user_daylength     = atoi(sql_getvaluebyname(&sqr, 0, "prefdaylength"));
+	sid->dat->user_mailcurrent   = atoi(sql_getvaluebyname(&sqr, 0, "prefmailcurrent"));
+	sid->dat->user_maildefault   = atoi(sql_getvaluebyname(&sqr, 0, "prefmaildefault"));
+	sid->dat->user_maxlist       = atoi(sql_getvaluebyname(&sqr, 0, "prefmaxlist"));
+	sid->dat->user_menustyle     = atoi(sql_getvaluebyname(&sqr, 0, "prefmenustyle"));
+	sid->dat->user_timezone      = atoi(sql_getvaluebyname(&sqr, 0, "preftimezone"));
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "%s", sql_getvaluebyname(&sqr, 0, "preflanguage"));
+	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "%s", sql_getvaluebyname(&sqr, 0, "preftheme"));
 	if (!module_exists("mod_mail")) {
 		sid->dat->user_maildefault=0;
 	}
@@ -136,7 +136,7 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	if (p_strcasestr(sid->dat->in_UserAgent, "LYNX")!=NULL) {
 		sid->dat->user_menustyle=0;
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 //	if (strlen(sid->dat->user_username)==0) {
 //		DEBUG_OUT(sid, "auth_renewcookie()");
 //		return -1;
@@ -210,7 +210,7 @@ int auth_setcookie(CONN *sid)
 	int result;
 	struct timeval ttime;
 	struct timezone tzone;
-	int sqr;
+	SQLRES sqr;
 	int domainid;
 	int i;
 
@@ -275,12 +275,12 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			if ((sqr=sql_queryf("SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did))<0) return -1;
-			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(sqr);i++) {
+			if (sql_queryf(&sqr, "SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did)<0) return -1;
+			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(&sqr);i++) {
 				if (i<0) continue;
-				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
+				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(&sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
 			}
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			sql_updatef("INSERT INTO gw_usersessions (obj_ctime, obj_mtime, obj_uid, obj_did, remoteip, token, userid, domainid) VALUES ('%s', '%s', %d, %d, '%s', '%s', %d, %d)", timebuffer, timebuffer, sid->dat->user_uid, sid->dat->user_did, sid->dat->in_RemoteAddr, sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");
@@ -311,12 +311,12 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			if ((sqr=sql_queryf("SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did))<0) return -1;
-			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(sqr);i++) {
+			if (sql_queryf(&sqr, "SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did)<0) return -1;
+			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(&sqr);i++) {
 				if (i<0) continue;
-				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
+				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(&sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
 			}
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			sql_updatef("INSERT INTO gw_usersessions (obj_ctime, obj_mtime, obj_uid, obj_did, remoteip, token, userid, domainid) VALUES ('%s', '%s', %d, %d, '%s', '%s', %d, %d)", timebuffer, timebuffer, sid->dat->user_uid, sid->dat->user_did, sid->dat->in_RemoteAddr, sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");

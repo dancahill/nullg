@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ void xmlrpc_contact_newstruct(CONN *sid)
 	return;
 }
 
-void xmlrpc_contact_addstruct(CONN *sid, int sqr, int tuple)
+void xmlrpc_contact_addstruct(CONN *sid, SQLRES *sqr, int tuple)
 {
 	if ((tuple<0)||(tuple>=sql_numtuples(sqr))) return;
 	prints(sid, "<value>\r\n<struct>\r\n");
@@ -113,7 +113,8 @@ void xmlrpc_contact_addstruct(CONN *sid, int sqr, int tuple)
 
 void xmlrpc_contactread(CONN *sid, int contactid)
 {
-	int sqr;
+	SQLRES sqr;
+	int rc;
 
 	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
@@ -127,31 +128,32 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 		prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
 		return;
 	} else if (auth_priv(sid, "contacts")&A_ADMIN) {
-		sqr=sql_queryf("SELECT * from gw_contacts where contactid = %d ORDER BY contactid ASC", contactid);
+		rc=sql_queryf(&sqr, "SELECT * from gw_contacts where contactid = %d ORDER BY contactid ASC", contactid);
 	} else {
-		sqr=sql_queryf("SELECT * from gw_contacts WHERE contactid = %d  AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", contactid, sid->dat->user_uid, sid->dat->user_gid);
+		rc=sql_queryf(&sqr, "SELECT * from gw_contacts WHERE contactid = %d  AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", contactid, sid->dat->user_uid, sid->dat->user_gid);
 	}
-	if (sqr<0) {
+	if (rc<0) {
 		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
-	if (sql_numtuples(sqr)!=1) {
+	if (sql_numtuples(&sqr)!=1) {
 		xmlrpc_fault(sid, -1, "No matching record found");
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	prints(sid, "<?xml version=\"1.0\"?>\r\n");
 	prints(sid, "<methodResponse>\r\n<params>\r\n<param>\r\n");
-	xmlrpc_contact_addstruct(sid, sqr, 0);
+	xmlrpc_contact_addstruct(sid, &sqr, 0);
 	prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
 void xmlrpc_contactlist(CONN *sid)
 {
 	int i;
-	int sqr;
+	int rc;
+	SQLRES sqr;
 
 	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
@@ -159,23 +161,23 @@ void xmlrpc_contactlist(CONN *sid)
 		return;
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		sqr=sql_queryf("SELECT * from gw_contacts ORDER BY contactid ASC");
+		rc=sql_queryf(&sqr, "SELECT * from gw_contacts ORDER BY contactid ASC");
 	} else {
-		sqr=sql_queryf("SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
+		rc=sql_queryf(&sqr, "SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
 	}
-	if (sqr<0) {
+	if (rc<0) {
 		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<?xml version=\"1.0\"?>\r\n");
 	prints(sid, "<methodResponse>\r\n<params>\r\n<param>\r\n");
 	prints(sid, "<value>\r\n<array>\r\n<data>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		xmlrpc_contact_addstruct(sid, sqr, i);
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		xmlrpc_contact_addstruct(sid, &sqr, i);
 	}
 	prints(sid, "</data>\r\n</array>\r\n</value>\r\n");
 	prints(sid, "</param>\r\n</params>\r\n</methodResponse>\r\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 

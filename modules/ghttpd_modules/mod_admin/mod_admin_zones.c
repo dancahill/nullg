@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -71,68 +71,69 @@ void adminzoneedit(CONN *sid)
 void adminzonelist(CONN *sid)
 {
 	int i, j;
+	int rc;
 	int lastdomain;
 	int thisdomain;
-	int sqr1;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr1=sql_queryf("SELECT zoneid, obj_did, zonename FROM gw_zones ORDER BY obj_did, zonename ASC"))<0) return;
+		if (sql_queryf(&sqr1, "SELECT zoneid, obj_did, zonename FROM gw_zones ORDER BY obj_did, zonename ASC")<0) return;
 	} else {
-		if ((sqr1=sql_queryf("SELECT zoneid, obj_did, zonename FROM gw_zones WHERE obj_did = %d ORDER BY obj_did, zonename ASC", sid->dat->user_did))<0) return;
+		if (sql_queryf(&sqr1, "SELECT zoneid, obj_did, zonename FROM gw_zones WHERE obj_did = %d ORDER BY obj_did, zonename ASC", sid->dat->user_did)<0) return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
+		rc=sql_queryf(&sqr2, "SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
 	} else {
-		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
+		rc=sql_queryf(&sqr2, "SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
 	}
-	if (sqr2<0) {
-		sql_freeresult(sqr1);
+	if (rc<0) {
+		sql_freeresult(&sqr1);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr1)<1) {
+	if (sql_numtuples(&sqr1)<1) {
 		prints(sid, "There are no zones<BR>\n");
 		prints(sid, "<A HREF=%s/admin/zoneeditnew>New Zone</A>\n", sid->dat->in_ScriptName);
 		prints(sid, "</CENTER>\n");
-		sql_freeresult(sqr2);
-		sql_freeresult(sqr1);
+		sql_freeresult(&sqr2);
+		sql_freeresult(&sqr1);
 		return;
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=200 STYLE='border-style:solid'>&nbsp;Zone Name&nbsp;</TH></TR>\n");
 	lastdomain=-1;
-	if (sql_numtuples(sqr2)<2) {
-		lastdomain=atoi(sql_getvalue(sqr1, 0, 1));
+	if (sql_numtuples(&sqr2)<2) {
+		lastdomain=atoi(sql_getvalue(&sqr1, 0, 1));
 	}
-	for (i=0;i<sql_numtuples(sqr1);i++) {
-		thisdomain=atoi(sql_getvalue(sqr1, i, 1));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		thisdomain=atoi(sql_getvalue(&sqr1, i, 1));
 		if (lastdomain!=thisdomain) {
 			lastdomain=thisdomain;
 			prints(sid, "<TR CLASS=\"FIELDNAME\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
-			for (j=0;j<sql_numtuples(sqr2);j++) {
-				if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
-					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
+			for (j=0;j<sql_numtuples(&sqr2);j++) {
+				if (atoi(sql_getvalue(&sqr2, j, 0))==atoi(sql_getvalue(&sqr1, i, 1))) {
+					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(&sqr2, j, 1)));
 					break;
 				}
 			}
-			if (j==sql_numtuples(sqr2)) {
+			if (j==sql_numtuples(&sqr2)) {
 				prints(sid, "&nbsp;</TD>");
 			}
 		}
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/zoneedit?zoneid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "<A HREF=%s/admin/zoneedit?zoneid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr1, i, 2)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/zoneedit?zoneid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/admin/zoneedit?zoneid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(&sqr1, i, 2)));
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<A HREF=%s/admin/zoneeditnew>New Zone</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr1);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -144,7 +145,7 @@ void adminzonesave(CONN *sid)
 	char *ptemp;
 	time_t t;
 	int zoneid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -169,20 +170,20 @@ void adminzonesave(CONN *sid)
 		prints(sid, "<CENTER>Zone %d deleted successfully</CENTER><BR>\n", zone.zoneid);
 		db_log_activity(sid, "zones", zone.zoneid, "delete", "%s - %s deleted zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	} else if (zone.zoneid==0) {
-		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND obj_did = %d", zone.zonename, zone.obj_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT zonename FROM gw_zones where zonename = '%s' AND obj_did = %d", zone.zonename, zone.obj_did)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Zone %s already exists</CENTER><BR>\n", zone.zonename);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(zone.zonename)<1) {
 			prints(sid, "<CENTER>Zone name is too short</CENTER><BR>\n");
 			return;
 		}
-		if ((sqr=sql_query("SELECT max(zoneid) FROM gw_zones"))<0) return;
-		zone.zoneid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		sql_freeresult(sqr);
+		if (sql_query(&sqr, "SELECT max(zoneid) FROM gw_zones")<0) return;
+		zone.zoneid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
 		if (zone.zoneid<1) zone.zoneid=1;
 		strcpy(query, "INSERT INTO gw_zones (zoneid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, zonename) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", zone.zoneid, curdate, curdate, zone.obj_uid, zone.obj_gid, zone.obj_did, zone.obj_gperm, zone.obj_operm);
@@ -195,13 +196,13 @@ void adminzonesave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND zoneid <> %d AND obj_did = %d", zone.zonename, zone.zoneid, zone.obj_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr, "SELECT zonename FROM gw_zones where zonename = '%s' AND zoneid <> %d AND obj_did = %d", zone.zonename, zone.zoneid, zone.obj_did)<0) return;
+		if (sql_numtuples(&sqr)>0) {
 			prints(sid, "<CENTER>Zone %s already exists</CENTER><BR>\n", zone.zonename);
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr);
 			return;
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (strlen(zone.zonename)<1) {
 			prints(sid, "<CENTER>Zone name is too short</CENTER><BR>\n");
 			return;

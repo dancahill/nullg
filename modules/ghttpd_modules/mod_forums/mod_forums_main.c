@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ typedef struct {
 	char subject[64];
 } BTREE;
 
-static int forum_treesort_r(CONN *sid, BTREE *btree, int sqr, int depth, int parentid, int foldercount)
+static int forum_treesort_r(CONN *sid, BTREE *btree, SQLRES *sqr, int depth, int parentid, int foldercount)
 {
 	int fid, pid;
 	int i;
@@ -70,28 +70,28 @@ void fmessagesave(CONN *sid);
 void htselect_forumgroup(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT forumgroupid, title FROM gw_forumgroups WHERE obj_did = %d ORDER BY title ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT forumgroupid, title FROM gw_forumgroups WHERE obj_did = %d ORDER BY title ASC", sid->dat->user_did)<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
 char *htview_forumgroup(CONN *sid, int selected)
 {
 	char *buffer=getbuffer(sid);
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT title FROM gw_forumgroups WHERE forumgroupid = %d AND obj_did = %d", selected, sid->dat->user_did))<0) return buffer;
-	if (sql_numtuples(sqr)==1) {
-		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 0)));
+	if (sql_queryf(&sqr, "SELECT title FROM gw_forumgroups WHERE forumgroupid = %d AND obj_did = %d", selected, sid->dat->user_did)<0) return buffer;
+	if (sql_numtuples(&sqr)==1) {
+		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(&sqr, 0, 0)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return buffer;
 }
 
@@ -150,27 +150,27 @@ void forumgroupedit(CONN *sid)
 void forumgrouplist(CONN *sid)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT forumgroupid, title FROM gw_forumgroups WHERE  obj_did = %d ORDER BY title ASC", sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT forumgroupid, title FROM gw_forumgroups WHERE  obj_did = %d ORDER BY title ASC", sid->dat->user_did)<0) return;
 	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr)>0) {
+	if (sql_numtuples(&sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'>&nbsp;Forum Group Name&nbsp;</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/forums/groupedit?forumgroupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<A HREF=%s/forums/groupedit?forumgroupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+		for (i=0;i<sql_numtuples(&sqr);i++) {
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/forums/groupedit?forumgroupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+			prints(sid, "<A HREF=%s/forums/groupedit?forumgroupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, i, 0)));
+			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 		prints(sid, "</TABLE>\n");
 	} else {
 		prints(sid, "<B>There are no forum groups</B><BR>\n");
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<A HREF=%s/forums/groupeditnew>New Forum Group</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
 	return;
@@ -221,28 +221,28 @@ void forumgroupsave(CONN *sid)
 void forumview(CONN *sid, int forumid)
 {
 	int forumgroupid;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT forumid, forumgroupid, postername, subject, message FROM gw_forums WHERE forumid = %d AND obj_did = %d", forumid, sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT forumid, forumgroupid, postername, subject, message FROM gw_forums WHERE forumid = %d AND obj_did = %d", forumid, sid->dat->user_did)<0) return;
 	prints(sid, "<CENTER>\n");
-	forumgroupid=atoi(sql_getvalue(sqr, 0, 1));
+	forumgroupid=atoi(sql_getvalue(&sqr, 0, 1));
 	if (forumgroupid) {
 		prints(sid, "<B><FONT STYLE='font-size: 14px'>");
 		prints(sid, "<A HREF=\"%s/forums/list?forumgroupid=%d\">%s</A></FONT></B><BR><BR>\n", sid->dat->in_ScriptName, forumgroupid, htview_forumgroup(sid, forumgroupid));
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;<B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 3)));
-	prints(sid, " by <B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 2)));
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;<B>%s</B>", str2html(sid, sql_getvalue(&sqr, 0, 3)));
+	prints(sid, " by <B>%s</B>", str2html(sid, sql_getvalue(&sqr, 0, 2)));
 	prints(sid, "</TH></TR>\n<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\n");
-	printline2(sid, 1, sql_getvalue(sqr, 0, 4));
+	printline2(sid, 1, sql_getvalue(&sqr, 0, 4));
 	prints(sid, "<FONT SIZE=2>\n<BR><BR>[<A HREF=%s/forums/msglist?forum=%d>Top</A>]&nbsp;[<A HREF=%s/forums/msgpost?forum=%d>Reply</A>]</FONT>\n", sid->dat->in_ScriptName, forumid, sid->dat->in_ScriptName, forumid);
 	prints(sid, "</TD></TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -256,25 +256,25 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	int next=0;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
-	if ((sqr=sql_queryf("SELECT messageid, referenceid FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)<1) return;
-	btree=calloc(sql_numtuples(sqr)+2, sizeof(_btree));
-	ptree=calloc(sql_numtuples(sqr)+2, sizeof(_ptree));
+	if (sql_queryf(&sqr, "SELECT messageid, referenceid FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr)<1) return;
+	btree=calloc(sql_numtuples(&sqr)+2, sizeof(_btree));
+	ptree=calloc(sql_numtuples(&sqr)+2, sizeof(_ptree));
 	j=0;
 	widthloop:
-	for (i=base;i<sql_numtuples(sqr);i++) {
+	for (i=base;i<sql_numtuples(&sqr);i++) {
 		if (btree[i].printed) continue;
-		if (atoi(sql_getvalue(sqr, i, 1))==btree[depth].lastref) {
+		if (atoi(sql_getvalue(&sqr, i, 1))==btree[depth].lastref) {
 			ptree[j].id=i;
 			ptree[j].depth=depth-1;
 			j++;
-			btree[depth+1].lastref=atoi(sql_getvalue(sqr, i, 0));
+			btree[depth+1].lastref=atoi(sql_getvalue(&sqr, i, 0));
 			btree[i].printed=1;
 			depth++;
 		}
@@ -286,15 +286,15 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	base++;
 	btree[depth].lastref=0;
 	depth=0;
-	if (base<sql_numtuples(sqr)) {
+	if (base<sql_numtuples(&sqr)) {
 		goto widthloop;
 	}
-	for (i=0; i<sql_numtuples(sqr); i++) {
+	for (i=0; i<sql_numtuples(&sqr); i++) {
 		if (ptree[i].id+1==messageid) {
 			if (i>0) {
 				previous=ptree[i-1].id+1;
 			}
-			if (i<sql_numtuples(sqr)-1) {
+			if (i<sql_numtuples(&sqr)-1) {
 				next=ptree[i+1].id+1;
 			}
 			break;
@@ -302,15 +302,15 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	}
 	free(ptree);
 	free(btree);
-	sql_freeresult(sqr);
-	if ((sqr=sql_queryf("SELECT messageid, postername, posttime, subject, message FROM gw_forumposts WHERE messageid = %d and forumid = %d AND obj_did = %d", messageid, forumid, sid->dat->user_did))<0) return;
+	sql_freeresult(&sqr);
+	if (sql_queryf(&sqr, "SELECT messageid, postername, posttime, subject, message FROM gw_forumposts WHERE messageid = %d and forumid = %d AND obj_did = %d", messageid, forumid, sid->dat->user_did)<0) return;
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>");
-	prints(sid, "&nbsp;<B>%s</B><BR>", str2html(sid, sql_getvalue(sqr, 0, 3)));
-	prints(sid, "&nbsp;By <B>%s</B> on ", str2html(sid, sql_getvalue(sqr, 0, 1)));
-	prints(sid, "%s ", time_sql2datetext(sid, sql_getvalue(sqr, 0, 2)));
-	prints(sid, "%s", time_sql2timetext(sid, sql_getvalue(sqr, 0, 2)));
+	prints(sid, "&nbsp;<B>%s</B><BR>", str2html(sid, sql_getvalue(&sqr, 0, 3)));
+	prints(sid, "&nbsp;By <B>%s</B> on ", str2html(sid, sql_getvalue(&sqr, 0, 1)));
+	prints(sid, "%s ", time_sql2datetext(sid, sql_getvalue(&sqr, 0, 2)));
+	prints(sid, "%s", time_sql2timetext(sid, sql_getvalue(&sqr, 0, 2)));
 	prints(sid, "</FONT></TH></TR>\n<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\n");
 	prints(sid, "<FONT SIZE=2>\n[<A HREF=%s/forums/msglist?forum=%d>Top</A>]", sid->dat->in_ScriptName, forumid);
 	if (previous>0) {
@@ -324,7 +324,7 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 		prints(sid, "&nbsp;[Next]\n");
 	}
 	prints(sid, "</FONT><BR><BR>\n");
-	printline2(sid, 1, sql_getvalue(sqr, 0, 4));
+	printline2(sid, 1, sql_getvalue(&sqr, 0, 4));
 	prints(sid, "<BR><BR><FONT SIZE=2>\n[<A HREF=%s/forums/msglist?forum=%d>Top</A>]", sid->dat->in_ScriptName, forumid);
 	if (previous>0) {
 		prints(sid, "&nbsp;[<A HREF=%s/forums/msgread?forum=%d&message=%d>Previous</A>]", sid->dat->in_ScriptName, forumid, previous);
@@ -339,7 +339,7 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	prints(sid, "</FONT>\n");
 	prints(sid, "</TD></TR></TABLE><P>\n");
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -410,7 +410,7 @@ void fmessagepost(CONN *sid)
 	char submit[10];
 	int forumid=0;
 	int referenceid=0;
-	int sqr;
+	SQLRES sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
@@ -459,15 +459,15 @@ void fmessagepost(CONN *sid)
 		}
 	}
 	if (!(auth_priv(sid, "forums")&A_INSERT)) return;
-	if ((sqr=sql_queryf("SELECT subject FROM gw_forumposts WHERE messageid = %d and forumid = %d AND obj_did = %d", referenceid, forumid, sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		if (strncasecmp(sql_getvalue(sqr, 0, 0), "RE:", 3)!=0) {
-			snprintf(subject, sizeof(subject)-1, "Re: %s", sql_getvalue(sqr, 0, 0));
+	if (sql_queryf(&sqr, "SELECT subject FROM gw_forumposts WHERE messageid = %d and forumid = %d AND obj_did = %d", referenceid, forumid, sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		if (strncasecmp(sql_getvalue(&sqr, 0, 0), "RE:", 3)!=0) {
+			snprintf(subject, sizeof(subject)-1, "Re: %s", sql_getvalue(&sqr, 0, 0));
 		} else {
-			snprintf(subject, sizeof(subject)-1, "%s", sql_getvalue(sqr, 0, 0));
+			snprintf(subject, sizeof(subject)-1, "%s", sql_getvalue(&sqr, 0, 0));
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/forums/msgpost NAME=msgpost>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=forum VALUE=%d>\n", forumid);
@@ -493,18 +493,18 @@ void forumlist(CONN *sid, int longlist)
 	int forumgroupid=0;
 	int i;
 	int selected=0;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FORUMGROUPID"))!=NULL) { selected=1; forumgroupid=atoi(ptemp); }
-	if ((sqr=sql_queryf("SELECT distinct forumgroupid FROM gw_forums WHERE obj_did = %d ORDER BY forumgroupid ASC", sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)>1) {
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			if (forumgroupid==atoi(sql_getvalue(sqr, i, 0))) {
+	if (sql_queryf(&sqr1, "SELECT distinct forumgroupid FROM gw_forums WHERE obj_did = %d ORDER BY forumgroupid ASC", sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr1)>1) {
+		for (i=0;i<sql_numtuples(&sqr1);i++) {
+			if (forumgroupid==atoi(sql_getvalue(&sqr1, i, 0))) {
 				if (selected==1) selected=2;
 				break;
 			}
@@ -513,45 +513,45 @@ void forumlist(CONN *sid, int longlist)
 			prints(sid, "<CENTER>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=250 STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Forum Groups</TH></TR>\n");
-			for (i=0;i<sql_numtuples(sqr);i++) {
+			for (i=0;i<sql_numtuples(&sqr1);i++) {
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
-				prints(sid, "<TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=window.location.href=\"%s/forums/list?forumgroupid=%d\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, "<A HREF=%s/forums/list?forumgroupid=%d", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, ">%s</A>&nbsp;</TD>", htview_forumgroup(sid, atoi(sql_getvalue(sqr, i, 0))));
-				if ((sqr2=sql_queryf("SELECT count(forumid) FROM gw_forums WHERE forumgroupid=%d AND obj_did = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_did))<0) {
-					sql_freeresult(sqr);
+				prints(sid, "<TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=window.location.href=\"%s/forums/list?forumgroupid=%d\">", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+				prints(sid, "<A HREF=%s/forums/list?forumgroupid=%d", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+				prints(sid, ">%s</A>&nbsp;</TD>", htview_forumgroup(sid, atoi(sql_getvalue(&sqr1, i, 0))));
+				if (sql_queryf(&sqr2, "SELECT count(forumid) FROM gw_forums WHERE forumgroupid=%d AND obj_did = %d", atoi(sql_getvalue(&sqr1, i, 0)), sid->dat->user_did)<0) {
+					sql_freeresult(&sqr1);
 					return;
 				}
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%d forum%s</TD>", atoi(sql_getvalue(sqr2, 0, 0)), atoi(sql_getvalue(sqr2, 0, 0))==1?"":"s");
-				sql_freeresult(sqr2);
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%d forum%s</TD>", atoi(sql_getvalue(&sqr2, 0, 0)), atoi(sql_getvalue(&sqr2, 0, 0))==1?"":"s");
+				sql_freeresult(&sqr2);
 				prints(sid, "</TR>\n");
 			}
 			prints(sid, "</TABLE>\n");
 			prints(sid, "</CENTER>\n");
-			sql_freeresult(sqr);
+			sql_freeresult(&sqr1);
 			return;
 		}
-	} else if (sql_numtuples(sqr)==1) {
-		forumgroupid=atoi(sql_getvalue(sqr, 0, 0));
+	} else if (sql_numtuples(&sqr1)==1) {
+		forumgroupid=atoi(sql_getvalue(&sqr1, 0, 0));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	prints(sid, "<CENTER>\n");
 	if ((selected==2)&&(forumgroupid)) {
 		prints(sid, "<B><FONT STYLE='font-size: 14px'>%s</FONT></B><BR><BR>\n", htview_forumgroup(sid, forumgroupid));
 	}
 	if (longlist==0) {
-		if ((sqr=sql_queryf("SELECT forumid, postername, posttime, subject FROM gw_forums WHERE forumgroupid = %d AND obj_did = %d ORDER BY forumid ASC", forumgroupid, sid->dat->user_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
+		if (sql_queryf(&sqr1, "SELECT forumid, postername, posttime, subject FROM gw_forums WHERE forumgroupid = %d AND obj_did = %d ORDER BY forumid ASC", forumgroupid, sid->dat->user_did)<0) return;
+		if (sql_numtuples(&sqr1)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH ALIGN=left STYLE='border-style:solid'>Forum List</TH></TR>\n");
-			for (i=0;i<sql_numtuples(sqr);i++) {
+			for (i=0;i<sql_numtuples(&sqr1);i++) {
 				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP STYLE='border-style:solid'>");
-				prints(sid, "[%d] <B><A HREF=%s/forums/msglist?forum=%d>", atoi(sql_getvalue(sqr, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-				prints(sid, "%s</A></B> by ", str2html(sid, sql_getvalue(sqr, i, 3)));
-				prints(sid, "<B>%s</B>", str2html(sid, sql_getvalue(sqr, i, 1)));
-				if ((sqr2=sql_queryf("SELECT count(messageid) FROM gw_forumposts where forumid = %d AND obj_did = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_did))<0) return;
-				prints(sid, " (%d posts)", atoi(sql_getvalue(sqr2, 0, 0)));
-				sql_freeresult(sqr2);
+				prints(sid, "[%d] <B><A HREF=%s/forums/msglist?forum=%d>", atoi(sql_getvalue(&sqr1, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr1, i, 0)));
+				prints(sid, "%s</A></B> by ", str2html(sid, sql_getvalue(&sqr1, i, 3)));
+				prints(sid, "<B>%s</B>", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+				if (sql_queryf(&sqr2, "SELECT count(messageid) FROM gw_forumposts where forumid = %d AND obj_did = %d", atoi(sql_getvalue(&sqr1, i, 0)), sid->dat->user_did)<0) return;
+				prints(sid, " (%d posts)", atoi(sql_getvalue(&sqr2, 0, 0)));
+				sql_freeresult(&sqr2);
 				prints(sid, "</TD></TR>\n");
 			}
 			prints(sid, "</TABLE>\n");
@@ -559,23 +559,23 @@ void forumlist(CONN *sid, int longlist)
 			prints(sid, "<B>There are no forums</B>\n");
 		}
 	} else {
-		if ((sqr=sql_queryf("SELECT forumid, postername, posttime, subject, message FROM gw_forums WHERE forumgroupid = %d AND obj_did = %d ORDER BY forumid DESC", forumgroupid, sid->dat->user_did))<0) return;
-		if (sql_numtuples(sqr)>0) {
-			for (i=0;i<sql_numtuples(sqr);i++) {
+		if (sql_queryf(&sqr1, "SELECT forumid, postername, posttime, subject, message FROM gw_forums WHERE forumgroupid = %d AND obj_did = %d ORDER BY forumid DESC", forumgroupid, sid->dat->user_did)<0) return;
+		if (sql_numtuples(&sqr1)>0) {
+			for (i=0;i<sql_numtuples(&sqr1);i++) {
 				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
 				prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>");
-				prints(sid, "&nbsp;%s by ", str2html(sid, sql_getvalue(sqr, i, 3)));
-				prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
-				if ((sqr2=sql_queryf("SELECT count(messageid) FROM gw_forumposts where forumid = %d AND obj_did = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_did))<0) return;
-				prints(sid, " (%d posts)", atoi(sql_getvalue(sqr2, 0, 0)));
-				sql_freeresult(sqr2);
+				prints(sid, "&nbsp;%s by ", str2html(sid, sql_getvalue(&sqr1, i, 3)));
+				prints(sid, "%s", str2html(sid, sql_getvalue(&sqr1, i, 1)));
+				if (sql_queryf(&sqr2, "SELECT count(messageid) FROM gw_forumposts where forumid = %d AND obj_did = %d", atoi(sql_getvalue(&sqr1, i, 0)), sid->dat->user_did)<0) return;
+				prints(sid, " (%d posts)", atoi(sql_getvalue(&sqr2, 0, 0)));
+				sql_freeresult(&sqr2);
 				prints(sid, "</FONT></TD></TR>\n");
 				prints(sid, "<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>");
 				memset(body, 0, sizeof(body));
-				snprintf(body, sizeof(body)-1, "%s", sql_getvalue(sqr, i, 4));
-//				printline2(sid, 1, sql_getvalue(sqr, 0, 4));
+				snprintf(body, sizeof(body)-1, "%s", sql_getvalue(&sqr1, i, 4));
+//				printline2(sid, 1, sql_getvalue(&sqr1, 0, 4));
 				printline2(sid, 1, body);
-				prints(sid, "\n<BR><BR>[<A HREF=%s/forums/msglist?forum=%s>Read More</A>]\n", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+				prints(sid, "\n<BR><BR>[<A HREF=%s/forums/msglist?forum=%s>Read More</A>]\n", sid->dat->in_ScriptName, sql_getvalue(&sqr1, i, 0));
 				prints(sid, "</TD></TR></TABLE><P>\n");
 			}
 		} else {
@@ -583,7 +583,7 @@ void forumlist(CONN *sid, int longlist)
 		}
 	}
 	prints(sid, "</CENTER>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr1);
 	return;
 }
 
@@ -597,7 +597,7 @@ void fmessagelist(CONN *sid)
 	int i;
 	int j;
 	int x;
-	int sqr;
+	SQLRES sqr;
 	short int bgtoggle=0;
 	int tzoffset;
 
@@ -609,15 +609,15 @@ void fmessagelist(CONN *sid)
 	tzoffset=time_tzoffset(sid, time(NULL));
 	forumid=atoi(ptemp);
 	forumview(sid, forumid);
-	if ((sqr=sql_queryf("SELECT messageid, referenceid, postername, posttime, subject FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did))<0) return;
-	msgcount=sql_numtuples(sqr);
+	if (sql_queryf(&sqr, "SELECT messageid, referenceid, postername, posttime, subject FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did)<0) return;
+	msgcount=sql_numtuples(&sqr);
 	if (msgcount<1) {
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		return;
 	}
 	xtree=calloc(msgcount, sizeof(BTREE));
-	forum_treesort_r(sid, xtree, sqr, 0, 0, 0);
-	sql_freeresult(sqr);
+	forum_treesort_r(sid, xtree, &sqr, 0, 0, 0);
+	sql_freeresult(&sqr);
 	for (i=0;i<msgcount;i++) {
 		for (j=i+1;j<msgcount;j++) {
 			if (xtree[j].depth<xtree[i].depth+1) break;
@@ -691,7 +691,7 @@ void forumsave(CONN *sid)
 	time_t t;
 	int forumid;
 	int forumgroupid=0;
-	int sqr;
+	SQLRES sqr;
 	char *pTemp;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
@@ -701,9 +701,9 @@ void forumsave(CONN *sid)
 	memset(message, 0, sizeof(message));
 	memset(subject, 0, sizeof(subject));
 	memset(query, 0, sizeof(query));
-	if ((sqr=sql_query("SELECT max(forumid) FROM gw_forums"))<0) return;
-	forumid=atoi(sql_getvalue(sqr, 0, 0))+1;
-	sql_freeresult(sqr);
+	if (sql_query(&sqr, "SELECT max(forumid) FROM gw_forums")<0) return;
+	forumid=atoi(sql_getvalue(&sqr, 0, 0))+1;
+	sql_freeresult(&sqr);
 	if (forumid<1) forumid=1;
 	if ((pTemp=getpostenv(sid, "FORUMGROUPID"))!=NULL) forumgroupid=atoi(pTemp);
 	if ((pTemp=getpostenv(sid, "SUBJECT"))!=NULL)   strncpy(subject, pTemp, sizeof(subject)-1);
@@ -735,7 +735,7 @@ void fmessagesave(CONN *sid)
 	int forumid=0;
 	int messageid=0;
 	int referenceid=0;
-	int sqr;
+	SQLRES sqr;
 	char *pTemp;
 
 	if (!(auth_priv(sid, "forums")&A_INSERT)) {
@@ -756,10 +756,10 @@ void fmessagesave(CONN *sid)
 		str2sql(message, sizeof(message)-1, query);
 	}
 	memset(query, 0, sizeof(query));
-	if ((sqr=sql_queryf("SELECT max(messageid) FROM gw_forumposts where forumid = %d", forumid))<0) return;
-	messageid=atoi(sql_getvalue(sqr, 0, 0))+1;
+	if (sql_queryf(&sqr, "SELECT max(messageid) FROM gw_forumposts where forumid = %d", forumid)<0) return;
+	messageid=atoi(sql_getvalue(&sqr, 0, 0))+1;
 	if (messageid<1) messageid=1;
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	t=time(NULL);
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	snprintf(query, sizeof(query)-1, "INSERT INTO gw_forumposts (messageid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,forumid,referenceid,postername,posttime,subject,message) values (%d, '%s', '%s', 0, 0, %d, 0, 0, %d, %d, '%s', '%s', '%s', '", messageid, posttime, posttime, sid->dat->user_did, forumid, referenceid, sid->dat->user_username, posttime, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, subject));

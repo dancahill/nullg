@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "mod_contacts_lang.h"
 
 /* mod_contacts_db.c */
-int dblist_contacts(CONN *sid, char *searchfield, char *searchstring);
+int dblist_contacts(CONN *sid, SQLRES *sqr2, char *searchfield, char *searchstring);
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact);
 int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact);
 /* mod_contacts_lang.c */

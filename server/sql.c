@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ static int mysqlUpdate(char *sqlquery)
 	return 0;
 }
 
-static int mysqlQuery(int sqr, char *sqlquery)
+static int mysqlQuery(SQLRES *sqr, char *sqlquery)
 {
 	MYSQL_RES *myres;
 	MYSQL_FIELD *MYfield;
@@ -127,39 +127,39 @@ static int mysqlQuery(int sqr, char *sqlquery)
 		log_error("sql", __FILE__, __LINE__, 1, "MYSQL error: %s", libmysql.error(&mysql));
 		return -1;
 	}
-	sqlreply[sqr].NumFields=(int)libmysql.num_fields(myres);
+	sqr->NumFields=(int)libmysql.num_fields(myres);
 	/* retreive the field names */
-	column=sqlreply[sqr].fields;
-	for (field=0;field<sqlreply[sqr].NumFields;field++) {
+	column=sqr->fields;
+	for (field=0;field<sqr->NumFields;field++) {
 		MYfield=libmysql.fetch_field_direct(myres, field);
 		snprintf(column, MAX_FIELD_SIZE, "%s", MYfield->name);
 		column+=strlen(column)+1;
 	}
 	/* build our cursor and track the number of tuples */
 	rowsalloc=50;
-	sqlreply[sqr].cursor=(char **)calloc(rowsalloc, sizeof(char *));
+	sqr->cursor=(char **)calloc(rowsalloc, sizeof(char *));
 	/* now to populate the cursor */
 	for (tuple=0;;tuple++) {
 		if ((MYrow=libmysql.fetch_row(myres))==NULL) break;
-		sqlreply[sqr].cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
-		if (sqlreply[sqr].cursor[tuple]==NULL) {
+		sqr->cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
+		if (sqr->cursor[tuple]==NULL) {
 			log_error("sql", __FILE__, __LINE__, 1, "malloc() error creating SQL cursor tuple.");
 			exit(-1);
 		}
-		column=sqlreply[sqr].cursor[tuple];
-		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+		column=sqr->cursor[tuple];
+		for (field=0;field<sqr->NumFields;field++) {
 			snprintf(column, MAX_FIELD_SIZE, "%s", MYrow[field]);
 			column+=strlen(column)+1;
 		}
 		if (tuple+2>rowsalloc) {
 			rowsalloc+=50;
-			sqlreply[sqr].cursor=(char **)realloc(sqlreply[sqr].cursor, rowsalloc*sizeof(char *));
+			sqr->cursor=(char **)realloc(sqr->cursor, rowsalloc*sizeof(char *));
 		}
 	}
-	sqlreply[sqr].NumTuples=tuple;
+	sqr->NumTuples=tuple;
 	libmysql.free_result(myres);
 	myres=NULL;
-	return sqr;
+	return 0;
 }
 #endif /* HAVE_MYSQL */
 
@@ -248,7 +248,7 @@ static int odbcUpdate(char *sqlquery)
 	return 0;
 }
 
-static int odbcQuery(int sqr, char *sqlquery)
+static int odbcQuery(SQLRES *sqr, char *sqlquery)
 {
 	SQLSMALLINT pccol;
 	SDWORD collen;
@@ -279,10 +279,10 @@ static int odbcQuery(int sqr, char *sqlquery)
 		log_error("sql", __FILE__, __LINE__, 1, "ODBC Query - SQLNumResultCols %s", buf);
 		return -1;
 	}
-	sqlreply[sqr].NumFields=pccol;
+	sqr->NumFields=pccol;
 	/* retreive the field names */
-	column=sqlreply[sqr].fields;
-	for (field=0;field<sqlreply[sqr].NumFields;field++) {
+	column=sqr->fields;
+	for (field=0;field<sqr->NumFields;field++) {
 		rc=SQLDescribeCol(hStmt, (SQLSMALLINT)(field+1), column, MAX_FIELD_SIZE, NULL, NULL, NULL, NULL, NULL);
 		if ((rc!=SQL_SUCCESS)&&(rc!=SQL_SUCCESS_WITH_INFO)) {
 			SQLError(hEnv, hDBC, hStmt, sqlstate, NULL, buf, sizeof(buf), NULL);
@@ -293,18 +293,18 @@ static int odbcQuery(int sqr, char *sqlquery)
 	}
 	/* build our cursor and track the number of tuples */
 	rowsalloc=50;
-	sqlreply[sqr].cursor=(char **)calloc(rowsalloc, sizeof(char *));
+	sqr->cursor=(char **)calloc(rowsalloc, sizeof(char *));
 	/* now to populate the cursor */
 	for (tuple=0;;tuple++) {
 		rc=SQLFetch(hStmt);
 		if ((rc!=SQL_SUCCESS)&&(rc!=SQL_SUCCESS_WITH_INFO)) break;
-		sqlreply[sqr].cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
-		if (sqlreply[sqr].cursor[tuple]==NULL) {
+		sqr->cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
+		if (sqr->cursor[tuple]==NULL) {
 			log_error("sql", __FILE__, __LINE__, 1, "malloc() error creating SQL cursor tuple.");
 			exit(-1);
 		}
-		column=sqlreply[sqr].cursor[tuple];
-		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+		column=sqr->cursor[tuple];
+		for (field=0;field<sqr->NumFields;field++) {
 			rc=SQLGetData(hStmt, (SQLUSMALLINT)(field+1), SQL_C_CHAR, column, MAX_FIELD_SIZE, &collen);
 			if ((rc!=SQL_SUCCESS)&&(rc!=SQL_SUCCESS_WITH_INFO)) {
 				SQLError(hEnv, hDBC, hStmt, sqlstate, NULL, buf, sizeof(buf), NULL);
@@ -315,13 +315,13 @@ static int odbcQuery(int sqr, char *sqlquery)
 		}
 		if (tuple+2>rowsalloc) {
 			rowsalloc+=50;
-			sqlreply[sqr].cursor=(char **)realloc(sqlreply[sqr].cursor, rowsalloc*sizeof(char *));
+			sqr->cursor=(char **)realloc(sqr->cursor, rowsalloc*sizeof(char *));
 		}
 	}
-	sqlreply[sqr].NumTuples=tuple;
+	sqr->NumTuples=tuple;
 	SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 	hStmt=NULL;
-	return sqr;
+	return 0;
 }
 #endif /* HAVE_ODBC */
 
@@ -407,7 +407,7 @@ static int pgsqlUpdate(char *sqlquery)
 	return 0;
 }
 
-static int pgsqlQuery(int sqr, char *sqlquery)
+static int pgsqlQuery(SQLRES *sqr, char *sqlquery)
 {
 	char query[8192];
 	char *column;
@@ -436,27 +436,27 @@ static int pgsqlQuery(int sqr, char *sqlquery)
 		pgsqlDisconnect();
 		return -1;
 	}
-	sqlreply[sqr].NumFields=libpgsql.nfields(pgres);
-	sqlreply[sqr].NumTuples=libpgsql.ntuples(pgres);
+	sqr->NumFields=libpgsql.nfields(pgres);
+	sqr->NumTuples=libpgsql.ntuples(pgres);
 	/* k..  now we know how many tuples and fields, we can build our cursor */
-	sqlreply[sqr].cursor=(char **)calloc(sqlreply[sqr].NumTuples, sizeof(char *));
-	for (tuple=0;tuple<sqlreply[sqr].NumTuples;tuple++) {
-		sqlreply[sqr].cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
-		if (sqlreply[sqr].cursor[tuple]==NULL) {
+	sqr->cursor=(char **)calloc(sqr->NumTuples, sizeof(char *));
+	for (tuple=0;tuple<sqr->NumTuples;tuple++) {
+		sqr->cursor[tuple]=calloc(MAX_TUPLE_SIZE, sizeof(char));
+		if (sqr->cursor[tuple]==NULL) {
 			log_error("sql", __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor tuple.");
 			exit(-1);
 		}
 	}
 	/* retreive the field names */
-	column=sqlreply[sqr].fields;
-	for (field=0;field<sqlreply[sqr].NumFields;field++) {
+	column=sqr->fields;
+	for (field=0;field<sqr->NumFields;field++) {
 		snprintf(column, MAX_FIELD_SIZE, "%s", libpgsql.fname(pgres, field));
 		column+=strlen(column)+1;
 	}
 	/* now to populate the cursor */
-	for (tuple=0;tuple<sqlreply[sqr].NumTuples;tuple++) {
-		column=sqlreply[sqr].cursor[tuple];
-		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+	for (tuple=0;tuple<sqr->NumTuples;tuple++) {
+		column=sqr->cursor[tuple];
+		for (field=0;field<sqr->NumFields;field++) {
 			snprintf(column, MAX_FIELD_SIZE, "%s", libpgsql.getvalue(pgres, tuple, field));
 			column+=strlen(column)+1;
 		}
@@ -469,7 +469,7 @@ static int pgsqlQuery(int sqr, char *sqlquery)
 		libpgsql.clear(pgres);
 		pgres=NULL;
 	}
-	return sqr;
+	return 0;
 }
 #endif /* HAVE_PGSQL */
 
@@ -564,57 +564,57 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 	char *column;
 	static unsigned int rowsalloc;
 	unsigned int field;
-	int sqr=(int)vpsqr;
+	SQLRES *sqr=vpsqr;
 
-	if (sqlreply[sqr].cursor==NULL) {
-		sqlreply[sqr].NumFields=argc;
+	if (sqr->cursor==NULL) {
+		sqr->NumFields=argc;
 		/* retreive the field names */
-		column=sqlreply[sqr].fields;
-		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+		column=sqr->fields;
+		for (field=0;field<sqr->NumFields;field++) {
 			snprintf(column, MAX_FIELD_SIZE, "%s", azColName[field]);
 			column+=strlen(column)+1;
 		}
 		/* build our cursor and track the number of tuples */
-		sqlreply[sqr].NumTuples=0;
+		sqr->NumTuples=0;
 		rowsalloc=50;
-		if ((sqlreply[sqr].cursor=(char **)calloc(rowsalloc, sizeof(char *)))==NULL) {
+		if ((sqr->cursor=(char **)calloc(rowsalloc, sizeof(char *)))==NULL) {
 			log_error("sql", __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor.");
 			exit(-1);
 		}
 	}
 	/* now to populate the cursor */
 	if (argv!=NULL) {
-		if ((sqlreply[sqr].cursor[sqlreply[sqr].NumTuples]=calloc(MAX_TUPLE_SIZE, sizeof(char)))==NULL) {
+		if ((sqr->cursor[sqr->NumTuples]=calloc(MAX_TUPLE_SIZE, sizeof(char)))==NULL) {
 			log_error("sql", __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor tuple.");
 			exit(-1);
 		}
-		column=sqlreply[sqr].cursor[sqlreply[sqr].NumTuples];
-		for (field=0;field<sqlreply[sqr].NumFields;field++) {
+		column=sqr->cursor[sqr->NumTuples];
+		for (field=0;field<sqr->NumFields;field++) {
 			snprintf(column, MAX_FIELD_SIZE, "%s", argv[field]?argv[field]:"NULL");
 			column+=strlen(column)+1;
 		}
-		if (sqlreply[sqr].NumTuples+2>rowsalloc) {
+		if (sqr->NumTuples+2>rowsalloc) {
 			rowsalloc+=50;
-			sqlreply[sqr].cursor=(char **)realloc(sqlreply[sqr].cursor, rowsalloc*sizeof(char *));
+			sqr->cursor=(char **)realloc(sqr->cursor, rowsalloc*sizeof(char *));
 		}
-		sqlreply[sqr].NumTuples++;
+		sqr->NumTuples++;
 	}
 	return 0;
 }
 
-static int sqliteQuery(int sqr, char *sqlquery)
+static int sqliteQuery(SQLRES *sqr, char *sqlquery)
 {
 	char *zErrMsg=0;
 	int rc;
 	short int retries=10;
 
-	sqlreply[sqr].NumFields=0;
-	sqlreply[sqr].NumTuples=0;
+	sqr->NumFields=0;
+	sqr->NumTuples=0;
 retry:
 	rc=libsqlite.exec(db, sqlquery, sqliteCallback, (void *)sqr, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
-		return sqr;
+		return 0;
 	case SQLITE_BUSY:
 	case SQLITE_CORRUPT:
 		if (retries>0) { retries--; msleep(5); goto retry; }
@@ -676,24 +676,24 @@ void sql_unsafedisconnect()
 	return;
 }
 
-void sql_freeresult(int sqr)
+void sql_freeresult(SQLRES *sqr)
 {
 	unsigned int tuple;
 
 	pthread_mutex_lock(&Lock.SQL);
-	memset(sqlreply[sqr].fields, 0, sizeof(sqlreply[sqr].fields));
-	if (sqlreply[sqr].cursor!=NULL) {
-		for (tuple=0;tuple<sqlreply[sqr].NumTuples;tuple++) {
-			if (sqlreply[sqr].cursor[tuple]!=NULL) {
-				free(sqlreply[sqr].cursor[tuple]);
-				sqlreply[sqr].cursor[tuple]=NULL;
+	memset(sqr->fields, 0, sizeof(sqr->fields));
+	if (sqr->cursor!=NULL) {
+		for (tuple=0;tuple<sqr->NumTuples;tuple++) {
+			if (sqr->cursor[tuple]!=NULL) {
+				free(sqr->cursor[tuple]);
+				sqr->cursor[tuple]=NULL;
 			}
 		}
-		free(sqlreply[sqr].cursor);
-		sqlreply[sqr].cursor=NULL;
+		free(sqr->cursor);
+		sqr->cursor=NULL;
 	}
-	sqlreply[sqr].NumFields=0;
-	sqlreply[sqr].NumTuples=0;
+	sqr->NumFields=0;
+	sqr->NumTuples=0;
 	proc.stats.sql_handlecount--;
 	log_error("sql", __FILE__, __LINE__, 4, "SQL query [%d] freed", sqr);
 	pthread_mutex_unlock(&Lock.SQL);
@@ -749,28 +749,20 @@ int sql_updatef(char *format, ...)
 	return sql_update(sqlquery);
 }
 
-int sql_query(char *query)
+int sql_query(SQLRES *sqr, char *query)
 {
-	int i;
 	int rc=-1;
 
 	pthread_mutex_lock(&Lock.SQL);
-	for (i=0;;i++) {
-		if (i>=proc.config.sql_maxconn) {
-			sleep(1);
-			i=0;
-			continue;
-		}
-		if (sqlreply[i].cursor==NULL) break;
-	}
-	log_error("sql", __FILE__, __LINE__, 3, "SQL query [%d]: %s", i, query);
+	memset((char *)sqr, 0, sizeof(SQLRES));
+	log_error("sql", __FILE__, __LINE__, 3, "SQL query: %s", query);
 	proc.stats.sql_queries++;
 	if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect()<0) {
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		if ((rc=mysqlQuery(i, query))<0) {
+		if ((rc=mysqlQuery(sqr, query))<0) {
 			mysqlDisconnect();
 			mysqlConnect();
 		}
@@ -780,7 +772,7 @@ int sql_query(char *query)
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		if ((rc=odbcQuery(i, query))<0) {
+		if ((rc=odbcQuery(sqr, query))<0) {
 			odbcDisconnect();
 			odbcConnect();
 		}
@@ -790,7 +782,7 @@ int sql_query(char *query)
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		if ((rc=pgsqlQuery(i, query))<0) {
+		if ((rc=pgsqlQuery(sqr, query))<0) {
 			pgsqlDisconnect();
 			pgsqlConnect();
 		}
@@ -799,7 +791,7 @@ int sql_query(char *query)
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		if ((rc=sqliteQuery(i, query))<0) {
+		if ((rc=sqliteQuery(sqr, query))<0) {
 			sqliteDisconnect();
 			sqliteConnect();
 		}
@@ -809,7 +801,7 @@ int sql_query(char *query)
 	return rc;
 }
 
-int sql_queryf(char *format, ...)
+int sql_queryf(SQLRES *sqr, char *format, ...)
 {
 	unsigned char sqlquery[8192];
 	va_list ap;
@@ -818,45 +810,45 @@ int sql_queryf(char *format, ...)
 	va_start(ap, format);
 	vsnprintf(sqlquery, sizeof(sqlquery)-1, format, ap);
 	va_end(ap);
-	return sql_query(sqlquery);
+	return sql_query(sqr, sqlquery);
 }
 
-char *sql_getname(int sqr, int fieldnumber)
+char *sql_getname(SQLRES *sqr, int fieldnumber)
 {
 	char *column=NULL;
 	int i;
 
-	if ((fieldnumber<0)||(fieldnumber+1>(int)sqlreply[sqr].NumFields)) return NULL;
-	column=sqlreply[sqr].fields;
+	if ((fieldnumber<0)||(fieldnumber+1>(int)sqr->NumFields)) return NULL;
+	column=sqr->fields;
 	for (i=0;i<fieldnumber;i++) {
 		column+=strlen(column)+1;
 	}
 	return column;
 }
 
-char *sql_getvalue(int sqr, int tuple, int field)
+char *sql_getvalue(SQLRES *sqr, int tuple, int field)
 {
 	char *column=NULL;
 	int i;
 
-	if ((tuple<0)||(tuple+1>(int)sqlreply[sqr].NumTuples)) return NULL;
-	if ((field<0)||(field+1>(int)sqlreply[sqr].NumFields)) return NULL;
-	column=sqlreply[sqr].cursor[tuple];
+	if ((tuple<0)||(tuple+1>(int)sqr->NumTuples)) return NULL;
+	if ((field<0)||(field+1>(int)sqr->NumFields)) return NULL;
+	column=sqr->cursor[tuple];
 	for (i=0;i<field;i++) {
 		column+=strlen(column)+1;
 	}
 	return column;
 }
 
-char *sql_getvaluebyname(int sqr, int tuple, char *fieldname)
+char *sql_getvaluebyname(SQLRES *sqr, int tuple, char *fieldname)
 {
 	char *column=NULL;
 	unsigned int i;
 
-	if ((tuple<0)||(tuple+1>(int)sqlreply[sqr].NumTuples)) return NULL;
-/*	if ((field<0)||(field+1>(int)sqlreply[sqr].NumFields)) return NULL; */
-	column=sqlreply[sqr].cursor[tuple];
-	for (i=0;i<sqlreply[sqr].NumFields;i++) {
+	if ((tuple<0)||(tuple+1>(int)sqr->NumTuples)) return NULL;
+/*	if ((field<0)||(field+1>(int)sqr->NumFields)) return NULL; */
+	column=sqr->cursor[tuple];
+	for (i=0;i<sqr->NumFields;i++) {
 		if (strcasecmp(fieldname, sql_getname(sqr, i))==0) {
 			return column;
 		} else {
@@ -866,12 +858,12 @@ char *sql_getvaluebyname(int sqr, int tuple, char *fieldname)
 	return NULL;
 }
 
-int sql_numfields(int sqr)
+int sql_numfields(SQLRES *sqr)
 {
-	return sqlreply[sqr].NumFields;
+	return sqr->NumFields;
 }
 
-int sql_numtuples(int sqr)
+int sql_numtuples(SQLRES *sqr)
 {
-	return sqlreply[sqr].NumTuples;
+	return sqr->NumTuples;
 }

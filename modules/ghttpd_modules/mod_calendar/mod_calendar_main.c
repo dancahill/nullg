@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,15 +22,15 @@
 void htselect_eventclosingstatus(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT eventclosingid, closingname FROM gw_eventclosings ORDER BY closingname ASC"))<0) return;
+	if (sql_queryf(&sqr, "SELECT eventclosingid, closingname FROM gw_eventclosings ORDER BY closingname ASC")<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -40,8 +40,8 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	char *ptemp1, *ptemp2;
 	int i;
 	int j;
-	int sqr;
-	int sqr2;
+	SQLRES sqr1;
+	SQLRES sqr2;
 	int status;
 
 	if ((ptemp1=getgetenv(sid, "STATUS"))!=NULL) {
@@ -65,10 +65,10 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "	location=document.eventfilter.status.options[document.eventfilter.status.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	if ((sqr=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
-	if ((sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did))<0) return;
-	for (i=0;i<sql_numtuples(sqr2);i++) {
-		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr2, i, 0)));
+	if (sql_queryf(&sqr1, "SELECT userid, groupid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did)<0) return;
+	if (sql_queryf(&sqr2, "SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did)<0) return;
+	for (i=0;i<sql_numtuples(&sqr2);i++) {
+		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr2, i, 0)));
 		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
 			prints(sid, "&day=%d", atoi(ptemp1));
 		} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
@@ -76,10 +76,10 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 			prints(sid, "&year=%d", atoi(ptemp2));
 		}
 		prints(sid, "&status=%d", status);
-		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(sqr2, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
-		for (j=0;j<sql_numtuples(sqr);j++) {
-			if (atoi(sql_getvalue(sqr, j, 1))!=atoi(sql_getvalue(sqr2, i, 0))) continue;
-			prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, j, 0)));
+		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(&sqr2, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(&sqr2, i, 1)));
+		for (j=0;j<sql_numtuples(&sqr1);j++) {
+			if (atoi(sql_getvalue(&sqr1, j, 1))!=atoi(sql_getvalue(&sqr2, i, 0))) continue;
+			prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr1, j, 0)));
 			if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
 				prints(sid, "&day=%d", atoi(ptemp1));
 			} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
@@ -87,15 +87,15 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 				prints(sid, "&year=%d", atoi(ptemp2));
 			}
 			prints(sid, "&status=%d", status);
-			prints(sid, "'%s>&nbsp;&nbsp;%s\");\n", atoi(sql_getvalue(sqr, j, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, j, 2)));
+			prints(sid, "'%s>&nbsp;&nbsp;%s\");\n", atoi(sql_getvalue(&sqr1, j, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(&sqr1, j, 2)));
 		}
 	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		for (j=0;j<sql_numtuples(sqr2);j++) {
-			if (atoi(sql_getvalue(sqr, i, 1))==atoi(sql_getvalue(sqr2, j, 0))) break;
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		for (j=0;j<sql_numtuples(&sqr2);j++) {
+			if (atoi(sql_getvalue(&sqr1, i, 1))==atoi(sql_getvalue(&sqr2, j, 0))) break;
 		}
-		if (j<sql_numtuples(sqr2)) continue;
-		prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
+		if (j<sql_numtuples(&sqr2)) continue;
+		prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(&sqr1, i, 0)));
 		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
 			prints(sid, "&day=%d", atoi(ptemp1));
 		} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
@@ -103,7 +103,7 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 			prints(sid, "&year=%d", atoi(ptemp2));
 		}
 		prints(sid, "&status=%d", status);
-		prints(sid, "'%s>*%s\");\n", atoi(sql_getvalue(sqr, i, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 2)));
+		prints(sid, "'%s>*%s\");\n", atoi(sql_getvalue(&sqr1, i, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(&sqr1, i, 2)));
 	}
 	prints(sid, "document.write('</SELECT>');\r\n");
 	prints(sid, "document.write('<SELECT NAME=status onChange=\"go2()\">');\r\n");
@@ -127,15 +127,15 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "</SCRIPT>\r\n");
 	prints(sid, "<NOSCRIPT>\r\n");
 	prints(sid, "<SELECT NAME=userid>\r\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 2)));
+	for (i=0;i<sql_numtuples(&sqr1);i++) {
+		j=atoi(sql_getvalue(&sqr1, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==userid?" SELECTED":"", str2html(sid, sql_getvalue(&sqr1, i, 2)));
 	}
 	prints(sid, "</SELECT>");
 //	prints(sid, "<SELECT NAME=groupid>\r\n");
-//	for (i=0;i<sql_numtuples(sqr2);i++) {
-//		j=atoi(sql_getvalue(sqr2, i, 0));
-//		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
+//	for (i=0;i<sql_numtuples(&sqr2);i++) {
+//		j=atoi(sql_getvalue(&sqr2, i, 0));
+//		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(&sqr2, i, 1)));
 //	}
 //	prints(sid, "</SELECT>\r\n");
 	prints(sid, "<SELECT NAME=status>\r\n");
@@ -146,23 +146,23 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr2);
+	sql_freeresult(&sqr1);
 	return;
 }
 
 void htselect_eventtype(CONN *sid, int selected)
 {
 	int i, j;
-	int sqr;
+	SQLRES sqr;
 
-	if ((sqr=sql_queryf("SELECT eventtypeid, eventtypename FROM gw_eventtypes ORDER BY eventtypename ASC"))<0) return;
+	if (sql_queryf(&sqr, "SELECT eventtypeid, eventtypename FROM gw_eventtypes ORDER BY eventtypename ASC")<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		j=atoi(sql_getvalue(&sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(&sqr, i, 1)));
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	return;
 }
 
@@ -172,7 +172,7 @@ void calendarreminders(CONN *sid)
 	int a, b;
 	int i;
 	int reminders=0;
-	int sqr;
+	SQLRES sqr;
 	time_t eventdate;
 	time_t t;
 
@@ -182,11 +182,11 @@ void calendarreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
+	if (sql_queryf(&sqr, "SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did)<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", lang.event_title);
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
-		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		a=time_sql2unix(sql_getvalue(&sqr, i, 2))-time(NULL);
+		b=a-atoi(sql_getvalue(&sqr, i, 3))*60;
 		if (b<0) {
 			reminders++;
 			if (reminders==1) {
@@ -195,16 +195,16 @@ void calendarreminders(CONN *sid)
 				prints(sid, "<TR><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", lang.event_name);
 			}
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), lang.event_reset);
-			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
-			eventdate=time_sql2unix(sql_getvalue(sqr, i, 2));
+			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0), lang.event_reset);
+			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(&sqr, i, 0), str2html(sid, sql_getvalue(&sqr, i, 1)));
+			eventdate=time_sql2unix(sql_getvalue(&sqr, i, 2));
 			eventdate+=time_tzoffset(sid, eventdate);
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, eventdate));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2timetext(sid, eventdate));
 			prints(sid, "</TR>\n");
 		}
 	}
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	if (reminders==0) {
 		prints(sid, "<BR>%s</CENTER>\n", lang.event_none);
 //		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
@@ -220,7 +220,7 @@ void reminderstatus(CONN *sid)
 	char *ptemp;
 	int eventid;
 	int reminder;
-	int sqr;
+	SQLRES sqr;
 	time_t eventstart;
 	time_t now;
 
@@ -229,16 +229,16 @@ void reminderstatus(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
 	eventid=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d AND obj_did = %d", eventid, sid->dat->user_uid, sid->dat->user_did))<0) return;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
+	if (sql_queryf(&sqr, "SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d AND obj_did = %d", eventid, sid->dat->user_uid, sid->dat->user_did)<0) return;
+	if (sql_numtuples(&sqr)!=1) {
+		sql_freeresult(&sqr);
 		return;
 	}
-	reminder=atoi(sql_getvalue(sqr, 0, 0));
-	eventstart=time_sql2unix(sql_getvalue(sqr, 0, 1));
+	reminder=atoi(sql_getvalue(&sqr, 0, 0));
+	eventstart=time_sql2unix(sql_getvalue(&sqr, 0, 1));
 	now=time(NULL);
 	time_unix2sql(timebuffer, sizeof(timebuffer)-1, now);
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	eventstart=(eventstart-now)/60;
 	if (eventstart<0) {
 		eventstart=0;
@@ -571,7 +571,7 @@ void calendarview(CONN *sid)
 	char *ptemp;
 	int eventid;
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
@@ -597,35 +597,35 @@ void calendarview(CONN *sid)
 	}
 	prints(sid, "</TH></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users"))<0) return;
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedby) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	if (sql_queryf(&sqr, "SELECT userid, username FROM gw_users")<0) return;
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==event.assignedby) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD>\n");
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Date        </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100 STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2datetext(sid, event.eventstart));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		if (atoi(sql_getvalue(sqr, i, 0))==event.assignedto) {
-			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
+	for (i=0;i<sql_numtuples(&sqr);i++) {
+		if (atoi(sql_getvalue(&sqr, i, 0))==event.assignedto) {
+			prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD>\n");
-	sql_freeresult(sqr);
+	sql_freeresult(&sqr);
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Start Time  </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", time_unix2timetext(sid, event.eventstart));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Event Type  </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", htview_eventtype(sid, event.eventtype));
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Finish Time </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", time_unix2timetext(sid, event.eventfinish));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
-	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", event.contactid))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
-		prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
-		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) prints(sid, ", ");
-		prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 2)));
+	if (sql_queryf(&sqr, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", event.contactid)<0) return;
+	if (sql_numtuples(&sqr)>0) {
+		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, 0, 0)));
+		prints(sid, "%s", str2html(sid, sql_getvalue(&sqr, 0, 1)));
+		if (strlen(sql_getvalue(&sqr, 0, 1))&&strlen(sql_getvalue(&sqr, 0, 2))) prints(sid, ", ");
+		prints(sid, "%s</A>", str2html(sid, sql_getvalue(&sqr, 0, 2)));
 	}
-	sql_freeresult(sqr);
-	prints(sid, "&nbsp;</TD>\n", sql_getvalue(sqr, 0, 2));
+	sql_freeresult(&sqr);
+	prints(sid, "&nbsp;</TD>\n");
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Availability</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", event.busy>0?"Busy":"Available");
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Priority    </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
 	if (event.priority==0) prints(sid, "Lowest");
@@ -668,7 +668,7 @@ void calendarsave(CONN *sid)
 	int duration;
 	int eventid;
 	int rc;
-	int sqr;
+	SQLRES sqr;
 	int zoneid;
 	u_avail uavail;
 
@@ -739,11 +739,11 @@ void calendarsave(CONN *sid)
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Autoassign")==0)) {
 		if ((ptemp=getpostenv(sid, "AUTOGROUP"))==NULL) return;
 		zoneid=0;
-		if ((sqr=sql_queryf("SELECT geozone FROM gw_contacts where contactid = %d", event.contactid))<0) return;
-		if (sql_numtuples(sqr)==1) {
-			zoneid=atoi(sql_getvalue(sqr, 0, 0));
+		if (sql_queryf(&sqr, "SELECT geozone FROM gw_contacts where contactid = %d", event.contactid)<0) return;
+		if (sql_numtuples(&sqr)==1) {
+			zoneid=atoi(sql_getvalue(&sqr, 0, 0));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		if (atoi(ptemp)<1) {
 			prints(sid, "<CENTER><B>Please specify a group.</B></CENTER>\n");
 		} else if ((rc=db_autoassign(&uavail, atoi(ptemp), zoneid, event.eventid, event.busy, event.eventstart, event.eventfinish))<0) {

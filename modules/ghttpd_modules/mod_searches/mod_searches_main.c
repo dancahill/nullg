@@ -1,5 +1,5 @@
 /*
-    NullLogic Groupware - Copyright (C) 2000-2004 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2005 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 void searchform(CONN *sid)
 {
 	int i;
-	int sqr;
+	SQLRES sqr;
 
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function startSearch()\n");
@@ -58,25 +58,25 @@ void searchform(CONN *sid)
 		prints(sid, "<TR><TH COLSPAN=3>Contact Search Form</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n");
 		prints(sid, "<OPTION SELECTED>All Columns\n");
-		if ((sqr=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
-		for (i=0;i<sql_numfields(sqr);i++) {
-			if (strcmp(sql_getname(sqr, i), "obj_ctime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_mtime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_uid")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_gid")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_did")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_gperm")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "obj_operm")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "loginip")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "logintime")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "logintoken")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "password")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "enabled")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "geozone")==0) continue;
-			if (strcmp(sql_getname(sqr, i), "timezone")==0) continue;
-			prints(sid, "<OPTION>%s\n", sql_getname(sqr, i));
+		if (sql_query(&sqr, "SELECT * FROM gw_contacts WHERE contactid = 1")<0) return;
+		for (i=0;i<sql_numfields(&sqr);i++) {
+			if (strcmp(sql_getname(&sqr, i), "obj_ctime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_mtime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_uid")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_did")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_gperm")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "obj_operm")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "loginip")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "logintime")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "logintoken")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "password")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "enabled")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "geozone")==0) continue;
+			if (strcmp(sql_getname(&sqr, i), "timezone")==0) continue;
+			prints(sid, "<OPTION>%s\n", sql_getname(&sqr, i));
 		}
-		sql_freeresult(sqr);
+		sql_freeresult(&sqr);
 		prints(sid, "</SELECT></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=TEXT NAME=string value='' SIZE=20></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n");
