@@ -21,7 +21,7 @@
 
 void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 {
-	char *option[]={ "All", "Personal", "Calls", "Contacts", "Events", "Notes", "Orders", "Tasks", "Users" };
+	char *option[]={ "All", "Personal", "Calls", "Contacts", "Events", "Notes", "Orders", "Projects", "Tasks", "Users" };
 	char *ptemp;
 	int i;
 	int j;
@@ -78,6 +78,7 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<OPTION VALUE='6'%s>%s\n", table==6?" SELECTED":"", option[6]);
 	prints(sid, "<OPTION VALUE='7'%s>%s\n", table==7?" SELECTED":"", option[7]);
 	prints(sid, "<OPTION VALUE='8'%s>%s\n", table==8?" SELECTED":"", option[8]);
+	prints(sid, "<OPTION VALUE='9'%s>%s\n", table==9?" SELECTED":"", option[9]);
 	prints(sid, "</SELECT>\r\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
@@ -257,6 +258,15 @@ void notesview(CONN *sid)
 		}
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
+	} else if (strcmp(note.tablename, "projects")==0) {
+		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
+		if ((sqr=sql_queryf("SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", note.tableindex))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<A HREF=%s/projects/view?projectid=%d>", sid->dat->in_ScriptName, note.tableindex);
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		}
+		sql_freeresult(sqr);
+		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "tasks")==0) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
 		if ((sqr=sql_queryf("SELECT taskid, taskname FROM gw_tasks WHERE taskid = %d", note.tableindex))<0) return;
@@ -325,8 +335,9 @@ void noteslist(CONN *sid)
 		case 4: { snprintf(tablename, sizeof(tablename)-1, "events"); break; }
 		case 5: { snprintf(tablename, sizeof(tablename)-1, "notes"); break; }
 		case 6: { snprintf(tablename, sizeof(tablename)-1, "orders"); break; }
-		case 7: { snprintf(tablename, sizeof(tablename)-1, "tasks"); break; }
-		case 8: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
+		case 7: { snprintf(tablename, sizeof(tablename)-1, "projects"); break; }
+		case 8: { snprintf(tablename, sizeof(tablename)-1, "tasks"); break; }
+		case 9: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
 	}
 	if (auth_priv(sid, "admin")&A_ADMIN) {
 		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_did))<0) return;
@@ -351,6 +362,8 @@ void noteslist(CONN *sid)
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "orders")==0) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/view?orderid=%d>Order</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "projects")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/projects/view?projectid=%d>Project</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "tasks")==0) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "users")==0) {
@@ -428,6 +441,8 @@ void notessave(CONN *sid)
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "orders")==0) {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/orders/view?orderid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
+		} else if (strcmp(note.tablename, "projects")==0) {
+			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/projects/view?projectid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "tasks")==0) {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/tasks/view?taskid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "users")==0) {

@@ -141,12 +141,13 @@ void taskedit(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (strcmp(sid->dat->in_RequestURI, "/tasks/editnew")==0) {
+	if (strncmp(sid->dat->in_RequestURI, "/tasks/editnew", 14)==0) {
 		taskid=0;
 		if (dbread_task(sid, 2, 0, &task)!=0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
+		if ((ptemp=getgetenv(sid, "PROJECTID"))!=NULL) task.projectid=atoi(ptemp);
 	} else {
 		if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
 		taskid=atoi(ptemp);
@@ -157,6 +158,14 @@ void taskedit(CONN *sid)
 	}
 	strftime(duedate, sizeof(duedate)-1, "%Y-%m-%d", gmtime(&task.duedate));
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "function ContactView() {\r\n");
+	prints(sid, "	var contactid=document.taskedit.contactid.value;\r\n");
+	prints(sid, "	if (contactid<1) {\r\n");
+	prints(sid, "		window.open('%s/contacts/search1','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=410');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "	} else {\r\n");
+	prints(sid, "		window.open('%s/contacts/view?contactid='+contactid,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=410');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "	}\r\n");
+	prints(sid, "}\r\n");
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
@@ -186,6 +195,15 @@ void taskedit(CONN *sid)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, task.assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
+	if (module_exists(sid, "mod_contacts")) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:255px'>\n");
+		htselect_contact(sid, task.contactid);
+		prints(sid, "</SELECT></TD></TR>\n");
+	}
+	if ((module_exists(sid, "mod_projects"))&&(task.projectid>0)) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Project&nbsp;</B></TD>");
+		prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=projectid value=\"%d\" SIZE=25 style='width:255px'></TD></TR>\n", task.projectid);
+	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:255px'>\n");
 	htselect_priority(sid, task.priority);
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -320,6 +338,26 @@ void taskview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
 	sql_freeresult(sqr);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact     </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
+	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", task.contactid))<0) return;
+	if (sql_numtuples(sqr)>0) {
+		prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
+		prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) prints(sid, ", ");
+		prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 2)));
+	}
+	sql_freeresult(sqr);
+	prints(sid, "&nbsp;</TD></TR>\n");
+	if ((module_exists(sid, "mod_projects"))&&(task.projectid>0)) {
+		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Project&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
+		if ((sqr=sql_queryf("SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", task.projectid))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<A HREF=%s/projects/view?projectid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)));
+			prints(sid, "%s</A>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		}
+		sql_freeresult(sqr);
+		prints(sid, "&nbsp;</TD></TR>\n");
+	}
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Priority&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
 	if (task.priority==0) prints(sid, "Lowest");
 	else if (task.priority==1) prints(sid, "Low");
@@ -434,6 +472,8 @@ void tasksave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "ASSIGNEDBY"))!=NULL) task.assignedby=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "ASSIGNEDTO"))!=NULL) task.assignedto=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "TASKNAME"))!=NULL) snprintf(task.taskname, sizeof(task.taskname)-1, "%s", ptemp);
+	if ((ptemp=getpostenv(sid, "CONTACTID"))!=NULL) task.contactid=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "PROJECTID"))!=NULL) task.projectid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "STATUS"))!=NULL) task.status=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PRIORITY"))!=NULL) task.priority=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "REMINDER"))!=NULL) task.reminder=atoi(ptemp);

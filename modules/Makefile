@@ -17,6 +17,7 @@ all:
 	@echo " mod_notes"     ; cd mod_notes     ; $(MAKE)
 	@echo " mod_orders"    ; cd mod_orders    ; $(MAKE)
 	@echo " mod_profile"   ; cd mod_profile   ; $(MAKE)
+	@echo " mod_projects"  ; cd mod_projects  ; $(MAKE)
 	@echo " mod_searches"  ; cd mod_searches  ; $(MAKE)
 	@echo " mod_tasks"     ; cd mod_tasks     ; $(MAKE)
 	@echo " mod_xmlrpc"    ; cd mod_xmlrpc    ; $(MAKE)
@@ -36,6 +37,7 @@ clean:
 	@cd mod_notes     ; $(MAKE) clean
 	@cd mod_orders    ; $(MAKE) clean
 	@cd mod_profile   ; $(MAKE) clean
+	@cd mod_projects  ; $(MAKE) clean
 	@cd mod_searches  ; $(MAKE) clean
 	@cd mod_tasks     ; $(MAKE) clean
 	@cd mod_xmlrpc    ; $(MAKE) clean

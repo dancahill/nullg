@@ -157,6 +157,7 @@ int sanity_checkdb()
 	if (sanity_dbcheck_table("gw_orderitems",	"orderitemid",		ORDERITEMFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_orders",		"orderid",		ORDERFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_products",		"productid",		PRODUCTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_projects",		"projectid",		PROJECTFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_queries",		"queryid",		QUERYFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_tasks",		"taskid",		TASKFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_users",		"userid",		USERFIELDS)==-1) checkerror++;

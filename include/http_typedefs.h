@@ -39,10 +39,11 @@
 #define MENU_NOTES		11
 #define MENU_ORDERS		12
 #define MENU_PROFILE		13
-#define MENU_SEARCHES		14
-#define MENU_TASKS		15
-#define MENU_WEBMAIL		16
-#define MENU_XMLRPC		17
+#define MENU_PROJECTS		14
+#define MENU_SEARCHES		15
+#define MENU_TASKS		16
+#define MENU_WEBMAIL		17
+#define MENU_XMLRPC		18
 
 typedef struct {
 	int lastref;

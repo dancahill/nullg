@@ -510,13 +510,12 @@ int webmailmime_line(CONN *sid, char *bodytemp, int szbodytemp, char *inbuffer, 
 	}
 	if (strncasecmp(ctype, "text/html", 9)==0) {
 		DecodeHTML(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1, reply);
-		strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
-		bytes=strlen(outbuffer2);
 	} else {
 		DecodeText(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1);
-		strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
-		bytes=strlen(outbuffer2);
 	}
+	if (szbodytemp<0) return 0;
+	strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
+	bytes=strlen(outbuffer2);
 	return bytes;
 }
 
@@ -592,7 +591,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 	for (;;) {
 		if (*fp==NULL) break;
 		if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
-			if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
+			if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
+				return msgdone;
+			}
 		}
 		if (head) {
 			memset(ctype, 0, sizeof(ctype));
@@ -601,7 +602,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
-					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
+					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
+						return msgdone;
+					}
 				}
 				if (strcmp(inbuffer, "")==0) {
 					head=0;
@@ -666,7 +669,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 				if (inbuffer[0]=='\0') { file=0; break; }
 				if (inbuffer[0]!='-') continue;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
-					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
+					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
+						return msgdone;
+					}
 				}
 				if (p_strcasestr(inbuffer, boundary)!=NULL) {
 					file=0;
@@ -682,7 +687,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 			if (strcmp(inbuffer, "")==0) break;
 			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
-			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
+			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
+				return msgdone;
+			}
 		}
 		if (*fp==NULL) break;
 		if (!reply) {
@@ -745,7 +752,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 			msgdone=1;
 		}
 		if (*fp==NULL) break;
-		if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
+		if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
+			return msgdone;
+		}
 	}
 	if ((!reply)&&(sid->dat->wm->numfiles>0)&&(depth<2)) {
 		prints(sid, "<HR>Attachments<BR>\n");

@@ -61,11 +61,13 @@ int dbread_task(CONN *sid, short int perm, int index, REC_TASK *task)
 	task->assignedby=atoi(sql_getvalue(sqr, 0, 8));
 	task->assignedto=atoi(sql_getvalue(sqr, 0, 9));
 	strncpy(task->taskname,		sql_getvalue(sqr, 0, 10), sizeof(task->taskname)-1);
-	task->duedate=time_sql2unix(sql_getvalue(sqr, 0, 11));
-	task->priority=atoi(sql_getvalue(sqr, 0, 12));
-	task->reminder=atoi(sql_getvalue(sqr, 0, 13));
-	task->status=atoi(sql_getvalue(sqr, 0, 14));
-	strncpy(task->details,		sql_getvalue(sqr, 0, 15), sizeof(task->details)-1);
+	task->contactid=atoi(sql_getvalue(sqr, 0, 11));
+	task->projectid=atoi(sql_getvalue(sqr, 0, 12));
+	task->duedate=time_sql2unix(sql_getvalue(sqr, 0, 13));
+	task->priority=atoi(sql_getvalue(sqr, 0, 14));
+	task->reminder=atoi(sql_getvalue(sqr, 0, 15));
+	task->status=atoi(sql_getvalue(sqr, 0, 16));
+	strncpy(task->details,		sql_getvalue(sqr, 0, 17), sizeof(task->details)-1);
 	sql_freeresult(sqr);
 	return 0;
 }
@@ -88,11 +90,13 @@ int dbwrite_task(CONN *sid, int index, REC_TASK *task)
 		task->taskid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (task->taskid<1) task->taskid=1;
-		strcpy(query, "INSERT INTO gw_tasks (taskid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, assignedby, assignedto, taskname, status, priority, reminder, duedate, details) values (");
+		strcpy(query, "INSERT INTO gw_tasks (taskid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, assignedby, assignedto, taskname, contactid, projectid, status, priority, reminder, duedate, details) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", task->taskid, curdate, curdate, task->obj_uid, task->obj_gid, task->obj_did, task->obj_gperm, task->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->assignedto);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, task->taskname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->contactid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->projectid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->status);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->priority);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->reminder);
@@ -105,6 +109,8 @@ int dbwrite_task(CONN *sid, int index, REC_TASK *task)
 		strncatf(query, sizeof(query)-strlen(query)-1, "assignedby = '%d', ", task->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "assignedto = '%d', ", task->assignedto);
 		strncatf(query, sizeof(query)-strlen(query)-1, "taskname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, task->taskname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "contactid = '%d', ", task->contactid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "projectid = '%d', ", task->projectid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "status = '%d', ", task->status);
 		strncatf(query, sizeof(query)-strlen(query)-1, "priority = '%d', ", task->priority);
 		strncatf(query, sizeof(query)-strlen(query)-1, "reminder = '%d', ", task->reminder);

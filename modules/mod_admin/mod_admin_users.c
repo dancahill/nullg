@@ -322,6 +322,15 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "</TR>\n");
 	}
+	if (module_exists(sid, "mod_projects")) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Projects&nbsp;</B></TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_r VALUE='1' %s></TD>", (user->authprojects&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_m VALUE='1' %s></TD>", (user->authprojects&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_i VALUE='1' %s></TD>", (user->authprojects&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_d VALUE='1' %s></TD>", (user->authprojects&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_a VALUE='1' %s></TD>", (user->authprojects&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
 	if (module_exists(sid, "mod_searches")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
@@ -612,6 +621,14 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_D"))!=NULL) user.authprofile+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_A"))!=NULL) user.authprofile+=A_ADMIN;
 	}
+	if (module_exists(sid, "mod_projects")) {
+		user.authprojects=0;
+		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_R"))!=NULL) user.authprojects+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_M"))!=NULL) user.authprojects+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_I"))!=NULL) user.authprojects+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_D"))!=NULL) user.authprojects+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_A"))!=NULL) user.authprojects+=A_ADMIN;
+	}
 	if (module_exists(sid, "mod_searches")) {
 		user.authquery=0;
 		if ((ptemp=getpostenv(sid, "AUTHQUERY_R"))!=NULL) user.authquery+=A_READ;
@@ -700,7 +717,7 @@ void adminusersave(CONN *sid)
 		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (user.userid<1) user.userid=1;
-		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
+		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authprojects, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", user.userid, curdate, curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
@@ -719,6 +736,7 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authmessages);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authorders);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authprofile);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authprojects);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authquery);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authwebmail);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.prefdaystart);
@@ -794,6 +812,7 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "authmessages = '%d', ", user.authmessages);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authorders = '%d', ", user.authorders);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authprofile = '%d', ", user.authprofile);
+		strncatf(query, sizeof(query)-strlen(query)-1, "authprojects = '%d', ", user.authprojects);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authquery = '%d', ", user.authquery);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authwebmail = '%d', ", user.authwebmail);
 		strncatf(query, sizeof(query)-strlen(query)-1, "prefdaystart = '%d', ", user.prefdaystart);

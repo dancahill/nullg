@@ -145,7 +145,7 @@ retry2:
  			fixslashes(tmpname2);
 			if (stat(tmpname1, &sb)==0) goto retry2;
 			if (stat(tmpname2, &sb)==0) goto retry2;
-			log_access("smtpd", "[%s] remote delivery from: '%s', to: '%s' (queued)", sid->dat->user_RemoteAddr, mconn->from, mconn->rcpt[i]);
+			log_access("smtpd", "[%s] queued mail from: '%s', to: '%s'", sid->dat->user_RemoteAddr, mconn->from, mconn->rcpt[i]);
 		} else {
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));

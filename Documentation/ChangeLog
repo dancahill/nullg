@@ -1,3 +1,13 @@
+1.3.18
+------
+- enforce \r\n line endings for smtp spool client
+- upgraded SQLite to 2.8.14
+- added projectid fields to events and tasks to support new project module
+- added contactid field to tasks
+- added new PROJECTS module
+- fixed inconsistent userrec mappings
+- fixed single dots in outgoing e-mail bodies
+
 1.3.17
 ------
 - fixed a heap overflow in mod_mail caused by large message bodies

@@ -328,6 +328,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 				return;
 			}
 			if ((ptemp=getgetenv(sid, "CONTACTID"))!=NULL) eventrec.contactid=atoi(ptemp);
+			if ((ptemp=getgetenv(sid, "PROJECTID"))!=NULL) eventrec.projectid=atoi(ptemp);
 			if ((ptemp=getgetenv(sid, "USERID"))!=NULL) eventrec.assignedto=atoi(ptemp);
 			if ((ptemp=getgetenv(sid, "TIME"))!=NULL) {
 				eventrec.eventstart=atoi(ptemp)-time_tzoffset(sid, eventrec.eventstart);
@@ -431,6 +432,10 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n");
 		htselect_contact(sid, event->contactid);
 		prints(sid, "</SELECT></TD></TR>\n");
+	}
+	if ((module_exists(sid, "mod_projects"))&&(event->projectid>0)) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Project&nbsp;</B></TD>");
+		prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=projectid value=\"%d\" SIZE=25 style='width:182px'></TD></TR>\n", event->projectid);
 	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:182px'>\n");
 	htselect_priority(sid, event->priority);
@@ -692,6 +697,7 @@ void calendarsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "ASSIGNEDTO"))!=NULL) event.assignedto=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "EVENTTYPE"))!=NULL) event.eventtype=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "CONTACTID"))!=NULL) event.contactid=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "PROJECTID"))!=NULL) event.projectid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PRIORITY"))!=NULL) event.priority=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "REMINDER"))!=NULL) event.reminder=atoi(ptemp);
 	memset(tempdate, 0, sizeof(tempdate));

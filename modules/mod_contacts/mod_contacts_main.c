@@ -133,6 +133,8 @@ void contactsearch2(CONN *sid)
 	prints(sid, "		window.opener.document.calledit.contactid.value=contactid;\r\n");
 	prints(sid, "	} else if (window.opener.document.eventedit) {\r\n");
 	prints(sid, "		window.opener.document.eventedit.contactid.value=contactid;\r\n");
+	prints(sid, "	} else if (window.opener.document.taskedit) {\r\n");
+	prints(sid, "		window.opener.document.taskedit.contactid.value=contactid;\r\n");
 	prints(sid, "	}\r\n");
 	prints(sid, "	window.close();\r\n");
 	prints(sid, "}\r\n");
@@ -1076,12 +1078,16 @@ skipcheck1:
 			prints(sid, "			window.opener.document.calledit.contactid.add(newoption);\r\n");
 			prints(sid, "		} else if (window.opener.document.eventedit) {\r\n");
 			prints(sid, "			window.opener.document.eventedit.contactid.add(newoption);\r\n");
+			prints(sid, "		} else if (window.opener.document.taskedit) {\r\n");
+			prints(sid, "			window.opener.document.taskedit.contactid.add(newoption);\r\n");
 			prints(sid, "		}\r\n");
 			prints(sid, "	} else {\r\n");
 			prints(sid, "		if (window.opener.document.calledit) {\r\n");
 			prints(sid, "			obj=window.opener.document.forms[\"calledit\"][\"contactid\"];\r\n");
 			prints(sid, "		} else if (window.opener.document.eventedit) {\r\n");
 			prints(sid, "			obj=window.opener.document.forms[\"eventedit\"][\"contactid\"];\r\n");
+			prints(sid, "		} else if (window.opener.document.taskedit) {\r\n");
+			prints(sid, "			obj=window.opener.document.forms[\"taskedit\"][\"contactid\"];\r\n");
 			prints(sid, "		}\r\n");
 			prints(sid, "		text='%s';\r\n", htview_contact(sid, contact.contactid));
 			prints(sid, "		value=%d;\r\n", contact.contactid);
@@ -1091,6 +1097,8 @@ skipcheck1:
 			prints(sid, "		window.opener.document.calledit.contactid.value=%d;\r\n", contact.contactid);
 			prints(sid, "	} else if (window.opener.document.eventedit) {\r\n");
 			prints(sid, "		window.opener.document.eventedit.contactid.value=%d;\r\n", contact.contactid);
+			prints(sid, "	} else if (window.opener.document.taskedit) {\r\n");
+			prints(sid, "		window.opener.document.taskedit.contactid.value=%d;\r\n", contact.contactid);
 			prints(sid, "	}\r\n");
 			prints(sid, "	window.close();\r\n");
 			prints(sid, "// -->\n</SCRIPT>\n");

@@ -128,6 +128,7 @@ typedef struct {
 	char eventname[51];
 	int eventtype;
 	int contactid;
+	int projectid;
 	int priority;
 	int reminder;
 	time_t eventstart;
@@ -291,6 +292,22 @@ typedef struct {
 	char details[1025];
 } REC_PRODUCT;
 typedef struct {
+	int projectid;
+	time_t obj_ctime;
+	time_t obj_mtime;
+	int obj_uid;
+	int obj_gid;
+	int obj_did;
+	int obj_gperm;
+	int obj_operm;
+	char projectname[51];
+	int projectadmin;
+	time_t projectstart;
+	time_t projectfinish;
+	int status;
+	char details[1025];
+} REC_PROJECT;
+typedef struct {
 	int queryid;
 	time_t obj_ctime;
 	time_t obj_mtime;
@@ -314,6 +331,8 @@ typedef struct {
 	int assignedby;
 	int assignedto;
 	char taskname[51];
+	int contactid;
+	int projectid;
 	time_t duedate;
 	int priority;
 	int reminder;
@@ -348,6 +367,7 @@ typedef struct {
 	int authmessages;
 	int authorders;
 	int authprofile;
+	int authprojects;
 	int authquery;
 	int authwebmail;
 	int prefdaystart;

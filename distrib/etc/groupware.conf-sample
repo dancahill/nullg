@@ -53,8 +53,9 @@
    load module       = mod_forums
    load module       = mod_messages
    load module       = mod_notes
-   load module       = mod_orders
+;  load module       = mod_orders
    load module       = mod_profile
+;  load module       = mod_projects
    load module       = mod_searches
    load module       = mod_tasks
    load module       = mod_xmlrpc

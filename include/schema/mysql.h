@@ -201,6 +201,7 @@ CREATE TABLE gw_events (\n\
 	eventname	varchar(50)	NOT NULL DEFAULT '',\n\
 	eventtype	int4		NOT NULL DEFAULT 0,\n\
 	contactid	int4		NOT NULL DEFAULT 0,\n\
+	projectid	int4		NOT NULL DEFAULT 0,\n\
 	priority	int4		NOT NULL DEFAULT 0,\n\
 	reminder	int4		NOT NULL DEFAULT 0,\n\
 	eventstart	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
@@ -542,6 +543,25 @@ CREATE TABLE gw_products (\n\
 	PRIMARY KEY (productid)\n\
 );"
 
+#define MYSQLDB_PROJECTS "\
+CREATE TABLE gw_projects (\n\
+	projectid	int4		NOT NULL auto_increment,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	projectname	varchar(50)	NOT NULL DEFAULT '',\n\
+	projectadmin	int4		NOT NULL DEFAULT 0,\n\
+	projectstart	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	projectfinish	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	status		int4		NOT NULL DEFAULT 0,\n\
+	details		text		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (projectid)\n\
+);"
+
 #define MYSQLDB_QUERIES "\
 CREATE TABLE gw_queries (\n\
 	queryid		int4		NOT NULL auto_increment,\n\
@@ -585,6 +605,8 @@ CREATE TABLE gw_tasks (\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
 	assignedto	int4		NOT NULL DEFAULT 0,\n\
 	taskname	varchar(50)	NOT NULL DEFAULT '',\n\
+	contactid	int4		NOT NULL DEFAULT 0,\n\
+	projectid	int4		NOT NULL DEFAULT 0,\n\
 	duedate		datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	priority	int4		NOT NULL DEFAULT 0,\n\
 	reminder	int4		NOT NULL DEFAULT 0,\n\
@@ -622,6 +644,7 @@ CREATE TABLE gw_users (\n\
 	authmessages	int4		NOT NULL DEFAULT 0,\n\
 	authorders	int4		NOT NULL DEFAULT 0,\n\
 	authprofile	int4		NOT NULL DEFAULT 0,\n\
+	authprojects	int4		NOT NULL DEFAULT 0,\n\
 	authquery	int4		NOT NULL DEFAULT 0,\n\
 	authwebmail	int4		NOT NULL DEFAULT 0,\n\
 	prefdaystart	int4		NOT NULL DEFAULT 0,\n\

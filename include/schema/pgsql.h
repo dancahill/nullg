@@ -42,6 +42,7 @@ CREATE SEQUENCE noteid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE ordeid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE ordiid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE prodid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE projid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE querid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE smtrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE taskid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -234,6 +235,7 @@ CREATE TABLE gw_events (\n\
 	eventname	varchar(50)	NOT NULL DEFAULT '',\n\
 	eventtype	int4		NOT NULL DEFAULT 0,\n\
 	contactid	int4		NOT NULL DEFAULT 0,\n\
+	projectid	int4		NOT NULL DEFAULT 0,\n\
 	priority	int4		NOT NULL DEFAULT 0,\n\
 	reminder	int4		NOT NULL DEFAULT 0,\n\
 	eventstart	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
@@ -575,6 +577,25 @@ CREATE TABLE gw_products (\n\
 	PRIMARY KEY (productid)\n\
 );\n\n"
 
+#define PGSQLDB_PROJECTS "\
+CREATE TABLE gw_projects (\n\
+	projectid	int4		NOT NULL DEFAULT nextval('projid_seq'::text),\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	projectname	varchar(50)	NOT NULL DEFAULT '',\n\
+	projectadmin	int4		NOT NULL DEFAULT 0,\n\
+	projectstart	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	projectfinish	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	status		int4		NOT NULL DEFAULT 0,\n\
+	details		text		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (projectid)\n\
+);\n\n"
+
 #define PGSQLDB_QUERIES "\
 CREATE TABLE gw_queries (\n\
 	queryid		int4		NOT NULL DEFAULT nextval('querid_seq'::text),\n\
@@ -618,6 +639,8 @@ CREATE TABLE gw_tasks (\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
 	assignedto	int4		NOT NULL DEFAULT 0,\n\
 	taskname	varchar(50)	NOT NULL DEFAULT '',\n\
+	contactid	int4		NOT NULL DEFAULT 0,\n\
+	projectid	int4		NOT NULL DEFAULT 0,\n\
 	duedate		timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	priority	int4		NOT NULL DEFAULT 0,\n\
 	reminder	int4		NOT NULL DEFAULT 0,\n\
@@ -655,6 +678,7 @@ CREATE TABLE gw_users ( \
 	authmessages	int4		NOT NULL DEFAULT 0, \
 	authorders	int4		NOT NULL DEFAULT 0, \
 	authprofile	int4		NOT NULL DEFAULT 0, \
+	authprojects	int4		NOT NULL DEFAULT 0, \
 	authquery	int4		NOT NULL DEFAULT 0, \
 	authwebmail	int4		NOT NULL DEFAULT 0, \
 	prefdaystart	int4		NOT NULL DEFAULT 0, \

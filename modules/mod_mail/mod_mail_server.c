@@ -1140,6 +1140,9 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
 		if (fp==NULL) break;
 		striprn(inbuffer);
+		if (strcmp(inbuffer, ".")==0) {
+			strncat(inbuffer, ".", sizeof(inbuffer));
+		}
 		if (strlen(inbuffer)+outlen>=sizeof(outbuffer)-3) {
 			if (wmprints(sid, "%s", outbuffer)<0) {
 				if (fp!=NULL) { fclose(fp); fp=NULL; }

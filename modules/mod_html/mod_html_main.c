@@ -85,6 +85,7 @@ void mod_html_topmenu(CONN *sid, int menu)
 		case MENU_NOTES:     mod_html_header(sid, "NullLogic Groupware Notebook"); break;
 		case MENU_ORDERS:    mod_html_header(sid, "NullLogic Groupware Orders"); break;
 		case MENU_PROFILE:   mod_html_header(sid, "NullLogic Groupware User Profile"); break;
+		case MENU_PROJECTS:  mod_html_header(sid, "NullLogic Groupware Projects"); break;
 		case MENU_SEARCHES:  mod_html_header(sid, "NullLogic Groupware Searches"); break;
 		case MENU_TASKS:     mod_html_header(sid, "NullLogic Groupware Tasks"); break;
 		case MENU_WEBMAIL:   mod_html_header(sid, "NullLogic Groupware Webmail"); break;
@@ -276,6 +277,10 @@ domenu:
 			break;
 		case MENU_PROFILE:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>EDIT PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			break;
+		case MENU_PROJECTS:
+			prints(sid, "<A CLASS='TBAR' HREF=%s/projects/list>PROJECTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/projects/editnew>NEW PROJECT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			break;
 		case MENU_SEARCHES:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/search/>SEARCHES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
@@ -721,7 +726,7 @@ void mod_html_reloadframe(CONN *sid)
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf("SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
 			b=a-atoi(sql_getvalue(sqr1, i, 1))*60;
@@ -736,7 +741,7 @@ void mod_html_reloadframe(CONN *sid)
 	}
 	if (auth_priv(sid, "calendar")&A_READ) {
 		isreminder=0;
-		if ((sqr1=sql_queryf("SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 ORDER BY duedate ASC", posttime, sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT duedate, reminder FROM gw_tasks where duedate < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY duedate ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			a=time_sql2unix(sql_getvalue(sqr1, i, 0))-time(NULL);
 			a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr1, i, 0)));
@@ -753,9 +758,9 @@ void mod_html_reloadframe(CONN *sid)
 	if (auth_priv(sid, "messages")&A_READ) {
 		t=time(NULL)-10;
 		strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-		if ((sqr1=sql_queryf("SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s'", sid->dat->user_uid, sid->dat->user_uid, posttime))<0) return;
+		if ((sqr1=sql_queryf("SELECT messageid, sender FROM gw_messages WHERE obj_uid = %d AND rcpt = %d and status > 2 AND obj_ctime < '%s' AND obj_did = %d", sid->dat->user_uid, sid->dat->user_uid, posttime, sid->dat->user_did))<0) return;
 		if (sql_numtuples(sqr1)>0) {
-			if ((sqr2=sql_queryf("SELECT userid, username FROM gw_users"))<0) {
+			if ((sqr2=sql_queryf("SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) {
 				sql_freeresult(sqr1);
 				return;
 			}
@@ -774,14 +779,14 @@ void mod_html_reloadframe(CONN *sid)
 	}
 	if ((mod_mail_sync=module_call(sid, "mod_mail_sync"))!=NULL) {
 		notice=0;
-		if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))<0) return;
+		if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0 AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {
 			sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
 			j=time_sql2unix(sql_getvalue(sqr1, i, 5));
 			if ((strlen(sql_getvalue(sqr1, i, 2))>0)&&(j+(atoi(sql_getvalue(sqr1, i, 4))*60)<time(NULL))) {
 				mod_mail_sync(sid, 0);
 			}
-			if ((sqr2=sql_queryf("SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) break;
+			if ((sqr2=sql_queryf("SELECT mailheaderid FROM gw_mailheaders where obj_uid = %d AND obj_did = %d AND accountid = %d AND status = 'n'", sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent))<0) break;
 			if (sql_numtuples(sqr2)>0) notice=1;
 			sql_freeresult(sqr2);
 		}

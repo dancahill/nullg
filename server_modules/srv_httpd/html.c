@@ -354,6 +354,10 @@ domenu:
 		case MENU_PROFILE:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>EDIT PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			break;
+		case MENU_PROJECTS:
+			prints(sid, "<A CLASS='TBAR' HREF=%s/projects/list>PROJECTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/projects/editnew>NEW PROJECT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			break;
 		case MENU_SEARCHES:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/search/>SEARCHES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/search/sqlrun>SQL QUERIES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);

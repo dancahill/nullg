@@ -1,12 +1,12 @@
 #!/bin/sh
 
 do_configure() {
-	if [ ! -r "sqlite-2.8.13.tar.gz" ]; then
+	if [ ! -r "sqlite-2.8.14.tar.gz" ]; then
 		echo "sqlite source not found"
 		exit 0
 	fi
 	if [ ! -r "sqlite/configure" ]; then
-		tar zxf sqlite-2.8.13.tar.gz
+		tar zxf sqlite-2.8.14.tar.gz
 	fi
 	mkdir -p build
 	cd build

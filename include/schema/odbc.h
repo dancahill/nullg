@@ -201,6 +201,7 @@ CREATE TABLE gw_events (\n\
 	eventname	varchar(50)	NOT NULL,\n\
 	eventtype	integer,\n\
 	contactid	integer,\n\
+	projectid	integer		NOT NULL,\n\
 	priority	integer,\n\
 	reminder	integer,\n\
 	eventstart	datetime	NOT NULL,\n\
@@ -542,6 +543,25 @@ CREATE TABLE gw_products (\n\
 	PRIMARY KEY (productid)\n\
 );"
 
+#define MDB_PROJECTS "\
+CREATE TABLE gw_projects (\n\
+	projectid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	projectname	varchar(50)	NOT NULL,\n\
+	projectadmin	integer		NOT NULL,\n\
+	projectstart	datetime	NOT NULL,\n\
+	projectfinish	datetime	NOT NULL,\n\
+	status		integer		NOT NULL,\n\
+	details		memo,\n\
+	PRIMARY KEY (projectid)\n\
+);"
+
 #define MDB_QUERIES "\
 CREATE TABLE gw_queries (\n\
 	queryid		autoincrement,\n\
@@ -585,6 +605,8 @@ CREATE TABLE gw_tasks (\n\
 	assignedby	integer,\n\
 	assignedto	integer,\n\
 	taskname	varchar(50)	NOT NULL,\n\
+	contactid	integer		NOT NULL,\n\
+	projectid	integer		NOT NULL,\n\
 	duedate		datetime	NOT NULL,\n\
 	priority	integer		NOT NULL,\n\
 	reminder	integer		NOT NULL,\n\
@@ -622,6 +644,7 @@ CREATE TABLE gw_users (\n\
 	authmessages	integer		NOT NULL,\n\
 	authorders	integer		NOT NULL,\n\
 	authprofile	integer		NOT NULL,\n\
+	authprojects	integer		NOT NULL,\n\
 	authquery	integer		NOT NULL,\n\
 	authwebmail	integer		NOT NULL,\n\
 	prefdaystart	integer		NOT NULL,\n\

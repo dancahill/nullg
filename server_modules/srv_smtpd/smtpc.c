@@ -156,7 +156,8 @@ int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt)
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "354", 3)!=0) goto quit;
 	while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
-		smtp_printf(smtp_sock, "%s", inbuffer);
+		striprn(inbuffer);
+		smtp_printf(smtp_sock, "%s\r\n", inbuffer);
 	}
 	smtp_printf(smtp_sock, ".\r\n");
 	do {

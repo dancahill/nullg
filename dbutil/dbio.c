@@ -88,6 +88,7 @@ int dump_db(char *filename)
 	if (dump_table(fp, "gw_orders",			"orderid")<0) 		printf("\r\nError dumping gw_orders\r\n");
 	if (dump_table(fp, "gw_orderitems",		"orderitemid")<0) 	printf("\r\nError dumping gw_orderitems\r\n");
 	if (dump_table(fp, "gw_products",		"productid")<0) 	printf("\r\nError dumping gw_products\r\n");
+	if (dump_table(fp, "gw_projects",		"projectid")<0) 	printf("\r\nError dumping gw_projects\r\n");
 	if (dump_table(fp, "gw_queries",		"queryid")<0) 		printf("\r\nError dumping gw_queries\r\n");
 	if (dump_table(fp, "gw_smtp_relayrules",	"relayruleid")<0) 	printf("\r\nError dumping gw_smtp_relayrules\r\n");
 	if (dump_table(fp, "gw_tasks",			"taskid")<0) 		printf("\r\nError dumping gw_tasks\r\n");
@@ -128,6 +129,7 @@ int init_mdb(void)
 	if (sqlUpdate(1, MDB_ORDERS)<0)            { printf("\r\nError inserting gw_orders\r\n");          return -1; }
 	if (sqlUpdate(1, MDB_ORDERITEMS)<0)        { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, MDB_PRODUCTS)<0)          { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, MDB_PROJECTS)<0)          { printf("\r\nError inserting gw_projects\r\n");        return -1; }
 	if (sqlUpdate(1, MDB_QUERIES)<0)           { printf("\r\nError inserting gw_queries\r\n");         return -1; }
 	if (sqlUpdate(1, MDB_SMTP_RELAYRULES)<0)   { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, MDB_TASKS)<0)             { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
@@ -166,6 +168,7 @@ int init_mysql(void)
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_orders;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_products;");
+	sqlUpdate(0, "DROP TABLE IF EXISTS gw_projects;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_queries;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_tasks;");
@@ -198,6 +201,7 @@ int init_mysql(void)
 	if (sqlUpdate(1, MYSQLDB_ORDERS)<0)                { printf("\r\nError inserting gw_orders\r\n");          return -1; }
 	if (sqlUpdate(1, MYSQLDB_ORDERITEMS)<0)            { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, MYSQLDB_PRODUCTS)<0)              { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, MYSQLDB_PROJECTS)<0)              { printf("\r\nError inserting gw_projects\r\n");        return -1; }
 	if (sqlUpdate(1, MYSQLDB_QUERIES)<0)               { printf("\r\nError inserting gw_queries\r\n");         return -1; }
 	if (sqlUpdate(1, MYSQLDB_SMTP_RELAYRULES)<0)       { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, MYSQLDB_TASKS)<0)                 { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
@@ -265,6 +269,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP TABLE gw_orders;");
 	sqlUpdate(0, "DROP TABLE gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE gw_products;");
+	sqlUpdate(0, "DROP TABLE gw_projects;");
 	sqlUpdate(0, "DROP TABLE gw_queries;");
 	sqlUpdate(0, "DROP TABLE gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE gw_tasks;");
@@ -299,6 +304,7 @@ int init_pgsql(void)
 	if (sqlUpdate(1, PGSQLDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
 	if (sqlUpdate(1, PGSQLDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, PGSQLDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, PGSQLDB_PROJECTS)<0)        { printf("\r\nError inserting gw_projects\r\n");        return -1; }
 	if (sqlUpdate(1, PGSQLDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
 	if (sqlUpdate(1, PGSQLDB_SMTP_RELAYRULES)<0) { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, PGSQLDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
@@ -364,6 +370,7 @@ int init_pgsqlseq(void)
 	pgsql_seqsync("gw_orders",          "orderid",        "ordeid_seq");
 	pgsql_seqsync("gw_orderitems",      "orderitemid",    "ordiid_seq");
 	pgsql_seqsync("gw_products",        "productid",      "prodid_seq");
+	pgsql_seqsync("gw_projects",        "projectid",      "projid_seq");
 	pgsql_seqsync("gw_queries",         "queryid",        "querid_seq");
 	pgsql_seqsync("gw_smtp_relayrules", "relayruleid",    "smtrid_seq");
 	pgsql_seqsync("gw_tasks",           "taskid",         "taskid_seq");
@@ -401,6 +408,7 @@ int init_sqlite(void)
 	sqlUpdate(0, "DROP TABLE gw_orders;");
 	sqlUpdate(0, "DROP TABLE gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE gw_products;");
+	sqlUpdate(0, "DROP TABLE gw_projects;");
 	sqlUpdate(0, "DROP TABLE gw_queries;");
 	sqlUpdate(0, "DROP TABLE gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE gw_tasks;");
@@ -433,6 +441,7 @@ int init_sqlite(void)
 	if (sqlUpdate(1, SQLITEDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
 	if (sqlUpdate(1, SQLITEDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, SQLITEDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, SQLITEDB_PROJECTS)<0)        { printf("\r\nError inserting gw_projects\r\n");        return -1; }
 	if (sqlUpdate(1, SQLITEDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
 	if (sqlUpdate(1, SQLITEDB_SMTP_RELAYRULES)<0) { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, SQLITEDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
@@ -494,10 +503,22 @@ int table_check()
 	}
 
 	/* Assign all orphaned records to domain 1 */
-
 	sqlUpdatef(1, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
 	sqlUpdatef(1, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
-
+	sqlUpdatef(1, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_bookmarkfolders SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_mailaccounts SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_mailfolders SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_mailheaders SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_orders SET obj_did = 1 WHERE obj_did = 0");
+	sqlUpdatef(1, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
+	/* Update the db version */
 	sqlUpdatef(1, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
 	return 0;
 }
