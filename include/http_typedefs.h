@@ -108,6 +108,8 @@ typedef struct {
 	short int  user_menustyle;
 	short int  user_maxlist;
 	short int  user_timezone;
+	char       user_language[4];
+	char       user_theme[40];
 	WEBMAIL   *wm;
 	// INCOMING DATA
 	short int cgi_lite;

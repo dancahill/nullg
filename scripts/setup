@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.5"
+MAIN_TITLE="NullLogic Groupware Setup v1.3.6"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"

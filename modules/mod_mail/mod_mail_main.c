@@ -465,6 +465,9 @@ void webmailread(CONN *sid)
 	strftime(curdate, 30, "%B %d, %Y %I:%M %p", gmtime(&unixdate));
 	printht(sid, "%s", curdate);
 	prints(sid, "&nbsp;</TD></TR>\n");
+	if (strlen(header.scanresult)) {
+		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP NOWRAP>&nbsp;Scan Result&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;%s&nbsp;</TD></TR>\n", header.scanresult);
+	}
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");

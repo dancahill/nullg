@@ -153,6 +153,7 @@ int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header)
 	snprintf(header->contenttype, sizeof(header->contenttype)-1, "%s", sql_getvalue(sqr, tuple, 22));
 	snprintf(header->boundary,    sizeof(header->boundary)-1,    "%s", sql_getvalue(sqr, tuple, 23));
 	snprintf(header->encoding,    sizeof(header->encoding)-1,    "%s", sql_getvalue(sqr, tuple, 24));
+	snprintf(header->scanresult,  sizeof(header->scanresult)-1,  "%s", sql_getvalue(sqr, tuple, 25));
 	ptemp=header->From;
 	while ((*ptemp)&&(strlen(header->FromName)<sizeof(header->FromName)-1)) {
 		if (*ptemp=='<') break;

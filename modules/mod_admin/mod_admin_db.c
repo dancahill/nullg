@@ -200,27 +200,29 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	user->prefmenustyle=atoi(sql_getvalue(sqr, 0, 34));
 	user->preftimezone=atoi(sql_getvalue(sqr, 0, 35));
 	user->prefgeozone=atoi(sql_getvalue(sqr, 0, 36));
-	strncpy(user->availability,     sql_getvalue(sqr, 0, 37), sizeof(user->availability)-1);
-	strncpy(user->surname,          sql_getvalue(sqr, 0, 38), sizeof(user->surname)-1);
-	strncpy(user->givenname,        sql_getvalue(sqr, 0, 39), sizeof(user->givenname)-1);
-	strncpy(user->jobtitle,         sql_getvalue(sqr, 0, 40), sizeof(user->jobtitle)-1);
-	strncpy(user->division,         sql_getvalue(sqr, 0, 41), sizeof(user->division)-1);
-	strncpy(user->supervisor,       sql_getvalue(sqr, 0, 42), sizeof(user->supervisor)-1);
-	strncpy(user->address,          sql_getvalue(sqr, 0, 43), sizeof(user->address)-1);
-	strncpy(user->locality,         sql_getvalue(sqr, 0, 44), sizeof(user->locality)-1);
-	strncpy(user->region,           sql_getvalue(sqr, 0, 45), sizeof(user->region)-1);
-	strncpy(user->country,          sql_getvalue(sqr, 0, 46), sizeof(user->country)-1);
-	strncpy(user->postalcode,       sql_getvalue(sqr, 0, 47), sizeof(user->postalcode)-1);
-	strncpy(user->homenumber,       sql_getvalue(sqr, 0, 48), sizeof(user->homenumber)-1);
-	strncpy(user->worknumber,       sql_getvalue(sqr, 0, 49), sizeof(user->worknumber)-1);
-	strncpy(user->faxnumber,        sql_getvalue(sqr, 0, 50), sizeof(user->faxnumber)-1);
-	strncpy(user->cellnumber,       sql_getvalue(sqr, 0, 51), sizeof(user->cellnumber)-1);
-	strncpy(user->pagernumber,      sql_getvalue(sqr, 0, 52), sizeof(user->pagernumber)-1);
-	strncpy(user->email,            sql_getvalue(sqr, 0, 53), sizeof(user->email)-1);
-	strncpy(user->birthdate,        sql_getvalue(sqr, 0, 54), 10);
-	strncpy(user->hiredate,         sql_getvalue(sqr, 0, 55), 10);
-	strncpy(user->sin,              sql_getvalue(sqr, 0, 56), sizeof(user->sin)-1);
-	strncpy(user->isactive,         sql_getvalue(sqr, 0, 57), sizeof(user->isactive)-1);
+	strncpy(user->preflanguage,     sql_getvalue(sqr, 0, 37), sizeof(user->preflanguage)-1);
+	strncpy(user->preftheme,        sql_getvalue(sqr, 0, 38), sizeof(user->preftheme)-1);
+	strncpy(user->availability,     sql_getvalue(sqr, 0, 39), sizeof(user->availability)-1);
+	strncpy(user->surname,          sql_getvalue(sqr, 0, 40), sizeof(user->surname)-1);
+	strncpy(user->givenname,        sql_getvalue(sqr, 0, 41), sizeof(user->givenname)-1);
+	strncpy(user->jobtitle,         sql_getvalue(sqr, 0, 42), sizeof(user->jobtitle)-1);
+	strncpy(user->division,         sql_getvalue(sqr, 0, 43), sizeof(user->division)-1);
+	strncpy(user->supervisor,       sql_getvalue(sqr, 0, 44), sizeof(user->supervisor)-1);
+	strncpy(user->address,          sql_getvalue(sqr, 0, 45), sizeof(user->address)-1);
+	strncpy(user->locality,         sql_getvalue(sqr, 0, 46), sizeof(user->locality)-1);
+	strncpy(user->region,           sql_getvalue(sqr, 0, 47), sizeof(user->region)-1);
+	strncpy(user->country,          sql_getvalue(sqr, 0, 48), sizeof(user->country)-1);
+	strncpy(user->postalcode,       sql_getvalue(sqr, 0, 49), sizeof(user->postalcode)-1);
+	strncpy(user->homenumber,       sql_getvalue(sqr, 0, 50), sizeof(user->homenumber)-1);
+	strncpy(user->worknumber,       sql_getvalue(sqr, 0, 51), sizeof(user->worknumber)-1);
+	strncpy(user->faxnumber,        sql_getvalue(sqr, 0, 52), sizeof(user->faxnumber)-1);
+	strncpy(user->cellnumber,       sql_getvalue(sqr, 0, 53), sizeof(user->cellnumber)-1);
+	strncpy(user->pagernumber,      sql_getvalue(sqr, 0, 54), sizeof(user->pagernumber)-1);
+	strncpy(user->email,            sql_getvalue(sqr, 0, 55), sizeof(user->email)-1);
+	strncpy(user->birthdate,        sql_getvalue(sqr, 0, 56), 10);
+	strncpy(user->hiredate,         sql_getvalue(sqr, 0, 57), 10);
+	strncpy(user->sin,              sql_getvalue(sqr, 0, 58), sizeof(user->sin)-1);
+	strncpy(user->isactive,         sql_getvalue(sqr, 0, 59), sizeof(user->isactive)-1);
 	if (strlen(user->availability)==0) {
 		strncpy(user->availability, "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(user->availability)-1);
 	}
@@ -238,6 +240,12 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	if (user->authwebmail&A_ADMIN) user->authwebmail=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 	if (user->prefdaylength+user->prefdaystart>24) user->prefdaylength=24-user->prefdaystart;
 	sql_freeresult(sqr);
+	if (strlen(user->preflanguage)==0) {
+		snprintf(user->preflanguage, sizeof(user->preflanguage)-1, "en");
+	}
+	if (strlen(user->preftheme)==0) {
+		snprintf(user->preftheme, sizeof(user->preftheme)-1, "default");
+	}
 	return 0;
 }
 

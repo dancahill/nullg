@@ -344,6 +344,8 @@ typedef struct {
 	int prefmenustyle;
 	short int preftimezone;
 	short int prefgeozone;
+	char preflanguage[12];
+	char preftheme[12];
 	char availability[169];
 	char surname[51];
 	char givenname[51];

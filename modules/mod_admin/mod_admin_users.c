@@ -199,6 +199,8 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n");
 	htselect_zone(sid, user->prefgeozone);
 	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preflanguage    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preflanguage));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preftheme   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preftheme));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
@@ -627,6 +629,8 @@ void adminusersave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "PREFMAXLIST"))!=NULL) user.prefmaxlist=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFTIMEZONE"))!=NULL) user.preftimezone=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFGEOZONE"))!=NULL) user.prefgeozone=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "PREFLANGUAGE"))!=NULL) snprintf(user.preflanguage, sizeof(user.preflanguage)-1, "%s", ptemp);
+	if ((ptemp=getpostenv(sid, "PREFTHEME"))!=NULL) snprintf(user.preftheme, sizeof(user.preftheme)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "SURNAME"))!=NULL) snprintf(user.surname, sizeof(user.surname)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "GIVENNAME"))!=NULL) snprintf(user.givenname, sizeof(user.givenname)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "JOBTITLE"))!=NULL) snprintf(user.jobtitle, sizeof(user.jobtitle)-1, "%s", ptemp);
@@ -692,7 +696,7 @@ void adminusersave(CONN *sid)
 		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (user.userid<1) user.userid=1;
-		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
+		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", user.userid, curdate, curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
@@ -721,6 +725,8 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.prefmenustyle);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.preftimezone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.prefgeozone);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.preflanguage));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.preftheme));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.availability);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.surname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.givenname));
@@ -794,6 +800,8 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "prefmenustyle = '%d', ", user.prefmenustyle);
 		strncatf(query, sizeof(query)-strlen(query)-1, "preftimezone = '%d', ", user.preftimezone);
 		strncatf(query, sizeof(query)-strlen(query)-1, "prefgeozone = '%d', ", user.prefgeozone);
+		strncatf(query, sizeof(query)-strlen(query)-1, "preflanguage = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.preflanguage));
+		strncatf(query, sizeof(query)-strlen(query)-1, "preftheme = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.preftheme));
 		strncatf(query, sizeof(query)-strlen(query)-1, "availability = '%s', ", user.availability);
 		strncatf(query, sizeof(query)-strlen(query)-1, "surname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.surname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "givenname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.givenname));

@@ -18,7 +18,7 @@
 #include "http_mod.h"
 #include "mod_mail.h"
 
-int webmailheader(CONN *sid, wmheader *header)
+int webmailheader(CONN *sid, wmheader *header, FILE **fp)
 {
 	char inbuffer[1024];
 	char *prevheader=NULL;
@@ -26,8 +26,14 @@ int webmailheader(CONN *sid, wmheader *header)
 	int prevheadersize=0;
 
 	header->status[0]='n';
+	memset(header->boundary, 0, sizeof(header->boundary));
 	for (;;) {
-		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, &sid->dat->wm->socket)<0) return -1;
+		if (fp!=NULL) {
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
+		} else {
+			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, &sid->dat->wm->socket)<0) return -1;
+		}
 		striprn(inbuffer);
 		if (strcmp(inbuffer, "")==0) break;
 		if (strncasecmp(inbuffer, "Reply-To:", 9)==0) {

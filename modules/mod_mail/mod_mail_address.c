@@ -73,11 +73,11 @@ void wmaddr_list(CONN *sid)
 	prints(sid, "	window.close();\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "//--></SCRIPT>\r\n");
-	if ((sqr1=sql_queryf("SELECT userid, surname, givenname, email from gw_users ORDER BY surname, givenname ASC"))<0) return;
+	if ((sqr1=sql_queryf("SELECT userid, surname, givenname, email from gw_users WHERE domainid = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts ORDER BY surname, givenname ASC"))<0) return;
+		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts WHERE obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
 	} else {
-		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if ((sqr2=sql_queryf("SELECT contactid, surname, givenname, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 	}
 	if ((sql_numtuples(sqr1)<1)&&(sql_numtuples(sqr2)<1)) {
 		sql_freeresult(sqr1);

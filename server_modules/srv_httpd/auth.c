@@ -122,6 +122,8 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	sid->dat->user_maxlist       = atoi(sql_getvaluebyname(sqr, 0, "prefmaxlist"));
 	sid->dat->user_menustyle     = atoi(sql_getvaluebyname(sqr, 0, "prefmenustyle"));
 	sid->dat->user_timezone      = atoi(sql_getvaluebyname(sqr, 0, "preftimezone"));
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "%s", sql_getvaluebyname(sqr, 0, "preflanguage"));
+	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "%s", sql_getvaluebyname(sqr, 0, "preftheme"));
 	if (!module_exists(sid, "mod_mail")) {
 		sid->dat->user_maildefault=0;
 	}
@@ -138,6 +140,12 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	if (sid->dat->user_daylength>24) sid->dat->user_daylength=24;
 	if (sid->dat->user_maxlist<5)    sid->dat->user_maxlist=5;
 	if (sid->dat->user_menustyle<0)  sid->dat->user_menustyle=0;
+	if (strlen(sid->dat->user_language)==0) {
+		snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+	}
+	if (strlen(sid->dat->user_theme)==0) {
+		snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
+	}
 	if (settoken) {
 		t=time(NULL)+604800;
 		memset(timebuffer, 0, sizeof(timebuffer));

@@ -407,6 +407,8 @@ CREATE TABLE gw_mailheaders (\n\
 	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_scanresult	varchar(100)	NOT NULL DEFAULT '',\n\
+	msg_text	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailheaderid, accountid)\n\
 );"
 
@@ -583,6 +585,8 @@ CREATE TABLE gw_users (\n\
 	prefmenustyle	int4		NOT NULL DEFAULT 1,\n\
 	preftimezone	int4		NOT NULL DEFAULT 0,\n\
 	prefgeozone	int4		NOT NULL DEFAULT 0,\n\
+	preflanguage	varchar(4)	NOT NULL DEFAULT 'en',\n\
+	preftheme	varchar(40)	NOT NULL DEFAULT 'default',\n\
 	availability	varchar(170)	NOT NULL DEFAULT '',\n\
 "
 

@@ -37,14 +37,14 @@ void mod_html_header(CONN *sid, char *title)
 	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "TH       { background-color: #0000A0; color: #FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "</STYLE>\r\n");
-	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/css/style.css\">\r\n");
+	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n", sid->dat->user_theme);
 	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
 		prints(sid, "<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/groupware/javascript/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n");
 	}
 	prints(sid, "</HEAD>\r\n");
-	prints(sid, "<BODY BACKGROUND=\"/groupware/images/bgmain.gif\"");
+	prints(sid, "<BODY BACKGROUND=\"/groupware/themes/%s/bg_main.gif\"", sid->dat->user_theme);
 	prints(sid, " BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"");
-	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0");
+	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\"");
 	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
 		prints(sid, " onLoad=init();");
 	}
@@ -95,7 +95,7 @@ void mod_html_topmenu(CONN *sid, int menu)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
 	prints(sid, "function ShowHelp()\r\n");
 	prints(sid, "{\r\n");
-	prints(sid, "	window.open('/groupware/help/" LANGUAGE_CODE "/");
+	prints(sid, "	window.open('/groupware/help/%s/", sid->dat->user_language);
 	switch (menu) {
 		case MENU_ADMIN:     prints(sid, "ch02-00.html"); break;
 		case MENU_BOOKMARKS: prints(sid, "ch03-00.html"); break;
@@ -594,6 +594,7 @@ void mod_html_menuframe(CONN *sid)
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic Groupware Menu</TITLE>\r\n");
+	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n", sid->dat->user_theme);
 	prints(sid, "<STYLE TYPE=text/css>\r\n");
 	prints(sid, "DIV     { position:absolute; }\n");
 	prints(sid, "A       { font-family: Arial, Verdana, sans-serif; font-size=9pt; color: #FFFFFF; text-decoration: none}\n");
@@ -627,7 +628,7 @@ void mod_html_menuframe(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	if (sid->dat->user_menustyle==1) {
 		prints(sid, "</HEAD>\r\n");
-		prints(sid, "<BODY BACKGROUND=/groupware/images/bgborder.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF onContextMenu='return false'>\r\n");
+		prints(sid, "<BODY BACKGROUND=/groupware/themes/%s/bg_menu.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false'>\r\n", sid->dat->user_theme);
 		prints(sid, "<CENTER>\r\n");
 		prints(sid, "<A HREF=%s/frames/motd target='gwmain' onclick=\"window.open('%s/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/groupware/images/groupware.gif HEIGHT=50 WIDTH=125 ALT='%s logged in'></A><BR><BR>\r\n", sid->dat->in_ScriptName, sid->dat->in_ScriptName, sid->dat->user_username);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");
@@ -694,7 +695,7 @@ void mod_html_menuframe(CONN *sid)
 		prints(sid, "o.showPanel(0);\n");
 		prints(sid, "// -->\r\n</SCRIPT>\r\n");
 		prints(sid, "</HEAD>\r\n");
-		prints(sid, "<BODY BACKGROUND=/groupware/images/bgborder.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF onContextMenu='return false' onLoad=resize_op5(); onResize=myOnResize();>\r\n");
+		prints(sid, "<BODY BACKGROUND=/groupware/themes/%s/bg_menu.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false' onLoad=resize_op5(); onResize=myOnResize();>\r\n", sid->dat->user_theme);
 		prints(sid, "</BODY>\r\n</HTML>\r\n");
 	}
 	return;

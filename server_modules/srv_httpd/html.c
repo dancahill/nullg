@@ -39,10 +39,10 @@ void htpage_header(CONN *sid, char *title)
 	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "TH       { background-color: 0000A0; color: FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "</STYLE>\r\n");
-	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/%s/css/style.css\">\r\n", SERVER_BASENAME);
+	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/%s/themes/%s/style.css\">\r\n", SERVER_BASENAME, sid->dat->user_theme);
 	prints(sid, "</HEAD>\r\n");
-	prints(sid, "<BODY BACKGROUND=\"/%s/images/bgmain.gif\" BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"", SERVER_BASENAME);
-	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0>\r\n", SERVER_BASENAME);
+	prints(sid, "<BODY BACKGROUND=\"/%s/themes/%s/bgmain.gif\" BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"", SERVER_BASENAME, sid->dat->user_theme);
+	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\">\r\n", SERVER_BASENAME);
 }
 
 void htpage_footer(CONN *sid)
