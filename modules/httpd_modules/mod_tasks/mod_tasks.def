@@ -1,6 +1,0 @@
-LIBRARY		mod_tasks
-VERSION		1.3.25
-EXPORTS
-	mod_init
-	mod_main
-	mod_exit

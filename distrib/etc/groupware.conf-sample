@@ -28,12 +28,13 @@
 ;  ssl cert file     = /usr/local/nullgroupware/etc/ssl-cert.pem
 ;  ssl key file      = /usr/local/nullgroupware/etc/ssl-priv.pem
 
-   load module       = httpd
+   load module       = ghttpd
+;  load module       = httpd
    load module       = pop3d
    load module       = smtpd
    load module       = smtpq
 
-[httpd]
+[ghttpd]
    interface         = INADDR_ANY
    port              = 4110
 ;  ssl port          = 4112
@@ -61,6 +62,18 @@
    load module       = mod_searches
    load module       = mod_tasks
    load module       = mod_xmlrpc
+
+[httpd]
+   interface         = INADDR_ANY
+   port              = 80
+;  ssl port          = 443
+   max connections   = 50
+   max keepalive     = 15
+   max idle          = 120
+   max post size     = 33554432
+
+   load module       = mod_cgi
+;  load module       = mod_php
 
 [pop3d]
    interface         = INADDR_ANY

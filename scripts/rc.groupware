@@ -37,7 +37,8 @@ groupware_start() {
 	else
 		echo -n "Starting NullLogic Groupware services: "
 		cd ${BASE_PATH}/bin
-		echo -n "httpd " ; nullgw-server httpd
+		echo -n "ghttpd " ; nullgw-server ghttpd
+#		echo -n "httpd " ; nullgw-server httpd
 #		echo -n "pop3d " ; nullgw-server pop3d
 #		echo -n "smtpd " ; nullgw-server smtpd
 #		echo -n "smtpq " ; nullgw-server smtpq

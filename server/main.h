@@ -80,10 +80,10 @@
 	#include <sys/wait.h>
 	#define closesocket close
 #endif
-#include "ssl.h"
+#include "common/ssl.h"
 
-#include "defines.h"
-#include "typedefs.h"
+#include "common/defines.h"
+#include "common/typedefs.h"
 #include "functions.h"
 
 #ifdef MAIN_GLOBALS

@@ -15,8 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "core_mod.h"
-#include "http_typedefs.h"
+#include "core/mod.h"
+#include "httpd/typedefs.h"
 #include "httpd_lang.h"
 
 #ifdef WIN32
@@ -59,6 +59,7 @@ time_t time_wmgetdate(char *src);
 /* html.c functions */
 void htpage_header(CONN *sid, char *title);
 void htpage_footer(CONN *sid);
+int  htpage_dirlist(CONN *sid);
 void htpage_login(CONN *sid);
 void htpage_logout(CONN *sid);
 void htpage_frameset(CONN *sid);

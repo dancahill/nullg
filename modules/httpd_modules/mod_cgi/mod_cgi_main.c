@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SRVMOD_MAIN 1
-#include "http_mod.h"
+#include "httpd/mod.h"
 #ifndef WIN32
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 
@@ -167,6 +168,7 @@ DllExport int mod_main(CONN *sid)
 		{ ".pl",  "/usr/bin/perl" },
 		{ NULL,   NULL }
 	};
+	union wait status;
 	int pset1[2];
 	int pset2[2];
 #endif
@@ -353,6 +355,7 @@ DllExport int mod_main(CONN *sid)
 #else
 	close(local.in);
 	close(local.out);
+	wait(&status);
 #endif
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);

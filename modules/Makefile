@@ -3,10 +3,12 @@
 include ../Rules.mak
 
 all:
-	@echo "core_modules"  ; cd core_modules  ; $(MAKE)
-	@echo "httpd_modules" ; cd httpd_modules ; $(MAKE)
+	@echo "core_modules"   ; cd core_modules   ; $(MAKE)
+	@echo "ghttpd_modules" ; cd ghttpd_modules ; $(MAKE)
+	@echo "httpd_modules"  ; cd httpd_modules  ; $(MAKE)
 
 clean:
-	@cd core_modules  ; $(MAKE) clean
-	@cd httpd_modules ; $(MAKE) clean
+	@cd core_modules   ; $(MAKE) clean
+	@cd ghttpd_modules ; $(MAKE) clean
+	@cd httpd_modules  ; $(MAKE) clean
 	@rm -f *~

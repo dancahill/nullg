@@ -3,12 +3,14 @@
 include ../../Rules.mak
 
 all:
+	@echo " ghttpd" ; cd ghttpd ; $(MAKE)
 	@echo " httpd" ; cd httpd ; $(MAKE)
 	@echo " pop3d" ; cd pop3d ; $(MAKE)
 	@echo " smtpd" ; cd smtpd ; $(MAKE)
 	@echo " smtpq" ; cd smtpq ; $(MAKE)
 
 clean:
+	@cd ghttpd ; $(MAKE) clean
 	@cd httpd ; $(MAKE) clean
 	@cd pop3d ; $(MAKE) clean
 	@cd smtpd ; $(MAKE) clean

@@ -54,8 +54,8 @@ int conf_read()
 {
 	memset((char *)&mod_config, 0, sizeof(mod_config));
 	strncpy(http_proc.config.http_interface, "INADDR_ANY", sizeof(http_proc.config.http_interface)-1);
-	http_proc.config.http_port         = 4110;
-	http_proc.config.http_sslport      = 4112;
+	http_proc.config.http_port         = 80;
+	http_proc.config.http_sslport      = 443;
 	http_proc.config.http_maxconn      = 50;
 	http_proc.config.http_maxkeepalive = 15;
 	http_proc.config.http_maxidle      = 120;

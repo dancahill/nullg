@@ -754,8 +754,6 @@ void http_dorequest(CONN *sid)
 	char pageuri[200];
 	unsigned char file[255];
 	unsigned char htdir[50];
-	char *ptemp;
-	int relocate=0;
 
 	DEBUG_IN(sid, "dorequest()");
 	if (http_proc.RunAsCGI) {
@@ -778,71 +776,15 @@ void http_dorequest(CONN *sid)
 			return;
 		}
 	}
-	if (strncmp(sid->dat->in_RequestURI, "/xml-rpc/", 9)==0) {
-		if (module_menucall(sid)) {
-			DEBUG_OUT(sid, "dorequest()");
-			return;
-		}
-	}
 	snprintf(sid->dat->out_ContentType, sizeof(sid->dat->out_ContentType)-1, "text/html");
-	if (auth_getcookie(sid)!=0) {
-		if (auth_setcookie(sid)==0) {
-			db_log_activity(sid, "login", 0, "login", "%s - Login: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
-			relocate=1;
-		} else if ((getgetenv(sid, "USERNAME")!=NULL)||(getpostenv(sid, "USERNAME")!=NULL)) {
-			db_log_activity(sid, "login", 0, "failed login", "%s - Login failed: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
-			htpage_login(sid);
-			DEBUG_OUT(sid, "dorequest()");
-			return;
-		} else {
-			htpage_login(sid);
-			DEBUG_OUT(sid, "dorequest()");
-			return;
-		}
-	}
 	memset(pageuri, 0, sizeof(pageuri));
-	if ((ptemp=getpostenv(sid, "PAGEURI"))!=NULL) {
-		snprintf(pageuri, sizeof(pageuri)-1, "%s", ptemp);
-	} else {
-		snprintf(pageuri, sizeof(pageuri)-1, "%s%s", sid->dat->in_ScriptName, sid->dat->in_RequestURI);
-	}
-	if ((ptemp=p_strcasestr(pageuri, "username"))!=NULL) { *ptemp='\0'; relocate=1; }
-	if ((ptemp=p_strcasestr(pageuri, "password"))!=NULL) { *ptemp='\0'; relocate=1; }
-	if (pageuri[strlen(pageuri)-1]=='&') pageuri[strlen(pageuri)-1]='\0';
-	if (pageuri[strlen(pageuri)-1]=='?') pageuri[strlen(pageuri)-1]='\0';
-	if (relocate) {
-		/*
-		 * maybe someday M$ will fix their web server.
-		 * Until then, it's _very_ unsafe to use redirects.
-		 */
-/*
-		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
-		send_header(sid, 0, 303, "1", "text/html", -1, -1);
-*/
-		send_header(sid, 0, 200, "1", "text/html", -1, -1);
-		prints(sid, "<HTML><HEAD></HEAD><BODY>\n");
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\nlocation.replace('%s');\r\n// -->\r\n</SCRIPT>\r\n", pageuri);
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL='%s'\">\r\n", pageuri);
-		/* prints(sid, "<BR><CENTER>The requested resource can be found at <A HREF=%s>%s</A>.</CENTER>\n", pageuri, pageuri); */
-		prints(sid, "</BODY></HTML>\n");
-		DEBUG_OUT(sid, "dorequest()");
-		return;
-	}
-	if (strcmp(sid->dat->in_RequestURI, "/")==0) {
-		if (sid->dat->user_menustyle==0) {
-			htpage_motd(sid);
-		} else {
-			htpage_frameset(sid);
-		}
-		DEBUG_OUT(sid, "dorequest()");
-		return;
-	}
-	if (strncmp(sid->dat->in_RequestURI, "/logout", 7)==0) {
-		auth_logout(sid);
-	} else if (module_menucall(sid)) {
+	if (module_menucall(sid)) {
 		DEBUG_OUT(sid, "dorequest()");
 		return;
 	} else if (filesend(sid, file)==0) {
+		DEBUG_OUT(sid, "dorequest()");
+		return;
+	} else if (htpage_dirlist(sid)==0) {
 		DEBUG_OUT(sid, "dorequest()");
 		return;
 	} else {

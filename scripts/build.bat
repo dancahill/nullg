@@ -6,6 +6,7 @@ MKDIR obj
 MKDIR distrib\bin
 MKDIR distrib\lib
 MKDIR distrib\lib\core
+MKDIR distrib\lib\ghttpd
 MKDIR distrib\lib\httpd
 COPY SQLITE\LIBSQLITE.DLL distrib\lib
 CLS
@@ -22,6 +23,9 @@ CD ..\SERVER
 NMAKE /C /S /F SERVER.MAK
 CD ..\MODULES\CORE_MODULES
 CALL MAKE.BAT
+CD ..\GHTTPD_MODULES
+CALL MAKE.BAT
+CD ..\..
 CD ..\HTTPD_MODULES
 CALL MAKE.BAT
 CD ..\..

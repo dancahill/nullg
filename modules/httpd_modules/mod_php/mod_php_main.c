@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SRVMOD_MAIN 1
-#include "http_mod.h"
+#include "httpd/mod.h"
 #include "mod_php.h"
 
 static CONN *get_sid()

@@ -39,7 +39,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_admin"=".\modules\httpd_modules\mod_admin\mod_admin.dsp" - Package Owner=<4>
+Project: "mod_admin"=".\modules\ghttpd_modules\mod_admin\mod_admin.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -51,7 +51,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_bookmarks"=".\modules\httpd_modules\mod_bookmarks\mod_bookmarks.dsp" - Package Owner=<4>
+Project: "mod_bookmarks"=".\modules\ghttpd_modules\mod_bookmarks\mod_bookmarks.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -63,7 +63,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_calendar"=".\modules\httpd_modules\mod_calendar\mod_calendar.dsp" - Package Owner=<4>
+Project: "mod_calendar"=".\modules\ghttpd_modules\mod_calendar\mod_calendar.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -75,7 +75,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_calls"=".\modules\httpd_modules\mod_calls\mod_calls.dsp" - Package Owner=<4>
+Project: "mod_calls"=".\modules\ghttpd_modules\mod_calls\mod_calls.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -87,7 +87,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_cgi"=".\modules\httpd_modules\mod_cgi\mod_cgi.dsp" - Package Owner=<4>
+Project: "mod_cgi"=".\modules\ghttpd_modules\mod_cgi\mod_cgi.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -99,7 +99,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_contacts"=".\modules\httpd_modules\mod_contacts\mod_contacts.dsp" - Package Owner=<4>
+Project: "mod_contacts"=".\modules\ghttpd_modules\mod_contacts\mod_contacts.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -111,7 +111,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_files"=".\modules\httpd_modules\mod_files\mod_files.dsp" - Package Owner=<4>
+Project: "mod_files"=".\modules\ghttpd_modules\mod_files\mod_files.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -123,7 +123,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_forums"=".\modules\httpd_modules\mod_forums\mod_forums.dsp" - Package Owner=<4>
+Project: "mod_forums"=".\modules\ghttpd_modules\mod_forums\mod_forums.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -135,7 +135,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_html"=".\modules\httpd_modules\mod_html\mod_html.dsp" - Package Owner=<4>
+Project: "mod_html"=".\modules\ghttpd_modules\mod_html\mod_html.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -147,7 +147,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_mail"=".\modules\httpd_modules\mod_mail\mod_mail.dsp" - Package Owner=<4>
+Project: "mod_mail"=".\modules\ghttpd_modules\mod_mail\mod_mail.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -159,7 +159,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_messages"=".\modules\httpd_modules\mod_messages\mod_messages.dsp" - Package Owner=<4>
+Project: "mod_messages"=".\modules\ghttpd_modules\mod_messages\mod_messages.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -171,7 +171,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_notes"=".\modules\httpd_modules\mod_notes\mod_notes.dsp" - Package Owner=<4>
+Project: "mod_notes"=".\modules\ghttpd_modules\mod_notes\mod_notes.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -183,7 +183,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_orders"=".\modules\httpd_modules\mod_orders\mod_orders.dsp" - Package Owner=<4>
+Project: "mod_orders"=".\modules\ghttpd_modules\mod_orders\mod_orders.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -195,7 +195,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_profile"=".\modules\httpd_modules\mod_profile\mod_profile.dsp" - Package Owner=<4>
+Project: "mod_profile"=".\modules\ghttpd_modules\mod_profile\mod_profile.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -207,7 +207,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_searches"=".\modules\httpd_modules\mod_searches\mod_searches.dsp" - Package Owner=<4>
+Project: "mod_searches"=".\modules\ghttpd_modules\mod_searches\mod_searches.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -219,7 +219,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_tasks"=".\modules\httpd_modules\mod_tasks\mod_tasks.dsp" - Package Owner=<4>
+Project: "mod_tasks"=".\modules\ghttpd_modules\mod_tasks\mod_tasks.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -231,7 +231,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_xmlrpc"=".\modules\httpd_modules\mod_xmlrpc\mod_xmlrpc.dsp" - Package Owner=<4>
+Project: "mod_xmlrpc"=".\modules\ghttpd_modules\mod_xmlrpc\mod_xmlrpc.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -244,6 +244,18 @@ Package=<4>
 ###############################################################################
 
 Project: "server"=".\server\server.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "core_ghttpd"=".\modules\core_modules\ghttpd\core_ghttpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

@@ -112,6 +112,11 @@ int config_write(GLOBAL_CONFIG *config)
 	FILE *fp=NULL;
 
 	fixslashes(proc.config_filename);
+	fixslashes(proc.config.dir_base);
+	fixslashes(proc.config.dir_bin);
+	fixslashes(proc.config.dir_etc);
+	fixslashes(proc.config.dir_lib);
+	fixslashes(proc.config.dir_var);
 	if ((fp=fopen(proc.config_filename, "w"))==NULL) return -1;
 	fprintf(fp, "# This file contains system settings for NullLogic Groupware.\n\n");
 	fprintf(fp, "[global]\n");
@@ -128,11 +133,12 @@ int config_write(GLOBAL_CONFIG *config)
 	fprintf(fp, "   var path          = \"%s\"\n", config->dir_var);
 	fprintf(fp, "   sql server type   = \"%s\"\n", config->sql_type);
 	fprintf(fp, "\n");
-	fprintf(fp, "   load module       = httpd\n");
-	fprintf(fp, "   load module       = pop3d\n");
-	fprintf(fp, "   load module       = smtpd\n");
-	fprintf(fp, "   load module       = smtpq\n");
-	fprintf(fp, "\n[httpd]\n");
+	fprintf(fp, "   load module       = ghttpd\n");
+	fprintf(fp, ";  load module       = httpd\n");
+	fprintf(fp, ";  load module       = pop3d\n");
+	fprintf(fp, ";  load module       = smtpd\n");
+	fprintf(fp, ";  load module       = smtpq\n");
+	fprintf(fp, "\n[ghttpd]\n");
 	fprintf(fp, "\n");
 	fprintf(fp, "   load module       = mod_html\n");
 	fprintf(fp, "   load module       = mod_admin\n");

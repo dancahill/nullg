@@ -1,0 +1,6 @@
+LIBRARY		mod_projects
+VERSION		1.3.26
+EXPORTS
+	mod_init
+	mod_main
+	mod_exit

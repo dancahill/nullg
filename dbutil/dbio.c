@@ -16,11 +16,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "main.h"
-#include "schema/data.h"
-#include "schema/mysql.h"
-#include "schema/odbc.h"
-#include "schema/pgsql.h"
-#include "schema/sqlite.h"
+#include "sql/schema/data.h"
+#include "sql/schema/mysql.h"
+#include "sql/schema/odbc.h"
+#include "sql/schema/pgsql.h"
+#include "sql/schema/sqlite.h"
 
 int dump_table(FILE *fp, char *table, char *index)
 {

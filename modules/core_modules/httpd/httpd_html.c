@@ -55,6 +55,96 @@ void htpage_footer(CONN *sid)
 	prints(sid, "</BODY>\r\n</HTML>\r\n");
 }
 
+int htpage_dirlist(CONN *sid)
+{
+#ifdef WIN32
+	struct	direct *dentry;
+#else
+	struct	dirent *dentry;
+#endif
+	DIR	*handle;
+	char	file[1024];
+	char	index[1024];
+	char	showfile[1024];
+	struct	stat sb;
+	char	*directory;
+	char timebuf[100];
+	time_t t;
+
+	if (strncmp(sid->dat->in_RequestURI, "/", 1)!=0) {
+		return -1;
+	}
+	directory=sid->dat->in_RequestURI+1;
+	snprintf(file, sizeof(file)-1, "%s/%s", config->dir_var_htdocs, directory);
+	decodeurl(file);
+	fixslashes(file);
+	while ((file[strlen(file)-1]=='\\')||(file[strlen(file)-1]=='/')) { file[strlen(file)-1]='\0'; };
+	if (strstr(file, "..")!=NULL) return -1;
+	snprintf(index, sizeof(index)-1, "%s/%s/index.html", config->dir_var_htdocs, directory);
+	decodeurl(index);
+	fixslashes(index);
+	if (stat(index, &sb)==0) {
+		filesend(sid, index);
+		return 0;
+	}
+	snprintf(index, sizeof(index)-1, "%s/%s/index.php", config->dir_var_htdocs, directory);
+	decodeurl(index);
+	fixslashes(index);
+	if (stat(index, &sb)==0) {
+		snprintf(sid->dat->in_ScriptName, sizeof(sid->dat->in_ScriptName)-1, "/%s/index.php", directory);
+//		cgi_main(sid);
+		return 0;
+	}
+	if (stat(file, &sb)!=0) return -1;
+	if (!(sb.st_mode & S_IFDIR)) return filesend(sid, file);
+	t=time((time_t*)0);
+	strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", localtime(&t));
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
+	prints(sid, "<CENTER>\n<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\n");
+	prints(sid, "<TR BGCOLOR=#0000A0><TH COLSPAN=4><FONT COLOR=white>Index of %s</FONT></TH></TR>\n", sid->dat->in_RequestURI);
+	prints(sid, "<TR BGCOLOR=#E0E0E0>");
+	prints(sid, "<TH width=20%%>Filename</TH><TH width=10%%>Size</TH>");
+	prints(sid, "<TH width=10%%>Date</TH><TH width=60%%>Description</TH></TR>\n");
+	handle=opendir(file);
+	while ((dentry=readdir(handle))!=NULL) {
+		snprintf(file, sizeof(file)-1, "%s/%s%s", config->dir_var_htdocs, directory, dentry->d_name);
+		fixslashes(file);
+		stat(file, &sb);
+		if (strcmp(".", dentry->d_name)==0) continue;
+		if ((strcmp("..", dentry->d_name)==0)&&(strcmp("/files/", sid->dat->in_RequestURI)==0)) continue;
+		if (strcmp("..", dentry->d_name)==0) {
+			prints(sid, "<TR BGCOLOR=#F0F0F0><TD COLSPAN=4><IMG SRC=/icons/foldero.gif>");
+			prints(sid, "<A HREF=%s/> Parent Directory</A></TD>\n", dentry->d_name);
+			continue;
+		}
+		strftime(timebuf, sizeof(timebuf), "%b %d %Y %H:%M", localtime(&sb.st_mtime));
+		memset(showfile, 0, sizeof(showfile));
+		snprintf(showfile, sizeof(showfile)-1, "%s", dentry->d_name);
+		prints(sid, "<TR BGCOLOR=#F0F0F0><TD ALIGN=left NOWRAP>");
+		if (sb.st_mode & S_IFDIR) {
+			prints(sid, "<IMG SRC=/icons/folder.gif>&nbsp;<A HREF=");
+			printhex(sid, "%s", showfile);
+			prints(sid, "/>%s/</A></TD>", dentry->d_name);
+		} else {
+			prints(sid, "<IMG SRC=/icons/default.gif>&nbsp;<A HREF=");
+			printhex(sid, "%s", showfile);
+			prints(sid, ">%s</A></TD>", dentry->d_name);
+		}
+		if (sb.st_size>1048576) {
+			prints(sid, "<TD ALIGN=right NOWRAP>%10.1f M</TD>\n", (float)sb.st_size/1048576.0);
+		} else {
+			prints(sid, "<TD ALIGN=right NOWRAP>%10.1f K</TD>\n", (float)sb.st_size/1024.0);
+		}
+		prints(sid, "<TD ALIGN=right NOWRAP>%s</TD>\n", timebuf);
+		prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;</TD></TR>\n");
+	}
+	closedir(handle);
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "</BODY></HTML>\n");
+	return 0;
+}
+
 void htpage_login(CONN *sid)
 {
 	HTMOD_HTML_LOGIN mod_html_login;
