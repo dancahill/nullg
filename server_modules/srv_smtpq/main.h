@@ -46,9 +46,9 @@ typedef struct {
 
 /* auth.c functions */
 int auth_login(CONN *sid, char *username, char *password, int mbox);
-/* smtp.c functions */
-void smtp_dorequest(CONN *sid);
-
+/* smtpc.c functions */
+int smtp_client(FILE *fp);
+/* smtq.c functions */
 #ifdef WIN32
 unsigned _stdcall smtp_spool(void *x);
 #else

@@ -80,6 +80,10 @@ SOURCE=.\mod_mail_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_mail_files.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_mail_filters.c
 # End Source File
 # Begin Source File

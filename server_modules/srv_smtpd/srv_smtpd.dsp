@@ -68,11 +68,11 @@ SOURCE=.\main.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\smtp.c
+SOURCE=.\smtpc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\smtpclient.c
+SOURCE=.\smtpd.c
 # End Source File
 # End Target
 # End Project

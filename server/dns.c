@@ -24,25 +24,6 @@
 #pragma comment(lib, "dnsapi.lib")
 #define BUFFER_LEN 255
 #define MAXBUF 512
-
-char *getmxbyname(char *domain)
-{
-	DNS_FREE_TYPE freetype;
-	DNS_STATUS status;
-	PDNS_RECORD pDnsRecord;
-	char *str;
-
-	freetype=DnsFreeRecordListDeep;
-	status=DnsQuery_A(domain, DNS_TYPE_MX, DNS_QUERY_BYPASS_CACHE, NULL, &pDnsRecord, NULL);
-	if (status) {
-		str=NULL;
-	} else {
-		str=malloc(MAXBUF);
-		_snprintf(str, MAXBUF-1, "%s:", (pDnsRecord->Data.MX.pNameExchange));
-		DnsRecordListFree(pDnsRecord, freetype);
-	}
-	return(str);
-}
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,21 +31,33 @@ char *getmxbyname(char *domain)
 #include <netinet/in.h>
 #include <resolv.h>
 #include <arpa/nameser.h>
-
 #define MAXPACKET	8192	/* max size of packet */
 #define MAXMXHOSTS	20	/* max num of mx records we want to see */
 #define MAXBUF		512
 enum { MAXMXBUFSIZ=(MAXMXHOSTS*(MAXBUF+1)) };
-
 typedef union {
 	HEADER hdr;
 	u_char buf[MAXPACKET];
 } querybuf;
- 
-char *getmxbyname(char *domain)
-{
-	static char hostbuf[MAXMXBUFSIZ];
+#endif
 
+char *dns_getmxbyname(char *dest, int destlen, char *domain)
+{
+#ifdef WIN32
+	DNS_FREE_TYPE freetype;
+	DNS_STATUS status;
+	PDNS_RECORD pDnsRecord;
+
+	freetype=DnsFreeRecordListDeep;
+	status=DnsQuery_A(domain, DNS_TYPE_MX, DNS_QUERY_BYPASS_CACHE, NULL, &pDnsRecord, NULL);
+	if (status) {
+		dest[0]='\0';
+	} else {
+		_snprintf(dest, destlen, "%s", (pDnsRecord->Data.MX.pNameExchange));
+		DnsRecordListFree(pDnsRecord, freetype);
+	}
+#else
+	char hostbuf[MAXMXBUFSIZ];
 	char *MxHosts[MAXMXHOSTS];
 	querybuf answer;		/* answer buffer from nameserver */
 	HEADER *hp;			/* answer buffer header */
@@ -78,9 +71,8 @@ char *getmxbyname(char *domain)
 	register int i;
 	register int j;
 	register int n;
-	char *str;			/* final answer string buffer. */
 
-	str=malloc(MAXBUF);
+	dest[0]='\0';
 	// Query the nameserver to retrieve mx records for the given domain.
 	n=res_search(domain, C_IN, T_MX, (u_char *)&answer, sizeof(answer));
 	if (n<0) {
@@ -133,10 +125,11 @@ char *getmxbyname(char *domain)
 		n = strlen(bp) + 1;
 		bp += n;
 	}
+	if (nmx<1) return NULL;
 	// Sort all records by preference.
-	for (i = 0; i < nmx; i++) {
-		for (j = i + 1; j < nmx; j++) {
-			if (prefer[i] > prefer[j]) {
+	for (i=0;i<nmx;i++) {
+		for (j=i+1;j<nmx;j++) {
+			if (prefer[i]>prefer[j]) {
 				register u_short tmppref;
 				register char *tmphost;
 
@@ -149,10 +142,7 @@ char *getmxbyname(char *domain)
 			}
 		}
 	}
-	for (i = 0; i< nmx; i++){
-		strcat(str, MxHosts[i]);
-		strcat(str, ":");
-	}
-	return(str);
-}
+	snprintf(dest, destlen, "%s", MxHosts[0]);
 #endif
+	return (dest);
+}

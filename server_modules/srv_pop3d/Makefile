@@ -3,7 +3,7 @@
 include ../../Rules.mak
 
 CFLAGS  = $(LIB_CFLAGS)
-OBJECTS = auth.o main.o pop3.o
+OBJECTS = auth.o main.o pop3d.o
 TARGET  = $(LIB_TARGETDIR)/srv_pop3d.so
 
 all: srv_http

@@ -22,6 +22,7 @@ static FUNCTION functions[]={
 	{ "config_write",		config_write			},
 	{ "decode_base64",		decode_base64			},
 	{ "log_access",			log_access			},
+	{ "dns_getmxbyname",		dns_getmxbyname			},
 	{ "domain_getname",		domain_getname			},
 	{ "domain_getid",		domain_getid			},
 	{ "log_error",			log_error			},

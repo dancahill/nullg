@@ -68,7 +68,7 @@ SOURCE=.\main.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\pop3.c
+SOURCE=.\pop3d.c
 # End Source File
 # End Target
 # End Project

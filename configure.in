@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(nullgroupware, 1.3.12, nulllogic@users.sourceforge.net)
+AC_INIT(nullgroupware, 1.3.13, nulllogic@users.sourceforge.net)
 AC_CONFIG_HEADER([include/config.h])
 AC_CANONICAL_HOST
 
@@ -20,6 +20,7 @@ if test "$check_pthread" != no; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
+AC_CHECK_LIB([resolv], [dn_expand])
 AC_CHECK_LIB([crypto], [main])
 AC_CHECK_LIB([ssl], [main])
 AC_CHECK_FUNC(gethostent, , AC_CHECK_LIB(nsl, gethostent))
@@ -29,20 +30,21 @@ AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([	\
-	arpa/inet.h	\
-	fcntl.h		\
-	netdb.h		\
-	netinet/in.h	\
-	paths.h		\
-	stdlib.h	\
-	string.h	\
-	sys/file.h	\
-	sys/socket.h	\
-	sys/time.h	\
-	sys/timeb.h	\
-	unistd.h	\
-	mysql/mysql.h	\
+AC_CHECK_HEADERS([		\
+	arpa/inet.h		\
+	fcntl.h			\
+	netdb.h			\
+	netinet/in.h		\
+	paths.h			\
+	stdlib.h		\
+	string.h		\
+	sys/file.h		\
+	sys/socket.h		\
+	sys/time.h		\
+	sys/timeb.h		\
+	unistd.h		\
+	mysql/mysql.h		\
+	postgresql/libpq-fe.h	\
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.

@@ -1,3 +1,13 @@
+1.3.13
+------
+- fixed minor build incompatibilities with OpenBSD
+- updated included SQL headers
+- new MX DNS lookup system is now integrated and working
+- fixed sanity check for directories on win32
+- fixed SMTP rejection of NULL sender
+- added much better logging of DNS errors
+- fixed socket disconnect code on non-ssl connections
+
 1.3.12
 ------
 - fixed the layout of user/group/domain lists

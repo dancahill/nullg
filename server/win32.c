@@ -250,6 +250,7 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 //			module_load(argv[i]);
 //		}
 //	}
+	sanity_checkdirs();
 	if (modules_exec()!=0) exit(-2);
 	if (modules_cron()!=0) exit(-2);
 	/* NOW BACK TO THE SERVICE CRAP */

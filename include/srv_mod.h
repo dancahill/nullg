@@ -72,6 +72,7 @@
 typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
 typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
 typedef	char *(*MAIN_DECODE_BASE64)(char *, int, char *);
+typedef	char *(*MAIN_DNS_GETMXBYNAME)(char *, int, char *);
 typedef	char *(*MAIN_DOMAIN_GETNAME)(char *, int, int);
 typedef	int   (*MAIN_DOMAIN_GETID)(char *);
 typedef	void  (*MAIN_LOG_ACCESS)(char *, const char *, ...);
@@ -131,6 +132,7 @@ typedef	void  (*MAIN_CLOSEDIR)(DIR *);
 EXTERN MAIN_CONFIG_READ			config_read;
 EXTERN MAIN_CONFIG_WRITE		config_write;
 EXTERN MAIN_DECODE_BASE64		decode_base64;
+EXTERN MAIN_DNS_GETMXBYNAME		dns_getmxbyname;
 EXTERN MAIN_DOMAIN_GETNAME		domain_getname;
 EXTERN MAIN_DOMAIN_GETID		domain_getid;
 EXTERN MAIN_LOG_ACCESS			log_access;
@@ -223,6 +225,7 @@ int mod_import()
 	if (_get_func((void *)&config_read,		"config_read"		)!=0) return -1;
 	if (_get_func((void *)&config_write,		"config_write"		)!=0) return -1;
 	if (_get_func((void *)&decode_base64,		"decode_base64"		)!=0) return -1;
+	if (_get_func((void *)&dns_getmxbyname,		"dns_getmxbyname"	)!=0) return -1;
 	if (_get_func((void *)&domain_getname,		"domain_getname"	)!=0) return -1;
 	if (_get_func((void *)&domain_getid,		"domain_getid"		)!=0) return -1;
 	if (_get_func((void *)&md5_init,		"md5_init"		)!=0) return -1;

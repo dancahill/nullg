@@ -352,6 +352,7 @@ DllExport int mod_cron()
 
 DllExport int mod_exit()
 {
+	log_error("core", __FILE__, __LINE__, 1, "Stopping %s httpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 /*
 void server_shutdown()
 {
@@ -362,7 +363,6 @@ void server_shutdown()
 	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
 #endif
 //	log_access("httpd", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
-	log_error("core", __FILE__, __LINE__, 1, "Stopping %s httpd %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 //	pthread_kill(proc.ListenThread, 14);
 //	shutdown(proc.ListenSocket, 2);
 //	closesocket(proc.ListenSocket);

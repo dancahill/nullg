@@ -29,7 +29,11 @@
 #else
 #include "sql/mysql.h"
 #endif
+#ifdef HAVE_POSTGRESQL_LIBPQ_FE_H
+#include "postgresql/libpq-fe.h"
+#else
 #include "sql/pgsql.h"
+#endif
 #include "sql/sqlite.h"
 
 #ifdef HAVE_MYSQL

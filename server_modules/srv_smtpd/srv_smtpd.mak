@@ -33,8 +33,8 @@ ALL : "..\..\distrib\lib\srv_smtpd.dll"
 CLEAN :
 	-@erase "$(INTDIR)\auth.obj"
 	-@erase "$(INTDIR)\main.obj"
-	-@erase "$(INTDIR)\smtp.obj"
-	-@erase "$(INTDIR)\smtpclient.obj"
+	-@erase "$(INTDIR)\smtpc.obj"
+	-@erase "$(INTDIR)\smtpd.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\srv_smtpd.exp"
 	-@erase "..\..\distrib\lib\srv_smtpd.dll"
@@ -87,8 +87,8 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 LINK32_OBJS= \
 	"$(INTDIR)\auth.obj" \
 	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\smtp.obj" \
-	"$(INTDIR)\smtpclient.obj"
+	"$(INTDIR)\smtpc.obj" \
+	"$(INTDIR)\smtpd.obj"
 
 "..\..\distrib\lib\srv_smtpd.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -107,14 +107,14 @@ SOURCE=.\main.c
 "$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\smtp.c
+SOURCE=.\smtpc.c
 
-"$(INTDIR)\smtp.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\smtpc.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\smtpclient.c
+SOURCE=.\smtpd.c
 
-"$(INTDIR)\smtpclient.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\smtpd.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

@@ -35,6 +35,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_mail_address.obj"
 	-@erase "$(INTDIR)\mod_mail_codec.obj"
 	-@erase "$(INTDIR)\mod_mail_db.obj"
+	-@erase "$(INTDIR)\mod_mail_files.obj"
 	-@erase "$(INTDIR)\mod_mail_filters.obj"
 	-@erase "$(INTDIR)\mod_mail_folders.obj"
 	-@erase "$(INTDIR)\mod_mail_html.obj"
@@ -99,6 +100,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_mail_address.obj" \
 	"$(INTDIR)\mod_mail_codec.obj" \
 	"$(INTDIR)\mod_mail_db.obj" \
+	"$(INTDIR)\mod_mail_files.obj" \
 	"$(INTDIR)\mod_mail_filters.obj" \
 	"$(INTDIR)\mod_mail_folders.obj" \
 	"$(INTDIR)\mod_mail_html.obj" \
@@ -132,6 +134,11 @@ SOURCE=.\mod_mail_codec.c
 SOURCE=.\mod_mail_db.c
 
 "$(INTDIR)\mod_mail_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_files.c
+
+"$(INTDIR)\mod_mail_files.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_mail_filters.c

@@ -81,6 +81,10 @@ SOURCE=.\config.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dns.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\domains.c
 # End Source File
 # Begin Source File

@@ -102,7 +102,7 @@ int config_read(CONFIG *config)
 			return -1;
 		};
 		printf("\r\n%s", CONFIG_MAKE);
-		log_error(NULL, __FILE__, __LINE__, 1, "%s", CONFIG_MAKE);
+//		log_error(NULL, __FILE__, __LINE__, 1, "%s", CONFIG_MAKE);
 		config_write(config);
 		printf("done.\n");
 		goto sanity_check;

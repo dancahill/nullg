@@ -75,6 +75,10 @@ char *EncodeBase64string(CONN *sid, char *src);
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);
 int dbread_mailcurrent(CONN *sid, int mailcurrent);
 int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header);
+/* mod_mail_files.c */
+void webmailsave(CONN *sid);
+void webmailmove(CONN *sid);
+void webmailpurge(CONN *sid);
 /* mod_mail_filters.c */
 int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid);
 void wmfilter_edit(CONN *sid);

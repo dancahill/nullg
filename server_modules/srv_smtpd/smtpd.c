@@ -37,6 +37,7 @@
 
 typedef struct {
 	short unsigned int sender_is_local;
+	short unsigned int sender_is_blank;
 	short unsigned int num_rcpts;
 	short unsigned int rcptalloc;
 	int msgbodysize;
@@ -53,7 +54,7 @@ static int allow_relay(CONN *sid)
 	int allowed;
 
 	memset(curdate, 0, sizeof(curdate));
-	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL)-600);
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL)-1800);
 	sql_updatef("DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND obj_mtime < '%s'", curdate);
 	if ((sqr=sql_queryf("SELECT * FROM gw_smtp_relayrules WHERE ipaddress = '%s'", sid->dat->user_RemoteAddr))<0) return 0;
 	if (sql_numtuples(sqr)>0) {
@@ -74,7 +75,7 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 	char *host;
 	char *buf_ptr;
 	int i;
-	int localdomainid;
+make 	int localdomainid;
 	int userid;
 	int sqr;
 	int is_remote;
@@ -169,6 +170,10 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	char *buf_ptr;
 	unsigned int buf_alloc;
 
+	if ((strlen(mconn->from)==0)&&(mconn->sender_is_blank==0)) {
+		tcp_fprintf(&sid->socket, "500 Sender Invalid\r\n");
+		return;
+	}
 	tcp_fprintf(&sid->socket, "354 Send the mail data, end with .\r\n");
 	if (mconn->msgbody) { free(mconn->msgbody); mconn->msgbody=NULL; }
 	buf_alloc=65536;
@@ -205,7 +210,6 @@ static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
 		if (mconn->rcpt[i]!=NULL) { free(mconn->rcpt[i]); mconn->rcpt[i]=NULL; }
 	}
 	memset(mconn->from, 0, sizeof(mconn->from));
-	mconn->sender_is_local=0;
 	mconn->num_rcpts=0;
 	ptemp=line;
 	while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
@@ -222,12 +226,12 @@ static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
 	} else {
 		host="localhost";
 	}
-//	if (domain_getid(host)>0) mconn->sender_is_local=1;
-	mconn->sender_is_local=allow_relay(sid);
 	if (strlen(mconn->from)) {
 		tcp_fprintf(&sid->socket, "250 Sender '%s' OK\r\n", mconn->from);
 	} else {
-		tcp_fprintf(&sid->socket, "500 Sender Invalid\r\n");
+		mconn->sender_is_blank=1;
+//		tcp_fprintf(&sid->socket, "500 Sender Invalid\r\n");
+		tcp_fprintf(&sid->socket, "250 Sender 'NULL' OK\r\n");
 	}
 	return;
 }
@@ -252,7 +256,7 @@ static void smtp_rcpt(CONN *sid, MAILCONN *mconn, char *line)
 	if (strlen(mconn->rcpt[mconn->num_rcpts-1])) {
 		tcp_fprintf(&sid->socket, "250 Recipient '%s' OK\r\n", mconn->rcpt[mconn->num_rcpts-1]);
 	} else {
-		tcp_fprintf(&sid->socket, "500 Sender Invalid\r\n");
+		tcp_fprintf(&sid->socket, "500 Recipient Invalid\r\n");
 	}
 	return;
 }
@@ -265,7 +269,8 @@ static void smtp_rset(CONN *sid, MAILCONN *mconn)
 		if (mconn->rcpt[i]!=NULL) { free(mconn->rcpt[i]); mconn->rcpt[i]=NULL; }
 	}
 	memset(mconn->from, 0, sizeof(mconn->from));
-	mconn->sender_is_local=0;
+	mconn->sender_is_local=allow_relay(sid);
+	mconn->sender_is_blank=0;
 	mconn->num_rcpts=0;
 	tcp_fprintf(&sid->socket, "250 Reset OK\r\n");
 	return;
@@ -293,6 +298,7 @@ void smtp_dorequest(CONN *sid)
 	memset((char *)&mconn, 0, sizeof(mconn));
 	strncpy(sid->dat->user_RemoteAddr, inet_ntoa(sid->socket.ClientAddr.sin_addr), sizeof(sid->dat->user_RemoteAddr)-1);
 	tcp_fprintf(&sid->socket, "250 Welcome to %s SMTPd\r\n", SERVER_NAME);
+	mconn.sender_is_local=allow_relay(sid);
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;

@@ -96,7 +96,11 @@
 	#include <sqlext.h>
 #endif
 #ifdef HAVE_PGSQL
+	#ifdef HAVE_POSTGRESQL_LIBPQ_FE_H
+	#include "postgresql/libpq-fe.h"
+	#else
 	#include "sql/pgsql.h"
+	#endif
 #endif
 #ifdef HAVE_SQLITE
 	#include "sql/sqlite.h"

@@ -211,7 +211,7 @@ void calendarlistmonth(CONN *sid)
 //				t2=time_sql2unix(sql_getvalue(sqr, index, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
 				t2+=time_tzoffset(sid, t2);
 				prints(sid, "<FONT SIZE=1 STYLE='font-size:10px'><NOBR>%s ", time_unix2lotimetext(sid, t2));
-				prints(sid, "<A HREF=%s/calendar/view?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, index, 0)));
+				prints(sid, "<A HREF=%s/calendar/edit?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, index, 0)));
 				if (groupid>0) {
 					prints(sid, "[%s] %s\" STYLE='color:%s'>", sql_getvalue(sqr2, k, 2), sql_getvalue(sqr, index, 5), colour);
 				} else {

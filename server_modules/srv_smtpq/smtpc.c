@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-int smtp_printf(int smtp_sock, const char *format, ...)
+static int smtp_printf(int smtp_sock, const char *format, ...)
 {
 	char buffer[1024];
 	va_list ap;
@@ -29,11 +29,11 @@ int smtp_printf(int smtp_sock, const char *format, ...)
 	va_end(ap);
 	send(smtp_sock, buffer, strlen(buffer), 0);
 	len=strlen(buffer);
-	log_error("smtpq_debug", __FILE__, __LINE__, 1, ">> %s", buffer);
+	log_error("smtpc", __FILE__, __LINE__, 2, ">> %s", buffer);
 	return len;
 }
 
-int smtp_fgets(char *buffer, int max, int smtp_sock)
+static int smtp_fgets(char *buffer, int max, int smtp_sock)
 {
 	char *pbuffer=buffer;
 	char temp[2];
@@ -50,7 +50,7 @@ int smtp_fgets(char *buffer, int max, int smtp_sock)
 		if (temp[0]==10) break;
 	}
 	*pbuffer=0;
-	log_error("smtpq_debug", __FILE__, __LINE__, 1, "<< %s", buffer);
+	log_error("smtpc", __FILE__, __LINE__, 2, "<< %s", buffer);
 	return n;
 }
 
@@ -90,7 +90,9 @@ int smtp_client(FILE *fp)
 	char host[128];
 	char from[128];
 	char rcpt[128];
-	char *ptemp;
+	char mxhost[128];
+	char *ptemp1;
+	char *ptemp2;
 	int smtp_sock;
 
 	memset(from, 0, sizeof(from));
@@ -99,24 +101,50 @@ int smtp_client(FILE *fp)
 	if (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
 		if (strncasecmp(inbuffer, "X-SMTP-MAIL:", 12)==0) {
 			striprn(inbuffer);
-			ptemp=inbuffer+12;
-			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			snprintf(from, sizeof(from)-1, "%s", ptemp);
+			ptemp1=inbuffer+12;
+			while ((*ptemp1==' ')||(*ptemp1=='\t')) ptemp1++;
+			snprintf(from, sizeof(from)-1, "%s", ptemp1);
 		}
 	}
 	memset(rcpt, 0, sizeof(rcpt));
 	if (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
 		if (strncasecmp(inbuffer, "X-SMTP-RCPT:", 12)==0) {
 			striprn(inbuffer);
-			ptemp=inbuffer+12;
-			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			snprintf(rcpt, sizeof(rcpt)-1, "%s", ptemp);
+			ptemp1=inbuffer+12;
+			while ((*ptemp1==' ')||(*ptemp1=='\t')) ptemp1++;
+			snprintf(rcpt, sizeof(rcpt)-1, "%s", ptemp1);
 		}
 	}
-	if (strlen(from)==0) return -1;
+//	if (strlen(from)==0) return -1;
 	if (strlen(rcpt)==0) return -1;
 	memset(inbuffer, 0, sizeof(inbuffer));
-	if ((smtp_sock=smtp_connect(config->smtp_relayhost))<0) goto quit;
+	if (strlen(config->smtp_relayhost)>0) {
+		if ((smtp_sock=smtp_connect(config->smtp_relayhost))<0) {
+			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to relay host '%s'", config->smtp_relayhost);
+			return -1;
+		}
+	} else {
+		if ((ptemp1=strchr(rcpt, '@'))==NULL) {
+			log_error("smtpc", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
+			return -1;
+		}
+		ptemp1++;
+		if (*ptemp1=='\0') {
+			log_error("smtpc", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
+			return -1;
+		}
+		memset(mxhost, 0, sizeof(mxhost));
+		ptemp2=dns_getmxbyname(mxhost, sizeof(mxhost)-1, ptemp1);
+		if (ptemp2==NULL) {
+			log_error("smtpc", __FILE__, __LINE__, 1, "no MX entry found for '%s'", ptemp1);
+			memset(mxhost, 0, sizeof(mxhost));
+			snprintf(mxhost, sizeof(mxhost)-1, "%s", ptemp1);
+		}
+		if ((smtp_sock=smtp_connect(mxhost))<0) {
+			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to host '%s'", mxhost);
+			return -1;
+		}
+	}
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
@@ -127,13 +155,13 @@ int smtp_client(FILE *fp)
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
-	smtp_printf(smtp_sock, "MAIL FROM: <%s>\r\n", from);
+	smtp_printf(smtp_sock, "MAIL FROM:<%s>\r\n", from);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
-	smtp_printf(smtp_sock, "RCPT TO: <%s>\r\n", rcpt);
+	smtp_printf(smtp_sock, "RCPT TO:<%s>\r\n", rcpt);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
@@ -158,52 +186,7 @@ int smtp_client(FILE *fp)
 	smtp_disconnect(smtp_sock);
 	return 0;
 quit:
-	log_error("smtpd", __FILE__, __LINE__, 1, "remote server response: %s", inbuffer);
+	log_error("smtpc", __FILE__, __LINE__, 1, "remote server response: %s", inbuffer);
 	smtp_disconnect(smtp_sock);
 	return -1;
-}
-
-#ifdef WIN32
-unsigned _stdcall smtp_spool(void *x)
-#else
-void *smtp_spool(void *x)
-#endif
-{
-#ifdef WIN32
-	struct	direct *dentry;
-#else
-	struct	dirent *dentry;
-#endif
-	struct stat sb;
-	DIR  *handle;
-	FILE *fp=NULL;
-	char dirname[256];
-	char tmpname[256];
-	short int status;
-
-	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/mqueue", config->server_dir_var_spool);
-	fixslashes(dirname);
-	while (1) {
-		handle=opendir(dirname);
-		while ((dentry=readdir(handle))!=NULL) {
-			if (strcmp(".", dentry->d_name)==0) continue;
-			if (strcmp("..", dentry->d_name)==0) continue;
-			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/%s", dirname, dentry->d_name);
-			fixslashes(tmpname);
-			if (stat(tmpname, &sb)!=0) continue;
-			if (sb.st_mode&S_IFDIR) continue;
-			if ((fp=fopen(tmpname, "rb"))!=NULL) {
-				status=smtp_client(fp);
-				fclose(fp);
-				if (status==0) {
-					unlink(tmpname);
-				}
-			}
-		}
-		closedir(handle);
-		sleep(60);
-	}
-	return 0;
 }

@@ -33,7 +33,7 @@ ALL : "..\..\distrib\lib\srv_pop3d.dll"
 CLEAN :
 	-@erase "$(INTDIR)\auth.obj"
 	-@erase "$(INTDIR)\main.obj"
-	-@erase "$(INTDIR)\pop3.obj"
+	-@erase "$(INTDIR)\pop3d.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\srv_pop3d.exp"
 	-@erase "..\..\distrib\lib\srv_pop3d.dll"
@@ -86,7 +86,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 LINK32_OBJS= \
 	"$(INTDIR)\auth.obj" \
 	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\pop3.obj"
+	"$(INTDIR)\pop3d.obj"
 
 "..\..\distrib\lib\srv_pop3d.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -105,9 +105,9 @@ SOURCE=.\main.c
 "$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\pop3.c
+SOURCE=.\pop3d.c
 
-"$(INTDIR)\pop3.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\pop3d.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

@@ -67,19 +67,22 @@ int ssl_accept(TCP_SOCKET *sock)
 
 int ssl_close(TCP_SOCKET *sock)
 {
-	if (sock->ssl==NULL) return 0;
-	if (SSL_get_shutdown(sock->ssl)&SSL_RECEIVED_SHUTDOWN) {
-		SSL_shutdown(sock->ssl);
-	} else {
-		SSL_clear(sock->ssl);
+	if (sock->ssl!=NULL) {
+		if (SSL_get_shutdown(sock->ssl)&SSL_RECEIVED_SHUTDOWN) {
+			SSL_shutdown(sock->ssl);
+		} else {
+			SSL_clear(sock->ssl);
+		}
 	}
 	if (sock->socket>-1) {
 		shutdown(sock->socket, 2);
 		closesocket(sock->socket);
 		sock->socket=-1;
 	}
-	SSL_free(sock->ssl);
-	sock->ssl=NULL;
+	if (sock->ssl!=NULL) {
+		SSL_free(sock->ssl);
+		sock->ssl=NULL;
+	}
 	return 0;
 }
 

@@ -192,30 +192,18 @@ retry:
 
 int tcp_close(TCP_SOCKET *socket, short int owner_killed)
 {
-//	if (socket->socket<0) return 0;
 	if (!owner_killed) {
 		socket->want_close=1;
-#ifdef HAVE_LIBSSL
-//		if (socket->ssl!=NULL) {
-//			SSL_shutdown(socket->ssl);
-//		}
-#endif
-		if (socket->socket>-1) {
-			shutdown(socket->socket, 2);
-			closesocket(socket->socket);
-			socket->socket=-1;
-		}
 	} else {
 		socket->want_close=0;
 #ifdef HAVE_LIBSSL
-		ssl_close(socket);
-#else
-		if (socket->socket>-1) {
-			shutdown(socket->socket, 2);
-			closesocket(socket->socket);
-			socket->socket=-1;
-		}
+		if (socket->ssl!=NULL) ssl_close(socket);
 #endif
+	}
+	if (socket->socket>-1) {
+		shutdown(socket->socket, 2);
+		closesocket(socket->socket);
+		socket->socket=-1;
 	}
 	return 0;
 }

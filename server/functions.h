@@ -58,11 +58,13 @@ int pthread_kill(pthread_t handle, int sig);
 /* config.c functions */
 int     config_read(CONFIG *config);
 int     config_write(CONFIG *config);
+/* dns.c functions */
+char   *dns_getmxbyname(char *dest, int destlen, char *domain);
 /* domains.c functions */
 char   *domain_getname(char *outstring, int outlen, int domainid);
 int     domain_getid(char *domainname);
 /* format.c */
-char *decode_base64(char *dest, int szdest, char *src);
+char   *decode_base64(char *dest, int szdest, char *src);
 //char   *getbuffer(CONN *sid);
 void    fixslashes(char *pOriginal);
 int     hex2int(char *pChars);

@@ -196,6 +196,7 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 				(strncasecmp(src, "<B>", 3)==0)||
 				(strncasecmp(src, "<I>", 3)==0)||
  				(strncasecmp(src, "<U>", 3)==0)||
+				(strncasecmp(src, "<STYLE", 6)==0)||
 				(strncasecmp(src, "<CENTER>", 8)==0)) {
 			if (reply) {
 				sid->dat->wm->codecstate=1;

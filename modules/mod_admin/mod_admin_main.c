@@ -146,6 +146,7 @@ void mod_main(CONN *sid)
 	else {
 		prints(sid, "<CENTER>\n");
 		admin_stats(sid);
+		prints(sid, "<A HREF=%s/admin/status>Details</A>", sid->dat->in_ScriptName);
 		prints(sid, "</CENTER>\n");
 	}
 	htpage_footer(sid);
