@@ -248,7 +248,7 @@ void calledit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, call.obj_gid, sid->dat->user_did);
+	htselect_group(sid, auth_priv(sid, "calls"), call.obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", call.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
@@ -581,7 +581,11 @@ void callsave(CONN *sid)
 		if (sql_updatef("DELETE FROM gw_calls WHERE callid = %d", call.callid)<0) return;
 		prints(sid, "<BR><CENTER>Call %d deleted successfully</CENTER><BR>\n", call.callid);
 		db_log_activity(sid, 1, "calls", call.callid, "delete", "%s - %s deleted call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+		prints(sid, "location.replace(\"%s/calls/list\");\n", sid->dat->in_ScriptName);
+		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calls/list\">\n", sid->dat->in_ScriptName);
+		prints(sid, "</NOSCRIPT>\n");
 	} else if (call.callid==0) {
 		if (!(auth_priv(sid, "calls")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -593,7 +597,11 @@ void callsave(CONN *sid)
 		}
 		prints(sid, "<BR><CENTER>Call %d added successfully</CENTER><BR>\n", call.callid);
 		db_log_activity(sid, 1, "calls", call.callid, "insert", "%s - %s added call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+		prints(sid, "location.replace(\"%s/calls/view?callid=%d\");\n", sid->dat->in_ScriptName, call.callid);
+		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calls/view?callid=%d\">\n", sid->dat->in_ScriptName, call.callid);
+		prints(sid, "</NOSCRIPT>\n");
 	} else {
 		if (!(auth_priv(sid, "calls")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -609,7 +617,11 @@ void callsave(CONN *sid)
 		}
 		prints(sid, "<BR><CENTER>Call %d modified successfully</CENTER><BR>\n", call.callid);
 		db_log_activity(sid, 1, "calls", call.callid, "modify", "%s - %s modified call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+		prints(sid, "location.replace(\"%s/calls/view?callid=%d\");\n", sid->dat->in_ScriptName, call.callid);
+		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calls/view?callid=%d\">\n", sid->dat->in_ScriptName, call.callid);
+		prints(sid, "</NOSCRIPT>\n");
 	}
 	return;
 }

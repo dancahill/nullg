@@ -16,12 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_contacts.h"
-
-/* mod_contacts_db.c */
-int dblist_contacts(CONN *sid, char *searchfield, char *searchstring);
-int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact);
-int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact);
-/* mod_contacts_vcard.c */
-void contacts_vcardexport(CONN *sid);
-void contacts_vcardimport(CONN *sid);
+#define EC_NOERROR	0	/* NO ERROR */
+#define EC_UNKNOWN	-1	/* ERROR - UNKNOWN OR UNSPECIFIED ERROR TYPE */
+#define EC_NORECORD	-2	/* ERROR - NO MATCHING RECORD OR FILE */
+#define EC_NOPERM	-3	/* ERROR - INSUFFICIENT PERMISSIONS */

@@ -120,7 +120,7 @@ void bookmarkfolderedit(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, bookmarkfolder.obj_gid, sid->dat->user_did);
+		htselect_group(sid, auth_priv(sid, "bookmarks"), bookmarkfolder.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmarkfolder.obj_gperm==0?" CHECKED":"");
@@ -324,7 +324,7 @@ void bookmarksedit(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, bookmark.obj_gid, sid->dat->user_did);
+		htselect_group(sid, auth_priv(sid, "bookmarks"), bookmark.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmark.obj_gperm==0?" CHECKED":"");

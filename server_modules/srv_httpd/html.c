@@ -616,12 +616,16 @@ void htselect_eventstatus(CONN *sid, int selected)
 	return;
 }
 
-void htselect_group(CONN *sid, int selected, int domainid)
+void htselect_group(CONN *sid, short int perm, int selected, int domainid)
 {
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", domainid))<0) return;
+	if (perm&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", domainid))<0) return;
+	} else {
+		if ((sqr=sql_queryf("SELECT gw_groups.groupid, gw_groups.groupname FROM gw_groups, gw_groupmembers WHERE (gw_groupmembers.groupid = gw_groups.groupid AND (gw_groupmembers.userid = %d OR gw_groupmembers.groupid = %d)) AND gw_groups.obj_did = %d ORDER BY groupname ASC", sid->dat->user_uid, sid->dat->user_gid, domainid))<0) return;
+	}
 	prints(sid, "<OPTION VALUE='0'>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));

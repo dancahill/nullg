@@ -59,6 +59,7 @@
 #endif
 #include "defines.h"
 #include "typedefs.h"
+#include "http_errno.h"
 #include "http_records.h"
 #include "http_typedefs.h"
 
@@ -85,7 +86,7 @@ typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_DAY)(CONN *, char *);
 typedef	void  (*MAIN_HTSELECT_DOMAIN)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_EVENTSTATUS)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, int, int);
+typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, short int, int, int);
 typedef	void  (*MAIN_HTSELECT_HOUR)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_MINUTES)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_MONTH)(CONN *, char *);

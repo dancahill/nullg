@@ -119,6 +119,10 @@ void mod_main(CONN *sid)
 		admingrouplist(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/groupsave", 16)==0)
 		admingroupsave(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/admin/groupmemberedit", 22)==0)
+		admingroupmemberedit(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/admin/groupmembersave", 22)==0)
+		admingroupmembersave(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/grouptimeedit", 20)==0)
 		admingrouptimeedit(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/grouptimesave", 20)==0)

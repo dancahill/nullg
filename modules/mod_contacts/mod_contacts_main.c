@@ -182,6 +182,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	char *greytoggle;
 	char baddr[250];
 	char maddr[250];
+	int perm=0;
 	int is_editable;
 	int is_recycled=0;
 	int editperms=0;
@@ -199,14 +200,14 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		prints(sid, "<BR>\r\n");
 		if (strncmp(sid->dat->in_RequestURI, "/contacts/viewnew", 17)==0) {
 			contactid=0;
-			if (dbread_contact(sid, 2, 0, &contactrec)!=0) {
+			if ((perm=dbread_contact(sid, 2, 0, &contactrec))<0) {
 				prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 				return;
 			}
 		} else {
 			if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) return;
 			contactid=atoi(ptemp);
-			if (dbread_contact(sid, 1, contactid, &contactrec)!=0) {
+			if ((perm=dbread_contact(sid, 1, contactid, &contactrec))<0) {
 				prints(sid, "<CENTER>");
 				prints(sid, ERR_NORECORD, contactid);
 				prints(sid, "</CENTER>\n");
@@ -241,14 +242,12 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	}
 	greytoggle=" DISABLED";
 	is_editable=0;
-	if (auth_priv(sid, "contacts")&A_MODIFY) {
-		if (auth_priv(sid, "contacts")&A_ADMIN) {
-			greytoggle="";
-			is_editable=1;
-		} else if ((contact->obj_uid==sid->dat->user_uid)||((contact->obj_gid==sid->dat->user_gid)&&(contact->obj_gperm>=2))||(contact->obj_operm>=2)) {
-			greytoggle="";
-			is_editable=1;
-		}
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
+		greytoggle="";
+		is_editable=1;
+	} else if ((auth_priv(sid, "contacts")&A_MODIFY)&&(perm>=2)) {
+		greytoggle="";
+		is_editable=1;
 	}
 	tz1=time_tzoffset(sid, time(NULL));
 	tz2=time_tzoffsetcon(sid, time(NULL), contact->contactid);
@@ -318,6 +317,9 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			prints(sid, "<A HREF=\"mailwrite?to=%s\">%s</A>&nbsp;</TD></TR>\n", contact->email, str2html(sid, contact->email));
 		}
 	}
+	if (strlen(contact->website)) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Web Site&nbsp;</B></TD><TD NOWRAP WIDTH=100%%><A HREF=\"%s\" TARGET=_blank>%s</A>&nbsp;</TD></TR>\n", contact->website, contact->website);
+	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", str2html(sid, contact->homenumber));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", str2html(sid, contact->mobilenumber));
 	if (strlen(maddr)) {
@@ -350,6 +352,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homenumber     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->homenumber), greytoggle);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Mobile Number   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mobilenumber   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->mobilenumber), greytoggle);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=email          value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->email), greytoggle);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Web Site        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=website        value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->website), greytoggle);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeaddress    value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->homeaddress), greytoggle);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homelocality   value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->homelocality), greytoggle);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeregion     value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->homeregion), greytoggle);
@@ -397,8 +400,8 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	htselect_user(sid, contact->obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
-	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, contact->obj_gid, sid->dat->user_did);
+	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\n", ((auth_priv(sid, "contacts")&A_ADMIN)||(contact->obj_uid==sid->dat->user_did))?"":" DISABLED");
+	htselect_group(sid, auth_priv(sid, "contacts"), contact->obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", contact->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
@@ -585,14 +588,14 @@ void contact_mailview(CONN *sid)
 	if (sql_numtuples(sqr)>0) {
 		contactid=atoi(sql_getvalue(sqr, 0, 0));
 		sql_freeresult(sqr);
-		if (dbread_contact(sid, 1, contactid, &contactrec)!=0) {
+		if (dbread_contact(sid, 1, contactid, &contactrec)<0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", contactid);
 			return;
 		}
 	} else {
 		contactid=0;
 		sql_freeresult(sqr);
-		if (dbread_contact(sid, 2, 0, &contactrec)!=0) {
+		if (dbread_contact(sid, 2, 0, &contactrec)<0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -687,27 +690,7 @@ void contactlist(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR><TD ALIGN=CENTER VALIGN=TOP WIDTH=100%%>\n");
 	if ((ptemp=getgetenv(sid, "S"))==NULL) ptemp="All";
 	strncpy(searchstring, ptemp, sizeof(searchstring)-1);
-	if (strcasecmp(searchstring, "All")==0) {
-		if (auth_priv(sid, "contacts")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
-		} else {
-			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
-		}
-	} else {
-		if (auth_priv(sid, "contacts")&A_ADMIN) {
-			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_did))<0) return;
-			} else {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%')) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_did))<0) return;
-			}
-		} else {
-			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%')  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
-			} else {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%'))  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
-			}
-		}
-	}
+	if ((sqr1=dblist_contacts(sid, "surname", searchstring))<0) return;
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
 	prints(sid, "<CENTER><BR>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\n");
@@ -1002,7 +985,7 @@ void contactsave(CONN *sid)
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "CONTACTID"))==NULL) return;
 	contactid=atoi(ptemp);
-	if (dbread_contact(sid, 2, contactid, &contact)!=0) {
+	if (dbread_contact(sid, 2, contactid, &contact)<0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -1015,6 +998,7 @@ void contactsave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) contact.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) contact.obj_operm=atoi(ptemp);
 	}
+	if ((ptemp=getpostenv(sid, "FOLDERID"))!=NULL) contact.folderid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "USERNAME"))!=NULL) snprintf(contact.username, sizeof(contact.username)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "PASSWORD"))!=NULL) snprintf(contact.password, sizeof(contact.password)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "ENABLED"))!=NULL) contact.enabled=atoi(ptemp);
@@ -1027,6 +1011,7 @@ void contactsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "REFERREDBY"))!=NULL) snprintf(contact.referredby, sizeof(contact.referredby)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "ALTCONTACT"))!=NULL) snprintf(contact.altcontact, sizeof(contact.altcontact)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "PREFBILLING"))!=NULL) snprintf(contact.prefbilling, sizeof(contact.prefbilling)-1, "%s", ptemp);
+	if ((ptemp=getpostenv(sid, "WEBSITE"))!=NULL) snprintf(contact.website, sizeof(contact.website)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "EMAIL"))!=NULL) snprintf(contact.email, sizeof(contact.email)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "HOMENUMBER"))!=NULL) snprintf(contact.homenumber, sizeof(contact.homenumber)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "WORKNUMBER"))!=NULL) snprintf(contact.worknumber, sizeof(contact.worknumber)-1, "%s", ptemp);
@@ -1052,7 +1037,11 @@ void contactsave(CONN *sid)
 		if (sql_updatef("DELETE FROM gw_contacts WHERE contactid = %d", contact.contactid)<0) return;
 		prints(sid, "<CENTER>Contact %d deleted successfully</CENTER><BR>\n", contactid);
 		db_log_activity(sid, 1, "contacts", contact.contactid, "delete", "%s - %s deleted contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+		prints(sid, "location.replace(\"%s/contacts/list\");\n", sid->dat->in_ScriptName);
+		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/list\">\n", sid->dat->in_ScriptName);
+		prints(sid, "</NOSCRIPT>\n");
 	} else if (contact.contactid==0) {
 		if (!(auth_priv(sid, "contacts")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -1113,7 +1102,11 @@ skipcheck1:
 			prints(sid, "	window.close();\r\n");
 			prints(sid, "// -->\n</SCRIPT>\n");
 		} else {
+			prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+			prints(sid, "location.replace(\"%s/contacts/view?contactid=%d\");\n", sid->dat->in_ScriptName, contact.contactid);
+			prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/view?contactid=%d\">\n", sid->dat->in_ScriptName, contact.contactid);
+			prints(sid, "</NOSCRIPT>\n");
 		}
 	} else {
 		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
@@ -1136,7 +1129,11 @@ skipcheck2:
 		}
 		prints(sid, "<CENTER>Contact %d modified successfully</CENTER><BR>\n", contact.contactid);
 		db_log_activity(sid, 1, "contacts", contact.contactid, "modify", "%s - %s modified contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+		prints(sid, "location.replace(\"%s/contacts/view?contactid=%d\");\n", sid->dat->in_ScriptName, contact.contactid);
+		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/view?contactid=%d\">\n", sid->dat->in_ScriptName, contact.contactid);
+		prints(sid, "</NOSCRIPT>\n");
 	}
 	return;
 }

@@ -85,10 +85,14 @@ static int smtp_accept(CONN *sid, MAILCONN *mconn)
 	struct timezone tzone;
 	int blocksize;
 	int bytes;
-	char curdate[40];
+	char curdate1[40];
+	char curdate2[40];
+	time_t t=time(NULL);
 
-	memset(curdate, 0, sizeof(curdate));
-	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	memset(curdate1, 0, sizeof(curdate1));
+	memset(curdate2, 0, sizeof(curdate2));
+	strftime(curdate1, sizeof(curdate1), "%a, %d %b %Y %H:%M:%S +0000", gmtime(&t));
+	time_unix2sql(curdate2, sizeof(curdate2)-1, t);
 	for (i=0;i<mconn->num_rcpts;i++) {
 		is_remote=0;
 		snprintf(tmpaddr, sizeof(tmpaddr)-1, "%s", mconn->rcpt[i]);
@@ -149,6 +153,9 @@ retry2:
 			continue;
 		}
 		if ((fp=fopen(tmpname1, "wb"))!=NULL) {
+			fprintf(fp, "Received: from %s ([%s])\r\n", mconn->helo, sid->dat->user_RemoteAddr);
+			fprintf(fp, "	by %s for %s;\r\n", proc->config.hostname, mconn->rcpt[i]);
+			fprintf(fp, "	%s\r\n", curdate1);
 			buf_ptr=mconn->msgbody;
 			blocksize=mconn->msgbodysize;
 			do {
@@ -170,7 +177,7 @@ retry2:
 				}
 				fprintf(fp, "MAIL: %s\r\n", mconn->from);
 				fprintf(fp, "RCPT: %s\r\n", mconn->rcpt[i]);
-				fprintf(fp, "DATE: %s\r\n", curdate);
+				fprintf(fp, "DATE: %s\r\n", curdate2);
 				fclose(fp);
 			}
 		} else {

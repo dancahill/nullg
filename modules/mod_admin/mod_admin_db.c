@@ -110,6 +110,50 @@ int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 	return 0;
 }
 
+int dbread_groupmember(CONN *sid, short int perm, int index, REC_GROUPMEMBER *groupmember)
+{
+	int authlevel;
+	int sqr;
+
+	memset(groupmember, 0, sizeof(REC_GROUPMEMBER));
+	authlevel=auth_priv(sid, "admin");
+	if (authlevel<1) return -1;
+	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
+	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
+//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+	if (index==0) {
+		groupmember->obj_uid=sid->dat->user_uid;
+		groupmember->obj_gid=sid->dat->user_gid;
+		groupmember->obj_did=sid->dat->user_did;
+		groupmember->obj_gperm=1;
+		groupmember->obj_operm=1;
+		return 0;
+	}
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d", index))<0) return -1;
+	} else if (authlevel&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
+	} else {
+		if ((sqr=sql_queryf("SELECT * FROM gw_groupmembers where groupmemberid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+	}
+	if (sql_numtuples(sqr)!=1) {
+		sql_freeresult(sqr);
+		return -2;
+	}
+	groupmember->groupmemberid = atoi(sql_getvalue(sqr, 0, 0));
+	groupmember->obj_ctime     = time_sql2unix(sql_getvalue(sqr, 0, 1));
+	groupmember->obj_mtime     = time_sql2unix(sql_getvalue(sqr, 0, 2));
+	groupmember->obj_uid       = atoi(sql_getvalue(sqr, 0, 3));
+	groupmember->obj_gid       = atoi(sql_getvalue(sqr, 0, 4));
+	groupmember->obj_did       = atoi(sql_getvalue(sqr, 0, 5));
+	groupmember->obj_gperm     = atoi(sql_getvalue(sqr, 0, 6));
+	groupmember->obj_operm     = atoi(sql_getvalue(sqr, 0, 7));
+	groupmember->userid        = atoi(sql_getvalue(sqr, 0, 8));
+	groupmember->groupid       = atoi(sql_getvalue(sqr, 0, 9));
+	sql_freeresult(sqr);
+	return 0;
+}
+
 int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 {
 	int authlevel;

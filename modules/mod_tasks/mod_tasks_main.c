@@ -44,7 +44,7 @@ void taskreminders(CONN *sid)
 		if (b<0) {
 			reminders++;
 			if (reminders==1) {
-				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
+				prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 				prints(sid, "<TR><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;Task Name&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH></TR>\n");
 			}
@@ -220,7 +220,7 @@ void taskedit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, task.obj_gid, sid->dat->user_did);
+	htselect_group(sid, auth_priv(sid, "calendar"), task.obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", task.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");

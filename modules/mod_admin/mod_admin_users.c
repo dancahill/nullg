@@ -123,7 +123,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	htselect_domain(sid, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n");
-	htselect_group(sid, user->groupid, user->domainid);
+	htselect_group(sid, A_ADMIN, user->groupid, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", user->userid==1?" DISABLED":"");
 	if ((user->userid==1)||(user->enabled)) {

@@ -120,6 +120,7 @@ CREATE TABLE gw_contacts (\n\
 	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	folderid	int4		NOT NULL DEFAULT 0,\n\
 	loginip		varchar(20)	NOT NULL DEFAULT '0.0.0.0',\n\
 	logintime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	logintoken	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -135,7 +136,8 @@ CREATE TABLE gw_contacts (\n\
 	referredby	varchar(50)	NOT NULL DEFAULT '',\n\
 	altcontact	varchar(50)	NOT NULL DEFAULT '',\n\
 	prefbilling	varchar(50)	NOT NULL DEFAULT '',\n\
-	email		varchar(50)	NOT NULL DEFAULT '',\n\
+	website		varchar(250)	NOT NULL DEFAULT '',\n\
+	email		varchar(250)	NOT NULL DEFAULT '',\n\
 	homenumber	varchar(25)	NOT NULL DEFAULT '',\n\
 	worknumber	varchar(25)	NOT NULL DEFAULT '',\n\
 	faxnumber	varchar(25)	NOT NULL DEFAULT '',\n\
@@ -325,6 +327,21 @@ CREATE TABLE gw_groups (\n\
 	motd		text		NOT NULL DEFAULT '',\n\
 	members		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (groupid)\n\
+);"
+
+#define SQLITEDB_GROUPMEMBERS "\
+CREATE TABLE gw_groupmembers (\n\
+	groupmemberid	INTEGER,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	userid		int4		NOT NULL DEFAULT 0,\n\
+	groupid		int4		NOT NULL DEFAULT 0,\n\
+	PRIMARY KEY (groupmemberid)\n\
 );"
 
 #define SQLITEDB_MAILACCOUNTS "\

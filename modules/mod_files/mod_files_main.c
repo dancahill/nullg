@@ -416,7 +416,7 @@ int fileul(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, file.obj_gid, sid->dat->user_did);
+		htselect_group(sid, auth_priv(sid, "files"), file.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
@@ -488,7 +488,7 @@ int filemkdir(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, file.obj_gid, sid->dat->user_did);
+		htselect_group(sid, auth_priv(sid, "files"), file.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
@@ -547,7 +547,7 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, file.obj_gid, sid->dat->user_did);
+	htselect_group(sid, auth_priv(sid, "files"), file.obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) editperms=1;
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
@@ -757,7 +757,7 @@ int filerecv(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, description));
 	if (sql_update(query)<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
 	db_log_activity(sid, 1, "files", fileid, "insert", "%s - %s uploaded file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, filename);
-	prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
+	prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 	prints(sid, "<CENTER>\nFile '%s%s' has been received.<BR>\n", location, filename);
 	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]</CENTER>\n");
 	htpage_footer(sid);

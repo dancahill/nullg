@@ -24,6 +24,7 @@ void adminconfigsave(CONN *sid);
 /* mod_admin_db.c */
 int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain);
 int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group);
+int dbread_groupmember(CONN *sid, short int perm, int index, REC_GROUPMEMBER *groupmember);
 int dbread_user(CONN *sid, short int perm, int index, REC_USER *user);
 int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone);
 /* mod_admin_domains.c */
@@ -31,6 +32,8 @@ void admindomainedit(CONN *sid);
 void admindomainlist(CONN *sid);
 void admindomainsave(CONN *sid);
 /* mod_admin_groups.c */
+void admingroupmemberedit(CONN *sid);
+void admingroupmembersave(CONN *sid);
 void admingroupedit(CONN *sid);
 void admingrouplist(CONN *sid);
 void admingroupsave(CONN *sid);

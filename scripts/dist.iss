@@ -2,11 +2,11 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.3.15
+AppVerName=NullLogic Groupware 1.3.16
 AppPublisher=NullLogic
-AppPublisherURL=http://nullgroupware.sf.net/
-AppSupportURL=http://nullgroupware.sf.net/
-AppUpdatesURL=http://nullgroupware.sf.net/
+AppPublisherURL=http://nullgroupware.sourceforge.net/
+AppSupportURL=http://nullgroupware.sourceforge.net/
+AppUpdatesURL=http://nullgroupware.sourceforge.net/
 DefaultDirName={pf}\NullLogic Groupware
 DefaultGroupName=NullLogic Groupware
 LicenseFile=..\distrib\COPYRIGHT.txt
@@ -16,13 +16,13 @@ InfoAfterFile=..\distrib\README.txt
 [Files]
 Source: "..\distrib\*.*"; Flags: ignoreversion recursesubdirs; DestDir: "{app}"
 [Icons]
-Name: "{group}\Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\config.exe"
+Name: "{group}\Groupware Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\nullgw-config.exe"
 Name: "{group}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 Name: "{group}\Groupware Help"; Filename: "{app}\var\htdocs\groupware\help\en\index.html"
-Name: "{group}\Groupware Online"; Filename: "http://nullgroupware.sf.net/"
+Name: "{group}\Groupware Online"; Filename: "http://nullgroupware.sourceforge.net/"
 Name: "{commonstartup}\Groupware Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 [Run]
-Filename: "{app}\bin\config.exe"; Workingdir: "{app}\bin"; Description: "Edit Groupware Configuration"; Flags: postinstall skipifsilent unchecked
+Filename: "{app}\bin\nullgw-config.exe"; Workingdir: "{app}\bin"; Description: "Edit Groupware Configuration"; Flags: postinstall skipifsilent unchecked
 Filename: "{app}\bin\gwmon.exe"; Workingdir: "{app}\bin"; Description: "Launch Groupware Monitor"; Flags: nowait postinstall skipifsilent
 [UninstallRun]
 Filename: "net.exe"; Parameters: "stop nullgroupware"; Flags: runminimized

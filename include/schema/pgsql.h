@@ -29,9 +29,10 @@ CREATE SEQUENCE ecloid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE etypid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE fileid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE foruid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
-CREATE SEQUENCE forgid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\n"
+CREATE SEQUENCE forgid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n"
 #define PGSQLDB_SEQUENCES2 "\
 CREATE SEQUENCE grouid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE grpmid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE mailid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE mfilid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE mfdrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -152,6 +153,7 @@ CREATE TABLE gw_contacts (\n\
 	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	folderid	int4		NOT NULL DEFAULT 0,\n\
 	loginip		varchar(20)	NOT NULL DEFAULT '0.0.0.0',\n\
 	logintime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	logintoken	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -167,7 +169,8 @@ CREATE TABLE gw_contacts (\n\
 	referredby	varchar(50)	NOT NULL DEFAULT '',\n\
 	altcontact	varchar(50)	NOT NULL DEFAULT '',\n\
 	prefbilling	varchar(50)	NOT NULL DEFAULT '',\n\
-	email		varchar(50)	NOT NULL DEFAULT '',\n\
+	website		varchar(250)	NOT NULL DEFAULT '',\n\
+	email		varchar(250)	NOT NULL DEFAULT '',\n\
 	homenumber	varchar(25)	NOT NULL DEFAULT '',\n\
 	worknumber	varchar(25)	NOT NULL DEFAULT '',\n\
 	faxnumber	varchar(25)	NOT NULL DEFAULT '',\n\
@@ -190,8 +193,8 @@ CREATE TABLE gw_contacts (\n\
 #define PGSQLDB_DOMAINS "\
 CREATE TABLE gw_domains (\n\
 	domainid	int4		NOT NULL DEFAULT nextval('domaid_seq'::text),\n\
-	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
-	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
 	obj_did		int4		NOT NULL DEFAULT 0,\n\
@@ -204,8 +207,8 @@ CREATE TABLE gw_domains (\n\
 #define PGSQLDB_DOMAINALIASES "\
 CREATE TABLE gw_domainaliases (\n\
 	domainaliasid	int4		NOT NULL DEFAULT nextval('domlid_seq'::text),\n\
-	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
-	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
 	obj_did		int4		NOT NULL DEFAULT 0,\n\
@@ -357,6 +360,21 @@ CREATE TABLE gw_groups (\n\
 	motd		text		NOT NULL DEFAULT '',\n\
 	members		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (groupid)\n\
+);\n\n"
+
+#define PGSQLDB_GROUPMEMBERS "\
+CREATE TABLE gw_groupmembers (\n\
+	groupmemberid	int4		NOT NULL DEFAULT nextval('grpmid_seq'::text),\n\
+	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	userid		int4		NOT NULL DEFAULT 0,\n\
+	groupid		int4		NOT NULL DEFAULT 0,\n\
+	PRIMARY KEY (groupmemberid)\n\
 );\n\n"
 
 #define PGSQLDB_MAILACCOUNTS "\
@@ -575,8 +593,8 @@ CREATE TABLE gw_queries (\n\
 #define PGSQLDB_SMTP_RELAYRULES "\
 CREATE TABLE gw_smtp_relayrules (\n\
 	relayruleid	int4			NOT NULL DEFAULT nextval('smtrid_seq'::text),\n\
-	obj_ctime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
-	obj_mtime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_ctime	timestamp		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	timestamp		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4			NOT NULL DEFAULT 0,\n\
 	obj_gid		int4			NOT NULL DEFAULT 0,\n\
 	obj_did		int4			NOT NULL DEFAULT 0,\n\

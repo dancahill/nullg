@@ -120,6 +120,7 @@ CREATE TABLE gw_contacts (\n\
 	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
+	folderid	integer,\n\
 	loginip		varchar(20),\n\
 	logintime	datetime,\n\
 	logintoken	varchar(50),\n\
@@ -135,7 +136,8 @@ CREATE TABLE gw_contacts (\n\
 	referredby	varchar(50),\n\
 	altcontact	varchar(50),\n\
 	prefbilling	varchar(50),\n\
-	email		varchar(50),\n\
+	website		varchar(250),\n\
+	email		varchar(250),\n\
 	homenumber	varchar(25),\n\
 	worknumber	varchar(25),\n\
 	faxnumber	varchar(25),\n\
@@ -325,6 +327,21 @@ CREATE TABLE gw_groups (\n\
 	motd		memo,\n\
 	members		memo,\n\
 	PRIMARY KEY (groupid)\n\
+);"
+
+#define MDB_GROUPMEMBERS "\
+CREATE TABLE gw_groupmembers (\n\
+	groupmemberid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	userid		integer,\n\
+	groupid		integer,\n\
+	PRIMARY KEY (groupmemberid)\n\
 );"
 
 #define MDB_MAILACCOUNTS "\

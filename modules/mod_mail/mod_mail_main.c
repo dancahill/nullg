@@ -53,7 +53,7 @@ void wmnotice(CONN *sid)
 	}
 	sql_freeresult(sqr1);
 	prints(sid, "</TABLE></CENTER>\n");
-	prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
+	prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 	return;
 }
 

@@ -100,7 +100,7 @@ void usage(char *arg0)
 {
 	char *progname;
 
-	printf("\r\nNullLogic Groupware CSV Sync [1.3.15]\r\n");
+	printf("\r\nNullLogic Groupware CSV Sync [1.3.16]\r\n");
 #ifdef WIN32
 	progname=strrchr(arg0, '\\');
 #else

@@ -18,6 +18,156 @@
 #include "http_mod.h"
 #include "mod_admin.h"
 
+void admingroupmemberedit(CONN *sid)
+{
+	REC_GROUPMEMBER groupmember;
+	char *ptemp;
+	int groupmemberid;
+
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (strncmp(sid->dat->in_RequestURI, "/admin/groupmembereditnew", 25)==0) {
+		groupmemberid=0;
+		if (dbread_groupmember(sid, 2, 0, &groupmember)!=0) {
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			return;
+		}
+		if ((ptemp=getgetenv(sid, "GROUPID"))==NULL) return;
+		groupmember.groupid=atoi(ptemp);
+	} else {
+		if ((ptemp=getgetenv(sid, "GROUPMEMBERID"))==NULL) return;
+		groupmemberid=atoi(ptemp);
+		if (dbread_groupmember(sid, 2, groupmemberid, &groupmember)!=0) {
+			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", groupmemberid);
+			return;
+		}
+	}
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "function ConfirmDelete() {\n");
+	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
+	prints(sid, "}\n");
+	prints(sid, "// -->\n</SCRIPT>\n");
+	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/admin/groupmembersave NAME=memberedit>\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=hidden NAME=groupmemberid VALUE='%d'>\n", groupmember.groupmemberid);
+	prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupmember.groupid);
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
+	prints(sid, "<TR><TH COLSPAN=2><A HREF=%s/admin/groupedit?groupid=%d>Group %d</A> - ", sid->dat->in_ScriptName, groupmember.groupid, groupmember.groupid);
+	if (groupmemberid>0) {
+		prints(sid, " Group Member %d</TH></TR>\n", groupmemberid);
+	} else {
+		prints(sid, " New Group Member</TH></TR>\n");
+	}
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group&nbsp; </B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:217px' DISABLED>");
+	htselect_group(sid, A_ADMIN, groupmember.groupid, groupmember.obj_did);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;User&nbsp;  </B></TD><TD ALIGN=RIGHT><SELECT NAME=userid style='width:217px'>");
+	htselect_user(sid, groupmember.userid);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
+	if (groupmember.groupmemberid>0) {
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
+	}
+	prints(sid, "</FORM>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.memberedit.groupid.focus();\n// -->\n</SCRIPT>\n");
+	return;
+}
+
+void admingroupmemberlist(CONN *sid, int domainid, int groupid)
+{
+	int i;
+	int sqr;
+
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (!auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if (domainid!=sid->dat->user_did) {
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			return;
+		}
+	}
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\r\n");
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE groupid = %d AND domainid = %d ORDER BY username ASC", groupid, domainid))<0) return;
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		prints(sid, "<TR><TD>&nbsp;</TD>");
+		prints(sid, "<TD COLSPAN=2 WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(sqr, i, 1)));
+	}
+	sql_freeresult(sqr);
+	if ((sqr=sql_queryf("SELECT gw_groupmembers.groupmemberid, gw_users.userid, gw_users.username FROM gw_users, gw_groupmembers WHERE gw_users.userid = gw_groupmembers.userid AND gw_groupmembers.groupid = %d AND gw_users.domainid = %d ORDER BY username ASC", groupid, domainid))<0) return;
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		prints(sid, "<TR><TD><A HREF=%s/admin/groupmemberedit?groupmemberid=%d>edit</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "<TD WIDTH=100%% NOWRAP style='cursor:hand' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 1)));
+		prints(sid, "+<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 1)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\r\n", str2html(sid, sql_getvalue(sqr, i, 2)));
+	}
+	sql_freeresult(sqr);
+	prints(sid, "</TABLE>\r\n");
+	return;
+}
+
+void admingroupmembersave(CONN *sid)
+{
+	REC_GROUPMEMBER groupmember;
+	char query[2048];
+	char curdate[40];
+	char *ptemp;
+	time_t t;
+	int groupmemberid;
+
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
+	if ((ptemp=getpostenv(sid, "GROUPMEMBERID"))==NULL) return;
+	groupmemberid=atoi(ptemp);
+	if (dbread_groupmember(sid, 2, groupmemberid, &groupmember)!=0) {
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) groupmember.groupid=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "USERID"))!=NULL) groupmember.userid=atoi(ptemp);
+	t=time(NULL);
+	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
+	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
+		if (sql_updatef("DELETE FROM gw_groupmembers WHERE groupmemberid = %d", groupmember.groupmemberid)<0) return;
+		prints(sid, "<CENTER>Group Member %d deleted successfully</CENTER><BR>\n", groupmember.groupmemberid);
+		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "delete", "%s - %s deleted groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+	} else if (groupmember.groupmemberid==0) {
+		snprintf(query, sizeof(query)-1, "INSERT INTO gw_groupmembers (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupid, userid) values ("
+			"'%s', '%s', '0', '0', '%d', '0', '0', '%d', '%d')", curdate, curdate, groupmember.obj_did, groupmember.groupid, groupmember.userid);
+		if (sql_update(query)<0) {
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			return;
+		}
+		prints(sid, "<CENTER>Group Member %d added successfully</CENTER><BR>\n", groupmember.groupmemberid);
+		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "insert", "%s - %s added groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+	} else {
+		snprintf(query, sizeof(query)-1, "UPDATE gw_groupmembers SET obj_mtime = '%s', groupid = '%d', userid = '%d' WHERE groupmemberid = %d",
+			curdate, groupmember.groupid, groupmember.userid, groupmember.groupmemberid);
+		if (sql_update(query)<0) {
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			return;
+		}
+		prints(sid, "<CENTER>Group Member %d modified successfully</CENTER><BR>\n", groupmember.groupmemberid);
+		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "modify", "%s - %s modified groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+	}
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
+	prints(sid, "location.replace(\"%s/admin/groupedit?groupid=%d\");\n", sid->dat->in_ScriptName, groupmember.groupid);
+	prints(sid, "// -->\n</SCRIPT>\n");
+	prints(sid, "<NOSCRIPT>\n");
+	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/admin/groupedit?groupid=%d\">\n", sid->dat->in_ScriptName, groupmember.groupid);
+	prints(sid, "</NOSCRIPT>\n");
+	return;
+}
+
 void admingroupedit(CONN *sid)
 {
 	REC_GROUP group;
@@ -49,14 +199,20 @@ void admingroupedit(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/groupsave NAME=groupedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", group.groupid);
 	if (groupid!=0) {
-		prints(sid, "<TR><TH COLSPAN=2>Group %d</TH></TR>\n", groupid);
+		prints(sid, "<TR><TH COLSPAN=2>Group %d</TH></TR>\n", group.groupid);
 	} else {
 		prints(sid, "<TR><TH COLSPAN=2>New Group</TH></TR>\n");
 	}
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>Group Name    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=groupname   value=\"%s\" SIZE=50></TD></TR>\n", str2html(sid, group.groupname));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>Group Name</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=groupname   value=\"%s\" SIZE=50></TD></TR>\n", str2html(sid, group.groupname));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>Message of the Day</B></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", str2html(sid, group.motd));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2>\n");
+	if (groupid!=0) {
+		prints(sid, "<TR><TH COLSPAN=2>Group Members [<A HREF=%s/admin/groupmembereditnew?groupid=%d>new</A>]</TH></TR>\r\n", sid->dat->in_ScriptName, group.groupid);
+		prints(sid, "<TR><TD COLSPAN=2 CLASS=\"FIELDVAL\" WIDTH=100%%>\n");
+		admingroupmemberlist(sid, group.obj_did, group.groupid);
+		prints(sid, "</TD></TR>\n");
+	}
+	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "admin")&A_ADMIN)&&(groupid>1)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");

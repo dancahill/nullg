@@ -163,7 +163,7 @@ void notesedit(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "admin")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, note.obj_gid, sid->dat->user_did);
+		htselect_group(sid, auth_priv(sid, "admin"), note.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", note.obj_gperm==0?" CHECKED":"");

@@ -68,6 +68,7 @@ typedef struct {
 	int obj_did;
 	int obj_gperm;
 	int obj_operm;
+	int folderid;
 	char loginip[21];
 	time_t logintime;
 	char logintoken[51];
@@ -83,7 +84,8 @@ typedef struct {
 	char referredby[51];
 	char altcontact[51];
 	char prefbilling[51];
-	char email[51];
+	char website[251];
+	char email[251];
 	char homenumber[26];
 	char worknumber[26];
 	char faxnumber[26];
@@ -178,6 +180,18 @@ typedef struct {
 	char motd[1025];
 	char members[1025];
 } REC_GROUP;
+typedef struct {
+	int groupmemberid;
+	time_t obj_ctime;
+	time_t obj_mtime;
+	int obj_uid;
+	int obj_gid;
+	int obj_did;
+	int obj_gperm;
+	int obj_operm;
+	int userid;
+	int groupid;
+} REC_GROUPMEMBER;
 typedef struct {
 	int mailaccountid;
 	time_t obj_ctime;
