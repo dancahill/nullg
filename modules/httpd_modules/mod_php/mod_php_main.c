@@ -267,11 +267,11 @@ DllExport int mod_main(CONN *sid)
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 
 	if (php_request_startup(TSRMLS_C)==SUCCESS) {
-		zend_eval_string("foreach ($HTTP_SERVER_VARS as $x => $a) { echo \"<font color=green>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
-		zend_eval_string("foreach ($_COOKIE as $x => $a) { echo \"<font color=red>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
-		zend_eval_string("foreach ($HTTP_GET_VARS as $x => $a) { echo \"<font color=black>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
-		zend_eval_string("foreach ($HTTP_POST_VARS as $x => $a) { echo \"<font color=blue>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
 		php_execute_script(&file_handle TSRMLS_CC);
+//		zend_eval_string("foreach ($HTTP_SERVER_VARS as $x => $a) { echo \"<font color=green>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
+//		zend_eval_string("foreach ($_COOKIE as $x => $a) { echo \"<font color=red>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
+//		zend_eval_string("foreach ($HTTP_GET_VARS as $x => $a) { echo \"<font color=black>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
+//		zend_eval_string("foreach ($HTTP_POST_VARS as $x => $a) { echo \"<font color=blue>[$x][$a]</font><br>\"; }", NULL, "nullgroupare-sapi");
 		php_request_shutdown(NULL);
 		return 0;
 	}

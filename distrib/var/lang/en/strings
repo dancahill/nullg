@@ -12,7 +12,7 @@
    FORM_RESET      = "Reset"
    FORM_SAVE       = "Save"
 
-[srv_httpd]
+[httpd]
    MENU_ADM_CONFIG = "CONFIGURATION"
    MENU_ADM_LOGS   = "LOGS"
    MENU_ADM_CHECK  = "SYSCHECK"

@@ -14,6 +14,16 @@ function browser_version()
 		var pos=bVer.indexOf(' ');
 		var bVer=bVer.substring(0, pos);
 	}
+
+	var pos=useragent.indexOf('Firefox');
+	if (pos>-1) {
+		var pos=useragent.indexOf('Gecko');
+		bVer=useragent.substring(pos+6);
+		var pos=bVer.indexOf(' ');
+		var bVer=bVer.substring(0, pos);
+		return (new Array(bName, bVer));
+	}
+
 	if (bName=='Netscape') {
 		var bVer=useragent.substring(8);
 		var pos=bVer.indexOf(' ');

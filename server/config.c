@@ -128,11 +128,11 @@ int config_write(GLOBAL_CONFIG *config)
 	fprintf(fp, "   var path          = \"%s\"\n", config->dir_var);
 	fprintf(fp, "   sql server type   = \"%s\"\n", config->sql_type);
 	fprintf(fp, "\n");
-	fprintf(fp, "   load module       = srv_httpd\n");
-	fprintf(fp, "   load module       = srv_pop3d\n");
-	fprintf(fp, "   load module       = srv_smtpd\n");
-	fprintf(fp, "   load module       = srv_smtpq\n");
-	fprintf(fp, "\n[srv_httpd]\n");
+	fprintf(fp, "   load module       = httpd\n");
+	fprintf(fp, "   load module       = pop3d\n");
+	fprintf(fp, "   load module       = smtpd\n");
+	fprintf(fp, "   load module       = smtpq\n");
+	fprintf(fp, "\n[httpd]\n");
 	fprintf(fp, "\n");
 	fprintf(fp, "   load module       = mod_html\n");
 	fprintf(fp, "   load module       = mod_admin\n");

@@ -16,9 +16,9 @@ setcookie( "cookie[three]", "cookiethree" );
 <?php echo "Hi, I'm a PHP script!"; ?>
 
 <h3>Server Variables</h3>
-<b>SCRIPT_NAME:</b> <?php echo $SCRIPT_NAME; ?><br>
-<b>QUERY_STRING:</b> <?php echo $QUERY_STRING; ?><br>
-<b>SERVER_SOFTWARE:</b> <?php echo $SERVER_SOFTWARE; ?><br>
+<b>SCRIPT_NAME:</b> <?php echo $_SERVER['SCRIPT_NAME']; ?><br>
+<b>QUERY_STRING:</b> <?php echo $_SERVER['QUERY_STRING']; ?><br>
+<b>SERVER_SOFTWARE:</b> <?php echo $_SERVER['SERVER_SOFTWARE']; ?><br>
 
 <h3>Cookies</h3>
 <table border=1>

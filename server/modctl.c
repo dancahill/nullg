@@ -160,11 +160,7 @@ int module_load(char *modname)
 	}
 	if (i==MAX_MOD_FUNCTIONS) return -1;
 	memset(libname, 0, sizeof(libname));
-	if (strncmp(modname, "srv_", 4)==0) {
-		snprintf(libname, sizeof(libname)-1, "%s/%s.%s", proc.config.dir_lib, modname, ext);
-	} else {
-		snprintf(libname, sizeof(libname)-1, "%s/srv_%s.%s", proc.config.dir_lib, modname, ext);
-	}
+	snprintf(libname, sizeof(libname)-1, "%s/core/%s.%s", proc.config.dir_lib, modname, ext);
 	fixslashes(libname);
 	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name)-1, "%s", modname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))==NULL) goto fail;

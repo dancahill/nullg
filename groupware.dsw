@@ -255,7 +255,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_httpd"=".\modules\server_modules\srv_httpd\srv_httpd.dsp" - Package Owner=<4>
+Project: "core_httpd"=".\modules\core_modules\httpd\core_httpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -267,7 +267,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_pop3d"=".\modules\server_modules\srv_pop3d\srv_pop3d.dsp" - Package Owner=<4>
+Project: "core_pop3d"=".\modules\core_modules\pop3d\core_pop3d.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -279,7 +279,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_smtpd"=".\modules\server_modules\srv_smtpd\srv_smtpd.dsp" - Package Owner=<4>
+Project: "core_smtpd"=".\modules\core_modules\smtpd\core_smtpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -291,7 +291,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_smtpq"=".\modules\server_modules\srv_smtpq\srv_smtpq.dsp" - Package Owner=<4>
+Project: "core_smtpq"=".\modules\core_modules\smtpq\core_smtpq.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

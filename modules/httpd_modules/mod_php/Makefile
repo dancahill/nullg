@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 #PHPBASE = /usr/include/php4
-PHPBASE = /home/null/php-4.3.8
+PHPBASE = /home/null/php-4.3.10
 
 CFLAGS  = $(MOD_CFLAGS) -I$(PHPBASE) -I$(PHPBASE)/main -I$(PHPBASE)/regex -I$(PHPBASE)/TSRM -I$(PHPBASE)/Zend
 OBJECTS = mod_php_main.o

@@ -28,12 +28,12 @@
 ;  ssl cert file     = /usr/local/nullgroupware/etc/ssl-cert.pem
 ;  ssl key file      = /usr/local/nullgroupware/etc/ssl-priv.pem
 
-   load module       = srv_httpd
-   load module       = srv_pop3d
-   load module       = srv_smtpd
-   load module       = srv_smtpq
+   load module       = httpd
+   load module       = pop3d
+   load module       = smtpd
+   load module       = smtpq
 
-[srv_httpd]
+[httpd]
    interface         = INADDR_ANY
    port              = 4110
 ;  ssl port          = 4112
@@ -62,14 +62,14 @@
    load module       = mod_tasks
    load module       = mod_xmlrpc
 
-[srv_pop3d]
+[pop3d]
    interface         = INADDR_ANY
    port              = 110
 ;  ssl port          = 995
    max connections   = 50
    max idle          = 120
 
-[srv_smtpd]
+[smtpd]
    interface         = INADDR_ANY
 ;  relay host        = ""
    port              = 25

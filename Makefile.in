@@ -29,7 +29,7 @@ all: _all
 	@echo "Thank you for using NullLogic Groupware."
 	@echo ""
 
-_all: _sqlite _misc _dbutil _server _server_modules _httpd_modules
+_all: _sqlite _misc _dbutil _server _core_modules _httpd_modules
 
 _sqlite:
 	@echo "sqlite"
@@ -53,9 +53,10 @@ _server:
 	@echo "server"
 	@cd server;$(MAKE)
 
-_server_modules:
-	@echo "server_modules"
-	@cd modules/server_modules;$(MAKE)
+_core_modules:
+	@echo "core_modules"
+	@mkdir -p distrib/lib/core
+	@cd modules/core_modules;$(MAKE)
 
 _httpd_modules:
 	@echo "httpd_modules"
@@ -77,7 +78,7 @@ clean:
 	@chmod 0755 scripts/lxtool
 	@cd dbutil;$(MAKE) clean
 	@cd server;$(MAKE) clean
-	@cd modules/server_modules;$(MAKE) clean
+	@cd modules/core_modules;$(MAKE) clean
 	@cd modules/httpd_modules;$(MAKE) clean
 	@./scripts/lxtool clean
 	@rm -f distrib/bin/* distrib/lib/*.so distrib/lib/httpd/*.so *~

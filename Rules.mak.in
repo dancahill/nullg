@@ -17,5 +17,7 @@ MOD_CFLAGS    = -Wall -O2 -fPIC -I../../../include
 MOD_LDFLAGS   = -s -shared
 MOD_TARGETDIR = ../../../distrib/lib
 
+TOP_BUILD_DIR = @TOP_BUILD_DIR@
+
 .c.o:
 	@echo "  CC $@" ; $(CC) $(CFLAGS) -c $< -o $@
