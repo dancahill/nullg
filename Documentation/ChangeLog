@@ -1,3 +1,11 @@
+1.3.7
+-----
+- added search form for e-mail
+- modified e-mail MIME decoding to use buffers, instead of direct output
+- e-mail message bodies are now fully searchable
+- e-mail files are now stored in subdirectories corresponding to their mailboxid
+- e-mail accounts and files are now stored in corresponding domain directories
+
 1.3.6
 -----
 - added mail header fields for scanresult

@@ -104,20 +104,23 @@ void webmailraw(CONN *sid)
 	char inbuffer[1024];
 	char msgfilename[512];
 	char *ptemp;
+	int folderid;
 	int msgnum=0;
 	int sqr;
 
 	send_header(sid, 1, 200, "OK", "1", "text/plain", -1, -1);
 	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) msgnum=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT mailheaderid, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, folder, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "No such message.<BR>");
 		sql_freeresult(sqr);
 		return;
+	} else {
+		folderid=atoi(sql_getvalue(sqr, 0, 1));
 	}
 	sql_freeresult(sqr);
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, msgnum);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {
@@ -175,6 +178,7 @@ void webmaillist(CONN *sid)
 	} else {
 		folderid=1;
 	}
+	wmfolder_testcreate(sid, sid->dat->user_mailcurrent, folderid);
 	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
 		if (sid->dat->user_mailcurrent!=atoi(ptemp)) {
 			sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->user_username);
@@ -356,11 +360,13 @@ void webmaillist(CONN *sid)
 void webmailread(CONN *sid)
 {
 	wmheader header;
+	struct stat sb;
 	FILE *fp;
 	char *ptemp;
 	char curdate[40];
 	char inbuffer[512];
 	char msgfilename[512];
+	char oldfilename[512];
 	char searchstring[256];
 	short int order=0;
 	int folderid=0;
@@ -471,10 +477,20 @@ void webmailread(CONN *sid)
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");
-	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, header.accountid, localid);
-	fixslashes(msgfilename);
 	sql_updatef("UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
+	memset(msgfilename, 0, sizeof(msgfilename));
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, folderid, localid);
+	fixslashes(msgfilename);
+	if (stat(msgfilename, &sb)!=0) {
+		memset(oldfilename, 0, sizeof(oldfilename));
+		snprintf(oldfilename, sizeof(oldfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, localid);
+		fixslashes(oldfilename);
+		if (stat(oldfilename, &sb)==0) {
+			if (rename(oldfilename, msgfilename)==0) {
+				prints(sid, "[stuff]");
+			}
+		}
+	}
 	fp=fopen(msgfilename, "r");
 	if (fp!=NULL) {
 		while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
@@ -523,6 +539,7 @@ void webmailwrite(CONN *sid)
 	char subject[512];
 	char *ptemp;
 	short int accountid=sid->dat->user_mailcurrent;
+	short int folderid=0;
 	short int replyto=0;
 	short int replyall=0;
 	short int forward=0;
@@ -553,6 +570,8 @@ void webmailwrite(CONN *sid)
 		if (sql_numtuples(sqr)!=1) {
 			sql_freeresult(sqr);
 			return;
+		} else {
+			folderid=atoi(sql_getvaluebyname(sqr, 0, "folder"));
 		}
 		dbread_getheader(sid, sqr, 0, &header);
 		sql_freeresult(sqr);
@@ -646,7 +665,7 @@ void webmailwrite(CONN *sid)
 			prints(sid, ">\n");
 		}
 		memset(msgfilename, 0, sizeof(msgfilename));
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, msgnum);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid, msgnum);
 		fixslashes(msgfilename);
 		if ((fp=fopen(msgfilename, "r"))!=NULL) {
 			while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
@@ -788,21 +807,11 @@ void webmailsave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.encoding));
 	if (sql_update(query)<0) return;
 	prints(sid, ".");
-	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d", config->server_dir_var_mail, sid->dat->user_mailcurrent);
-	fixslashes(msgfilename);
-	if ((stat(msgfilename, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
-#ifdef WIN32
-		if (mkdir(msgfilename)!=0) {
-#else
-		if (mkdir(msgfilename, 0700)!=0) {
-#endif
-			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", msgfilename);
-			return;
-		}
+	if (wmfolder_testcreate(sid, sid->dat->user_mailcurrent, 1)<0) {
+		return;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, headerid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, headerid);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "wb");
 	if (fp==NULL) {
@@ -958,6 +967,7 @@ void webmailmove(CONN *sid)
 			} else {
 				sql_updatef("UPDATE gw_mailheaders SET folder = '%d' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", folderid, sid->dat->user_mailcurrent, sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0)));
 			}
+			wmfolder_msgmove(sid, sid->dat->user_mailcurrent, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 3)), folderid);
 			prints(sid, "success.<BR>\n");
 		}
 //		deleted=i;
@@ -1009,12 +1019,12 @@ void webmailpurge(CONN *sid)
 	accountid=atoi(ptemp);
 	prints(sid, "<BR><B>Purging and re-indexing account %d ... </B>", accountid);
 	flushbuffer(sid);
-	if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
 	err=0;
 	memset(msgfilename, 0, sizeof(msgfilename));
 	memset(newfilename, 0, sizeof(newfilename));
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
 		if (stat(msgfilename, &sb)==0) {
 			if (unlink(msgfilename)!=0) {
 				prints(sid, "<BR><B>'%s' could not be deleted.</B>\n", msgfilename);
@@ -1029,8 +1039,8 @@ void webmailpurge(CONN *sid)
 	if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
 	for (i=0,j=1;i<sql_numtuples(sqr);i++) {
 		if (j==atoi(sql_getvalue(sqr, i, 0))) { j++; continue; }
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, atoi(sql_getvalue(sqr, i, 0)));
-		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, j);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, j);
 		if (rename(msgfilename, newfilename)==0) {
 			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d and accountid = %d and mailheaderid = %d", j, sid->dat->user_uid, accountid, atoi(sql_getvalue(sqr, i, 0)))<0) {
 				rename(newfilename, msgfilename);
@@ -1071,8 +1081,8 @@ void webmailframeset(CONN *sid)
 			prints(sid, "?folderid=%d", atoi(ptemp));
 		} else if ((ptemp=getgetenv(sid, "C"))!=NULL) {
 			prints(sid, "?c=%s", ptemp);
-			if ((ptemp=getgetenv(sid, "ADDR"))!=NULL) {
-				prints(sid, "&addr=%s", ptemp);
+			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
+				prints(sid, "&text=%s", ptemp);
 			}
 		}
 		prints(sid, " MARGINHEIGHT=1 MARGINWIDTH=1 SCROLLING=YES>\n", sid->dat->in_ScriptName);
@@ -1130,6 +1140,8 @@ void mod_main(CONN *sid)
 		webmailpurge(sid);
 	} else if (strncmp(suburi, "save", 4)==0) {
 		webmailsave(sid);
+	} else if (strncmp(suburi, "search", 6)==0) {
+		search_form(sid);
 	} else if (strncmp(suburi, "sync", 4)==0) {
 		wmsync(sid, 1);
 	} else if (strncmp(suburi, "raw", 3)==0) {

@@ -145,6 +145,7 @@ void mod_html_topmenu(CONN *sid, int menu)
 		if (strncmp(sid->dat->in_RequestURI, "/mail/list", 10)==0) goto domenu;
 		if (strncmp(sid->dat->in_RequestURI, "/mail/purge", 11)==0) goto domenu;
 		if (strncmp(sid->dat->in_RequestURI, "/mail/quit", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/search", 12)==0) goto domenu;
 		if (strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)==0) goto domenu;
 		return;
 	}
@@ -291,7 +292,8 @@ domenu:
 				if (sid->dat->user_mailcurrent>0) {
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/main TARGET=gwmain>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 					prints(sid, "<A CLASS='TBAR' HREF=javascript:ComposeMail()>COMPOSE</A>&nbsp;&middot;&nbsp;");
-					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);\
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/search TARGET=gwmain>SEARCH</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				}
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list TARGET=gwmain>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
@@ -299,6 +301,7 @@ domenu:
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/list>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/write>COMPOSE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/search>SEARCH</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				}
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}

@@ -111,10 +111,10 @@ typedef struct {
 	char      server_dir_var[255];
 	char      server_dir_var_backup[255];
 	char      server_dir_var_db[255];
-	char      server_dir_var_files[255];
+	char      server_dir_var_domains[255];
 	char      server_dir_var_htdocs[255];
 	char      server_dir_var_log[255];
-	char      server_dir_var_mail[255];
+	char      server_dir_var_spool[255];
 	char      server_dir_var_tmp[255];
 	short int server_loglevel;
 	char      server_username[33];

@@ -81,7 +81,7 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	memset(filename, 0, sizeof(filename));
 	ptemp=dir;
 	if (strlen(ptemp)>=7) ptemp+=7;
-	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, ptemp, file);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, ptemp, file);
 	fixslashes(filename);
 //	logerror(sid, __FILE__, __LINE__, 1, "[%s]", filename);
 	x=stat(filename, &sb);
@@ -168,7 +168,7 @@ int dirlist(CONN *sid)
 		return -1;
 	}
 	directory=uri+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%s", config->server_dir_var_files, directory);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
@@ -248,7 +248,7 @@ int dirlist(CONN *sid)
 //	if (!RunAsCGI) pthread_mutex_lock(&Lock.FileList);
 	handle=opendir(filename);
 	while ((dentry=readdir(handle))!=NULL) {
-		snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, dentry->d_name);
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, dentry->d_name);
 		fixslashes(filename);
 		stat(filename, &sb);
 		if (strcmp(".", dentry->d_name)==0) continue;
@@ -333,7 +333,7 @@ int dirlist(CONN *sid)
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 1))!=sid->dat->user_did) continue;
-		snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, sql_getvalue(sqr, i, 2));
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, sql_getvalue(sqr, i, 2));
 		fixslashes(filename);
 		isvalid=1;
 		if (stat(filename, &sb)!=0) isvalid=0;
@@ -409,7 +409,7 @@ int fileul(CONN *sid)
 		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
 		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
-	snprintf(filename, sizeof(filename)-1, "%s/%s", config->server_dir_var_files, directory+7);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory+7);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
@@ -505,7 +505,7 @@ int filemkdir(CONN *sid)
 		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
 		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
-	snprintf(filename, sizeof(filename)-1, "%s/%s", config->server_dir_var_files, directory+7);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory+7);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
@@ -758,7 +758,7 @@ int filerecv(CONN *sid)
 				return -1;
 			}
 			ptemp=line+14;
-			snprintf(file, sizeof(file)-1, "%s%s%s", config->server_dir_var_files, directory, filename);
+			snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, filename);
 			fixslashes(file);
 			fp=fopen(file, "wb");
 			if (fp==NULL) {
@@ -857,7 +857,7 @@ int filedirsave(CONN *sid)
 	t=time(NULL);
 	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	memset(file, 0, sizeof(file));
-	snprintf(file, sizeof(file)-1, "%s%s%s", config->server_dir_var_files, filerec.filepath+6, filerec.filename);
+	snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, filerec.filepath+6, filerec.filename);
 	if (strstr(file, "..")!=NULL) return -1;
 	fixslashes(file);
 #ifdef WIN32
@@ -947,7 +947,7 @@ void fileinfosave(CONN *sid)
 			return;
 		}
 		memset(filename, 0, sizeof(filename));
-		snprintf(filename, sizeof(filename)-1, "%s%s%s", config->server_dir_var_files, file.filepath+6, file.filename);
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, file.filepath+6, file.filename);
 		fixslashes(filename);
 		if (stat(filename, &sb)==0) {
 			if (sb.st_mode & S_IFDIR) {
@@ -1038,7 +1038,7 @@ void fileedit(CONN *sid)
 	prints(sid, "</TH></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>");
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
 	fp=fopen(filename, "rb");
 	if (fp!=NULL) {
@@ -1095,7 +1095,7 @@ void filesave(CONN *sid)
 		return;
 	}
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
 	fp=fopen(filename, "wb");
 	if (fp==NULL) {
@@ -1141,7 +1141,7 @@ void filescan(CONN *sid)
 		return;
 	}
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
 	snprintf(tempname, sizeof(tempname)-1, "%s/scan-%d.tmp", config->server_dir_var_tmp, (int)(time(NULL)%999));
 	fixslashes(tempname);

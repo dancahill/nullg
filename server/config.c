@@ -145,14 +145,14 @@ int config_read(CONFIG *config)
 				strncpy(config->server_dir_var_backup, pVal, sizeof(config->server_dir_var_backup)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.VAR.DB")==0) {
 				strncpy(config->server_dir_var_db, pVal, sizeof(config->server_dir_var_db)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.FILES")==0) {
-				strncpy(config->server_dir_var_files, pVal, sizeof(config->server_dir_var_files)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.VAR.DOMAINS")==0) {
+				strncpy(config->server_dir_var_domains, pVal, sizeof(config->server_dir_var_domains)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.VAR.HTDOCS")==0) {
 				strncpy(config->server_dir_var_htdocs, pVal, sizeof(config->server_dir_var_htdocs)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.VAR.LOG")==0) {
 				strncpy(config->server_dir_var_log, pVal, sizeof(config->server_dir_var_log)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.MAIL")==0) {
-				strncpy(config->server_dir_var_mail, pVal, sizeof(config->server_dir_var_mail)-1);
+			} else if (strcmp(pVar, "SERVER.DIR.VAR.SPOOL")==0) {
+				strncpy(config->server_dir_var_spool, pVal, sizeof(config->server_dir_var_spool)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.VAR.TMP")==0) {
 				strncpy(config->server_dir_var_tmp, pVal, sizeof(config->server_dir_var_tmp)-1);
 			} else if (strcmp(pVar, "SERVER.LOGLEVEL")==0) {
@@ -226,8 +226,8 @@ sanity_check:
 	if (!strlen(config->server_dir_var_db)) {
 		snprintf(config->server_dir_var_db,     sizeof(config->server_dir_var_db)-1,     "%s/db", config->server_dir_var);
 	}
-	if (!strlen(config->server_dir_var_files)) {
-		snprintf(config->server_dir_var_files,  sizeof(config->server_dir_var_files)-1,  "%s/files", config->server_dir_var);
+	if (!strlen(config->server_dir_var_domains)) {
+		snprintf(config->server_dir_var_domains,  sizeof(config->server_dir_var_domains)-1,  "%s/domains", config->server_dir_var);
 	}
 	if (!strlen(config->server_dir_var_htdocs)) {
 		snprintf(config->server_dir_var_htdocs, sizeof(config->server_dir_var_htdocs)-1, "%s/htdocs", config->server_dir_var);
@@ -235,8 +235,8 @@ sanity_check:
 	if (!strlen(config->server_dir_var_log)) {
 		snprintf(config->server_dir_var_log,    sizeof(config->server_dir_var_log)-1,    "%s/log", config->server_dir_var);
 	}
-	if (!strlen(config->server_dir_var_mail)) {
-		snprintf(config->server_dir_var_mail,   sizeof(config->server_dir_var_mail)-1,   "%s/mail", config->server_dir_var);
+	if (!strlen(config->server_dir_var_spool)) {
+		snprintf(config->server_dir_var_spool,   sizeof(config->server_dir_var_spool)-1,   "%s/spool", config->server_dir_var);
 	}
 	if (!strlen(config->server_dir_var_tmp)) {
 		snprintf(config->server_dir_var_tmp,    sizeof(config->server_dir_var_tmp)-1,    "%s/tmp", config->server_dir_var);
@@ -249,10 +249,10 @@ sanity_check:
 	fixslashes(config->server_dir_var);
 	fixslashes(config->server_dir_var_backup);
 	fixslashes(config->server_dir_var_db);
-	fixslashes(config->server_dir_var_files);
+	fixslashes(config->server_dir_var_domains);
 	fixslashes(config->server_dir_var_htdocs);
 	fixslashes(config->server_dir_var_log);
-	fixslashes(config->server_dir_var_mail);
+	fixslashes(config->server_dir_var_spool);
 	fixslashes(config->server_dir_var_tmp);
 	if (config->http_maxconn==0) config->http_maxconn=50;
 	if (config->http_maxidle==0) config->http_maxidle=120;
@@ -304,49 +304,49 @@ int config_write(CONFIG *config)
 	fixslashes(proc.config_filename);
 	if ((fp=fopen(proc.config_filename, "w"))==NULL) return -1;
 	fprintf(fp, "# %s\n\n", CONFIG_HEAD);
-	fprintf(fp, "SERVER.DIR.BASE       = \"%s\"\n", config->server_dir_base);
-	fprintf(fp, "SERVER.DIR.BIN        = \"%s\"\n", config->server_dir_bin);
-	fprintf(fp, "SERVER.DIR.CGI        = \"%s\"\n", config->server_dir_cgi);
-	fprintf(fp, "SERVER.DIR.ETC        = \"%s\"\n", config->server_dir_etc);
-	fprintf(fp, "SERVER.DIR.LIB        = \"%s\"\n", config->server_dir_lib);
-	fprintf(fp, "SERVER.DIR.VAR        = \"%s\"\n", config->server_dir_var);
-	fprintf(fp, "SERVER.DIR.VAR.BACKUP = \"%s\"\n", config->server_dir_var_backup);
-	fprintf(fp, "SERVER.DIR.VAR.DB     = \"%s\"\n", config->server_dir_var_db);
-	fprintf(fp, "SERVER.DIR.VAR.FILES  = \"%s\"\n", config->server_dir_var_files);
-	fprintf(fp, "SERVER.DIR.VAR.HTDOCS = \"%s\"\n", config->server_dir_var_htdocs);
-	fprintf(fp, "SERVER.DIR.VAR.LOG    = \"%s\"\n", config->server_dir_var_log);
-	fprintf(fp, "SERVER.DIR.VAR.MAIL   = \"%s\"\n", config->server_dir_var_mail);
-	fprintf(fp, "SERVER.DIR.VAR.TMP    = \"%s\"\n", config->server_dir_var_tmp);
-	fprintf(fp, "SERVER.LOGLEVEL       = \"%d\"\n", config->server_loglevel);
-	fprintf(fp, "SERVER.USERNAME       = \"%s\"\n", config->server_username);
-	fprintf(fp, "HTTP.HOSTNAME         = \"%s\"\n", config->http_hostname);
-	fprintf(fp, "HTTP.PORT             = \"%d\"\n", config->http_port);
-	fprintf(fp, "HTTP.SSLPORT          = \"%d\"\n", config->http_port_ssl);
-	fprintf(fp, "HTTP.MAXCONN          = \"%d\"\n", config->http_maxconn);
-	fprintf(fp, "HTTP.MAXIDLE          = \"%d\"\n", config->http_maxidle);
-	fprintf(fp, "HTTP.MAXPOSTSIZE      = \"%d\"\n", config->http_maxpostsize);
-	fprintf(fp, "POP3.HOSTNAME         = \"%s\"\n", config->pop3_hostname);
-	fprintf(fp, "POP3.PORT             = \"%d\"\n", config->pop3_port);
-	fprintf(fp, "POP3.MAXCONN          = \"%d\"\n", config->pop3_maxconn);
-	fprintf(fp, "POP3.MAXIDLE          = \"%d\"\n", config->pop3_maxidle);
-	fprintf(fp, "SMTP.HOSTNAME         = \"%s\"\n", config->smtp_hostname);
-	if (strlen(config->smtp_relayhost)) {
-		fprintf(fp, "SMTP.RELAYHOST        = \"%s\"\n", config->smtp_relayhost);
-	}
-	fprintf(fp, "SMTP.PORT             = \"%d\"\n", config->smtp_port);
-	fprintf(fp, "SMTP.MAXCONN          = \"%d\"\n", config->smtp_maxconn);
-	fprintf(fp, "SMTP.MAXIDLE          = \"%d\"\n", config->smtp_maxidle);
-	fprintf(fp, "SQL.TYPE              = \"%s\"\n", config->sql_type);
-	fprintf(fp, "SQL.HOSTNAME          = \"%s\"\n", config->sql_hostname);
-	fprintf(fp, "SQL.PORT              = \"%d\"\n", config->sql_port);
-	fprintf(fp, "SQL.DBNAME            = \"%s\"\n", config->sql_dbname);
-	fprintf(fp, "SQL.USERNAME          = \"%s\"\n", config->sql_username);
-	fprintf(fp, "SQL.PASSWORD          = \"%s\"\n", config->sql_password);
+	fprintf(fp, "SERVER.DIR.BASE        = \"%s\"\n", config->server_dir_base);
+	fprintf(fp, "SERVER.DIR.BIN         = \"%s\"\n", config->server_dir_bin);
+	fprintf(fp, "SERVER.DIR.CGI         = \"%s\"\n", config->server_dir_cgi);
+	fprintf(fp, "SERVER.DIR.ETC         = \"%s\"\n", config->server_dir_etc);
+	fprintf(fp, "SERVER.DIR.LIB         = \"%s\"\n", config->server_dir_lib);
+	fprintf(fp, "SERVER.DIR.VAR         = \"%s\"\n", config->server_dir_var);
+	fprintf(fp, "SERVER.DIR.VAR.BACKUP  = \"%s\"\n", config->server_dir_var_backup);
+	fprintf(fp, "SERVER.DIR.VAR.DB      = \"%s\"\n", config->server_dir_var_db);
+	fprintf(fp, "SERVER.DIR.VAR.DOMAINS = \"%s\"\n", config->server_dir_var_domains);
+	fprintf(fp, "SERVER.DIR.VAR.HTDOCS  = \"%s\"\n", config->server_dir_var_htdocs);
+	fprintf(fp, "SERVER.DIR.VAR.LOG     = \"%s\"\n", config->server_dir_var_log);
+	fprintf(fp, "SERVER.DIR.VAR.SPOOL   = \"%s\"\n", config->server_dir_var_spool);
+	fprintf(fp, "SERVER.DIR.VAR.TMP     = \"%s\"\n", config->server_dir_var_tmp);
+	fprintf(fp, "SERVER.LOGLEVEL        = \"%d\"\n", config->server_loglevel);
+	fprintf(fp, "SERVER.USERNAME        = \"%s\"\n", config->server_username);
+	fprintf(fp, "HTTP.HOSTNAME          = \"%s\"\n", config->http_hostname);
+	fprintf(fp, "HTTP.PORT              = \"%d\"\n", config->http_port);
+	fprintf(fp, "HTTP.SSLPORT           = \"%d\"\n", config->http_port_ssl);
+	fprintf(fp, "HTTP.MAXCONN           = \"%d\"\n", config->http_maxconn);
+	fprintf(fp, "HTTP.MAXIDLE           = \"%d\"\n", config->http_maxidle);
+	fprintf(fp, "HTTP.MAXPOSTSIZE       = \"%d\"\n", config->http_maxpostsize);
+	fprintf(fp, "POP3.HOSTNAME          = \"%s\"\n", config->pop3_hostname);
+	fprintf(fp, "POP3.PORT              = \"%d\"\n", config->pop3_port);
+	fprintf(fp, "POP3.MAXCONN           = \"%d\"\n", config->pop3_maxconn);
+	fprintf(fp, "POP3.MAXIDLE           = \"%d\"\n", config->pop3_maxidle);
+	fprintf(fp, "SMTP.HOSTNAME          = \"%s\"\n", config->smtp_hostname);
+//	if (strlen(config->smtp_relayhost)) {
+		fprintf(fp, "SMTP.RELAYHOST         = \"%s\"\n", config->smtp_relayhost);
+//	}
+	fprintf(fp, "SMTP.PORT              = \"%d\"\n", config->smtp_port);
+	fprintf(fp, "SMTP.MAXCONN           = \"%d\"\n", config->smtp_maxconn);
+	fprintf(fp, "SMTP.MAXIDLE           = \"%d\"\n", config->smtp_maxidle);
+	fprintf(fp, "SQL.TYPE               = \"%s\"\n", config->sql_type);
+	fprintf(fp, "SQL.HOSTNAME           = \"%s\"\n", config->sql_hostname);
+	fprintf(fp, "SQL.PORT               = \"%d\"\n", config->sql_port);
+	fprintf(fp, "SQL.DBNAME             = \"%s\"\n", config->sql_dbname);
+	fprintf(fp, "SQL.USERNAME           = \"%s\"\n", config->sql_username);
+	fprintf(fp, "SQL.PASSWORD           = \"%s\"\n", config->sql_password);
 #ifdef WIN32
-	fprintf(fp, "SQL.ODBC_DSN          = \"%s\"\n", config->sql_odbc_dsn);
+	fprintf(fp, "SQL.ODBC_DSN           = \"%s\"\n", config->sql_odbc_dsn);
 #endif
-	fprintf(fp, "UTIL.SCANFILE         = \"%s\"\n", config->util_scanfile);
-	fprintf(fp, "UTIL.SCANMAIL         = \"%s\"\n", config->util_scanmail);
+	fprintf(fp, "UTIL.SCANFILE          = \"%s\"\n", config->util_scanfile);
+	fprintf(fp, "UTIL.SCANMAIL          = \"%s\"\n", config->util_scanmail);
 	fclose(fp);
 	return 0;
 }

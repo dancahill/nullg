@@ -292,6 +292,7 @@ void wmfolder_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", parentid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, foldername));
 		if (sql_update(query)<0) return;
+		if (wmfolder_testcreate(sid, accountid, folderid)<0) return;
 		prints(sid, "<CENTER>Mail folder %d added successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	} else {
@@ -302,6 +303,7 @@ void wmfolder_save(CONN *sid)
 			strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailfolderid = %d AND obj_uid = %d AND accountid = %d", folderid, sid->dat->user_uid, accountid);
 			if (sql_update(query)<0) return;
 		}
+		if (wmfolder_testcreate(sid, accountid, folderid)<0) return;
 		prints(sid, "<CENTER>Mail folder %d modified successfully</CENTER><BR>\n", folderid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/accounts/edit?account=%d\">\n", sid->dat->in_ScriptName, accountid);
 	}

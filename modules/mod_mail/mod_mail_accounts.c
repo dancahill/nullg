@@ -266,7 +266,7 @@ void wmaccount_save(CONN *sid)
 			return;
 		}
 		memset(dirname, 0, sizeof(dirname));
-		snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->server_dir_var_mail, mailacct.mailaccountid);
+		snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->server_dir_var_domains, sid->dat->user_did, mailacct.mailaccountid);
 		if (stat(dirname, &sb)!=0) return;
 		/* Purge the maildir with extreme prejudice - This should be recursive */
 		handle=opendir(dirname);
@@ -313,24 +313,7 @@ void wmaccount_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%c', ", mailacct.showdebug==0?'n':'y');
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
 		if (sql_update(query)<0) return;
-		memset(dirname, 0, sizeof(dirname));
-		snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->server_dir_var_mail, mailacct.mailaccountid);
-		fixslashes(dirname);
-#ifdef WIN32
-		if (mkdir(dirname)!=0) {
-#else
-		if (mkdir(dirname, 0700)!=0) {
-#endif
-			log_error("mod_mail", __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
-			return;
-		}
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, mailacct.mailaccountid);
+		wmfolder_makedefaults(sid, mailacct.mailaccountid);
 		prints(sid, "<BR><CENTER>E-Mail account %d added successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {

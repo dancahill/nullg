@@ -462,9 +462,9 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		prints(sid, "<TD>");
 		if (atoi(sql_getvalue(sqr, 0, 0))>0) {
 			if (sid->dat->user_menustyle>0) {
-				prints(sid, "<A HREF=%s/mail/main?c=addr&addr=%s TARGET=gwmain>list</A>", sid->dat->in_ScriptName, contact->email);
+				prints(sid, "<A HREF=%s/mail/main?c=addr&text=%s TARGET=gwmain>list</A>", sid->dat->in_ScriptName, contact->email);
 			} else {
-				prints(sid, "<A HREF=%s/mail/main?c=addr&addr=%s>list</A>", sid->dat->in_ScriptName, contact->email);
+				prints(sid, "<A HREF=%s/mail/main?c=addr&text=%s>list</A>", sid->dat->in_ScriptName, contact->email);
 			}
 		}
 		prints(sid, "&nbsp;</TD>\n");

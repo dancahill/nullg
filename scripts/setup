@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.6"
+MAIN_TITLE="NullLogic Groupware Setup v1.3.7"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -19,10 +19,10 @@ do_copying() {
 	mkdir -p $SERVER_DIR_BASE/var			1>>$LOGFILE 2>>$LOGFILE
 	mkdir -p $SERVER_DIR_BASE/var/backup		1>>$LOGFILE 2>>$LOGFILE
 	mkdir -p $SERVER_DIR_BASE/var/db		1>>$LOGFILE 2>>$LOGFILE
-	mkdir -p $SERVER_DIR_BASE/var/files		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/domains		1>>$LOGFILE 2>>$LOGFILE
 	mkdir -p $SERVER_DIR_BASE/var/htdocs		1>>$LOGFILE 2>>$LOGFILE
 	mkdir -p $SERVER_DIR_BASE/var/log		1>>$LOGFILE 2>>$LOGFILE
-	mkdir -p $SERVER_DIR_BASE/var/mail		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/spool		1>>$LOGFILE 2>>$LOGFILE
 	mkdir -p $SERVER_DIR_BASE/var/tmp		1>>$LOGFILE 2>>$LOGFILE
 	cp -pR bin/* $SERVER_DIR_BASE/bin		1>>$LOGFILE 2>>$LOGFILE
 	cp -pR cgi-bin/* $SERVER_DIR_BASE/cgi-bin	1>>$LOGFILE 2>>$LOGFILE
@@ -57,11 +57,11 @@ do_copying() {
 	chmod 0700 $SERVER_DIR_BASE/var/backup		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/db		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0600 $SERVER_DIR_BASE/var/db/*.db		1>>$LOGFILE 2>>$LOGFILE
-	chmod 0700 $SERVER_DIR_BASE/var/files		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/domains		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/var/htdocs		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/log		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0600 $SERVER_DIR_BASE/var/log/*.log	1>>$LOGFILE 2>>$LOGFILE
-	chmod 0700 $SERVER_DIR_BASE/var/mail		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/spool		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/tmp		1>>$LOGFILE 2>>$LOGFILE
 	if [ "$HAVE_DIALOG" = "yes" ]; then
 		echo "done." 1>>$LOGFILE 2>>$LOGFILE

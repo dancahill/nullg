@@ -182,7 +182,7 @@ void *smtp_spool(void *x)
 	short int status;
 
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/queue", config->server_dir_var_mail);
+	snprintf(dirname, sizeof(dirname)-1, "%s/mqueue", config->server_dir_var_spool);
 	fixslashes(dirname);
 	while (1) {
 		handle=opendir(dirname);

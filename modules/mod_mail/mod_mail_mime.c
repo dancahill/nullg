@@ -153,6 +153,7 @@ int webmailheader(CONN *sid, wmheader *header, FILE **fp)
 static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, char *filename, short int depth)
 {
 	char inbuffer[1024];
+	char outbuffer[1024];
 	char b64buffer[1024];
 	char fnamebuf[512];
 	char cdisp[128];
@@ -308,7 +309,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 				if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) break;
 				if (strncasecmp(cencode, "base64", 6)==0) {
 					if (strlen(inbuffer)+b64len>=sizeof(b64buffer)-1) {
-						if (DecodeBase64(sid, b64buffer, "")<0) {
+						if (DecodeBase64file(sid, b64buffer)<0) {
 							if (*fp!=NULL) { fclose(*fp); *fp=NULL; }
 						}
 						memset(b64buffer, 0, sizeof(b64buffer));
@@ -317,15 +318,15 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 					strcat(b64buffer, inbuffer);
 					b64len+=strlen(inbuffer);
 				} else if (strncasecmp(cencode, "quoted-printable", 16)==0) {
-					DecodeQP(sid, 0, inbuffer, "");
+					DecodeQP(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
 				} else if (strncasecmp(cencode, "7bit", 4)==0) {
-					DecodeText(sid, 0, inbuffer);
+					DecodeText(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
 				} else if (strncasecmp(cencode, "8bit", 4)==0) {
-					DecodeText(sid, 0, inbuffer);
+					DecodeText(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
 				}
 			}
 			if ((strncasecmp(cencode, "base64", 6)==0)&&(strlen(b64buffer))) {
-				DecodeBase64(sid, b64buffer, "");
+				DecodeBase64file(sid, b64buffer);
 			}
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
@@ -356,6 +357,7 @@ void webmailfiledl(CONN *sid)
 	char inbuffer[1024];
 	char msgfilename[256];
 	int msgnum=0;
+	int folderid=0;
 	int sqr;
 
 	memset(filename, 0, sizeof(filename));
@@ -371,22 +373,23 @@ void webmailfiledl(CONN *sid)
 	strncpy(filename, pQueryString, sizeof(filename)-1);
 	decodeurl(filename);
 	memset((char *)&header, 0, sizeof(header));
-	if ((sqr=sql_queryf("SELECT mailheaderid, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, folder, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		send_error(sid, 400, "Bad Request", "No such message.");
 		sql_freeresult(sqr);
 		return;
 	}
-	snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(sqr, 0, 1));
-	snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(sqr, 0, 2));
-	snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(sqr, 0, 3));
+	folderid=atoi(sql_getvalue(sqr, 0, 1));
+	snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(sqr, 0, 2));
+	snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(sqr, 0, 3));
+	snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(sqr, 0, 4));
 	sql_freeresult(sqr);
 	if (p_strcasestr(header.contenttype, "multipart")==NULL) {
 		send_error(sid, 400, "Bad Request", "No files are attached to this message.");
 		return;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, msgnum);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {
@@ -492,6 +495,31 @@ char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize)
 	return filebody;
 }
 
+int webmailmime_line(CONN *sid, char *bodytemp, int szbodytemp, char *inbuffer, char *ctype, char *encoding, short int reply)
+{
+	char outbuffer1[1024];
+	char outbuffer2[1024];
+	int bytes=0;
+
+	if (strncasecmp(encoding, "quoted-printable", 16)==0) {
+		DecodeQP(sid, outbuffer1, sizeof(outbuffer1)-1, inbuffer);
+	} else if (strncasecmp(encoding, "base64", 6)==0) {
+		snprintf(outbuffer1, sizeof(outbuffer1)-1, "%s", DecodeBase64string(sid, inbuffer));
+	} else {
+		snprintf(outbuffer1, sizeof(outbuffer1)-1, "%s", inbuffer);
+	}
+	if (strncasecmp(ctype, "text/html", 9)==0) {
+		DecodeHTML(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1, reply);
+		strncat(bodytemp, outbuffer2, szbodytemp);
+		bytes=strlen(outbuffer2);
+	} else {
+		DecodeText(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1);
+		strncat(bodytemp, outbuffer2, szbodytemp);
+		bytes=strlen(outbuffer2);
+	}
+	return bytes;
+}
+
 int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth)
 {
 	char inbuffer[1024];
@@ -499,6 +527,10 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 	char ctype[200];
 	char cbound[100];
 	char tbound[100];
+	char *bodytemp;
+	char *sqltemp;
+	int szbodytemp=65536;
+	int bodysize;
 	char *ptemp;
 	int file=0;
 	int head=0;
@@ -514,19 +546,25 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		if ((!reply)&&(strncasecmp(contenttype, "text/html", 9)!=0)) {
 			prints(sid, "<PRE><FONT FACE=Arial, Verdana>");
 		}
+		bodytemp=calloc(szbodytemp, sizeof(char));
+		bodysize=0;
 		for (;;) {
 			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
-			if (strncasecmp(encoding, "quoted-printable", 16)==0) {
-				DecodeQP(sid, reply, inbuffer, contenttype);
-			} else if (strncasecmp(encoding, "base64", 6)==0) {
-				DecodeBase64(sid, inbuffer, contenttype);
-			} else if (strncasecmp(contenttype, "text/html", 9)==0) {
-				DecodeHTML(sid, reply, inbuffer, contenttype, 1);
-			} else {
-				printline(sid, reply, inbuffer);
-			}
+			bodysize+=webmailmime_line(sid, bodytemp+bodysize, szbodytemp-bodysize, inbuffer, contenttype, encoding, reply);
 		}
+		if (bodysize>0) {
+			sqltemp=calloc(bodysize+256, sizeof(char));
+			snprintf(sqltemp, bodysize+255, "UPDATE gw_mailheaders SET msg_text = '%s' WHERE mailheaderid = %d AND obj_uid = %d AND obj_did = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bodytemp), nummessage, sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent);
+			sql_update(sqltemp);
+			free(sqltemp);
+		}
+		if ((reply)||(strncasecmp(contenttype, "text/html", 9)!=0)) {
+			printline(sid, reply, bodytemp);
+		} else {
+			prints(sid, bodytemp);
+		}
+		free(bodytemp);
 		if ((!reply)&&(strncasecmp(contenttype, "text/html", 9)!=0)) {
 			prints(sid, "</FONT></PRE>");
 		}
@@ -653,6 +691,8 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 				prints(sid, "<PRE><FONT FACE=Arial, Verdana>");
 			}
 		}
+		bodytemp=calloc(szbodytemp, sizeof(char));
+		bodysize=0;
 		for (;;) {
 			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
@@ -668,24 +708,23 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 				if (reply) continue;
 			}
 			if (strncasecmp(ctype, "text/html", 9)==0) {
-				if (strncasecmp(cencode, "quoted-printable", 16)==0) {
-					DecodeQP(sid, reply, inbuffer, ctype);
-				} else if (strncasecmp(cencode, "base64", 6)==0) {
-					DecodeBase64(sid, inbuffer, ctype);
-				} else {
-					DecodeHTML(sid, reply, inbuffer, ctype, 1);
-				}
+				bodysize+=webmailmime_line(sid, bodytemp+bodysize, szbodytemp-bodysize, inbuffer, ctype, cencode, reply);
 			} else if (strncasecmp(contenttype, "multipart/alternative", 21)!=0) {
-//			} else {
-				if (strncasecmp(cencode, "quoted-printable", 16)==0) {
-					DecodeQP(sid, reply, inbuffer, ctype);
-				} else if (strncasecmp(cencode, "base64", 6)==0) {
-					DecodeBase64(sid, inbuffer, ctype);
-				} else {
-					printline(sid, reply, inbuffer);
-				}
+				bodysize+=webmailmime_line(sid, bodytemp+bodysize, szbodytemp-bodysize, inbuffer, ctype, cencode, reply);
 			}
 		}
+		if (bodysize>0) {
+			sqltemp=calloc(bodysize+256, sizeof(char));
+			snprintf(sqltemp, bodysize+255, "UPDATE gw_mailheaders SET msg_text = '%s' WHERE mailheaderid = %d AND obj_uid = %d AND obj_did = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bodytemp), nummessage, sid->dat->user_uid, sid->dat->user_did, sid->dat->user_mailcurrent);
+			sql_update(sqltemp);
+			free(sqltemp);
+		}
+		if ((reply)||(strncasecmp(ctype, "text/html", 9)!=0)) {
+			printline(sid, reply, bodytemp);
+		} else {
+			prints(sid, bodytemp);
+		}
+		free(bodytemp);
 		if (!reply) {
 			if ((!msgdone)&&(strncasecmp(ctype, "text/html", 9)!=0)) {
 				prints(sid, "</FONT></PRE>\n");

@@ -92,6 +92,7 @@ int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid,
 			sql_updatef("UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s', hdr_scanresult = '[VIRUS+SPAM]' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
 			prints(sid, "[VIRUS+SPAM]");
 		}
+		wmfolder_msgmove(sid, accountid, messageid, 1, 7);
 		return 7;
 	}
 	return 0;
@@ -108,7 +109,7 @@ int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 	int rc;
 
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, messageid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, messageid);
 	fixslashes(msgfilename);
 	rc=wmfilter_scan(sid, header, msgfilename, accountid, messageid);
 	if (rc>0) return rc;
@@ -164,6 +165,7 @@ testrule:
 	}
 	sql_freeresult(sqr1);
 	sql_updatef("UPDATE gw_mailheaders SET folder = %d WHERE mailheaderid = %d AND accountid = %d", dstmbox, messageid, accountid);
+	wmfolder_msgmove(sid, accountid, messageid, 1, dstmbox);
 	return dstmbox;
 }
 

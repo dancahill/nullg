@@ -83,7 +83,7 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 				continue;
 			}
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/local/%s", config->server_dir_var_mail, tmpaddr);
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s", config->server_dir_var_spool, localdomainid, tmpaddr);
 			if (stat(tmpname, &sb)!=0) {
 #ifdef WIN32
 				if (mkdir(tmpname)!=0) {
@@ -97,7 +97,7 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 retry1:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/local/%s/%d%03d.msg", config->server_dir_var_mail, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s/%d%03d.msg", config->server_dir_var_spool, localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry1;
 			log_access("smtpd", "local delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
@@ -106,7 +106,7 @@ retry1:
 retry2:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/queue/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mqueue/%d%03d.msg", config->server_dir_var_spool, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry2;
 		} else {
@@ -115,7 +115,7 @@ retry2:
 retry3:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/queue/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mqueue/%d%03d.msg", config->server_dir_var_spool, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry3;
 

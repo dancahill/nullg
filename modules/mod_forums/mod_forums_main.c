@@ -599,12 +599,14 @@ void fmessagelist(CONN *sid)
 	int x;
 	int sqr;
 	short int bgtoggle=0;
+	int tzoffset;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FORUM"))==NULL) return;
+	tzoffset=time_tzoffset(sid, time(NULL));
 	forumid=atoi(ptemp);
 	forumview(sid, forumid);
 	if ((sqr=sql_queryf("SELECT messageid, referenceid, postername, posttime, subject FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did))<0) return;
@@ -672,8 +674,8 @@ void fmessagelist(CONN *sid)
 		prints(sid, "<B>&nbsp;%s</B></A>&nbsp;", str2html(sid, xtree[i].subject));
 		prints(sid, "</TD></TR></TABLE></TD>");
 		prints(sid, "<TD NOWRAP>%s&nbsp;&nbsp;</TD>", str2html(sid, xtree[i].postername));
-		prints(sid, "<TD NOWRAP>%s ", time_unix2datetext(sid, xtree[i].posttime));
-		prints(sid, "%s</TD></TR>\n", time_unix2timetext(sid, xtree[i].posttime));
+		prints(sid, "<TD NOWRAP ALIGN=RIGHT>%s ", time_unix2datetext(sid, xtree[i].posttime+tzoffset));
+		prints(sid, "%s</TD></TR>\n", time_unix2timetext(sid, xtree[i].posttime+tzoffset));
 	}
 	prints(sid, "</TABLE>\n</CENTER>\n");
 	free(xtree);

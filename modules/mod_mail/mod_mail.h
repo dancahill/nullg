@@ -62,14 +62,14 @@ void wmaccount_save(CONN *sid);
 void wmaddr_list(CONN *sid);
 /* mod_mail_codec.c */
 char *DecodeRFC2047(CONN *sid, char *src);
-int  DecodeHTML(CONN *sid, short int reply, char *src, char *ctype, short int crlf);
-int  DecodeQP(CONN *sid, short int reply, char *src, char *ctype);
-int  DecodeText(CONN *sid, short int reply, char *src);
-int  EncodeBase64(CONN *sid, char *src, int srclen);
-int  EncodeBase64file(FILE *fp, char *src, int srclen);
-int  DecodeBase64(CONN *sid, char *src, char *ctype);
-char *EncodeBase64string(CONN *sid, char *src);
+int   DecodeHTML(CONN *sid, char *dest, int szdest, char *src, short int reply);
+int   DecodeQP(CONN *sid, char *dest, int szdest, char *src);
+int   DecodeText(CONN *sid, char *dest, int szdest, char *src);
+int   DecodeBase64file(CONN *sid, char *src);
 char *DecodeBase64string(CONN *sid, char *src);
+int   EncodeBase64(CONN *sid, char *src, int srclen);
+int   EncodeBase64file(FILE *fp, char *src, int srclen);
+char *EncodeBase64string(CONN *sid, char *src);
 /* mod_mail_db.c */
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);
 int dbread_mailcurrent(CONN *sid, int mailcurrent);
@@ -99,6 +99,9 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 char *search_makestring(CONN *sid);
 int search_doquery(CONN *sid, const char *order_by, int folderid);
 /* mod_mail_server.c */
+int  wmfolder_makedefaults(CONN *sid, int accountid);
+int  wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, int dstfolderid);
+int  wmfolder_testcreate(CONN *sid, int accountid, int folderid);
 int  wmprints(CONN *sid, const char *format, ...);
 int  wmfgets(CONN *sid, char *buffer, int max, TCP_SOCKET *sock);
 int  wmffgets(CONN *sid, char *buffer, int max, FILE **fp);

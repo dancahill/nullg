@@ -20,6 +20,109 @@
 
 static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+int wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, int dstfolderid)
+{
+	struct stat sb;
+	char srcfilename[512];
+	char dstfilename[512];
+
+	wmfolder_testcreate(sid, accountid, dstfolderid);
+	memset(srcfilename, 0, sizeof(srcfilename));
+	memset(dstfilename, 0, sizeof(dstfilename));
+	snprintf(srcfilename, sizeof(srcfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, srcfolderid, messageid);
+	snprintf(dstfilename, sizeof(dstfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, dstfolderid, messageid);
+	fixslashes(srcfilename);
+	fixslashes(dstfilename);
+	if (stat(srcfilename, &sb)==0) {
+		if (rename(srcfilename, dstfilename)==0) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int wmfolder_makedefaults(CONN *sid, int accountid)
+{
+	char curdate[40];
+
+	memset(curdate, 0, sizeof(curdate));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	if (wmfolder_testcreate(sid, accountid, 1)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 2)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 3)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 4)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 5)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 6)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 7)<0) return -1;
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	return 0;
+}
+
+int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
+{
+	char dirname[512];
+	struct stat sb;
+
+	if (accountid<1) return -1;
+	if (folderid<1) folderid=1;
+	memset(dirname, 0, sizeof(dirname));
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->server_dir_var_domains, sid->dat->user_did);
+	fixslashes(dirname);
+	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
+#ifdef WIN32
+		if (mkdir(dirname)!=0) {
+#else
+		if (mkdir(dirname, 0700)!=0) {
+#endif
+			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
+			return -1;
+		}
+	}
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail", config->server_dir_var_domains, sid->dat->user_did);
+	fixslashes(dirname);
+	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
+#ifdef WIN32
+		if (mkdir(dirname)!=0) {
+#else
+		if (mkdir(dirname, 0700)!=0) {
+#endif
+			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
+			return -1;
+		}
+	}
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->server_dir_var_domains, sid->dat->user_did, accountid);
+	fixslashes(dirname);
+	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
+#ifdef WIN32
+		if (mkdir(dirname)!=0) {
+#else
+		if (mkdir(dirname, 0700)!=0) {
+#endif
+			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
+			return -1;
+		}
+	}
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d/%04d", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid);
+	fixslashes(dirname);
+	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
+#ifdef WIN32
+		if (mkdir(dirname)!=0) {
+#else
+		if (mkdir(dirname, 0700)!=0) {
+#endif
+			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", dirname);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 int wmprints(CONN *sid, const char *format, ...)
 {
 	char buffer[1024];
@@ -673,29 +776,22 @@ int wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose)
 	char *ptemp;
 	FILE *fp;
 	struct stat sb;
+	int folderid;
 	int sqr;
 
-	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d", config->server_dir_var_mail, sid->dat->user_mailcurrent);
-	fixslashes(msgfilename);
-	if ((stat(msgfilename, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
-#ifdef WIN32
-		if (mkdir(msgfilename)!=0) {
-#else
-		if (mkdir(msgfilename, 0700)!=0) {
-#endif
-			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", msgfilename);
-			return -1;
-		}
-	}
-	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, localid);
-	fixslashes(msgfilename);
-	if ((sqr=sql_queryf("SELECT mailheaderid, size FROM gw_mailheaders where accountid = %d and obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, localid))<0) return -1;
+	if ((sqr=sql_queryf("SELECT mailheaderid, size, folder FROM gw_mailheaders where accountid = %d and obj_uid = %d and mailheaderid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, localid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return -1;
 	}
+	folderid=atoi(sql_getvalue(sqr, 0, 2));
+	if (wmfolder_testcreate(sid, sid->dat->user_mailcurrent, 1)<0) {
+		sql_freeresult(sqr);
+		return -1;
+	}
+	memset(msgfilename, 0, sizeof(msgfilename));
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, localid);
+	fixslashes(msgfilename);
 	if (stat(msgfilename, &sb)==0) {
 		if (atoi(sql_getvalue(sqr, 0, 1))==sb.st_size) {
 			sql_freeresult(sqr);
@@ -778,7 +874,6 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 #else
 	int fp;
 #endif
-	struct stat sb;
 	char curdate[40];
 	char inbuffer[1024];
 	char query[8192];
@@ -803,21 +898,11 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		DEBUG_OUT(sid, "wmserver_mlistsync()");
 		return -1;
 	}
-	memset(lockfile, 0, sizeof(lockfile));
-	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d", config->server_dir_var_mail, sid->dat->user_mailcurrent);
-	fixslashes(lockfile);
-	if ((stat(lockfile, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
-#ifdef WIN32
-		if (mkdir(lockfile)!=0) {
-#else
-		if (mkdir(lockfile, 0700)!=0) {
-#endif
-			log_error("mod_mail", __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", lockfile);
-			return -1;
-		}
+	if (wmfolder_testcreate(sid, sid->dat->user_mailcurrent, 1)<0) {
+		return -1;
 	}
 	memset(lockfile, 0, sizeof(lockfile));
-	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d/mbox.lock", config->server_dir_var_mail, sid->dat->user_mailcurrent);
+	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d/mail/%04d/mbox.lock", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent);
 	fixslashes(lockfile);
 #ifdef WIN32
 	if ((fp=_fsopen(lockfile, "wb", _SH_DENYWR))==NULL) return -2;
@@ -958,8 +1043,8 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		t=time(NULL);
 		strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 		memset(query, 0, sizeof(query));
-		strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_messageid, hdr_inreplyto, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", headerid, curdate, curdate, sid->dat->user_uid, 0, 0, 0);
+		strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_messageid, hdr_inreplyto, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", headerid, curdate, curdate, sid->dat->user_uid, 0, sid->dat->user_did, 0, 0);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d", sid->dat->user_mailcurrent);
 		strncatf(query, sizeof(query)-strlen(query)-1, "', '%d", dstmbox);
 		strncatf(query, sizeof(query)-strlen(query)-1, "', 'n");
@@ -1137,7 +1222,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 		}
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, mailid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, mailid);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {
@@ -1183,6 +1268,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 		flushbuffer(sid);
 		wmserver_smtpdisconnect(sid);
 		sql_updatef("UPDATE gw_mailheaders SET folder = '3' WHERE mailheaderid = %d AND accountid = %d", mailid, sid->dat->user_mailcurrent);
+		wmfolder_msgmove(sid, sid->dat->user_mailcurrent, mailid, 2, 3);
 		return 0;
 	}
 quit:

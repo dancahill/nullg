@@ -144,15 +144,7 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 		if ((sqr2=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, account))<0) continue;
 		if (sql_numtuples(sqr2)<1) {
 			sql_freeresult(sqr2);
-			memset(curdate, 0, sizeof(curdate));
-			snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-			sql_updatef(sid, "INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
+			wmfolder_makedefaults(sid, account);
 			if ((sqr2=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) continue;
 		}
 		btree=calloc(sql_numtuples(sqr2)+2, sizeof(_btree));
@@ -227,7 +219,6 @@ void htselect_mailfolderjump(CONN *sid, int selected)
 {
 	_btree *btree;
 	_ptree *ptree;
-	char curdate[32];
 	int base=0;
 	int depth=1;
 	int indent=0;
@@ -239,15 +230,7 @@ void htselect_mailfolderjump(CONN *sid, int selected)
 	if ((sqr=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		sql_freeresult(sqr);
-		memset(curdate, 0, sizeof(curdate));
-		time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
-		sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '0', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_mailcurrent);
+		wmfolder_makedefaults(sid, sid->dat->user_mailcurrent);
 		if ((sqr=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return;
 	}
 	btree=calloc(sql_numtuples(sqr)+2, sizeof(_btree));

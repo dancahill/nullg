@@ -473,7 +473,7 @@ int init_db(void)
 
 int restore_db(char *filename)
 {
-	char line[12288];
+	char line[32768];
 	char *pTemp;
 	FILE *fp;
 
