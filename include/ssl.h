@@ -18,11 +18,13 @@
 
 #ifdef HAVE_OPENSSL_SSL_H
 	#include <openssl/ssl.h>
-//	#include <openssl/rsa.h>
-//	#include <openssl/crypto.h>
-//	#include <openssl/x509.h>
-//	#include <openssl/pem.h>
-//	#include <openssl/err.h>
+/*
+	#include <openssl/rsa.h>
+	#include <openssl/crypto.h>
+	#include <openssl/x509.h>
+	#include <openssl/pem.h>
+	#include <openssl/err.h>
+*/
 #else
 	/* working substitutes for missing ssl headers */
 	typedef char SSL;

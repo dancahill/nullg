@@ -19,9 +19,9 @@
 #include "i18n/mod_calendar.h"
 
 /* mod_calendar_assign.c */
-int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
-int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
-int db_autoassign(CONN *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_availcheck(int userid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_autoschedule(int userid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_autoassign(u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish);
 /* mod_calendar_availmap.c */
 void calendar_availmap(CONN *sid);
 /* mod_calendar_db.c */

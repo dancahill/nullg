@@ -139,7 +139,7 @@ void admingroupmembersave(CONN *sid)
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (sql_updatef("DELETE FROM gw_groupmembers WHERE groupmemberid = %d", groupmember.groupmemberid)<0) return;
 		prints(sid, "<CENTER>Group Member %d deleted successfully</CENTER><BR>\n", groupmember.groupmemberid);
-		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "delete", "%s - %s deleted groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+		db_log_activity(sid, "groupmembers", groupmember.groupmemberid, "delete", "%s - %s deleted groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
 	} else if (groupmember.groupmemberid==0) {
 		snprintf(query, sizeof(query)-1, "INSERT INTO gw_groupmembers (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupid, userid) values ("
 			"'%s', '%s', '0', '0', '%d', '0', '0', '%d', '%d')", curdate, curdate, groupmember.obj_did, groupmember.groupid, groupmember.userid);
@@ -148,7 +148,7 @@ void admingroupmembersave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Group Member %d added successfully</CENTER><BR>\n", groupmember.groupmemberid);
-		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "insert", "%s - %s added groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+		db_log_activity(sid, "groupmembers", groupmember.groupmemberid, "insert", "%s - %s added groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
 	} else {
 		snprintf(query, sizeof(query)-1, "UPDATE gw_groupmembers SET obj_mtime = '%s', groupid = '%d', userid = '%d' WHERE groupmemberid = %d",
 			curdate, groupmember.groupid, groupmember.userid, groupmember.groupmemberid);
@@ -157,7 +157,7 @@ void admingroupmembersave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Group Member %d modified successfully</CENTER><BR>\n", groupmember.groupmemberid);
-		db_log_activity(sid, 1, "groupmembers", groupmember.groupmemberid, "modify", "%s - %s modified groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
+		db_log_activity(sid, "groupmembers", groupmember.groupmemberid, "modify", "%s - %s modified groupmember %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupmember.groupmemberid);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/admin/groupedit?groupid=%d\");\n", sid->dat->in_ScriptName, groupmember.groupid);
@@ -325,7 +325,7 @@ void admingroupsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_groups WHERE groupid = %d", group.groupid)<0) return;
 		prints(sid, "<CENTER>Group %d deleted successfully</CENTER><BR>\n", group.groupid);
-		db_log_activity(sid, 1, "groups", group.groupid, "delete", "%s - %s deleted group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
+		db_log_activity(sid, "groups", group.groupid, "delete", "%s - %s deleted group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else if (group.groupid==0) {
 		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND obj_did = %d", group.groupname, group.obj_did))<0) return;
 		if (sql_numtuples(sqr)>0) {
@@ -350,7 +350,7 @@ void admingroupsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.members));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Group %d added successfully</CENTER><BR>\n", group.groupid);
-		db_log_activity(sid, 1, "groups", group.groupid, "insert", "%s - %s added group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
+		db_log_activity(sid, "groups", group.groupid, "insert", "%s - %s added group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -374,7 +374,7 @@ void admingroupsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE groupid = %d AND obj_did = %d", group.groupid, group.obj_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Group %d modified successfully</CENTER><BR>\n", group.groupid);
-		db_log_activity(sid, 1, "groups", group.groupid, "modify", "%s - %s modified group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
+		db_log_activity(sid, "groups", group.groupid, "modify", "%s - %s modified group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/grouplist\">\n", sid->dat->in_ScriptName);
 	return;
@@ -520,7 +520,7 @@ void admingrouptimesave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (sql_updatef("UPDATE gw_groups SET obj_mtime = '%s', availability = '%s' WHERE groupid = %d", curdate, availability, groupid)<0) return;
 	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR>\n");
-	db_log_activity(sid, 1, "groups", groupid, "modify", "%s - %s modified availability for group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupid);
+	db_log_activity(sid, "groups", groupid, "modify", "%s - %s modified availability for group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, groupid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/admin/groupedit?groupid=%d\");\n", sid->dat->in_ScriptName, groupid);
 	prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");

@@ -48,7 +48,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		user=&userrec;
 	}
 	tz1=time_tzoffset(sid, time(NULL));
-	tz2=time_tzoffset2(sid, time(NULL), user->userid);
+	tz2=time_tzoffset2(time(NULL), user->userid);
 	if (user->userid<1) tz2=tz1;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
@@ -182,7 +182,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	if (module_exists(sid, "mod_calendar")) {
+	if (module_exists("mod_calendar")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:255px'>\n");
 		htselect_hour(sid, user->prefdaystart);
 		prints(sid, "</SELECT></TD></TR>\n");
@@ -232,7 +232,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' %s></TD>", (user->authadmin&A_ADMIN)?"checked":"");
 	}
 	prints(sid, "</TR>\n");
-	if (module_exists(sid, "mod_bookmarks")) {
+	if (module_exists("mod_bookmarks")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
@@ -241,7 +241,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authbookmarks_a VALUE='1' %s></TD>", (user->authbookmarks&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_calendar")) {
+	if (module_exists("mod_calendar")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
@@ -250,7 +250,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalendar_a VALUE='1' %s></TD>", (user->authcalendar&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_calls")) {
+	if (module_exists("mod_calls")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
@@ -259,7 +259,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcalls_a VALUE='1' %s></TD>", (user->authcalls&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_contacts")) {
+	if (module_exists("mod_contacts")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
@@ -268,7 +268,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authcontacts_a VALUE='1' %s></TD>", (user->authcontacts&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_mail")) {
+	if (module_exists("mod_mail")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
@@ -277,7 +277,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_files")) {
+	if (module_exists("mod_files")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
@@ -286,7 +286,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authfiles_a VALUE='1' %s></TD>", (user->authfiles&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_forums")) {
+	if (module_exists("mod_forums")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -295,7 +295,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authforums_a VALUE='1' %s></TD>", (user->authforums&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_messages")) {
+	if (module_exists("mod_messages")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -304,7 +304,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_orders")) {
+	if (module_exists("mod_orders")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
@@ -313,7 +313,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authorders_a VALUE='1' %s></TD>", (user->authorders&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_profile")) {
+	if (module_exists("mod_profile")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
@@ -322,7 +322,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_projects")) {
+	if (module_exists("mod_projects")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Projects&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_r VALUE='1' %s></TD>", (user->authprojects&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_m VALUE='1' %s></TD>", (user->authprojects&A_MODIFY)?"checked":"");
@@ -331,7 +331,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authprojects_a VALUE='1' %s></TD>", (user->authprojects&A_ADMIN)?"checked":"");
 		prints(sid, "</TR>\n");
 	}
-	if (module_exists(sid, "mod_searches")) {
+	if (module_exists("mod_searches")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox CLASS='nomargin' NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
 		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -344,7 +344,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TD NOWRAP COLSPAN=2>");
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
@@ -533,7 +533,7 @@ void adminusersave(CONN *sid)
 	}
 	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) user.groupid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "ENABLED"))!=NULL) user.enabled=atoi(ptemp);
-	if (module_exists(sid, "mod_admin")) {
+	if (module_exists("mod_admin")) {
 		user.authdomainadmin=0;
 		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_R"))!=NULL) user.authdomainadmin+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_M"))!=NULL) user.authdomainadmin+=A_MODIFY;
@@ -541,7 +541,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_D"))!=NULL) user.authdomainadmin+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_A"))!=NULL) user.authdomainadmin+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_admin")) {
+	if (module_exists("mod_admin")) {
 		user.authadmin=0;
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_R"))!=NULL) user.authadmin+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_M"))!=NULL) user.authadmin+=A_MODIFY;
@@ -549,7 +549,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_D"))!=NULL) user.authadmin+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_A"))!=NULL) user.authadmin+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_bookmarks")) {
+	if (module_exists("mod_bookmarks")) {
 		user.authbookmarks=0;
 		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_R"))!=NULL) user.authbookmarks+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_M"))!=NULL) user.authbookmarks+=A_MODIFY;
@@ -557,7 +557,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_D"))!=NULL) user.authbookmarks+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_A"))!=NULL) user.authbookmarks+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_calendar")) {
+	if (module_exists("mod_calendar")) {
 		user.authcalendar=0;
 		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_R"))!=NULL) user.authcalendar+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_M"))!=NULL) user.authcalendar+=A_MODIFY;
@@ -565,7 +565,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_D"))!=NULL) user.authcalendar+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_A"))!=NULL) user.authcalendar+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_calls")) {
+	if (module_exists("mod_calls")) {
 		user.authcalls=0;
 		if ((ptemp=getpostenv(sid, "AUTHCALLS_R"))!=NULL) user.authcalls+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHCALLS_M"))!=NULL) user.authcalls+=A_MODIFY;
@@ -573,7 +573,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHCALLS_D"))!=NULL) user.authcalls+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHCALLS_A"))!=NULL) user.authcalls+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_contacts")) {
+	if (module_exists("mod_contacts")) {
 		user.authcontacts=0;
 		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_R"))!=NULL) user.authcontacts+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_M"))!=NULL) user.authcontacts+=A_MODIFY;
@@ -581,7 +581,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_D"))!=NULL) user.authcontacts+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_A"))!=NULL) user.authcontacts+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_files")) {
+	if (module_exists("mod_files")) {
 		user.authfiles=0;
 		if ((ptemp=getpostenv(sid, "AUTHFILES_R"))!=NULL) user.authfiles+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHFILES_M"))!=NULL) user.authfiles+=A_MODIFY;
@@ -589,7 +589,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHFILES_D"))!=NULL) user.authfiles+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHFILES_A"))!=NULL) user.authfiles+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_forums")) {
+	if (module_exists("mod_forums")) {
 		user.authforums=0;
 		if ((ptemp=getpostenv(sid, "AUTHFORUMS_R"))!=NULL) user.authforums+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHFORUMS_M"))!=NULL) user.authforums+=A_MODIFY;
@@ -597,7 +597,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHFORUMS_D"))!=NULL) user.authforums+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHFORUMS_A"))!=NULL) user.authforums+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_messages")) {
+	if (module_exists("mod_messages")) {
 		user.authmessages=0;
 		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_R"))!=NULL) user.authmessages+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_M"))!=NULL) user.authmessages+=A_MODIFY;
@@ -605,7 +605,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_D"))!=NULL) user.authmessages+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_A"))!=NULL) user.authmessages+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_orders")) {
+	if (module_exists("mod_orders")) {
 		user.authorders=0;
 		if ((ptemp=getpostenv(sid, "AUTHORDERS_R"))!=NULL) user.authorders+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHORDERS_M"))!=NULL) user.authorders+=A_MODIFY;
@@ -613,7 +613,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHORDERS_D"))!=NULL) user.authorders+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHORDERS_A"))!=NULL) user.authorders+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_profile")) {
+	if (module_exists("mod_profile")) {
 		user.authprofile=0;
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_R"))!=NULL) user.authprofile+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_M"))!=NULL) user.authprofile+=A_MODIFY;
@@ -621,7 +621,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_D"))!=NULL) user.authprofile+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHPROFILE_A"))!=NULL) user.authprofile+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_projects")) {
+	if (module_exists("mod_projects")) {
 		user.authprojects=0;
 		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_R"))!=NULL) user.authprojects+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_M"))!=NULL) user.authprojects+=A_MODIFY;
@@ -629,7 +629,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_D"))!=NULL) user.authprojects+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHPROJECTS_A"))!=NULL) user.authprojects+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_searches")) {
+	if (module_exists("mod_searches")) {
 		user.authquery=0;
 		if ((ptemp=getpostenv(sid, "AUTHQUERY_R"))!=NULL) user.authquery+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHQUERY_M"))!=NULL) user.authquery+=A_MODIFY;
@@ -637,7 +637,7 @@ void adminusersave(CONN *sid)
 		if ((ptemp=getpostenv(sid, "AUTHQUERY_D"))!=NULL) user.authquery+=A_DELETE;
 		if ((ptemp=getpostenv(sid, "AUTHQUERY_A"))!=NULL) user.authquery+=A_ADMIN;
 	}
-	if (module_exists(sid, "mod_mail")) {
+	if (module_exists("mod_mail")) {
 		user.authwebmail=0;
 		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_R"))!=NULL) user.authwebmail+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_M"))!=NULL) user.authwebmail+=A_MODIFY;
@@ -696,7 +696,7 @@ void adminusersave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_users WHERE userid = %d", user.userid)<0) return;
 		prints(sid, "<CENTER>User %d deleted successfully</CENTER><BR>\n", userid);
-		db_log_activity(sid, 1, "users", user.userid, "delete", "%s - %s deleted user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
+		db_log_activity(sid, "users", user.userid, "delete", "%s - %s deleted user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else if (user.userid==0) {
 		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' AND domainid = %d", user.username, user.domainid))<0) return;
@@ -772,7 +772,7 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.isactive));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>User added successfully</CENTER><BR>\n");
-		db_log_activity(sid, 1, "users", user.userid, "insert", "%s - %s added user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
+		db_log_activity(sid, "users", user.userid, "insert", "%s - %s added user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
@@ -849,7 +849,7 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", user.userid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>User %d modified successfully</CENTER><BR>\n", userid);
-		db_log_activity(sid, 1, "users", user.userid, "modify", "%s - %s modified user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
+		db_log_activity(sid, "users", user.userid, "modify", "%s - %s modified user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	return;
@@ -1028,7 +1028,7 @@ void adminusertimesave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (sql_updatef("UPDATE gw_users SET obj_mtime = '%s', availability = '%s' WHERE userid = %d", curdate, availability, userid)<0) return;
 	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR>\n");
-	db_log_activity(sid, 1, "users", userid, "modify", "%s - %s modified availability for user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, userid);
+	db_log_activity(sid, "users", userid, "modify", "%s - %s modified availability for user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, userid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/admin/useredit?userid=%d\");\n", sid->dat->in_ScriptName, userid);
 	prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");

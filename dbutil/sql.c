@@ -18,14 +18,6 @@
 #include "main.h"
 #include "sql.h"
 
-/****************************************************************************
- *	*DLLInit()
- *
- *	Purpose	: MySQL specific function to disconnect from the SQL server
- *	Args	: None
- *	Returns	: void
- *	Notes	: None
- ***************************************************************************/
 int mysqlDLLInit()
 {
 #ifdef HAVE_MYSQL
@@ -143,7 +135,7 @@ fail:
 int SQLiteDLLInit()
 {
 	char libname[255];
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	static int isloaded=0;
 #ifdef WIN32
 	HINSTANCE hinstLib;
@@ -171,9 +163,18 @@ int SQLiteDLLInit()
 	goto fail;
 #endif
 found:
-	if ((libsqlite.open=(SQLITE_OPEN)dlsym(hinstLib, "sqlite_open"))==NULL) goto fail;
-	if ((libsqlite.exec=(SQLITE_EXEC)dlsym(hinstLib, "sqlite_exec"))==NULL) goto fail;
-	if ((libsqlite.close=(SQLITE_CLOSE)dlsym(hinstLib, "sqlite_close"))==NULL) goto fail;
+	if ((libsqlite.open=(SQLITE_OPEN)dlsym(hinstLib, "sqlite3_open"))==NULL) {
+		printf("error finding symbol sqlite3_open\r\n");
+		goto fail;
+	}
+	if ((libsqlite.exec=(SQLITE_EXEC)dlsym(hinstLib, "sqlite3_exec"))==NULL) {
+		printf("error finding symbol sqlite3_exec\r\n");
+		goto fail;
+	}
+	if ((libsqlite.close=(SQLITE_CLOSE)dlsym(hinstLib, "sqlite3_close"))==NULL) {
+		printf("error finding symbol sqlite3_close\r\n");
+		goto fail;
+	}
 	return 0;
 fail:
 	printf("ERROR: Failed to load %s", libname);
@@ -237,7 +238,7 @@ void pgsqlDisconnect()
 
 void sqliteDisconnect()
 {
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	libsqlite.close(db);
 	Connected=0;
 #endif
@@ -269,9 +270,9 @@ int mysqlConnect()
 #endif
 }
 
+#ifdef HAVE_ODBC
 int odbcConnect()
 {
-#ifdef HAVE_ODBC
 	SQLCHAR szConnStr[255];
 	SWORD cbConnStr;
 	RETCODE rc;
@@ -306,10 +307,8 @@ int odbcConnect()
 	}
 	Connected=1;
 	return 0;
-#else
-	return -1;
-#endif
 }
+#endif
 
 int pgsqlConnect()
 {
@@ -336,7 +335,7 @@ int pgsqlConnect()
 
 int sqliteConnect()
 {
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	char dbname[255];
 	char *zErrMsg=0;
 
@@ -344,9 +343,9 @@ int sqliteConnect()
 	if (Connected) return 0;
 	snprintf(dbname, sizeof(dbname)-1, "%s/groupware.db", config.dir_var_db);
 //	fixslashes(dbname);
-	db=libsqlite.open(dbname, 0, &zErrMsg);
-	if (db==0) {
-		printf("\nSQLite Connect - %s", zErrMsg);
+	if (libsqlite.open(dbname, &db)!=SQLITE_OK) {
+//		printf("\nSQLite Connect - %s", zErrMsg);
+		printf("\nSQLite Connect error");
 		return -1;
 	}
 	Connected=1;
@@ -378,9 +377,9 @@ int mysqlUpdate(int verbose, char *sqlquery)
 #endif
 }
 
+#ifdef HAVE_ODBC
 int odbcUpdate(int verbose, char *sqlquery)
 {
-#ifdef HAVE_ODBC
 	char sqlstate[15];
 	char buf[250];
 	RETCODE rc;
@@ -403,10 +402,8 @@ int odbcUpdate(int verbose, char *sqlquery)
 	SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 	hStmt=NULL;
 	return 0;
-#else
-	return -1;
-#endif
 }
+#endif
 
 int pgsqlUpdate(int verbose, char *sqlquery)
 {
@@ -426,7 +423,7 @@ int pgsqlUpdate(int verbose, char *sqlquery)
 
 int sqliteUpdate(int verbose, char *sqlquery)
 {
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	char *zErrMsg=0;
 	int rc;
 
@@ -505,9 +502,9 @@ int mysqlQuery(int sqr, char *sqlquery)
 #endif
 }
 
+#ifdef HAVE_ODBC
 int odbcQuery(int sqr, char *sqlquery)
 {
-#ifdef HAVE_ODBC
 	SQLSMALLINT pccol;
 	SDWORD collen;
 	RETCODE rc;
@@ -599,10 +596,8 @@ int odbcQuery(int sqr, char *sqlquery)
 	SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 	hStmt=NULL;
 	return sqr;
-#else
-	return -1;
-#endif
 }
+#endif
 
 int pgsqlQuery(int sqr, char *sqlquery)
 {
@@ -710,7 +705,7 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 
 int sqliteQuery(int sqr, char *sqlquery)
 {
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	char *zErrMsg=0;
 	int rc;
 
@@ -760,12 +755,14 @@ int sqlUpdate(int verbose, char *sqlquery)
 {
 	int rc=-1;
 
-	if (strcmp(config.sql_type, "ODBC")==0) {
-		if (odbcConnect()<0) return -1;
-		rc=odbcUpdate(verbose, sqlquery);
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	if (strcmp(config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect()<0) return -1;
 		rc=mysqlUpdate(verbose, sqlquery);
+#ifdef HAVE_ODBC
+	} else if (strcmp(config.sql_type, "ODBC")==0) {
+		if (odbcConnect()<0) return -1;
+		rc=odbcUpdate(verbose, sqlquery);
+#endif
 	} else if (strcmp(config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect()<0) return -1;
 		rc=pgsqlUpdate(verbose, sqlquery);
@@ -800,12 +797,14 @@ int sqlQuery(char *query)
 		printf("\ndropping sql connection - max %d", MAX_QUERIES);
 		return -1;
 	}
-	if (strcmp(config.sql_type, "ODBC")==0) {
-		if (odbcConnect()<0) return -1;
-		rc=odbcQuery(i, query);
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	if (strcmp(config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect()<0) return -1;
 		rc=mysqlQuery(i, query);
+#ifdef HAVE_ODBC
+	} else if (strcmp(config.sql_type, "ODBC")==0) {
+		if (odbcConnect()<0) return -1;
+		rc=odbcQuery(i, query);
+#endif
 	} else if (strcmp(config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect()<0) return -1;
 		rc=pgsqlQuery(i, query);
@@ -868,7 +867,7 @@ char *str2sql(char *instring)
 	static unsigned char buffer[8192];
 	unsigned char ch;
 	int bufferlength=0;
-	int i=0;
+	unsigned int i=0;
 
 	memset(buffer, 0, sizeof(buffer));
 	while ((instring[i])&&(i<sizeof(buffer)-1)) {

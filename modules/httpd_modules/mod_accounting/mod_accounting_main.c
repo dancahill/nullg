@@ -21,7 +21,7 @@
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_ACCOUNTING);
 	prints(sid, "<BR>\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/accounting/journal/list", 24)==0) {

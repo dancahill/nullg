@@ -86,7 +86,7 @@ void admin_status(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_ADMIN);
 	if ((strncmp(sid->dat->in_RequestURI, "/admin/activity", 15)!=0)&&(strncmp(sid->dat->in_RequestURI, "/admin/access", 13)!=0)&&(strncmp(sid->dat->in_RequestURI, "/admin/error", 12)!=0)) {
 		prints(sid, "<BR>\r\n");
@@ -103,10 +103,12 @@ DllExport int mod_main(CONN *sid)
 		adminactivityview(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/error", 12)==0)
 		adminerror(sid);
+/*
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/configedit", 17)==0)
 		adminconfigedit(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/configsave", 17)==0)
 		adminconfigsave(sid);
+*/
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/domainedit", 17)==0)
 		admindomainedit(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/domainlist", 17)==0)
@@ -165,16 +167,16 @@ DllExport int mod_exit()
 DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
-		"mod_admin",		// mod_name
-		3,			// mod_submenu
-		"ADMINISTRATION",	// mod_menuname
-		"/admin/",		// mod_menuuri
-		"admin",		// mod_menuperm
-		"mod_main",		// fn_name
-		"/admin/",		// fn_uri
-		mod_init,		// fn_init
-		mod_main,		// fn_main
-		mod_exit		// fn_exit
+		"mod_admin",		/* mod_name	*/
+		3,			/* mod_submenu	*/
+		"ADMINISTRATION",	/* mod_menuname	*/
+		"/admin/",		/* mod_menuuri	*/
+		"admin",		/* mod_menuperm	*/
+		"mod_main",		/* fn_name	*/
+		"/admin/",		/* fn_uri	*/
+		mod_init,		/* fn_init	*/
+		mod_main,		/* fn_main	*/
+		mod_exit		/* fn_exit	*/
 	};
 
 	proc=_proc;

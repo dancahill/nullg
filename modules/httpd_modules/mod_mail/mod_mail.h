@@ -64,8 +64,8 @@ void wmaddr_list(CONN *sid);
 /* mod_mail_codec.c */
 char *DecodeRFC2047(CONN *sid, char *src);
 int   DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int reply);
-int   DecodeQP(CONN *sid, char *dest, unsigned int szdest, char *src);
-int   DecodeText(CONN *sid, char *dest, unsigned int szdest, char *src);
+int   DecodeQP(char *dest, unsigned int szdest, char *src);
+int   DecodeText(char *dest, unsigned int szdest, char *src);
 int   DecodeBase64file(CONN *sid, char *src);
 char *DecodeBase64string(CONN *sid, char *src);
 int   EncodeBase64(CONN *sid, char *src, int srclen);
@@ -112,7 +112,7 @@ int  wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, 
 int  wmfolder_testcreate(CONN *sid, int accountid, int folderid);
 int  wmprints(CONN *sid, const char *format, ...);
 int  wmfgets(CONN *sid, char *buffer, int max, TCP_SOCKET *sock);
-int  wmffgets(CONN *sid, char *buffer, int max, FILE **fp);
+int  wmffgets(char *buffer, int max, FILE **fp);
 void wmclose(CONN *sid);
 int  wmserver_smtpconnect(CONN *sid);
 int  wmserver_smtpauth(CONN *sid);
@@ -128,7 +128,7 @@ int  wmserver_uidl(CONN *sid, int message, char *uidl);
 int  is_msg_end(CONN *sid, char *buffer);
 int  wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose);
 int  wmserver_mlistsync(CONN *sid, char ***uidl_list);
-void wmserver_purge(CONN *sid, int remove);
+void wmserver_purge(CONN *sid);
 int  wmserver_send(CONN *sid, int mailid, int verbose);
 int  wmsync(CONN *sid, int verbose);
 

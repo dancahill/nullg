@@ -56,7 +56,7 @@ int pthread_kill(pthread_t handle, int sig);
 
 /* config.c functions */
 int     config_read(char *section, void *callback);
-//int     config_read(GLOBAL_CONFIG *config);
+/* int  config_read(GLOBAL_CONFIG *config); */
 int     config_write(GLOBAL_CONFIG *config);
 int     conf_read(void);
 int     conf_read_modules(void);
@@ -67,7 +67,7 @@ char   *domain_getname(char *outstring, int outlen, int domainid);
 int     domain_getid(char *domainname);
 /* format.c */
 char   *decode_base64(char *dest, int szdest, char *src);
-//char   *getbuffer(CONN *sid);
+/* char *getbuffer(CONN *sid); */
 void    fixslashes(char *pOriginal);
 int     hex2int(char *pChars);
 void    striprn(char *string);
@@ -84,7 +84,7 @@ int     tcp_fgets(char *buffer, int max, TCP_SOCKET *socket);
 int     tcp_fprintf(TCP_SOCKET *socket, const char *format, ...);
 int     tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags);
 int     tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags);
-//int     tcp_close(TCP_SOCKET *socket);
+/* int tcp_close(TCP_SOCKET *socket); */
 int     tcp_close(TCP_SOCKET *socket, short int owner_killed);
 /* modctl.c functions */
 #ifdef WIN32
@@ -109,11 +109,11 @@ void md5_update(struct MD5Context *ctx, unsigned char const *buf, unsigned len);
 void md5_final(unsigned char digest[16], struct MD5Context *ctx);
 char *md5_crypt(char *passwd, char *pw, char *salt);
 /* server.c functions */
-//int     closeconnect(CONN *sid, int exitflag);
+/* int closeconnect(CONN *sid, int exitflag); */
 void    server_restart(void);
 void    server_shutdown(void);
-//void    dorequest(CONN *sid);
-//void    cgiinit(void);
+/* void dorequest(CONN *sid); */
+/* void cgiinit(void); */
 void    init(void);
 /*
 #ifdef WIN32

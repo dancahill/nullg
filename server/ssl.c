@@ -81,9 +81,11 @@ int ssl_dl_init()
 		fixslashes(libname);
 		if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	}
-//	snprintf(libname, sizeof(libname)-1, "libssl.%s", libext);
-//	fixslashes(libname);
-//	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+/*
+	snprintf(libname, sizeof(libname)-1, "libssl.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+*/
 #else
 	snprintf(libname, sizeof(libname)-1, "libssl.%s.0.9.7", libext);
 	fixslashes(libname);

@@ -91,54 +91,54 @@ void *htloop(void *x)
 #endif
 {
 	struct sockaddr_in peer;
-	int fromlen=sizeof(struct sockaddr_in);
+	unsigned int fromlen=sizeof(struct sockaddr_in);
 	int sid=(int)x;
-//	int lowat=1;
+	/* int lowat=1; */
 
 	DEBUG_IN(NULL, "htloop()");
 	log_error("core", __FILE__, __LINE__, 2, "Starting htloop() thread");
-	conn[sid].id=pthread_self();
+	http_proc.conn[sid].id=pthread_self();
 #ifndef WIN32
-	pthread_detach(conn[sid].id);
+	pthread_detach(http_proc.conn[sid].id);
 #endif
-//	setsockopt(conn[sid].socket, SOL_SOCKET, SO_RCVLOWAT, (void *)&lowat, sizeof(lowat));
-	log_error("httpd", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket);
+	/* setsockopt(http_proc.conn[sid].socket, SOL_SOCKET, SO_RCVLOWAT, (void *)&lowat, sizeof(lowat)); */
+	log_error("httpd", __FILE__, __LINE__, 4, "Opening connection thread [%u]", http_proc.conn[sid].socket);
 	proc->stats.http_conns++;
 	for (;;) {
-		if (conn[sid].PostData!=NULL) { free(conn[sid].PostData); conn[sid].PostData=NULL; }
-		if (conn[sid].dat!=NULL) free(conn[sid].dat);
-		conn[sid].dat=calloc(1, sizeof(CONNDATA));
-		conn[sid].dat->out_ContentLength=-1;
-		conn[sid].socket.atime=time(NULL);
-		conn[sid].socket.ctime=time(NULL);
-		getpeername(conn[sid].socket.socket, (struct sockaddr *)&peer, &fromlen);
-		strncpy(conn[sid].dat->in_RemoteAddr, inet_ntoa(peer.sin_addr), sizeof(conn[sid].dat->in_RemoteAddr)-1);
-		conn[sid].dat->in_RemotePort=ntohs(conn[sid].socket.ClientAddr.sin_port);
-		if (conn[sid].socket.ssl!=NULL) {
-			conn[sid].dat->in_ServerPort=mod_config.http_sslport;
+		if (http_proc.conn[sid].PostData!=NULL) { free(http_proc.conn[sid].PostData); http_proc.conn[sid].PostData=NULL; }
+		if (http_proc.conn[sid].dat!=NULL) free(http_proc.conn[sid].dat);
+		http_proc.conn[sid].dat=calloc(1, sizeof(CONNDATA));
+		http_proc.conn[sid].dat->out_ContentLength=-1;
+		http_proc.conn[sid].socket.atime=time(NULL);
+		http_proc.conn[sid].socket.ctime=time(NULL);
+		getpeername(http_proc.conn[sid].socket.socket, (struct sockaddr *)&peer, &fromlen);
+		strncpy(http_proc.conn[sid].dat->in_RemoteAddr, inet_ntoa(peer.sin_addr), sizeof(http_proc.conn[sid].dat->in_RemoteAddr)-1);
+		http_proc.conn[sid].dat->in_RemotePort=ntohs(http_proc.conn[sid].socket.ClientAddr.sin_port);
+		if (http_proc.conn[sid].socket.ssl!=NULL) {
+			http_proc.conn[sid].dat->in_ServerPort=http_proc.config.http_sslport;
 		} else {
-			conn[sid].dat->in_ServerPort=mod_config.http_port;
+			http_proc.conn[sid].dat->in_ServerPort=http_proc.config.http_port;
 		}
 
-		http_dorequest(&conn[sid]);
-		conn[sid].dat->out_bodydone=1;
-		flushbuffer(&conn[sid]);
-		log_access("httpd", "%s \"%s %s %s\" %d %d \"%s\"", conn[sid].dat->in_RemoteAddr, conn[sid].dat->in_RequestMethod, conn[sid].dat->in_RequestURI, conn[sid].dat->in_Protocol, conn[sid].dat->out_status, conn[sid].dat->out_bytecount, conn[sid].dat->in_UserAgent);
-		conn[sid].state=0;
-		if (conn[sid].dat->wm!=NULL) {
-			tcp_close(&conn[sid].dat->wm->socket, 1);
-			free(conn[sid].dat->wm);
-			conn[sid].dat->wm=NULL;
+		http_dorequest(&http_proc.conn[sid]);
+		http_proc.conn[sid].dat->out_bodydone=1;
+		flushbuffer(&http_proc.conn[sid]);
+		log_htaccess(&http_proc.conn[sid]);
+		http_proc.conn[sid].state=0;
+		if (http_proc.conn[sid].dat->wm!=NULL) {
+			tcp_close(&http_proc.conn[sid].dat->wm->socket, 1);
+			free(http_proc.conn[sid].dat->wm);
+			http_proc.conn[sid].dat->wm=NULL;
 		}
-//		memset(conn[sid].dat, 0, sizeof(CONNDATA));
-		if (p_strcasestr(conn[sid].dat->out_Connection, "Keep-Alive")==NULL) {
+		/* memset(http_proc.conn[sid].dat, 0, sizeof(CONNDATA)); */
+		if (p_strcasestr(http_proc.conn[sid].dat->out_Connection, "Keep-Alive")==NULL) {
 			break;
 		}
 	}
-	log_error("httpd", __FILE__, __LINE__, 4, "Closing connection thread [%u]", conn[sid].socket.socket);
-	// closeconnect() cleans up our mess for us
-	closeconnect(&conn[sid], 2);
-	conn[sid].socket.socket=-1;
+	log_error("httpd", __FILE__, __LINE__, 4, "Closing connection thread [%u]", http_proc.conn[sid].socket.socket);
+	/* closeconnect() cleans up our mess for us */
+	closeconnect(&http_proc.conn[sid], 2);
+	http_proc.conn[sid].socket.socket=-1;
 	DEBUG_OUT(NULL, "htloop()");
 	pthread_exit(0);
 	return 0;
@@ -150,22 +150,22 @@ static int get_conn()
 
 	pthread_mutex_lock(&ListenerMutex);
 	for (i=0;;i++) {
-		if (i>=mod_config.http_maxconn) {
+		if (i>=http_proc.config.http_maxconn) {
 			msleep(10);
 			i=0;
 			continue;
 		}
-		if (conn[i].id==0) {
+		if (http_proc.conn[i].id==0) {
 			break;
 		}
 	}
-	if (conn[i].PostData!=NULL) { free(conn[i].PostData); conn[i].PostData=NULL; }
-	if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
-	memset((char *)&conn[i], 0, sizeof(conn[i]));
+	if (http_proc.conn[i].PostData!=NULL) { free(http_proc.conn[i].PostData); http_proc.conn[i].PostData=NULL; }
+	if (http_proc.conn[i].dat!=NULL) { free(http_proc.conn[i].dat); http_proc.conn[i].dat=NULL; }
+	memset((char *)&http_proc.conn[i], 0, sizeof(http_proc.conn[i]));
 #ifdef WIN32
-	conn[i].id=(unsigned int)1;
+	http_proc.conn[i].id=(unsigned int)1;
 #else
-	conn[i].id=(pthread_t)1;
+	http_proc.conn[i].id=(pthread_t)1;
 #endif
 	pthread_mutex_unlock(&ListenerMutex);
 	return i;
@@ -187,7 +187,7 @@ void *httpd_accept_loop(void *x)
 	short int socket;
 
 	DEBUG_IN(NULL, "httpd_accept_loop()");
-	log_error("core", __FILE__, __LINE__, 2, "Starting httpd_accept_loop() thread (%s)", (conntype==CONN_SSL?"ssl":"std"));
+	log_error("core", __FILE__, __LINE__, 1, "Starting httpd_accept_loop() thread (%s)", (conntype==CONN_SSL?"ssl":"std"));
 #ifndef WIN32
 	pthread_detach(pthread_self());
 #endif
@@ -209,25 +209,25 @@ void *httpd_accept_loop(void *x)
 			log_error("httpd", __FILE__, __LINE__, 0, "unknown connection type %d", conntype);
 			exit(-1);
 		}
-		socket=tcp_accept(ListenSocket, (struct sockaddr_in *)&conn[sid].socket.ClientAddr);
+		socket=tcp_accept(ListenSocket, (struct sockaddr_in *)&http_proc.conn[sid].socket.ClientAddr);
 		/*
 		 * If ListenSocket==-1 then someone either has, or soon will kill the listener,
 		 * probably from server_shutdown().
 		 */
 		if (ListenSocket==-1) return 0;
-		conn[sid].socket.socket=socket;
+		http_proc.conn[sid].socket.socket=socket;
 #ifdef WIN32
-		if (conn[sid].socket.socket==INVALID_SOCKET) {
+		if (http_proc.conn[sid].socket.socket==INVALID_SOCKET) {
 			log_error("httpd", __FILE__, __LINE__, 2, "httpd_accept_loop() shutting down...");
 			DEBUG_OUT(NULL, "httpd_accept_loop()");
 			return 0;
 #else
-		if (conn[sid].socket.socket<0) {
+		if (http_proc.conn[sid].socket.socket<0) {
 			continue;
 #endif
 		} else {
-			if (conntype==CONN_SSL) ssl_accept(&conn[sid].socket);
-			if (pthread_create(&conn[sid].handle, &thr_attr, htloop, (void *)sid)==-1) {
+			if (conntype==CONN_SSL) ssl_accept(&http_proc.conn[sid].socket);
+			if (pthread_create(&http_proc.conn[sid].handle, &thr_attr, htloop, (void *)sid)==-1) {
 				log_error("httpd", __FILE__, __LINE__, 0, "htloop() failed to start...");
 				DEBUG_OUT(NULL, "httpd_accept_loop()");
 				exit(-1);
@@ -251,17 +251,17 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	if (mod_import()!=0) return -1;
 	conf_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s httpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	if (mod_config.http_port) {
-		if ((http_proc.ListenSocketSTD=tcp_bind(mod_config.http_interface, mod_config.http_port))<0) return -1;
+	if (http_proc.config.http_port) {
+		if ((http_proc.ListenSocketSTD=tcp_bind(http_proc.config.http_interface, http_proc.config.http_port))<0) return -1;
 	}
-	if ((proc->ssl_is_loaded)&&(mod_config.http_sslport)) {
-		if ((http_proc.ListenSocketSSL=tcp_bind(mod_config.http_interface, mod_config.http_sslport))<0) return -1;
+	if ((proc->ssl_is_loaded)&&(http_proc.config.http_sslport)) {
+		if ((http_proc.ListenSocketSSL=tcp_bind(http_proc.config.http_interface, http_proc.config.http_sslport))<0) return -1;
 	}
-	if ((conn=calloc(mod_config.http_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.http_maxconn, sizeof(CONN));
+	if ((http_proc.conn=calloc(http_proc.config.http_maxconn, sizeof(CONN)))==NULL) {
+		printf("\r\nconn calloc(%d, %d) failed\r\n", http_proc.config.http_maxconn, sizeof(CONN));
 		return -1;
 	}
-	for (i=0;i<mod_config.http_maxconn;i++) conn[i].socket.socket=-1;
+	for (i=0;i<http_proc.config.http_maxconn;i++) http_proc.conn[i].socket.socket=-1;
 	if (modules_init()!=0) exit(-2);
 	return 0;
 }
@@ -274,13 +274,13 @@ DllExport int mod_exec()
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
-	if (mod_config.http_port) {
+	if (http_proc.config.http_port) {
 		if (pthread_create(&http_proc.ListenThreadSTD, &thr_attr, httpd_accept_loop, (void *)CONN_STD)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "httpd_accept_loop() failed...");
 			return -2;
 		}
 	}
-	if ((proc->ssl_is_loaded)&&(mod_config.http_sslport)) {
+	if ((proc->ssl_is_loaded)&&(http_proc.config.http_sslport)) {
 		if (pthread_create(&http_proc.ListenThreadSSL, &thr_attr, httpd_accept_loop, (void *)CONN_SSL)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "httpd_accept_loop_ssl() failed...");
 			return -2;
@@ -295,25 +295,25 @@ DllExport int mod_cron()
 	short int connections=0;
 	short int i;
 
-	for (i=0;i<mod_config.http_maxconn;i++) {
-		if ((conn[i].id==0)||(conn[i].socket.atime==0)) continue;
+	for (i=0;i<http_proc.config.http_maxconn;i++) {
+		if ((http_proc.conn[i].id==0)||(http_proc.conn[i].socket.atime==0)) continue;
 		connections++;
-		if (conn[i].state==0) {
-			if (ctime-conn[i].socket.atime<mod_config.http_maxkeepalive) continue;
+		if (http_proc.conn[i].state==0) {
+			if (ctime-http_proc.conn[i].socket.atime<http_proc.config.http_maxkeepalive) continue;
 		} else {
-			if (ctime-conn[i].socket.atime<mod_config.http_maxidle) continue;
+			if (ctime-http_proc.conn[i].socket.atime<http_proc.config.http_maxidle) continue;
 		}
-		log_error("httpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
-//		closeconnect is _not_ ssl-friendly
-//		closeconnect(&conn[i], 0);
+		log_error("httpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", http_proc.conn[i].id, ctime-http_proc.conn[i].socket.atime);
+		/* closeconnect is _not_ ssl-friendly */
 /*
-		if (&conn[i].dat!=NULL) {
-			if (&conn[i].dat->wm!=NULL) {
-				tcp_close(&conn[i].dat->wm->socket, 0);
+		closeconnect(&http_proc.conn[i], 0);
+		if (&http_proc.conn[i].dat!=NULL) {
+			if (&http_proc.conn[i].dat->wm!=NULL) {
+				tcp_close(&http_proc.conn[i].dat->wm->socket, 0);
 			}
 		}
 */
-		tcp_close(&conn[i].socket, 0);
+		tcp_close(&http_proc.conn[i].socket, 0);
 	}
 	return 0;
 }
@@ -321,49 +321,17 @@ DllExport int mod_cron()
 DllExport int mod_exit()
 {
 	log_error("core", __FILE__, __LINE__, 1, "Stopping %s httpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-/*
-void server_shutdown()
-{
-	int i;
-	int opensockets;
-
-#ifndef WIN32
-	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
-#endif
-//	log_access("httpd", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
-//	pthread_kill(proc.ListenThread, 14);
-//	shutdown(proc.ListenSocket, 2);
-//	closesocket(proc.ListenSocket);
-//	proc.ListenSocket=-1;
-	opensockets=0;
-	for (i=0;i<config->http_maxconn;i++) {
-		if (conn[i].socket.socket!=-1) opensockets++;
-	}
-	if (!opensockets) goto fini;
-	sleep(2);
-	for (i=0;i<config->http_maxconn;i++) {
-		if (conn[i].id==0) continue;
-//		pthread_kill(conn[i].handle, 14);
-		if (conn[i].socket.socket!=-1) {
-			shutdown(conn[i].socket.socket, 2);
-			closesocket(conn[i].socket.socket);
-			conn[i].socket.socket=-1;
-		}
-		if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
-	}
-fini:
-	free(conn);
-}
-*/
-
 	if (http_proc.ListenSocketSTD>0) {
-//		shutdown(ListenSocket, 2);
-//		closesocket(ListenSocket);
+/*		shutdown(ListenSocket, 2);
+		closesocket(ListenSocket);
+*/
 		http_proc.ListenSocketSTD=0;
 	}
 	if (http_proc.ListenSocketSSL>0) {
-//		shutdown(ListenSocket, 2);
-//		closesocket(ListenSocket);
+/*
+		shutdown(ListenSocket, 2);
+		closesocket(ListenSocket);
+*/
 		http_proc.ListenSocketSSL=0;
 	}
 	return 0;

@@ -286,7 +286,7 @@ void wmaccount_save(CONN *sid)
 		if (sql_updatef("DELETE FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did)<0) return;
 		rmdir(dirname);
 		prints(sid, "<BR><CENTER>E-Mail account %d deleted successfully</CENTER><BR>\n", mailacct.mailaccountid);
-		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "delete", "%s - %s deleted mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
+		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "delete", "%s - %s deleted mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else if (mailacct.mailaccountid==0) {
 		if ((sqr=sql_query("SELECT max(mailaccountid) FROM gw_mailaccounts"))<0) return;
 		mailacct.mailaccountid=atoi(sql_getvalue(sqr, 0, 0))+1;
@@ -315,7 +315,7 @@ void wmaccount_save(CONN *sid)
 		if (sql_update(query)<0) return;
 		wmfolder_makedefaults(sid, mailacct.mailaccountid);
 		prints(sid, "<BR><CENTER>E-Mail account %d added successfully</CENTER><BR>\n", mailacct.mailaccountid);
-		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
+		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {
 		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
@@ -343,7 +343,7 @@ void wmaccount_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d", mailacct.mailaccountid, sid->dat->user_uid, sid->dat->user_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<BR><CENTER>E-mail account %d modified successfully</CENTER><BR>\n", mailacct.mailaccountid);
-		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "modify", "%s - %s modified mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
+		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "modify", "%s - %s modified mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/mail/accounts/list\");\n", sid->dat->in_ScriptName);

@@ -128,7 +128,7 @@ void admindomainsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_domains WHERE domainid = %d", domain.domainid)<0) return;
 		prints(sid, "<CENTER>Domain %d deleted successfully</CENTER><BR>\n", domain.domainid);
-		db_log_activity(sid, 1, "domains", domain.domainid, "delete", "%s - %s deleted domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
+		db_log_activity(sid, "domains", domain.domainid, "delete", "%s - %s deleted domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
 	} else if (domain.domainid==0) {
 		if ((sqr=sql_queryf("SELECT domainname FROM gw_domains where domainname = '%s'", domain.domainname))<0) return;
 		if (sql_numtuples(sqr)>0) {
@@ -150,7 +150,7 @@ void admindomainsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, domain.domainname));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Domain %d added successfully</CENTER><BR>\n", domain.domainid);
-		db_log_activity(sid, 1, "domains", domain.domainid, "insert", "%s - %s added domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
+		db_log_activity(sid, "domains", domain.domainid, "insert", "%s - %s added domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -172,7 +172,7 @@ void admindomainsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE domainid = %d", domain.domainid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Domain %d modified successfully</CENTER><BR>\n", domain.domainid);
-		db_log_activity(sid, 1, "domains", domain.domainid, "modify", "%s - %s modified domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
+		db_log_activity(sid, "domains", domain.domainid, "modify", "%s - %s modified domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/domainlist\">\n", sid->dat->in_ScriptName);
 	return;

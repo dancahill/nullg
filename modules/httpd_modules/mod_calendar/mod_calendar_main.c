@@ -428,12 +428,12 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Event Type&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventtype style='width:182px'>\n");
 	htselect_eventtype(sid, event->eventtype);
 	prints(sid, "</SELECT></TD></TR>\n");
-	if (module_exists(sid, "mod_contacts")) {
+	if (module_exists("mod_contacts")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n");
 		htselect_contact(sid, event->contactid);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	if ((module_exists(sid, "mod_projects"))&&(event->projectid>0)) {
+	if ((module_exists("mod_projects"))&&(event->projectid>0)) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Project&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=projectid value=\"%d\" SIZE=25 style='width:182px'></TD></TR>\n", event->projectid);
 	}
@@ -514,7 +514,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
 	if (event->eventid>0) {
-		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+		if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 			prints(sid, "<TR><TD NOWRAP>");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
@@ -634,7 +634,7 @@ void calendarview(CONN *sid)
 	else if (event.priority==3) prints(sid, "High");
 	else if (event.priority==4) prints(sid, "Highest");
 	prints(sid, "&nbsp;</TD>\n");
-	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(sid, event.status));
+	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(event.status));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Reminder    </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>\n", htview_reminder(sid, event.reminder));
 	if (event.status) {
 		prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Closing Status</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventclosingstatus(sid, event.closingstatus));
@@ -643,7 +643,7 @@ void calendarview(CONN *sid)
 	}
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, event.details));
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>Notes");
 		prints(sid, " [<A HREF=%s/notes/editnew?table=events&index=%d>new</A>]", sid->dat->in_ScriptName, event.eventid);
 		prints(sid, "</TH></TR>\n");
@@ -727,7 +727,7 @@ void calendarsave(CONN *sid)
 			calendaredit(sid, &event);
 			return;
 		}
-		if ((rc=db_autoschedule(sid, event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))<0) {
+		if ((rc=db_autoschedule(event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))<0) {
 			prints(sid, "<CENTER><B>Could not find an available time slot for this event.</B></CENTER>\n");
 		} else {
 			event.eventfinish+=rc-event.eventstart;
@@ -746,7 +746,7 @@ void calendarsave(CONN *sid)
 		sql_freeresult(sqr);
 		if (atoi(ptemp)<1) {
 			prints(sid, "<CENTER><B>Please specify a group.</B></CENTER>\n");
-		} else if ((rc=db_autoassign(sid, &uavail, atoi(ptemp), zoneid, event.eventid, event.busy, event.eventstart, event.eventfinish))<0) {
+		} else if ((rc=db_autoassign(&uavail, atoi(ptemp), zoneid, event.eventid, event.busy, event.eventstart, event.eventfinish))<0) {
 			prints(sid, "<CENTER><B>Could not find an available user for this event.</B></CENTER>\n");
 		} else {
 			event.assignedto=uavail.userid;
@@ -768,7 +768,7 @@ void calendarsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_events WHERE eventid = %d", event.eventid)<0) return;
 		prints(sid, "<CENTER>Calendar event %d deleted successfully</CENTER><BR>\n", event.eventid);
-		db_log_activity(sid, 1, "events", event.eventid, "delete", "%s - %s deleted calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
+		db_log_activity(sid, "events", event.eventid, "delete", "%s - %s deleted calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/list\">\n", sid->dat->in_ScriptName);
 	} else if (event.eventid==0) {
 		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
@@ -780,7 +780,7 @@ void calendarsave(CONN *sid)
 			calendaredit(sid, &event);
 			return;
 		}
-		if ((rc=db_availcheck(sid, event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))!=0) {
+		if ((rc=db_availcheck(event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))!=0) {
 			if (rc==-1) {
 				prints(sid, "<CENTER><B>This user is not available for the requested time.</B></CENTER>\n");
 			} else {
@@ -794,7 +794,7 @@ void calendarsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Calendar event %d added successfully</CENTER><BR>\n", event.eventid);
-		db_log_activity(sid, 1, "events", event.eventid, "insert", "%s - %s added calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
+		db_log_activity(sid, "events", event.eventid, "insert", "%s - %s added calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/view?eventid=%d\">\n", sid->dat->in_ScriptName, event.eventid);
 	} else {
 		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
@@ -806,7 +806,7 @@ void calendarsave(CONN *sid)
 			calendaredit(sid, &event);
 			return;
 		}
-		if ((rc=db_availcheck(sid, event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))!=0) {
+		if ((rc=db_availcheck(event.assignedto, event.eventid, event.busy, event.eventstart, event.eventfinish))!=0) {
 			if (rc==-1) {
 				prints(sid, "<CENTER><B>This user is not available for the requested time.</B></CENTER>\n");
 			} else {
@@ -820,7 +820,7 @@ void calendarsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Event %d modified successfully</CENTER><BR>\n", event.eventid);
-		db_log_activity(sid, 1, "events", event.eventid, "modify", "%s - %s modified calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
+		db_log_activity(sid, "events", event.eventid, "modify", "%s - %s modified calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/view?eventid=%d\">\n", sid->dat->in_ScriptName, event.eventid);
 	}
 	return;
@@ -839,12 +839,14 @@ DllExport int mod_main(CONN *sid)
 	if (strncmp(sid->dat->in_RequestURI, "/calendar/vcardexport", 21)==0) {
 		event_vcalexport(sid);
 		return 0;
+/*
 	} else if (strncmp(sid->dat->in_RequestURI, "/calendar/vcardimport", 21)==0) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		event_vcalimport(sid);
 		return 0;
+*/
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/calendar/reminders", 19)==0) {
 		htpage_header(sid, "Groupware Event Reminder");
 		calendarreminders(sid);

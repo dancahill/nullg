@@ -15,26 +15,34 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#define HAVE_MYSQL
 #ifdef WIN32
-	#define HAVE_ODBC
+#define HAVE_ODBC
+#endif
+#define HAVE_PGSQL
+#define HAVE_SQLITE3
+
+#ifdef HAVE_MYSQL
+	#ifdef HAVE_MYSQL_MYSQL_H
+	#include "mysql/mysql.h"
+	#else
+	#include "sql/mysql.h"
+	#endif
+#endif
+#ifdef HAVE_ODBC
 	#include <sql.h>
 	#include <sqlext.h>
 #endif
-#define HAVE_MYSQL
-#define HAVE_PGSQL
-#define HAVE_SQLITE
-
-#ifdef HAVE_MYSQL_MYSQL_H
-#include "mysql/mysql.h"
-#else
-#include "sql/mysql.h"
+#ifdef HAVE_PGSQL
+	#ifdef HAVE_POSTGRESQL_LIBPQ_FE_H
+	#include "postgresql/libpq-fe.h"
+	#else
+	#include "sql/pgsql.h"
+	#endif
 #endif
-#ifdef HAVE_POSTGRESQL_LIBPQ_FE_H
-#include "postgresql/libpq-fe.h"
-#else
-#include "sql/pgsql.h"
+#ifdef HAVE_SQLITE3
+	#include "sql/sqlite3.h"
 #endif
-#include "sql/sqlite.h"
 
 #ifdef HAVE_MYSQL
 typedef	void          (STDCALL *LIBMYSQL_CLOSE)(MYSQL *);
@@ -64,12 +72,13 @@ typedef	ExecStatusType (*LIBPGSQL_RESULTSTATUS)(const PGresult *);
 typedef	PGconn        *(*LIBPGSQL_SETDBLOGIN)(const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 typedef	ConnStatusType (*LIBPGSQL_STATUS)(const PGconn *);
 #endif
-#ifdef HAVE_SQLITE
-typedef	sqlite *(*SQLITE_OPEN)(const char *filename, int mode, char **errmsg);
-typedef	void    (*SQLITE_CLOSE)(sqlite *);
-typedef	int     (*SQLITE_EXEC)(sqlite *, const char *sql, sqlite_callback, void *, char **errmsg);
+#ifdef HAVE_SQLITE3
+typedef	int  (*SQLITE_OPEN)(const char *filename, sqlite3 **ppDb);
+typedef	int  (*SQLITE_EXEC)(sqlite3 *, const char *sql, sqlite_callback, void *, char **errmsg);
+typedef	void (*SQLITE_CLOSE)(sqlite3 *);
 #endif
 
+/* global vars */
 #ifdef HAVE_MYSQL
 struct {
 	LIBMYSQL_CLOSE close;
@@ -102,7 +111,7 @@ struct {
 	LIBPGSQL_STATUS status;
 } libpgsql;
 #endif
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 struct {
 	SQLITE_OPEN open;
 	SQLITE_CLOSE close;
@@ -110,25 +119,22 @@ struct {
 } libsqlite;
 #endif
 
-/* MySQL headers, libs, and global vars */
 #ifdef HAVE_MYSQL
 static MYSQL mysql;
 static MYSQL *mysock=NULL;
 static MYSQL_RES *myres=NULL;
 #endif
-/* WinODBC headers, libs, and global vars */
 #ifdef HAVE_ODBC
 static SQLHENV hEnv=NULL;
 static SQLHDBC hDBC=NULL;
 static SQLHSTMT hStmt=NULL;
 #endif
-/* PGSQL headers, libs, and global vars */
 #ifdef HAVE_PGSQL
 static PGconn *pgconn=NULL;
 static PGresult *pgres=NULL;
 #endif
-#ifdef HAVE_SQLITE
-static sqlite *db;
+#ifdef HAVE_SQLITE3
+static sqlite3 *db;
 #endif
 
 /* shared vars */

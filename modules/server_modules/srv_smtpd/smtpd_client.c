@@ -92,7 +92,7 @@ int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt)
 	char *ptemp2;
 	int smtp_sock;
 
-//	if (strlen(from)==0) return -1;
+	/* if (strlen(from)==0) return -1; */
 	if (strlen(rcpt)==0) return -1;
 	memset(inbuffer, 0, sizeof(inbuffer));
 	if (strlen(mod_config.smtp_relayhost)>0) {
@@ -173,7 +173,7 @@ quit:
 	smtp_disconnect(smtp_sock);
 	if (strncasecmp(inbuffer, "504", 3)!=0) {
 		bounce_send(from, rcpt, orig_msg, inbuffer);
-//		unlink(filename);
+		/* unlink(filename); */
 		return -2;
 	}
 	return -1;

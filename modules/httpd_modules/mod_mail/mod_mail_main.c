@@ -108,7 +108,7 @@ void webmailraw(CONN *sid)
 	int msgnum=0;
 	int sqr;
 
-	send_header(sid, 1, 200, "OK", "1", "text/plain", -1, -1);
+	send_header(sid, 1, 200, "1", "text/plain", -1, -1);
 	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) msgnum=atoi(ptemp);
 	if ((sqr=sql_queryf("SELECT mailheaderid, folder, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
 	if (sql_numtuples(sqr)!=1) {
@@ -130,13 +130,13 @@ void webmailraw(CONN *sid)
 	prints(sid, "<PRE>\r\n");
 	prints(sid, "<HR>\r\n");
 	for (;;) {
-		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
+		wmffgets(inbuffer, sizeof(inbuffer)-1, &fp);
 		if (strcmp(inbuffer, "")==0) break;
 		printht(sid, "%s\r\n", inbuffer);
 	}
 	prints(sid, "<HR>\r\n");
 	for (;;) {
-		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
+		wmffgets(inbuffer, sizeof(inbuffer)-1, &fp);
 		if (fp==NULL) break;
 		printht(sid, "%s\r\n", inbuffer);
 	}
@@ -697,7 +697,7 @@ void webmailframeset(CONN *sid)
 	char *ptemp;
 	int sqr;
 
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<HTML>\n<HEAD>\n<TITLE>NullLogic Groupware Webmail</TITLE>\n</HEAD>\n");
 	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
 		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->user_username)==0) {
@@ -755,7 +755,7 @@ DllExport int mod_main(CONN *sid)
 		webmailfiledl(sid);
 		goto done;
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	if (strncmp(suburi, "notice", 6)==0) {
 		htpage_header(sid, "E-Mail Notice");
 		wmnotice(sid);

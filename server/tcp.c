@@ -65,12 +65,12 @@ int tcp_accept(int listensock, struct sockaddr_in *addr)
 {
 	struct sockaddr_in peer;
 	int clientsock;
-	int fromlen=sizeof(struct sockaddr_in);
-//	int timeout=500;	// 0.5 seconds
+	unsigned int fromlen=sizeof(struct sockaddr_in);
+/*	int timeout=500; */
 
 	clientsock=accept(listensock, (struct sockaddr *)&addr, &fromlen);
 	getpeername(clientsock, (struct sockaddr *)&peer, &fromlen);
-//	setsockopt(clientsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout));
+/*	setsockopt(clientsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout)); */
 	log_error("tcp", __FILE__, __LINE__, 5, "tcp_accept: connection from %s", inet_ntoa(peer.sin_addr));
 	return clientsock;
 }
@@ -78,6 +78,8 @@ int tcp_accept(int listensock, struct sockaddr_in *addr)
 int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 {
 	int rc;
+
+//	log_error("tcp", __FILE__, __LINE__, 1, "tcp_close: socket=%d, pid=%d, wc=%d", socket->socket, getpid(), socket->want_close);
 
 	if (socket->socket==-1) return -1;
 	if (socket->want_close) {
@@ -94,6 +96,7 @@ int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 #else
 	rc=recv(socket->socket, buffer, len, flags);
 #endif
+//	log_error("tcp", __FILE__, __LINE__, 1, "tcp_close: socket=%d, pid=%d, bytes=%d", socket->socket, getpid(), rc);
 	if (rc>0) {
 		socket->atime=time(NULL);
 		socket->bytes_in+=rc;
@@ -125,7 +128,6 @@ int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 		socket->bytes_out+=rc;
 	}
 	log_error("tcp", __FILE__, __LINE__, 5, "tcp_send: %d bytes of binary data", rc);
-//	log_error("tcp", __FILE__, __LINE__, 5, "tcp_send: %s", buffer);
 	return rc;
 }
 
@@ -156,7 +158,7 @@ int tcp_send_nolog(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 
 int tcp_fprintf(TCP_SOCKET *socket, const char *format, ...)
 {
-	unsigned char buffer[2048];
+	char buffer[2048];
 	va_list ap;
 	int rc;
 

@@ -109,7 +109,7 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	}
 	sid->dat->user_uid = atoi(sql_getvaluebyname(sqr, 0, "userid"));
 	sid->dat->user_gid = atoi(sql_getvaluebyname(sqr, 0, "groupid"));
-//	memset((char *)&sid->dat->auth, 0, sizeof(sid->dat->auth));
+	/* memset((char *)&sid->dat->auth, 0, sizeof(sid->dat->auth)); */
 	for (i=0,j=0;i<sql_numfields(sqr);i++) {
 		if (strncmp(sql_getname(sqr, i), "auth", 4)!=0) continue;
 		strncpy(sid->dat->auth[j].name, sql_getname(sqr, i)+4, sizeof(sid->dat->auth[j].name)-1);
@@ -126,10 +126,10 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	sid->dat->user_timezone      = atoi(sql_getvaluebyname(sqr, 0, "preftimezone"));
 	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "%s", sql_getvaluebyname(sqr, 0, "preflanguage"));
 	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "%s", sql_getvaluebyname(sqr, 0, "preftheme"));
-	if (!module_exists(sid, "mod_mail")) {
+	if (!module_exists("mod_mail")) {
 		sid->dat->user_maildefault=0;
 	}
-	if (!module_exists(sid, "mod_html")) {
+	if (!module_exists("mod_html")) {
 		sid->dat->user_menustyle=0;
 	}
 	if (p_strcasestr(sid->dat->in_UserAgent, "LYNX")!=NULL) {
@@ -350,7 +350,6 @@ int auth_priv(CONN *sid, char *service)
 	int authlevel;
 	int i;
 
-//	DEBUG_IN(sid, "auth_priv()");
 	authlevel=0;
 	if (strlen(service)<4) return 0;
 	for (i=0;i<MAX_AUTH_FIELDS;i++) {
@@ -361,6 +360,5 @@ int auth_priv(CONN *sid, char *service)
 	}
 
 	if (authlevel&A_ADMIN) authlevel=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
-//	DEBUG_OUT(sid, "auth_priv()");
 	return authlevel;
 }

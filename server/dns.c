@@ -31,7 +31,9 @@
 #include <netinet/in.h>
 #include <resolv.h>
 #include <arpa/nameser.h>
+#ifdef HAVE_ARPA_NAMESER_COMPAT_H
 #include <arpa/nameser_compat.h>
+#endif
 #define MAXPACKET	8192	/* max size of packet */
 #define MAXMXHOSTS	20	/* max num of mx records we want to see */
 #define MAXBUF		512
@@ -82,7 +84,7 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 	}
 	if (n<HFIXEDSZ) return(0);
 	/* avoid problems after truncation in tcp packets */
-	if (n>sizeof(answer)) n=sizeof(answer);
+	if (n>(int)sizeof(answer)) n=(int)sizeof(answer);
 	// Valid answer received. Skip the query record.
 	hp=(HEADER *)&answer;
 	qdcount=ntohs((u_short)hp->qdcount);

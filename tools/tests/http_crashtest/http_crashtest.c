@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "http_crashtest.h"
+#include <signal.h>
 
 #ifdef WIN32
 static WSADATA wsaData;
@@ -118,7 +119,7 @@ retry:
 		if (retries>0) goto retry;
 	}
 //printf("%s", buffer);
-	striprn(buffer);
+//	striprn(buffer);
 	return n;
 }
 
@@ -170,6 +171,8 @@ void *http_test1(void *x)
 	char tmpbuf[1024];
 	char postbuf[8192];
 	short int postsize=0;
+	short int insize=0;
+	short int rc;
 	int i;
 #ifdef HAVE_SSL
 	SSL_METHOD *meth;
@@ -181,19 +184,20 @@ void *http_test1(void *x)
 	SSL_load_error_strings();
 	conn[sid].ctx=SSL_CTX_new(meth);
 #endif
+	if (http_connect(&conn[sid], host, port)<0) {
+		conn[sid].socket=-1;
+		return 0;
+	}
 	for (i=0;i<perconn;i++) {
-		if (http_connect(&conn[sid], host, port)<0) {
-			conn[sid].socket=-1;
-			return 0;
-		}
 //		memset(tmpbuf, 'x', sizeof(tmpbuf));
 //		tmpbuf[sizeof(tmpbuf)-1]='\0';
 //		snprintf(postbuf, sizeof(postbuf)-1, "blah=testing\r\n");
 //		postsize=strlen(postbuf);
 		wmprintf(&conn[sid],
-			"GET %s HTTP/1.0\r\n"
+			"GET %s HTTP/1.1\r\n"
 			"Host: %s\r\n"
-			"Connection: close\r\n"
+			"User-Agent: NGW_Bench/1.0a\r\n"
+			"Connection: Keep-Alive\r\n"
 			"Content-Length: %d\r\n"
 			"\r\n",
 			uri, host, postsize
@@ -201,25 +205,36 @@ void *http_test1(void *x)
 //		wmprintf(&conn[sid], "%s", postbuf);
 //		printf("\r\n\r\n");
 		for (;;) {
-			if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) break;
-			if (!strlen(inbuffer)) break;
+			rc=wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket);
+			if (rc<0) { printf("x"); break; }
+			if (strncmp(inbuffer, "Content-Length: ", 16)==0) { insize=atoi(inbuffer+16); }
+			if (strlen(inbuffer)<3) break;
+			striprn(inbuffer);
 //			printf("%s\r\n", inbuffer);
 		}
 //		printf("%s\r\n", inbuffer);
 		for (;;) {
-			if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) break;
-			if (!strlen(inbuffer)) break;
+			rc=wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket);
+//			printf("pid=%d rc=%d insize=%d\r\n", getpid(), rc, insize);
+			if (rc<0) { printf("x"); break; }
+			insize-=rc;
+			if (insize<1) break;
+
+//			if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) break;
+//			if (!strlen(inbuffer)) break;
 //			printf("%s\r\n", inbuffer);
 		}
-#ifdef HAVE_SSL
-		SSL_shutdown(conn[sid].ssl);
-#endif
-		closesocket(conn[sid].socket);
-#ifdef HAVE_SSL
-		SSL_free(conn[sid].ssl);
-#endif
-		printf(".");
+//		printf(".");
 	}
+
+#ifdef HAVE_SSL
+	SSL_shutdown(conn[sid].ssl);
+#endif
+	closesocket(conn[sid].socket);
+#ifdef HAVE_SSL
+	SSL_free(conn[sid].ssl);
+#endif
+
 #ifdef HAVE_SSL
 	SSL_CTX_free(conn[sid].ctx);
 #endif
@@ -243,6 +258,9 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 #endif
+
+	signal(SIGPIPE, SIG_IGN);
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 	if (argc!=3) {
 		printf("progname numconn perconn\r\n");
@@ -259,12 +277,12 @@ int main(int argc, char *argv[])
 	}
 	gettimeofday(&ttime, &tzone);
 	x=ttime.tv_sec; y=ttime.tv_usec;
+	if (pthread_attr_init(&thr_attr)) exit(-2);
+#ifndef OLDLINUX
+	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-2);
+#endif
 	for (i=0;i<numconn;i++) {
 		conn[i].socket=-1;
-		if (pthread_attr_init(&thr_attr)) exit(-2);
-#ifndef OLDLINUX
-		if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-2);
-#endif
 		if (pthread_create(&blah, &thr_attr, http_test1, (void *)i)==-1) {
 			printf("thread failed to start.\r\n");
 			exit(-2);

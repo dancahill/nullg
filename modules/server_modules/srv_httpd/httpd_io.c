@@ -193,7 +193,7 @@ void flushbuffer(CONN *sid)
 
 int prints(CONN *sid, const char *format, ...)
 {
-	unsigned char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(sid);
 	short int str_len1, str_len2;
 	va_list ap;
 
@@ -220,7 +220,7 @@ int prints(CONN *sid, const char *format, ...)
 
 int raw_prints(CONN *sid, const char *format, ...)
 {
-	unsigned char buffer[2048];
+	char buffer[2048];
 	va_list ap;
 
 	if (sid==NULL) return -1;
@@ -238,65 +238,7 @@ int raw_prints(CONN *sid, const char *format, ...)
 	}
 }
 
-int sgets(CONN *sid, char *buffer, int max, int fd)
-{
-/*
-	char *pbuffer=buffer;
-	char *obuffer;
-	short int lf=0;
-	short int n=0;
-	short int rc;
-	short int x;
-
-	if (sid==NULL) return -1;
-retry:
-	if (!sid->dat->recvbufsize) {
-		x=sizeof(sid->dat->recvbuf)-sid->dat->recvbufoffset-sid->dat->recvbufsize-2;
-		obuffer=sid->dat->recvbuf+sid->dat->recvbufoffset+sid->dat->recvbufsize;
-		if ((rc=recv(fd, obuffer, x, 0))<0) {
-			return -1;
-		} else if (rc<1) {
-			//
-			 * Add a one millisecond delay if zero bytes are
-			 * returned.  This should drastically decrease the
-			 * cpu usage of threads serving slow clients.
-			 //
-			msleep(1);
-			goto retry;
-		} else {
-			sid->socket.atime=time(NULL);
-		}
-		sid->dat->recvbufsize+=rc;
-	}
-	obuffer=sid->dat->recvbuf+sid->dat->recvbufoffset;
-	while ((n<max)&&(sid->dat->recvbufsize>0)) {
-		sid->dat->recvbufoffset++;
-		sid->dat->recvbufsize--;
-		n++;
-		if (*obuffer=='\n') lf=1;
-		*pbuffer++=*obuffer++;
-		if ((lf)||(*obuffer=='\0')) break;
-	}
-	*pbuffer='\0';
-	if (n>max-1) return n;
-	if (!lf) {
-		if (sid->dat->recvbufsize>0) {
-			memmove(sid->dat->recvbuf, sid->dat->recvbuf+sid->dat->recvbufoffset, sid->dat->recvbufsize);
-			memset(sid->dat->recvbuf+sid->dat->recvbufsize, 0, sizeof(sid->dat->recvbuf)-sid->dat->recvbufsize);
-			sid->dat->recvbufoffset=0;
-		} else {
-			memset(sid->dat->recvbuf, 0, sizeof(sid->dat->recvbuf));
-			sid->dat->recvbufoffset=0;
-			sid->dat->recvbufsize=0;
-		}
-		goto retry;
-	}
-	return n;
-*/
-	return 0;
-}
-
-int filesend(CONN *sid, unsigned char *file)
+int filesend(CONN *sid, char *file)
 {
 	struct stat sb;
 	int fp;
@@ -309,13 +251,13 @@ int filesend(CONN *sid, unsigned char *file)
 	if (strstr(file, "..")!=NULL) return -1;
 	if (stat(file, &sb)!=0) return -1;
 	if (sb.st_mode&S_IFDIR) return -1;
-	// need some check for IfModifiedSince here
+	/* need some check for IfModifiedSince here */
 	if ((fp=open(file, O_RDONLY|O_BINARY))==-1) return -1;
 	sid->dat->out_bytecount=sb.st_size;
 	sid->dat->out_bodydone=1;
 	bytesleft=sb.st_size;
-	send_fileheader(sid, 1, 200, "OK", "1", get_mime_type(file), sb.st_size, sb.st_mtime);
-	// sendfile() can't be used without screwing up our timeouts, so we do this
+	send_fileheader(sid, 1, 200, "1", get_mime_type(file), sb.st_size, sb.st_mtime);
+	/* sendfile() can't be used without screwing up our timeouts, so we do this */
 	for (;;) {
 		if (bytesleft<=0) break;
 		blocksize=sizeof(fileblock);
@@ -345,7 +287,7 @@ int closeconnect(CONN *sid, int exitflag)
 		flushbuffer(sid);
 	}
 	if (http_proc.RunAsCGI) {
-//		sql_disconnect(sid);
+		/* sql_disconnect(sid); */
 		fflush(stdout);
 		DEBUG_OUT(sid, "closeconnect()");
 		exit(0);
@@ -371,7 +313,7 @@ int closeconnect(CONN *sid, int exitflag)
 		CloseHandle(sid->handle);
 #endif
 		DEBUG_OUT(sid, "closeconnect()");
-		memset(sid, 0, sizeof(conn[0]));
+		memset(sid, 0, sizeof(http_proc.conn[0]));
 		sid->socket.socket=-1;
 #ifdef WIN32
 		_endthread();

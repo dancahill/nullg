@@ -95,7 +95,7 @@ void profileedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='padding:2px'>User Profile for %s</TH></TR>\n", sid->dat->user_username);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password             </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password  VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user.password));
-	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
+	if (module_exists("mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Calendar Start       </B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 		prints(sid, "<SELECT NAME=prefdaystart style='width:255px'>\n");
 		htselect_hour(sid, user.prefdaystart);
@@ -109,7 +109,7 @@ void profileedit(CONN *sid)
 		htselect_zone(sid, user.prefgeozone, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Current Mail Account</B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 		prints(sid, "<SELECT NAME=prefmailcurrent style='width:255px'>\n");
 		htselect_mailaccount(sid, user.prefmailcurrent);
@@ -118,7 +118,7 @@ void profileedit(CONN *sid)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Default Mail Account</B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=prefmaildefault style='width:255px'>\n");
 	prints(sid, "<OPTION VALUE=0%s>External Mail Client\n", user.prefmaildefault!=1?" SELECTED":"");
-	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		prints(sid, "<OPTION VALUE=1%s>Web E-Mail\n", user.prefmaildefault==1?" SELECTED":"");
 	}
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -148,10 +148,10 @@ void profileedit(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD></TR>");
 	prints(sid, "<TR><TD ALIGN=CENTER>\n");
-	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		prints(sid, "[<A HREF=%s/mail/accounts/list>Edit Mail Accounts</A>]\n", sid->dat->in_ScriptName);
 	}
-	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
+	if (module_exists("mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
 		prints(sid, "[<A HREF=%s/profile/timeedit>Edit Availability</A>]\n", sid->dat->in_ScriptName);
 	}
 	prints(sid, "</TD></TR></TABLE>\n");
@@ -207,7 +207,7 @@ void profilesave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", sid->dat->user_uid);
 	if (sql_update(query)<0) return;
 	prints(sid, "<CENTER>Profile modified successfully</CENTER><BR>\n");
-	db_log_activity(sid, 1, "profile", 0, "modify", "%s - %s modified profile", sid->dat->in_RemoteAddr, sid->dat->user_username);
+	db_log_activity(sid, "profile", 0, "modify", "%s - %s modified profile", sid->dat->in_RemoteAddr, sid->dat->user_username);
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/profile/edit\">\n", sid->dat->in_ScriptName);
 	return;
 }
@@ -370,7 +370,7 @@ void profiletimesave(CONN *sid)
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (sql_updatef("UPDATE gw_users SET obj_mtime = '%s', availability = '%s' WHERE userid = %d", curdate, availability, sid->dat->user_uid)<0) return;
 	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR>\n");
-	db_log_activity(sid, 1, "profile", 0, "modify", "%s - %s modified availability", sid->dat->in_RemoteAddr, sid->dat->user_username);
+	db_log_activity(sid, "profile", 0, "modify", "%s - %s modified availability", sid->dat->in_RemoteAddr, sid->dat->user_username);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/profile/edit\");\n", sid->dat->in_ScriptName);
 	prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -381,7 +381,7 @@ void profiletimesave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_PROFILE);
 	prints(sid, "<BR>\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/profile/save", 13)==0) {

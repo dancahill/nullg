@@ -79,12 +79,12 @@ typedef struct {
 	short int socket;
 	struct sockaddr_in ClientAddr;
 	SSL *ssl;
-	time_t ctime; // Creation time
-	time_t atime; // Last Access time
+	time_t ctime; /* Creation time */
+	time_t atime; /* Last Access time */
 	unsigned int bytes_in;
 	unsigned int bytes_out;
 	short int want_close;
-	// TCP INPUT BUFFER
+	/* TCP INPUT BUFFER */
 	short int recvbufsize;
 	short int recvbufoffset;
 	char      recvbuf[2048];

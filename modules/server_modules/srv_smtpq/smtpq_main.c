@@ -88,8 +88,6 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
 	int i;
 
-	ListenSocketSTD=0;
-	ListenSocketSSL=0;
 	pthread_mutex_init(&ListenerMutex, NULL);
 	proc=_proc;
 	config=&proc->config;
@@ -136,7 +134,6 @@ DllExport int mod_cron()
 			if (ctime-conn[i].socket.atime<mod_config.smtp_maxidle) continue;
 		}
 		log_error("smtpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
-//		closeconnect(&conn[i], 0);
 		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;
@@ -145,50 +142,5 @@ DllExport int mod_cron()
 DllExport int mod_exit()
 {
 	log_error("core", __FILE__, __LINE__, 1, "Stopping %s smtpq %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-/*
-void server_shutdown()
-{
-	int i;
-	int opensockets;
-
-#ifndef WIN32
-	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
-#endif
-//	log_access("smtpd", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
-//	pthread_kill(proc.ListenThread, 14);
-//	shutdown(proc.ListenSocket, 2);
-//	closesocket(proc.ListenSocket);
-//	proc.ListenSocket=-1;
-	opensockets=0;
-	for (i=0;i<config->smtp_maxconn;i++) {
-		if (conn[i].socket.socket!=-1) opensockets++;
-	}
-	if (!opensockets) goto fini;
-	sleep(2);
-	for (i=0;i<config->smtp_maxconn;i++) {
-		if (conn[i].id==0) continue;
-//		pthread_kill(conn[i].handle, 14);
-		if (conn[i].socket.socket!=-1) {
-			shutdown(conn[i].socket.socket, 2);
-			closesocket(conn[i].socket.socket);
-			conn[i].socket.socket=-1;
-		}
-		if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
-	}
-fini:
-	free(conn);
-}
-*/
-
-	if (ListenSocketSTD>0) {
-//		shutdown(ListenSocket, 2);
-//		closesocket(ListenSocket);
-		ListenSocketSTD=0;
-	}
-	if (ListenSocketSSL>0) {
-//		shutdown(ListenSocket, 2);
-//		closesocket(ListenSocket);
-		ListenSocketSSL=0;
-	}
 	return 0;
 }

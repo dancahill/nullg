@@ -29,7 +29,7 @@ static HINSTANCE hinstLib=NULL;
 static void *hinstLib=NULL;
 #endif
 
-int module_exists(CONN *sid, char *mod_name)
+int module_exists(char *mod_name)
 {
 	int i;
 
@@ -40,7 +40,7 @@ int module_exists(CONN *sid, char *mod_name)
 	return 0;
 }
 
-void *module_call(CONN *sid, char *fn_name)
+void *module_call(char *fn_name)
 {
 	int i;
 
@@ -96,8 +96,10 @@ int module_load(char *modname)
 		{ "sql_numfields",		sql_numfields			},
 		{ "sql_numtuples",		sql_numtuples			},
 		{ "sys_system",			sys_system			},
-//		{ "tcp_bind",			tcp_bind			},
-//		{ "tcp_accept",			tcp_accept			},
+/*
+		{ "tcp_bind",			tcp_bind			},
+		{ "tcp_accept",			tcp_accept			},
+*/
 		{ "tcp_fgets",			tcp_fgets			},
 		{ "tcp_fprintf",		tcp_fprintf			},
 		{ "tcp_recv",			tcp_recv			},
@@ -179,7 +181,9 @@ int module_load(char *modname)
 		{ "flushbuffer",		flushbuffer			},
 		{ "hex2int",			hex2int				},
 		{ "closeconnect",		closeconnect			},
-//		{ "srv_restart",		server_restart			},
+/*
+		{ "srv_restart",		server_restart			},
+*/
 		{ "module_exists",		module_exists			},
 		{ "module_call",		module_call			},
 #ifdef WIN32

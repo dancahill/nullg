@@ -142,7 +142,7 @@ int dirlist(CONN *sid)
 		return 0;
 	}
 	if (stat(filename, &sb)!=0) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_FILES);
 		prints(sid, "<BR><CENTER>File or folder does not exist</CENTER><BR>\n");
 		return 0;
@@ -160,7 +160,7 @@ int dirlist(CONN *sid)
 	}
 	if ((strlen(file.filepath)>1)&&(!(auth_priv(sid, "files")&A_ADMIN))) {
 		if ((rc=fileperm(sid, A_READ, file.filepath, file.filename))<0) {
-			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+			send_header(sid, 0, 200, "1", "text/html", -1, -1);
 			htpage_topmenu(sid, MENU_FILES);
 			if (rc==-2) {
 				prints(sid, "<BR><CENTER>File does not exist</CENTER><BR>\n");
@@ -177,7 +177,7 @@ int dirlist(CONN *sid)
 	}
 	t=time(NULL);
 	strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", localtime(&t));
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_FILES);
 	isvalid=1;
 
@@ -237,7 +237,7 @@ int dirlist(CONN *sid)
 			if (sql_update(query)<0) {
 				log_error("mod_files", __FILE__, __LINE__, 1, "%s - ERROR: Cannot upload file [%s].", sid->dat->in_RemoteAddr, dentry->d_name);
 			} else {
-//				db_log_activity(sid, 1, "files", fileid, "insert", "%s - system uploaded file %d %s", sid->dat->in_RemoteAddr, fileid, dentry->d_name);
+//				db_log_activity(sid, "files", fileid, "insert", "%s - system uploaded file %d %s", sid->dat->in_RemoteAddr, fileid, dentry->d_name);
 			}
 			isvalid=0;
 		}
@@ -756,7 +756,7 @@ int filerecv(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "'file', '%s', '%s', '0', ", datebuf, datebuf);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, description));
 	if (sql_update(query)<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
-	db_log_activity(sid, 1, "files", fileid, "insert", "%s - %s uploaded file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, filename);
+	db_log_activity(sid, "files", fileid, "insert", "%s - %s uploaded file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, filename);
 	prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 	prints(sid, "<CENTER>\nFile '%s%s' has been received.<BR>\n", location, filename);
 	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]</CENTER>\n");
@@ -845,7 +845,7 @@ int filedirsave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "'dir', '%s', '%s', '0', ", datebuf, datebuf);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, filerec.description));
 	if (sql_update(query)<0) return -1;
-	db_log_activity(sid, 1, "filefolders", fileid, "insert", "%s - %s created file folder %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, file);
+	db_log_activity(sid, "filefolders", fileid, "insert", "%s - %s created file folder %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, fileid, file);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "File folder '%s%s' has been created.", filerec.filepath, filerec.filename);
 	prints(sid, "</CENTER>\n");
@@ -925,7 +925,7 @@ void fileinfosave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_files WHERE fileid = %d AND obj_did = %d", file.fileid, sid->dat->user_did)<0) return;
 		prints(sid, "<CENTER>file %d deleted successfully</CENTER><BR>\n", file.fileid);
-		db_log_activity(sid, 1, "files", file.fileid, "delete", "%s - %s deleted file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
+		db_log_activity(sid, "files", file.fileid, "delete", "%s - %s deleted file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	} else {
 		if (!(auth_priv(sid, "files")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -951,7 +951,7 @@ void fileinfosave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE fileid = %d AND obj_did = %d", file.fileid, sid->dat->user_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>file %d modified successfully</CENTER><BR>\n", file.fileid);
-		db_log_activity(sid, 1, "files", file.fileid, "modify", "%s - %s modified file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
+		db_log_activity(sid, "files", file.fileid, "modify", "%s - %s modified file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s", sid->dat->in_ScriptName);
 	printhex(sid, "%s", file.filepath);
@@ -1070,7 +1070,7 @@ void filesave(CONN *sid)
 	}
 	fclose(fp);
 	prints(sid, "<CENTER>file %d edited successfully</CENTER><BR>\n", file.fileid);
-	db_log_activity(sid, 1, "files", file.fileid, "modify", "%s - %s edited file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
+	db_log_activity(sid, "files", file.fileid, "modify", "%s - %s edited file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
 	printhex(sid, "%s", file.filepath);
 	prints(sid, "\">\n");
@@ -1147,7 +1147,7 @@ void filescan(CONN *sid)
 DllExport int mod_main(CONN *sid)
 {
 	if (dirlist(sid)==0) return 0;
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	if ((strncmp(sid->dat->in_RequestURI, "/fileul", 7)!=0)&&(strncmp(sid->dat->in_RequestURI, "/filerecv", 9)!=0)) {
 		htpage_topmenu(sid, MENU_FILES);
 		prints(sid, "<BR>\r\n");

@@ -52,7 +52,7 @@ void taskreminders(CONN *sid)
 			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/tasks/reminderreset?taskid=%s>reset</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
 			duedate=time_sql2unix(sql_getvalue(sqr, i, 2));
-//			duedate+=time_tzoffset(sid, duedate);
+/*			duedate+=time_tzoffset(sid, duedate); */
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_unix2datetext(sid, duedate));
 			prints(sid, "</TR>\n");
 		}
@@ -60,7 +60,7 @@ void taskreminders(CONN *sid)
 	sql_freeresult(sqr);
 	if (reminders==0) {
 		prints(sid, "<BR>No approaching due tasks\n</CENTER>\n");
-//		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
+/*		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n"); */
 	} else {
 		prints(sid, "</TABLE></CENTER>\n");
 	}
@@ -99,25 +99,25 @@ void taskreminderstatus(CONN *sid)
 		reminder=0;
 	}
 	switch (reminder) {
-	case 10080: // 7 days
+	case 10080: /* 7 days */
 		reminder=8640;
 		if (reminder<duedate) break;
-	case 8640: // 6 days
+	case 8640: /* 6 days */
 		reminder=7200;
 		if (reminder<duedate) break;
-	case 7200: // 5 days
+	case 7200: /* 5 days */
 		reminder=5760;
 		if (reminder<duedate) break;
-	case 5760: // 4 days
+	case 5760: /* 4 days */
 		reminder=4320;
 		if (reminder<duedate) break;
-	case 4320: // 3 days
+	case 4320: /* 3 days */
 		reminder=2880;
 		if (reminder<duedate) break;
-	case 2880: // 2 days
+	case 2880: /* 2 days */
 		reminder=1440;
 		if (reminder<duedate) break;
-	case 1440: // 1 day
+	case 1440: /* 1 day */
 		reminder=0;
 		if (reminder<duedate) break;
 	default:
@@ -195,12 +195,12 @@ void taskedit(CONN *sid)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, task.assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
-	if (module_exists(sid, "mod_contacts")) {
+	if (module_exists("mod_contacts")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:255px'>\n");
 		htselect_contact(sid, task.contactid);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
-	if ((module_exists(sid, "mod_projects"))&&(task.projectid>0)) {
+	if ((module_exists("mod_projects"))&&(task.projectid>0)) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Project&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=projectid value=\"%d\" SIZE=25 style='width:255px'></TD></TR>\n", task.projectid);
 	}
@@ -255,7 +255,7 @@ void taskedit(CONN *sid)
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
 	if (task.taskid>0) {
-		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+		if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 			prints(sid, "<TR><TD NOWRAP>");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
@@ -348,7 +348,7 @@ void taskview(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	prints(sid, "&nbsp;</TD></TR>\n");
-	if ((module_exists(sid, "mod_projects"))&&(task.projectid>0)) {
+	if ((module_exists("mod_projects"))&&(task.projectid>0)) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Project&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP STYLE='border-style:solid'>");
 		if ((sqr=sql_queryf("SELECT projectid, projectname FROM gw_projects WHERE projectid = %d", task.projectid))<0) return;
 		if (sql_numtuples(sqr)>0) {
@@ -367,10 +367,10 @@ void taskview(CONN *sid)
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Reminder&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_reminder(sid, task.reminder));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Due Date&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", time_sql2datetext(sid, duedate));
-	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(sid, task.status));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status&nbsp;</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(task.status));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=2 STYLE='border-style:solid'><B>Details&nbsp;</B></TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, task.details));
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Notes");
 		prints(sid, " [<A HREF=%s/notes/editnew?table=tasks&index=%d>new</A>]", sid->dat->in_ScriptName, task.taskid);
 		prints(sid, "</FONT></TH></TR>\n");
@@ -491,7 +491,7 @@ void tasksave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_tasks WHERE taskid = %d", task.taskid)<0) return;
 		prints(sid, "<CENTER>Task %d deleted successfully</CENTER><BR>\n", task.taskid);
-		db_log_activity(sid, 1, "tasks", task.taskid, "delete", "%s - %s deleted task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
+		db_log_activity(sid, "tasks", task.taskid, "delete", "%s - %s deleted task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else if (task.taskid==0) {
 		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -502,7 +502,7 @@ void tasksave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Task %d added successfully</CENTER><BR>\n", task.taskid);
-		db_log_activity(sid, 1, "tasks", task.taskid, "insert", "%s - %s added task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
+		db_log_activity(sid, "tasks", task.taskid, "insert", "%s - %s added task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else {
 		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -513,7 +513,7 @@ void tasksave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Task %d modified successfully</CENTER><BR>\n", task.taskid);
-		db_log_activity(sid, 1, "tasks", task.taskid, "modify", "%s - %s modified task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
+		db_log_activity(sid, "tasks", task.taskid, "modify", "%s - %s modified task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/list\">\n", sid->dat->in_ScriptName);
 	return;
@@ -521,7 +521,7 @@ void tasksave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/tasks/reminders", 16)==0) {
 		htpage_header(sid, "Groupware Task Reminder");
 		taskreminders(sid);
@@ -555,16 +555,16 @@ DllExport int mod_exit()
 DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
-		"mod_tasks",		// mod_name
-		0,			// mod_submenu
-		"",			// mod_menuname
-		"",			// mod_menuuri
-		"calendar",		// mod_menuperm
-		"mod_main",		// fn_name
-		"/tasks/",		// fn_uri
-		mod_init,		// fn_init
-		mod_main,		// fn_main
-		mod_exit		// fn_exit
+		"mod_tasks",		/* mod_name	*/
+		0,			/* mod_submenu	*/
+		"",			/* mod_menuname	*/
+		"",			/* mod_menuuri	*/
+		"calendar",		/* mod_menuperm	*/
+		"mod_main",		/* fn_name	*/
+		"/tasks/",		/* fn_uri	*/
+		mod_init,		/* fn_init	*/
+		mod_main,		/* fn_main	*/
+		mod_exit		/* fn_exit	*/
 	};
 
 	proc=_proc;

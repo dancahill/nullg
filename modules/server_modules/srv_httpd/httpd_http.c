@@ -95,7 +95,7 @@ void ReadPOSTData(CONN *sid)
 		sid->dat->in_ContentLength=0;
 		closeconnect(sid, 1);
 		return;
-	} else if (bytesleft>mod_config.http_maxpostsize) {
+	} else if (bytesleft>http_proc.config.http_maxpostsize) {
 		log_error("http", __FILE__, __LINE__, 1, "ERROR: Content-Length of %d is too large.", sid->dat->in_ContentLength);
 		sid->dat->in_ContentLength=0;
 		closeconnect(sid, 1);
@@ -152,7 +152,7 @@ void ReadPOSTData(CONN *sid)
 			pPostData+=rc;
 		}
 	}
-//	log_error("http", __FILE__, __LINE__, 4, "[%s]", sid->PostData);
+	/* log_error("http", __FILE__, __LINE__, 4, "[%s]", sid->PostData); */
 	return;
 }
 
@@ -262,10 +262,12 @@ char *getmimeenv(CONN *sid, char *query, unsigned int *buffersize)
 				}
 				if (buffer[*buffersize-1]=='\n') *buffersize-=1;
 				if (buffer[*buffersize-1]=='\r') *buffersize-=1;
+/*
 				if (*buffersize<0) {
 					*buffersize=0;
 					buffer=NULL;
 				}
+*/
 				return buffer;
 			}
 		} else {
@@ -477,11 +479,11 @@ void read_cgienv(CONN *sid)
 	if (strlen(sid->dat->in_RequestURI)==0) {
 		strncpy(sid->dat->in_RequestURI, "/", sizeof(sid->dat->in_RequestURI)-1);
 	}
-//////////////////
+/***********************************/
 	strncpy(sid->dat->in_CGIScriptName, sid->dat->in_RequestURI, sizeof(sid->dat->in_CGIScriptName)-1);
 	if ((ptemp=strchr(sid->dat->in_CGIScriptName, '?'))!=NULL) *ptemp='\0';
-//	AHHH!!!
-//	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
+	/* AHHH!!! */
+	/* if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0'; */
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
 		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_cgi, progname);
@@ -506,12 +508,12 @@ void read_cgienv(CONN *sid)
 		snprintf(sid->dat->in_CGIPathInfo, sizeof(sid->dat->in_CGIPathInfo)-1, "%s", progname+(strlen(progname)-length));
 		sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-length]='\0';
 	}
-//////////////////
+/***********************************/
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
-		if (sid->dat->in_ContentLength<mod_config.http_maxpostsize) {
+		if (sid->dat->in_ContentLength<http_proc.config.http_maxpostsize) {
 			ReadPOSTData(sid);
 		} else {
-			// try to print an error : note the inbuffer being full may block us
+			/* try to print an error : note the inbuffer being full may block us */
 			send_error(sid, 413, "Bad Request", "Request entity too large.");
 			closeconnect(sid, 1);
 		}
@@ -541,8 +543,8 @@ int read_header(CONN *sid)
 			return -1;
 		}
 		striprn(line);
-	} while ((strlen(line)==0)&&((time(NULL)-x)<mod_config.http_maxkeepalive));
-	if ((strlen(line)==0)&&((time(NULL)-x)>=mod_config.http_maxkeepalive)) {
+	} while ((strlen(line)==0)&&((time(NULL)-x)<http_proc.config.http_maxkeepalive));
+	if ((strlen(line)==0)&&((time(NULL)-x)>=http_proc.config.http_maxkeepalive)) {
 		DEBUG_OUT(sid, "read_header()");
 		closeconnect(sid, 2);
 		return -1;
@@ -570,13 +572,18 @@ int read_header(CONN *sid)
 	ptemp2=sid->dat->in_Protocol;
 	while ((*ptemp2)&&(*ptemp2!=' ')) ptemp2++;
 	if (*ptemp2) *ptemp2='\0';
-//	log_error("http", __FILE__, __LINE__, 2, "[%s]", line);
-//	log_error("http", __FILE__, __LINE__, 2, "[%s][%s][%s]", sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol);
+/*
+	log_error("http", __FILE__, __LINE__, 2, "[%s]", line);
+	log_error("http", __FILE__, __LINE__, 2, "[%s][%s][%s]", sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol);
+*/
 	if (strlen(sid->dat->in_RequestMethod)==0) send_error(sid, 400, "Bad Request", "Method not found in request.");
 	if (strlen(sid->dat->in_RequestURI)==0) send_error(sid, 400, "Bad Request", "URI not found in request.");
 	if (strlen(sid->dat->in_Protocol)==0) send_error(sid, 400, "Bad Request", "Protocol not found in request.");
-//	if (sscanf(line, "%[^ ] %[^ ] %[^ ]", sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol)!=3)
-//		send_error(sid, 400, "Bad Request", "Can't Parse Request.");
+/*
+	if (sscanf(line, "%[^ ] %[^ ] %[^ ]", sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol)!=3) {
+		send_error(sid, 400, "Bad Request", "Can't Parse Request.");
+	}
+*/
 	ptemp=sid->dat->in_RequestMethod;
 	while (*ptemp) { *ptemp=toupper(*ptemp); ptemp++; };
 	memset(alter_uri, 0, sizeof(alter_uri));
@@ -588,8 +595,10 @@ int read_header(CONN *sid)
 		} else if (strncasecmp(line, "Content-Length: ", 16)==0) {
 			sid->dat->in_ContentLength=atoi((char *)&line+16);
 			if (sid->dat->in_ContentLength<0) {
-				// Negative Content-Length?  If so, the client is either broken or malicious.
-				// Thanks to <ilja@idefense.be> for spotting this one (Null httpd).
+				/*
+				 * Negative Content-Length?  If so, the client is either broken or malicious.
+				 * Thanks to <ilja@idefense.be> for spotting this one (Null httpd).
+				 */
 				log_error("http", __FILE__, __LINE__, 1, "ERROR: negative Content-Length of %d provided by client.", sid->dat->in_ContentLength);
 				sid->dat->in_ContentLength=0;
 			}
@@ -621,12 +630,12 @@ int read_header(CONN *sid)
 		return -1;
 	}
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
-		if (sid->dat->in_ContentLength<mod_config.http_maxpostsize) {
+		if (sid->dat->in_ContentLength<http_proc.config.http_maxpostsize) {
 			ReadPOSTData(sid);
 		} else {
-			// try to print an error : note the inbuffer being full may block us
+			/* try to print an error : note the inbuffer being full may block us */
 			send_error(sid, 413, "Bad Request", "Request entity too large.");
-			log_error("http", __FILE__, __LINE__, 1, "%s - Large POST (>%d bytes) disallowed", sid->dat->in_RemoteAddr, mod_config.http_maxpostsize);
+			log_error("http", __FILE__, __LINE__, 1, "%s - Large POST (>%d bytes) disallowed", sid->dat->in_RemoteAddr, http_proc.config.http_maxpostsize);
 			DEBUG_OUT(sid, "read_header()");
 			closeconnect(sid, 1);
 			return -1;
@@ -638,11 +647,11 @@ int read_header(CONN *sid)
 	if (strchr(sid->dat->in_RequestURI, '?')!=NULL) {
 		strncpy(sid->dat->in_QueryString, strchr(sid->dat->in_RequestURI, '?')+1, sizeof(sid->dat->in_QueryString)-1);
 	}
-//////////////////
+/***********************************/
 	strncpy(sid->dat->in_CGIScriptName, sid->dat->in_RequestURI, sizeof(sid->dat->in_CGIScriptName)-1);
 	if ((ptemp=strchr(sid->dat->in_CGIScriptName, '?'))!=NULL) *ptemp='\0';
-//	AHHH!!!
-//	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
+	/* AHHH!!! */
+	/* if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0'; */
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
 		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_cgi, progname);
@@ -667,7 +676,7 @@ int read_header(CONN *sid)
 		snprintf(sid->dat->in_CGIPathInfo, sizeof(sid->dat->in_CGIPathInfo)-1, "%s", progname+(strlen(progname)-length));
 		sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-length]='\0';
 	}
-//////////////////
+/***********************************/
 	if (strcasecmp(sid->dat->in_Connection, "Keep-Alive")==0) {
 		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Keep-Alive");
 	} else {
@@ -683,7 +692,7 @@ int read_header(CONN *sid)
 
 void send_error(CONN *sid, int status, char* title, char* text)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n");
 	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
@@ -694,12 +703,12 @@ void send_error(CONN *sid, int status, char* title, char* text)
 	prints(sid, "<HR>\r\n<ADDRESS>%s %s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME, PACKAGE_VERSION);
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
-	log_access("httpd", "%s \"%s %s %s\" %d %d \"%s\"", sid->dat->in_RemoteAddr, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent);
+	log_htaccess(sid);
 	closeconnect(sid, 1);
 	return;
 }
 
-void send_header(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
+void send_header(CONN *sid, int cacheable, int status, char *extra_header, char *mime_type, int length, time_t mod)
 {
 	char timebuf[100];
 	time_t now;
@@ -734,9 +743,9 @@ void send_header(CONN *sid, int cacheable, int status, char *title, char *extra_
 	}
 }
 
-void send_fileheader(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
+void send_fileheader(CONN *sid, int cacheable, int status, char *extra_header, char *mime_type, int length, time_t mod)
 {
-	send_header(sid, cacheable, status, title, extra_header, mime_type, length, mod);
+	send_header(sid, cacheable, status, extra_header, mime_type, length, mod);
 	flushheader(sid);
 }
 
@@ -778,10 +787,10 @@ void http_dorequest(CONN *sid)
 	snprintf(sid->dat->out_ContentType, sizeof(sid->dat->out_ContentType)-1, "text/html");
 	if (auth_getcookie(sid)!=0) {
 		if (auth_setcookie(sid)==0) {
-			db_log_activity(sid, 0, "login", 0, "login", "%s - Login: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
+			db_log_activity(sid, "login", 0, "login", "%s - Login: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
 			relocate=1;
 		} else if ((getgetenv(sid, "USERNAME")!=NULL)||(getpostenv(sid, "USERNAME")!=NULL)) {
-			db_log_activity(sid, 0, "login", 0, "failed login", "%s - Login failed: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
+			db_log_activity(sid, "login", 0, "failed login", "%s - Login failed: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
 			htpage_login(sid);
 			DEBUG_OUT(sid, "dorequest()");
 			return;
@@ -806,13 +815,15 @@ void http_dorequest(CONN *sid)
 		 * maybe someday M$ will fix their web server.
 		 * Until then, it's _very_ unsafe to use redirects.
 		 */
-//		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
-//		send_header(sid, 0, 303, "OK", "1", "text/html", -1, -1);
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+/*
+		snprintf(sid->dat->out_Location, sizeof(sid->dat->out_Location)-1, "%s", pageuri);
+		send_header(sid, 0, 303, "1", "text/html", -1, -1);
+*/
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		prints(sid, "<HTML><HEAD></HEAD><BODY>\n");
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\nlocation.replace('%s');\r\n// -->\r\n</SCRIPT>\r\n", pageuri);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL='%s'\">\r\n", pageuri);
-//		prints(sid, "<BR><CENTER>The requested resource can be found at <A HREF=%s>%s</A>.</CENTER>\n", pageuri, pageuri);
+		/* prints(sid, "<BR><CENTER>The requested resource can be found at <A HREF=%s>%s</A>.</CENTER>\n", pageuri, pageuri); */
 		prints(sid, "</BODY></HTML>\n");
 		DEBUG_OUT(sid, "dorequest()");
 		return;
@@ -835,7 +846,7 @@ void http_dorequest(CONN *sid)
 		DEBUG_OUT(sid, "dorequest()");
 		return;
 	} else {
-		send_header(sid, 0, 404, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 404, "1", "text/html", -1, -1);
 		prints(sid, "<BR><CENTER>The file or function '");
 		printht(sid, "%s", sid->dat->in_RequestURI);
 		prints(sid, "' could not be found.</CENTER>\n");

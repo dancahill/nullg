@@ -62,15 +62,15 @@ int xmlrpc_auth_login(CONN *sid)
 	int sqr;
 
 	if (getxmlparam(sid, 3, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		xmlrpc_fault(sid, -1, "Missing username");
 		return -1;
 	} else if (getxmlparam(sid, 4, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		xmlrpc_fault(sid, -1, "Missing password");
 		return -1;
 	} else if (getxmlparam(sid, 5, "string")==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		xmlrpc_fault(sid, -1, "Missing loginip");
 		return -1;
 	}
@@ -84,25 +84,25 @@ int xmlrpc_auth_login(CONN *sid)
 		if (strlen(password)==32) {
 			if ((strlen(username)==0)||(strlen(sid->dat->user_token)!=32)) return -1;
 			if ((sqr=sql_queryf("SELECT loginip, logintoken, contactid FROM gw_contacts WHERE username = '%s' AND obj_did = %d", username, sid->dat->user_did))<0) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
 			if (sql_numtuples(sqr)!=1) {
 				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
 			if (strcmp(raddress, sql_getvalue(sqr, 0, 0))!=0) {
 				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
 			if (strcmp(password, sql_getvalue(sqr, 0, 1))!=0) {
 				sql_freeresult(sqr);
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
@@ -112,7 +112,7 @@ int xmlrpc_auth_login(CONN *sid)
 			return contactid;
 		} else {
 			if ((contactid=xmlrpc_auth_checkpass(sid, username, password))<1) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Authentication failure");
 				return -1;
 			}
@@ -128,7 +128,7 @@ int xmlrpc_auth_login(CONN *sid)
 			return contactid;
 		}
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	xmlrpc_fault(sid, -1, "Authentication failure");
 	return -1;
 }

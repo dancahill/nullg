@@ -209,7 +209,7 @@ void orderitemsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_orderitems WHERE orderitemid = %d AND obj_did = %d", orderitem.orderitemid, sid->dat->user_did)<0) return;
 		prints(sid, "<CENTER>Order item %d deleted successfully</CENTER><BR>\n", orderitem.orderitemid);
-		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "delete", "%s - %s deleted order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
+		db_log_activity(sid, "orderitems", orderitem.orderitemid, "delete", "%s - %s deleted order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else if (orderitem.orderitemid==0) {
 		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -240,7 +240,7 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f')", orderitem.tax2);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order item %d added successfully</CENTER><BR>\n", orderitem.orderitemid);
-		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "insert", "%s - %s added order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
+		db_log_activity(sid, "orderitems", orderitem.orderitemid, "insert", "%s - %s added order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else {
 		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -258,7 +258,7 @@ void orderitemsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE orderitemid = %d", orderitem.orderitemid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order item %d modified successfully</CENTER><BR>\n", orderitem.orderitemid);
-		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "modify", "%s - %s modified order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
+		db_log_activity(sid, "orderitems", orderitem.orderitemid, "modify", "%s - %s modified order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	}
 	totaldue=0;
 	if ((sqr=sql_queryf("SELECT quantity, unitprice, discount, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderitem.orderid))<0) return;

@@ -53,8 +53,8 @@ char *time_unix2lotimetext(CONN *sid, time_t unixdate);
 char *time_unix2sqldate(CONN *sid, time_t unixdate);
 char *time_unix2sqltime(CONN *sid, time_t unixdate);
 int time_tzoffset(CONN *sid, time_t unixdate);
-int time_tzoffset2(CONN *sid, time_t unixdate, int userid);
-int time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid);
+int time_tzoffset2(time_t unixdate, int userid);
+int time_tzoffsetcon(time_t unixdate, int contactid);
 time_t time_wmgetdate(char *src);
 /* html.c functions */
 void htpage_header(CONN *sid, char *title);
@@ -85,7 +85,7 @@ char *htview_callaction(CONN *sid, int selected);
 char *htview_contact(CONN *sid, int selected);
 char *htview_domain(CONN *sid, int selected);
 char *htview_eventclosingstatus(CONN *sid, int selected);
-char *htview_eventstatus(CONN *sid, int selected);
+char *htview_eventstatus(int selected);
 char *htview_eventtype(CONN *sid, int selected);
 char *htview_holiday(char *date);
 char *htview_reminder(CONN *sid, int selected);
@@ -103,44 +103,34 @@ char *getxmlstruct(CONN *sid, char *reqmember, char *reqtype);
 void read_cgienv(CONN *sid);
 int read_header(CONN *sid);
 void send_error(CONN *sid, int status, char* title, char* text);
-void send_header(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
-void send_fileheader(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
+void send_header(CONN *sid, int cacheable, int status, char *extra_header, char *mime_type, int length, time_t mod);
+void send_fileheader(CONN *sid, int cacheable, int status, char *extra_header, char *mime_type, int length, time_t mod);
 void http_dorequest(CONN *sid);
 /* io.c functions */
 void flushheader(CONN *sid);
 void flushbuffer(CONN *sid);
 int prints(CONN *sid, const char *format, ...);
 int raw_prints(CONN *sid, const char *format, ...);
-int sgets(CONN *sid, char *buffer, int max, int fd);
-int filesend(CONN *sid, unsigned char *file);
+int filesend(CONN *sid, char *file);
 int closeconnect(CONN *sid, int exitflag);
 /* log.c functions */
-int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...);
+int db_log_activity(CONN *sid, char *category, int indexid, char *action, const char *format, ...);
+void log_htaccess(CONN *sid);
 /* modctl.c functions */
-int module_exists(CONN *sid, char *mod_name);
-void *module_call(CONN *sid, char *fn_name);
+int module_exists(char *mod_name);
+void *module_call(char *fn_name);
 int module_menucall(CONN *sid);
 int module_load(char *modname);
 int modules_init();
 
-typedef struct {
-	char      http_interface[128];
-	short int http_port;
-	short int http_sslport;
-	short int http_maxkeepalive;
-	short int http_maxconn;
-	short int http_maxidle;
-	int       http_maxpostsize;
-} MOD_CONFIG;
-
 #ifdef SRVMOD_MAIN
-	CONN *conn;
+/*	CONN *conn; */
 	HTTP_PROC http_proc;
 	pthread_mutex_t ListenerMutex;
-	MOD_CONFIG mod_config;
+	HTTP_CONFIG *mod_config;
 #else
-	extern CONN *conn;
+/*	extern CONN *conn; */
 	extern HTTP_PROC http_proc;
 	extern pthread_mutex_t ListenerMutex;
-	extern MOD_CONFIG mod_config;
+	extern HTTP_CONFIG *mod_config;
 #endif

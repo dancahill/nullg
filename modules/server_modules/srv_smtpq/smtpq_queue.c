@@ -42,7 +42,7 @@ void *smtp_spool(void *x)
 	short int status;
 	time_t t=time(NULL);
 
-	log_error("core", __FILE__, __LINE__, 2, "Starting smtp_spool() thread");
+	log_error("core", __FILE__, __LINE__, 1, "Starting smtp_spool() thread");
 	memset(dirname1, 0, sizeof(dirname1));
 	memset(dirname2, 0, sizeof(dirname2));
 	memset(from, 0, sizeof(from));

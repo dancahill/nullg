@@ -450,13 +450,13 @@ void webmailmove(CONN *sid)
 		flushbuffer(sid);
 	}
 	if (purge) {
-		wmserver_purge(sid, 2);
+		wmserver_purge(sid);
 		if (sid->dat->wm->showdebug) {
 			sql_freeresult(sqr);
 			return;
 		}
 	}
-//	if ((purge)&&(sid->dat->wm->remove>0)) wmserver_purge(sid, 2);
+//	if ((purge)&&(sid->dat->wm->remove>0)) wmserver_purge(sid);
 //	snprintf(msgnum, sizeof(msgnum)-1, "%d", deleted);
 //	if (deleted>=nummessages) deleted=nummessages-1;
 	if (sid->dat->user_menustyle>0) {

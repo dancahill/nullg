@@ -430,7 +430,7 @@ void notessave(CONN *sid)
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (sql_updatef("DELETE FROM gw_notes WHERE noteid = %d", note.noteid)<0) return;
 		prints(sid, "<CENTER>Note %d deleted successfully</CENTER><BR>\n", note.noteid);
-		db_log_activity(sid, 1, "notes", note.noteid, "delete", "%s - %s deleted note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
+		db_log_activity(sid, "notes", note.noteid, "delete", "%s - %s deleted note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
 		if (strcmp(note.tablename, "calls")==0) {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calls/view?callid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "contacts")==0) {
@@ -456,7 +456,7 @@ void notessave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Note %d added successfully</CENTER><BR>\n", note.noteid);
-		db_log_activity(sid, 1, "notes", note.noteid, "insert", "%s - %s added note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
+		db_log_activity(sid, "notes", note.noteid, "insert", "%s - %s added note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.noteid);
 	} else {
 		if (dbwrite_note(sid, noteid, &note)<1) {
@@ -464,7 +464,7 @@ void notessave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Note %d modified successfully</CENTER><BR>\n", note.noteid);
-		db_log_activity(sid, 1, "notes", note.noteid, "modify", "%s - %s modified note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
+		db_log_activity(sid, "notes", note.noteid, "modify", "%s - %s modified note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.noteid);
 	}
 	return;
@@ -472,7 +472,7 @@ void notessave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_NOTES);
 	if (strncmp(sid->dat->in_RequestURI, "/notes/edit", 11)==0) {
 		notesedit(sid);

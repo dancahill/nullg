@@ -21,33 +21,33 @@
 
 void mod_html_header(CONN *sid, char *title)
 {
-	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
-	prints(sid, "<HTML>\r\n");
-	prints(sid, "<HEAD>\r\n");
-//	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
-	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n");
-	prints(sid, "<TITLE>%s</TITLE>\r\n", title);
-	prints(sid, "<STYLE TYPE=text/css>\r\n");
-	prints(sid, ".JUSTIFY { text-align: justify; }\r\n");
-	prints(sid, ".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial,Verdana; font-size: 8pt; }\r\n");
-	prints(sid, "A        { color: #0000FF; text-decoration: none; }\r\n");
-	prints(sid, "A:HOVER  { text-decoration: underline; }\r\n");
-//	prints(sid, "INPUT    { color: #000000; font-family: Courier New; font-size: 12px; }\r\n");
-//	prints(sid, "SELECT   { color: #000000; font-family: Courier New; font-size: 12px; }\r\n");
-	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
-	prints(sid, "TH       { background-color: #0000A0; color: #FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
-	prints(sid, "</STYLE>\r\n");
-	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n", sid->dat->user_theme);
-	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
-		prints(sid, "<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/groupware/javascript/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n");
-	}
-	prints(sid, "</HEAD>\r\n");
-	prints(sid, "<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"");
-	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\"");
-	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
-		prints(sid, " onLoad=init();");
-	}
-	prints(sid, ">\r\n");
+	short int mailwrite=0;
+
+	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) mailwrite=1;
+	prints(sid,
+		"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n"
+		"<HTML>\r\n"
+		"<HEAD>\r\n"
+		"<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n"
+		"<TITLE>%s</TITLE>\r\n"
+		"<STYLE TYPE=text/css>\r\n"
+		".JUSTIFY { text-align: justify; }\r\n"
+		".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial, Verdana; font-size: 8pt; }\r\n"
+		"A        { color: #0000FF; text-decoration: none; }\r\n"
+		"A:HOVER  { text-decoration: underline; }\r\n"
+		"TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n"
+		"TH       { background-color: #0000A0; color: #FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n"
+		"</STYLE>\r\n"
+		"<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n"
+		"%s"
+		"</HEAD>\r\n"
+		"<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\" MARGINHEIGHT=0 MARGINWIDTH=0 TOPMARGIN=0 LEFTMARGIN=0 CLASS=\"MAINBACK\"%s>\r\n"
+		, title
+		, sid->dat->user_theme
+		, mailwrite?"<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/groupware/javascript/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n":""
+		, mailwrite?" onLoad=init();":""
+	);
+	return;
 }
 
 void mod_html_footer(CONN *sid)
@@ -171,7 +171,7 @@ domenu:
 		}
 		prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
 		prints(sid, "<A CLASS='TBAR' HREF=javascript:ShowHelp()>%s</A>&nbsp;&middot;&nbsp;", MENU_HELP);
-		if (module_exists(sid, "mod_profile")) {
+		if (module_exists("mod_profile")) {
 			prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 		}
 		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, MENU_LOGOUT);
@@ -348,11 +348,9 @@ void mod_html_login(CONN *sid)
 	} else {
 		snprintf(pageuri, sizeof(pageuri)-1, "%s%s", sid->dat->in_ScriptName, sid->dat->in_RequestURI);
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	mod_html_header(sid, "NullLogic Groupware Login");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
-	prints(sid, "if (self!=parent) open('%s/','_top');\r\n", sid->dat->in_ScriptName);
-	prints(sid, "// -->\r\n</SCRIPT>\r\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\nif (self!=parent) open('%s/','_top');\r\n// -->\r\n</SCRIPT>\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<BR>\r\n");
 	snprintf(file, sizeof(file)-1, "%s/issue.txt", proc->config.dir_etc);
 	fixslashes(file);
@@ -400,15 +398,13 @@ void mod_html_login(CONN *sid)
 		prints(sid, "<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
 	}
 	sql_freeresult(sqr);
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><INPUT TYPE=SUBMIT VALUE='Login'></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
-		prints(sid, "<BR><TABLE>\r\n");
-		prints(sid, "<TR><TD><FONT COLOR=RED><PRE>\r\n");
+		prints(sid, "<BR><TABLE>\r\n<TR><TD><FONT COLOR=RED><PRE>\r\n");
 		prints(sid, "You have not yet changed the administrator's password.\r\n");
 		prints(sid, "Please do this as soon as possible for security reasons.\r\n");
-		prints(sid, "</PRE></FONT></TD></TR>\r\n");
-		prints(sid, "</TABLE>\r\n");
+		prints(sid, "</PRE></FONT></TD></TR>\r\n</TABLE>\r\n");
 	}
 	prints(sid, "</CENTER>\r\n<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
 	if (strlen(username)>0) {
@@ -422,8 +418,8 @@ void mod_html_login(CONN *sid)
 
 void mod_html_logout(CONN *sid)
 {
-	db_log_activity(sid, 0, "login", 0, "logout", "%s - Logout: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	db_log_activity(sid, "login", 0, "logout", "%s - Logout: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	mod_html_header(sid, "NullLogic Groupware Logout");
 	prints(sid, "<CENTER>\r\n<BR><BR>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
@@ -452,7 +448,7 @@ void mod_html_motd(CONN *sid)
 
 	t=(time(NULL)+time_tzoffset(sid, time(NULL)));
 	strftime(showtime, sizeof(showtime), "%A, %B %d, %Y", gmtime(&t));
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	mod_html_topmenu(sid, MENU_MAIN);
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\r\n<TABLE WIDTH=90%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR><TD COLSPAN=2>\r\n");
@@ -521,7 +517,7 @@ void mod_html_motd(CONN *sid)
 	sql_freeresult(sqr);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
-	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
@@ -544,7 +540,7 @@ void mod_html_motd(CONN *sid)
 		}
 		sql_freeresult(sqr);
 	}
-	if ((mod_tasks_list=module_call(sid, "mod_tasks_list"))!=NULL) {
+	if ((mod_tasks_list=module_call("mod_tasks_list"))!=NULL) {
 		mod_tasks_list(sid, sid->dat->user_uid, -1);
 	}
 	prints(sid, "</TD></TR>\r\n");
@@ -558,7 +554,7 @@ void mod_html_frameset(CONN *sid)
 //	int i, j;
 //	int sqr1;
 
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Frameset//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic Groupware</TITLE>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
@@ -576,7 +572,7 @@ void mod_html_frameset(CONN *sid)
 	prints(sid, "</HTML>\r\n");
 	prints(sid, "<!--\r\n");
 /*
-	if ((mod_mail_sync=module_call(sid, "mod_mail_sync"))!=NULL) {
+	if ((mod_mail_sync=module_call("mod_mail_sync"))!=NULL) {
 		if ((sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0", sid->dat->user_uid))>-1) {
 			for (i=0;i<sql_numtuples(sqr1);i++) {
 				sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
@@ -596,7 +592,7 @@ void mod_html_menuframe(CONN *sid)
 {
 	int i, j;
 
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic Groupware Menu</TITLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n", sid->dat->user_theme);
@@ -717,7 +713,7 @@ void mod_html_reloadframe(CONN *sid)
 	time_t t;
 	int notice=0;
 
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic Groupware</TITLE>\r\n");
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"60; URL=%s/frames/temp\">\r\n</HEAD>\r\n", sid->dat->in_ScriptName);
@@ -776,7 +772,7 @@ void mod_html_reloadframe(CONN *sid)
 		}
 		sql_freeresult(sqr1);
 	}
-	if ((mod_mail_sync=module_call(sid, "mod_mail_sync"))!=NULL) {
+	if ((mod_mail_sync=module_call("mod_mail_sync"))!=NULL) {
 		notice=0;
 		if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword, lastcount, notify, lastcheck FROM gw_mailaccounts where obj_uid = %d and notify > 0 AND obj_did = %d", sid->dat->user_uid, sid->dat->user_did))<0) return;
 		for (i=0;i<sql_numtuples(sqr1);i++) {

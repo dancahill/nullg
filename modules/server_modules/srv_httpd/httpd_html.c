@@ -21,7 +21,7 @@ void htpage_header(CONN *sid, char *title)
 {
 	HTMOD_HTML_HEADER mod_html_header;
 
-	if ((mod_html_header=module_call(sid, "mod_html_header"))!=NULL) {
+	if ((mod_html_header=module_call("mod_html_header"))!=NULL) {
 		mod_html_header(sid, title);
 		return;
 	}
@@ -29,7 +29,6 @@ void htpage_header(CONN *sid, char *title)
 	prints(sid, "<HTML>\r\n");
 	prints(sid, "<HEAD>\r\n");
 	prints(sid, "<TITLE>%s</TITLE>\r\n", title);
-//	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
 	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n");
 	prints(sid, "<STYLE TYPE=text/css>\r\n");
 	prints(sid, ".JUSTIFY { text-align: justify; }\r\n");
@@ -49,7 +48,7 @@ void htpage_footer(CONN *sid)
 {
 	HTMOD_HTML_FOOTER mod_html_footer;
 
-	if ((mod_html_footer=module_call(sid, "mod_html_footer"))!=NULL) {
+	if ((mod_html_footer=module_call("mod_html_footer"))!=NULL) {
 		mod_html_footer(sid);
 		return;
 	}
@@ -66,7 +65,7 @@ void htpage_login(CONN *sid)
 	char *ptemp;
 	int sqr;
 
-	if ((mod_html_login=module_call(sid, "mod_html_login"))!=NULL) {
+	if ((mod_html_login=module_call("mod_html_login"))!=NULL) {
 		mod_html_login(sid);
 		return;
 	}
@@ -77,7 +76,7 @@ void htpage_login(CONN *sid)
 	} else {
 		snprintf(pageuri, sizeof(pageuri)-1, "%s%s", sid->dat->in_ScriptName, sid->dat->in_RequestURI);
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_header(sid, SERVER_NAME);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
 	prints(sid, "if (self!=parent) open('%s/','_top');\r\n", sid->dat->in_ScriptName);
@@ -144,12 +143,12 @@ void htpage_logout(CONN *sid)
 {
 	HTMOD_HTML_LOGOUT mod_html_logout;
 
-	if ((mod_html_logout=module_call(sid, "mod_html_logout"))!=NULL) {
+	if ((mod_html_logout=module_call("mod_html_logout"))!=NULL) {
 		mod_html_logout(sid);
 		return;
 	}
-	db_log_activity(sid, 0, "login", 0, "logout", "%s - Logout: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	db_log_activity(sid, "login", 0, "logout", "%s - Logout: username=%s", sid->dat->in_RemoteAddr, sid->dat->user_username);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_header(sid, SERVER_NAME);
 	prints(sid, "<CENTER>\r\n<BR><BR>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
@@ -168,7 +167,7 @@ void htpage_frameset(CONN *sid)
 {
 	HTMOD_HTML_FRAMESET mod_html_frameset;
 
-	if ((mod_html_frameset=module_call(sid, "mod_html_frameset"))!=NULL) {
+	if ((mod_html_frameset=module_call("mod_html_frameset"))!=NULL) {
 		mod_html_frameset(sid);
 		return;
 	}
@@ -186,7 +185,7 @@ void htpage_topmenu(CONN *sid, int menu)
 	int status=0;
 	int i;
 
-	if ((mod_html_topmenu=module_call(sid, "mod_html_topmenu"))!=NULL) {
+	if ((mod_html_topmenu=module_call("mod_html_topmenu"))!=NULL) {
 		mod_html_topmenu(sid, menu);
 		return;
 	}
@@ -254,7 +253,7 @@ domenu:
 			dot=1;
 		}
 		prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
-		if (module_exists(sid, "mod_profile")) {
+		if (module_exists("mod_profile")) {
 			prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 		}
 		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, MENU_LOGOUT);
@@ -341,7 +340,7 @@ domenu:
 			}
 			break;
 		case MENU_MAIN:
-			if (module_exists(sid, "mod_html")) {
+			if (module_exists("mod_html")) {
 				prints(sid, "<A CLASS='TBAR' HREF=%s/frames/motd>MAIN</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
 				prints(sid, "<A CLASS='TBAR' HREF=%s/>MAIN</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
@@ -381,7 +380,7 @@ domenu:
 	prints(sid, "<A CLASS='TBAR' HREF=javascript:window.print()>%s</A>", MENU_PRINT);
 	prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
 	if (sid->dat->user_menustyle>0) {
-		if (module_exists(sid, "mod_profile")) {
+		if (module_exists("mod_profile")) {
 			if (menu==MENU_WEBMAIL) {
 				prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit TARGET=gwmain>PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
@@ -393,7 +392,7 @@ domenu:
 	prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 	prints(sid, "</TR></TABLE>\r\n</TD></TR></TABLE>\r\n");
 	prints(sid, "</CENTER>\r\n");
-//	flushbuffer(sid);
+	/* flushbuffer(sid); */
 }
 
 void htpage_motd(CONN *sid)
@@ -403,11 +402,11 @@ void htpage_motd(CONN *sid)
 	time_t t;
 	int sqr;
 
-	if ((mod_html_motd=module_call(sid, "mod_html_motd"))!=NULL) {
+	if ((mod_html_motd=module_call("mod_html_motd"))!=NULL) {
 		mod_html_motd(sid);
 		return;
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_MAIN);
 	t=(time(NULL)+time_tzoffset(sid, time(NULL)));
 	strftime(showtime, sizeof(showtime), "%A, %B %d, %Y", gmtime(&t));
@@ -778,7 +777,7 @@ char *htview_eventclosingstatus(CONN *sid, int selected)
 	return buffer;
 }
 
-char *htview_eventstatus(CONN *sid, int selected)
+char *htview_eventstatus(int selected)
 {
 	char *option[]={ "Open", "Closed" };
 

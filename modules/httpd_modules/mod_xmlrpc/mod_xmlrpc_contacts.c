@@ -121,7 +121,7 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 {
 	int sqr;
 
-	send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
+	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
@@ -159,7 +159,7 @@ void xmlrpc_contactlist(CONN *sid)
 	int i;
 	int sqr;
 
-	send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
+	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
@@ -202,11 +202,11 @@ void xmlrpc_contactwrite(CONN *sid)
 		xmlrpc_fault(sid, -1, "Incorrect Method");
 		return;
 	}
-	if ((mod_contacts_read=module_call(sid, "mod_contacts_read"))==NULL) {
+	if ((mod_contacts_read=module_call("mod_contacts_read"))==NULL) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
 	}
-	if ((mod_contacts_write=module_call(sid, "mod_contacts_write"))==NULL) {
+	if ((mod_contacts_write=module_call("mod_contacts_write"))==NULL) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
 	}
@@ -272,7 +272,7 @@ void xmlrpc_contactwrite(CONN *sid)
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
-		db_log_activity(sid, 1, "contacts", contact.contactid, "insert", "%s - %s added contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		db_log_activity(sid, "contacts", contact.contactid, "insert", "%s - %s added contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 	} else {
 		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
@@ -285,7 +285,7 @@ void xmlrpc_contactwrite(CONN *sid)
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
-		db_log_activity(sid, 1, "contacts", contact.contactid, "modify", "%s - %s modified contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		db_log_activity(sid, "contacts", contact.contactid, "modify", "%s - %s modified contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 	}
 	xmlrpc_contactread(sid, contact.contactid);
 	return;

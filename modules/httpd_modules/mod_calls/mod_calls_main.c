@@ -374,10 +374,10 @@ void callview(CONN *sid)
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact Name</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, call.contactid, contactname);
 	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Finish </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2timetext(sid, call.callfinish));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Action      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD>\n", htview_callaction(sid, call.action));
-	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(sid, call.status));
+	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(call.status));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, call.details));
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>Notes");
 		prints(sid, " [<A HREF=%s/notes/editnew?table=calls&index=%d>new</A>]", sid->dat->in_ScriptName, call.callid);
 		prints(sid, "</TH></TR>\n");
@@ -580,7 +580,7 @@ void callsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_calls WHERE callid = %d", call.callid)<0) return;
 		prints(sid, "<BR><CENTER>Call %d deleted successfully</CENTER><BR>\n", call.callid);
-		db_log_activity(sid, 1, "calls", call.callid, "delete", "%s - %s deleted call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		db_log_activity(sid, "calls", call.callid, "delete", "%s - %s deleted call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/calls/list\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -596,7 +596,7 @@ void callsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<BR><CENTER>Call %d added successfully</CENTER><BR>\n", call.callid);
-		db_log_activity(sid, 1, "calls", call.callid, "insert", "%s - %s added call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		db_log_activity(sid, "calls", call.callid, "insert", "%s - %s added call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/calls/view?callid=%d\");\n", sid->dat->in_ScriptName, call.callid);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -616,7 +616,7 @@ void callsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<BR><CENTER>Call %d modified successfully</CENTER><BR>\n", call.callid);
-		db_log_activity(sid, 1, "calls", call.callid, "modify", "%s - %s modified call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
+		db_log_activity(sid, "calls", call.callid, "modify", "%s - %s modified call %d", sid->dat->in_RemoteAddr, sid->dat->user_username, call.callid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/calls/view?callid=%d\");\n", sid->dat->in_ScriptName, call.callid);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -628,7 +628,7 @@ void callsave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_CALLS);
 	if (strncmp(sid->dat->in_RequestURI, "/calls/edit", 11)==0) {
 		calledit(sid);

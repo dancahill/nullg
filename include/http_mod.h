@@ -30,7 +30,7 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #define _MT 1
-//#pragma comment(lib, "libcmt.lib")
+/* #pragma comment(lib, "libcmt.lib") */
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>
@@ -97,13 +97,13 @@ typedef	char *(*MAIN_HTVIEW_CALLACTION)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_CONTACT)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_DOMAIN)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_EVENTCLOSINGSTATUS)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTSTATUS)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_EVENTSTATUS)(int);
 typedef	char *(*MAIN_HTVIEW_EVENTTYPE)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_HOLIDAY)(char *);
 typedef	char *(*MAIN_HTVIEW_REMINDER)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_USER)(CONN *, int);
 typedef void  (*MAIN_HTSCRIPT_SHOWPAGE)(CONN *, short int);
-typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, int, char *, int, char *, const char *, ...);
+typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, char *, int, char *, const char *, ...);
 typedef	void  (*MAIN_LOG_ACCESS)(char *, const char *, ...);
 typedef	void  (*MAIN_LOG_ERROR)(char *, char *, int, int, const char *, ...);
 typedef	void  (*MAIN_MD5_INIT)(struct MD5Context *);
@@ -121,8 +121,10 @@ typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(int, int, char *);
 typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
 typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
 typedef	int   (*MAIN_SYS_SYSTEM)(const char *, ...);
-//typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
-//typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr_in *);
+/*
+typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
+typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr_in *);
+*/
 typedef	int   (*MAIN_TCP_FGETS)(char *, int, TCP_SOCKET *);
 typedef	int   (*MAIN_TCP_FPRINTF)(TCP_SOCKET *, const char *, ...);
 typedef	int   (*MAIN_TCP_RECV)(TCP_SOCKET *, char *, int, int);
@@ -133,8 +135,8 @@ typedef	char *(*MAIN_TIME_UNIX2SQL)(char *, int, time_t);
 typedef	char *(*MAIN_TIME_SQL2DATETEXT)(CONN *, char *);
 typedef	char *(*MAIN_TIME_SQL2TIMETEXT)(CONN *, char *);
 typedef	int   (*MAIN_TIME_TZOFFSET)(CONN *, time_t);
-typedef	int   (*MAIN_TIME_TZOFFSET2)(CONN *, time_t, int);
-typedef	int   (*MAIN_TIME_TZOFFSETCON)(CONN *, time_t, int);
+typedef	int   (*MAIN_TIME_TZOFFSET2)(time_t, int);
+typedef	int   (*MAIN_TIME_TZOFFSETCON)(time_t, int);
 typedef	char *(*MAIN_TIME_UNIX2TEXT)(CONN *, time_t);
 typedef	char *(*MAIN_TIME_UNIX2LOTIMETEXT)(CONN *, time_t);
 typedef	char *(*MAIN_TIME_UNIX2TIMETEXT)(CONN *, time_t);
@@ -148,7 +150,7 @@ typedef	void  (*MAIN_PRINTLINE2)(CONN *, int, char *);
 typedef	char *(*MAIN_STR2HTML)(CONN *, char *);
 typedef	char *(*MAIN_STRNCATF)(char *, int, const char *, ...);
 typedef	void  (*MAIN_SEND_ERROR)(CONN *, int, char *, char *);
-typedef	void  (*MAIN_SEND_HEADER)(CONN *, int, int, char *, char *, char *, int, time_t);
+typedef	void  (*MAIN_SEND_HEADER)(CONN *, int, int, char *, char *, int, time_t);
 typedef	void  (*MAIN_DECODEURL)(unsigned char *);
 typedef	char *(*MAIN_ENCODEURL)(CONN *, unsigned char *);
 typedef	void  (*MAIN_STRIPRN)(char *);
@@ -159,8 +161,8 @@ typedef	int   (*MAIN_FILESEND)(CONN *, char *);
 typedef	int   (*MAIN_CLOSECONNECT)(CONN *, int);
 typedef	int   (*MAIN_HEX2INT)(char *);
 typedef	char *(*MAIN_P_STRCASESTR)(char *, char *);
-typedef	int   (*MAIN_MODULE_EXISTS)(CONN *, char *);
-typedef	void *(*MAIN_MODULE_CALL)(CONN *, char *);
+typedef	int   (*MAIN_MODULE_EXISTS)(char *);
+typedef	void *(*MAIN_MODULE_CALL)(char *);
 #ifdef WIN32
 typedef	int   (*MAIN_GETTIMEOFDAY)(struct timeval *, struct timezone *);
 typedef	DIR  *(*MAIN_OPENDIR)(char *);
@@ -246,8 +248,10 @@ EXTERN MAIN_SQL_GETVALUEBYNAME		sql_getvaluebyname;
 EXTERN MAIN_SQL_NUMFIELDS		sql_numfields;
 EXTERN MAIN_SQL_NUMTUPLES		sql_numtuples;
 EXTERN MAIN_SYS_SYSTEM			sys_system;
-//EXTERN MAIN_TCP_BIND			tcp_bind;
-//EXTERN MAIN_TCP_ACCEPT		tcp_accept;
+/*
+EXTERN MAIN_TCP_BIND			tcp_bind;
+EXTERN MAIN_TCP_ACCEPT			tcp_accept;
+*/
 EXTERN MAIN_TCP_FGETS			tcp_fgets;
 EXTERN MAIN_TCP_FPRINTF			tcp_fprintf;
 EXTERN MAIN_TCP_RECV			tcp_recv;
@@ -404,8 +408,10 @@ int mod_import()
 	if (_get_func((void *)&sql_numfields,			"sql_numfields"			)!=0) return -1;
 	if (_get_func((void *)&sql_numtuples,			"sql_numtuples"			)!=0) return -1;
 	if (_get_func((void *)&sys_system,			"sys_system"			)!=0) return -1;
-//	if (_get_func((void *)&tcp_bind,			"tcp_bind"			)!=0) return -1;
-//	if (_get_func((void *)&tcp_accept,			"tcp_accept"			)!=0) return -1;
+/*
+	if (_get_func((void *)&tcp_bind,			"tcp_bind"			)!=0) return -1;
+	if (_get_func((void *)&tcp_accept,			"tcp_accept"			)!=0) return -1;
+*/
 	if (_get_func((void *)&tcp_fgets,			"tcp_fgets"			)!=0) return -1;
 	if (_get_func((void *)&tcp_fprintf,			"tcp_fprintf"			)!=0) return -1;
 	if (_get_func((void *)&tcp_recv,			"tcp_recv"			)!=0) return -1;
@@ -449,8 +455,10 @@ int mod_import()
 	if (_get_func((void *)&opendir,				"opendir"			)!=0) return -1;
 	if (_get_func((void *)&readdir,				"readdir"			)!=0) return -1;
 	if (_get_func((void *)&closedir,			"closedir"			)!=0) return -1;
+	_fmode=_O_BINARY;
 	_setmode(_fileno(stdin), _O_BINARY);
 	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
 #endif
 	return 0;
 }

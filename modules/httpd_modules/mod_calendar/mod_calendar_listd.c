@@ -151,7 +151,7 @@ void calendarlistday(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
 	calendarmini(sid, unixdate, userid, groupid);
-	if ((mod_tasks_list=module_call(sid, "mod_tasks_list"))!=NULL) {
+	if ((mod_tasks_list=module_call("mod_tasks_list"))!=NULL) {
 		prints(sid, "<BR>\n");
 		mod_tasks_list(sid, userid, groupid);
 	}

@@ -100,17 +100,17 @@ rm -f $LOGFILE
 touch $LOGFILE
 if [ -x /bin/dialog ]; then
 	HAVE_DIALOG="yes"
-	dialog --textbox README.txt 21 76
+	dialog --textbox README 21 76
 	setup_dialog
 elif [ -x /usr/bin/dialog ]; then
 	HAVE_DIALOG="yes"
-	dialog --textbox README.txt 21 76
+	dialog --textbox README 21 76
 	setup_dialog
 else
 	echo
 	echo "Press enter to read the README file."
 	read TMP
-	less README.txt
+	less README
 	setup_console
 fi
 rm -f $LOGFILE

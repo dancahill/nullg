@@ -17,7 +17,7 @@
 */
 #include "httpd_main.h"
 
-int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...)
+int db_log_activity(CONN *sid, char *category, int indexid, char *action, const char *format, ...)
 {
 	char curdate[32];
 	char details[2048];
@@ -45,4 +45,48 @@ int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, action));
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, details));
 	return sql_update(query);
+}
+
+void log_htaccess(CONN *sid)
+{
+	char logbuffer[2048];
+	char timebuffer[50];
+	char file[200];
+	FILE *fp;
+	struct timeval ttime;
+	struct timezone tzone;
+
+	snprintf(file, sizeof(file)-1, "%s/httpd-access.log", config->dir_var_log);
+	fixslashes(file);
+	memset(logbuffer, 0, sizeof(logbuffer));
+	memset(timebuffer, 0, sizeof(timebuffer));
+	gettimeofday(&ttime, &tzone);
+	strftime(timebuffer, sizeof(timebuffer)-1, "%d/%b/%Y:%H:%M:%S", localtime((time_t *)&ttime.tv_sec));
+/*
+	LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %T %v" full
+	LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %P %T" debug
+	LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+	LogFormat "%h %l %u %t \"%r\" %>s %b" common
+	LogFormat "%{Referer}i -> %U" referer
+	LogFormat "%{User-agent}i" agent
+*/
+/*
+	snprintf(logbuffer, sizeof(logbuffer)-1, "%s - %s [%s] \"%s %s %s\" %d %d \"-\" \"%s\"", sid->dat->in_RemoteAddr, sid->dat->user_username, timebuffer, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent);
+*/
+	snprintf(logbuffer, sizeof(logbuffer)-1, "%s", sid->dat->in_RemoteAddr);
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " -");
+	if (strlen(sid->dat->user_username)==0) {
+		strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " -");
+	} else {
+		strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " %s", sid->dat->user_username);
+	}
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " [%s]", timebuffer);
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " \"%s %s %s\"", sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol);
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " %d %d", sid->dat->out_status, sid->dat->out_bytecount);
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " \"-\"");
+	strncatf(logbuffer, sizeof(logbuffer)-strlen(logbuffer)-1, " \"%s\"", sid->dat->in_UserAgent);
+	if ((fp=fopen(file, "a"))==NULL) return;
+	fprintf(fp, "%s\n", logbuffer);
+	fclose(fp);
+	return;
 }

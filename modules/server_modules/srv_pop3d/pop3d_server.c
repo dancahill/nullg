@@ -86,8 +86,8 @@ static void pop3_retr(CONN *sid, MDIR *mdir, char *line)
 	char *ptemp;
 	char buffer[1024];
 	char outbuffer[1024];
-	short int outlen;
-	short int sublen;
+	unsigned int outlen;
+	unsigned int sublen;
 	int msg=0;
 
 	ptemp=line+4;
@@ -150,7 +150,7 @@ static void pop3_dele(CONN *sid, MDIR *mdir, char *line)
 	return;
 }
 
-static void pop3_noop(CONN *sid, MDIR *mdir)
+static void pop3_noop(CONN *sid)
 {
 	tcp_fprintf(&sid->socket, "+OK\r\n");
 	return;
@@ -325,7 +325,7 @@ static void pop3_local(CONN *sid)
 		} else if (strncasecmp(line, "dele", 4)==0) {
 			pop3_dele(sid, &mdir, line);
 		} else if (strcasecmp(line, "noop")==0) {
-			pop3_noop(sid, &mdir);
+			pop3_noop(sid);
 		} else if (strcasecmp(line, "last")==0) {
 			pop3_last(sid, &mdir);
 		} else if (strcasecmp(line, "rset")==0) {
@@ -396,7 +396,7 @@ static void pop3_remote(CONN *sid)
 		} else if (strncasecmp(line, "dele", 4)==0) {
 			pop3_dele(sid, &mdir, line);
 		} else if (strcasecmp(line, "noop")==0) {
-			pop3_noop(sid, &mdir);
+			pop3_noop(sid);
 		} else if (strcasecmp(line, "last")==0) {
 			pop3_last(sid, &mdir);
 		} else if (strcasecmp(line, "rset")==0) {

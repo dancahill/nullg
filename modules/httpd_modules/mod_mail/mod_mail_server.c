@@ -126,7 +126,7 @@ retry:
 	return n;
 }
 
-int wmffgets(CONN *sid, char *buffer, int max, FILE **fp)
+int wmffgets(char *buffer, int max, FILE **fp)
 {
 	int n=0;
 
@@ -378,7 +378,7 @@ void wmserver_disconnect(CONN *sid)
 {
 	char inbuffer[1024];
 
-	if (sid<0) return;
+	if (sid==NULL) return;
 	if (!sid->dat->wm->connected) return;
 	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "QUIT\r\n");
@@ -986,7 +986,7 @@ cleanup:
 	return nummessages;
 }
 
-void wmserver_purge(CONN *sid, int remove)
+void wmserver_purge(CONN *sid)
 {
 	char **uidls;
 	int numlocal;
@@ -1137,7 +1137,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	memset(outbuffer, 0, sizeof(outbuffer));
 	outlen=0;
 	for (;;) {
-		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
+		wmffgets(inbuffer, sizeof(inbuffer)-1, &fp);
 		if (fp==NULL) break;
 		striprn(inbuffer);
 		if (strcmp(inbuffer, ".")==0) {

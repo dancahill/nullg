@@ -20,19 +20,19 @@
 static void conf_callback(char *var, char *val)
 {
 	if (strcmp(var, "interface")==0) {
-		strncpy(mod_config.http_interface, val, sizeof(mod_config.http_interface)-1);
+		strncpy(http_proc.config.http_interface, val, sizeof(http_proc.config.http_interface)-1);
 	} else if (strcmp(var, "port")==0) {
-		mod_config.http_port=atoi(val);
+		http_proc.config.http_port=atoi(val);
 	} else if (strcmp(var, "ssl port")==0) {
-		mod_config.http_sslport=atoi(val);
+		http_proc.config.http_sslport=atoi(val);
 	} else if (strcmp(var, "max connections")==0) {
-		mod_config.http_maxconn=atoi(val);
+		http_proc.config.http_maxconn=atoi(val);
 	} else if (strcmp(var, "max keepalive")==0) {
-		mod_config.http_maxkeepalive=atoi(val);
+		http_proc.config.http_maxkeepalive=atoi(val);
 	} else if (strcmp(var, "max idle")==0) {
-		mod_config.http_maxidle=atoi(val);
+		http_proc.config.http_maxidle=atoi(val);
 	} else if (strcmp(var, "max post size")==0) {
-		mod_config.http_maxpostsize=atoi(val);
+		http_proc.config.http_maxpostsize=atoi(val);
 	} else if (strcmp(var, "load module")==0) {
 	} else {
 		log_error("httpd", __FILE__, __LINE__, 1, "unknown configuration directive '%s'", var);
@@ -51,13 +51,13 @@ static void conf_callback_modules(char *var, char *val)
 int conf_read()
 {
 	memset((char *)&mod_config, 0, sizeof(mod_config));
-	strncpy(mod_config.http_interface, "INADDR_ANY", sizeof(mod_config.http_interface)-1);
-	mod_config.http_port         = 4110;
-	mod_config.http_sslport      = 4112;
-	mod_config.http_maxconn      = 50;
-	mod_config.http_maxkeepalive = 15;
-	mod_config.http_maxidle      = 120;
-	mod_config.http_maxpostsize  = 32*1024*1024;
+	strncpy(http_proc.config.http_interface, "INADDR_ANY", sizeof(http_proc.config.http_interface)-1);
+	http_proc.config.http_port         = 4110;
+	http_proc.config.http_sslport      = 4112;
+	http_proc.config.http_maxconn      = 50;
+	http_proc.config.http_maxkeepalive = 15;
+	http_proc.config.http_maxidle      = 120;
+	http_proc.config.http_maxpostsize  = 32*1024*1024;
 	config_read("srv_httpd", conf_callback);
 	return 0;
 }

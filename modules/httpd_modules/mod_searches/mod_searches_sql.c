@@ -238,7 +238,7 @@ void searchsqlrun(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "FORMAT"))!=NULL) {
 		snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=query.csv");
-		send_header(sid, 1, 200, "OK", "1", "application/octet-stream", -1, -1);
+		send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
 		flushbuffer(sid);
 		for (i=0;i<sql_numfields(sqr);i++) {
 			prints(sid, "\"%s\"", sql_getname(sqr, i));
@@ -368,7 +368,7 @@ void searchsqlsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_queries WHERE queryid = %d", queryid)<0) return;
 		prints(sid, "<CENTER>Query %d deleted successfully</CENTER><BR>\n", queryid);
-		db_log_activity(sid, 1, "queries", query.queryid, "delete", "%s - %s deleted query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
+		db_log_activity(sid, "queries", query.queryid, "delete", "%s - %s deleted query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else if (query.queryid==0) {
 		if (!(auth_priv(sid, "query")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -379,7 +379,7 @@ void searchsqlsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Query %d added successfully</CENTER><BR>\n", query.queryid);
-		db_log_activity(sid, 1, "queries", query.queryid, "insert", "%s - %s added query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
+		db_log_activity(sid, "queries", query.queryid, "insert", "%s - %s added query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else {
 		if (!(auth_priv(sid, "query")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -390,7 +390,7 @@ void searchsqlsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Query %d modified successfully</CENTER><BR>\n", query.queryid);
-		db_log_activity(sid, 1, "queries", query.queryid, "modify", "%s - %s modified query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
+		db_log_activity(sid, "queries", query.queryid, "modify", "%s - %s modified query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/search/sqlrun\">\n", sid->dat->in_ScriptName);
 	return;

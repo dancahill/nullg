@@ -392,13 +392,13 @@ static void smtp_rset(CONN *sid, MAILCONN *mconn)
 	return;
 }
 
-static void smtp_noop(CONN *sid, MAILCONN *mconn)
+static void smtp_noop(CONN *sid)
 {
 	tcp_fprintf(&sid->socket, "220 OK\r\n");
 	return;
 }
 
-static void smtp_turn(CONN *sid, MAILCONN *mconn)
+static void smtp_turn(CONN *sid)
 {
 	tcp_fprintf(&sid->socket, "502 No\r\n");
 	return;
@@ -413,7 +413,9 @@ void smtp_dorequest(CONN *sid)
 
 	memset((char *)&mconn, 0, sizeof(mconn));
 	mconn.sender_is_local=allow_relay(sid);
-//	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_is_local?" - relaying allowed":" - relaying denied");
+/*
+	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_is_local?" - relaying allowed":" - relaying denied");
+*/
 	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd\r\n", proc->config.hostname, SERVER_NAME);
 	do {
 		memset(line, 0, sizeof(line));
@@ -454,9 +456,9 @@ void smtp_dorequest(CONN *sid)
 		} else if (strcasecmp(line, "rset")==0) {
 			smtp_rset(sid, &mconn);
 		} else if (strcasecmp(line, "turn")==0) {
-			smtp_turn(sid, &mconn);
+			smtp_turn(sid);
 		} else if (strcasecmp(line, "noop")==0) {
-			smtp_noop(sid, &mconn);
+			smtp_noop(sid);
 		} else {
 			log_error("smtpd", __FILE__, __LINE__, 1, "UNKNOWN COMMAND: '%s'", line);
 			tcp_fprintf(&sid->socket, "502 Unknown Command\r\n");

@@ -198,21 +198,21 @@ void forumgroupsave(CONN *sid)
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (sql_updatef("DELETE FROM gw_forumgroups WHERE forumgroupid = %d", forumgroup.forumgroupid)<0) return;
 		prints(sid, "<CENTER>Forum Group %d deleted successfully</CENTER><BR>\n", forumgroup.forumgroupid);
-		db_log_activity(sid, 1, "forumgroups", forumgroup.forumgroupid, "delete", "%s - %s deleted forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
+		db_log_activity(sid, "forumgroups", forumgroup.forumgroupid, "delete", "%s - %s deleted forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else if (forumgroup.forumgroupid==0) {
 		if ((forumgroup.forumgroupid=dbwrite_forumgroup(sid, 0, &forumgroup))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Forum Group %d added successfully</CENTER><BR>\n", forumgroup.forumgroupid);
-		db_log_activity(sid, 1, "forumgroups", forumgroup.forumgroupid, "insert", "%s - %s added forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
+		db_log_activity(sid, "forumgroups", forumgroup.forumgroupid, "insert", "%s - %s added forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else {
 		if (dbwrite_forumgroup(sid, forumgroupid, &forumgroup)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Forum Group %d modified successfully</CENTER><BR>\n", forumgroup.forumgroupid);
-		db_log_activity(sid, 1, "forumgroups", forumgroup.forumgroupid, "modify", "%s - %s modified forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
+		db_log_activity(sid, "forumgroups", forumgroup.forumgroupid, "modify", "%s - %s modified forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/forums/grouplist\">\n", sid->dat->in_ScriptName);
 	return;
@@ -721,7 +721,7 @@ void forumsave(CONN *sid)
 	if (sql_update(query)<0) return;
 	prints(sid, "<CENTER>Forum %d added successfully</CENTER>\n", forumid);
 	forumview(sid, forumid);
-	db_log_activity(sid, 1, "forums", forumid, "insert", "%s - %s added forum %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumid);
+	db_log_activity(sid, "forums", forumid, "insert", "%s - %s added forum %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumid);
 	return;
 }
 
@@ -768,13 +768,13 @@ void fmessagesave(CONN *sid)
 	if (sql_update(query)<0) return;
 	prints(sid, "<CENTER>Message %d added successfully</CENTER>\n", messageid);
 	fmessageview(sid, forumid, messageid);
-	db_log_activity(sid, 1, "forumposts", forumid, "insert", "%s - %s added message %d on forum %d", sid->dat->in_RemoteAddr, sid->dat->user_username, messageid, forumid);
+	db_log_activity(sid, "forumposts", forumid, "insert", "%s - %s added message %d on forum %d", sid->dat->in_RemoteAddr, sid->dat->user_username, messageid, forumid);
 	return;
 }
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_FORUMS);
 	prints(sid, "<BR>\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/forums/msgread",      15)==0) {

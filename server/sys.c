@@ -49,7 +49,7 @@ int sys_system(const char *format, ...)
 stuff:
 	GetExitCodeProcess(pi.hProcess, &exitcode);
 	if (exitcode==STILL_ACTIVE) goto stuff;
-//	if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
+/*	if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1); */
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	return exitcode;

@@ -260,10 +260,10 @@ void projectview(CONN *sid)
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Project Admin </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", htview_user(sid, project.projectadmin));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Start Date    </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2datetext(sid, project.projectstart));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Finish Date   </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2datetext(sid, project.projectfinish));
-	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status        </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", htview_eventstatus(sid, project.status));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status        </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", htview_eventstatus(project.status));
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n");
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, project.details));
-	if (module_exists(sid, "mod_calendar")) {
+	if (module_exists("mod_calendar")) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Events");
 		prints(sid, " [<A HREF=%s/calendar/editnew?projectid=%d>new</A>]", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "</TH></TR>\n");
@@ -282,7 +282,7 @@ void projectview(CONN *sid)
 		}
 		sql_freeresult(sqr);
 	}
-	if (module_exists(sid, "mod_tasks")) {
+	if (module_exists("mod_tasks")) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Tasks");
 		prints(sid, " [<A HREF=%s/tasks/editnew?projectid=%d>new</A>]", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "</TH></TR>\n");
@@ -301,7 +301,7 @@ void projectview(CONN *sid)
 		}
 		sql_freeresult(sqr);
 	}
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Notes");
 		prints(sid, " [<A HREF=%s/notes/editnew?table=projects&index=%d>new</A>]", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "</TH></TR>\n");
@@ -472,7 +472,7 @@ void projectsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_projects WHERE projectid = %d", project.projectid)<0) return;
 		prints(sid, "<BR><CENTER>Project %d deleted successfully</CENTER><BR>\n", project.projectid);
-		db_log_activity(sid, 1, "projects", project.projectid, "delete", "%s - %s deleted project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
+		db_log_activity(sid, "projects", project.projectid, "delete", "%s - %s deleted project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/projects/list\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -488,7 +488,7 @@ void projectsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<BR><CENTER>Project %d added successfully</CENTER><BR>\n", project.projectid);
-		db_log_activity(sid, 1, "projects", project.projectid, "insert", "%s - %s added project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
+		db_log_activity(sid, "projects", project.projectid, "insert", "%s - %s added project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/projects/view?projectid=%d\");\n", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -508,7 +508,7 @@ void projectsave(CONN *sid)
 			return;
 		}
 		prints(sid, "<BR><CENTER>Project %d modified successfully</CENTER><BR>\n", project.projectid);
-		db_log_activity(sid, 1, "projects", project.projectid, "modify", "%s - %s modified project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
+		db_log_activity(sid, "projects", project.projectid, "modify", "%s - %s modified project %d", sid->dat->in_RemoteAddr, sid->dat->user_username, project.projectid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/projects/view?projectid=%d\");\n", sid->dat->in_ScriptName, project.projectid);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -520,7 +520,7 @@ void projectsave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_PROJECTS);
 	if (strncmp(sid->dat->in_RequestURI, "/projects/edit", 14)==0) {
 		projectedit(sid);

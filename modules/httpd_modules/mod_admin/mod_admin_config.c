@@ -18,9 +18,9 @@
 #include "http_mod.h"
 #include "mod_admin.h"
 
+/*
 void adminconfigedit(CONN *sid)
 {
-/*
 	CONFIG cfg;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
@@ -144,7 +144,7 @@ void adminconfigedit(CONN *sid)
 #ifdef HAVE_PGSQL
 	prints(sid, "<OPTION VALUE='PGSQL'%s>PGSQL\n", strcmp(cfg.sql_type, "PGSQL")==0?" SELECTED":"");
 #endif
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	prints(sid, "<OPTION VALUE='SQLITE'%s>SQLITE\n", strcmp(cfg.sql_type, "SQLITE")==0?" SELECTED":"");
 #endif
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -172,13 +172,13 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "showpage(1);\n");
 	prints(sid, "SQLTypeUpdate();\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
-*/
 	return;
 }
+*/
 
+/*
 void adminconfigsave(CONN *sid)
 {
-/*
 	CONFIG cfg;
 	char *ptemp;
 
@@ -230,6 +230,6 @@ void adminconfigsave(CONN *sid)
 	db_log_activity(sid, 1, "config", 0, "modify", "%s - %s modified config", sid->dat->in_RemoteAddr, sid->dat->user_username);
 	flushbuffer(sid);
 //	server_restart();
-*/
 	return;
 }
+*/

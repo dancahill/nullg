@@ -207,7 +207,7 @@ void bookmarkfoldersave(CONN *sid)
 		sql_freeresult(sqr);
 		if (sql_updatef("DELETE FROM gw_bookmarkfolders WHERE folderid = %d", bookmarkfolder.folderid)<0) return;
 		prints(sid, "<CENTER>Bookmark Folder %d deleted successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "delete", "%s - %s deleted bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		db_log_activity(sid, "bookmarkfolders", bookmarkfolder.folderid, "delete", "%s - %s deleted bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
 		folderid=bookmarkfolder.parentid;
 	} else if (bookmarkfolder.folderid==0) {
 		if (strlen(bookmarkfolder.foldername)<1) {
@@ -224,7 +224,7 @@ void bookmarkfoldersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmarkfolder.foldername));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Bookmark folder %d added successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "insert", "%s - %s added bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		db_log_activity(sid, "bookmarkfolders", bookmarkfolder.folderid, "insert", "%s - %s added bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
 		folderid=bookmarkfolder.folderid;
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
@@ -237,7 +237,7 @@ void bookmarkfoldersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE folderid = %d", bookmarkfolder.folderid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Bookmark folder %d modified successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "modify", "%s - %s modified bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		db_log_activity(sid, "bookmarkfolders", bookmarkfolder.folderid, "modify", "%s - %s modified bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
 		folderid=bookmarkfolder.parentid;
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
@@ -475,7 +475,7 @@ void bookmarkssave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_bookmarks WHERE bookmarkid = %d", bookmark.bookmarkid)<0) return;
 		prints(sid, "<CENTER>Bookmark %d deleted successfully</CENTER><BR>\n", bookmark.bookmarkid);
-		db_log_activity(sid, 1, "bookmarks", bookmark.bookmarkid, "delete", "%s - %s deleted bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
+		db_log_activity(sid, "bookmarks", bookmark.bookmarkid, "delete", "%s - %s deleted bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else if (bookmark.bookmarkid==0) {
 		if (!(auth_priv(sid, "bookmarks")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -486,7 +486,7 @@ void bookmarkssave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Bookmark %d added successfully</CENTER><BR>\n", bookmark.bookmarkid);
-		db_log_activity(sid, 1, "bookmarks", bookmark.bookmarkid, "insert", "%s - %s added bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
+		db_log_activity(sid, "bookmarks", bookmark.bookmarkid, "insert", "%s - %s added bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else {
 		if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -497,7 +497,7 @@ void bookmarkssave(CONN *sid)
 			return;
 		}
 		prints(sid, "<CENTER>Bookmark %d modified successfully</CENTER><BR>\n", bookmark.bookmarkid);
-		db_log_activity(sid, 1, "bookmarks", bookmark.bookmarkid, "modify", "%s - %s modified bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
+		db_log_activity(sid, "bookmarks", bookmark.bookmarkid, "modify", "%s - %s modified bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/bookmarks/list?folder=%d\");\n", sid->dat->in_ScriptName, bookmark.folderid);
@@ -510,7 +510,7 @@ void bookmarkssave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_BOOKMARKS);
 	prints(sid, "<BR>\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/folderedit", 21)==0) {

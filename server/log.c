@@ -29,16 +29,15 @@ void log_access(char *logsrc, const char *format, ...)
 
 	snprintf(file, sizeof(file)-1, "%s/%s-access.log", proc.config.dir_var_log, logsrc);
 	fixslashes(file);
-	fp=fopen(file, "a");
-	if (fp!=NULL) {
-		va_start(ap, format);
-		vsnprintf(logbuffer, sizeof(logbuffer)-1, format, ap);
-		va_end(ap);
-		gettimeofday(&ttime, &tzone);
-		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
-		fprintf(fp, "%s - %s\n", timebuffer, logbuffer);
-		fclose(fp);
-	}
+	va_start(ap, format);
+	vsnprintf(logbuffer, sizeof(logbuffer)-1, format, ap);
+	va_end(ap);
+	gettimeofday(&ttime, &tzone);
+	strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
+	if ((fp=fopen(file, "a"))==NULL) return;
+	fprintf(fp, "%s - %s\n", timebuffer, logbuffer);
+	fclose(fp);
+	return;
 }
 
 void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *format, ...)
@@ -55,25 +54,24 @@ void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *
 	if ((loglevel>proc.config.loglevel)||(proc.config.loglevel<1)) return;
 	snprintf(file, sizeof(file)-1, "%s/%s-error.log", proc.config.dir_var_log, logsrc);
 	fixslashes(file);
-	fp=fopen(file, "a");
-	if (fp!=NULL) {
-		va_start(ap, format);
-		vsnprintf(logbuffer, sizeof(logbuffer)-1, format, ap);
-		va_end(ap);
-		striprn(logbuffer);
-		gettimeofday(&ttime, &tzone);
-		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
-		if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;
-		if ((ptemp=strrchr(srcfile, '\\'))!=NULL) srcfile=ptemp+1;
-		if (proc.config.loglevel>1) {
+	va_start(ap, format);
+	vsnprintf(logbuffer, sizeof(logbuffer)-1, format, ap);
+	va_end(ap);
+	striprn(logbuffer);
+	gettimeofday(&ttime, &tzone);
+	strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
+	if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;
+	if ((ptemp=strrchr(srcfile, '\\'))!=NULL) srcfile=ptemp+1;
+	if ((fp=fopen(file, "a"))==NULL) return;
+	if (proc.config.loglevel>1) {
 #ifdef WIN32
-			fprintf(fp, "%s - [%d][PID=?] %s %d %s\n", timebuffer, loglevel, srcfile, line, logbuffer);
+		fprintf(fp, "%s - [%d][PID=?] %s %d %s\n", timebuffer, loglevel, srcfile, line, logbuffer);
 #else
-			fprintf(fp, "%s - [%d][PID=%d] %s %d %s\n", timebuffer, loglevel, getpid(), srcfile, line, logbuffer);
+		fprintf(fp, "%s - [%d][PID=%d] %s %d %s\n", timebuffer, loglevel, getpid(), srcfile, line, logbuffer);
 #endif
-		} else {
-			fprintf(fp, "%s - [%d] %s\n", timebuffer, loglevel, logbuffer);
-		}
-		fclose(fp);
+	} else {
+		fprintf(fp, "%s - [%d] %s\n", timebuffer, loglevel, logbuffer);
 	}
+	fclose(fp);
+	return;
 }

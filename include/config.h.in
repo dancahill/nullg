@@ -95,6 +95,9 @@
 /* Define to 1 if you have the `pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 
+/* Define to 1 if you have the <pthread/mit/pthread.h> header file. */
+#undef HAVE_PTHREAD_MIT_PTHREAD_H
+
 /* Define to 1 if you have the `rmdir' function. */
 #undef HAVE_RMDIR
 

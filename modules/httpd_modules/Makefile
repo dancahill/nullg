@@ -17,6 +17,7 @@ all:
 	@echo " mod_messages"   ; cd mod_messages   ; $(MAKE)
 	@echo " mod_notes"      ; cd mod_notes      ; $(MAKE)
 	@echo " mod_orders"     ; cd mod_orders     ; $(MAKE)
+#	@echo " mod_php"        ; cd mod_php        ; $(MAKE)
 	@echo " mod_profile"    ; cd mod_profile    ; $(MAKE)
 	@echo " mod_projects"   ; cd mod_projects   ; $(MAKE)
 	@echo " mod_searches"   ; cd mod_searches   ; $(MAKE)
@@ -38,6 +39,7 @@ clean:
 	@cd mod_messages   ; $(MAKE) clean
 	@cd mod_notes      ; $(MAKE) clean
 	@cd mod_orders     ; $(MAKE) clean
+#	@cd mod_php        ; $(MAKE) clean
 	@cd mod_profile    ; $(MAKE) clean
 	@cd mod_projects   ; $(MAKE) clean
 	@cd mod_searches   ; $(MAKE) clean

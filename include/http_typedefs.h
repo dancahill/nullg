@@ -93,7 +93,7 @@ typedef struct {
 	short int val;
 } PREF;
 typedef struct {
-	// USER DATA
+	/* USER DATA */
 	char       user_username[64];
 	char       user_token[64];
 	char       user_domainname[64];
@@ -112,7 +112,7 @@ typedef struct {
 	char       user_language[4];
 	char       user_theme[40];
 	WEBMAIL   *wm;
-	// INCOMING DATA
+	/* INCOMING DATA */
 	short int cgi_lite;
 	char in_Connection[16];
 	int  in_ContentLength;
@@ -134,7 +134,7 @@ typedef struct {
 	char in_UserAgent[128];
 	char in_CGIPathInfo[128];
 	char in_CGIScriptName[128];
-	// OUTGOING DATA
+	/* OUTGOING DATA */
 	short int out_status;
 	short int out_headdone;
 	short int out_bodydone;
@@ -155,7 +155,7 @@ typedef struct {
 	char out_SetCookieUser[128];
 	char out_SetCookiePass[128];
 	unsigned char out_ReplyData[MAX_REPLYSIZE];
-	// BUFFERS
+	/* BUFFERS */
 	short int lastbuf;
 	char      smallbuf[4][4096];
 	char      largebuf[16384];
@@ -173,10 +173,12 @@ typedef struct {
 	char *PostData;
 } CONN;
 
-//typedef struct {
-//	char *fn_name;
-//	void *fn_ptr;
-//} FUNCTION;
+/*
+typedef struct {
+	char *fn_name;
+	void *fn_ptr;
+} FUNCTION;
+*/
 typedef struct {
 	char mod_name[40];
 	short int mod_submenu;
@@ -196,6 +198,16 @@ typedef struct {
 } MODULE_FUNC;
 
 typedef struct {
+	char      http_interface[128];
+	short int http_port;
+	short int http_sslport;
+	short int http_maxkeepalive;
+	short int http_maxconn;
+	short int http_maxidle;
+	int       http_maxpostsize;
+} HTTP_CONFIG;
+
+typedef struct {
 	int ListenSocketSTD;
 	int ListenSocketSSL;
 	pthread_t ListenThreadSTD;
@@ -203,6 +215,8 @@ typedef struct {
 	unsigned short RunAsCGI;
 	MODULE_MENU mod_menuitems[MAX_MOD_MENUITEMS+1];
 	MODULE_FUNC mod_functions[MAX_MOD_FUNCTIONS+1];
+	CONN *conn;
+	HTTP_CONFIG config;
 } HTTP_PROC;
 
 typedef	int  (*HTMOD_INIT)(_PROC *, HTTP_PROC *, FUNCTION *);

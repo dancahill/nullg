@@ -164,7 +164,7 @@ int config_read(CONFIG *config)
 	fixslashes(config->server_dir_var_log);
 	fixslashes(config->server_dir_var_mail);
 	fixslashes(config->server_dir_var_tmp);
-#ifdef HAVE_SQLITE
+#ifdef HAVE_SQLITE3
 	strncpy(config->sql_type, "SQLITE", sizeof(config->sql_type)-1);
 #endif
 	config->server_loglevel=1;

@@ -29,7 +29,7 @@ int webmailheader(CONN *sid, wmheader *header, FILE **fp)
 	memset(header->boundary, 0, sizeof(header->boundary));
 	for (;;) {
 		if (fp!=NULL) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 		} else {
 			if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, &sid->dat->wm->socket)<0) return -1;
@@ -150,7 +150,7 @@ int webmailheader(CONN *sid, wmheader *header, FILE **fp)
 	return 0;
 }
 
-static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, char *filename, short int depth)
+static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *boundary, char *filename, short int depth)
 {
 	char inbuffer[1024];
 	char outbuffer[1024];
@@ -173,7 +173,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 		head=1;
 	} else {
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 			if (p_strcasestr(inbuffer, boundary)!=NULL) {
 				head=1;
@@ -197,7 +197,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			memset(cencode, 0, sizeof(cencode));
 			prevheader=NULL;
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) return 0;
 				if (inbuffer[0]=='\0') { head=0; break; }
 				if (inbuffer[0]=='-') {
@@ -269,7 +269,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			}
 		}
 		if (strncasecmp(ctype, "message/rfc822", 14)==0) {
-			if (webmailfiledl_r(sid, fp, ctype, cencode, boundary, filename, depth)==1) {
+			if (webmailfiledl_r(sid, fp, ctype, boundary, filename, depth)==1) {
 				return 1;
 			} else {
 				head=1;
@@ -286,7 +286,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			}
 		}
 		if (p_strcasestr(ctype, "multipart")!=NULL) {
-			if (webmailfiledl_r(sid, fp, ctype, cencode, cbound, filename, depth)==1) {
+			if (webmailfiledl_r(sid, fp, ctype, cbound, filename, depth)==1) {
 				return 1;
 			} else {
 				head=1;
@@ -299,12 +299,12 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			if (strncasecmp(ptemp, "image/", 6)!=0) {
 				snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment");
 			}
-			send_header(sid, 1, 200, "OK", "1", ptemp, -1, -1);
+			send_header(sid, 1, 200, "1", ptemp, -1, -1);
 			flushbuffer(sid);
 			memset(b64buffer, 0, sizeof(b64buffer));
 			b64len=0;
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) return 1;
 				if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) break;
 				if (strncasecmp(cencode, "base64", 6)==0) {
@@ -318,23 +318,23 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 					strcat(b64buffer, inbuffer);
 					b64len+=strlen(inbuffer);
 				} else if (strncasecmp(cencode, "quoted-printable", 16)==0) {
-					DecodeQP(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
+					DecodeQP(outbuffer, sizeof(outbuffer)-1, inbuffer);
 				} else if (strncasecmp(cencode, "7bit", 4)==0) {
-					DecodeText(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
+					DecodeText(outbuffer, sizeof(outbuffer)-1, inbuffer);
 				} else if (strncasecmp(cencode, "8bit", 4)==0) {
-					DecodeText(sid, outbuffer, sizeof(outbuffer)-1, inbuffer);
+					DecodeText(outbuffer, sizeof(outbuffer)-1, inbuffer);
 				}
 			}
 			if ((strncasecmp(cencode, "base64", 6)==0)&&(strlen(b64buffer))) {
 				DecodeBase64file(sid, b64buffer);
 			}
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) return 1;
 			}
 		} else {
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
 				if (inbuffer[0]=='\0') break;
 				if (inbuffer[0]!='-') continue;
@@ -400,7 +400,7 @@ void webmailfiledl(CONN *sid)
 		striprn(inbuffer);
 		if (strlen(inbuffer)==0) break;
 	}
-	if (webmailfiledl_r(sid, &fp, header.contenttype, header.encoding, header.boundary, filename, 0)==0) {
+	if (webmailfiledl_r(sid, &fp, header.contenttype, header.boundary, filename, 0)==0) {
 		send_error(sid, 400, "Bad Request", "Attachment not found.");
 	}
 	return;
@@ -502,7 +502,7 @@ int webmailmime_line(CONN *sid, char *bodytemp, int szbodytemp, char *inbuffer, 
 	int bytes=0;
 
 	if (strncasecmp(encoding, "quoted-printable", 16)==0) {
-		DecodeQP(sid, outbuffer1, sizeof(outbuffer1)-1, inbuffer);
+		DecodeQP(outbuffer1, sizeof(outbuffer1)-1, inbuffer);
 	} else if (strncasecmp(encoding, "base64", 6)==0) {
 		snprintf(outbuffer1, sizeof(outbuffer1)-1, "%s", DecodeBase64string(sid, inbuffer));
 	} else {
@@ -511,7 +511,7 @@ int webmailmime_line(CONN *sid, char *bodytemp, int szbodytemp, char *inbuffer, 
 	if (strncasecmp(ctype, "text/html", 9)==0) {
 		DecodeHTML(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1, reply);
 	} else {
-		DecodeText(sid, outbuffer2, sizeof(outbuffer2)-1, outbuffer1);
+		DecodeText(outbuffer2, sizeof(outbuffer2)-1, outbuffer1);
 	}
 	if (szbodytemp<0) return 0;
 	strncat(bodytemp, outbuffer2, szbodytemp-strlen(bodytemp)-1);
@@ -548,7 +548,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		bodytemp=calloc(szbodytemp, sizeof(char));
 		bodysize=0;
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 			bodysize+=webmailmime_line(sid, bodytemp+bodysize, szbodytemp-bodysize, inbuffer, contenttype, encoding, reply);
 		}
@@ -577,7 +577,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		head=1;
 	} else {
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 			if (p_strcasestr(inbuffer, boundary)!=NULL) {
 				head=1;
@@ -599,7 +599,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 			memset(ctype, 0, sizeof(ctype));
 			memset(cencode, 0, sizeof(cencode));
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
 					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
@@ -620,7 +620,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 					while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 					strncpy(ctype, ptemp, sizeof(ctype)-1);
 					while (inbuffer[strlen(inbuffer)-1]==';') {
-						wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+						wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 						striprn(inbuffer);
 						strncat(ctype, inbuffer, sizeof(ctype)-strlen(ctype)-1);
 					}
@@ -664,7 +664,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		if (*fp==NULL) break;
 		if (file) {
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
 				if (inbuffer[0]=='\0') { file=0; break; }
 				if (inbuffer[0]!='-') continue;
@@ -685,7 +685,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		// start reading the part body
 		for (;;) {
 			if (strcmp(inbuffer, "")==0) break;
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) {
 				return msgdone;
@@ -705,7 +705,7 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		bodytemp=calloc(szbodytemp, sizeof(char));
 		bodysize=0;
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			wmffgets(inbuffer, sizeof(inbuffer)-1, fp);
 			if (*fp==NULL) break;
 			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) break;
 			if (p_strcasestr(inbuffer, boundary)!=NULL) {

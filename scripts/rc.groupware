@@ -21,10 +21,18 @@ fi
 BASE_PATH="/usr/local/nullgroupware"
 PATH=$BASE_PATH/bin:$PATH
 
-groupware_start() {
+check_status() {
 	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
-	then
+	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0; then
+		SERVER_STATUS="running"
+	else
+		SERVER_STATUS="not running"
+	fi
+	rm -f /tmp/_gw_proclist
+}
+
+groupware_start() {
+	if [ "$SERVER_STATUS" = "running" ]; then
 		echo "NullLogic Groupware appears to be running already."
 	else
 		echo -n "Starting NullLogic Groupware services: "
@@ -35,13 +43,10 @@ groupware_start() {
 #		echo -n "smtpq " ; nullgw-server smtpq
 		echo ""
 	fi
-	rm -f /tmp/_gw_proclist
 }
 
 groupware_stop() {
-	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
-	then
+	if [ "$SERVER_STATUS" = "running" ]; then
 		echo "Stopping NullLogic Groupware services"
 		killall -15 nullgw-server 2>/dev/null
 		sleep 2
@@ -49,31 +54,30 @@ groupware_stop() {
 	else
 		echo "NullLogic Groupware does not appear to be running."
 	fi
-	rm -f /tmp/_gw_proclist
 }
 
 groupware_status() {
-	ps axw > /tmp/_gw_proclist
-	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0
-	then
+	if [ "$SERVER_STATUS" = "running" ]; then
 		echo "NullLogic Groupware appears to be running"
 	else
 		echo "NullLogic Groupware does not appear to be running."
 	fi
-	rm -f /tmp/_gw_proclist
 }
 
 groupware_restart() {
 	groupware_stop
+	check_status
 	groupware_start
 }
 
+check_status
 case "$1" in
 start)
 	groupware_start
 	;;
 stop)
 	groupware_stop
+	exit 0
 	;;
 status)
 	groupware_status

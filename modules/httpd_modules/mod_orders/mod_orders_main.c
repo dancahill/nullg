@@ -159,7 +159,7 @@ void orderview(CONN *sid)
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" ALIGN=right COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", order.paymentdue);
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" ALIGN=right COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", order.paymentdue);
 	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" ALIGN=right COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", order.paymentreceived);
-	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+	if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>Notes");
 		prints(sid, " [<A HREF=%s/notes/editnew?table=orders&index=%d>new</A>]", sid->dat->in_ScriptName, order.orderid);
 		prints(sid, "</TH></TR>\n");
@@ -374,7 +374,7 @@ void ordersave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_orders WHERE orderid = %d", order.orderid)<0) return;
 		prints(sid, "<CENTER>Order %d deleted successfully</CENTER><BR>\n", order.orderid);
-		db_log_activity(sid, 1, "orders", order.orderid, "delete", "%s - %s deleted order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
+		db_log_activity(sid, "orders", order.orderid, "delete", "%s - %s deleted order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else if (order.orderid==0) {
 		if (!(auth_priv(sid, "orders")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -397,7 +397,7 @@ void ordersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.details));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order %d added successfully</CENTER><BR>\n", order.orderid);
-		db_log_activity(sid, 1, "orders", order.orderid, "insert", "%s - %s added order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
+		db_log_activity(sid, "orders", order.orderid, "insert", "%s - %s added order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else {
 		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -416,7 +416,7 @@ void ordersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE orderid = %d", order.orderid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Order %d modified successfully</CENTER><BR>\n", order.orderid);
-		db_log_activity(sid, 1, "orders", order.orderid, "modify", "%s - %s modified order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
+		db_log_activity(sid, "orders", order.orderid, "modify", "%s - %s modified order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "location.replace(\"%s/orders/view?orderid=%d\");\n", sid->dat->in_ScriptName, order.orderid);
@@ -438,7 +438,7 @@ DllExport int mod_main(CONN *sid)
 {
 	char *suburi=sid->dat->in_RequestURI;
 
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_ORDERS);
 	prints(sid, "<BR>\r\n");
 	if (strncmp(suburi, "/orders/", 8)!=0) return 0;

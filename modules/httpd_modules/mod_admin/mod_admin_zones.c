@@ -162,7 +162,7 @@ void adminzonesave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_zones WHERE zoneid = %d", zone.zoneid)<0) return;
 		prints(sid, "<CENTER>Zone %d deleted successfully</CENTER><BR>\n", zone.zoneid);
-		db_log_activity(sid, 1, "zones", zone.zoneid, "delete", "%s - %s deleted zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
+		db_log_activity(sid, "zones", zone.zoneid, "delete", "%s - %s deleted zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	} else if (zone.zoneid==0) {
 		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND obj_did = %d", zone.zonename, zone.obj_did))<0) return;
 		if (sql_numtuples(sqr)>0) {
@@ -184,7 +184,7 @@ void adminzonesave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, zone.zonename));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Zone %d added successfully</CENTER><BR>\n", zone.zoneid);
-		db_log_activity(sid, 1, "zones", zone.zoneid, "insert", "%s - %s added zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
+		db_log_activity(sid, "zones", zone.zoneid, "insert", "%s - %s added zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -206,7 +206,7 @@ void adminzonesave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE zoneid = %d AND obj_did = %d", zone.zoneid, zone.obj_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Zone %d modified successfully</CENTER><BR>\n", zone.zoneid);
-		db_log_activity(sid, 1, "zones", zone.zoneid, "modify", "%s - %s modified zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
+		db_log_activity(sid, "zones", zone.zoneid, "modify", "%s - %s modified zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/zonelist\">\n", sid->dat->in_ScriptName);
 	return;

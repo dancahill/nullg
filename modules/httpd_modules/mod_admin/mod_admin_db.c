@@ -28,7 +28,9 @@ int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain)
 	if (authlevel<1) return -1;
 	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
-//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+/*
+	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+*/
 	if (index==0) {
 		domain->obj_uid=sid->dat->user_uid;
 		domain->obj_gid=sid->dat->user_gid;
@@ -70,7 +72,9 @@ int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 	if (authlevel<1) return -1;
 	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
-//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+/*
+	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+*/
 	if (index==0) {
 		group->obj_uid=sid->dat->user_uid;
 		group->obj_gid=sid->dat->user_gid;
@@ -120,7 +124,9 @@ int dbread_groupmember(CONN *sid, short int perm, int index, REC_GROUPMEMBER *gr
 	if (authlevel<1) return -1;
 	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
-//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+/*
+	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+*/
 	if (index==0) {
 		groupmember->obj_uid=sid->dat->user_uid;
 		groupmember->obj_gid=sid->dat->user_gid;
@@ -164,7 +170,9 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	if (authlevel<1) return -1;
 	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
-//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+/*
+	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+*/
 	if (index==0) {
 		user->obj_uid=sid->dat->user_uid;
 		user->obj_gid=sid->dat->user_gid;
@@ -306,7 +314,9 @@ int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone)
 	if (authlevel<1) return -1;
 	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
 	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
-//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+/*
+	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+*/
 	if (index==0) {
 		zone->obj_uid=sid->dat->user_uid;
 		zone->obj_gid=sid->dat->user_gid;

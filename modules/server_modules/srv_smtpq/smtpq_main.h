@@ -25,12 +25,10 @@
 
 typedef struct {
 	char      user_username[64];
-//	char      user_token[64];
 	short int user_uid;
 	short int user_gid;
 	short int user_did;
 	short int user_mailcurrent;
-//	short int user_maildefault;
 } CONNDATA;
 typedef struct {
 	pthread_t handle;
@@ -73,8 +71,6 @@ typedef struct {
 
 #ifdef SRVMOD_MAIN
 	CONN *conn;
-	int ListenSocketSTD;
-	int ListenSocketSSL;
 	pthread_t ListenThreadSTD;
 	pthread_t ListenThreadSSL;
 	pthread_t SpoolThread;
@@ -82,8 +78,6 @@ typedef struct {
 	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
-	extern int ListenSocketSTD;
-	extern int ListenSocketSSL;
 	extern pthread_t ListenThreadSTD;
 	extern pthread_t ListenThreadSSL;
 	extern pthread_t SpoolThread;

@@ -34,7 +34,7 @@
 	#define HAVE_MYSQL
 	#define HAVE_ODBC
 	#define HAVE_PGSQL
-	#define HAVE_SQLITE
+	#define HAVE_SQLITE3
 	#define WIN32_LEAN_AND_MEAN
 	#define _MT 1
 	#pragma comment(lib, "libcmt.lib")
@@ -48,7 +48,6 @@
 	#include <basetsd.h>
 	#include <io.h>
 	#include <direct.h>
-//	#include "resource.h"
 #ifdef BCC
 	#define _setmode setmode
 #endif
@@ -59,12 +58,16 @@
 #else
 	#define HAVE_MYSQL
 	#define HAVE_PGSQL
-	#define HAVE_SQLITE
+	#define HAVE_SQLITE3
 	#include <dirent.h>
 	#include <dlfcn.h>
 	#include <netdb.h>
 	#include <paths.h>
+#ifdef HAVE_PTHREAD_MIT_PTHREAD_H
+	#include <pthread/mit/pthread.h>
+#else
 	#include <pthread.h>
+#endif
 	#include <signal.h>
 	#include <unistd.h>
 	#include <netinet/in.h>
@@ -77,28 +80,6 @@
 #endif
 #include "ssl.h"
 
-#ifdef HAVE_MYSQL
-	#ifdef HAVE_MYSQL_MYSQL_H
-	#include "mysql/mysql.h"
-	#else
-	#include "sql/mysql.h"
-	#endif
-#endif
-#ifdef HAVE_ODBC
-	#include <sql.h>
-	#include <sqlext.h>
-#endif
-#ifdef HAVE_PGSQL
-	#ifdef HAVE_POSTGRESQL_LIBPQ_FE_H
-	#include "postgresql/libpq-fe.h"
-	#else
-	#include "sql/pgsql.h"
-	#endif
-#endif
-#ifdef HAVE_SQLITE
-	#include "sql/sqlite.h"
-#endif
-
 #include "i18n/srv_httpd.h"
 #include "defines.h"
 #include "typedefs.h"
@@ -107,13 +88,13 @@
 #ifdef MAIN_GLOBALS
 	LOCKS   Lock;
 	_PROC   proc;
-//	CONN   *conn;
+/*	CONN   *conn; */
 	SQLRES *sqlreply;
 	pthread_t CronThread;
 #else
 	extern LOCKS   Lock;
 	extern _PROC   proc;
-//	extern CONN   *conn;
+/*	extern CONN   *conn; */
 	extern SQLRES *sqlreply;
 	extern pthread_t CronThread;
 #endif

@@ -157,10 +157,10 @@ char *encodeurl(CONN *sid, unsigned char *src)
 {
 	unsigned char *buffer=getbuffer(sid);
 	unsigned char *dest=buffer;
-//	char *unsafe="`'!@#$%^&*(){}<>~|\\\";? ,/";
+	/* char *unsafe="`'!@#$%^&*(){}<>~|\\\";? ,/"; */
 	char *unsafe="`'!@#$^&*(){}<>~|\\\";?,";
 	char *hex="0123456789ABCDEF";
-	short int dstlen=0;
+	unsigned int dstlen=0;
 
 	while (*src) {
 		if (dstlen+4>sizeof(sid->dat->smallbuf[0])) break;
@@ -447,7 +447,7 @@ char *time_unix2lotimetext(CONN *sid, time_t unixdate)
 	char *ptemp=buffer;
 
 	strftime(buffer, 30, "%I:%M%p", gmtime(&unixdate));
-	// GCC 3.2.2 was incrementing ptemp prematurely
+	/* GCC 3.2.2 was incrementing ptemp prematurely */
 	while (*ptemp) { *ptemp=tolower(*ptemp); ptemp++; }
 	return buffer;
 }
@@ -467,7 +467,7 @@ int time_tzoffset(CONN *sid, time_t unixdate)
 	return tzoffset;
 }
 
-int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
+int time_tzoffset2(time_t unixdate, int userid)
 {
 	int sqr;
 	int tz=-1;
@@ -488,7 +488,7 @@ int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
 	return tzoffset;
 }
 
-int time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid)
+int time_tzoffsetcon(time_t unixdate, int contactid)
 {
 	int sqr;
 	int tz=-1;

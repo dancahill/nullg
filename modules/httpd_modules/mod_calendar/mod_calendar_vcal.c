@@ -26,26 +26,26 @@ void event_vcalexport(CONN *sid)
 	int eventid=0;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CALENDAR);
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CALENDAR);
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	eventid=atoi(ptemp);
 	if (dbread_event(sid, 1, eventid, &event)!=0) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CALENDAR);
 		prints(sid, "<BR><CENTER>No matching record found for %d</CENTER>\n", eventid);
 		return;
 	}
 	snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=\"%s.ics\"", event.eventname);
-	send_header(sid, 1, 200, "OK", "1", "application/octet-stream", -1, -1);
+	send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
 	flushbuffer(sid);
 	memset(mtime, 0, sizeof(mtime));
 	strftime(mtime, 30, "%Y%m%dT%H%M%SZ", gmtime(&event.obj_mtime));
@@ -78,9 +78,9 @@ void event_vcalexport(CONN *sid)
 	return;
 }
 
+/*
 void event_vcalimport(CONN *sid)
 {
-/*
 	char buffer[4096];
 	char line[256];
 	char linetemp[256];
@@ -281,6 +281,6 @@ void event_vcalimport(CONN *sid)
 		prints(sid, "</CENTER>\n");
 	}
 	prints(sid, "</BODY></HTML>\n");
-*/
 	return;
 }
+*/

@@ -220,7 +220,7 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 	return (strlen(dest));
 }
 
-int DecodeQP(CONN *sid, char *dest, unsigned int szdest, char *src)
+int DecodeQP(char *dest, unsigned int szdest, char *src)
 {
 	char *destidx;
 	short int crlf=1;
@@ -245,7 +245,7 @@ int DecodeQP(CONN *sid, char *dest, unsigned int szdest, char *src)
 	return (strlen(dest));
 }
 
-int DecodeText(CONN *sid, char *dest, unsigned int szdest, char *src)
+int DecodeText(char *dest, unsigned int szdest, char *src)
 {
 	char *destidx;
 
@@ -264,7 +264,7 @@ int DecodeText(CONN *sid, char *dest, unsigned int szdest, char *src)
 	return (strlen(dest));
 }
 
-static int decode_b64(CONN *sid, char *dest, int szdest, char *src)
+static int decode_b64(char *dest, int szdest, char *src)
 {
 	int destidx, state, ch;
 	char *pos;
@@ -321,7 +321,7 @@ int DecodeBase64file(CONN *sid, char *src)
 	char *dest=getbuffer(sid);
 	int destsize;
 
-	destsize=decode_b64(sid, dest, sizeof(sid->dat->smallbuf[0])-1, src);
+	destsize=decode_b64(dest, sizeof(sid->dat->smallbuf[0])-1, src);
 	flushbuffer(sid);
 	if (http_proc->RunAsCGI) {
 		fwrite(dest, sizeof(char), destsize, stdout);
@@ -336,7 +336,7 @@ char *DecodeBase64string(CONN *sid, char *src)
 {
 	char *dest=getbuffer(sid);
 
-	decode_b64(sid, dest, sizeof(sid->dat->smallbuf[0])-1, src);
+	decode_b64(dest, sizeof(sid->dat->smallbuf[0])-1, src);
 	return dest;
 }
 

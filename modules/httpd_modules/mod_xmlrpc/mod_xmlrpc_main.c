@@ -64,7 +64,7 @@ DllExport int mod_main(CONN *sid)
 
 	DEBUG_IN(sid, "xmlrpc_main()");
 	if (auth_setcookie(sid)!=0) {
-		send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
+		send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 		xmlrpc_fault(sid, -1, "Authentication failure");
 		return 0;
 	}
@@ -80,7 +80,7 @@ DllExport int mod_main(CONN *sid)
 		} else if (strncmp(sid->dat->in_RequestURI, "/xml-rpc/contacts/write", 23)==0) {
 			xmlrpc_contactwrite(sid);
 		} else {
-			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+			send_header(sid, 0, 200, "1", "text/html", -1, -1);
 			htpage_topmenu(sid, MENU_XMLRPC);
 			prints(sid, "<BR>\r\n");
 			prints(sid, "</BODY>\r\n</HTML>\r\n");
@@ -92,7 +92,7 @@ DllExport int mod_main(CONN *sid)
 		snprintf(methodname, sizeof(methodname)-1, "%s", ptemp);
 		if (strncmp(methodname, "contacts.read", 13)==0) {
 			if ((ptemp=getxmlparam(sid, 3, "int"))==NULL) {
-				send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+				send_header(sid, 0, 200, "1", "text/html", -1, -1);
 				xmlrpc_fault(sid, -1, "Missing contactid");
 				DEBUG_OUT(sid, "xmlrpc_main()");
 				return 0;
@@ -108,7 +108,7 @@ DllExport int mod_main(CONN *sid)
 		} else if (strncmp(methodname, "contacts.write", 14)==0) {
 			xmlrpc_contactwrite(sid);
 		} else {
-			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+			send_header(sid, 0, 200, "1", "text/html", -1, -1);
 			xmlrpc_fault(sid, -1, "Invalid methodName");
 		}
 	}
@@ -124,16 +124,16 @@ DllExport int mod_exit()
 DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions)
 {
 	MODULE_MENU newmod = {
-		"mod_xmlrpc",		// mod_name
-		0,			// mod_submenu
-		"",			// mod_menuname
-		"",			// mod_menuuri
-		"",			// mod_menuperm
-		"mod_main",		// fn_name
-		"/xml-rpc/",		// fn_uri
-		mod_init,		// fn_init
-		mod_main,		// fn_main
-		mod_exit		// fn_exit
+		"mod_xmlrpc",		/* mod_name	*/
+		0,			/* mod_submenu	*/
+		"",			/* mod_menuname	*/
+		"",			/* mod_menuuri	*/
+		"",			/* mod_menuperm	*/
+		"mod_main",		/* fn_name	*/
+		"/xml-rpc/",		/* fn_uri	*/
+		mod_init,		/* fn_init	*/
+		mod_main,		/* fn_main	*/
+		mod_exit		/* fn_exit	*/
 	};
 
 	proc=_proc;

@@ -4,19 +4,35 @@ include Rules.mak
 
 all: _all
 	@echo ""
-	@echo "Finished compiling NullLogic Groupware."
+	@echo "+-----------------------------------------------------------------------------+"
+	@echo "| License:                                                                    |"
+	@echo "| This software is subject to the GNU GPL, available in this distribution in  |"
+	@echo "| the file Documentation/COPYING.  By continuing this installation process,   |"
+	@echo "| you are bound by the terms of this license agreement.  If you do not agree  |"
+	@echo "| with the terms of this license, you must abort the installation process at  |"
+	@echo "| this point.                                                                 |"
+	@echo "+-----------------------------------------------------------------------------+"
+	@echo "| New installation:                                                           |"
+	@echo "| If this is a new install, you can run 'make sslcert' to generate a new      |"
+	@echo "| SSL certificate, before running 'make install'.                             |"
+	@echo "+-----------------------------------------------------------------------------+"
+	@echo "| Upgrade:                                                                    |"
+	@echo "| If this is an upgrade, please stop any running instances of the server      |"
+	@echo "| before running 'make install'.  After upgrading, you may need to run        |"
+	@echo "| nullgw-dbutil to dump and restore the database.                             |"
+	@echo "|                                                                             |"
+	@echo "| If you are upgrading from a version prior to 1.3.20, you _must_ backup      |"
+	@echo "| your db prior to installing this version, as 1.3.20+ cannot read older      |"
+	@echo "| SQLite database files.                                                      |"
+	@echo "+-----------------------------------------------------------------------------+"
 	@echo ""
-	@echo "If this is a new install, you can run 'make sslcert' to generate"
-	@echo "a new SSL certificate."
-	@echo ""
-	@echo "If this is an upgrade, please stop any running instances of the"
-	@echo "server before running 'make install'.  After upgrading, you may"
-	@echo "need to run nullgw-dbutil to dump and restore the database."
-	@echo ""
-	@echo "The next step is to run 'make install'."
+	@echo "Thank you for using NullLogic Groupware."
 	@echo ""
 
 _all: _sqlite _dbutil _server _server_modules _httpd_modules
+	@cp -p Documentation/COPYING distrib/COPYING
+	@cp -p Documentation/COPYRIGHT distrib/COPYRIGHT
+	@cp -p Documentation/README distrib/README
 	@cp -p scripts/setup distrib/setup
 	@cp -p scripts/nullgw-backup distrib/bin/nullgw-backup
 	@cp -p scripts/nullgw-config distrib/bin/nullgw-config

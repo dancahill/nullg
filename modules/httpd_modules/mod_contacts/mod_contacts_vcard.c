@@ -26,26 +26,26 @@ void contacts_vcardexport(CONN *sid)
 	int contactid=0;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	contactid=atoi(ptemp);
 	if (dbread_contact(sid, 1, contactid, &contact)!=0) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
 		prints(sid, "<BR><CENTER>No matching record found for %d</CENTER>\n", contactid);
 		return;
 	}
 	snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=\"%s%s%s.vcf\"", contact.givenname, strlen(contact.givenname)?" ":"", contact.surname);
-	send_header(sid, 1, 200, "OK", "1", "application/octet-stream", -1, -1);
+	send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
 	flushbuffer(sid);
 	memset(mtime, 0, sizeof(mtime));
 	strftime(mtime, 30, "%Y%m%dT%H%M%SZ", gmtime(&contact.obj_mtime));

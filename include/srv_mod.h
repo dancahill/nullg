@@ -48,7 +48,11 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <netdb.h>
+#ifdef HAVE_PTHREAD_MIT_PTHREAD_H
+#include <pthread/mit/pthread.h>
+#else
 #include <pthread.h>
+#endif
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

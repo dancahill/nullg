@@ -179,7 +179,7 @@ void productsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_products WHERE productid = %d AND obj_did = %d", product.productid, sid->dat->user_did)<0) return;
 		prints(sid, "<CENTER>Product %d deleted successfully</CENTER><BR>\n", product.productid);
-		db_log_activity(sid, 1, "products", product.productid, "delete", "%s - %s deleted product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
+		db_log_activity(sid, "products", product.productid, "delete", "%s - %s deleted product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else if (product.productid==0) {
 		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -201,7 +201,7 @@ void productsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, product.details));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Product %d added successfully</CENTER><BR>\n", product.productid);
-		db_log_activity(sid, 1, "products", product.productid, "insert", "%s - %s added product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
+		db_log_activity(sid, "products", product.productid, "insert", "%s - %s added product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else {
 		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -219,7 +219,7 @@ void productsave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE productid = %d AND obj_did = %d", product.productid, sid->dat->user_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Product %d modified successfully</CENTER><BR>\n", product.productid);
-		db_log_activity(sid, 1, "products", product.productid, "modify", "%s - %s modified product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
+		db_log_activity(sid, "products", product.productid, "modify", "%s - %s modified product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	}
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/orders/productlist\">\n", sid->dat->in_ScriptName);
 	return;

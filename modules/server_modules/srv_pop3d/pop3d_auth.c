@@ -17,7 +17,7 @@
 */
 #include "pop3d_main.h"
 
-static int auth_checkpass(CONN *sid, char *rpassword, char *cpassword)
+static int auth_checkpass(char *rpassword, char *cpassword)
 {
 	char cpass[64];
 	char salt[10];
@@ -57,7 +57,7 @@ int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox
 		sql_freeresult(sqr);
 		return -1;
 	}
-	if (auth_checkpass(sid, password, sql_getvaluebyname(sqr, 0, "password"))!=0) {
+	if (auth_checkpass(password, sql_getvaluebyname(sqr, 0, "password"))!=0) {
 		sql_freeresult(sqr);
 		return -1;
 	}

@@ -212,13 +212,11 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		contact=&contactrec;
 	} else {
 		contactid=contact->contactid;
-//		if (((ptemp=getgetenv(sid, "email"))==NULL)||(contactid<1)) is_recycled=1;
 		if ((ptemp=getgetenv(sid, "email"))==NULL) is_recycled=1;
 	}
 	memset(maddr, 0, sizeof(maddr));
 	memset(baddr, 0, sizeof(baddr));
 	if (strlen(contact->homeaddress)&&strlen(contact->homelocality)&&strlen(contact->homeregion)&&strlen(contact->homecountry)) {
-//		snprintf(maddr, sizeof(maddr)-1, "http://mapblast.com/myblast/map.mb?CMD=GEO&req_action=crmap&AD2_street=%s&AD2=%s&AD3=%s, %s&AD4=%s", contact->mailaddress, contact->mailaddress, contact->maillocality, contact->mailregion, contact->mailcountry);
 		snprintf(maddr, sizeof(maddr)-1, "http://www.mapquest.com/maps/map.adp?country=%s&address=%s&city=%s&state=%s", contact->homecountry, contact->homeaddress, contact->homelocality, contact->homeregion);
 	}
 	ptemp=maddr;
@@ -227,7 +225,6 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		ptemp++;
 	}
 	if (strlen(contact->workaddress)&&strlen(contact->worklocality)&&strlen(contact->workregion)&&strlen(contact->workcountry)) {
-//		snprintf(baddr, sizeof(baddr)-1, "http://mapblast.com/myblast/map.mb?CMD=GEO&req_action=crmap&AD2_street=%s&AD2=%s&AD3=%s, %s&AD4=%s", contact->billaddress, contact->billaddress, contact->billlocality, contact->billregion, contact->billcountry);
 		snprintf(baddr, sizeof(baddr)-1, "http://www.mapquest.com/maps/map.adp?country=%s&address=%s&city=%s&state=%s", contact->workcountry, contact->workaddress, contact->worklocality, contact->workregion);
 	}
 	ptemp=baddr;
@@ -245,7 +242,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		is_editable=1;
 	}
 	tz1=time_tzoffset(sid, time(NULL));
-	tz2=time_tzoffsetcon(sid, time(NULL), contact->contactid);
+	tz2=time_tzoffsetcon(time(NULL), contact->contactid);
 	if (contact->contactid<1) tz2=tz1;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
@@ -370,7 +367,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	if (module_exists(sid, "mod_xmlrpc")) {
+	if (module_exists("mod_xmlrpc")) {
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->username), greytoggle);
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, contact->password), greytoggle);
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Allow Login       &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", greytoggle);
@@ -413,7 +410,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<DIV ID=page7 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (contact->contactid>0) {
-		if (module_exists(sid, "mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
+		if (module_exists("mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
 			if ((sqr=sql_queryf("SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Calls</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
@@ -426,7 +423,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			prints(sid, "</TR>\n");
 			sql_freeresult(sqr);
 		}
-		if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
+		if (module_exists("mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
 			if ((sqr=sql_queryf("SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Events</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
@@ -439,7 +436,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			prints(sid, "</TR>\n");
 			sql_freeresult(sqr);
 		}
-		if (module_exists(sid, "mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
+		if (module_exists("mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
 			if ((sqr=sql_queryf("SELECT count(orderid) FROM gw_orders WHERE contactid = %d AND obj_did = %d", contact->contactid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Orders</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
@@ -453,7 +450,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			sql_freeresult(sqr);
 		}
 	}
-	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
+	if (module_exists("mod_mail")&&(auth_priv(sid, "webmail")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
 		if ((sqr=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->user_uid, contact->email, contact->email, contact->email))<0) return;
 		prints(sid, "<TR CLASS=\"EDITFORM\">");
 		prints(sid, "<TD NOWRAP WIDTH=100%%>%d E-Mails</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
@@ -489,7 +486,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
 	if (contact->contactid>0) {
-		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+		if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 			prints(sid, "<TR><TD NOWRAP>");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 			prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
@@ -789,7 +786,7 @@ void contactcallslist(CONN *sid)
 	time_t calldate;
 
 	prints(sid, "<BR>\r\n");
-	if (!module_exists(sid, "mod_calls")) {
+	if (!module_exists("mod_calls")) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -858,7 +855,7 @@ void contacteventlist(CONN *sid)
 	int sqr2;
 
 	prints(sid, "<BR>\r\n");
-	if (!module_exists(sid, "mod_calendar")) {
+	if (!module_exists("mod_calendar")) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -891,7 +888,7 @@ void contacteventlist(CONN *sid)
 			prints(sid, "&nbsp;<A HREF=%s/calendar/view?eventid=%d>%d</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
 			prints(sid, "<TD ALIGN=right NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", time_sql2datetext(sid, sql_getvalue(sqr, i, 2)));
-			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_eventstatus(sid, atoi(sql_getvalue(sqr, i, 3))));
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", htview_eventstatus(atoi(sql_getvalue(sqr, i, 3))));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", priority[atoi(sql_getvalue(sqr, i, 4))]);
 			prints(sid, "</TR>\n");
 		}
@@ -920,7 +917,7 @@ void contactorderlist(CONN *sid)
 	int sqr2;
 
 	prints(sid, "<BR>\r\n");
-	if (!module_exists(sid, "mod_orders")) {
+	if (!module_exists("mod_orders")) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -1031,7 +1028,7 @@ void contactsave(CONN *sid)
 		}
 		if (sql_updatef("DELETE FROM gw_contacts WHERE contactid = %d", contact.contactid)<0) return;
 		prints(sid, "<CENTER>Contact %d deleted successfully</CENTER><BR>\n", contactid);
-		db_log_activity(sid, 1, "contacts", contact.contactid, "delete", "%s - %s deleted contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		db_log_activity(sid, "contacts", contact.contactid, "delete", "%s - %s deleted contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/contacts/list\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -1067,7 +1064,7 @@ skipcheck1:
 			return;
 		}
 		prints(sid, "<CENTER>Contact %d added successfully</CENTER><BR>\n", contact.contactid);
-		db_log_activity(sid, 1, "contacts", contact.contactid, "insert", "%s - %s added contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		db_log_activity(sid, "contacts", contact.contactid, "insert", "%s - %s added contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 		if ((ptemp=getpostenv(sid, "CALLSET"))!=NULL) {
 			prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 			prints(sid, "	if (navigator.appVersion.indexOf(\"MSIE \")>-1) {\r\n");
@@ -1129,7 +1126,7 @@ skipcheck2:
 			return;
 		}
 		prints(sid, "<CENTER>Contact %d modified successfully</CENTER><BR>\n", contact.contactid);
-		db_log_activity(sid, 1, "contacts", contact.contactid, "modify", "%s - %s modified contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
+		db_log_activity(sid, "contacts", contact.contactid, "modify", "%s - %s modified contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 		prints(sid, "location.replace(\"%s/contacts/view?contactid=%d\");\n", sid->dat->in_ScriptName, contact.contactid);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
@@ -1145,11 +1142,11 @@ DllExport int mod_main(CONN *sid)
 		contacts_vcardexport(sid);
 		return 0;
 	} else if (strncmp(sid->dat->in_RequestURI, "/contacts/vcardimport", 21)==0) {
-		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		contacts_vcardimport(sid);
 		return 0;
 	}
-	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_CONTACTS);
 	if (strncmp(sid->dat->in_RequestURI, "/contacts/search1", 17)==0) {
 		contactsearch1(sid);

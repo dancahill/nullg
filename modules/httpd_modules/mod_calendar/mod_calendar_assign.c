@@ -18,7 +18,7 @@
 #include "http_mod.h"
 #include "mod_calendar.h"
 
-char *db_avail_getweek(CONN *sid, int userid, char *availability)
+static char *db_avail_getweek(int userid, char *availability)
 {
 	char availbuff[170];
 	char gavailability[673];
@@ -73,7 +73,7 @@ char *db_avail_getweek(CONN *sid, int userid, char *availability)
 	return availability;
 }
 
-char *db_avail_getfullweek(CONN *sid, int userid, int record, time_t eventstart, char *availability)
+char *db_avail_getfullweek(int userid, int record, time_t eventstart, char *availability)
 {
 	char timebuf1[40];
 	char timebuf2[40];
@@ -88,16 +88,16 @@ char *db_avail_getfullweek(CONN *sid, int userid, int record, time_t eventstart,
 	strftime(timebuf1, sizeof(timebuf1), "%w %H %M", gmtime(&eventstart));
 	sscanf(timebuf1, "%d %d %d", &t1.tm_wday, &t1.tm_hour, &t1.tm_min);
 	eventstart=((int)(eventstart/86400)*86400)-(t1.tm_wday*86400);
-	eventstart-=time_tzoffset2(sid, eventstart, userid);
+	eventstart-=time_tzoffset2(eventstart, userid);
 	eventfinish=eventstart+604800;
 	strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
 	strftime(timebuf2, sizeof(timebuf2)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventfinish));
 	if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish FROM gw_events where eventid <> %d and busy <> 0 and ((eventstart >= '%s' and eventstart < '%s') or (eventfinish > '%s' and eventfinish < '%s') or (eventstart < '%s' and eventfinish >= '%s')) and assignedto = %d", record, timebuf1, timebuf2, timebuf1, timebuf2, timebuf1, timebuf2, userid))<0) return NULL;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		eventstart=time_sql2unix(sql_getvalue(sqr, i, 1));
-		eventstart+=time_tzoffset2(sid, eventstart, userid);
+		eventstart+=time_tzoffset2(eventstart, userid);
 		eventfinish=time_sql2unix(sql_getvalue(sqr, i, 2));
-		eventfinish+=time_tzoffset2(sid, eventfinish, userid);
+		eventfinish+=time_tzoffset2(eventfinish, userid);
 		strftime(timebuf1, sizeof(timebuf1), "%w %H %M", gmtime(&eventstart));
 		sscanf(timebuf1, "%d %d %d", &t1.tm_wday, &t1.tm_hour, &t1.tm_min);
 		strftime(timebuf2, sizeof(timebuf2), "%w %H %M", gmtime(&eventfinish));
@@ -116,7 +116,7 @@ char *db_avail_getfullweek(CONN *sid, int userid, int record, time_t eventstart,
 	return availability;
 }
 
-int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_availcheck(int userid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	char availability[673];
 	char timebuf1[40];
@@ -131,9 +131,9 @@ int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart
 
 	if (!busy) return 0;
 	memset(availability, 0, sizeof(availability));
-	ts=eventstart+time_tzoffset2(sid, eventstart, userid);
-	tf=eventfinish+time_tzoffset2(sid, eventfinish, userid);
-	if ((ptemp=db_avail_getweek(sid, userid, availability))==NULL) return -1;
+	ts=eventstart+time_tzoffset2(eventstart, userid);
+	tf=eventfinish+time_tzoffset2(eventfinish, userid);
+	if ((ptemp=db_avail_getweek(userid, availability))==NULL) return -1;
 	strftime(timebuf1, sizeof(timebuf1), "%w %H %M", gmtime(&ts));
 	sscanf(timebuf1, "%d %d %d", &t1.tm_wday, &t1.tm_hour, &t1.tm_min);
 	strftime(timebuf2, sizeof(timebuf2), "%w %H %M", gmtime(&tf));
@@ -145,7 +145,7 @@ int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart
 	for (i=j;i<k;i++) {
 		if (availability[i]!='1') return -1;
 	}
-	if ((ptemp=db_avail_getfullweek(sid, userid, record, eventstart, availability))==NULL) return -2;
+	if ((ptemp=db_avail_getfullweek(userid, record, eventstart, availability))==NULL) return -2;
 	for (i=j;i<k;i++) {
 		if (availability[i]=='1') continue;
 		strftime(timebuf1, sizeof(timebuf1)-1, "%Y-%m-%d %H:%M:%S", gmtime(&eventstart));
@@ -160,7 +160,7 @@ int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart
 	return 0;
 }
 
-int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_autoschedule(int userid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	char availability[673];
 	char availweekbuf[673];
@@ -177,14 +177,14 @@ int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventsta
 	if (!busy) return eventstart;
 	memset(timeblock, 0, sizeof(timeblock));
 	memset(availability, 0, sizeof(availability));
-	if ((ptemp=db_avail_getweek(sid, userid, availability))==NULL) return -1;
+	if ((ptemp=db_avail_getweek(userid, availability))==NULL) return -1;
 	memcpy(availweekbuf, availability, sizeof(availweekbuf));
 	i=(int)((eventfinish-eventstart)/900);
 	if (i<0) i=0;
 	if (i>96) return -1;
 	for (j=0;j<i;j++) timeblock[j]='1';
 	if ((ptemp=strstr(availability, timeblock))==NULL) return -1;
-	ts=eventstart+time_tzoffset2(sid, eventstart, userid);
+	ts=eventstart+time_tzoffset2(eventstart, userid);
 	strftime(timebuf1, sizeof(timebuf1), "%w %H %M", gmtime(&ts));
 	sscanf(timebuf1, "%d %d %d", &t1.tm_wday, &t1.tm_hour, &t1.tm_min);
 	newtime=((int)(ts/86400)*86400)-(t1.tm_wday*86400);
@@ -193,11 +193,11 @@ int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventsta
 		if (lasttz!=time_tzoffset(sid, newtime+10800)) {
 			lasttz=time_tzoffset(sid, newtime+10800);
 //			memset(availability, 0, sizeof(availability));
-//			if ((ptemp=db_avail_getweek(sid, userid, availability))==NULL) return -1;
+//			if ((ptemp=db_avail_getweek(userid, availability))==NULL) return -1;
 		}
 */
 		memcpy(availweekbuf, availability, sizeof(availweekbuf));
-		if ((ptemp=db_avail_getfullweek(sid, userid, record, newtime, availweekbuf))==NULL) return -1;
+		if ((ptemp=db_avail_getfullweek(userid, record, newtime, availweekbuf))==NULL) return -1;
 		if (week==0) {
 			if ((ptemp=strstr(availweekbuf+((ts/900)-(newtime/900)), timeblock))==NULL) {
 				newtime+=604800;
@@ -211,14 +211,14 @@ int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventsta
 				continue;
 			}
 		}
-		newtime-=time_tzoffset2(sid, newtime, userid);
+		newtime-=time_tzoffset2(newtime, userid);
 		newtime+=(strlen(availweekbuf)-strlen(ptemp))*900;
 		return newtime;
 	} while (1);
 	return newtime;
 }
 
-int db_autoassign(CONN *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_autoassign(u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	int i;
 	int j;
@@ -234,7 +234,7 @@ int db_autoassign(CONN *sid, u_avail *uavail, int groupid, int zoneid, int recor
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
-		if ((rc=db_autoschedule(sid, j, record, busy, eventstart, eventfinish))<0) continue;
+		if ((rc=db_autoschedule(j, record, busy, eventstart, eventfinish))<0) continue;
 		if ((rc<uavail->time)||(uavail->time==0)) {
 			uavail->userid=j;
 			uavail->time=rc;
