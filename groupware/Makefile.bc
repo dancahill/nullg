@@ -1,0 +1,43 @@
+# Makefile for NullLogic Groupware
+CC=bcc32
+CFLAGS = -O2 -DWIN32 -DBCC -s -I./include $(MYSQLINC)
+#LDFLAGS = $(MYSQLLIB)
+OBJECTS = \
+	core/sql.obj core/main.obj core/config.obj core/cgi.obj core/db-abstract.obj \
+	core/fileio.obj core/format.obj core/html.obj core/http.obj core/md5.obj \
+	core/sanity.obj core/security.obj core/server.obj \
+	mods/admin.obj mods/calendar.obj mods/companies.obj mods/contacts.obj mods/files.obj \
+	mods/forums.obj mods/links.obj mods/messages.obj mods/orders.obj mods/products.obj \
+	mods/profile.obj mods/searches.obj mods/tasks.obj mods/wmmain.obj mods/wmserver.obj
+
+groupware.exe: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) obj/*.obj -ogroupware.exe
+#	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -ogroupware.exe
+	@echo
+	@echo "Copy webmail.cgi to your web server's cgi-bin directory,"
+	@echo "ie. 'cp -a webmail.cgi /var/www/cgi-bin'."
+	@echo "Copy webmail/ to your web server's htdocs directory,"
+	@echo "ie. 'cp -a webmail /var/www/htdocs'."
+	@echo
+
+clean:
+	del *.obj
+	del *.tds
+	del groupware.exe
+
+all:
+	make groupware.exe
+
+.c.obj:
+	$(CC) $(CFLAGS) -nobj /c $<
+
+[obj].obj.exe:
+	$(CC) $(CFLAGS) $&.obj
+
+install:
+	@echo
+	@echo "There is no install.  Copy webmail.cgi to your web server's cgi-bin directory,"
+	@echo "ie. 'cp -a webmail.cgi /var/www/cgi-bin'."
+	@echo "Copy webmail/ to your web server's htdocs directory,"
+	@echo "ie. 'cp -a webmail /var/www/htdocs'."
+	@echo

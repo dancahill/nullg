@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for hackfile in * ; do
+	fromdos < $hackfile > ${hackfile}.dos
+	mv ${hackfile}.dos ${hackfile}
+done

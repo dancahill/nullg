@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic Groupware Documentation - The Error Log Viewer</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-01.html>The Access Log Viewer</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-03.html>The Configuration Editor</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>NullLogic Groupware</FONT></B><BR>
+Chapter 2. Administration<BR><BR>
+</CENTER>
+<HR>
+<H2>The Error Log Viewer</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The error log viewer can be used to view the contents of the <I>error.log</I>
+file which contains a record of errors caused by the SQL server or the NullLogic
+Groupware Server.  Some examples and explanations are given below.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+In this example, the client web browser requested a URL which does not translate
+into an internal command, and it does not represent a file which can be downloaded
+by the client.
+</P>
+<PRE>
+	Apr 01 12:05:57 - 127.0.0.1 - Incorrect function call '/groupware/images/logo.gif' by administrator
+</PRE>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This, and similar errors usually indicate a problem with the SQL server itself.
+In this case, the MySQL server which NullLogic Groupware is trying to connect to
+is not running.  The same error could also be caused if the SQL connection information
+in the configuration is wrong.  Other similar errors may be caused by
+incorrect SQL query syntax.
+</P>
+<PRE>
+	Apr 01 12:07:46 - MYSQL error: Can't connect to MySQL server on 'localhost' (10061)
+</PRE>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This particular error may be quite common during initial installation if ODBC
+is chosen as the SQL type, and you have not installed the necessary updates on
+your system.  For more information, read <A HREF=ch01-04.html>Troubleshooting</A>.
+</P>
+<PRE>
+	Apr 01 12:09:16 - ODBC Error: [IM002][Microsoft][ODBC Driver Manager] Data source name not found and no default driver specified (0)
+</PRE>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-01.html>The Access Log Viewer</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-03.html>The Configuration Editor</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>

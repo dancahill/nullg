@@ -1,9 +1,0 @@
-<DIV CLASS=JUSTIFY>
-     Welcome to Sentinel Groupware.  If you are a new user,
-please take the time to read the online help.  It is also
-recommended that you edit your profile and configure your e-mail
-account information if you haven't already done so.
-<BR><BR>
-ADMINISTRATORS: This message can, and should be customized to
-meet the needs of your users.
-</DIV>

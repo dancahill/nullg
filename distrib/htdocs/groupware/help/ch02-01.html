@@ -1,0 +1,47 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic Groupware Documentation - The Access Log Viewer</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-00.html>Chapter 2 Index</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-02.html>The Error Log Viewer</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>NullLogic Groupware</FONT></B><BR>
+Chapter 2. Administration<BR><BR>
+</CENTER>
+<HR><H2>The Access Log Viewer</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The access log viewer can be used to view the contents of the <I>access.log</I>
+file which contains a record of transactions processed by the server.
+Normally logged activity includes startup and shutdown of the server, logins
+and logouts, and notifications of record modifications.  The detail used when
+logging events can be modified in the configuration editor by changing the
+'Server Log Level' to the desired level.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Available logging levels include:
+<DL>
+<DD>Level 0 - Minimal - Only server startups, shutdowns, logins and logouts are logged.</DD>
+<DD>Level 1 - Light - Logs level 0 events, and notifications when a record is modified.</DD>
+<DD>Level 2 - Moderate - Logs level 1 and lower events, each requested resource, and all SQL UPDATE commands.</DD>
+<DD>Level 3 - Heavy - Logs level 2 and lower events, and all SQL SELECT commands.</DD>
+<DD>Level 4 - Debug - Logs everything that can be logged.</DD>
+</DL>
+</P>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-00.html>Chapter 2 Index</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch02-02.html>The Error Log Viewer</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>

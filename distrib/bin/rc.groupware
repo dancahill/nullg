@@ -1,0 +1,45 @@
+#!/bin/sh
+# Init script to start/stop/restart the Null Groupware server.
+RUN_AS_USER="groupware"
+
+groupware_start() {
+	if test `ps axw | grep -c groupware` -gt 3
+	then
+		echo "NullLogic Groupware appears to be running already."
+	else
+		su - ${RUN_AS_USER} -c "cd /usr/local/groupware/bin;/usr/local/groupware/bin/groupware"
+	fi
+}
+
+groupware_stop() {
+	if test `ps axw | grep -c groupware` -gt 3
+	then
+		echo "Stopping NullLogic Groupware..."
+		killall -15 -q groupware
+		sleep 2
+		killall -9 -q groupware
+	else
+		echo "NullLogic Groupware does not appear to be running."
+	fi
+}
+
+groupware_restart() {
+	groupware_stop
+	sleep 1
+	groupware_start
+}
+
+case "$1" in
+'start')
+	groupware_start
+	;;
+'stop')
+	groupware_stop
+	;;
+'restart')
+	groupware_restart
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}"
+esac
+exit 0

@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic Groupware Documentation - Listing and Viewing Orders</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch12-00.html>Chapter 11 Index</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch12-02.html>Adding and Editing Orders</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>NullLogic Groupware</FONT></B><BR>
+Chapter 12. Orders<BR><BR>
+</CENTER>
+<HR><H2>Listing Orders</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+When you first enter the orders section, you will be presented with a form for
+searching for orders.  On the left side of the form is an option box which
+will allow you either search for a match in all fields, or just a selected
+field.  The textbox allows you to specify a string of text to search for.
+This can be the order id, a name, or anything else you wish to search for.
+Wildcards such as * and ? can be used in searches.  The button on the right is
+used to submit the search.  Searches are case insensitive.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+If a search returns more than 50 results, then the output will be broken up
+into pages, each page having 50 or less results.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+If you are unfamiliar with wildcards, a quick summary is as follows.  The '*'
+character can be substituted in a search string for any number of characters.
+The '?' character can be substituted for only one.  For example, a search for
+"*" (the default) will return all records.  A search for "*1*" would return
+all records that have a 1 anywhere in them.  Searching for "1?" would return
+only records which have a matching field two characters long, with the first
+one being a 1.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+After submitting a search, a list of all matches will be returned.  This list
+will show the order id, customer name, order date, amount due and amount
+received.  Clicking on the order id number will bring up a view of that order.
+Clicking on the customer name will bring up a view of the contact.
+</P>
+<HR><H2>Viewing Orders</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Order views can be accessed by several means, two of which are from contact
+order list, and of course, the order search/list.  Both the viewer and the
+editor display the same information, however the editor can be used to add and
+edit orders.
+</P>
+<H3>Order Date</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Date' field is the date on which the order was originally created.
+</P>
+<H3>Customer</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Customer' field is the name of the customer associated with this order.
+When working with the order system, the words 'customer' and 'contact' may be
+used interchangeably.  All customers should have an entry in the contact
+section.
+</P>
+<H3>Employee</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Employee' field is used to record the username of the person who originally
+created this order.
+</P>
+<H3>Order Type</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Type' field is used to indicate the nature of this order.
+Possible entries include 'Sale', 'AR Payment' (Accounts Receivable) and
+'Quote'.
+</P>
+<H3>Payment Method</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Method' field is used to indicate the means of payment used for
+this order.  Possible entries include 'Cash', 'Cheque', 'Credit Card', 'Debit
+Card' and 'Money Order'.
+</P>
+<H3>Payment Due</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Due' field is the sum amount due for all items in this order,
+including applicable taxes.
+</P>
+<H3>Payment Received</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Received' field is the total payment made on this order.
+</P>
+<H3>Details</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Details' field is used to record any additional details for anything
+which may not be clear in the invoice and/or any reasons for changing the
+order information at a later date.
+</P>
+<H3>Order Items</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Items' list displays all items or products which have been added
+to this order.  Each item entry shows the product name, the quantity, any
+discount, the base price of the product, PST, and GST.  Order items can be
+added or edited by clicking on 'Add Item' or 'edit' respectively.  Items can
+be deleting by clicking on 'edit' and then 'Delete'.
+</P>
+<HR><H3>Notes on Taxes</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The default taxes, PST (Provincial Sales Tax) and GST (Goods and Services Tax)
+may have the wrong percentages for your region, or may be entirely the wrong
+taxes for your country.  The names and default percentages of both taxes can
+be changed by modifying the corresponding entries in the 'gw_dbinfo' table.
+</P>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch12-00.html>Chapter 11 Index</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch12-02.html>Adding and Editing Orders</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>

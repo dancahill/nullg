@@ -1,0 +1,47 @@
+# Makefile for NullLogic Groupware
+MYSQLDEF = -DHAVE_MYSQL
+MYSQLINC = -I/usr/include/mysql
+MYSQLLIB = -L/usr/lib -lmysqlclient -lpthread
+PGSQLDEF = -DHAVE_PGSQL
+PGSQLINC = -I/usr/local/pgsql/include
+PGSQLLIB = -L/usr/local/pgsql/lib -lpq -lpthread
+CC = gcc
+OBJECTS = \
+        core/sql.o     core/main.o     core/config.o    core/cgi.o      core/db-abstract.o \
+        core/fileio.o  core/format.o   core/html.o      core/http.o     core/md5.o \
+        core/sanity.o  core/security.o core/server.o \
+        mods/admin.o   mods/calendar.o mods/companies.o mods/contacts.o mods/files.o \
+        mods/forums.o  mods/links.o    mods/messages.o  mods/orders.o   mods/products.o \
+        mods/profile.o mods/searches.o mods/tasks.o     mods/wmmain.o   mods/wmserver.o
+
+ifeq ($(MAKECMDGOALS), mysql)
+	CFLAGS  = -Wall -O2 -s $(MYSQLDEF) -I./include $(MYSQLINC)
+	LDFLAGS = $(MYSQLLIB)
+endif
+ifeq ($(MAKECMDGOALS), pgsql)
+	CFLAGS  = -Wall -O2 -s $(PGSQLDEF) -I./include $(PGSQLINC)
+	LDFLAGS = $(PGSQLLIB)
+endif
+
+all:
+	@echo
+	@echo "make both|mysql|pgsql"
+	@echo
+
+both:
+	rm -f *.o
+	make mysql
+	rm -f *.o
+	make pgsql
+	rm -f *.o
+
+mysql: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o groupware-mysql
+	@echo Make groupware-mysql is complete.
+
+pgsql: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o groupware-pgsql
+	@echo Make groupware-pgsql is complete.
+
+clean:
+	rm -f groupware-mysql groupware-pgsql core/*.o mods/*.o *.o *~

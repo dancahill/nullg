@@ -1,0 +1,228 @@
+/*
+    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+#include "main.h"
+
+void flushheader(CONNECTION *sid)
+{
+	char line[256];
+
+	if (sid->dat->out_headdone) return;
+	if (!sid->dat->out_status) {
+		sid->dat->out_headdone=1;
+		return;
+	}
+	if ((sid->dat->out_bodydone)&&(!sid->dat->out_flushed)) {
+		sid->dat->out_ContentLength=strlen(sid->dat->out_ReplyData);
+	}
+	if ((sid->dat->out_status<200)||(sid->dat->out_status>=300)) {
+		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
+	} else if ((strcasecmp(sid->dat->in_Connection, "Keep-Alive")==0)&&(sid->dat->out_bodydone)) {
+		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Keep-Alive");
+	} else if ((strlen(sid->dat->in_Connection)==0)&&(sid->dat->out_bodydone)&&(strcasecmp(sid->dat->in_Protocol, "HTTP/1.1")==0)) {
+		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Keep-Alive");
+	} else {
+		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
+	}
+	if (RunAsCGI) {
+		if (strlen(sid->dat->out_CacheControl)) {
+			snprintf(line, sizeof(line)-1, "Cache-Control: %s\r\n", sid->dat->out_CacheControl);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_ContentDisposition)) {
+			snprintf(line, sizeof(line)-1, "Content-Disposition: %s\r\n", sid->dat->out_ContentDisposition);
+			printf("%s", line);
+		}
+		if (sid->dat->out_ContentLength>-1) {
+			snprintf(line, sizeof(line)-1, "Content-Length: %d\r\n", sid->dat->out_ContentLength);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_Date)) {
+			snprintf(line, sizeof(line)-1, "Date: %s\r\n", sid->dat->out_Date);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_Expires)) {
+			snprintf(line, sizeof(line)-1, "Expires: %s\r\n", sid->dat->out_Expires);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_LastModified)) {
+			snprintf(line, sizeof(line)-1, "Last-Modified: %s\r\n", sid->dat->out_LastModified);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_Location)) {
+			snprintf(line, sizeof(line)-1, "Location: %s\r\n", sid->dat->out_Location);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_Pragma)) {
+			snprintf(line, sizeof(line)-1, "Pragma: %s\r\n", sid->dat->out_Pragma);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_SetCookieUser)) {
+			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_SetCookiePass)) {
+			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookiePass);
+			printf("%s", line);
+		}
+		if (sid->dat->out_status) {
+			snprintf(line, sizeof(line)-1, "Status: %d\r\n", sid->dat->out_status);
+			printf("%s", line);
+		}
+		if (strlen(sid->dat->out_ContentType)) {
+			snprintf(line, sizeof(line)-1, "Content-Type: %s\r\n\r\n", sid->dat->out_ContentType);
+			printf("%s", line);
+		} else {
+			snprintf(line, sizeof(line)-1, "Content-Type: text/plain\r\n\r\n");
+			printf("%s", line);
+		}
+	} else {
+		if (strcasestr(sid->dat->in_Protocol, "HTTP/1.1")!=NULL) {
+			snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.1");
+		} else {
+			snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
+		}
+		snprintf(line, sizeof(line)-1, "%s %d OK\r\n", sid->dat->out_Protocol, sid->dat->out_status);
+		send(sid->socket, line, strlen(line), 0);
+		if (strlen(sid->dat->out_CacheControl)) {
+			snprintf(line, sizeof(line)-1, "Cache-Control: %s\r\n", sid->dat->out_CacheControl);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_Connection)) {
+			snprintf(line, sizeof(line)-1, "Connection: %s\r\n", sid->dat->out_Connection);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (sid->dat->out_bodydone) {
+			snprintf(line, sizeof(line)-1, "Content-Length: %d\r\n", sid->dat->out_ContentLength);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_ContentDisposition)) {
+			snprintf(line, sizeof(line)-1, "Content-Disposition: %s\r\n", sid->dat->out_ContentDisposition);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_Date)) {
+			snprintf(line, sizeof(line)-1, "Date: %s\r\n", sid->dat->out_Date);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_Expires)) {
+			snprintf(line, sizeof(line)-1, "Expires: %s\r\n", sid->dat->out_Expires);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_LastModified)) {
+			snprintf(line, sizeof(line)-1, "Last-Modified: %s\r\n", sid->dat->out_LastModified);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_Location)) {
+			snprintf(line, sizeof(line)-1, "Location: %s\r\n", sid->dat->out_Location);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_Pragma)) {
+			snprintf(line, sizeof(line)-1, "Pragma: %s\r\n", sid->dat->out_Pragma);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		snprintf(line, sizeof(line)-1, "Server: %s\r\n", SERVER_NAME);
+		send(sid->socket, line, strlen(line), 0);
+		if (strlen(sid->dat->out_SetCookieUser)) {
+			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_SetCookiePass)) {
+			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookiePass);
+			send(sid->socket, line, strlen(line), 0);
+		}
+		if (strlen(sid->dat->out_ContentType)) {
+			snprintf(line, sizeof(line)-1, "Content-Type: %s\r\n\r\n", sid->dat->out_ContentType);
+			send(sid->socket, line, strlen(line), 0);
+		} else {
+			snprintf(line, sizeof(line)-1, "Content-Type: text/plain\r\n\r\n");
+			send(sid->socket, line, strlen(line), 0);
+		}
+	}
+	sid->dat->out_headdone=1;
+	return;
+}
+
+void flushbuffer(CONNECTION *sid)
+{
+	char *pTemp=sid->dat->out_ReplyData;
+	unsigned int dcount;
+
+	flushheader(sid);
+	if (strlen(pTemp)==0) return;
+	sid->dat->out_flushed=1;
+	while (strlen(pTemp)) {
+		dcount=512;
+		if (strlen(pTemp)<dcount) dcount=strlen(pTemp);
+		if (RunAsCGI) {
+			fwrite(pTemp, sizeof(char), dcount, stdout);
+		} else {
+			send(sid->socket, pTemp, dcount, 0);
+		}
+		pTemp+=dcount;
+	}
+	memset(sid->dat->out_ReplyData, 0, sizeof(sid->dat->out_ReplyData));
+	return;
+}
+
+int prints(CONNECTION *sid, const char *format, ...)
+{
+	unsigned char buffer[2048];
+	va_list ap;
+
+	if (sid==NULL) return -1;
+	sid->atime=time(NULL);
+	memset(buffer, 0, sizeof(buffer));
+	va_start(ap, format);
+	vsnprintf(buffer, sizeof(buffer)-1, format, ap);
+	va_end(ap);
+	if (strlen(sid->dat->out_ReplyData)+sizeof(buffer)>MAX_REPLYSIZE-2) {
+		flushbuffer(sid);
+	}
+	strcat(sid->dat->out_ReplyData, buffer);
+	if (strlen(sid->dat->out_ReplyData)+sizeof(buffer)>MAX_REPLYSIZE-2) {
+		flushbuffer(sid);
+	}
+	return 0;
+}
+
+int sgets(char *buffer, int max, int fd)
+{
+	CONNECTION *sid=&conn[getsid()];
+	int n=0;
+	int rc;
+
+//	if (sid==-1) return -1;
+	sid->atime=time(NULL);
+	if (RunAsCGI) {
+		fgets(buffer, sizeof(buffer)-1, stdin);
+		return strlen(buffer);
+	}
+	while (n<max) {
+		if ((rc=recv(sid->socket, buffer, 1, 0))<1) {
+			closeconnect(sid, 2);
+			return -1;
+		}
+		n++;
+		if (*buffer=='\n') {
+			buffer++;
+			break;
+		}
+		buffer++;
+	}
+	*buffer=0;
+	return n;
+}
