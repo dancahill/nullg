@@ -18,50 +18,6 @@
 #include "http_mod.h"
 #include "mod_mail.h"
 
-int wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, int dstfolderid)
-{
-	struct stat sb;
-	char srcfilename[512];
-	char dstfilename[512];
-
-	wmfolder_testcreate(sid, accountid, dstfolderid);
-	memset(srcfilename, 0, sizeof(srcfilename));
-	memset(dstfilename, 0, sizeof(dstfilename));
-	snprintf(srcfilename, sizeof(srcfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, srcfolderid, messageid);
-	snprintf(dstfilename, sizeof(dstfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, dstfolderid, messageid);
-	fixslashes(srcfilename);
-	fixslashes(dstfilename);
-	if (stat(srcfilename, &sb)==0) {
-		if (rename(srcfilename, dstfilename)==0) {
-			return 0;
-		}
-	}
-	return -1;
-}
-
-int wmfolder_makedefaults(CONN *sid, int accountid)
-{
-	char curdate[40];
-
-	memset(curdate, 0, sizeof(curdate));
-	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
-	if (wmfolder_testcreate(sid, accountid, 1)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 2)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 3)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 4)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 5)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 6)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 7)<0) return -1;
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
-	return 0;
-}
-
 int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 {
 	char dirname[512];
@@ -118,6 +74,50 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 			return -1;
 		}
 	}
+	return 0;
+}
+
+int wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, int dstfolderid)
+{
+	struct stat sb;
+	char srcfilename[512];
+	char dstfilename[512];
+
+	wmfolder_testcreate(sid, accountid, dstfolderid);
+	memset(srcfilename, 0, sizeof(srcfilename));
+	memset(dstfilename, 0, sizeof(dstfilename));
+	snprintf(srcfilename, sizeof(srcfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, srcfolderid, messageid);
+	snprintf(dstfilename, sizeof(dstfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, dstfolderid, messageid);
+	fixslashes(srcfilename);
+	fixslashes(dstfilename);
+	if (stat(srcfilename, &sb)==0) {
+		if (rename(srcfilename, dstfilename)==0) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int wmfolder_makedefaults(CONN *sid, int accountid)
+{
+	char curdate[40];
+
+	memset(curdate, 0, sizeof(curdate));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	if (wmfolder_testcreate(sid, accountid, 1)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 2)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 3)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 4)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 5)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 6)<0) return -1;
+	if (wmfolder_testcreate(sid, accountid, 7)<0) return -1;
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('1', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER1 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('2', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER2 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('3', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER3 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('4', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER4 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('5', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER5 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('6', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER6 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
+	sql_updatef("INSERT INTO gw_mailfolders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) values ('7', '%s', '%s', '%d', '0', '%d', '0', '0', '%d', '0', '" MOD_MAIL_FOLDER7 "');", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, accountid);
 	return 0;
 }
 

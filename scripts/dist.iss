@@ -2,15 +2,15 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.3.20
+AppVerName=NullLogic Groupware 1.3.21
 AppPublisher=NullLogic
 AppPublisherURL=http://nullgroupware.sourceforge.net/
 AppSupportURL=http://nullgroupware.sourceforge.net/
 AppUpdatesURL=http://nullgroupware.sourceforge.net/
 DefaultDirName={pf}\NullLogic Groupware
 DefaultGroupName=NullLogic Groupware
-LicenseFile=..\distrib\COPYRIGHT.txt
-InfoAfterFile=..\distrib\README.txt
+LicenseFile=..\Documentation\COPYRIGHT
+InfoAfterFile=..\Documentation\README
 ; uncomment the following line if you want your installation to run on NT 3.51 too.
 ; MinVersion=4,3.51
 [Files]

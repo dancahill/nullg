@@ -71,6 +71,8 @@ int sanity_checkdb()
 //	int x, y;
 
 	if (strcmp(proc.config.sql_type, "SQLITE")==0) {
+		if (sanity_dircheck("%s", proc.config.dir_var)!=0) exit(-2);
+		if (sanity_dircheck("%s", proc.config.dir_var_db)!=0) exit(-2);
 		snprintf(file, sizeof(file)-1, "%s/%s.db", proc.config.dir_var_db, SERVER_BASENAME);
 		fixslashes(file);
 		if ((stat(file, &sb)!=0)||(sb.st_size==0)) {

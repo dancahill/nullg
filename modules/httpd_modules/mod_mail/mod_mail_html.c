@@ -66,10 +66,14 @@ void htselect_mailaccount(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d order by mailaccountid ASC", sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d AND obj_did = %d ORDER BY mailaccountid ASC", sid->dat->user_uid, sid->dat->user_did))<0) return;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+	}
+	if ((sql_numtuples(sqr)>0)&&(sid->dat->user_mailcurrent==0)) {
+		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
+		sql_updatef("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, sid->dat->user_did);
 	}
 	sql_freeresult(sqr);
 	return;
@@ -80,7 +84,11 @@ void htselect_mailjump(CONN *sid, int selected)
 	int i;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d order by accountname ASC", sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE obj_uid = %d AND obj_did = %d ORDER BY accountname ASC", sid->dat->user_uid, sid->dat->user_did))<0) return;
+	if ((sql_numtuples(sqr)>0)&&(sid->dat->user_mailcurrent==0)) {
+		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
+		sql_updatef("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid, sid->dat->user_did);
+	}
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
 	prints(sid, "<!--\r\n");
 	prints(sid, "function go() {\r\n");

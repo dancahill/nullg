@@ -240,6 +240,7 @@ void *pop3d_accept_loop(void *x)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	int loaded=0;
 	int i;
 
 	ListenSocketSTD=0;
@@ -252,17 +253,20 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	conf_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s pop3d %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if (mod_config.pop3_port) {
-		if ((ListenSocketSTD=tcp_bind(mod_config.pop3_interface, mod_config.pop3_port))<0) return -1;
+		if ((ListenSocketSTD=tcp_bind(mod_config.pop3_interface, mod_config.pop3_port))!=-1) loaded=1;
 	}
 	if ((proc->ssl_is_loaded)&&(mod_config.pop3_sslport)) {
-		if ((ListenSocketSSL=tcp_bind(mod_config.pop3_interface, mod_config.pop3_sslport))<0) return -1;
+		if ((ListenSocketSSL=tcp_bind(mod_config.pop3_interface, mod_config.pop3_sslport))!=-1) loaded=1;
 	}
-	if ((conn=calloc(mod_config.pop3_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.pop3_maxconn, sizeof(CONN));
-		return -1;
+	if (loaded) {
+		if ((conn=calloc(mod_config.pop3_maxconn, sizeof(CONN)))==NULL) {
+			printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.pop3_maxconn, sizeof(CONN));
+			return -1;
+		}
+		for (i=0;i<mod_config.pop3_maxconn;i++) conn[i].socket.socket=-1;
+		return 0;
 	}
-	for (i=0;i<mod_config.pop3_maxconn;i++) conn[i].socket.socket=-1;
-	return 0;
+	return -1;
 }
 
 DllExport int mod_exec()
@@ -273,13 +277,13 @@ DllExport int mod_exec()
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
-	if (mod_config.pop3_port) {
+	if ((mod_config.pop3_port)&&(ListenSocketSTD!=-1)) {
 		if (pthread_create(&ListenThreadSTD, &thr_attr, pop3d_accept_loop, (void *)CONN_STD)==-1) {
 			log_error("pop3d", __FILE__, __LINE__, 0, "pop3d_accept_loop() failed...");
 			return -2;
 		}
 	}
-	if ((proc->ssl_is_loaded)&&(mod_config.pop3_sslport)) {
+	if ((mod_config.pop3_sslport)&&(ListenSocketSSL!=-1)&&(proc->ssl_is_loaded)) {
 		if (pthread_create(&ListenThreadSSL, &thr_attr, pop3d_accept_loop, (void *)CONN_SSL)==-1) {
 			log_error("pop3d", __FILE__, __LINE__, 0, "pop3d_accept_loop_ssl() failed...");
 			return -2;

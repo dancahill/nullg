@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_bookmarks.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_bookmarks_db.obj"
+	-@erase "$(INTDIR)\mod_bookmarks_export.obj"
 	-@erase "$(INTDIR)\mod_bookmarks_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_bookmarks.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_bookmarks.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_bookmarks_db.obj" \
+	"$(INTDIR)\mod_bookmarks_export.obj" \
 	"$(INTDIR)\mod_bookmarks_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_bookmarks.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_bookmarks_db.c
 
 "$(INTDIR)\mod_bookmarks_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_bookmarks_export.c
+
+"$(INTDIR)\mod_bookmarks_export.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_bookmarks_main.c

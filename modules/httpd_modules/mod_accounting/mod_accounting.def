@@ -1,5 +1,5 @@
 LIBRARY		mod_accounting
-VERSION		1.3.20
+VERSION		1.3.21
 EXPORTS
 	mod_init
 	mod_main

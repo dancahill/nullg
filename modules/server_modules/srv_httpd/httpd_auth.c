@@ -298,7 +298,7 @@ int auth_setcookie(CONN *sid)
 	} else if ((getgetenv(sid, "USERNAME")!=NULL)&&(getgetenv(sid, "PASSWORD")!=NULL)&&(getgetenv(sid, "DOMAIN")!=NULL)) {
 		strncpy(sid->dat->user_username, getgetenv(sid, "USERNAME"), sizeof(sid->dat->user_username)-1);
 		strncpy(password, getgetenv(sid, "PASSWORD"), sizeof(password)-1);
-		ptemp=getpostenv(sid, "DOMAIN");
+		ptemp=getgetenv(sid, "DOMAIN");
 		domainid=domain_getid(ptemp);
 		if (domainid<0) {
 			sid->dat->user_did=1;

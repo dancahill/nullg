@@ -96,6 +96,14 @@ setup_dialog() {
 	clear 2>/dev/null
 }
 
+case "$1" in
+upgrade)
+	if [ -x /etc/init.d/nullgroupware ]; then
+		/etc/init.d/nullgroupware stop
+	fi
+	;;
+esac
+
 rm -f $LOGFILE
 touch $LOGFILE
 if [ -x /bin/dialog ]; then
@@ -118,6 +126,9 @@ rm -f $LOGFILE
 case "$1" in
 upgrade)
 	cd $SERVER_DIR_BASE/bin ; ./nullgw-config upgrade
+	if [ -x /etc/init.d/nullgroupware ]; then
+		/etc/init.d/nullgroupware start
+	fi
 	;;
 *)
 	cd $SERVER_DIR_BASE/bin ; ./nullgw-config

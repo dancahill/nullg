@@ -510,6 +510,11 @@ void bookmarkssave(CONN *sid)
 
 DllExport int mod_main(CONN *sid)
 {
+	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/export", 17)==0) {
+		send_header(sid, 0, 200, "1", "text/plain", -1, -1);
+		bookmarks_export(sid);
+		return 0;
+	}
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_BOOKMARKS);
 	prints(sid, "<BR>\r\n");

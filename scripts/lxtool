@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgroupware-1.3.20-x86
+OUTFILE=nullgroupware-1.3.21-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "OpenBSD" ]; then
@@ -235,12 +235,12 @@ dedos() {
 
 	chmod 0755 scripts/nullgw-config
 	chmod 0755 scripts/fromdos
-	chmod 0755 scripts/make_sqlite
+	chmod 0755 scripts/libsqlite_make
 	chmod 0755 scripts/rc.groupware
 	chmod 0755 scripts/setup
 	chmod 0755 distrib -R
 	set_perms
-	cp -av scripts/make_sqlite sqlite/make_sqlite
+	cp -av scripts/libsqlite_make sqlite/libsqlite_make
 }
 
 case "$1" in

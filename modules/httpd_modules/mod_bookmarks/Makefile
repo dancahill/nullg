@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_bookmarks_db.o mod_bookmarks_main.o
+OBJECTS = mod_bookmarks_db.o mod_bookmarks_export.o mod_bookmarks_main.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_bookmarks.so
 
 all: mod_bookmarks

@@ -39,6 +39,10 @@ _all: _sqlite _dbutil _server _server_modules _httpd_modules
 	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
 	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/rc.groupware
 
+_sqlite:
+	@echo "sqlite"
+	@cd sqlite;./libsqlite_make build
+
 _dbutil:
 	@echo "dbutil"
 	@cd dbutil;$(MAKE)
@@ -55,10 +59,6 @@ _httpd_modules:
 	@echo "httpd_modules"
 	@mkdir -p distrib/lib/httpd
 	@cd modules/httpd_modules;$(MAKE)
-
-_sqlite:
-	@echo "sqlite"
-	@cd sqlite;./make_sqlite build
 
 sslcert:
 	openssl req -new -x509 -nodes -out distrib/etc/ssl-cert.pem -keyout distrib/etc/ssl-priv.pem -days 365
@@ -83,14 +83,14 @@ clean:
 	@echo "done."
 
 distclean: clean
-	@cd sqlite;./make_sqlite clean
+	@cd sqlite;./libsqlite_make clean
 	@rm -f `find -name *~`
 	@echo -n "Running autoconf..."
 	@autoconf
-	@echo "done."
 	@rm -rf autom4te.cache
-	@chown -R 0:0 *
 	@rm -f config.log config.status include/config.h Makefile Rules.mak
+	@chown -R 0:0 *
+	@echo "done."
 
 install: _all
 	@chown -R 0:0 distrib/*
@@ -98,13 +98,10 @@ install: _all
 
 upgrade: _all
 	@chown -R 0:0 distrib/*
-	/etc/init.d/nullgroupware stop
 	@cd distrib;./setup upgrade
-	/etc/init.d/nullgroupware start
-	@sync
 
 wc:
-	wc `find -name *.[ch]`
+	wc `find . -name *.[ch] ! -path './sqlite/*'`
 
 dist:
 	@chmod 0755 scripts/lxtool

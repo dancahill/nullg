@@ -435,7 +435,12 @@ void adminuserlist(CONN *sid)
 		sql_freeresult(sqr2);
 		return;
 	}
-	if ((sqr4=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		sqr4=sql_queryf("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
+	} else {
+		sqr4=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
+	}
+	if (sqr4<0) {
 		sql_freeresult(sqr1);
 		sql_freeresult(sqr2);
 		sql_freeresult(sqr3);
@@ -717,6 +722,7 @@ void adminusersave(CONN *sid)
 		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (user.userid<1) user.userid=1;
+		memset(query, 0, sizeof(query));
 		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authprojects, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", user.userid, curdate, curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
@@ -771,8 +777,35 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.sin));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.isactive));
 		if (sql_update(query)<0) return;
-		prints(sid, "<CENTER>User added successfully</CENTER><BR>\n");
 		db_log_activity(sid, "users", user.userid, "insert", "%s - %s added user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
+		prints(sid, "<CENTER>User added successfully</CENTER><BR>\n");
+		memset(query, 0, sizeof(query));
+		strcpy(query, "INSERT INTO gw_mailaccounts (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, showdebug, signature) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '%d', '0', '%d', '0', '0', ", curdate, curdate, user.userid, user.domainid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'Local Mail', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s %s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.givenname), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.surname));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s@%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, domain_getname(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.domainid)));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'POP3', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'localhost', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'110', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'localhost', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'25', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s@%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, domain_getname(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.domainid)));
+//		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, EncodeBase64string(sid, mailacct.poppassword)));
+		strncatf(query, sizeof(query)-strlen(query)-1, "'', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'n', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'0', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'0', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'2004-01-01', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'n', ");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'')");
+		if (sql_update(query)<0) return;
+//		wmfolder_makedefaults(sid, mailacct.mailaccountid);
+//		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
+		prints(sid, "<CENTER>E-Mail account added successfully</CENTER><BR>\n");
+
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {

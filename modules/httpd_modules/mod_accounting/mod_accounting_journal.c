@@ -32,7 +32,7 @@ void journal_listraw(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d ORDER BY entrydate ASC", sid->dat->user_did))<0) return;
+	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
 		prints(sid, "<TR><TH STYLE='border-style:solid'>id</TH><TH STYLE='border-style:solid'>date</TH><TH STYLE='border-style:solid'>accountid</TH><TH STYLE='border-style:solid'>details</TH><TH STYLE='border-style:solid'>debit</TH><TH STYLE='border-style:solid'>credit</TH><TH STYLE='border-style:solid'>balance</TH></TR>\n");
@@ -51,8 +51,8 @@ void journal_listraw(CONN *sid)
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 5)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%s</TD>", str2html(sid, sql_getvalue(sqr, i, 3)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%s</TD>", str2html(sid, sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 3)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 4)));
 			debit=(float)(atof(sql_getvalue(sqr, i, 3)));
 			credit=(float)(atof(sql_getvalue(sqr, i, 4)));
 			mdebit+=debit;
@@ -133,7 +133,7 @@ void journal_list(CONN *sid)
 	snprintf(curdate2, sizeof(curdate2)-1, "%04d-%02d-%02d 23:59:59", e3, e1, e2);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "%.10s - %.10s<BR>\n", curdate1, curdate2);
-	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d AND entrydate >= '%s' AND entrydate <= '%s' ORDER BY entrydate ASC", sid->dat->user_did, curdate1, curdate2))<0) return;
+	if ((sqr=sql_queryf("SELECT journalentryid, entrydate, accountid, debit, credit, details FROM gw_accounting_journal WHERE obj_did = %d AND entrydate >= '%s' AND entrydate <= '%s' ORDER BY entrydate ASC, journalentryid ASC", sid->dat->user_did, curdate1, curdate2))<0) return;
 	if ((sqr2=sql_queryf("SELECT SUM(debit), SUM(credit) FROM gw_accounting_journal WHERE obj_did = %d AND entrydate < '%s' ORDER BY entrydate ASC", sid->dat->user_did, curdate1))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500 STYLE='border-style:solid'>\r\n");
@@ -165,8 +165,8 @@ void journal_list(CONN *sid)
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%.10s</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr, i, 5)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%s</TD>", str2html(sid, sql_getvalue(sqr, i, 3)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%s</TD>", str2html(sid, sql_getvalue(sqr, i, 4)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 3)));
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>$%1.2f</TD>", atof(sql_getvalue(sqr, i, 4)));
 			debit=(float)(atof(sql_getvalue(sqr, i, 3)));
 			credit=(float)(atof(sql_getvalue(sqr, i, 4)));
 			mdebit+=debit;

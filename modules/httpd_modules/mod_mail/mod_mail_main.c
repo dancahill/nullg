@@ -657,7 +657,7 @@ void webmailwrite(CONN *sid)
 	prints(sid, "	ALT='Create a Hyperlink'     SRC='/groupware/images/wmedit_link.png'      onClick=doLink()                         BORDER=0 WIDTH=22 HEIGHT=22 CLASS=butClass onMouseOver=selOn(this) onMouseOut=selOff(this)><IMG\r\n");
 	prints(sid, "	ALT='Insert Picture'         SRC='/groupware/images/wmedit_image.png'     onClick=doImage()                        BORDER=0 WIDTH=22 HEIGHT=22 CLASS=butClass onMouseOver=selOn(this) onMouseOut=selOff(this)></TD>\r\n");
 	prints(sid, "</TR></TABLE>\r\n");
-	prints(sid, "<CENTER><IFRAME id=\"wmeditor\" HEIGHT=236 WIDTH=646 SRC=\"javascript:return false;\"></IFRAME></CENTER>");
+	prints(sid, "<CENTER><IFRAME id=\"wmeditor\" HEIGHT=236 WIDTH=646 SRC=\"%s/mail/blank\"></IFRAME></CENTER>", sid->dat->in_ScriptName);
 	prints(sid, "</DIV>");
 	prints(sid, "<CENTER><TEXTAREA NAME=msgbody COLS=78 ROWS=16 WRAP=VIRTUAL>\n");
 	if (msgnum) {
@@ -739,6 +739,14 @@ DllExport int mod_main(CONN *sid)
 
 	if (strncmp(suburi, "/mail/", 6)!=0) return 0;
 	suburi+=6;
+
+	if (strncmp(suburi, "blank", 5)==0) {
+		send_header(sid, 0, 200, "1", "text/html", -1, -1);
+//		flushbuffer(sid);
+		return 0;
+	}
+
+
 	if (sid->dat->wm==NULL) {
 		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return 0;
 	}

@@ -1,3 +1,12 @@
+1.3.21
+------
+- fixed FreeBSD build error
+- fixed segfault caused by failed bind()ing
+- fixed broken html mail composer (XP SP2 really broke this)
+- a local mail account is now added upon creation of a new user
+- added bookmark export for Mozilla
+- upgraded SQLite to 3.0.8
+
 1.3.20
 ------
 - added php sapi module (experimental)

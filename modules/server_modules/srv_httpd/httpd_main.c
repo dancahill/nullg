@@ -240,6 +240,7 @@ void *httpd_accept_loop(void *x)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
+	int loaded=0;
 	int i;
 
 	http_proc.ListenSocketSTD=0;
@@ -252,18 +253,21 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	conf_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s httpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if (http_proc.config.http_port) {
-		if ((http_proc.ListenSocketSTD=tcp_bind(http_proc.config.http_interface, http_proc.config.http_port))<0) return -1;
+		if ((http_proc.ListenSocketSTD=tcp_bind(http_proc.config.http_interface, http_proc.config.http_port))!=-1) loaded=1;
 	}
 	if ((proc->ssl_is_loaded)&&(http_proc.config.http_sslport)) {
-		if ((http_proc.ListenSocketSSL=tcp_bind(http_proc.config.http_interface, http_proc.config.http_sslport))<0) return -1;
+		if ((http_proc.ListenSocketSSL=tcp_bind(http_proc.config.http_interface, http_proc.config.http_sslport))!=-1) loaded=1;
 	}
-	if ((http_proc.conn=calloc(http_proc.config.http_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", http_proc.config.http_maxconn, sizeof(CONN));
-		return -1;
+	if (loaded) {
+		if ((http_proc.conn=calloc(http_proc.config.http_maxconn, sizeof(CONN)))==NULL) {
+			printf("\r\nconn calloc(%d, %d) failed\r\n", http_proc.config.http_maxconn, sizeof(CONN));
+			return -1;
+		}
+		for (i=0;i<http_proc.config.http_maxconn;i++) http_proc.conn[i].socket.socket=-1;
+		if (modules_init()!=0) exit(-2);
+		return 0;
 	}
-	for (i=0;i<http_proc.config.http_maxconn;i++) http_proc.conn[i].socket.socket=-1;
-	if (modules_init()!=0) exit(-2);
-	return 0;
+	return -1;
 }
 
 DllExport int mod_exec()
@@ -274,13 +278,13 @@ DllExport int mod_exec()
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
-	if (http_proc.config.http_port) {
+	if ((http_proc.config.http_port)&&(http_proc.ListenSocketSTD!=-1)) {
 		if (pthread_create(&http_proc.ListenThreadSTD, &thr_attr, httpd_accept_loop, (void *)CONN_STD)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "httpd_accept_loop() failed...");
 			return -2;
 		}
 	}
-	if ((proc->ssl_is_loaded)&&(http_proc.config.http_sslport)) {
+	if ((http_proc.config.http_sslport)&&(http_proc.ListenSocketSSL!=-1)&&(proc->ssl_is_loaded)) {
 		if (pthread_create(&http_proc.ListenThreadSSL, &thr_attr, httpd_accept_loop, (void *)CONN_SSL)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "httpd_accept_loop_ssl() failed...");
 			return -2;

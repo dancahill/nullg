@@ -85,7 +85,12 @@ void adminzonelist(CONN *sid)
 	} else {
 		if ((sqr1=sql_queryf("SELECT zoneid, obj_did, zonename FROM gw_zones WHERE obj_did = %d ORDER BY obj_did, zonename ASC", sid->dat->user_did))<0) return;
 	}
-	if ((sqr2=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC");
+	} else {
+		sqr2=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d", sid->dat->user_did);
+	}
+	if (sqr2<0) {
 		sql_freeresult(sqr1);
 		return;
 	}

@@ -1,0 +1,14 @@
+Source: nullgroupware
+Section: main/net
+Priority: optional
+Maintainer: Dan Cahill <nulllogic@users.sourceforge.net>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
+Package: nullgroupware
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: spamassassin
+Description: NullLogic Groupware Server
+ This is the NullLogic Groupware Server Suite written and
+ maintained by Dan Cahill.
