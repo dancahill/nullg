@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_contacts.dsp
 !IF "$(CFG)" == ""
 CFG=mod_contacts - Win32 Release
-!MESSAGE No configuration specified. Defaulting to mod_contacts - Win32 Release.
+!MESSAGE mod_contacts - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_contacts - Win32 Release"
@@ -95,15 +95,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("mod_contacts.dep")
-!INCLUDE "mod_contacts.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "mod_contacts.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "mod_contacts - Win32 Release"

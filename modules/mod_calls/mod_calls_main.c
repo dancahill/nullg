@@ -159,28 +159,28 @@ void calledit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=callid VALUE='%d'>\n", call.callid);
 	prints(sid, "<INPUT TYPE=hidden NAME=callstart VALUE='%d'>\n", call.callstart);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
 	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>CALL INFO</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>DETAILS</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>PERMISSIONS</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Call Name&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Call Name&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=callname value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, call.callname), (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, call.assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:255px'%s>\n", config->colour_editform, config->colour_fieldnametext, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() CLASS=\"EDITFORM\">Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:255px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
 	htselect_contact(sid, call.contactid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Action&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=action style='width:255px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Action&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=action style='width:255px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
 	htselect_callaction(sid, call.action);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Call Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=callstart2 style='width:128px'%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Call Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=callstart2 style='width:128px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_month(sid, callstart);
 	prints(sid, "</SELECT><SELECT NAME=callstart1 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_day(sid, callstart);
@@ -188,7 +188,7 @@ void calledit(CONN *sid)
 	htselect_year(sid, 2000, callstart);
 	prints(sid, "</SELECT></TD></TR>\n");
 	calltime=call.callstart%86400;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Call Start&nbsp;</B></TD><TD ALIGN=RIGHT>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Call Start&nbsp;</B></TD><TD ALIGN=RIGHT>");
 	prints(sid, "<SELECT NAME=callstart4 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	temp=calltime/3600;
 	if (temp>12) temp-=12;
@@ -221,41 +221,41 @@ void calledit(CONN *sid)
 	duration=call.callfinish-call.callstart;
 	if (duration<0) duration=0;
 	duration/=60;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Duration&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Duration&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=duration1 style='width:128px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_qhours(sid, duration/60);
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=duration2 style='width:127px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_minutes(sid, duration%60);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:255px'%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:255px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_eventstatus(sid, call.status);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=5 COLS=50%s>%s</TEXTAREA></TD></TR>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED", str2html(sid, call.details));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Details&nbsp;</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=5 COLS=50%s>%s</TEXTAREA></TD></TR>\n", (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED", str2html(sid, call.details));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((call.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calls")&A_ADMIN)) editperms=1;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, call.obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
 	htselect_group(sid, call.obj_gid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", call.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", call.obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\n", call.obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\n", call.obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\n", call.obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", call.obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
@@ -344,25 +344,25 @@ void callview(CONN *sid)
 	sql_freeresult(sqr);
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, call.callname));
+	prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>%s", str2html(sid, call.callname));
 	if (auth_priv(sid, "calls")&A_MODIFY) {
 		if (auth_priv(sid, "calls")&A_ADMIN) {
-			prints(sid, " [<A HREF=%s/calls/edit?callid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
+			prints(sid, " [<A HREF=%s/calls/edit?callid=%d>edit</A>]", sid->dat->in_ScriptName, call.callid);
 		} else if ((call.assignedby==sid->dat->user_uid)||(call.assignedto==sid->dat->user_uid)||(call.obj_uid==sid->dat->user_uid)||((call.obj_gid==sid->dat->user_gid)&&(call.obj_gperm>=2))||(call.obj_operm>=2)) {
-			prints(sid, " [<A HREF=%s/calls/edit?callid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
+			prints(sid, " [<A HREF=%s/calls/edit?callid=%d>edit</A>]", sid->dat->in_ScriptName, call.callid);
 		}
 	}
-	prints(sid, "</FONT></TH></TR>\n");
+	prints(sid, "</TH></TR>\n");
 	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users"))<0) return;
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedby) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</NOBR></TD>\n");
-	prints(sid, "<TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Call Date       </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2datetext(sid, call.callstart));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Date       </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2datetext(sid, call.callstart));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned To </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -370,17 +370,17 @@ void callview(CONN *sid)
 	}
 	prints(sid, "&nbsp;</TD>\n");
 	sql_freeresult(sqr);
-	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Call Start  </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callstart));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Contact Name</B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, sid->dat->in_ScriptName, call.contactid, contactname);
-	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Call Finish </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2timetext(sid, call.callfinish));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Action      </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD>\n", config->colour_fieldname, config->colour_fieldval, htview_callaction(sid, call.action));
-	prints(sid, "    <TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, call.status));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, call.details));
+	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Start  </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", time_unix2timetext(sid, call.callstart));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Contact Name</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><A HREF=%s/contacts/view?contactid=%d>%s</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, call.contactid, contactname);
+	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Call Finish </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>%s&nbsp;</NOBR></TD></TR>\n", time_unix2timetext(sid, call.callfinish));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Action      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD>\n", htview_callaction(sid, call.action));
+	prints(sid, "    <TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Status      </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", htview_eventstatus(sid, call.status));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=4 STYLE='border-style:solid'><B>Details</B></TD></TR>\n");
+	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=4 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, call.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
-		prints(sid, " [<A HREF=%s/notes/editnew?table=calls&index=%d STYLE='color: %s'>new</A>]", sid->dat->in_ScriptName, call.callid, config->colour_thlink);
-		prints(sid, "</FONT></TH></TR>\n");
+		prints(sid, "<TR><TH COLSPAN=4 NOWRAP STYLE='border-style:solid'>Notes");
+		prints(sid, " [<A HREF=%s/notes/editnew?table=calls&index=%d>new</A>]", sid->dat->in_ScriptName, call.callid);
+		prints(sid, "</TH></TR>\n");
 		mod_notes_sublist(sid, "calls", call.callid, 4);
 	}
 	prints(sid, "</TABLE>\n</CENTER>\n");
@@ -442,14 +442,14 @@ void calllist(CONN *sid)
 	if (total>0) {
 		prints(sid, "Found %d matching calls<BR>\n", total);
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Call ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Duration&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Call ID&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Action&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Contact&nbsp;</TH><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Duration&nbsp;</TH>");
 		if (status==2) {
-			prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TH>", config->colour_thtext);
+			prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Status&nbsp;</TH>");
 		}
 		prints(sid, "</TR>\n");
 		for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 			if (atoi(sql_getvalue(sqr1, i, 6))!=userid) continue;
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' ", config->colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=RIGHT NOWRAP style='cursor:hand; border-style:solid' ");
 			if ((userid==sid->dat->user_uid)&&(atoi(sql_getvalue(sqr1, i, 5))==0)) {
 				prints(sid, "onClick=\"window.location.href='%s/calls/edit?callid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 				prints(sid, "&nbsp;<A HREF=%s/calls/edit?callid=%d>%d</A>&nbsp;</TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), atoi(sql_getvalue(sqr1, i, 0)));

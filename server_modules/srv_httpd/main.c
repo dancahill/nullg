@@ -233,7 +233,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	log_error("http", __FILE__, __LINE__, 1, "Starting %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
+	log_error("core", __FILE__, __LINE__, 1, "Starting %s httpd %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 	if (config->http_port) {
 		if ((http_proc.ListenSocket=tcp_bind(config->http_hostname, config->http_port))<0) return -1;
 	}
@@ -294,7 +294,7 @@ void server_shutdown()
 	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
 #endif
 //	log_access("http", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
-	log_error("http", __FILE__, __LINE__, 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
+	log_error("core", __FILE__, __LINE__, 1, "Stopping %s httpd %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 //	pthread_kill(proc.ListenThread, 14);
 //	shutdown(proc.ListenSocket, 2);
 //	closesocket(proc.ListenSocket);

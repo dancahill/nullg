@@ -148,12 +148,12 @@ void calendar_availmap(CONN *sid)
 	}
 	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
+	prints(sid, "<TR CLASS=\"FIELDNAME\">\n");
 	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\n");
 	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\n");
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
+	prints(sid, "<TR CLASS=\"FIELDNAME\">\n");
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
@@ -162,7 +162,7 @@ void calendar_availmap(CONN *sid)
 	prints(sid, "</TR>\n");
 	for (i=0;i<7;i++) {
 		prints(sid, "<TR BGCOLOR=#F0F0F0>\n");
-		prints(sid, "<TD ALIGN=LEFT NOWRAP BGCOLOR=\"%s\" STYLE='border-style:solid'><B>&nbsp;%s&nbsp;</B></TD>\n", config->colour_fieldname, dow[i]);
+		prints(sid, "<TD ALIGN=LEFT NOWRAP CLASS=\"FIELDNAME\" STYLE='border-style:solid'><B>&nbsp;%s&nbsp;</B></TD>\n", dow[i]);
 		for (j=0;j<24;j++) {
 			prints(sid, "<TD STYLE='border-style:solid'>");
 			for (k=0;k<4;k++) {

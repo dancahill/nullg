@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on server.dsp
 !IF "$(CFG)" == ""
 CFG=server - Win32 Release
-!MESSAGE No configuration specified. Defaulting to server - Win32 Release.
+!MESSAGE server - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "server - Win32 Release"
@@ -113,15 +113,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("server.dep")
-!INCLUDE "server.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "server.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "server - Win32 Release"

@@ -50,21 +50,20 @@ void productedit(CONN *sid)
 	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/orders/productsave NAME=productedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=productid VALUE='%d'>\n", product.productid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (productid>0) {
-		prints(sid, "<A HREF=%s/orders/productview?productid=%d STYLE='color: %s'>Product %d</A></FONT></TH></TR>\n", sid->dat->in_ScriptName, product.productid, config->colour_thtext, product.productid);
+		prints(sid, "<TR><TH COLSPAN=2><A HREF=%s/orders/productview?productid=%d>Product %d</A></TH></TR>\n", sid->dat->in_ScriptName, product.productid, product.productid);
 	} else {
-		prints(sid, "New Product</FONT></TH></TR>\n");
+		prints(sid, "<TR><TH COLSPAN=2>New Product</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> Product Name  </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=productname  value=\"%s\" SIZE=30></TD></TR>\n", config->colour_editform, str2html(sid, product.productname));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> Category      </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=category     value=\"%s\" SIZE=30></TD></TR>\n", config->colour_editform, str2html(sid, product.category));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> Discount      </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, product.discount*100.0F);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> Unit Price    </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.unitprice);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> Internal Cost </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value=\"%1.2f\" SIZE=30></TD></TR>\n", config->colour_editform, product.internalcost);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax1name, product.tax1*100.0F);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value=\"%1.1f\" SIZE=30></TD></TR>\n", config->colour_editform, proc->info.tax2name, product.tax2*100.0F);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=3 COLS=40>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, product.details));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> Product Name  </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=productname  value=\"%s\" SIZE=30></TD></TR>\n", str2html(sid, product.productname));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> Category      </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=category     value=\"%s\" SIZE=30></TD></TR>\n", str2html(sid, product.category));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> Discount      </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value=\"%1.1f\" SIZE=30></TD></TR>\n", product.discount*100.0F);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> Unit Price    </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value=\"%1.2f\" SIZE=30></TD></TR>\n", product.unitprice);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> Internal Cost </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value=\"%1.2f\" SIZE=30></TD></TR>\n", product.internalcost);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value=\"%1.1f\" SIZE=30></TD></TR>\n", proc->info.tax1name, product.tax1*100.0F);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value=\"%1.1f\" SIZE=30></TD></TR>\n", proc->info.tax2name, product.tax2*100.0F);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=3 COLS=40>%s</TEXTAREA></TD></TR>\n", str2html(sid, product.details));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "orders")&A_ADMIN)&&(product.productid!=0)) {
@@ -92,20 +91,20 @@ void productview(CONN *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='border-style:solid'><FONT COLOR=%s>Product %d", config->colour_th, config->colour_thtext, productid);
+	prints(sid, "<TR><TH COLSPAN=2 STYLE='border-style:solid'>Product %d", productid);
 	if (auth_priv(sid, "orders")&A_ADMIN) {
-		prints(sid, " [<A HREF=%s/orders/productedit?productid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, productid, config->colour_thlink);
+		prints(sid, " [<A HREF=%s/orders/productedit?productid=%d>edit</A>]", sid->dat->in_ScriptName, productid);
 	}
 	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Product Name </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.productname));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Category     </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, product.category));
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Discount     </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount*100.0F);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Unit Price   </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>Internal Cost</B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1*100.0F);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD BGCOLOR=\"%s\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2*100.0F);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=\"%s\" COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, product.details));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Product Name </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", str2html(sid, product.productname));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Category     </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%s&nbsp;</TD></TR>\n", str2html(sid, product.category));
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Discount     </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", product.discount*100.0F);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Unit Price   </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", product.unitprice);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Internal Cost</B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>$%1.2f&nbsp;</TD></TR>\n", product.internalcost);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", proc->info.tax1name, product.tax1*100.0F);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>%s           </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=100%% STYLE='border-style:solid'>%1.1f%%&nbsp;</TD></TR>\n", proc->info.tax2name, product.tax2*100.0F);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" COLSPAN=2 STYLE='border-style:solid'><B>Details</B></TD></TR>\n");
+	prints(sid, "<TR><TD CLASS=\"FIELDVAL\" COLSPAN=2 STYLE='border-style:solid'><PRE>%s&nbsp;</PRE></TD></TR>\n", str2html(sid, product.details));
 	prints(sid, "</TABLE>\n<BR>\n</CENTER>\n");
 }
 
@@ -122,10 +121,10 @@ void productlist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(sqr));
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_th);
-		prints(sid, "<TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Product Name</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Category</FONT></TH><TH NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Unit Price</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>");
+		prints(sid, "<TH NOWRAP STYLE='border-style:solid'>Product Name</TH><TH NOWRAP STYLE='border-style:solid'>Category</TH><TH NOWRAP STYLE='border-style:solid'>Unit Price</TH></TR>\n");
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/productview?productid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 1)));
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, 2)));

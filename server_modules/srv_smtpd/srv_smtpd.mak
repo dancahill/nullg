@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on srv_smtpd.dsp
 !IF "$(CFG)" == ""
 CFG=srv_smtpd - Win32 Release
-!MESSAGE No configuration specified. Defaulting to srv_smtpd - Win32 Release.
+!MESSAGE srv_smtpd - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "srv_smtpd - Win32 Release"
@@ -94,15 +94,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("srv_smtpd.dep")
-!INCLUDE "srv_smtpd.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "srv_smtpd.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "srv_smtpd - Win32 Release"

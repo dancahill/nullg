@@ -88,8 +88,8 @@ void contacts_vcardimport(CONN *sid)
 		prints(sid, "<CENTER><BR>\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 		prints(sid, "<FORM METHOD=POST ACTION=%s/contacts/vcardimport NAME=vcardimport ENCTYPE=multipart/form-data>\n", sid->dat->in_ScriptName);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>vCard Import</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD><TD><INPUT TYPE=submit VALUE='Import'></TD></TR>\n", config->colour_editform);
+		prints(sid, "<TR><TH COLSPAN=2>vCard Import</TH></TR>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD><TD><INPUT TYPE=submit VALUE='Import'></TD></TR>\n");
 		prints(sid, "</FORM>\n");
 		prints(sid, "</TABLE>\n");
 		prints(sid, "</CENTER>\n");

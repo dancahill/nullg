@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_calendar.dsp
 !IF "$(CFG)" == ""
 CFG=mod_calendar - Win32 Release
-!MESSAGE No configuration specified. Defaulting to mod_calendar - Win32 Release.
+!MESSAGE mod_calendar - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_calendar - Win32 Release"
@@ -107,15 +107,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("mod_calendar.dep")
-!INCLUDE "mod_calendar.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "mod_calendar.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "mod_calendar - Win32 Release"

@@ -288,8 +288,8 @@ int dirlist(CONN *sid)
 	i=4;
 	if (auth_priv(sid, "files")&A_MODIFY) i++;
 	if (strlen(config->util_scanfile)) i++;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, i);
-	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
+	prints(sid, "<TR><TH COLSPAN=%d STYLE='border-style:solid'>", i);
+	prints(sid, "&nbsp;Index of ");
 	memset(uri2, 0, sizeof(uri2));
 	i=0;
 	if (uri[i]=='/') {
@@ -298,7 +298,7 @@ int dirlist(CONN *sid)
 		i++;
 		while (uri[i]) {
 			if (uri[i]=='/') {
-				prints(sid, "<A HREF=\"%s%s/\" STYLE='color: %s'>%s</A>/", sid->dat->in_ScriptName, uri2, config->colour_thtext, strrchr(uri2, '/')+1);
+				prints(sid, "<A HREF=\"%s%s/\">%s</A>/", sid->dat->in_ScriptName, uri2, strrchr(uri2, '/')+1);
 			}
 			uri2[i]=uri[i];
 			i++;
@@ -306,8 +306,8 @@ int dirlist(CONN *sid)
 	} else {
 		prints(sid, "%s", uri);
 	}
-	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldname);
+	prints(sid, "</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"FIELDNAME\">");
 	if (auth_priv(sid, "files")&A_MODIFY) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
@@ -317,7 +317,7 @@ int dirlist(CONN *sid)
 	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
 	prints(sid, "<TD width=10%% STYLE='border-style:solid'><B>&nbsp;Size&nbsp;</B></TD><TD width=60%% STYLE='border-style:solid'><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
 	if ((strncmp(uri, "/files/", 7)==0)&&(strlen(file.filepath)>1)) {
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
@@ -339,7 +339,7 @@ int dirlist(CONN *sid)
 		if (isvalid) strftime(timebuf, sizeof(timebuf)-1, "%b %d %Y %H:%M", localtime(&sb.st_mtime));
 		memset(showfile, 0, sizeof(showfile));
 		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(sqr, i, 1));
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
@@ -439,26 +439,26 @@ int fileul(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filerecv NAME=filesend ENCTYPE=multipart/form-data onSubmit=waitForCompletion();>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=location value='%s'>\n", location);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>Uploading new file to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
+	prints(sid, "<TR><TH COLSPAN=2>Uploading new file to '%s'</TH></TR>\n", directory);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", str2html(sid, file.description));
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", file.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", file.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", file.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", file.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", file.obj_operm==2?" CHECKED":"");
@@ -511,26 +511,26 @@ int filemkdir(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave?location=\"%s\" NAME=filedirsave>\n", sid->dat->in_ScriptName, directory);
 //	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave NAME=filedirsave>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=filepath value='%s'>\n", location);
-	prints(sid, "<TR><TH BGCOLOR=\"%s\" COLSPAN=2><FONT COLOR=%s>Adding folder to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=2>Adding folder to '%s'</TH></TR>\n", directory);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", file.filename);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n");
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", file.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", file.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", file.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", file.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", file.obj_operm==2?" CHECKED":"");
@@ -570,27 +570,27 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "<CENTER>\n<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/fileinfosave NAME=fileedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=fileid VALUE='%d'>\n", file.fileid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>File %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, fileid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>File Name    </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filename));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP>&nbsp;<B>File Location</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filepath     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", config->colour_editform, str2html(sid, file.filepath));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=2>File %d</TH></TR>\n", fileid);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>File Name    </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", str2html(sid, file.filename));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>File Location</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filepath     value=\"%s\" SIZE=40 DISABLED></TD></TR>\n", str2html(sid, file.filepath));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", str2html(sid, file.description));
+	prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, file.obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_group(sid, file.obj_gid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) editperms=1;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", file.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", file.obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\n", file.obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Other Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\n", file.obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\n", file.obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", file.obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
@@ -651,7 +651,7 @@ int filerecv(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TD STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n", config->colour_topmenu);
+	prints(sid, "<TR CLASS=\"TBAR\"><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n");
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n<BR>\n");
 	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		DEBUG_OUT(sid, "filerecv()");
@@ -1028,13 +1028,11 @@ void fileedit(CONN *sid)
 	prints(sid, "<CENTER>\n<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filesave NAME=fileedit ENCTYPE=multipart/form-data>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=fileid VALUE='%d'>\n", file.fileid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
-	prints(sid, "<A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, fileid, config->colour_thtext, fileid);
+	prints(sid, "<TR><TH><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, fileid);
 	printhex(sid, "%s", file.filepath);
-	prints(sid, " STYLE='color: %s'>File %d - ", config->colour_thtext, fileid);
-	prints(sid, "%s%s", str2html(sid, file.filepath), str2html(sid, file.filename));
-	prints(sid, "</FONT></TH></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>", config->colour_editform);
+	prints(sid, ">File %d - %s%s", fileid, str2html(sid, file.filepath), str2html(sid, file.filename));
+	prints(sid, "</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>");
 	directory=file.filepath+7;
 	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, directory, file.filename);
 	fixslashes(filename);

@@ -25,16 +25,17 @@ void mod_html_header(CONN *sid, char *title)
 	prints(sid, "<HTML>\r\n");
 	prints(sid, "<HEAD>\r\n");
 //	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
+	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n");
 	prints(sid, "<TITLE>%s</TITLE>\r\n", title);
 	prints(sid, "<STYLE TYPE=text/css>\r\n");
 	prints(sid, ".JUSTIFY { text-align: justify; }\r\n");
 	prints(sid, ".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial,Verdana; font-size: 8pt; }\r\n");
-	prints(sid, "A        { color: %s; text-decoration: none; }\r\n", proc->config.colour_links);
+	prints(sid, "A        { color: #0000FF; text-decoration: none; }\r\n");
 	prints(sid, "A:HOVER  { text-decoration: underline; }\r\n");
 //	prints(sid, "INPUT    { color: #000000; font-family: Courier New; font-size: 12px; }\r\n");
 //	prints(sid, "SELECT   { color: #000000; font-family: Courier New; font-size: 12px; }\r\n");
 	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
-	prints(sid, "TH       { background-color: %s; color: %s; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n", proc->config.colour_th, proc->config.colour_thtext);
+	prints(sid, "TH       { background-color: #0000A0; color: #FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "</STYLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/css/style.css\">\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
@@ -151,7 +152,7 @@ domenu:
 	prints(sid, "<CENTER>\r\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	if (sid->dat->user_menustyle==0) {
-		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", proc->config.colour_topmenu);
+		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 		for (i=0;;i++) {
 			if (strlen(http_proc->mod_menuitems[i].mod_name)==0) break;
 			if (strlen(http_proc->mod_menuitems[i].mod_menuname)==0) continue;
@@ -176,7 +177,7 @@ domenu:
 		prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 		prints(sid, "</TR></TABLE>\r\n</TD></TR>\r\n");
 	}
-	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\">\r\n", proc->config.colour_topmenu);
+	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\">\r\n");
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
@@ -280,17 +281,23 @@ domenu:
 			break;
 		case MENU_WEBMAIL:
 			if (sid->dat->user_menustyle>0) {
-				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/main TARGET=gwmain>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-				prints(sid, "<A CLASS='TBAR' HREF=javascript:ComposeMail()>COMPOSE</A>&nbsp;&middot;&nbsp;");
-				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				if (sid->dat->user_mailcurrent>0) {
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/main TARGET=gwmain>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=javascript:ComposeMail()>COMPOSE</A>&nbsp;&middot;&nbsp;");
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);\
+				}
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list TARGET=gwmain>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
-				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/list>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/write>COMPOSE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				if (sid->dat->user_mailcurrent>0) {
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/list>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/write>COMPOSE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+					prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				}
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}
-			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/quit%s>QUIT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=gwmain":"");
+			if (sid->dat->user_mailcurrent>0) {
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/quit%s>QUIT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=gwmain":"");
+			}
 			break;
 	}
 	prints(sid, "<A CLASS='TBAR' HREF=javascript:window.print()>%s</A>", MENU_PRINT);
@@ -349,7 +356,7 @@ void mod_html_login(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=\"%s/\" AUTOCOMPLETE=OFF NAME=login>\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=pageuri VALUE=\"%s\">\r\n", pageuri);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='padding:1px'><FONT COLOR=%s>NullLogic Groupware Login</FONT></TH></TR>\r\n", proc->config.colour_th, proc->config.colour_thtext);
+	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>NullLogic Groupware Login</TH></TR>\r\n");
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
 	if ((sqr=sql_query("SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;
@@ -363,9 +370,9 @@ void mod_html_login(CONN *sid)
 	if (strlen(username)==0) {
 		snprintf(username, sizeof(username)-1, "%s", sid->dat->user_username);
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", proc->config.colour_editform, username);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", proc->config.colour_editform, password);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n", proc->config.colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
 		prints(sid, "<BR><TABLE>\r\n");
@@ -392,8 +399,8 @@ void mod_html_logout(CONN *sid)
 	mod_html_header(sid, "NullLogic Groupware Logout");
 	prints(sid, "<CENTER>\r\n<BR><BR>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH><FONT COLOR=%s>NullLogic Groupware Logout</FONT></TH></TR>\r\n", proc->config.colour_th, proc->config.colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD>\r\n", proc->config.colour_fieldval);
+	prints(sid, "<TR><TH>NullLogic Groupware Logout</TH></TR>\r\n");
+	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD>\r\n");
 	prints(sid, "You have successfully logged out.\r\n");
 	prints(sid, "</TD></TR>\r\n");
 	prints(sid, "</TABLE>\r\n");
@@ -421,16 +428,16 @@ void mod_html_motd(CONN *sid)
 	mod_html_topmenu(sid, MENU_MAIN);
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\r\n<TABLE WIDTH=90%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR><TD COLSPAN=2>\r\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TH BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", proc->config.colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'><TR><TH STYLE='border-style:solid'>\n");
 	prints(sid, "<TABLE WIDTH=100%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>\r\n");
-	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left><FONT COLOR=%s>Welcome, %s.&nbsp;</FONT></TH>\r\n", proc->config.colour_thtext, str2html(sid, sid->dat->user_username));
-	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right><FONT COLOR=%s>&nbsp;%s</FONT></TH>\r\n", proc->config.colour_thtext, showtime);
+	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left>Welcome, %s.&nbsp;</TH>\r\n", str2html(sid, sid->dat->user_username));
+	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right>&nbsp;%s</TH>\r\n", showtime);
 	prints(sid, "</TR></TABLE>\r\n");
 	prints(sid, "</TH></TR>\r\n");
 	if ((sqr=sql_queryf("SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='border-style:solid'>\r\n", proc->config.colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\r\n");
 			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
@@ -454,10 +461,10 @@ void mod_html_motd(CONN *sid)
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if ((sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid))<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'><FONT COLOR=%s>Calendar</FONT></TH></TR>\n", proc->config.colour_th, proc->config.colour_thtext);
+	prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'>Calendar</TH></TR>\n");
 	for (i=0;i<2;i++) {
 		t=unixdate+(i*86400);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><B><A HREF=%s/calendar/list?day=%d>", proc->config.colour_fieldval, sid->dat->in_ScriptName, (int)(t/86400));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><B><A HREF=%s/calendar/list?day=%d>", sid->dat->in_ScriptName, (int)(t/86400));
 		if (i==0) {
 			prints(sid, "Today");
 		} else if (i==1) {
@@ -468,7 +475,7 @@ void mod_html_motd(CONN *sid)
 		for (j=0;j<sql_numtuples(sqr);j++) {
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
 			if ((t2<t)||(t2>=t+86400)) continue;
-			prints(sid, "<TR BGCOLOR=\"%s\">", proc->config.colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
@@ -479,7 +486,7 @@ void mod_html_motd(CONN *sid)
 			if (k>0) k--;
 		}
 		while (k>0) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", proc->config.colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
 			k--;
 		}
 	}
@@ -490,14 +497,14 @@ void mod_html_motd(CONN *sid)
 		if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>", proc->config.colour_th);
-			prints(sid, "<FONT SIZE=2 COLOR=%s>&nbsp;E-Mail</FONT></TH></TR>\n", proc->config.colour_thtext);
+			prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
+			prints(sid, "<FONT SIZE=2>&nbsp;E-Mail</FONT></TH></TR>\n");
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
 				newmessages=atoi(sql_getvalue(sqr2, 0, 0));
 				sql_freeresult(sqr2);
-				prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", proc->config.colour_fieldval);
-				prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=LEFT NOWRAP>", proc->config.colour_fieldval);
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP>");
 				if (sid->dat->user_menustyle>0) {
 					prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 				} else {

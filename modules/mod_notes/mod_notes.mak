@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_notes.dsp
 !IF "$(CFG)" == ""
 CFG=mod_notes - Win32 Release
-!MESSAGE No configuration specified. Defaulting to mod_notes - Win32 Release.
+!MESSAGE mod_notes - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_notes - Win32 Release"
@@ -93,15 +93,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("mod_notes.dep")
-!INCLUDE "mod_notes.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "mod_notes.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "mod_notes - Win32 Release"

@@ -36,17 +36,6 @@
 
 #include "resource.h"
 
-#define DEFAULT_COLOUR_TOPMENU		"#C0C0C0" // "#C0C0C0"
-#define DEFAULT_COLOUR_EDITFORM		"#F0F0F0" // "#F0F0F0"
-#define DEFAULT_COLOUR_FIELDNAME	"#E0E0E0" // "#E0E0E0"
-#define DEFAULT_COLOUR_FIELDNAMETEXT	"#000000" // "#000000"
-#define DEFAULT_COLOUR_FIELDVAL		"#F0F0F0" // "#F0F0F0"
-#define DEFAULT_COLOUR_FIELDVALTEXT	"#000000" // "#000000"
-#define DEFAULT_COLOUR_TABLETRIM	"#000000" // "#000000"
-#define DEFAULT_COLOUR_TH		"#0000A0" // "#00A5D0"
-#define DEFAULT_COLOUR_THTEXT		"#FFFFFF" // "#000000"
-#define DEFAULT_COLOUR_THLINK		"#E0E0FF" // "#0000FF"
-#define DEFAULT_COLOUR_LINKS		"#0000FF" // "#0000FF"
 #define DEFAULT_SERVER_USERNAME		"nullgw"
 
 #define snprintf _snprintf
@@ -54,17 +43,6 @@
 #define strcasecmp stricmp
 
 typedef struct {
-	char      colour_topmenu[10];
-	char      colour_editform[10];
-	char      colour_fieldname[10];
-	char      colour_fieldnametext[10];
-	char      colour_fieldval[10];
-	char      colour_fieldvaltext[10];
-	char      colour_tabletrim[10];
-	char      colour_th[10];
-	char      colour_thtext[10];
-	char      colour_thlink[10];
-	char      colour_links[10];
 	char      server_dir_base[255];
 	char      server_dir_bin[255];
 	char      server_dir_cgi[255];
@@ -161,17 +139,6 @@ int config_read(CONFIG *config)
 		}
 	}
 	/* define default values */
-	snprintf(config->colour_editform,       sizeof(config->colour_editform)-1,       "%s", DEFAULT_COLOUR_EDITFORM);
-	snprintf(config->colour_fieldname,      sizeof(config->colour_fieldname)-1,      "%s", DEFAULT_COLOUR_FIELDNAME);
-	snprintf(config->colour_fieldnametext,  sizeof(config->colour_fieldnametext)-1,  "%s", DEFAULT_COLOUR_FIELDNAMETEXT);
-	snprintf(config->colour_fieldval,       sizeof(config->colour_fieldval)-1,       "%s", DEFAULT_COLOUR_FIELDVAL);
-	snprintf(config->colour_fieldvaltext,   sizeof(config->colour_fieldvaltext)-1,   "%s", DEFAULT_COLOUR_FIELDVALTEXT);
-	snprintf(config->colour_links,          sizeof(config->colour_links)-1,          "%s", DEFAULT_COLOUR_LINKS);
-	snprintf(config->colour_tabletrim,      sizeof(config->colour_th)-1,             "%s", DEFAULT_COLOUR_TABLETRIM);
-	snprintf(config->colour_th,             sizeof(config->colour_th)-1,             "%s", DEFAULT_COLOUR_TH);
-	snprintf(config->colour_thlink,         sizeof(config->colour_thlink)-1,         "%s", DEFAULT_COLOUR_THLINK);
-	snprintf(config->colour_thtext,         sizeof(config->colour_thtext)-1,         "%s", DEFAULT_COLOUR_THTEXT);
-	snprintf(config->colour_topmenu,        sizeof(config->colour_topmenu)-1,        "%s", DEFAULT_COLOUR_TOPMENU);
 	snprintf(config->server_dir_bin,        sizeof(config->server_dir_bin)-1,        "%s/bin", config->server_dir_base);
 	snprintf(config->server_dir_cgi,        sizeof(config->server_dir_cgi)-1,        "%s/cgi-bin", config->server_dir_base);
 	snprintf(config->server_dir_etc,        sizeof(config->server_dir_etc)-1,        "%s/etc", config->server_dir_base);
@@ -253,29 +220,7 @@ int config_read(CONFIG *config)
 			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
 			while (*pVal=='"') pVal++;
 			if (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
-			if (strcmp(pVar, "COLOUR.TOPMENU")==0) {
-				snprintf(config->colour_topmenu,       sizeof(config->colour_topmenu)-1,       "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.EDITFORM")==0) {
-				snprintf(config->colour_editform,      sizeof(config->colour_editform)-1,      "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.FIELDNAME")==0) {
-				snprintf(config->colour_fieldname,     sizeof(config->colour_fieldname)-1,     "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.FIELDNAMETEXT")==0) {
-				snprintf(config->colour_fieldnametext, sizeof(config->colour_fieldnametext)-1, "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.FIELDVAL")==0) {
-				snprintf(config->colour_fieldval,      sizeof(config->colour_fieldval)-1,      "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.FIELDVALTEXT")==0) {
-				snprintf(config->colour_fieldvaltext,  sizeof(config->colour_fieldvaltext)-1,  "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.TABLETRIM")==0) {
-				snprintf(config->colour_tabletrim,     sizeof(config->colour_tabletrim)-1,     "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.TH")==0) {
-				snprintf(config->colour_th,            sizeof(config->colour_th)-1,            "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.THTEXT")==0) {
-				snprintf(config->colour_thtext,        sizeof(config->colour_thtext)-1,        "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.THLINK")==0) {
-				snprintf(config->colour_thlink,        sizeof(config->colour_thlink)-1,        "%s", pVal);
-			} else if (strcmp(pVar, "COLOUR.LINKS")==0) {
-				snprintf(config->colour_links,         sizeof(config->colour_links)-1,         "%s", pVal);
-			} else if (strcmp(pVar, "SERVER.DIR.BASE")==0) {
+			if (strcmp(pVar, "SERVER.DIR.BASE")==0) {
 				strncpy(config->server_dir_base, pVal, sizeof(config->server_dir_base)-1);
 			} else if (strcmp(pVar, "SERVER.DIR.BIN")==0) {
 				strncpy(config->server_dir_bin, pVal, sizeof(config->server_dir_bin)-1);
@@ -401,17 +346,6 @@ int config_write(CONFIG *config)
 	fixslashes(config_filename);
 	if ((fp=fopen(config_filename, "w"))==NULL) return -1;
 	fprintf(fp, "# This file contains system settings for NullLogic Groupware.\n\n");
-	fprintf(fp, "COLOUR.EDITFORM       = \"%s\"\n", config->colour_editform);
-	fprintf(fp, "COLOUR.FIELDNAME      = \"%s\"\n", config->colour_fieldname);
-	fprintf(fp, "COLOUR.FIELDNAMETEXT  = \"%s\"\n", config->colour_fieldnametext);
-	fprintf(fp, "COLOUR.FIELDVAL       = \"%s\"\n", config->colour_fieldval);
-	fprintf(fp, "COLOUR.FIELDVALTEXT   = \"%s\"\n", config->colour_fieldvaltext);
-	fprintf(fp, "COLOUR.LINKS          = \"%s\"\n", config->colour_links);
-	fprintf(fp, "COLOUR.TABLETRIM      = \"%s\"\n", config->colour_tabletrim);
-	fprintf(fp, "COLOUR.TH             = \"%s\"\n", config->colour_th);
-	fprintf(fp, "COLOUR.THLINK         = \"%s\"\n", config->colour_thlink);
-	fprintf(fp, "COLOUR.THTEXT         = \"%s\"\n", config->colour_thtext);
-	fprintf(fp, "COLOUR.TOPMENU        = \"%s\"\n", config->colour_topmenu);
 	fprintf(fp, "SERVER.DIR.BASE       = \"%s\"\n", config->server_dir_base);
 	fprintf(fp, "SERVER.DIR.BIN        = \"%s\"\n", config->server_dir_bin);
 	fprintf(fp, "SERVER.DIR.CGI        = \"%s\"\n", config->server_dir_cgi);

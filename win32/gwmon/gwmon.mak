@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on gwmon.dsp
 !IF "$(CFG)" == ""
 CFG=gwmon - Win32 Release
-!MESSAGE No configuration specified. Defaulting to gwmon - Win32 Release.
+!MESSAGE gwmon - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "gwmon - Win32 Release"
@@ -96,15 +96,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("gwmon.dep")
-!INCLUDE "gwmon.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "gwmon.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "gwmon - Win32 Release"

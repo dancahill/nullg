@@ -242,6 +242,14 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 	}
 	/* LET THE GROUPWARE BEGIN */
 	init();
+	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
+//	if (argc<2) {
+		if (modules_init()!=0) exit(-2);
+//	} else {
+//		for (i=1;i<argc;i++) {
+//			module_load(argv[i]);
+//		}
+//	}
 	if (modules_exec()!=0) exit(-2);
 	if (modules_cron()!=0) exit(-2);
 	/* NOW BACK TO THE SERVICE CRAP */

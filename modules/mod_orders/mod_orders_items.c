@@ -89,22 +89,22 @@ void orderitemedit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=orderitemid VALUE='%d'>\n", orderitem.orderitemid);
 	prints(sid, "<INPUT TYPE=hidden NAME=orderid VALUE='%d'>\n", orderitem.orderid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s><A HREF=%s/orders/view?orderid=%d STYLE='color: %s'>Order %d</A> - ", config->colour_th, config->colour_thtext, sid->dat->in_ScriptName, orderitem.orderid, config->colour_thtext, orderitem.orderid);
+	prints(sid, "<TR><TH COLSPAN=2><A HREF=%s/orders/view?orderid=%d>Order %d</A> - ", sid->dat->in_ScriptName, orderitem.orderid, orderitem.orderid);
 	if (orderitemid>0) {
-		prints(sid, "Item %d</FONT></TH></TR>\n", orderitem.orderitemid);
+		prints(sid, "Item %d</TH></TR>\n", orderitem.orderitemid);
 	} else {
-		prints(sid, "New Item</FONT></TH></TR>\n");
+		prints(sid, "New Item</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Product&nbsp;      </B></TD><TD ALIGN=RIGHT><SELECT NAME=productid style='width:217px'>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Product&nbsp;      </B></TD><TD ALIGN=RIGHT><SELECT NAME=productid style='width:217px'>");
 	htselect_product(sid, orderitem.productid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Quantity&nbsp;     </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=quantity     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.quantity);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Quantity&nbsp;     </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=quantity     value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", orderitem.quantity);
 	if (strncmp(sid->dat->in_RequestURI, "/orders/itemeditnew", 17)!=0) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Discount&nbsp;     </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.discount*100.0F);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.unitprice);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, orderitem.internalcost);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1*100.0F);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2*100.0F);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Discount&nbsp;     </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=discount     value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", orderitem.discount*100.0F);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", orderitem.unitprice);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT>$<INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=30 style='width:217px'></TD></TR>\n", orderitem.internalcost);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax1         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", proc->info.tax1name, orderitem.tax1*100.0F);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT>%%<INPUT TYPE=TEXT NAME=tax2         value='%1.1f' SIZE=30 style='width:217px'></TD></TR>\n", proc->info.tax2name, orderitem.tax2*100.0F);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
@@ -131,10 +131,10 @@ void orderitemlist(CONN *sid, int orderid)
 	int sqr;
 
 	if ((sqr=sql_queryf("SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR>");
 	prints(sid, "<TD NOWRAP STYLE='border-style:solid'><B>Product</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Quantity</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Unit Price</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Discount</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Extended</B></TD></TR>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=\"%s\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", config->colour_editform, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>");
 		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
@@ -148,7 +148,7 @@ void orderitemlist(CONN *sid, int orderid)
 	}
 	sql_freeresult(sqr);
 	if (auth_priv(sid, "orders")&A_MODIFY) {
-		prints(sid, "<TR BGCOLOR=\"%s\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", config->colour_editform, sid->dat->in_ScriptName, orderid);
+		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", sid->dat->in_ScriptName, orderid);
 		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");

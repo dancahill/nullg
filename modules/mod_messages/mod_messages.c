@@ -117,9 +117,9 @@ void messages_userlist(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'>&nbsp;User&nbsp;</TH><TH ALIGN=left STYLE='border-style:solid'>&nbsp;History&nbsp;</TH></TR>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='cursor:hand; border-style:solid' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP STYLE='cursor:hand; border-style:solid' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;<A HREF=\"javascript:ViewHistory('%d', '%s')\">history</A>&nbsp;</TD></TR>\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1));
 	}
 	prints(sid, "</TABLE></CENTER>\n");
@@ -215,7 +215,7 @@ void messages_send(CONN *sid)
 	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/messages/send?userid=%d NAME=msgcompose>\n", sid->dat->in_ScriptName, userid);
-	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\">\n");
 	prints(sid, "<TD WIDTH=100%%><INPUT TYPE=TEXT NAME=message WIDTH=50 STYLE='width:100%%'></TD>\n");
 	prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Send VALUE='Send'></TD>\n");
 	prints(sid, "</TR></FORM></TABLE>\n");
@@ -321,10 +321,10 @@ void messages_history(CONN *sid)
 		msgdate=time_sql2unix(sql_getvalue(sqr, i, 1));
 		msgdate+=time_tzoffset(sid, msgdate);
 		if (lastdate+86399<msgdate) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP><B>%s</B></TD></TR>\r\n", config->colour_fieldval, time_unix2datetext(sid, msgdate));
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP><B>%s</B></TD></TR>\r\n", time_unix2datetext(sid, msgdate));
 			lastdate=(int)(msgdate/86400)*86400;
 		}
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		prints(sid, "<TD NOWRAP VALIGN=TOP><A HREF=%s/messages/delete?userid=%d&messageid=%s>delete</A></TD>", sid->dat->in_ScriptName, userid, sql_getvalue(sqr, i, 0));
 		prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=%s>", atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid?"black":"blue");
 		if (atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid) {

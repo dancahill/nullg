@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on dbutil.dsp
 !IF "$(CFG)" == ""
 CFG=dbutil - Win32 Release
-!MESSAGE No configuration specified. Defaulting to dbutil - Win32 Release.
+!MESSAGE dbutil - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "dbutil - Win32 Release"
@@ -100,15 +100,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("dbutil.dep")
-!INCLUDE "dbutil.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "dbutil.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "dbutil - Win32 Release"

@@ -340,6 +340,7 @@ int DecodeBase64(CONN *sid, char *src, char *ctype)
 	} else if (strncasecmp(ctype, "text/plain", 10)==0) {
 		prints(sid, "%s", dest);
 	} else {
+		flushbuffer(sid);
 		if (http_proc->RunAsCGI) {
 			fwrite(dest, sizeof(char), destidx, stdout);
 		} else {

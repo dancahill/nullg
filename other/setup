@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.0"
+MAIN_TITLE="NullLogic Groupware Setup v1.3.1"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -35,23 +35,27 @@ do_copying() {
 	touch $SERVER_DIR_BASE/var/db/groupware.db	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/http-access.log	1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/log/http-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/pop3-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/pop3-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtp-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtp-error.log	1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/COPYING		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/COPYRIGHT.txt	1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/README.txt		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/bin			1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/bin/*		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/etc			1>>$LOGFILE 2>>$LOGFILE
-	chmod 0600 $SERVER_DIR_BASE/etc/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/etc/*.cfg		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/lib			1>>$LOGFILE 2>>$LOGFILE
-	chmod 0644 $SERVER_DIR_BASE/lib/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0644 $SERVER_DIR_BASE/lib/*.so		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var			1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/backup		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/db		1>>$LOGFILE 2>>$LOGFILE
-	chmod 0600 $SERVER_DIR_BASE/var/db/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/var/db/*.db		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/files		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0755 $SERVER_DIR_BASE/var/htdocs		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/log		1>>$LOGFILE 2>>$LOGFILE
-	chmod 0600 $SERVER_DIR_BASE/var/log/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/var/log/*.log	1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/mail		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0700 $SERVER_DIR_BASE/var/tmp		1>>$LOGFILE 2>>$LOGFILE
 	if [ "$HAVE_DIALOG" = "yes" ]; then

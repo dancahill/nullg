@@ -61,18 +61,17 @@ void wmfolder_edit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<INPUT TYPE=hidden NAME=accountid VALUE='%d'>\n", accountid);
 	prints(sid, "<INPUT TYPE=hidden NAME=folderid VALUE='%d'>\n", folderid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (folderid!=0) {
-		prints(sid, "Mail Folder '%s'</FONT></TH></TR>\n", foldername);
+		prints(sid, "<TR><TH COLSPAN=2>Mail Folder '%s'</TH></TR>\n", foldername);
 	} else {
-		prints(sid, "New Mail Folder</FONT></TH></TR>\n");
+		prints(sid, "<TR><TH COLSPAN=2>New Mail Folder</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP COLSPAN=2>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'%s>\n", config->colour_editform, (folderid<1)||(folderid>5)?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'%s>\n", (folderid<1)||(folderid>5)?"":" DISABLED");
 	htselect_mailfolder(sid, parentid, 1, 1);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'%s></TD></TR>\n", config->colour_editform, str2html(sid, foldername), (folderid<1)||(folderid>5)?"":" DISABLED");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'%s></TD></TR>\n", str2html(sid, foldername), (folderid<1)||(folderid>5)?"":" DISABLED");
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	if ((folderid<1)||(folderid>5)) {

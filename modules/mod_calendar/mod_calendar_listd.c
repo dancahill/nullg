@@ -106,11 +106,11 @@ void calendarlistday(CONN *sid)
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=100%% STYLE='border-style:solid'>&nbsp;Event Name&nbsp;</TH></TR>\n");
 	for (i=0;i<24;i++) {
 		snprintf(showtime, sizeof(showtime)-1, "%02d:00:00", i);
 		if ((i>=sid->dat->user_daystart)&&(i<sid->dat->user_daystart+sid->dat->user_daylength)) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>");
 			prints(sid, "<FONT SIZE=2><A HREF=%s/calendar/editnew?", sid->dat->in_ScriptName);
 			prints(sid, "time=%d>%s</A></FONT></TD>", unixdate+(i*3600), time_sql2timetext(sid, showtime));
 			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
@@ -132,9 +132,9 @@ void calendarlistday(CONN *sid)
 				if (j==sql_numtuples(sqr2)) { index++; continue; }
 			}
 			if ((i>=sid->dat->user_daystart)&&(i<=sid->dat->user_daystart+sid->dat->user_daylength)) {
-				prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			} else {
-				prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldname);
+				prints(sid, "<TR CLASS=\"FIELDNAME\">");
 			}
 			t2+=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");

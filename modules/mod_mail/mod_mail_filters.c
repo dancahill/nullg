@@ -209,16 +209,15 @@ void wmfilter_edit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<INPUT TYPE=hidden NAME=accountid VALUE='%d'>\n", accountid);
 	prints(sid, "<INPUT TYPE=hidden NAME=filterid VALUE='%d'>\n", filterid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (filterid!=0) {
-		prints(sid, "Mail Filter '%s'</FONT></TH></TR>\n", filtername);
+		prints(sid, "<TR><TH COLSPAN=2>Mail Filter '%s'</TH></TR>\n", filtername);
 	} else {
-		prints(sid, "New Mail Filter</FONT></TH></TR>\n");
+		prints(sid, "<TR><TH COLSPAN=2>New Mail Filter</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP COLSPAN=2>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Name   &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=filtername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, filtername));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Header &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=header style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Filter Name   &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=filtername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, filtername));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Filter Header &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=header style='width:217px'>\n");
 	hdrfound=0;
 	if (strcasecmp(header, "from")==0) hdrfound=1;
 	else if (strcasecmp(header, "reply-to")==0) hdrfound=2;
@@ -236,16 +235,16 @@ void wmfilter_edit(CONN *sid)
 //	prints(sid, "<OPTION VALUE='bcc'%s>BCC:\n",           hdrfound==5?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='subject'%s>Subject:\n",   hdrfound==6?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter String &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=string value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, string));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Rule &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=rule style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Filter String &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=string value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, string));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Filter Rule &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=rule style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='exact'%s>Exact match\n", strcasecmp(rule, "exact")==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='substr'%s>Substring match\n", strcasecmp(rule, "substr")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Filter Action &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=action style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Filter Action &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=action style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='move'%s>Move to folder\n", strcasecmp(action, "move")==0?" SELECTED":"");
 //	prints(sid, "<OPTION VALUE='delete'%s>Delete from server\n", strcasecmp(action, "delete")==0?" SELECTED":"");
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Move to Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=dstfolderid style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Move to Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=dstfolderid style='width:217px'>\n");
 	htselect_mailfolder(sid, dstfolderid, 1, 0);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");

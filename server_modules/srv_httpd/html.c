@@ -29,13 +29,15 @@ void htpage_header(CONN *sid, char *title)
 	prints(sid, "<HTML>\r\n");
 	prints(sid, "<HEAD>\r\n");
 	prints(sid, "<TITLE>%s</TITLE>\r\n", title);
+//	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
+	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n");
 	prints(sid, "<STYLE TYPE=text/css>\r\n");
 	prints(sid, ".JUSTIFY { text-align: justify; }\r\n");
 	prints(sid, ".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial,Verdana; font-size: 8pt; }\r\n");
-	prints(sid, "A        { color: %s; text-decoration: none; }\r\n", config->colour_links);
+	prints(sid, "A        { text-decoration: none; }\r\n");
 	prints(sid, "A:HOVER  { text-decoration: underline; }\r\n");
 	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
-	prints(sid, "TH       { background-color: %s; color: %s; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n", config->colour_th, config->colour_thtext);
+	prints(sid, "TH       { background-color: 0000A0; color: FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "</STYLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/%s/css/style.css\">\r\n", SERVER_BASENAME);
 	prints(sid, "</HEAD>\r\n");
@@ -86,7 +88,7 @@ void htpage_login(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=\"%s/\" AUTOCOMPLETE=OFF NAME=login>\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=pageuri VALUE=\"%s\">\r\n", pageuri);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='padding:1px'><FONT COLOR=%s>%s Login</FONT></TH></TR>\r\n", config->colour_th, config->colour_thtext, SERVER_NAME);
+	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>%s Login</TH></TR>\r\n", SERVER_NAME);
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
 	if ((sqr=sql_query("SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;
@@ -100,9 +102,9 @@ void htpage_login(CONN *sid)
 	if (strlen(username)==0) {
 		snprintf(username, sizeof(username)-1, "%s", sid->dat->user_username);
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", config->colour_editform, username);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", config->colour_editform, password);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n", config->colour_editform);
+	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
+	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
+	prints(sid, "<TR CLASS=EDITFORM><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
 		prints(sid, "<BR><TABLE>\r\n");
@@ -135,8 +137,8 @@ void htpage_logout(CONN *sid)
 	htpage_header(sid, SERVER_NAME);
 	prints(sid, "<CENTER>\r\n<BR><BR>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH><FONT COLOR=%s>%s Logout</FONT></TH></TR>\r\n", config->colour_th, config->colour_thtext, SERVER_NAME);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD>\r\n", config->colour_fieldval);
+	prints(sid, "<TR><TH>%s Logout</TH></TR>\r\n", SERVER_NAME);
+	prints(sid, "<TR CLASS=FIELDVAL><TD>\r\n");
 	prints(sid, "You have successfully logged out.\r\n");
 	prints(sid, "</TD></TR>\r\n");
 	prints(sid, "</TABLE>\r\n");
@@ -219,7 +221,7 @@ domenu:
 	prints(sid, "<CENTER>\r\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	if (sid->dat->user_menustyle==0) {
-		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;", config->colour_topmenu);
+		prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 		for (i=0;;i++) {
 			if (strlen(http_proc.mod_menuitems[i].mod_name)==0) break;
 			if (strlen(http_proc.mod_menuitems[i].mod_menuname)==0) continue;
@@ -243,7 +245,7 @@ domenu:
 		prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 		prints(sid, "</TR></TABLE>\r\n</TD></TR>\r\n");
 	}
-	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle BGCOLOR=\"%s\">\r\n", config->colour_topmenu);
+	prints(sid, "<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\">\r\n");
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
@@ -386,16 +388,16 @@ void htpage_motd(CONN *sid)
 	t=(time(NULL)+time_tzoffset(sid, time(NULL)));
 	strftime(showtime, sizeof(showtime), "%A, %B %d, %Y", gmtime(&t));
 	prints(sid, "<BR>\r\n<CENTER>\r\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=80%% STYLE='border-style:solid'><TR><TH BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", config->colour_th);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=80%% STYLE='border-style:solid'><TR><TH STYLE='border-style:solid'>\n");
 	prints(sid, "<TABLE WIDTH=100%% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>\r\n");
-	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left><FONT COLOR=%s>Welcome, %s.&nbsp;</FONT></TH>\r\n", config->colour_thtext, str2html(sid, sid->dat->user_username));
-	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right><FONT COLOR=%s>&nbsp;%s</FONT></TH>\r\n", config->colour_thtext, showtime);
+	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=left>Welcome, %s.&nbsp;</TH>\r\n", str2html(sid, sid->dat->user_username));
+	prints(sid, "<TH WIDTH=100%% NOWRAP ALIGN=right>&nbsp;%s</TH>\r\n", showtime);
 	prints(sid, "</TR></TABLE>\r\n");
 	prints(sid, "</TH></TR>\r\n");
 	if ((sqr=sql_queryf("SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 STYLE='border-style:solid'>\r\n", config->colour_fieldval);
+			prints(sid, "<TR><TD COLSPAN=2 CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\r\n");
 			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
@@ -805,11 +807,11 @@ void htscript_showpage(CONN *sid, short int pages)
 	prints(sid, "	for (var i=1;i<%d;i++) {\n", pages+1);
 	prints(sid, "		if (i==page) {\n");
 	prints(sid, "			document.getElementById('page'+i+'tab').style.borderBottom='solid 0px #000000';\n");
-	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='%s';\n", config->colour_fieldval);
+	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='#F0F0F0';\n");
 	prints(sid, "			document.getElementById('page'+i).style.display='block';\n");
 	prints(sid, "		} else {\n");
 	prints(sid, "			document.getElementById('page'+i+'tab').style.borderBottom='solid 1px #000000';\n");
-	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='%s';\n", config->colour_fieldname);
+	prints(sid, "			document.getElementById('page'+i+'tab').bgColor='#E0E0E0';\n");
 	prints(sid, "			document.getElementById('page'+i).style.display='none';\n");
 	prints(sid, "		}\n");
 	prints(sid, "	}\n");

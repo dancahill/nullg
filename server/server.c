@@ -164,7 +164,6 @@ void init()
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
 		exit(-2);
 	}
-	if (modules_init()!=0) exit(-2);
 #ifndef WIN32
 #ifndef FREEBSD
 #ifndef VALGRIND

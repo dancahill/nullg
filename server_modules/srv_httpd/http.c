@@ -724,7 +724,7 @@ void send_header(CONN *sid, int cacheable, int status, char *title, char *extra_
 		snprintf(sid->dat->out_CacheControl, sizeof(sid->dat->out_CacheControl)-1, "public");
 		snprintf(sid->dat->out_Pragma, sizeof(sid->dat->out_Pragma)-1, "public");
 	} else {
-		snprintf(sid->dat->out_CacheControl, sizeof(sid->dat->out_CacheControl)-1, "no-cache; must-revalidate");
+		snprintf(sid->dat->out_CacheControl, sizeof(sid->dat->out_CacheControl)-1, "no-cache, no-store, must-revalidate");
 		snprintf(sid->dat->out_Expires, sizeof(sid->dat->out_Expires)-1, "%s", timebuf);
 		snprintf(sid->dat->out_Pragma, sizeof(sid->dat->out_Pragma)-1, "no-cache");
 	}

@@ -91,7 +91,7 @@ void wmaddr_list(CONN *sid)
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	j=0;
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;E-Mail&nbsp;</TH></TR>\n");
 	for (i=0;i<sql_numtuples(sqr1);i++) {
 		if (strlen(sql_getvalue(sqr1, i, 3))<1) continue;
 		if (strchr(sql_getvalue(sqr1, i, 3), '@')==NULL) continue;
@@ -103,7 +103,7 @@ void wmaddr_list(CONN *sid)
 		strncpy(realname2, sql_getvalue(sqr1, i, 2), sizeof(realname2)-1);
 		if (strlen(sql_getvalue(sqr1, i, 1))&&strlen(sql_getvalue(sqr1, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
 		strncat(realname2, sql_getvalue(sqr1, i, 1), sizeof(realname2)-strlen(realname2)-1);
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, realname1));
 		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(sqr1, i, 3), str2html(sid, sql_getvalue(sqr1, i, 3)));
 		prints(sid, "<INPUT TYPE=hidden NAME=name%d VALUE=\"%s\">", j, realname2);
@@ -118,7 +118,7 @@ void wmaddr_list(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		j++;
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Contact Name&nbsp;</TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;E-Mail&nbsp;</TH></TR>\n");
 	for (i=0;i<sql_numtuples(sqr2);i++) {
 		if (strlen(sql_getvalue(sqr2, i, 3))<1) continue;
 		if (strchr(sql_getvalue(sqr2, i, 3), '@')==NULL) continue;
@@ -130,7 +130,7 @@ void wmaddr_list(CONN *sid)
 		strncpy(realname2, sql_getvalue(sqr2, i, 2), sizeof(realname2)-1);
 		if (strlen(sql_getvalue(sqr2, i, 1))&&strlen(sql_getvalue(sqr2, i, 2))) strncat(realname2, " ", sizeof(realname2)-strlen(realname2)-1);
 		strncat(realname2, sql_getvalue(sqr2, i, 1), sizeof(realname2)-strlen(realname2)-1);
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, realname1));
 		prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><A HREF=\"javascript:SendTo('%s', '%s', '%s'); window.close();\">%s</A>&nbsp;</TD>", field, realname2, sql_getvalue(sqr2, i, 3), str2html(sid, sql_getvalue(sqr2, i, 3)));
 		prints(sid, "<INPUT TYPE=hidden NAME=name%d VALUE=\"%s\">", j, realname2);

@@ -781,7 +781,10 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		DEBUG_OUT(sid, "wmserver_mlistsync()");
 		return -1;
 	}
-
+	if (sid->dat->user_mailcurrent==0) {
+		DEBUG_OUT(sid, "wmserver_mlistsync()");
+		return -1;
+	}
 	memset(lockfile, 0, sizeof(lockfile));
 	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d", config->server_dir_var_mail, sid->dat->user_mailcurrent);
 	fixslashes(lockfile);

@@ -76,7 +76,7 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/accounts/save NAME=profilemailedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=mailaccountid VALUE='%d'>\n", mailacct.mailaccountid);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=\"%s\">\n", config->colour_fieldname);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
 	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>" MOD_MAIL_TAB_GEN "</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>" MOD_MAIL_TAB_SER "</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>" MOD_MAIL_TAB_ADV "</A>&nbsp;</TD>\n");
@@ -87,29 +87,29 @@ void wmaccount_edit(CONN *sid)
 	}
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Account Name   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=accountname  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.accountname));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Real Name      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=realname     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.realname));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Organization   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.organization));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;E-Mail Address </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.address));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Reply Address  </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=replyto      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.replyto));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Account Name   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=accountname  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.accountname));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Real Name      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=realname     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.realname));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Organization   </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.organization));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-Mail Address </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=address      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.address));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Reply Address  </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=replyto      VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.replyto));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Host Type      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Host Type      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=hosttype style='width:217px' onchange=PortUpdate();>\n");
 	prints(sid, "<OPTION VALUE='POP3'%s>POP3\n", strcasecmp(mailacct.hosttype, "POP3")==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='IMAP'%s>IMAP\n", strcasecmp(mailacct.hosttype, "IMAP")==0?" SELECTED":"");
 	prints(sid, "</SELECT>\n</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype1>%s</SPAN> Host </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pophost VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", str2html(sid, mailacct.pophost));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Host      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtphost     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.smtphost));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Username       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popusername  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.popusername));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Password       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=poppassword  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.poppassword));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Auth      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype1>%s</SPAN> Host </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=pophost VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", str2html(sid, mailacct.pophost));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;SMTP Host      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtphost     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.smtphost));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popusername  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.popusername));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password       </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=poppassword  VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, mailacct.poppassword));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;SMTP Auth      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=smtpauth style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='n'%s>No\n", mailacct.smtpauth[0]=='n'?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='y'%s>Yes\n", mailacct.smtpauth[0]!='n'?" SELECTED":"");
@@ -118,16 +118,16 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype2>%s</SPAN> Port </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popport      VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", mailacct.popport);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;SMTP Port      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtpport     VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, mailacct.smtpport);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Check for new mail</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;<SPAN ID=hosttype2>%s</SPAN> Port </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=popport      VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", strcasecmp(mailacct.hosttype, "IMAP")==0?"IMAP":"POP3", mailacct.popport);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;SMTP Port      </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=smtpport     VALUE=\"%d\" SIZE=30 style='width:217px'></TD></TR>\n", mailacct.smtpport);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Check for new mail</B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=notify style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='0'%s>never\n", mailacct.notify==0?" SELECTED":"");
 	for (i=1;i<61;i++) {
 		prints(sid, "<OPTION VALUE='%d'%s>every %d minute%s\n", i, i==mailacct.notify?" SELECTED":"", i, i!=1?"s":"");
 	}
 	prints(sid, "</SELECT>\n</TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Remove messages from server</B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Remove messages from server</B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=remove style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='0'%s>never\n", mailacct.remove==0?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='1'%s>when retrieved\n",  mailacct.remove==1?" SELECTED":"");
@@ -137,20 +137,20 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Signature&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER><TEXTAREA WRAP=VIRTUAL NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, mailacct.signature));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Signature&nbsp;</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER><TEXTAREA WRAP=VIRTUAL NAME=signature ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", str2html(sid, mailacct.signature));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	if (mailacct.mailaccountid!=0) {
 		prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD>", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD>");
 		wmfolder_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");
 		prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD>", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD>");
 		wmfilter_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");
@@ -188,9 +188,9 @@ void wmaccount_list(CONN *sid)
 		if ((sqr=sql_queryf("SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=300 STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Mail Accounts</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>&nbsp;Mail Accounts</TH></TR>\n");
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/accounts/edit?account=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "<A HREF=%s/mail/accounts/edit?account=%d>%s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
 				prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/mail/purge?accountid=%d>purge</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "</TR>\n");

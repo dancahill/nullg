@@ -255,7 +255,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_http"=".\server_modules\http\srv_http.dsp" - Package Owner=<4>
+Project: "srv_httpd"=".\server_modules\srv_httpd\srv_httpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -267,7 +267,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_pop3"=".\server_modules\pop3\srv_pop3.dsp" - Package Owner=<4>
+Project: "srv_pop3d"=".\server_modules\srv_pop3d\srv_pop3d.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -279,7 +279,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "srv_smtp"=".\server_modules\smtp\srv_smtp.dsp" - Package Owner=<4>
+Project: "srv_smtpd"=".\server_modules\srv_smtpd\srv_smtpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

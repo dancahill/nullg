@@ -19,6 +19,51 @@
 #include "http_mod.h"
 #include "mod_forums.h"
 
+typedef struct {
+	int id;
+	int pid;
+	int depth;
+	int numchildren;
+	time_t posttime;
+	char postername[64];
+	char subject[64];
+} BTREE;
+
+static int forum_treesort_r(CONN *sid, BTREE *btree, int sqr, int depth, int parentid, int foldercount)
+{
+	int fid, pid;
+	int i;
+
+	if (depth==0) {
+		i=sql_numtuples(sqr);
+	} else {
+		i=0;
+	}
+//	for (i=0;i<sql_numtuples(sqr);i++) {
+	for (;;) {
+		if (depth==0) {
+			i--;
+			if (i<0) break;
+		} else {
+			i++;
+			if (i>=sql_numtuples(sqr)) break;
+		}
+		pid=atoi(sql_getvalue(sqr, i, 1));
+		if (pid==parentid) {
+			fid=atoi(sql_getvalue(sqr, i, 0));
+			btree[foldercount].depth=depth;
+			btree[foldercount].id=atoi(sql_getvalue(sqr, i, 0));
+			btree[foldercount].pid=atoi(sql_getvalue(sqr, i, 1));
+			snprintf(btree[foldercount].postername, sizeof(btree[foldercount].postername)-1, "%s", sql_getvalue(sqr, i, 2));
+			btree[foldercount].posttime=time_sql2unix(sql_getvalue(sqr, i, 3));
+			snprintf(btree[foldercount].subject, sizeof(btree[foldercount].subject)-1, "%s", sql_getvalue(sqr, i, 4));
+			foldercount++;
+			foldercount=forum_treesort_r(sid, btree, sqr, depth+1, fid, foldercount);
+		}
+	}
+	return foldercount;
+}
+
 void forumsave(CONN *sid);
 void fmessagesave(CONN *sid);
 
@@ -80,22 +125,21 @@ void forumgroupedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/forums/groupsave NAME=groupedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=forumgroupid VALUE='%d'>\n", forumgroup.forumgroupid);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (forumgroupid!=0) {
-		prints(sid, "Forum Group %d</FONT></TH></TR>\n", forumgroupid);
+		prints(sid, "<TR><TH COLSPAN=2>Forum Group %d</TH></TR>\n", forumgroupid);
 	} else {
-		prints(sid, "New Forum Group</FONT></TH></TR>\n");
+		prints(sid, "<TR><TH COLSPAN=2>New Forum Group</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>Title</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=title value=\"%s\" SIZE=50></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.title));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>Description</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.description));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>Title</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=title value=\"%s\" SIZE=50></TD></TR>\n", str2html(sid, forumgroup.title));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>Description</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=description ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", str2html(sid, forumgroup.description));
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 //	if ((auth_priv(sid, "forums")&A_ADMIN)&&(forumgroupid>1)) {
 //		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 //	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
-	prints(sid, "</TD></TR>\n", config->colour_editform);
+	prints(sid, "</TD></TR>\n");
 	prints(sid, "</FORM>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
@@ -116,9 +160,9 @@ void forumgrouplist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Forum Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'>&nbsp;Forum Group Name&nbsp;</TH></TR>\n");
 		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/forums/groupedit?forumgroupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/forums/groupedit?forumgroupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<A HREF=%s/forums/groupedit?forumgroupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
@@ -187,13 +231,13 @@ void forumview(CONN *sid, int forumid)
 	prints(sid, "<CENTER>\n");
 	forumgroupid=atoi(sql_getvalue(sqr, 0, 1));
 	if (forumgroupid) {
-		prints(sid, "<B><FONT COLOR=%s STYLE='font-size: 14px'>", config->colour_links);
+		prints(sid, "<B><FONT STYLE='font-size: 14px'>");
 		prints(sid, "<A HREF=\"%s/forums/list?forumgroupid=%d\">%s</A></FONT></B><BR><BR>\n", sid->dat->in_ScriptName, forumgroupid, htview_forumgroup(sid, forumgroupid));
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;<B>%s</B>", config->colour_th, config->colour_thtext, str2html(sid, sql_getvalue(sqr, 0, 3)));
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;<B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 3)));
 	prints(sid, " by <B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 2)));
-	prints(sid, "</FONT></TH></TR>\n<TR><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", config->colour_fieldval);
+	prints(sid, "</TH></TR>\n<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\n");
 	printline2(sid, 1, sql_getvalue(sqr, 0, 4));
 	prints(sid, "<FONT SIZE=2>\n<BR><BR>[<A HREF=%s/forums/msglist?forum=%d>Top</A>]&nbsp;[<A HREF=%s/forums/msgpost?forum=%d>Reply</A>]</FONT>\n", sid->dat->in_ScriptName, forumid, sid->dat->in_ScriptName, forumid);
 	prints(sid, "</TD></TR></TABLE>\n");
@@ -262,12 +306,12 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	if ((sqr=sql_queryf("SELECT messageid, postername, posttime, subject, message FROM gw_forumposts WHERE messageid = %d and forumid = %d", messageid, forumid))<0) return;
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>");
 	prints(sid, "&nbsp;<B>%s</B><BR>", str2html(sid, sql_getvalue(sqr, 0, 3)));
 	prints(sid, "&nbsp;By <B>%s</B> on ", str2html(sid, sql_getvalue(sqr, 0, 1)));
 	prints(sid, "%s ", time_sql2datetext(sid, sql_getvalue(sqr, 0, 2)));
 	prints(sid, "%s", time_sql2timetext(sid, sql_getvalue(sqr, 0, 2)));
-	prints(sid, "</FONT></TH></TR>\n<TR><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", config->colour_fieldval);
+	prints(sid, "</FONT></TH></TR>\n<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\n");
 	prints(sid, "<FONT SIZE=2>\n[<A HREF=%s/forums/msglist?forum=%d>Top</A>]", sid->dat->in_ScriptName, forumid);
 	if (previous>0) {
 		prints(sid, "&nbsp;[<A HREF=%s/forums/msgread?forum=%d&message=%d>Previous</A>]", sid->dat->in_ScriptName, forumid, previous);
@@ -328,10 +372,10 @@ void forumpost(CONN *sid)
 		if (strcmp(submit, "Preview")==0) {
 			prints(sid, "<CENTER>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>\n");
 			prints(sid, "<B>%s</B> by ", str2html(sid, subject));
 			prints(sid, "<B>%s</B>\n", str2html(sid, sid->dat->user_username));
-			prints(sid, "</FONT></TH></TR><TR BGCOLOR=\"%s\"><TD STYLE='border-style:solid'>\n", config->colour_fieldval);
+			prints(sid, "</FONT></TH></TR><TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>\n");
 			printline2(sid, 1, message);
 			prints(sid, "&nbsp;\n");
 			prints(sid, "</TD></TR></TABLE><P>\n");
@@ -341,12 +385,12 @@ void forumpost(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/forums/post NAME=forumpost>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>New Forum</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Subject&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=subject VALUE=\"%s\" SIZE=60 style='width:427px'></TD></TR>\n", config->colour_editform, str2html(sid, subject));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP><B>&nbsp;Forum Group&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=forumgroupid style='width:427px'>\n", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=2>New Forum</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Subject&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=subject VALUE=\"%s\" SIZE=60 style='width:427px'></TD></TR>\n", str2html(sid, subject));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Forum Group&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=forumgroupid style='width:427px'>\n");
 	htselect_forumgroup(sid, forumgroupid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=message ROWS=10 COLS=70>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=message ROWS=10 COLS=70>");
 	printline2(sid, 0, message);
 	prints(sid, "</TEXTAREA></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
@@ -390,10 +434,10 @@ void fmessagepost(CONN *sid)
 		if (strcmp(submit, "Preview")==0) {
 			prints(sid, "<CENTER>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>\n");
 			prints(sid, "<B>%s</B> by ", str2html(sid, subject));
 			prints(sid, "<B>%s</B>\n", str2html(sid, sid->dat->user_username));
-			prints(sid, "</FONT></TH></TR><TR><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>\n", config->colour_fieldval);
+			prints(sid, "</TH></TR><TR><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>\n");
 			printline2(sid, 1, message);
 			prints(sid, "&nbsp;\n");
 			prints(sid, "</TD></TR></TABLE><P>\n");
@@ -429,9 +473,9 @@ void fmessagepost(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=forum VALUE=%d>\n", forumid);
 	prints(sid, "<INPUT TYPE=hidden NAME=reference VALUE=%d>\n", referenceid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>New Message</TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>Subject</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=subject VALUE=\"%s\" SIZE=70></TD></TR>\n", config->colour_editform, str2html(sid, subject));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=message ROWS=10 COLS=70>", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=2>New Message</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>Subject</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=subject VALUE=\"%s\" SIZE=70></TD></TR>\n", str2html(sid, subject));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=message ROWS=10 COLS=70>");
 	printline2(sid, 0, message);
 	prints(sid, "</TEXTAREA></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
@@ -468,9 +512,9 @@ void forumlist(CONN *sid, int longlist)
 		if (selected!=2) {
 			prints(sid, "<CENTER>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=250 STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR><TH BGCOLOR=\"%s\" COLSPAN=2 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Forum Groups</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR><TH COLSPAN=2 NOWRAP STYLE='border-style:solid'>Forum Groups</TH></TR>\n");
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 				prints(sid, "<TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=window.location.href=\"%s/forums/list?forumgroupid=%d\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "<A HREF=%s/forums/list?forumgroupid=%d", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, ">%s</A>&nbsp;</TD>", htview_forumgroup(sid, atoi(sql_getvalue(sqr, i, 0))));
@@ -493,15 +537,15 @@ void forumlist(CONN *sid, int longlist)
 	sql_freeresult(sqr);
 	prints(sid, "<CENTER>\n");
 	if ((selected==2)&&(forumgroupid)) {
-		prints(sid, "<B><FONT COLOR=%s STYLE='font-size: 14px'>%s</FONT></B><BR><BR>\n", config->colour_links, htview_forumgroup(sid, forumgroupid));
+		prints(sid, "<B><FONT STYLE='font-size: 14px'>%s</FONT></B><BR><BR>\n", htview_forumgroup(sid, forumgroupid));
 	}
 	if (longlist==0) {
 		if ((sqr=sql_queryf("SELECT forumid, postername, posttime, subject FROM gw_forums WHERE forumgroupid = %d ORDER BY forumid ASC", forumgroupid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-			prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=left STYLE='border-style:solid'><FONT COLOR=%s>Forum List</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+			prints(sid, "<TR><TH ALIGN=left STYLE='border-style:solid'>Forum List</TH></TR>\n");
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP STYLE='border-style:solid'>");
 				prints(sid, "[%d] <B><A HREF=%s/forums/msglist?forum=%d>", atoi(sql_getvalue(sqr, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				prints(sid, "%s</A></B> by ", str2html(sid, sql_getvalue(sqr, i, 3)));
 				prints(sid, "<B>%s</B>", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -519,14 +563,14 @@ void forumlist(CONN *sid, int longlist)
 		if (sql_numtuples(sqr)>0) {
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
-				prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+				prints(sid, "<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>");
 				prints(sid, "&nbsp;%s by ", str2html(sid, sql_getvalue(sqr, i, 3)));
 				prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 				if ((sqr2=sql_queryf("SELECT count(messageid) FROM gw_forumposts where forumid = %d", atoi(sql_getvalue(sqr, i, 0))))<0) return;
 				prints(sid, " (%d posts)", atoi(sql_getvalue(sqr2, 0, 0)));
 				sql_freeresult(sqr2);
 				prints(sid, "</FONT></TD></TR>\n");
-				prints(sid, "<TR><TD BGCOLOR=\"%s\" STYLE='border-style:solid'>", config->colour_fieldval);
+				prints(sid, "<TR><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>");
 				memset(body, 0, sizeof(body));
 				snprintf(body, sizeof(body)-1, "%s", sql_getvalue(sqr, i, 4));
 //				printline2(sid, 1, sql_getvalue(sqr, 0, 4));
@@ -543,22 +587,18 @@ void forumlist(CONN *sid, int longlist)
 	return;
 }
 
-// heh..  if this code makes sense to you, please explain it to me..
-// it's just a recursive depth first binary tree sorting algorithm, after all...
 void fmessagelist(CONN *sid)
 {
-	_btree *btree;
-	_ptree *ptree;
+	BTREE *xtree;
 	char *ptemp;
-	int base=0;
-	int depth=1;
-	int forumid=0;
-	int indent=0;
+	int msgcount;
+	int forumid;
+	int indent;
 	int i;
 	int j;
-	int k;
 	int x;
 	int sqr;
+	short int bgtoggle=0;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -568,71 +608,47 @@ void fmessagelist(CONN *sid)
 	forumid=atoi(ptemp);
 	forumview(sid, forumid);
 	if ((sqr=sql_queryf("SELECT messageid, referenceid, postername, posttime, subject FROM gw_forumposts WHERE forumid = %d ORDER BY messageid ASC", forumid))<0) return;
-	if (sql_numtuples(sqr)<1) {
+	msgcount=sql_numtuples(sqr);
+	if (msgcount<1) {
 		sql_freeresult(sqr);
 		return;
 	}
-	btree=calloc(sql_numtuples(sqr)+2, sizeof(_btree));
-	ptree=calloc(sql_numtuples(sqr)+2, sizeof(_ptree));
-	j=0;
-widthloop:
-	for (i=base;i<sql_numtuples(sqr); i++) {
-		if (btree[atoi(sql_getvalue(sqr, i, 0))].printed) continue;
-		if (atoi(sql_getvalue(sqr, i, 1))==btree[depth].lastref) {
-			ptree[j].id=i;
-			ptree[j].depth=depth-1;
-			j++;
-			btree[depth+1].lastref=atoi(sql_getvalue(sqr, i, 0));
-			btree[atoi(sql_getvalue(sqr, i, 0))].printed=1;
-			depth++;
-		}
-	}
-	if (depth>0) {
-		depth--;
-		goto widthloop;
-	}
-	base++;
-	btree[depth].lastref=0;
-	depth=0;
-	if (base<sql_numtuples(sqr)) {
-		goto widthloop;
-	}
-	for (i=0;i<sql_numtuples(sqr); i++) {
-		for (j=i+1; j<sql_numtuples(sqr); j++) {
-			if (ptree[j].depth<ptree[i].depth+1) break;
-			if (ptree[j].depth>ptree[i].depth+1) continue;
-			ptree[i].numchildren++;
+	xtree=calloc(msgcount, sizeof(BTREE));
+	forum_treesort_r(sid, xtree, sqr, 0, 0, 0);
+	sql_freeresult(sqr);
+	for (i=0;i<msgcount;i++) {
+		for (j=i+1;j<msgcount;j++) {
+			if (xtree[j].depth<xtree[i].depth+1) break;
+			if (xtree[j].depth>xtree[i].depth+1) continue;
+			xtree[i].numchildren++;
 		}
 	}
 	prints(sid, "<CENTER><BR>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=90%%>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\" STYLE='padding:2px'><TH ALIGN=left><FONT COLOR=%s>&nbsp;Topic&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;Author&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext);
-	for (i=0; i<sql_numtuples(sqr); i++) {
-		j=ptree[i].id;
-		if (((float)i/2.0)==(int)(i/2))
-			prints(sid, "<TR BGCOLOR=#F0F0F0>");
-		else
-			prints(sid, "<TR BGCOLOR=#E0E0E0>");
+	prints(sid, "<TR STYLE='padding:2px'><TH ALIGN=left>&nbsp;Topic&nbsp;</TH><TH ALIGN=left>&nbsp;Author&nbsp;</TH><TH ALIGN=left>&nbsp;Date&nbsp;</TH></TR>\n");
+	for (i=0;i<msgcount;i++) {
+		bgtoggle=bgtoggle?0:1;
+		prints(sid, "<TR BGCOLOR=\"%s\">", bgtoggle?"#F0F0F0":"#E0E0E0");
 		prints(sid, "<TD NOWRAP ALIGN=TOP WIDTH=100%%>");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR><TD>");
-		for (indent=0;indent<ptree[i].depth;indent++) {
+		for (indent=0;indent<xtree[i].depth;indent++) {
 			x=0;
-			for (k=i-1;k>-1;k--) {
-				if (indent==ptree[i].depth-1) {
-					if (ptree[k].numchildren>1) {
+			for (j=i-1;j>-1;j--) {
+				if (indent==xtree[i].depth-1) {
+					if (xtree[j].numchildren>1) {
 						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-t.gif HEIGHT=21 WIDTH=9>");
-						ptree[k].numchildren--;
+						xtree[j].numchildren--;
 						x=1;
 						break;
-					} else if (ptree[k].numchildren==1) {
+					} else if (xtree[j].numchildren==1) {
 						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-l.gif HEIGHT=21 WIDTH=9>");
-						ptree[k].numchildren--;
+						xtree[j].numchildren--;
 						x=1;
 						break;
 					}
-				} else if (indent<ptree[i].depth-1) {
-					if (indent==ptree[k].depth) {
-						if (ptree[k].numchildren>0) {
+				} else if (indent<xtree[i].depth-1) {
+					if (indent==xtree[j].depth) {
+						if (xtree[j].numchildren>0) {
 							prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-i.gif HEIGHT=21 WIDTH=9>");
 							x=1;
 							break;
@@ -644,25 +660,23 @@ widthloop:
 				prints(sid, "<IMG BORDER=0 SRC=/groupware/images/blank.gif HEIGHT=21 WIDTH=9>");
 			}
 		}
-		if (ptree[i].numchildren>0) {
+		if (xtree[i].numchildren>0) {
 			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-m.gif HEIGHT=21 WIDTH=9>");
-		} else if (ptree[i].depth<1) {
+		} else if (xtree[i].depth<1) {
 			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-o.gif HEIGHT=21 WIDTH=9>");
 		} else {
 			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-c.gif HEIGHT=21 WIDTH=9>");
 		}
-		prints(sid, "</TD><TD NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/forums/msgread?forum=%d&message=%d'\">", sid->dat->in_ScriptName, forumid, atoi(sql_getvalue(sqr, j, 0)));
-		prints(sid, "<A HREF=%s/forums/msgread?forum=%d&message=%d>", sid->dat->in_ScriptName, forumid, atoi(sql_getvalue(sqr, j, 0)));
-		prints(sid, "<B>&nbsp;%s</B></A>&nbsp;", str2html(sid, sql_getvalue(sqr, j, 4)));
+		prints(sid, "</TD><TD NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/forums/msgread?forum=%d&message=%d'\">", sid->dat->in_ScriptName, forumid, xtree[i].id);
+		prints(sid, "<A HREF=%s/forums/msgread?forum=%d&message=%d>", sid->dat->in_ScriptName, forumid, xtree[i].id);
+		prints(sid, "<B>&nbsp;%s</B></A>&nbsp;", str2html(sid, xtree[i].subject));
 		prints(sid, "</TD></TR></TABLE></TD>");
-		prints(sid, "<TD NOWRAP>%s&nbsp;&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, j, 2)));
-		prints(sid, "<TD NOWRAP>%s ", time_sql2datetext(sid, sql_getvalue(sqr, j, 3)));
-		prints(sid, "%s</TD></TR>\n", time_sql2timetext(sid, sql_getvalue(sqr, j, 3)));
+		prints(sid, "<TD NOWRAP>%s&nbsp;&nbsp;</TD>", str2html(sid, xtree[i].postername));
+		prints(sid, "<TD NOWRAP>%s ", time_unix2datetext(sid, xtree[i].posttime));
+		prints(sid, "%s</TD></TR>\n", time_unix2timetext(sid, xtree[i].posttime));
 	}
 	prints(sid, "</TABLE>\n</CENTER>\n");
-	free(ptree);
-	free(btree);
-	sql_freeresult(sqr);
+	free(xtree);
 	return;
 }
 

@@ -56,30 +56,30 @@ void searchsqladd(CONN *sid)
 	prints(sid, "<INPUT TYPE=HIDDEN NAME=queryid VALUE=%d>\n", queryid);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	if (queryid!=0) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>Query Number %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, query.queryid);
+		prints(sid, "<TR><TH COLSPAN=2>Query Number %d</TH></TR>\n", query.queryid);
 	} else {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2><FONT COLOR=%s>New Query</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR><TH COLSPAN=2>New Query</TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", config->colour_editform, str2html(sid, query.queryname));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", str2html(sid, query.queryname));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>%s</TEXTAREA></TD></TR>\n", query.query);
 	if ((query.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "query")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, query.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, query.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", query.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", query.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", query.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", query.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", query.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", query.obj_operm==2?" CHECKED":"");
@@ -132,13 +132,13 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "<CENTER>\n");
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "Saved queries<BR>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR BGCOLOR=\"%s\">\n", config->colour_th);
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>\n");
 			if (auth_priv(sid, "query")&A_ADMIN) {
 				prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 			}
-			prints(sid, "<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>Query Name</FONT></TH></TR>\n", config->colour_thtext);
+			prints(sid, "<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'>Query Name</TH></TR>\n");
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 				if (auth_priv(sid, "query")&A_ADMIN) {
 					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 				}
@@ -247,18 +247,18 @@ void searchsqlrun(CONN *sid)
 	}
 	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(sqr));
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_th);
+	prints(sid, "<TR>");
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
 		offset=atoi(ptemp);
 	} else {
 		offset=0;
 	}
 	for (i=0;i<sql_numfields(sqr);i++) {
-		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>%s</FONT></TH>", config->colour_thtext, str2html(sid, sql_getname(sqr, i)));
+		prints(sid, "<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>%s</TH>", str2html(sid, sql_getname(sqr, i)));
 	}
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
-		prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">");
 		for (j=0;j<sql_numfields(sqr);j++)
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr, i, j)));
 		prints(sid, "</TR>\n");

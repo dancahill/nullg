@@ -55,8 +55,8 @@ void searchform(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
 	if (auth_priv(sid, "contacts")&A_READ) {
 		prints(sid, "<FORM METHOD=GET ACTION=%s/search/contacts NAME=contactsearch>\n", sid->dat->in_ScriptName);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD><SELECT NAME=column>\n", config->colour_editform);
+		prints(sid, "<TR><TH COLSPAN=3>Contact Search Form</TH></TR>\n");
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n");
 		prints(sid, "<OPTION SELECTED>All Columns\n");
 		if ((sqr=sql_query("SELECT * FROM gw_contacts WHERE contactid = 1"))<0) return;
 		for (i=0;i<sql_numfields(sqr);i++) {
@@ -84,8 +84,8 @@ void searchform(CONN *sid)
 		prints(sid, "<TR><TD COLSPAN=3>&nbsp;</TD></TR>\n");
 	}
 	prints(sid, "<FORM NAME='searchForm' ACTION=javascript:startSearch()>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=3><FONT COLOR=%s>Internet Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD>\n", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=3>Internet Search Form</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD>\n");
 	prints(sid, "<SELECT name='whichEngine'>\n");
 	prints(sid, "<OPTION>Altavista\n");
 	prints(sid, "<OPTION>AOL Netfind\n");

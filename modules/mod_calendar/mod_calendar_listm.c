@@ -147,9 +147,9 @@ void calendarlistmonth(CONN *sid)
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
 	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Sunday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Monday</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Tuesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Wednesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Thursday</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Friday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Saturday</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext);
+	prints(sid, "<TR><TH WIDTH=200 style='width:14%%; border-style:solid''>Sunday</TH><TH WIDTH=200 style='width:14%%; border-style:solid''>Monday</TH>");
+	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'>Tuesday</TH><TH WIDTH=200 style='width:14%%; border-style:solid'>Wednesday</TH><TH WIDTH=200 style='width:14%%; border-style:solid'>Thursday</TH>");
+	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'>Friday</TH><TH WIDTH=200 style='width:14%%; border-style:solid'>Saturday</TH></TR>\n");
 	printdate=today.day-35-today.week;
 	unixdate=unixdate/86400-35-today.week;
 	while (printdate<-5) { printdate+=7; unixdate+=7; }
@@ -164,14 +164,14 @@ void calendarlistmonth(CONN *sid)
 	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE groupid = %d ORDER BY userid ASC", groupid))<0) return;
 	for (i=printdate;i<dim[today.month-1]+1;i+=7) {
-		prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_fieldval);
+		prints(sid, "<TR CLASS=\"FIELDVAL\">\n");
 		for (j=0;j<7;j++) {
 			if (unixdate==now) {
 				prints(sid, "<TD BGCOLOR=#E0E0FF");
 			} else if ((printdate>0)&&(printdate<=dim[today.month-1])) {
-				prints(sid, "<TD BGCOLOR=\"%s\"", config->colour_fieldval);
+				prints(sid, "<TD CLASS=\"FIELDVAL\"");
 			} else {
-				prints(sid, "<TD BGCOLOR=#D0D0D0");
+				prints(sid, "<TD CLASS=\"FIELDNAME\"");
 			}
 			prints(sid, " VALIGN=TOP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, unixdate, status);
 			if (userid>0) prints(sid, "&userid=%d", userid);
@@ -235,8 +235,8 @@ void calendarlistmonth(CONN *sid)
 	prints(sid, "</CENTER>\n");
 	if ((groupid>0)&&(sql_numtuples(sqr2)>0)) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Colour Key&nbsp;</FONT></TH></TR>", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
+		prints(sid, "<TR><TH STYLE='border-style:solid'>&nbsp;Colour Key&nbsp;</TH></TR>");
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP STYLE='border-style:solid'>");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\r\n");
 		j=0;
 		for (i=0;i<sql_numtuples(sqr2);i++) {

@@ -30,10 +30,10 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs);
 
 int main(int argc, char *argv[])
 {
+	SERVICE_TABLE_ENTRY SrvTable[2];
 	HANDLE ghevDoForever;
 	DWORD g_dwOSVersion;
-//	pthread_attr_t thr_attr;
-	SERVICE_TABLE_ENTRY SrvTable[2];
+	unsigned short i;
 	char *ptemp;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -57,6 +57,14 @@ int main(int argc, char *argv[])
 			exit(-2);
 		}
 		init();
+		memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
+		if (argc<2) {
+			if (modules_init()!=0) exit(-2);
+		} else {
+			for (i=1;i<argc;i++) {
+				module_load(argv[i]);
+			}
+		}
 		if (modules_exec()!=0) exit(-2);
 		if (modules_cron()!=0) exit(-2);
 //		WaitForSingleObject(ghevDoForever, INFINITE);
@@ -110,6 +118,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	struct passwd *pw;
+	unsigned short i;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 	memset((char *)&proc, 0, sizeof(proc));
@@ -118,6 +127,14 @@ int main(int argc, char *argv[])
 	if (getenv("REQUEST_METHOD")!=NULL) return 0;
 	umask(077);
 	init();
+	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
+	if (argc<2) {
+		if (modules_init()!=0) exit(-2);
+	} else {
+		for (i=1;i<argc;i++) {
+			module_load(argv[i]);
+		}
+	}
 	if (getuid()==0) {
 		if (!(pw=getpwnam(proc.config.server_username))) {
 			printf("\r\nCannot find user '%s'.  Exiting.\r\n", proc.config.server_username);

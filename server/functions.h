@@ -87,6 +87,7 @@ void *cronloop(void *x);
 int     modules_init(void);
 int     modules_exec(void);
 int     modules_cron(void);
+int     module_load(char *modname);
 /* sanity.c functions */
 int     sanity_dbcheck(void);
 /* log.c functions */

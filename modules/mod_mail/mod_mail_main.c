@@ -37,7 +37,7 @@ void wmnotice(CONN *sid)
 	}
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Groupware E-Mail Notice</FONT></B>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'>Account Name</TH><TH STYLE='border-style:solid'>New</TH><TH STYLE='border-style:solid'>Total</TH></TR>\n", config->colour_th);
+	prints(sid, "<TR><TH ALIGN=left WIDTH=100%% STYLE='border-style:solid'>Account Name</TH><TH STYLE='border-style:solid'>New</TH><TH STYLE='border-style:solid'>Total</TH></TR>\n");
 	if ((sqr1=sql_queryf("SELECT mailaccountid, accountname, poppassword FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 	for (i=0;i<sql_numtuples(sqr1);i++) {
 		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr1, i, 0));
@@ -47,7 +47,7 @@ void wmnotice(CONN *sid)
 		if ((sqr2=sql_queryf("SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 1 AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) continue;
 		newmessages=atoi(sql_getvalue(sqr2, 0, 0));
 		sql_freeresult(sqr2);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TD ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.opener.top.gwmain.location.href='%s/mail/main?accountid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.opener.top.gwmain.location.href='%s/mail/main?accountid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sql_getvalue(sqr1, i, 1));
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s%d%s</TD><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%d</TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"", nummessages);
 	}
@@ -76,10 +76,10 @@ void wmloginform(CONN *sid)
 	prints(sid, "<BR><CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/sync AUTOCOMPLETE=OFF NAME=wmlogin>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE CELLPADDING=0 CELLSPACING=0 BORDER=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TH COLSPAN=2 STYLE='padding:1px'><FONT COLOR=%s>Webmail Login</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=wmusername SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->wm->username);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=wmpassword SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->wm->password);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Login'></CENTER></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>Webmail Login</TH></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=wmusername SIZE=25 VALUE='%s'></TD></TR>\n", sid->dat->wm->username);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=wmpassword SIZE=25 VALUE='%s'></TD></TR>\n", sid->dat->wm->password);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Login'></CENTER></TD></TR>\n");
 	prints(sid, "</TABLE></FORM></CENTER>\n");
 	if (strlen(sid->dat->wm->username)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.wmlogin.wmusername.focus();\n// -->\n</SCRIPT>\n");
@@ -264,27 +264,27 @@ void webmaillist(CONN *sid)
 	prints(sid, "</B></TD></TR>\n");
 	prints(sid, "<TR><TD COLSPAN=2>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\">\n", config->colour_th);
+	prints(sid, "<TR>\n");
 	if (searchstring[0]=='\0') {
 		prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	}
 	neworder=(order==3?2:3);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_FROM);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_FROM);
 	neworder=(order==5?4:5);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\" WIDTH=100%%>", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_SUBJECT);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_SUBJECT);
 	neworder=(order==0?1:0);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_DATE);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_DATE);
 	neworder=(order==6?7:6);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_SIZE);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_SIZE);
 	prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<nummessages)&&(i<offset+sid->dat->user_maxlist);i++) {
 		dbread_getheader(sid, sqr, i, &header);
-		prints(sid, "<TR BGCOLOR=\"%s\">", strcmp(header.status, "r")!=0?"#D0D0FF":config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=\"%s\">", strcmp(header.status, "r")!=0?"#D0D0FF":"#F0F0F0");
 		if (searchstring[0]=='\0') {
 			prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>\r\n", header.localid, header.uidl);
 		}
@@ -435,29 +435,29 @@ void webmailread(CONN *sid)
 		prints(sid, "[%s]\n", MOD_MAIL_NEXT);
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='padding:1px; border-style:solid'>", config->colour_fieldval);
+	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='padding:1px; border-style:solid'>");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_FROM, config->colour_fieldval);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_FROM);
 	prints(sid, "<A HREF=\"javascript:ViewContact('%s','%s');\">%s</A> - ", encodeurl(sid, header.FromName), header.FromAddr, str2html(sid, header.From));
 	prints(sid, "<A HREF=\"javascript:MsgTo('&quot;%s&quot; <%s>');\">Send Mail</A>", encodeurl(sid, header.FromName), header.ReplyTo);
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_TO, config->colour_fieldval);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_TO);
 	printht(sid, "%s", header.To);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	if (strlen(header.CC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_CC, config->colour_fieldval);
+		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_CC);
 		printht(sid, "%s", header.CC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
 	if (strlen(header.BCC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_BCC, config->colour_fieldval);
+		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_BCC);
 		printht(sid, "%s", header.BCC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_SUBJECT, config->colour_fieldval);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_SUBJECT);
 	printht(sid, "%s", header.Subject);
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=\"%s\" VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=\"%s\" WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_DATE, config->colour_fieldval);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_DATE);
 	memset(curdate, 0, sizeof(curdate));
 	unixdate=time_sql2unix(header.Date);
 	unixdate+=time_tzoffset(sid, unixdate);
@@ -466,8 +466,8 @@ void webmailread(CONN *sid)
 	printht(sid, "%s", curdate);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", config->colour_fieldval, sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD STYLE='border-style:solid'>\n", config->colour_fieldval);
+	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
+	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, header.accountid, localid);
 	fixslashes(msgfilename);
@@ -585,18 +585,18 @@ void webmailwrite(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/save NAME=wmcompose ENCTYPE=multipart/form-data onSubmit=\"copy_submit()\">\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=inreplyto VALUE=\"%s\">\n", header.MessageID);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", config->colour_editform, MOD_MAIL_FROM);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", MOD_MAIL_FROM);
 	prints(sid, "<SELECT NAME=accountid style='width:433px'>\n");
 	htselect_mailaccount(sid, accountid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_TO, str2html(sid, msgto));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_CC, str2html(sid, msgcc));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_BCC, str2html(sid, msgbcc));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_SUBJECT, str2html(sid, subject));
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%% STYLE='padding:0px'><B>&nbsp;Format&nbsp;</B></TD><TD STYLE='padding:0px'>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_TO, str2html(sid, msgto));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_CC, str2html(sid, msgcc));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_BCC, str2html(sid, msgbcc));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_SUBJECT, str2html(sid, subject));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE='padding:0px'><B>&nbsp;Format&nbsp;</B></TD><TD STYLE='padding:0px'>");
 	prints(sid, "<select NAME=ctype onChange=\"toggle_mode()\">\r\n<option value=plain>Plain Text</option>\r\n<option value=html>HTML</option>\r\n</select>\r\n");
 	prints(sid, "</TD></TR>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2>", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2>");
 	prints(sid, "<DIV ID=MenuBar STYLE='display: none'>\r\n");
 	prints(sid, "<TABLE BORDER=0><TR><TD NOWRAP STYLE='padding:0px'>\r\n");
 	prints(sid, "	<select onchange=\"SetFont('FontName', this.value)\">\r\n");
@@ -657,7 +657,7 @@ void webmailwrite(CONN *sid)
 	}
 	prints(sid, "</TEXTAREA></CENTER>\n");
 	prints(sid, "</TD></TR>\r\n");
-	prints(sid, "<TR BGCOLOR=\"%s\"><TD WIDTH=10%%>&nbsp;<B>Attachment</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=FILE NAME=fattach SIZE=70></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>Attachment</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=FILE NAME=fattach SIZE=70></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Send Mail'>\n");
 	prints(sid, "</FORM>\n</CENTER>\n");

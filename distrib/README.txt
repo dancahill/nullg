@@ -1,5 +1,5 @@
 -------------------------------------------
-NullLogic Groupware version 1.2 Readme File
+NullLogic Groupware version 1.3 Readme File
 -------------------------------------------
 
 This readme is intended to provide only the most cursory introduction

@@ -242,7 +242,7 @@ int modules_init()
 		fprintf(fp, "mod_profile\n");
 		fprintf(fp, "mod_searches\n");
 		fprintf(fp, "mod_tasks\n");
-		fprintf(fp, "#mod_xmlrpc\n");
+		fprintf(fp, "mod_xmlrpc\n");
 		fclose(fp);
 		fp=fopen(file, "r");
 	}

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_cgi.dsp
 !IF "$(CFG)" == ""
 CFG=mod_cgi - Win32 Release
-!MESSAGE No configuration specified. Defaulting to mod_cgi - Win32 Release.
+!MESSAGE mod_cgi - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_cgi - Win32 Release"
@@ -91,15 +91,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("mod_cgi.dep")
-!INCLUDE "mod_cgi.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "mod_cgi.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "mod_cgi - Win32 Release"

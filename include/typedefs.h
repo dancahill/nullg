@@ -102,17 +102,6 @@ typedef struct {
 } SQLRES;
 
 typedef struct {
-	char      colour_topmenu[10];
-	char      colour_editform[10];
-	char      colour_fieldname[10];
-	char      colour_fieldnametext[10];
-	char      colour_fieldval[10];
-	char      colour_fieldvaltext[10];
-	char      colour_tabletrim[10];
-	char      colour_th[10];
-	char      colour_thtext[10];
-	char      colour_thlink[10];
-	char      colour_links[10];
 	char      server_dir_base[255];
 	char      server_dir_bin[255];
 	char      server_dir_cgi[255];

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on srv_pop3d.dsp
 !IF "$(CFG)" == ""
 CFG=srv_pop3d - Win32 Release
-!MESSAGE No configuration specified. Defaulting to srv_pop3d - Win32 Release.
+!MESSAGE srv_pop3d - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "srv_pop3d - Win32 Release"
@@ -92,15 +92,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("srv_pop3d.dep")
-!INCLUDE "srv_pop3d.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "srv_pop3d.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "srv_pop3d - Win32 Release"

@@ -1,111 +1,22 @@
-1.2.5
+1.3.1
 -----
-- extended precision of percentages in mod_orders
-- removed 303 redirects for IIS compatibility
-- upgraded sqlite to 2.8.11
-- improved performance in fastcgi bridge
-- added pragma command for sqlite to improve write performance
-- added pragma command for sqlite to allow empty tables
-- added retry loops for locked sqlite databases
-- added spam filtering capability (via external script)
-- fixed minor config parsing errors
-- fixed html email formatting so it looks a lot less ... spammy
-- fixed incorrect date display for task reminders
-- fixed truncated email passwords
-- added a group selector for messenger user listing
+- Colours are now entirely controlled by CSS
+- Fixed process model to allow servers to be run as separate processes
+  (controlled by command-line parameters)
+- Forum tree sorting code was rewritten to allow a greater degree of
+  reuseability, and flexibility with varying sorting methods
+- Fixed mail module to _not_ try to sync account 0
+- mod_xmlrpc is now enabled by default in new installations
+- Updated SQLite to 2.8.12
+- Fixed several minor resource leaks caused by the process model rewrite
+- Changed default html charset to iso-8859-1 to avoid having high-ascii
+  characters clobbered
 
-1.2.4
+1.3.0
 -----
-- minor fixes for outlook<->gw sync tool
-- added csv and wab sync tools (suitable only for the crazy-brave for now)
-- several minor fixes to the order system
-- preliminary work on integrated pop3/smtp servers
-- schema fix - added hdr_messageid and hdr_inreplyto to gw_mailheaders
-- fixed widths in e-mail listing
-- fixed folderid and orderby in e-mail listing
-- started work on a 'fastcgi' bridge
-- minor fixes to env vars in mod_cgi
-- minor sql schema corrections
-- major speedups in e-mail mime file handling
-- fixed multiple accesses of e-mail accounts (was causing long lock delays)
-- fixed several premature idle-timeout points
-- moved mail account maintenance to mod_mail
-- added proper reply-to and smtp auth options to mail account maintenance
-- added mail<->contact and mail<->mail cross-referencing support
-- portability work for Linux 2.0 w/libc5 and FreeBSD
-- smarter and faster string formatting
-- greatly improved tcp input buffering
-- new availability map for the calendar module
-- new e-mail header filtering functionality
-
-1.2.3
------
-- added support for csv exports from user-defined sql queries
-- added import and export support for vcards
-- added native nt service support
-- changed the layout of contacts to use a new tabbed forms layout
-- minor fixes in css layout for better looking printouts
-- fixed cgi support on nt
-- fixed random segfault in mail syncing (invalid free())
-- fixed messenger history layout
-- fixed odbc date queries
-- fixed postgresql datetime/timestamp schema
-- added sqlite library to build process
-- added contact.list function to xmlrpc
-- wrote client library for xmlrpc contact syncing
-- wrote functional groupware<->outlook sync tool (test)
-- added hierarchical tree support to mail folders
-- fixed mailbox lock releasing with peer disconnects
-- modules can now dynamically add themselves to the main menu
-- fixed broken POST with hosted PHP (missing content-type)
-- fixed missing folders in various tree listings
-- added support for external virus scanner (experimental)
-
-1.2.2
------
-- license change - now available under GPL or commercial license
-- removed all licensing key checks and restrictions
-- fixed sql resource leak in mail purging
-- added server statistics to admin status
-- mail header indexing is now per-account
-- minor fixes to html mail composer
-- more modularization (cgi, html, xmlrpc)
-- numerous cleanups to module API
-- minor improvements to the build process
-- added default zone
-- streamlined the mail syncing/sending
-- fixed block selection in availability (moz js)
-- fixed bad quoting in file listing (js)
-- minor font and style fixes
-- fixed mail check/send order
-- fixed mysql 3.23/4.0 conflicts
-- better tree depth control in file listings
-- improved module dependency checks
-- better mime processing for email attachments with attachments (ad nauseum)
-- consolidated all of the calendar listing queries
-- added colour coding to calendar month listing
-
-1.2.1
------
-- fixes in files - better folder memory between pages
-- fixed expiring licenses
-- fixed image alignment in file listing
-- added perm controls to bookmark folders
-- fixed odd duped reminder popups
-- minor style fixes
-- call start and finish time recorded now
-- fixed timezone adjustment for highlighted day in month view
-- added duration and status to calls listings
-- numerous javascript enhancements to call handling
-- fixed frequency of mail account checking
-- added sql logging of record changes - removed same in flat file logs
-- added local spooling for incoming and outgoing email
-- added address lookup interface for the webmail composer
-- added html editor to webmail composer (IE and Moz 1.3+)
-- added support for multiple email folders
-- total rewrite of the messaging system
-- all user components are now fully modular
-- added option to view calendar by groups
-- added db integrity check tool to admin
-- added contact lookup for call editing interface
-- added inherited default ownership to files
+- Initial 1.3 development release
+- Each server, i.e. http, pop3, is now loaded as a module by a common core
+  server, and can either be loaded as a single process, or as separate server
+  processes
+- A new TCP socket handling interface has been designed to allow transparent
+  use of SSL (not finished yet)

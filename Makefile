@@ -54,6 +54,7 @@ clean:
 mrclean: clean
 	@ln -sf Rules/Linux Rules.mak
 	@cd contrib;./make_sqlite clean
+	@rm -f `find -name *~`
 
 install: all
 	@cd distrib;./setup

@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on config.dsp
 !IF "$(CFG)" == ""
 CFG=config - Win32 Release
-!MESSAGE No configuration specified. Defaulting to config - Win32 Release.
+!MESSAGE config - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "config - Win32 Release"
@@ -96,15 +96,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("config.dep")
-!INCLUDE "config.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "config.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "config - Win32 Release"

@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.3.0"
+MAIN_TITLE="NullLogic Groupware Configuration v1.3.1"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..

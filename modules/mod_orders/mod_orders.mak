@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Generated NMAKE File, Based on mod_orders.dsp
 !IF "$(CFG)" == ""
 CFG=mod_orders - Win32 Release
-!MESSAGE No configuration specified. Defaulting to mod_orders - Win32 Release.
+!MESSAGE mod_orders - Win32 Release.
 !ENDIF 
 
 !IF "$(CFG)" != "mod_orders - Win32 Release"
@@ -97,15 +97,6 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
-
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("mod_orders.dep")
-!INCLUDE "mod_orders.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "mod_orders.dep"
-!ENDIF 
-!ENDIF 
 
 
 !IF "$(CFG)" == "mod_orders - Win32 Release"

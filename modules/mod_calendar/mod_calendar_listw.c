@@ -117,12 +117,12 @@ void calendarlistweek(CONN *sid)
 		t=unixdate+(i*86400);
 		strftime(showtime, sizeof(showtime), "%Y-%m-%d", gmtime(&t));
 		t-=time_tzoffset(sid, t);
-		prints(sid, "<TR BGCOLOR=\"%s\"><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>", config->colour_th);
+		prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>");
 		prints(sid, "<FONT SIZE=2><B><A HREF=%s/calendar/list?day=%d", sid->dat->in_ScriptName, (int)(t/86400));
 		if (userid>0) prints(sid, "&userid=%d", userid);
 		if (groupid>0) prints(sid, "&groupid=%d", groupid);
 		prints(sid, "&status=%d", status);
-		prints(sid, " STYLE='color: %s'>%s</A></B></FONT></TH></TR>\n", config->colour_thlink, time_sql2datetext(sid, showtime));
+		prints(sid, ">%s</A></B></TH></TR>\n", time_sql2datetext(sid, showtime));
 		line=1;
 		for (j=0;j<sql_numtuples(sqr);j++) {
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
@@ -137,7 +137,7 @@ void calendarlistweek(CONN *sid)
 				}
 				if (k==sql_numtuples(sqr2)) continue;
 			}
-			prints(sid, "<TR BGCOLOR=\"%s\">", config->colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
 			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
@@ -150,7 +150,7 @@ void calendarlistweek(CONN *sid)
 			if (line>0) line--;
 		}
 		while (line>0) {
-			prints(sid, "<TR BGCOLOR=\"%s\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
 			line--;
 		}
 	}

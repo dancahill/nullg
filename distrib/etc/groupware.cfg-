@@ -1,16 +1,5 @@
 # This file contains system settings for NullLogic Groupware.
 
-COLOUR.EDITFORM       = "#F0F0F0"
-COLOUR.FIELDNAME      = "#E0E0E0"
-COLOUR.FIELDNAMETEXT  = "#000000"
-COLOUR.FIELDVAL       = "#F0F0F0"
-COLOUR.FIELDVALTEXT   = "#000000"
-COLOUR.LINKS          = "#0000FF"
-COLOUR.TABLETRIM      = "#000000"
-COLOUR.TH             = "#0000A0"
-COLOUR.THLINK         = "#E0E0FF"
-COLOUR.THTEXT         = "#FFFFFF"
-COLOUR.TOPMENU        = "#C0C0C0"
 SERVER.DIR.BASE       = "/usr/local/nullgroupware"
 SERVER.DIR.BIN        = "/usr/local/nullgroupware/bin"
 SERVER.DIR.CGI        = "/usr/local/nullgroupware/cgi-bin"
