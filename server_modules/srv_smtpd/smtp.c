@@ -85,7 +85,7 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 #else
 				if (mkdir(tmpname, 0700)!=0) {
 #endif
-					log_error("smtp", __FILE__, __LINE__, 0, "Error creating directory '%s'", tmpname);
+					log_error("smtpd", __FILE__, __LINE__, 0, "Error creating directory '%s'", tmpname);
 					continue;
 				}
 			}
@@ -95,7 +95,7 @@ retry1:
 			snprintf(tmpname, sizeof(tmpname)-1, "%s/local/%s/%d%03d.msg", config->server_dir_var_mail, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry1;
-			log_access("smtp", "local delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
+			log_access("smtpd", "local delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
 		} else if (mconn->sender_is_local) {
 			is_remote=1;
 retry2:
@@ -105,8 +105,31 @@ retry2:
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry2;
 		} else {
-			log_error("smtp", __FILE__, __LINE__, 1, "relaying denied.");
+
+			is_remote=1;
+retry3:
+			gettimeofday(&ttime, &tzone);
+			memset(tmpname, 0, sizeof(tmpname));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/queue/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			fixslashes(tmpname);
+			if (stat(tmpname, &sb)==0) goto retry3;
+
+			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
+
+/*
+retry3:
+			gettimeofday(&ttime, &tzone);
+			memset(tmpname, 0, sizeof(tmpname));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/unknown/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			fixslashes(tmpname);
+			if (stat(tmpname, &sb)==0) goto retry3;
+			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
+
+
+
+			log_error("smtpd", __FILE__, __LINE__, 1, "relaying denied.");
 			continue;
+*/
 		}
 		if ((fp=fopen(tmpname, "wb"))!=NULL) {
 			if (is_remote) {
@@ -122,7 +145,7 @@ retry2:
 			} while (blocksize>0);
 			fclose(fp);
 		} else {
-			log_error("smtp", __FILE__, __LINE__, 0, "ERROR: Cannot write to file [%s].", tmpname);
+			log_error("smtpd", __FILE__, __LINE__, 0, "ERROR: Cannot write to file [%s].", tmpname);
 		}
 	}
 	return;
@@ -274,7 +297,7 @@ void smtp_dorequest(CONN *sid)
 		}
 	} while (1);
 //	strncpy(sid->dat->in_RemoteAddr, inet_ntoa(sid->ClientAddr.sin_addr), sizeof(sid->dat->in_RemoteAddr)-1);
-	log_access("smtp", "HELO '%s' (%s)", mconn.helo, inet_ntoa(sid->socket.ClientAddr.sin_addr));
+	log_access("smtpd", "HELO '%s' (%s)", mconn.helo, inet_ntoa(sid->socket.ClientAddr.sin_addr));
 	mconn.rcptalloc=50;
 	if ((mconn.rcpt=(char **)calloc(mconn.rcptalloc, sizeof(char *)))==NULL) return;
 	do {
@@ -297,7 +320,7 @@ void smtp_dorequest(CONN *sid)
 		} else if (strcasecmp(line, "noop")==0) {
 			smtp_noop(sid, &mconn);
 		} else {
-			log_error("smtp", __FILE__, __LINE__, 1, "UNKNOWN COMMAND: '%s'", line);
+			log_error("smtpd", __FILE__, __LINE__, 1, "UNKNOWN COMMAND: '%s'", line);
 			tcp_fprintf(&sid->socket, "500 Unknown Command\r\n");
 		}
 	} while (1);

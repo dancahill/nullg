@@ -39,7 +39,7 @@ void mod_html_header(CONN *sid, char *title)
 	prints(sid, "</STYLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/css/style.css\">\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript SRC=/groupware/javascript/wmedit.js TYPE=text/javascript></SCRIPT>\r\n");
+		prints(sid, "<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/groupware/javascript/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n");
 	}
 	prints(sid, "</HEAD>\r\n");
 	prints(sid, "<BODY BACKGROUND=\"/groupware/images/bgmain.gif\"");

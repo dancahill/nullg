@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.2"
+MAIN_TITLE="NullLogic Groupware Setup v1.3.3"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -33,12 +33,17 @@ do_copying() {
 	cp -pR COPYRIGHT.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
 	cp -pR README.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
 	touch $SERVER_DIR_BASE/var/db/groupware.db	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/http-access.log	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/http-error.log	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/pop3-access.log	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/pop3-error.log	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/smtp-access.log	1>>$LOGFILE 2>>$LOGFILE
-	touch $SERVER_DIR_BASE/var/log/smtp-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/core-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/core-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/httpd-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/httpd-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/pop3d-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/pop3d-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtpd-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtpd-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtpq-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/smtpq-error.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/sql-error.log	1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/COPYING		1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/COPYRIGHT.txt	1>>$LOGFILE 2>>$LOGFILE
 	chmod 0644 $SERVER_DIR_BASE/README.txt		1>>$LOGFILE 2>>$LOGFILE
@@ -126,11 +131,17 @@ else
 	setup_console
 fi
 rm -f $LOGFILE
-cd $SERVER_DIR_BASE/bin ; ./configure
 
-echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./configure'."
-echo
-echo "To start the server, run 'cd $SERVER_DIR_BASE/bin;./rc.groupware start'."
-echo
+case "$1" in
+upgrade)
+	cd $SERVER_DIR_BASE/bin ; ./configure upgrade
+	;;
+*)
+	cd $SERVER_DIR_BASE/bin ; ./configure
+	echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./configure'."
+	echo
+	echo "To start the server, run 'cd $SERVER_DIR_BASE/bin;./rc.groupware start'."
+	echo
+esac
 
 exit

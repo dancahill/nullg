@@ -49,10 +49,12 @@ void pop3_dorequest(CONN *sid);
 	int ListenSocketSSL;
 	pthread_t ListenThread;
 	pthread_t ListenThreadSSL;
+	pthread_mutex_t ListenerMutex;
 #else
 	extern CONN *conn;
 	extern int ListenSocket;
 	extern int ListenSocketSSL;
 	extern pthread_t ListenThread;
 	extern pthread_t ListenThreadSSL;
+	extern pthread_mutex_t ListenerMutex;
 #endif

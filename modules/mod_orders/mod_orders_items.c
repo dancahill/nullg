@@ -131,7 +131,7 @@ void orderitemlist(CONN *sid, int orderid)
 	int sqr;
 
 	if ((sqr=sql_queryf("SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">");
 	prints(sid, "<TD NOWRAP STYLE='border-style:solid'><B>Product</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Quantity</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Unit Price</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Discount</B></TD><TD NOWRAP STYLE='border-style:solid'><B>Extended</B></TD></TR>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "<TR CLASS=\"EDITFORM\" style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));

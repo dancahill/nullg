@@ -112,6 +112,32 @@ void *poploop(void *x)
 	return 0;
 }
 
+static int get_conn()
+{
+	int i;
+
+	pthread_mutex_lock(&ListenerMutex);
+	for (i=0;;i++) {
+		if (i>=config->http_maxconn) {
+			msleep(10);
+			i=0;
+			continue;
+		}
+		if (conn[i].id==0) {
+			break;
+		}
+	}
+	if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
+	memset((char *)&conn[i], 0, sizeof(conn[i]));
+#ifdef WIN32
+	conn[i].id=(unsigned int)1;
+#else
+	conn[i].id=(pthread_t)1;
+#endif
+	pthread_mutex_unlock(&ListenerMutex);
+	return i;
+}
+
 #ifdef WIN32
 unsigned _stdcall pop3_accept_loop(void *x)
 #else
@@ -119,7 +145,8 @@ void *pop3_accept_loop(void *x)
 #endif
 {
 	pthread_attr_t thr_attr;
-	int i;
+	int sid;
+	short int socket;
 
 #ifndef WIN32
 	pthread_detach(pthread_self());
@@ -128,40 +155,29 @@ void *pop3_accept_loop(void *x)
 		log_error("pop3", __FILE__, __LINE__, 0, "pthread_attr_init()");
 		exit(1);
 	}
-#ifndef OLDLINUX
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
 #endif
 	for (;;) {
-		for (i=0;;i++) {
-			if (i>=config->pop3_maxconn) {
-				msleep(50);
-				i=0;
-				continue;
-			}
-			if (conn[i].id==0) break;
-		}
-		if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
-		memset((char *)&conn[i], 0, sizeof(conn[i]));
-		conn[i].socket.socket=tcp_accept(ListenSocket, (struct sockaddr *)&conn[i].socket.ClientAddr);
+		if ((sid=get_conn())<0) continue;
+		socket=tcp_accept(ListenSocket, (struct sockaddr *)&conn[sid].socket.ClientAddr);
+		/*
+		 * If ListenSocket==-1 then someone either has, or soon will kill the listener,
+ 		 * probably from server_shutdown().
+ 		 */
+ 		if (ListenSocket==-1) return 0;
+		conn[sid].socket.socket=socket;
 #ifdef WIN32
-		if (conn[i].socket.socket==INVALID_SOCKET) {
+		if (conn[sid].socket.socket==INVALID_SOCKET) {
+			log_error("pop3", __FILE__, __LINE__, 2, "pop3_accept_loop() shutting down...");
 			return 0;
-//			logerror(NULL, __FILE__, __LINE__, "accept() failed...");
-//			closesocket(proc.ListenSocket);
-//			WSACleanup();
-//			exit(0);
 #else
-		if (conn[i].socket.socket<0) {
+		if (conn[sid].socket.socket<0) {
 			continue;
 #endif
 		} else {
-#ifdef WIN32
-			conn[i].id=(unsigned int)1;
-#else
-			conn[i].id=(pthread_t)1;
-#endif
-			if (pthread_create(&conn[i].handle, &thr_attr, poploop, (void *)i)==-1) {
-				log_error(NULL, __FILE__, __LINE__, 0, "poploop() failed...");
+			if (pthread_create(&conn[sid].handle, &thr_attr, poploop, (void *)sid)==-1) {
+				log_error("pop3", __FILE__, __LINE__, 0, "poploop() failed...");
 				exit(0);
 			}
 		}
@@ -169,12 +185,63 @@ void *pop3_accept_loop(void *x)
 	return 0;
 }
 
+#ifdef HAVE_LIBSSL
+#ifdef WIN32
+unsigned _stdcall pop3_accept_loop_ssl(void *x)
+#else
+void *pop3_accept_loop_ssl(void *x)
+#endif
+{
+	pthread_attr_t thr_attr;
+	int sid;
+	short int socket;
+
+#ifndef WIN32
+	pthread_detach(pthread_self());
+#endif
+	if (pthread_attr_init(&thr_attr)) {
+		log_error("pop3", __FILE__, __LINE__, 0, "pthread_attr_init()");
+		exit(1);
+	}
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
+	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
+#endif
+	for (;;) {
+		if ((sid=get_conn())<0) continue;
+		socket=tcp_accept(ListenSocketSSL, (struct sockaddr *)&conn[sid].socket.ClientAddr);
+		/*
+		 * If ListenSocketSSL==-1 then someone either has, or soon will kill the listener,
+ 		 * probably from server_shutdown().
+ 		 */
+ 		if (ListenSocketSSL==-1) return 0;
+		conn[sid].socket.socket=socket;
+#ifdef WIN32
+		if (conn[i].socket.socket==INVALID_SOCKET) {
+			log_error("pop3", __FILE__, __LINE__, 2, "pop3_accept_loop_ssl() shutting down...");
+			return 0;
+#else
+		if (conn[sid].socket.socket<0) {
+			continue;
+#endif
+		} else {
+			ssl_accept(&conn[sid].socket);
+			if (pthread_create(&conn[sid].handle, &thr_attr, poploop, (void *)sid)==-1) {
+				log_error("pop3", __FILE__, __LINE__, 0, "poploop() failed...");
+				exit(0);
+			}
+		}
+	}
+	return 0;
+}
+#endif // HAVE_LIBSSL
+
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
 	int i;
 
 	ListenSocket=0;
 	ListenSocketSSL=0;
+	pthread_mutex_init(&ListenerMutex, NULL);
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
@@ -183,6 +250,11 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	if (config->pop3_port) {
 		if ((ListenSocket=tcp_bind(config->pop3_hostname, config->pop3_port))<0) return -1;
 	}
+#ifdef HAVE_LIBSSL
+	if ((proc->ssl_is_loaded)&&(config->pop3_port_ssl)) {
+		if ((ListenSocketSSL=tcp_bind(config->http_hostname, config->pop3_port_ssl))<0) return -1;
+	}
+#endif
 	if ((conn=calloc(config->pop3_maxconn, sizeof(CONN)))==NULL) {
 		printf("\r\nconn calloc(%d, %d) failed\r\n", config->pop3_maxconn, sizeof(CONN));
 		return -1;
@@ -196,13 +268,23 @@ DllExport int mod_exec()
 	pthread_attr_t thr_attr;
 
 	if (pthread_attr_init(&thr_attr)) return -2;
-#ifndef OLDLINUX
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
-	if (pthread_create(&ListenThread, &thr_attr, pop3_accept_loop, NULL)==-1) {
-		log_error(NULL, __FILE__, __LINE__, 0, "pop3_accept_loop() failed...");
-		return -2;
+	if (config->pop3_port) {
+		if (pthread_create(&ListenThread, &thr_attr, pop3_accept_loop, NULL)==-1) {
+			log_error("pop3", __FILE__, __LINE__, 0, "pop3_accept_loop() failed...");
+			return -2;
+		}
 	}
+#ifdef HAVE_LIBSSL
+	if ((proc->ssl_is_loaded)&&(config->pop3_port_ssl)) {
+		if (pthread_create(&ListenThreadSSL, &thr_attr, pop3_accept_loop_ssl, NULL)==-1) {
+			log_error("pop3", __FILE__, __LINE__, 0, "pop3_accept_loop_ssl() failed...");
+			return -2;
+		}
+	}
+#endif
 	return 0;
 }
 

@@ -84,157 +84,6 @@ int pthread_kill(pthread_t handle, int sig)
 }
 #endif
 
-#ifdef WIN32
-unsigned _stdcall smtploop(void *x)
-#else
-void *smtploop(void *x)
-#endif
-{
-	int sid=(int)x;
-
-	conn[sid].id=pthread_self();
-#ifndef WIN32
-	pthread_detach(conn[sid].id);
-#endif
-	log_error("smtpd", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket);
-	conn[sid].dat=calloc(1, sizeof(CONNDATA));
-	proc->stats.smtp_conns++;
-	if (conn[sid].dat!=NULL) free(conn[sid].dat);
-	conn[sid].dat=calloc(1, sizeof(CONNDATA));
-	conn[sid].socket.atime=time(NULL);
-	conn[sid].socket.ctime=time(NULL);
-	smtp_dorequest(&conn[sid]);
-	conn[sid].state=0;
-	log_error("smtpd", __FILE__, __LINE__, 4, "Closing connection thread [%u]", conn[sid].socket);
-	tcp_close(&conn[sid].socket);
-	conn[sid].socket.socket=-1;
-	pthread_exit(0);
-	return 0;
-}
-
-static int get_conn()
-{
-	int i;
-
-	pthread_mutex_lock(&ListenerMutex);
-	for (i=0;;i++) {
-		if (i>=config->http_maxconn) {
-			msleep(10);
-			i=0;
-			continue;
-		}
-		if (conn[i].id==0) {
-			break;
-		}
-	}
-	if (conn[i].dat!=NULL) { free(conn[i].dat); conn[i].dat=NULL; }
-	memset((char *)&conn[i], 0, sizeof(conn[i]));
-#ifdef WIN32
-	conn[i].id=(unsigned int)1;
-#else
-	conn[i].id=(pthread_t)1;
-#endif
-	pthread_mutex_unlock(&ListenerMutex);
-	return i;
-}
-
-#ifdef WIN32
-unsigned _stdcall smtp_accept_loop(void *x)
-#else
-void *smtp_accept_loop(void *x)
-#endif
-{
-	pthread_attr_t thr_attr;
-	int sid;
-	short int socket;
-
-#ifndef WIN32
-	pthread_detach(pthread_self());
-#endif
-	if (pthread_attr_init(&thr_attr)) {
-		log_error("smtpd", __FILE__, __LINE__, 0, "pthread_attr_init()");
-		exit(1);
-	}
-#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
-#endif
-	for (;;) {
-		if ((sid=get_conn())<0) continue;
-		socket=tcp_accept(ListenSocket, (struct sockaddr *)&conn[sid].socket.ClientAddr);
-		/*
-		 * If ListenSocket==-1 then someone either has, or soon will kill the listener,
-  		 * probably from server_shutdown().
-  		 */
-		if (ListenSocket==-1) return 0;
-		conn[sid].socket.socket=socket;
-#ifdef WIN32
-		if (conn[sid].socket.socket==INVALID_SOCKET) {
-			log_error("smtpd", __FILE__, __LINE__, 2, "smtp_accept_loop() shutting down...");
-			return 0;
-#else
-		if (conn[sid].socket.socket<0) {
-			continue;
-#endif
-		} else {
-			if (pthread_create(&conn[sid].handle, &thr_attr, smtploop, (void *)sid)==-1) {
-				log_error("smtpd", __FILE__, __LINE__, 0, "smtploop() failed...");
-				exit(0);
-			}
-		}
-	}
-	return 0;
-}
-
-#ifdef HAVE_LIBSSL
-#ifdef WIN32
-unsigned _stdcall smtp_accept_loop_ssl(void *x)
-#else
-void *smtp_accept_loop_ssl(void *x)
-#endif
-{
-	pthread_attr_t thr_attr;
-	int sid;
-	short int socket;
-
-#ifndef WIN32
-	pthread_detach(pthread_self());
-#endif
-	if (pthread_attr_init(&thr_attr)) {
-		log_error("smtpd", __FILE__, __LINE__, 0, "pthread_attr_init()");
-		exit(1);
-	}
-#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
-#endif
-	for (;;) {
-		if ((sid=get_conn())<0) continue;
-		socket=tcp_accept(ListenSocketSSL, (struct sockaddr *)&conn[sid].socket.ClientAddr);
-		/*
-		 * If ListenSocketSSL==-1 then someone either has, or soon will kill the listener,
-  		 * probably from server_shutdown().
-  		 */
-		if (ListenSocketSSL==-1) return 0;
-		conn[sid].socket.socket=socket;
-#ifdef WIN32
-		if (conn[sid].socket.socket==INVALID_SOCKET) {
-			log_error("smtpd", __FILE__, __LINE__, 2, "smtp_accept_loop_ssl() shutting down...");
-			return 0;
-#else
-		if (conn[sid].socket.socket<0) {
-			continue;
-#endif
-		} else {
-			ssl_accept(&conn[sid].socket);
-			if (pthread_create(&conn[sid].handle, &thr_attr, smtploop, (void *)sid)==-1) {
-				log_error("smtpd", __FILE__, __LINE__, 0, "smtploop() failed...");
-				exit(0);
-			}
-		}
-	}
-	return 0;
-}
-#endif // HAVE_LIBSSL
-
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
 	int i;
@@ -246,15 +95,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	if (config->smtp_port) {
-		if ((ListenSocket=tcp_bind(config->smtp_hostname, config->smtp_port))<0) return -1;
-	}
-#ifdef HAVE_LIBSSL
-	if ((proc->ssl_is_loaded)&&(config->smtp_port_ssl)) {
-		if ((ListenSocketSSL=tcp_bind(config->http_hostname, config->smtp_port_ssl))<0) return -1;
-	}
-#endif
+	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpq %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if ((conn=calloc(config->smtp_maxconn, sizeof(CONN)))==NULL) {
 		printf("\r\nconn calloc(%d, %d) failed\r\n", config->smtp_maxconn, sizeof(CONN));
 		return -1;
@@ -267,28 +108,14 @@ DllExport int mod_exec()
 {
 	pthread_attr_t thr_attr;
 
-	if (config->smtp_port) {
-		if (pthread_attr_init(&thr_attr)) return -2;
+	if (pthread_attr_init(&thr_attr)) return -2;
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-		if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
+	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
-		if (pthread_create(&ListenThread, &thr_attr, smtp_accept_loop, NULL)==-1) {
-			log_error("smtpd", __FILE__, __LINE__, 0, "smtp_accept_loop() failed...");
-			return -2;
-		}
+	if (pthread_create(&SpoolThread, &thr_attr, smtp_spool, NULL)==-1) {
+		log_error("smtpd", __FILE__, __LINE__, 0, "smtp_spool() loop failed to start.");
+		exit(0);
 	}
-#ifdef HAVE_LIBSSL
-	if ((proc->ssl_is_loaded)&&(config->smtp_port_ssl)) {
-		if (pthread_attr_init(&thr_attr)) return -2;
-#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-		if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
-#endif
-		if (pthread_create(&ListenThreadSSL, &thr_attr, smtp_accept_loop_ssl, NULL)==-1) {
-			log_error("smtpd", __FILE__, __LINE__, 0, "smtp_accept_loop_ssl() failed...");
-			return -2;
-		}
-	}
-#endif
 	return 0;
 }
 
@@ -298,6 +125,7 @@ DllExport int mod_cron()
 	short int connections=0;
 	short int i;
 
+	return 0;
 	for (i=0;i<config->smtp_maxconn;i++) {
 		if ((conn[i].id==0)||(conn[i].socket.atime==0)) continue;
 		connections++;

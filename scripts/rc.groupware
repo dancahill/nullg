@@ -26,6 +26,8 @@ groupware_start() {
 #		${BASE_PATH}/bin/nullgroupware pop3d
 #		echo -n "smtpd "
 #		${BASE_PATH}/bin/nullgroupware smtpd
+#		echo -n "smtpq "
+#		${BASE_PATH}/bin/nullgroupware smtpq
 		echo ""
 	fi
 	rm -f /tmp/_gw_proclist

@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgroupware-1.3.2-x86
+OUTFILE=nullgroupware-1.3.3-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "Linux" ]; then
@@ -62,9 +62,9 @@ build_clean() {
 build_pack() {
 	rm -rf ${OUTFILE}
 	rm -rf ${OUTFILE}.tar.gz
-	cp -p other/rc.groupware distrib/bin/rc.groupware
-	cp -p other/configure distrib/bin/configure
-	cp -p other/setup distrib/setup
+	cp -p scripts/rc.groupware distrib/bin/rc.groupware
+	cp -p scripts/configure distrib/bin/configure
+	cp -p scripts/setup distrib/setup
 	set_perms
 	cd distrib
 	touch --date="$FILEDATE" `find *`
@@ -78,9 +78,9 @@ build_pack() {
 build_slackpack() {
 	rm -rf slackroot
 	rm -rf ${OUTFILE}.tgz
-	cp -p other/rc.groupware distrib/bin/rc.groupware
-	cp -p other/configure distrib/bin/configure
-	cp -p other/setup distrib/setup
+	cp -p scripts/rc.groupware distrib/bin/rc.groupware
+	cp -p scripts/configure distrib/bin/configure
+	cp -p scripts/setup distrib/setup
 	set_perms
 	cd distrib
 	touch --date="$FILEDATE" `find -name "*"`
@@ -88,7 +88,33 @@ build_slackpack() {
 	mkdir -p slackroot/usr/local
 	mkdir -p slackroot/install
 	cp -pR distrib slackroot/usr/local/nullgroupware
-	cp -p other/slack/doinst.sh other/slack/slack-desc slackroot/install
+	cat << EOF > slackroot/install/doinst.sh
+( cd /usr/local/nullgroupware/bin ; ./configure )
+EOF
+	cat << EOF > slackroot/install/slack-desc
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':'.
+
+
+|-----handy-ruler------------------------------------------------------|
+nullgroupware: nullgroupware
+nullgroupware:
+nullgroupware: NullLogic Groupware Server
+nullgroupware:
+nullgroupware: This is the NullLogic Groupware Server Suite written and maintained
+nullgroupware: by Dan Cahill.
+nullgroupware:
+nullgroupware:
+nullgroupware:
+nullgroupware:
+nullgroupware:
+EOF
+	chmod 755 slackroot/install/doinst.sh
+	chmod 644 slackroot/install/slack-desc
 	cd slackroot
 	tar zcf ../${OUTFILE}.tgz *
 	cd ..
@@ -181,7 +207,7 @@ dedos() {
 	cd mod_xmlrpc;from_dos;cd ..
 	cd ..
 
-	cd other;from_dos
+	cd scripts;from_dos
 	cd fastcgi;from_dos;cd ..
 	cd msosync;from_dos;cd ..
 	cd php;from_dos;cd ..
@@ -194,14 +220,14 @@ dedos() {
 	cd icons;chmod 644 *;cd ..
 	cd ..
 
-	chmod 0755 other/configure
-	chmod 0755 other/fromdos
-	chmod 0755 other/make_sqlite
-	chmod 0755 other/rc.groupware
-	chmod 0755 other/setup
+	chmod 0755 scripts/configure
+	chmod 0755 scripts/fromdos
+	chmod 0755 scripts/make_sqlite
+	chmod 0755 scripts/rc.groupware
+	chmod 0755 scripts/setup
 	chmod 0755 distrib -R
 	set_perms
-	cp -av other/make_sqlite sqlite/make_sqlite
+	cp -av scripts/make_sqlite sqlite/make_sqlite
 }
 
 case "$1" in

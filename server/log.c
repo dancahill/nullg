@@ -60,6 +60,7 @@ void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *
 		va_start(ap, format);
 		vsnprintf(logbuffer, sizeof(logbuffer)-1, format, ap);
 		va_end(ap);
+		striprn(logbuffer);
 		gettimeofday(&ttime, &tzone);
 		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
 		if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;

@@ -112,7 +112,7 @@ void *htloop(void *x)
 		http_dorequest(&conn[sid]);
 		conn[sid].dat->out_bodydone=1;
 		flushbuffer(&conn[sid]);
-		log_access("http", "%s \"%s %s %s\" %d %d \"%s\"", conn[sid].dat->in_RemoteAddr, conn[sid].dat->in_RequestMethod, conn[sid].dat->in_RequestURI, conn[sid].dat->in_Protocol, conn[sid].dat->out_status, conn[sid].dat->out_bytecount, conn[sid].dat->in_UserAgent);
+		log_access("httpd", "%s \"%s %s %s\" %d %d \"%s\"", conn[sid].dat->in_RemoteAddr, conn[sid].dat->in_RequestMethod, conn[sid].dat->in_RequestURI, conn[sid].dat->in_Protocol, conn[sid].dat->out_status, conn[sid].dat->out_bytecount, conn[sid].dat->in_UserAgent);
 		conn[sid].state=0;
 		if (conn[sid].dat->wm!=NULL) {
 			tcp_close(&conn[sid].dat->wm->socket);
@@ -179,7 +179,7 @@ void *http_accept_loop(void *x)
 		DEBUG_OUT(NULL, "http_accept_loop()");
 		exit(-1);
 	}
-#ifndef OLDLINUX
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-1);
 #endif
 	for (;;) {
@@ -212,6 +212,7 @@ void *http_accept_loop(void *x)
 	return 0;
 }
 
+#ifdef HAVE_LIBSSL
 #ifdef WIN32
 unsigned _stdcall http_accept_loop_ssl(void *x)
 #else
@@ -231,7 +232,7 @@ void *http_accept_loop_ssl(void *x)
 		DEBUG_OUT(NULL, "http_accept_loop_ssl()");
 		exit(-1);
 	}
-#ifndef OLDLINUX
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-1);
 #endif
 	for (;;) {
@@ -264,6 +265,7 @@ void *http_accept_loop_ssl(void *x)
 	DEBUG_OUT(NULL, "http_accept_loop_ssl()");
 	return 0;
 }
+#endif // HAVE_LIBSSL
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
@@ -281,7 +283,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 		if ((http_proc.ListenSocket=tcp_bind(config->http_hostname, config->http_port))<0) return -1;
 	}
 #ifdef HAVE_LIBSSL
-	if (config->http_port_ssl) {
+	if ((proc->ssl_is_loaded)&&(config->http_port_ssl)) {
 		if ((http_proc.ListenSocketSSL=tcp_bind(config->http_hostname, config->http_port_ssl))<0) return -1;
 	}
 #endif
@@ -299,7 +301,7 @@ DllExport int mod_exec()
 	pthread_attr_t thr_attr;
 
 	if (pthread_attr_init(&thr_attr)) return -2;
-#ifndef OLDLINUX
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
 	if (config->http_port) {
@@ -309,7 +311,7 @@ DllExport int mod_exec()
 		}
 	}
 #ifdef HAVE_LIBSSL
-	if (config->http_port_ssl) {
+	if ((proc->ssl_is_loaded)&&(config->http_port_ssl)) {
 		if (pthread_create(&http_proc.ListenThreadSSL, &thr_attr, http_accept_loop_ssl, NULL)==-1) {
 			log_error(NULL, __FILE__, __LINE__, 0, "http_accept_loop_ssl() failed...");
 			return -2;
@@ -351,7 +353,7 @@ void server_shutdown()
 #ifndef WIN32
 	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
 #endif
-//	log_access("http", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
+//	log_access("httpd", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 	log_error("core", __FILE__, __LINE__, 1, "Stopping %s httpd %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 //	pthread_kill(proc.ListenThread, 14);
 //	shutdown(proc.ListenSocket, 2);

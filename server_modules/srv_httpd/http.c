@@ -695,7 +695,7 @@ void send_error(CONN *sid, int status, char* title, char* text)
 	prints(sid, "<HR>\r\n<ADDRESS>%s %s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME, PACKAGE_VERSION);
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
-	log_access("http", "%s \"%s %s %s\" %d %d \"%s\"", sid->dat->in_RemoteAddr, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent);
+	log_access("httpd", "%s \"%s %s %s\" %d %d \"%s\"", sid->dat->in_RemoteAddr, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent);
 	closeconnect(sid, 1);
 	return;
 }

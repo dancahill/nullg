@@ -20,42 +20,40 @@
 
 #ifdef HAVE_LIBSSL
 
-static SSL_CTX *ctx;
-static SSL_METHOD *meth;
-
 int ssl_init()
 {
 	SSL_load_error_strings();
 	SSLeay_add_ssl_algorithms();
-	meth=SSLv23_server_method();
-	ctx=SSL_CTX_new(meth);
-	if (!ctx) {
+	proc.ssl_meth=SSLv23_server_method();
+	proc.ssl_ctx=SSL_CTX_new(proc.ssl_meth);
+	if (!proc.ssl_ctx) {
 		log_error("core", __FILE__, __LINE__, 0, "SSL Error");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	if (SSL_CTX_use_certificate_file(ctx, "../etc/cert.pem", SSL_FILETYPE_PEM)<=0) {
+	if (SSL_CTX_use_certificate_file(proc.ssl_ctx, "../etc/cert.pem", SSL_FILETYPE_PEM)<=0) {
 		log_error("core",  __FILE__, __LINE__, 0, "SSL Error loading cert.pem");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	if (SSL_CTX_use_PrivateKey_file(ctx, "../etc/priv.pem", SSL_FILETYPE_PEM)<=0) {
+	if (SSL_CTX_use_PrivateKey_file(proc.ssl_ctx, "../etc/priv.pem", SSL_FILETYPE_PEM)<=0) {
 		log_error("core", __FILE__, __LINE__, 0, "SSL Error loading priv.pem");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	if (!SSL_CTX_check_private_key(ctx)) {
+	if (!SSL_CTX_check_private_key(proc.ssl_ctx)) {
 		log_error("core", __FILE__, __LINE__, 0, "Private key does not match the certificate public key");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
+	proc.ssl_is_loaded=1;
 	log_error("core", __FILE__, __LINE__, 2, "ssl_init() completed");
 	return 0;
 }
 
 int ssl_accept(TCP_SOCKET *sock)
 {
-	if ((sock->ssl=SSL_new(ctx))==NULL) {
+	if ((sock->ssl=SSL_new(proc.ssl_ctx))==NULL) {
 		return -1;
 	}
 	SSL_set_fd(sock->ssl, sock->socket);
@@ -76,7 +74,8 @@ int ssl_close(TCP_SOCKET *sock)
 
 int ssl_shutdown()
 {
-	SSL_CTX_free(ctx);
+	SSL_CTX_free(proc.ssl_ctx);
+	proc.ssl_is_loaded=0;
 	return 0;
 }
 

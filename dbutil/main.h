@@ -21,7 +21,11 @@
 #define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
 
+#ifdef WIN32
+#include "config-nt.h"
+#else
 #include "config.h"
+#endif
 #include <stdio.h>
 #include <time.h>
 #ifdef WIN32

@@ -1,12 +1,25 @@
-# Makefile for NullLogic Groupware
+# Makefile for NullLogic Groupware @PACKAGE_VERSION@
 
 include Rules.mak
 
-all: _sqlite _dbutil _server _server_modules _modules
-	@cp -p other/rc.groupware distrib/bin/rc.groupware
-	@cp -p other/cron.daily distrib/bin/cron.daily
-	@cp -p other/configure distrib/bin/configure
-	@cp -p other/setup distrib/setup
+all: _all
+	@echo ""
+	@echo "Finished compiling NullLogic Groupware."
+	@echo ""
+	@echo "If this is a new install, you can run 'make sslcert' to generate a new"
+	@echo "SSL certificate."
+	@echo ""
+	@echo "If this is an upgrade, please stop any running instances of the server"
+	@echo "before running 'make install'."
+	@echo ""
+	@echo "The next step is to run 'make install'."
+	@echo ""
+
+_all: _sqlite _dbutil _server _server_modules _modules
+	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
+	@cp -p scripts/cron.daily distrib/bin/cron.daily
+	@cp -p scripts/configure distrib/bin/configure
+	@cp -p scripts/setup distrib/setup
 
 _dbutil:
 	@echo "dbutil"
@@ -28,6 +41,9 @@ _sqlite:
 	@echo "sqlite"
 	@cd sqlite;./make_sqlite build
 
+sslcert:
+	openssl req -new -x509 -nodes -out distrib/etc/cert.pem -keyout distrib/etc/priv.pem -days 365
+
 autoconf:
 	@echo ifnames *.[ch]
 	@echo autoscan
@@ -37,13 +53,14 @@ autoconf:
 
 clean:
 	@echo -n "Cleaning..."
-	@chmod 0755 other/lxtool
+	@chmod 0755 scripts/lxtool
 	@cd dbutil;$(MAKE) clean
 	@cd server;$(MAKE) clean
 	@cd server_modules;$(MAKE) clean
 	@cd modules;$(MAKE) clean
-	@./other/lxtool clean
+	@./scripts/lxtool clean
 	@rm -f distrib/bin/* distrib/lib/* *~
+	@rm -f distrib/etc/cert.pem distrib/etc/priv.pem
 	@echo "done."
 
 distclean: clean
@@ -53,25 +70,27 @@ distclean: clean
 	@rm -rf autom4te.cache
 	@rm -f config.log config.status include/config.h Makefile Rules.mak
 
-install: all
+install: _all
+	@chown -R root.root * 1>/dev/null 2>&1
 	@cd distrib;./setup
 
-install2: all
+upgrade: _all
+	@chown -R root.root * 1>/dev/null 2>&1
 	/etc/rc.d/init.d/nullgw stop
-	@cd distrib;./setup
+	@cd distrib;./setup upgrade
 	/etc/rc.d/init.d/nullgw start
 
 wc:
 	wc `find -name *.[ch]`
 
 dist:
-	@chmod 0755 other/lxtool
-	@./other/lxtool clean
+	@chmod 0755 scripts/lxtool
+	@./scripts/lxtool clean
 	@$(MAKE)
-	@./other/lxtool pack
+	@./scripts/lxtool pack
 
 slackdist:
-	@chmod 0755 other/lxtool
-	@./other/lxtool clean
+	@chmod 0755 scripts/lxtool
+	@./scripts/lxtool clean
 	@$(MAKE)
-	@./other/lxtool slackpack
+	@./scripts/lxtool slackpack

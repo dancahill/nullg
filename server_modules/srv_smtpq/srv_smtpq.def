@@ -1,4 +1,4 @@
-LIBRARY		srv_httpd
+LIBRARY		srv_smtpq
 VERSION		1.3.3
 EXPORTS
 	mod_init

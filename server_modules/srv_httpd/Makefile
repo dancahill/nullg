@@ -2,14 +2,14 @@
 
 include ../../Rules.mak
 
-CFLAGS  = $(SRVMOD_CFLAGS)
+CFLAGS  = $(LIB_CFLAGS)
 OBJECTS = auth.o format.o html.o http.o io.o log.o main.o modctl.o
-TARGET  = $(SRVMOD_TARGETDIR)/srv_httpd.so
+TARGET  = $(LIB_TARGETDIR)/srv_httpd.so
 
 all: srv_http
 
 srv_http: $(OBJECTS)
-	$(CC) $(SRVMOD_LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(LIB_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

@@ -23,7 +23,12 @@
 #define HAVE_MYSQL
 #define HAVE_PGSQL
 #define HAVE_SQLITE
+
+#ifdef HAVE_MYSQL_MYSQL_H
+#include "mysql/mysql.h"
+#else
 #include "sql/mysql.h"
+#endif
 #include "sql/pgsql.h"
 #include "sql/sqlite.h"
 

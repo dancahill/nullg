@@ -251,7 +251,6 @@ int wmserver_connect(CONN *sid, int verbose)
 		strncpy(sid->dat->wm->address,      sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
 		strncpy(sid->dat->wm->replyto,      sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
 		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 12));
-		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 13));
 		ptemp=sql_getvalue(sqr, 0, 13);
 		if ((tolower(ptemp[0])=='y')&&(verbose)) {
 			sid->dat->wm->showdebug=1;

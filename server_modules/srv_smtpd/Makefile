@@ -2,14 +2,14 @@
 
 include ../../Rules.mak
 
-CFLAGS  = $(SRVMOD_CFLAGS)
+CFLAGS  = $(LIB_CFLAGS)
 OBJECTS = auth.o main.o smtp.o smtpclient.o
-TARGET  = $(SRVMOD_TARGETDIR)/srv_smtpd.so
+TARGET  = $(LIB_TARGETDIR)/srv_smtpd.so
 
 all: srv_http
 
 srv_http: $(OBJECTS)
-	$(CC) $(SRVMOD_LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(LIB_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

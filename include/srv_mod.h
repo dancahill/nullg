@@ -16,7 +16,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef WIN32
+#include "config-nt.h"
+#else
 #include "config.h"
+#endif
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -46,8 +50,8 @@
 #include <netdb.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>

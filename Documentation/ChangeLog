@@ -1,3 +1,21 @@
+1.3.3
+-----
+- added pop3s server support
+- added smtps server support
+- SMTP queueing is now handled by its own module
+- added 'sslcert' option to Makefile
+- fixed FreeBSD autoconf detection
+- fixed win32 build support (added static config.h)
+- fixed missing dependency in non-SSL build
+- fixed pthread_attr_setstacksize dependency for _old_ Linux systems
+- fixed several problems found with RPM .spec file
+- upgraded SQLite to 2.8.13
+
+1.3.2
+-----
+- Added autoconf support
+- Added https server support
+
 1.3.1
 -----
 - Colours are now entirely controlled by CSS

@@ -187,6 +187,14 @@ typedef struct {
 	DBINFO info;
 	STATS stats;
 	SRVMOD srvmod[MAX_MOD_FUNCTIONS+1];
+	unsigned short ssl_is_loaded;
+#ifdef HAVE_LIBSSL
+	SSL_CTX *ssl_ctx;
+	SSL_METHOD *ssl_meth;
+#else
+	void *ssl_ctx;
+	void *ssl_meth
+#endif
 #ifdef WIN32
 	HINSTANCE hInst;
 	WSADATA wsaData;

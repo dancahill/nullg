@@ -64,16 +64,21 @@ int config_read(CONFIG *config)
 	strncpy(config->sql_type, "SQLITE", sizeof(config->sql_type)-1);
 #endif
 	config->server_loglevel=1;
-	config->http_port=4110;
+	config->http_port=HTTP_PORT;
 	config->http_maxconn=50;
 	config->http_maxidle=120;
 	config->http_maxpostsize=33554432; /* 32 MB limit for POST request sizes */
-	config->pop3_port=110;
+	config->pop3_port=POP3_PORT;
 	config->pop3_maxconn=50;
 	config->pop3_maxidle=120;
-	config->smtp_port=25;
+	config->smtp_port=SMTP_PORT;
 	config->smtp_maxconn=50;
 	config->smtp_maxidle=120;
+#ifdef HAVE_LIBSSL
+	config->http_port_ssl=HTTPS_PORT;
+	config->pop3_port_ssl=POP3S_PORT;
+	config->smtp_port_ssl=SMTPS_PORT;
+#endif
 	config->sql_maxconn=config->http_maxconn*2;
 	/* try to open the config file */
 	/* try the current directory first, then ../etc/, then the default etc/ */
@@ -161,6 +166,10 @@ int config_read(CONFIG *config)
 #ifdef HAVE_LIBSSL
 			} else if (strcmp(pVar, "HTTP.SSLPORT")==0) {
 				config->http_port_ssl=atoi(pVal);
+			} else if (strcmp(pVar, "POP3.SSLPORT")==0) {
+				config->pop3_port_ssl=atoi(pVal);
+			} else if (strcmp(pVar, "SMTP.SSLPORT")==0) {
+				config->smtp_port_ssl=atoi(pVal);
 #endif
 			} else if (strcmp(pVar, "HTTP.MAXCONN")==0) {
 				config->http_maxconn=atoi(pVal);

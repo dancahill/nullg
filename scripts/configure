@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.3.2"
+MAIN_TITLE="NullLogic Groupware Configuration v1.3.3"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..
@@ -147,12 +147,15 @@ UTIL.SCANFILE     = "$UTIL_SCANFILE"
 UTIL.SCANMAIL     = "$UTIL_SCANMAIL"
 EOF
 	fi
+}
+
+set_permissions() {
 	if [ -x "/usr/sbin/useradd" ]; then
-		/usr/sbin/groupadd $SERVER_GROUPNAME 1>/dev/null 2>/dev/null
-		/usr/sbin/useradd -c "NullLogic Groupware" -d $SERVER_DIR_BASE/etc -g $SERVER_GROUPNAME $SERVER_USERNAME 1>/dev/null 2>/dev/null
+		/usr/sbin/groupadd $SERVER_GROUPNAME 1>/dev/null 2>&1
+		/usr/sbin/useradd -c "NullLogic Groupware" -d $SERVER_DIR_BASE/etc -g $SERVER_GROUPNAME $SERVER_USERNAME 1>/dev/null 2>&1
 	elif [ -x "/usr/sbin/pw" ]; then
-		pw group add $SERVER_GROUPNAME       1>/dev/null 2>/dev/null
-		pw user add $SERVER_USERNAME         1>/dev/null 2>/dev/null
+		pw group add $SERVER_GROUPNAME       1>/dev/null 2>&1
+		pw user add $SERVER_USERNAME         1>/dev/null 2>&1
 	fi
 	chown -R $SERVER_USERNAME:$SERVER_GROUPNAME $SERVER_DIR_BASE/etc 1>/dev/null 2>/dev/null
 	chown -R $SERVER_USERNAME:$SERVER_GROUPNAME $SERVER_DIR_BASE/var 1>/dev/null 2>/dev/null
@@ -431,15 +434,24 @@ Is this correct?  Press 'Yes' to continue, or 'No' to reconfigure." 0 0
 	fi
 }
 
-if [ -x /bin/dialog ]; then
-	HAVE_DIALOG="yes"
-	setup_dialog
-else
-	setup_console
-fi
-write_config
-clear 2>/dev/null
+case "$1" in
+upgrade)
+	read_config
+	set_permissions
+	exit
+	;;
+*)
+	if [ -x /bin/dialog ]; then
+		HAVE_DIALOG="yes"
+		setup_dialog
+	else
+		setup_console
+	fi
+	write_config
+	set_permissions
+esac
 
+clear 2>/dev/null
 if [ "$HAVE_CONFIG" = "no" ]; then
 	case "$SQL_TYPE" in
 		MYSQL)

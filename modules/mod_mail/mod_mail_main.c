@@ -631,7 +631,7 @@ void webmailwrite(CONN *sid)
 	prints(sid, "	ALT='Create a Hyperlink'     SRC='/groupware/images/wmedit_link.png'      onClick=doLink()                         BORDER=0 WIDTH=22 HEIGHT=22 CLASS=butClass onMouseOver=selOn(this) onMouseOut=selOff(this)><IMG\r\n");
 	prints(sid, "	ALT='Insert Picture'         SRC='/groupware/images/wmedit_image.png'     onClick=doImage()                        BORDER=0 WIDTH=22 HEIGHT=22 CLASS=butClass onMouseOver=selOn(this) onMouseOut=selOff(this)></TD>\r\n");
 	prints(sid, "</TR></TABLE>\r\n");
-	prints(sid, "<CENTER><IFRAME id=\"wmeditor\" HEIGHT=236 width=646></IFRAME></CENTER>");
+	prints(sid, "<CENTER><IFRAME id=\"wmeditor\" HEIGHT=236 WIDTH=646 SRC=\"javascript:return false;\"></IFRAME></CENTER>");
 	prints(sid, "</DIV>");
 	prints(sid, "<CENTER><TEXTAREA NAME=msgbody COLS=78 ROWS=16 WRAP=VIRTUAL>\n");
 	if (msgnum) {

@@ -15,7 +15,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifdef WIN32
+#include "config-nt.h"
+#else
 #include "config.h"
+#endif
 /* #includes */
 #include <ctype.h>
 #include <fcntl.h>
@@ -81,7 +85,11 @@
 #endif
 
 #ifdef HAVE_MYSQL
+	#ifdef HAVE_MYSQL_MYSQL_H
+	#include "mysql/mysql.h"
+	#else
 	#include "sql/mysql.h"
+	#endif
 #endif
 #ifdef HAVE_ODBC
 	#include <sql.h>

@@ -3,12 +3,12 @@
 include ../../Rules.mak
 
 CFLAGS  = $(LIB_CFLAGS)
-OBJECTS = auth.o main.o pop3.o
-TARGET  = $(LIB_TARGETDIR)/srv_pop3d.so
+OBJECTS = main.o smtpclient.o
+TARGET  = $(LIB_TARGETDIR)/srv_smtpq.so
 
-all: srv_http
+all: srv_smtpq
 
-srv_http: $(OBJECTS)
+srv_smtpq: $(OBJECTS)
 	$(CC) $(LIB_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:

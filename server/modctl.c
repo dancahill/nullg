@@ -94,7 +94,8 @@ int modules_cron()
 	pthread_attr_t thr_attr;
 
 	if (pthread_attr_init(&thr_attr)) return -2;
-#ifndef OLDLINUX
+
+#ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
 #endif
 	if (pthread_create(&CronThread, &thr_attr, cronloop, NULL)==-1) {
@@ -186,6 +187,7 @@ int modules_init()
 		fprintf(fp, "srv_httpd\n");
 		fprintf(fp, "#srv_pop3d\n");
 		fprintf(fp, "#srv_smtpd\n");
+		fprintf(fp, "#srv_smtpq\n");
 		fclose(fp);
 		fp=fopen(file, "r");
 	}
