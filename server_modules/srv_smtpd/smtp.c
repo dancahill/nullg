@@ -190,6 +190,7 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
+log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		if ((strcmp(line, ".\r\n")==0)||(strcmp(line, ".\n")==0)) break;
 		if ((mconn->msgbodysize+strlen(line)+2)>buf_alloc) {
 			buf_alloc+=131072;
@@ -308,6 +309,7 @@ void smtp_dorequest(CONN *sid)
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
+log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
 			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");
@@ -322,13 +324,13 @@ void smtp_dorequest(CONN *sid)
 			tcp_fprintf(&sid->socket, "500 Some people still say hello\r\n");
 		}
 	} while (1);
-//	strncpy(sid->dat->in_RemoteAddr, inet_ntoa(sid->ClientAddr.sin_addr), sizeof(sid->dat->in_RemoteAddr)-1);
 	log_access("smtpd", "HELO '%s' (%s)", mconn.helo, inet_ntoa(sid->socket.ClientAddr.sin_addr));
 	mconn.rcptalloc=50;
 	if ((mconn.rcpt=(char **)calloc(mconn.rcptalloc, sizeof(char *)))==NULL) return;
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) goto cleanup;
+log_error("smtpdebug", __FILE__, __LINE__, 0, "[%s]", line);
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
 			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");

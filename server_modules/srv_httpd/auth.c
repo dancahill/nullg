@@ -184,6 +184,8 @@ int auth_getcookie(CONN *sid)
 	int domainid;
 
 	DEBUG_IN(sid, "auth_getcookie()");
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
 	ptemp=strstr(sid->dat->in_Cookie, "gwuser=");
 	if (ptemp==NULL) {
 		DEBUG_OUT(sid, "auth_getcookie()");

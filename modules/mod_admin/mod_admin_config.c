@@ -117,11 +117,11 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_base        VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVBASE,  str2html(sid, cfg.server_dir_base));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_bin         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVBIN,   str2html(sid, cfg.server_dir_bin));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_cgi         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVCGI,   str2html(sid, cfg.server_dir_cgi));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_etc         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVETC,   str2html(sid, cfg.server_dir_etc));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_lib         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVLIB,   str2html(sid, cfg.server_dir_lib));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var         VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVVAR,   str2html(sid, cfg.server_dir_var));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_backup  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVBAK,   str2html(sid, cfg.server_dir_var_backup));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_cgi     VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVCGI,   str2html(sid, cfg.server_dir_var_cgi));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_db      VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVDB,    str2html(sid, cfg.server_dir_var_db));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_domains VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVDOM,   str2html(sid, cfg.server_dir_var_domains));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_dir_var_htdocs  VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", ADM_CFG_SRVHDOC,  str2html(sid, cfg.server_dir_var_htdocs));
@@ -194,11 +194,11 @@ void adminconfigsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "HTTP_MAXIDLE"))!=NULL)           cfg.http_maxidle=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_BASE"))!=NULL)        strncpy(cfg.server_dir_base,        ptemp, sizeof(cfg.server_dir_base)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_BIN"))!=NULL)         strncpy(cfg.server_dir_bin,         ptemp, sizeof(cfg.server_dir_bin)-1);
-	if ((ptemp=getpostenv(sid, "SERVER_DIR_CGI"))!=NULL)         strncpy(cfg.server_dir_cgi,         ptemp, sizeof(cfg.server_dir_cgi)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_ETC"))!=NULL)         strncpy(cfg.server_dir_etc,         ptemp, sizeof(cfg.server_dir_etc)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_LIB"))!=NULL)         strncpy(cfg.server_dir_lib,         ptemp, sizeof(cfg.server_dir_lib)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR"))!=NULL)         strncpy(cfg.server_dir_var,         ptemp, sizeof(cfg.server_dir_var)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_BACKUP"))!=NULL)  strncpy(cfg.server_dir_var_backup,  ptemp, sizeof(cfg.server_dir_var_backup)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_CGI"))!=NULL)     strncpy(cfg.server_dir_var_cgi,     ptemp, sizeof(cfg.server_dir_var_cgi)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_DB"))!=NULL)      strncpy(cfg.server_dir_var_db,      ptemp, sizeof(cfg.server_dir_var_db)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_DOMAINS"))!=NULL) strncpy(cfg.server_dir_var_domains, ptemp, sizeof(cfg.server_dir_var_domains)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_HTDOCS"))!=NULL)  strncpy(cfg.server_dir_var_htdocs,  ptemp, sizeof(cfg.server_dir_var_htdocs)-1);

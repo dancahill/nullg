@@ -105,11 +105,11 @@ typedef struct {
 typedef struct {
 	char      server_dir_base[255];
 	char      server_dir_bin[255];
-	char      server_dir_cgi[255];
 	char      server_dir_etc[255];
 	char      server_dir_lib[255];
 	char      server_dir_var[255];
 	char      server_dir_var_backup[255];
+	char      server_dir_var_cgi[255];
 	char      server_dir_var_db[255];
 	char      server_dir_var_domains[255];
 	char      server_dir_var_htdocs[255];

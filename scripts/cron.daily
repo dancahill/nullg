@@ -15,7 +15,7 @@ cd ${BASEDIR}
 gzip backup-${CURDATE}
 echo -n "Archiving backup tarball..."
 rm -f var/backup/backup-${CURDATE}.tgz
-tar zcf backup-${CURDATE}.tgz backup-${CURDATE}.gz cgi-bin etc var --exclude=var/backup/*
+tar zcf backup-${CURDATE}.tgz backup-${CURDATE}.gz etc var --exclude=var/backup/*
 rm -f backup-${CURDATE}.gz
 mv backup-${CURDATE}.tgz var/backup
 echo "done."

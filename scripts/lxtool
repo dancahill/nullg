@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgroupware-1.3.9-x86
+OUTFILE=nullgroupware-1.3.10-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "Linux" ]; then
@@ -20,9 +20,10 @@ set_perms() {
 	chmod 0644 distrib/README.txt
 	chmod 0755 distrib/setup
 	chmod 0755 distrib/bin/*
-	chmod 0644 distrib/cgi-bin/*
 	chmod 0600 distrib/etc/*
 	chmod 0755 distrib/lib/*
+	chmod 0700 distrib/var/cgi-bin
+	chmod 0700 distrib/var/cgi-bin/*
 	chmod 0700 distrib/var/db
 	chmod 0600 distrib/var/db/*
 	chmod 0700 distrib/var/files
@@ -44,11 +45,11 @@ set_perms() {
 	chmod 0644 distrib/var/htdocs/groupware/sounds/*
 	chmod 0700 distrib/var/log
 	chmod 0600 distrib/var/log/*
-	chmod 0700 distrib/var/mail
-	chmod 0700 distrib/var/mail/local
-	chmod 0600 distrib/var/mail/local/*
-	chmod 0700 distrib/var/mail/queue
-	chmod 0600 distrib/var/mail/queue/*
+	chmod 0700 distrib/var/spool
+	chmod 0700 distrib/var/spool/local
+	chmod 0600 distrib/var/spool/local/*
+	chmod 0700 distrib/var/spool/queue
+	chmod 0600 distrib/var/spool/queue/*
 	chmod 0700 distrib/var/tmp
 	chmod 0600 distrib/var/tmp/*
 }
@@ -176,7 +177,7 @@ dedos() {
 	cd javascript;from_dos;cd ..
 	cd ../..
 	cd log;from_dos;cd ..
-	cd mail;from_dos
+	cd spool;from_dos
 	cd local;from_dos;cd ..
 	cd queue;from_dos;cd ..
 	cd ../../..

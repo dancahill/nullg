@@ -57,7 +57,7 @@ static int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
 	return 0;
 }
 
-int sanity_dbcheck()
+int sanity_checkdb()
 {
 	char commandline[200];
 	char file[100];
@@ -69,16 +69,7 @@ int sanity_dbcheck()
 //	struct timeval ttime;
 //	struct timezone tzone;
 //	int x, y;
-	int domainid;
 
-	if (sanity_dircheck("%s", proc.config.server_dir_var)!=0) exit(-2);
-	if (sanity_dircheck("%s", proc.config.server_dir_var_db)!=0) exit(-2);
-	if (sanity_dircheck("%s", proc.config.server_dir_var_domains)!=0) exit(-2);
-	if (sanity_dircheck("%s", proc.config.server_dir_var_log)!=0) exit(-2);
-	if (sanity_dircheck("%s", proc.config.server_dir_var_spool)!=0) exit(-2);
-	if (sanity_dircheck("%s/mail", proc.config.server_dir_var_spool)!=0) exit(-2);
-	if (sanity_dircheck("%s/mqueue", proc.config.server_dir_var_spool)!=0) exit(-2);
-	if (sanity_dircheck("%s", proc.config.server_dir_var_tmp)!=0) exit(-2);
 	if (strcmp(proc.config.sql_type, "SQLITE")==0) {
 		snprintf(file, sizeof(file)-1, "%s/%s.db", proc.config.server_dir_var_db, SERVER_BASENAME);
 		fixslashes(file);
@@ -173,24 +164,6 @@ int sanity_dbcheck()
 		log_error("core", __FILE__, __LINE__, 0, "Please use dbutil to dump and restore the database");
 		exit(-2);
 	}
-
-	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains"))<0) {
-		log_error("core", __FILE__, __LINE__, 0, "Could not read retrieve domain list");
-		exit(-1);
-	}
-	if (sql_numtuples(sqr)<1) {
-		log_error("core", __FILE__, __LINE__, 0, "no domains exist"); exit(-1);
-		sql_update("INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2004-01-01 00:00:00', '2004-01-01 00:00:00', '0', '0', '0', '0', '0', 'default');");
-	}
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		domainid=atoi(sql_getvalue(sqr, i, 0));
-		if (sanity_dircheck("%s/%04d",			proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/%04d/attachments",	proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/%04d/files",		proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/%04d/mail",		proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/mail/%04d",		proc.config.server_dir_var_spool, domainid)!=0) exit(-2);
-	}
-	sql_freeresult(sqr);
 /*
 	gettimeofday(&ttime, &tzone);
 	x=ttime.tv_sec; y=ttime.tv_usec;
@@ -202,5 +175,41 @@ int sanity_dbcheck()
 	x=((ttime.tv_sec-x)*1000000)-y+ttime.tv_usec;
 	log_error("core", __FILE__, __LINE__, 2, "Query speed test finished [%s][queries=100][time=%1.3f seconds]", proc.config.sql_type, (float)x/(float)1000000);
 */
+	return 0;
+}
+
+int sanity_checkdirs()
+{
+	int i;
+	int sqr;
+	int domainid;
+
+	if (sanity_dircheck("%s", proc.config.server_dir_var)!=0) exit(-2);
+	if (sanity_dircheck("%s", proc.config.server_dir_var_db)!=0) exit(-2);
+	if (sanity_dircheck("%s", proc.config.server_dir_var_domains)!=0) exit(-2);
+	if (sanity_dircheck("%s", proc.config.server_dir_var_log)!=0) exit(-2);
+	if (sanity_dircheck("%s", proc.config.server_dir_var_spool)!=0) exit(-2);
+	if (sanity_dircheck("%s/mail", proc.config.server_dir_var_spool)!=0) exit(-2);
+	if (sanity_dircheck("%s/mqueue", proc.config.server_dir_var_spool)!=0) exit(-2);
+	if (sanity_dircheck("%s", proc.config.server_dir_var_tmp)!=0) exit(-2);
+	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains"))<0) {
+		log_error("core", __FILE__, __LINE__, 0, "Could not read retrieve domain list");
+		exit(-1);
+	}
+	if (sql_numtuples(sqr)<1) {
+		log_error("core", __FILE__, __LINE__, 0, "no domains exist"); exit(-1);
+		sql_update("INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2004-01-01 00:00:00', '2004-01-01 00:00:00', '0', '0', '0', '0', '0', 'default');");
+	}
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		domainid=atoi(sql_getvalue(sqr, i, 0));
+		if (sanity_dircheck("%s/%04d",             proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/attachments", proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/cgi-bin",     proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/files",       proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/htdocs",      proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/mail",        proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/mail/%04d",        proc.config.server_dir_var_spool,   domainid)!=0) exit(-2);
+	}
+	sql_freeresult(sqr);
 	return 0;
 }

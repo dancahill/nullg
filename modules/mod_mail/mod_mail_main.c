@@ -1065,7 +1065,7 @@ void webmailpurge(CONN *sid)
 	accountid=atoi(ptemp);
 	prints(sid, "<BR><B>Purging and re-indexing account %d ... </B>", accountid);
 	flushbuffer(sid);
-	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid))<0) return;
 	err=0;
 	memset(msgfilename, 0, sizeof(msgfilename));
 	memset(newfilename, 0, sizeof(newfilename));
@@ -1080,15 +1080,16 @@ void webmailpurge(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	if (err==0) {
-		sql_updatef("DELETE FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd'", sid->dat->user_uid, accountid);
+		sql_updatef("DELETE FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d and status = 'd'", sid->dat->user_uid, sid->dat->user_did, accountid);
 	}
-	if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid))<0) return;
 	for (i=0,j=1;i<sql_numtuples(sqr);i++) {
 		if (j==atoi(sql_getvalue(sqr, i, 0))) { j++; continue; }
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 0)));
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, j);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), j);
 		if (rename(msgfilename, newfilename)==0) {
-			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d and accountid = %d and mailheaderid = %d", j, sid->dat->user_uid, accountid, atoi(sql_getvalue(sqr, i, 0)))<0) {
+			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailheaderid = %d", j, sid->dat->user_uid, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 0)))<0) {
+				prints(sid, "<BR><B>'%s' could not be moved to '%s'</B>\n", msgfilename, newfilename);
 				rename(newfilename, msgfilename);
 				break;
 			}

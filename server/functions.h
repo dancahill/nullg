@@ -93,7 +93,8 @@ int     modules_exec(void);
 int     modules_cron(void);
 int     module_load(char *modname);
 /* sanity.c functions */
-int     sanity_dbcheck(void);
+int     sanity_checkdb(void);
+int     sanity_checkdirs(void);
 /* log.c functions */
 void    log_access(char *logsrc, const char *format, ...);
 void    log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *format, ...);

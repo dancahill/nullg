@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 				module_load(argv[i]);
 			}
 		}
+		sanity_checkdirs();
 		if (modules_exec()!=0) exit(-2);
 		if (modules_cron()!=0) exit(-2);
 //		WaitForSingleObject(ghevDoForever, INFINITE);
@@ -147,6 +148,7 @@ int main(int argc, char *argv[])
 		if (setgid(pw->pw_gid)) exit(-2);
 		if (setuid(pw->pw_uid)) exit(-2);
 	}
+	sanity_checkdirs();
 	if (modules_exec()!=0) exit(-2);
 //	if (modules_cron()!=0) exit(-2);
 	proc.DaemonThread=pthread_self();

@@ -323,25 +323,13 @@ int filesend(CONN *sid, unsigned char *file)
 	if (strstr(file, "..")!=NULL) return -1;
 	if (stat(file, &sb)!=0) return -1;
 	if (sb.st_mode&S_IFDIR) return -1;
-/*	if (strlen(sid->dat->in_IfModifiedSince)) {
-		send_fileheader(sid, 1, 304, "OK", "1", get_mime_type(file), sb.st_size, sb.st_mtime);
-		sid->dat->out_headdone=1;
-		sid->dat->out_bodydone=1;
-		sid->dat->out_flushed=1;
-		sid->dat->out_ReplyData[0]='\0';
-		flushbuffer(sid);
-		return 0;
-	}
-*/
+	// need some check for IfModifiedSince here
 	if ((fp=open(file, O_RDONLY|O_BINARY))==-1) return -1;
 	sid->dat->out_bytecount=sb.st_size;
 	sid->dat->out_bodydone=1;
 	bytesleft=sb.st_size;
 	send_fileheader(sid, 1, 200, "OK", "1", get_mime_type(file), sb.st_size, sb.st_mtime);
-	// sendfile() can't be used without screwing up our timeouts
-//#ifdef LINUX
-//	sendfile(sid->socket, fp, NULL, sb.st_size);
-//#else
+	// sendfile() can't be used without screwing up our timeouts, so we do this
 	for (;;) {
 		if (bytesleft<=0) break;
 		blocksize=sizeof(fileblock);
@@ -356,7 +344,6 @@ int filesend(CONN *sid, unsigned char *file)
 		}
 		sid->socket.atime=time(NULL);
 	}
-//#endif
 	close(fp);
 	sid->dat->out_headdone=1;
 	sid->dat->out_flushed=1;

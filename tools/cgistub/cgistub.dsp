@@ -1,23 +1,23 @@
-# Microsoft Developer Studio Project File - Name="fastcgi" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="cgistub" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=fastcgi - Win32 Release
+CFG=cgistub - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "fastcgi.mak".
+!MESSAGE NMAKE /f "cgistub.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "fastcgi.mak" CFG="fastcgi - Win32 Release"
+!MESSAGE NMAKE /f "cgistub.mak" CFG="cgistub - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "fastcgi - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "cgistub - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -34,7 +34,7 @@ RSC=rc.exe
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "..\distrib\bin"
-# PROP Intermediate_Dir "..\obj\fastcgi"
+# PROP Intermediate_Dir "..\obj\cgistub"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
@@ -51,7 +51,7 @@ LINK32=link.exe
 # SUBTRACT LINK32 /map
 # Begin Target
 
-# Name "fastcgi - Win32 Release"
+# Name "cgistub - Win32 Release"
 # Begin Source File
 
 SOURCE=.\main.c

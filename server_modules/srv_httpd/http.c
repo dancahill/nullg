@@ -484,7 +484,7 @@ void read_cgienv(CONN *sid)
 //	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_cgi, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_cgi, progname);
 	} else if (strncmp(sid->dat->in_CGIScriptName, "/", 1)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+1);
 		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_htdocs, progname);
@@ -646,7 +646,7 @@ int read_header(CONN *sid)
 //	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_cgi, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_cgi, progname);
 	} else if (strncmp(sid->dat->in_CGIScriptName, "/", 1)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+1);
 		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_htdocs, progname);

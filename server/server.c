@@ -161,7 +161,7 @@ void init()
 		printf("\r\nsqlreply calloc(%d, %d) failed\r\n", proc.config.sql_maxconn, sizeof(SQLRES));
 		exit(-2);
 	}
-	if (sanity_dbcheck()==-1) {
+	if (sanity_checkdb()==-1) {
 		log_error("core", __FILE__, __LINE__, 0, "SQL subsystem failed sanity check");
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
 		exit(-2);

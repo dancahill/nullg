@@ -12,7 +12,7 @@ cd "%BASEDIR%"
 gzip "backup-%CURDATE%"
 echo Archiving backup tarball...
 DEL var\backup\backup-%CURDATE%.tgz 2> NUL
-tar zcf backup-%CURDATE%.tgz backup-%CURDATE%.gz cgi-bin etc var --exclude=var/backup/*
+tar zcf backup-%CURDATE%.tgz backup-%CURDATE%.gz etc var --exclude=var/backup/*
 DEL backup-%CURDATE%.gz 2> NUL
 MOVE backup-%CURDATE%.tgz var\backup
 echo done.

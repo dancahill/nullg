@@ -8,8 +8,14 @@
 
 BASE_PATH="/usr/local/nullgroupware"
 
+# Source function library.
 if [ -x /etc/rc.d/init.d/functions ]; then
 	. /etc/rc.d/init.d/functions
+fi
+
+# Source networking configuration.
+if [ -x /etc/sysconfig/network ]; then
+	. /etc/sysconfig/network
 fi
 
 groupware_start() {
@@ -79,4 +85,5 @@ restart|reload)
 *)
 	echo "Usage: $0 {start|stop|status|restart|reload}"
 esac
-exit 0
+
+exit $?

@@ -130,6 +130,7 @@ void taskreminderstatus(CONN *sid)
 
 void taskedit(CONN *sid)
 {
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_TASK task;
 	char duedate[16];
 	char *ptemp;
@@ -235,6 +236,18 @@ void taskedit(CONN *sid)
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
+	if (task.taskid>0) {
+		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+			prints(sid, "<TR><TD NOWRAP>");
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
+			prints(sid, " [<A HREF=%s/notes/editnew?table=tasks&index=%d>new</A>]", sid->dat->in_ScriptName, task.taskid);
+			prints(sid, "</FONT></TH></TR>\n");
+			mod_notes_sublist(sid, "tasks", task.taskid, 1);
+			prints(sid, "</TABLE>\n");
+			prints(sid, "</TD></TR>\n");
+		}
+	}
 	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	if (taskid!=0) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save Task'>\n");

@@ -15,10 +15,58 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "main.h"
 
-static short unsigned int server_port=4110;
-static char *server_addr="localhost";
+#define SERVER_PORT	4110
+#define SERVER_ADDR	"localhost"
+#define MAX_POSTSIZE	33554432
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#ifdef WIN32
+	#define WIN32_LEAN_AND_MEAN
+	#pragma comment(lib, "ws2_32.lib")
+	#include <winsock2.h>
+	#include <windows.h>
+	#include <io.h>
+#ifdef BCC
+	#define _setmode setmode
+#endif
+	#define snprintf _snprintf
+	#define vsnprintf _vsnprintf
+	#define strcasecmp stricmp
+	#define strncasecmp strnicmp
+#else
+	#include <netdb.h>
+	#include <stdarg.h>
+	#include <string.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#define closesocket close
+#endif
+typedef struct {
+	short int state;
+	short int socket;
+	struct sockaddr_in ClientAddr;
+	time_t ctime;
+	time_t atime;
+	char *PostData;
+	int  in_ContentLength;
+	char in_Cookie[1024];
+	char in_Host[64];
+	char in_PathInfo[128];
+	char in_QueryString[1024];
+	char in_RemoteAddr[16];
+	char in_RequestMethod[8];
+	char in_RequestURI[1024];
+	char in_ScriptName[128];
+	char in_UserAgent[128];
+} CONN;
+
+static short unsigned int server_port=SERVER_PORT;
+static char *server_addr=SERVER_ADDR;
 static int htsocket;
 #ifdef WIN32
 static WSADATA wsaData;

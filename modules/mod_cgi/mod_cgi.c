@@ -42,7 +42,7 @@ void cgi_makeargs(CONN *sid, char *args[])
 //		snprintf(args[2], 254, "%s", ptemp);
 //		*ptemp='\0';
 //	}
-	snprintf(args[0], 254, "%s/%s", proc->config.server_dir_cgi, progname);
+	snprintf(args[0], 254, "%s/%s", proc->config.server_dir_var_cgi, progname);
 	fixslashes(args[0]);
 //	fixslashes(args[0]);
 	if (strlen(sid->dat->in_QueryString)) {

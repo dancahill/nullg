@@ -17,6 +17,12 @@
 */
 #include "srv_mod.h"
 
+#ifdef WIN32
+#pragma comment(lib, "ws2_32.lib")
+#else
+#define closesocket close
+#endif
+
 typedef struct {
 	char      user_username[64];
 //	char      user_token[64];
