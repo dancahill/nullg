@@ -1,0 +1,246 @@
+<HTML>
+<HEAD>
+<TITLE>Sentinel Groupware Documentation - The User Editor</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-04.html>The Message of the Day Editor</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch03-00.html>Chapter 3 Index</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>Sentinel Groupware</FONT></B><BR>
+Chapter 2. Administration<BR><BR>
+</CENTER>
+<HR>
+<H2>The User Editor</H2>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The user editor can be used to add, modify, or delete user accounts.
+All aspects of a Sentinel Groupware user's profile, including login information,
+security access levels, e-mail settings, and personal information can be changed
+from the user editor.
+</P>
+<H3>Username</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the login name which is assigned to the user.  Each user must have a
+unique username.
+</P>
+<H3>Password</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the user's login password.  Each user should be advised to choose a password
+which is both easy to remember, and hard to guess.  Passwords are encrypted before
+being stored in the Sentinel Groupware database.  If a user forgets their password,
+then the administrator will have to assign a new password to the user.
+</P>
+<H3>E-mail Address</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the e-mail address which will be used in the From: field on all outgoing
+Web E-mail.
+</P>
+<H3>E-mail Username</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the username to use when logging on to the POP3 e-mail server.
+</P>
+<H3>E-mail Password</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the password to use when logging on to the POP3 e-mail server.  Note that
+this password is stored in the database in cleartext.  If you have any concerns
+about the privacy of your e-mail, it is suggested that you <I>quit</I> the web
+e-mail system when not using it (thus removing the e-mail password from the database).
+</P>
+<H3>POP3 Server</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the fully qualified domain name of the POP3 server to use when retrieving
+e-mail.
+</P>
+<H3>SMTP Server</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the fully qualified domain name of the SMTP server to use when sending
+e-mail.
+</P>
+<H3>Administration</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+All administrative functions in Sentinel Groupware require level 4 security.
+Setting this to anything less than level 4 will disallow the user from accessing
+any of the administrative functions.  Setting this to level 0 will remove the
+<I>Administration</I> menu option entirely.
+</P>
+<H3>Calendar</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Calendar</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Calendar</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to view all public tasks and
+events as well as all private tasks and events assigned to the user.</DD>
+<DD>Level 2 or higher grants a user the ability to assign new tasks and events.</DD>
+<DD>Level 3 or higher grants a user the ability to modify and delete existing tasks and events.</DD>
+</DL>
+<H3>Contacts</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Contacts</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Contacts</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to view all contacts and companies.</DD>
+<DD>Level 2 or higher grants a user the ability to add new contacts and companies.</DD>
+<DD>Level 3 or higher grants a user the ability to modify and delete existing contacts and companies.</DD>
+</DL>
+<H3>Files</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Files</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Files</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to download files.</DD>
+<DD>Level 2 or higher grants a user the ability to upload new files.</DD>
+</DL>
+<H3>Forums</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Forums</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Forums</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to view all forums and replies.</DD>
+<DD>Level 2 or higher grants a user the ability to reply in forums.</DD>
+<DD>Level 3 or higher grants a user the ability to create new forums.</DD>
+</DL>
+<H3>Links</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Links</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Links</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to view all links.</DD>
+<DD>Level 2 or higher grants a user the ability to add new links.</DD>
+<DD>Level 3 or higher grants a user the ability to modify and delete existing links.</DD>
+</DL>
+<H3>Messages</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Messages</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Messages</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to read and delete personal messages.</DD>
+<DD>Level 2 or higher grants a user the ability to send messages.</DD>
+</DL>
+<H3>Orders</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Orders</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Orders</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to view all orders and products.</DD>
+<DD>Level 2 or higher grants a user the ability to add and modify orders.</DD>
+<DD>Level 3 or higher grants a user the ability to delete orders, and add, modify and delete products.</DD>
+</DL>
+<H3>Queries</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Queries</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Queries</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user the ability to run predefined queries.</DD>
+</DL>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Since running arbitrary SQL queries could present a security risk, level 4 access is
+required to add or run new queries.
+</P>
+<H3>Webmail</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This setting controls the access level granted to the user for the <I>Web E-mail</I> section.
+</P>
+<DL>
+<DD>Level 0 will remove the <I>Web E-mail</I> menu option entirely.</DD>
+<DD>Level 1 or higher grants a user full use of the web e-mail system.</DD>
+</DL>
+<H3>Surname</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the surname or last name of the user.
+</P>
+<H3>Given Name</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the given name or names of the user.
+</P>
+<H3>Title</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the job title of the user.
+</P>
+<H3>Division</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is division the user works in.
+</P>
+<H3>Supervisor</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is name of the user's supervisor.
+</P>
+<H3>Address</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the street address of the user.
+</P>
+<H3>City, Province</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the city and province the user lives in.
+</P>
+<H3>Country</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the country the user lives in.
+</P>
+<H3>Postal Code</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is postal code of the user's address.
+</P>
+<H3>Home Phone</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the home phone number of the user.
+</P>
+<H3>Work Phone</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the work phone number (and extension) of the user.
+</P>
+<H3>Cell Phone</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the cell phone number of the user.
+</P>
+<H3>FAX</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the FAX number of the user.
+</P>
+<H3>Pager</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the pager number of the user.
+</P>
+<H3>Date of Birth</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the user's date of birth.
+</P>
+<H3>Hire Date</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the date the user was hired.
+</P>
+<H3>S.I.N. (Social Insurance Number)</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This is the social insurance number (or social security number) of the user.
+</P>
+<H3>Active</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This specifies whether the user is currently active in the company or not.
+</P>
+<H3>Notes</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Any notes or memos about the user should go here.
+</P>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch02-04.html>The Message of the Day Editor</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch03-00.html>Chapter 3 Index</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>

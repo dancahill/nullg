@@ -1,0 +1,87 @@
+Sentinel Groupware ChangeLog
+
+1.0.0
+-----
+- re-released in source format under the GNU GPL
+
+1.0
+---
+- calendar date 'off by one' bug fixed
+
+1.0.0rc2
+--------
+- minor css color fixes
+- added redundant update frame refresher
+- minor calendar display changes
+
+1.0.0rc1
+--------
+- more webmail enhancements
+- odbc queries trimmed
+- fixed a small calendar display bug
+- minor consistency fixes
+- contact name display fix
+- finished documentation
+- removed logo.gif on main page
+
+0.9.1
+-----
+- better salt creation for MD5 passwords
+- changed default port to 4110
+- fixed a bug in dbutil for mdb 'init'ing
+- fixed a bug with some orders not showing up in searches
+- added prefix gw_ to table names (for cleaner db sharing)
+- added database version tracking
+- cleaned up order system floating points
+- names and default values for taxes can now be changed
+- major cleanup of the calendar month view code
+- fixed an old bug calculating the current year's leap year day
+- all code is now either 100% thread safe (i think) or mutexed
+- slightly smarter key checking
+- minor work on documentation
+- minor bugs in webmail fixed
+- minor bug fixed in dbutil to handle ' characters
+- forum message threading is much improved
+- better linking of related data
+
+0.9.0
+-----
+- replaced initdb with dbutil.  dbutil can backup and restore databases as
+  well as initialize them
+- total rewrite of standalone server code (fully multi-threaded on Win32 and
+  Linux)
+- create separate window for file uploads
+- added options to control maximum connections and maximum sql query caches
+- fixed bug with contact search/listing with missing companyid
+- changed resolution of reminders from hours to minutes
+- added http keepalive support
+- minor time and timezone fixes
+- major fix to contact searching
+- minor fixes to the file uploading system
+- minor fixes in the webmail interface
+- removed legacy DES crypt support
+
+0.8.8
+-----
+- added an install script for Linux
+- minor fixes in the webmail interface
+- added activation toggle for user accounts
+- major rewrite of the forum system
+- Numerous 'check for NULL' input fixes
+- added new fields to 'users' for tracking logins
+- created registration key system
+- initdb can now init mdb database format
+- Numerous fixes for Linux/Apache CGI mode
+- finished internal caching of PostgreSQL SELECTs
+- major cookie handling fixes
+- added a system to handle event reminders
+
+0.8.7
+-----
+- major enhancements to the ODBC code base (win32)
+- query section now allows SQL updates, inserts, and deletes (beware)
+- numerous small bugs which could be used to crash the server (win32)
+- switched from DES to MD5 password storage (DES support still exists for now
+  as a legacy feature)
+- major fixes in sending e-mail (messages aren't truncated any more)
+- more major fixes in sending e-mail (file attachments actually work now)

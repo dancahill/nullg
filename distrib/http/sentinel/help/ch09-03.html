@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>Sentinel Groupware Documentation - Adding and Editing Products</TITLE>
+<STYLE>
+.JUSTIFY {text-align : justify}
+A {color : #0000FF; text-decoration : none}
+</STYLE>
+</HEAD>
+<BODY BACKGROUND=../images/bgmain.gif BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch09-02.html>Adding and Editing Orders</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch10-00.html>Chapter 10 Index</A></TD>
+</TR></TABLE>
+<BR><B><FONT SIZE=+3>Sentinel Groupware</FONT></B><BR>
+Chapter 9. Orders<BR><BR>
+</CENTER>
+<HR>
+<H2>Adding and Editing Products</H2>
+<H3>Listing Products</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+A complete listing of all products in the database can be accessed by clicking
+on 'VIEW PRODUCTS' from any page in the order system.  In the left column of
+the list will be the product name.  Clicking on the product name will take you
+to a view of the product's information.  In the second column of the product
+list will be the category of the product.  In the third column will be the
+unmodified base unit price of the product.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+At the bottom of the products list will be a link 'New Product' which will
+allow you to add a new product.
+</P>
+<H3>Viewing Products</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The product view and edit forms display the exact same information.  Both
+forms include the following fields.
+</P>
+<H3>Product Name</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Product Name' field is the short descriptive name that will be used to
+identify this product (or service) in most order views.
+</P>
+<H3>Category</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Category' field indicates the general class of product or service under
+which this item falls.  This field is used as a user guide, and has no effect
+on the function of the order system.
+</P>
+<H3>Discount</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Discount' field indicates whether any discount should be assigned to this
+product.  If it is non-zero, future sales of this product will receive the
+indicated discount.  Note that the number shown on this form is the decimal
+notation of the discount percentage (e.g. 50% will appear as 0.50).
+</P>
+<H3>Unit Price</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Unit Price' field is the base unit price (before discounts and taxes) of
+this product for one unit.
+</P>
+<H3>Internal Cost</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Internal Cost' field can be used for accounting purposes to calculate
+net profit for a sale (e.g. Unit Price - Internal Cost = Profit).  This value
+is not used in the processing of a customer invoice.
+</P>
+<H3>PST (Provincial Sales Tax)</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'PST' field is used to indicate the percentage of the unit price to charge
+for tax 1.  As with the 'Discount' field, this field is in decimal notation.
+8% tax would be entered as 0.08.
+</P>
+<H3>GST (Goods and Services Tax)</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'GST' field is used to indicate the percentage of the unit price to charge
+for tax 2.  As with the 'Discount' field, this field is in decimal notation.
+8% tax would be entered as 0.08.
+</P>
+<H3>Notes on Taxes</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The default taxes, PST (Provincial Sales Tax) and GST (Goods and Services Tax)
+may have the wrong percentages for your region, or may be entirely the wrong
+taxes for your country.  The names and default percentages of both taxes can
+be changed by modifying the corresponding entries in the 'gw_dbinfo' table.
+</P>
+<HR>
+<CENTER>
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%><TR>
+<TD WIDTH=40% ALIGN=left><A HREF=ch09-02.html>Adding and Editing Orders</A></TD>
+<TD WIDTH=20% ALIGN=center><A HREF=index.html>Home</A></TD>
+<TD WIDTH=40% ALIGN=right><A HREF=ch10-00.html>Chapter 10 Index</A></TD>
+</TR></TABLE>
+</CENTER>
+</BODY>
+</HTML>
