@@ -562,7 +562,12 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		if ((reply)||(strncasecmp(contenttype, "text/html", 9)!=0)) {
 			printline(sid, reply, bodytemp);
 		} else {
-			prints(sid, bodytemp);
+			ptemp=bodytemp;
+			while (bodysize>0) {
+				if ((i=prints(sid, "%s", ptemp))<1) break;
+				ptemp+=i;
+log_error("mod_mail", __FILE__, __LINE__, 1, "a[%d]", i);
+			}
 		}
 		free(bodytemp);
 		if ((!reply)&&(strncasecmp(contenttype, "text/html", 9)!=0)) {
@@ -722,7 +727,12 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 		if ((reply)||(strncasecmp(ctype, "text/html", 9)!=0)) {
 			printline(sid, reply, bodytemp);
 		} else {
-			prints(sid, bodytemp);
+			ptemp=bodytemp;
+			while (bodysize>0) {
+				if ((i=prints(sid, "%s", ptemp))<1) break;
+				ptemp+=i;
+log_error("mod_mail", __FILE__, __LINE__, 1, "b[%d]", i);
+			}
 		}
 		free(bodytemp);
 		if (!reply) {

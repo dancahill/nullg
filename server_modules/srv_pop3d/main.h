@@ -39,7 +39,7 @@ typedef struct {
 } CONN;
 
 /* auth.c functions */
-int auth_login(CONN *sid, char *username, char *password, int mbox);
+int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox);
 /* pop3.c functions */
 void pop3_dorequest(CONN *sid);
 

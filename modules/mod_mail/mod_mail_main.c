@@ -206,8 +206,8 @@ void webmaillist(CONN *sid)
 	prints(sid, "</TD></FORM></TR></TABLE>\r\n");
 
 	flushbuffer(sid);
-	snprintf(searchstring, sizeof(searchstring)-1, "%s", search_makestring(sid));
-	if ((sqr=search_doquery(sid, order_by[order], folderid))<0) return;
+	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
+	if ((sqr=wmsearch_doquery(sid, order_by[order], folderid))<0) return;
 	nummessages=sql_numtuples(sqr);
 	if (nummessages<1) {
 		prints(sid, "<BR><CENTER><B>You have no messages in this mailbox</B></CENTER><BR>\n");
@@ -387,8 +387,8 @@ void webmailread(CONN *sid)
 		folderid=atoi(sql_getvalue(sqr, 0, 1));
 	}
 	sql_freeresult(sqr);
-	snprintf(searchstring, sizeof(searchstring)-1, "%s", search_makestring(sid));
-	if ((sqr=search_doquery(sid, order_by[order], folderid))<0) return;
+	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
+	if ((sqr=wmsearch_doquery(sid, order_by[order], folderid))<0) return;
 	nummessages=sql_numtuples(sqr);
 	for (i=0;i<nummessages;i++) {
 		if (localid==atoi(sql_getvalue(sqr, i, 0))) {
@@ -786,8 +786,8 @@ void webmailsave(CONN *sid)
 	sql_freeresult(sqr);
 	if (headerid<1) headerid=1;
 	memset(query, 0, sizeof(query));
-	strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_messageid, hdr_inreplyto, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", headerid, datebuf, datebuf, sid->dat->user_uid, 0, 0, 0);
+	strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_messageid, hdr_inreplyto, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", headerid, datebuf, datebuf, sid->dat->user_uid, 0, sid->dat->user_did, 0, 0);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d", sid->dat->user_mailcurrent);
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '2"); /* folder */
 	strncatf(query, sizeof(query)-strlen(query)-1, "', 'r");
@@ -1141,7 +1141,7 @@ void mod_main(CONN *sid)
 	} else if (strncmp(suburi, "save", 4)==0) {
 		webmailsave(sid);
 	} else if (strncmp(suburi, "search", 6)==0) {
-		search_form(sid);
+		wmsearch_form(sid);
 	} else if (strncmp(suburi, "sync", 4)==0) {
 		wmsync(sid, 1);
 	} else if (strncmp(suburi, "raw", 3)==0) {

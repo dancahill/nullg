@@ -310,6 +310,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	char finishdate[30];
 	char *ptemp;
 	int autogroup;
+	int copyid=0;
 	int eventid;
 	int duration;
 
@@ -333,12 +334,14 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 			}
 			if (eventrec.eventfinish<eventrec.eventstart) eventrec.eventfinish=eventrec.eventstart;
 		} else {
-			if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
-			eventid=atoi(ptemp);
+			eventid=0;
+			if ((ptemp=getgetenv(sid, "EVENTID"))!=NULL) eventid=atoi(ptemp);
+			if ((ptemp=getgetenv(sid, "COPYEVENTID"))!=NULL) { copyid=atoi(ptemp); eventid=copyid; }
 			if (dbread_event(sid, 2, eventid, &eventrec)!=0) {
 				prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", eventid);
 				return;
 			}
+			if (copyid) { eventid=0; eventrec.eventid=0; }
 		}
 		event=&eventrec;
 	}
@@ -476,6 +479,9 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
+	if ((auth_priv(sid, "calendar")&A_INSERT)&&(event->eventid!=0)) {
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Copy'>\n");
+	}
 	prints(sid, "</FORM>\n</CENTER>\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.eventedit.eventname.focus();\n");
 	prints(sid, "CloseUpdate();\n// -->\n</SCRIPT>\n");
@@ -681,7 +687,12 @@ void calendarsave(CONN *sid)
 		calendaredit(sid, &event);
 		return;
 	}
-	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
+	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Copy")==0)) {
+		prints(sid, "<CENTER><B>Copy of event <A HREF=%s/calendar/edit?eventid=%d>%d</A>.</B></CENTER>\n", sid->dat->in_ScriptName, event.eventid, event.eventid);
+		event.eventid=0;
+		calendaredit(sid, &event);
+		return;
+	} else if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "calendar")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;

@@ -96,7 +96,7 @@ void *poploop(void *x)
 #ifndef WIN32
 	pthread_detach(conn[sid].id);
 #endif
-	log_error("pop3", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket.socket);
+	log_error("pop3d", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket.socket);
 	conn[sid].dat=calloc(1, sizeof(CONNDATA));
 	proc->stats.pop3_conns++;
 	if (conn[sid].dat!=NULL) free(conn[sid].dat);
@@ -105,7 +105,7 @@ void *poploop(void *x)
 	conn[sid].socket.ctime=time(NULL);
 	pop3_dorequest(&conn[sid]);
 	conn[sid].state=0;
-	log_error("pop3", __FILE__, __LINE__, 4, "Closing connection thread [%u]", conn[sid].socket.socket);
+	log_error("pop3d", __FILE__, __LINE__, 4, "Closing connection thread [%u]", conn[sid].socket.socket);
 	tcp_close(&conn[sid].socket, 1);
 	conn[sid].socket.socket=-1;
 	pthread_exit(0);
@@ -152,7 +152,7 @@ void *pop3_accept_loop(void *x)
 	pthread_detach(pthread_self());
 #endif
 	if (pthread_attr_init(&thr_attr)) {
-		log_error("pop3", __FILE__, __LINE__, 0, "pthread_attr_init()");
+		log_error("pop3d", __FILE__, __LINE__, 0, "pthread_attr_init()");
 		exit(1);
 	}
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
@@ -169,7 +169,7 @@ void *pop3_accept_loop(void *x)
 		conn[sid].socket.socket=socket;
 #ifdef WIN32
 		if (conn[sid].socket.socket==INVALID_SOCKET) {
-			log_error("pop3", __FILE__, __LINE__, 2, "pop3_accept_loop() shutting down...");
+			log_error("pop3d", __FILE__, __LINE__, 2, "pop3_accept_loop() shutting down...");
 			return 0;
 #else
 		if (conn[sid].socket.socket<0) {
@@ -177,7 +177,7 @@ void *pop3_accept_loop(void *x)
 #endif
 		} else {
 			if (pthread_create(&conn[sid].handle, &thr_attr, poploop, (void *)sid)==-1) {
-				log_error("pop3", __FILE__, __LINE__, 0, "poploop() failed...");
+				log_error("pop3d", __FILE__, __LINE__, 0, "poploop() failed...");
 				exit(0);
 			}
 		}
@@ -200,7 +200,7 @@ void *pop3_accept_loop_ssl(void *x)
 	pthread_detach(pthread_self());
 #endif
 	if (pthread_attr_init(&thr_attr)) {
-		log_error("pop3", __FILE__, __LINE__, 0, "pthread_attr_init()");
+		log_error("pop3d", __FILE__, __LINE__, 0, "pthread_attr_init()");
 		exit(1);
 	}
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
@@ -217,7 +217,7 @@ void *pop3_accept_loop_ssl(void *x)
 		conn[sid].socket.socket=socket;
 #ifdef WIN32
 		if (conn[i].socket.socket==INVALID_SOCKET) {
-			log_error("pop3", __FILE__, __LINE__, 2, "pop3_accept_loop_ssl() shutting down...");
+			log_error("pop3d", __FILE__, __LINE__, 2, "pop3_accept_loop_ssl() shutting down...");
 			return 0;
 #else
 		if (conn[sid].socket.socket<0) {
@@ -226,7 +226,7 @@ void *pop3_accept_loop_ssl(void *x)
 		} else {
 			ssl_accept(&conn[sid].socket);
 			if (pthread_create(&conn[sid].handle, &thr_attr, poploop, (void *)sid)==-1) {
-				log_error("pop3", __FILE__, __LINE__, 0, "poploop() failed...");
+				log_error("pop3d", __FILE__, __LINE__, 0, "poploop() failed...");
 				exit(0);
 			}
 		}
@@ -273,14 +273,14 @@ DllExport int mod_exec()
 #endif
 	if (config->pop3_port) {
 		if (pthread_create(&ListenThread, &thr_attr, pop3_accept_loop, NULL)==-1) {
-			log_error("pop3", __FILE__, __LINE__, 0, "pop3_accept_loop() failed...");
+			log_error("pop3d", __FILE__, __LINE__, 0, "pop3_accept_loop() failed...");
 			return -2;
 		}
 	}
 #ifdef HAVE_LIBSSL
 	if ((proc->ssl_is_loaded)&&(config->pop3_port_ssl)) {
 		if (pthread_create(&ListenThreadSSL, &thr_attr, pop3_accept_loop_ssl, NULL)==-1) {
-			log_error("pop3", __FILE__, __LINE__, 0, "pop3_accept_loop_ssl() failed...");
+			log_error("pop3d", __FILE__, __LINE__, 0, "pop3_accept_loop_ssl() failed...");
 			return -2;
 		}
 	}
@@ -302,7 +302,7 @@ DllExport int mod_cron()
 		} else {
 			if (ctime-conn[i].socket.atime<config->pop3_maxidle) continue;
 		}
-		log_error("pop3", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
+		log_error("pop3d", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
 //		closeconnect(&conn[i], 0);
 		tcp_close(&conn[i].socket, 0);
 	}
@@ -320,7 +320,7 @@ void server_shutdown()
 #ifndef WIN32
 	if ((pthread_t)pthread_self()!=proc.DaemonThread) return;
 #endif
-//	log_access("pop3", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
+//	log_access("pop3d", 1, "Stopping %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 	log_error("core", __FILE__, __LINE__, 1, "Stopping %s pop3d %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 //	pthread_kill(proc.ListenThread, 14);
 //	shutdown(proc.ListenSocket, 2);

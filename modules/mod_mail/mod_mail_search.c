@@ -18,7 +18,7 @@
 #include "http_mod.h"
 #include "mod_mail.h"
 
-char *search_makestring(CONN *sid)
+char *wmsearch_makestring(CONN *sid)
 {
 	char *searchstring=getbuffer(sid);
 	char *ptemp;
@@ -54,7 +54,7 @@ char *search_makestring(CONN *sid)
 	return searchstring;
 }
 
-int search_doquery(CONN *sid, const char *order_by, int folderid)
+int wmsearch_doquery(CONN *sid, const char *order_by, int folderid)
 {
 	char *ptemp;
 	int sqr;
@@ -96,7 +96,7 @@ int search_doquery(CONN *sid, const char *order_by, int folderid)
 	return sqr;
 }
 
-void search_form(CONN *sid)
+void wmsearch_form(CONN *sid)
 {
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);

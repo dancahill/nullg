@@ -76,6 +76,8 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	int i, j;
 
 	DEBUG_IN(sid, "auth_renewcookie()");
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
 	if (strlen(sid->dat->user_username)==0) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;

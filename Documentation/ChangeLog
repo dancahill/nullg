@@ -1,3 +1,11 @@
+1.3.8
+-----
+- fixed truncated display of html e-mails
+- fixed prints() to return number of bytes actually printed
+- fixed login page to use 'default' theme
+- fixed POP3d and SMTPd to work with new directory layout
+- added option to copy events
+
 1.3.7
 -----
 - added search form for e-mail

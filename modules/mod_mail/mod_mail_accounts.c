@@ -149,13 +149,13 @@ void wmaccount_edit(CONN *sid)
 	if (mailacct.mailaccountid!=0) {
 		prints(sid, "<DIV ID=page5 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR CLASS=\"EDITFORM\"><TD>");
+		prints(sid, "<TR><TD>");
 		wmfolder_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");
 		prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-		prints(sid, "<TR CLASS=\"EDITFORM\"><TD>");
+		prints(sid, "<TR><TD>");
 		wmfilter_list(sid, mailacct.mailaccountid);
 		prints(sid, "</TD></TR></TABLE>\n");
 		prints(sid, "</DIV>\r\n");

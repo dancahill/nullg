@@ -214,7 +214,8 @@ int prints(CONN *sid, const char *format, ...)
 	if (sid==NULL) return -1;
 	sid->socket.atime=time(NULL);
 	va_start(ap, format);
-	str_len1=vsnprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, format, ap);
+	vsnprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, format, ap);
+	str_len1=strlen(buffer);
 	str_len2=strlen(sid->dat->out_ReplyData);
 	va_end(ap);
 	buffer[sizeof(sid->dat->smallbuf[0])-1]='\0';
@@ -228,7 +229,7 @@ int prints(CONN *sid, const char *format, ...)
 	if (str_len2+sizeof(sid->dat->smallbuf[0])>MAX_REPLYSIZE-2) {
 		flushbuffer(sid);
 	}
-	return 0;
+	return str_len1;
 }
 
 int raw_prints(CONN *sid, const char *format, ...)

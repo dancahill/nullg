@@ -147,7 +147,7 @@ void wmfolder_list(CONN *sid, int accountid)
 	prints(sid, "<CENTER><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
 	for (i=0; i<sql_numtuples(sqr1); i++) {
 		j=ptree[i].id;
-		prints(sid, "<TR BGCOLOR=#F0F0F0><TD NOWRAP WIDTH=100%%>");
+		prints(sid, "<TR><TD NOWRAP WIDTH=100%%>");
 		prints(sid, "&nbsp;<A HREF=%s/mail/folders/edit?accountid=%d&folderid=%d>edit</A>&nbsp;", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(sqr1, j, 0)));
 		for (indent=0;indent<ptree[i].depth;indent++) {
 			x=0;

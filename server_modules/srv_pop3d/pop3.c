@@ -271,14 +271,14 @@ static void pop3_local(CONN *sid)
 	mdir.mboxtotal=0;
 	mboxalloc=50;
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/mail/%d/%s", config->server_dir_var_spool, sid->dat->user_did, sid->dat->user_username);
+	snprintf(dirname, sizeof(dirname)-1, "%s/mail/%04d/%s", config->server_dir_var_spool, sid->dat->user_did, sid->dat->user_username);
 	if (stat(dirname, &sb)!=0) {
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
 #else
 		if (mkdir(dirname, 0700)!=0) {
 #endif
-			log_error("pop3", __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
+			log_error("pop3d", __FILE__, __LINE__, 1, "Error creating directory '%s'", dirname);
 			return;
 		}
 	}
@@ -428,11 +428,13 @@ void pop3_dorequest(CONN *sid)
 {
 	char line[128];
 	char username[64];
+	char domain[64];
 	char password[64];
 	int mbox;
 	char *ptemp;
 
 	memset(username, 0, sizeof(username));
+	memset(domain, 0, sizeof(domain));
 	memset(password, 0, sizeof(password));
 	mbox=0;
 	tcp_fprintf(&sid->socket, "+OK Welcome to %s POP3d\r\n", SERVER_NAME);
@@ -452,16 +454,21 @@ void pop3_dorequest(CONN *sid)
 				mbox=atoi(ptemp);
 				if (mbox<0) mbox=0;
 			}
+			if ((ptemp=strchr(username, '@'))!=NULL) {
+				*ptemp++='\0';
+				snprintf(domain, sizeof(domain)-1, "%s", ptemp);
+			}
 			tcp_fprintf(&sid->socket, "+OK USER '%s' MBOX '%d'\r\n", username, mbox);
 		} else if (strncasecmp(line, "pass", 4)==0) {
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(password, sizeof(password)-1, "%s", ptemp);
-			if (auth_login(sid, username, password, mbox)==0) {
+			if (auth_login(sid, username, domain, password, mbox)==0) {
 				tcp_fprintf(&sid->socket, "+OK PASS accepted\r\n");
 				break;
 			} else {
 				memset(username, 0, sizeof(username));
+				memset(domain, 0, sizeof(domain));
 				memset(password, 0, sizeof(password));
 				mbox=0;
 				sleep(2);
@@ -472,7 +479,7 @@ void pop3_dorequest(CONN *sid)
 		}
 	} while (1);
 	sid->state=1;
-	log_access("pop3", "SUCCESSFUL AUTH: %s", username);
+	log_access("pop3d", "SUCCESSFUL AUTH: %s", username);
 	if (mbox>0) {
 		pop3_remote(sid);
 	} else {

@@ -38,13 +38,19 @@ static int auth_checkpass(CONN *sid, char *rpassword, char *cpassword)
 	return 0;
 }
 
-int auth_login(CONN *sid, char *username, char *password, int mbox)
+int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox)
 {
+	int domainid;
 	int i;
 	int sqr;
 
 	if (strlen(username)==0) return -1;
-	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s'", username))<0) {
+
+	domainid=domain_getid(domain);
+	if (domainid<0) domainid=1;
+	sid->dat->user_did=domainid;
+
+	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d", username, domainid))<0) {
 		return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
@@ -63,7 +69,7 @@ int auth_login(CONN *sid, char *username, char *password, int mbox)
 		sid->dat->user_mailcurrent=0;
 		return 0;
 	}
-	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d order by mailaccountid ASC", mbox, sid->dat->user_uid))<0) {
+	if ((sqr=sql_queryf("SELECT mailaccountid, accountname FROM gw_mailaccounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d ORDER BY mailaccountid ASC", mbox, sid->dat->user_uid, sid->dat->user_did))<0) {
 		return -1;
 	}
 	i=sql_numtuples(sqr);

@@ -293,7 +293,7 @@ void wmfilter_list(CONN *sid, int accountid)
 	if (sql_numtuples(sqr1)>0) {
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
 		for (i=0; i<sql_numtuples(sqr1); i++) {
-			prints(sid, "<TR BGCOLOR=#F0F0F0><TD NOWRAP WIDTH=100%%>");
+			prints(sid, "<TR><TD NOWRAP WIDTH=100%%>");
 			prints(sid, "<A HREF=%s/mail/filters/edit?accountid=%d&filterid=%d>", sid->dat->in_ScriptName, accountid, atoi(sql_getvalue(sqr1, i, 0)));
 			prints(sid, "<B>%s</B></A></TD></TR>\n", str2html(sid, sql_getvalue(sqr1, i, 1)));
 		}
