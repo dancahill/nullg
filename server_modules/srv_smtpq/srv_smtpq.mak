@@ -31,6 +31,7 @@ ALL : "..\..\distrib\lib\srv_smtpq.dll"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\bounce.obj"
 	-@erase "$(INTDIR)\conf.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\smtpc.obj"
@@ -85,6 +86,7 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\srv_smtpq.pdb" /machine:I386 /out:"..\..\distrib\lib\srv_smtpq.dll" /implib:"$(OUTDIR)\srv_smtpq.lib" 
 LINK32_OBJS= \
+	"$(INTDIR)\bounce.obj" \
 	"$(INTDIR)\conf.obj" \
 	"$(INTDIR)\main.obj" \
 	"$(INTDIR)\smtpc.obj" \
@@ -97,6 +99,11 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "srv_smtpq - Win32 Release"
+SOURCE=.\bounce.c
+
+"$(INTDIR)\bounce.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\conf.c
 
 "$(INTDIR)\conf.obj" : $(SOURCE) "$(INTDIR)"

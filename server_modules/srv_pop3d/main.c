@@ -97,7 +97,6 @@ void *poploop(void *x)
 	pthread_detach(conn[sid].id);
 #endif
 	log_error("pop3d", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket.socket);
-	conn[sid].dat=calloc(1, sizeof(CONNDATA));
 	proc->stats.pop3_conns++;
 	if (conn[sid].dat!=NULL) free(conn[sid].dat);
 	conn[sid].dat=calloc(1, sizeof(CONNDATA));

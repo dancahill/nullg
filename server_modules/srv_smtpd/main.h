@@ -47,6 +47,8 @@ typedef struct {
 
 /* auth.c functions */
 int auth_login(CONN *sid, char *username, char *password, int mbox);
+/* bounce.c functions */
+int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason);
 /* conf.c functions */
 int conf_read(void);
 /* filter.c functions */
@@ -68,6 +70,7 @@ typedef struct {
 	short int smtp_maxconn;
 	short int smtp_maxidle;
 	int       smtp_retrydelay;
+	int       popauth_window;
 	char      filter_program[256];
 } MOD_CONFIG;
 

@@ -93,6 +93,7 @@ void *cronloop(void *x);
 #endif
 int     modules_init(void);
 int     modules_exec(void);
+int     modules_exit(void);
 int     modules_cron(void);
 int     module_load(char *modname);
 /* sanity.c functions */

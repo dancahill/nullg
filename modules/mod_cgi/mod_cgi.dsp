@@ -56,7 +56,7 @@ LINK32=link.exe
 # Name "mod_cgi - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_cgi.c
+SOURCE=.\mod_cgi_main.c
 # End Source File
 # Begin Source File
 

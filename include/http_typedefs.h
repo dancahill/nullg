@@ -128,6 +128,8 @@ typedef struct {
 	char in_RequestMethod[8];
 	char in_RequestURI[1024];
 	char in_ScriptName[128];
+	char in_ServerAddr[16];
+	int  in_ServerPort;
 	char in_UserAgent[128];
 	char in_CGIPathInfo[128];
 	char in_CGIScriptName[128];

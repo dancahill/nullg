@@ -71,6 +71,7 @@ static FUNCTION functions[]={
 
 SRVMOD_INIT mod_init;
 SRVMOD_EXEC mod_exec;
+SRVMOD_EXEC mod_exit;
 SRVMOD_EXEC mod_cron;
 
 #ifdef WIN32
@@ -118,6 +119,19 @@ int modules_exec()
 		if (strlen(proc.srvmod[i].mod_name)<1) break;
 		if ((mod_exec=(SRVMOD_EXEC)proc.srvmod[i].mod_exec)==NULL) return -1;
 		if (mod_exec()!=0) return -1;
+	}
+	return 0;
+}
+
+int modules_exit()
+{
+	int i;
+
+	for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
+		if (proc.srvmod[i].mod_exit==NULL) break;
+		if (strlen(proc.srvmod[i].mod_name)<1) break;
+		if ((mod_exit=(SRVMOD_EXEC)proc.srvmod[i].mod_exit)==NULL) return -1;
+		if (mod_exit()!=0) return -1;
 	}
 	return 0;
 }

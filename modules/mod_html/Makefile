@@ -3,7 +3,7 @@
 include ../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_html.o
+OBJECTS = mod_html_main.o
 TARGET  = $(MOD_TARGETDIR)/mod_html.so
 
 all: mod_html

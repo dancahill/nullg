@@ -32,6 +32,7 @@ ALL : "..\..\distrib\lib\srv_smtpd.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\auth.obj"
+	-@erase "$(INTDIR)\bounce.obj"
 	-@erase "$(INTDIR)\conf.obj"
 	-@erase "$(INTDIR)\filter.obj"
 	-@erase "$(INTDIR)\main.obj"
@@ -88,6 +89,7 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\srv_smtpd.pdb" /machine:I386 /out:"..\..\distrib\lib\srv_smtpd.dll" /implib:"$(OUTDIR)\srv_smtpd.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\auth.obj" \
+	"$(INTDIR)\bounce.obj" \
 	"$(INTDIR)\conf.obj" \
 	"$(INTDIR)\filter.obj" \
 	"$(INTDIR)\main.obj" \
@@ -104,6 +106,11 @@ LINK32_OBJS= \
 SOURCE=.\auth.c
 
 "$(INTDIR)\auth.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\bounce.c
+
+"$(INTDIR)\bounce.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\conf.c

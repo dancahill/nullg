@@ -33,6 +33,8 @@ static void conf_callback(char *var, char *val)
 		mod_config.smtp_maxidle=atoi(val);
 	} else if (strcmp(var, "retry delay")==0) {
 		mod_config.smtp_retrydelay=atoi(val);
+	} else if (strcmp(var, "pop auth window")==0) {
+		mod_config.popauth_window=atoi(val);
 	} else if (strcmp(var, "filter program")==0) {
 		strncpy(mod_config.filter_program, val, sizeof(mod_config.filter_program)-1);
 	} else {
@@ -51,6 +53,7 @@ int conf_read()
 	mod_config.smtp_maxconn    = 50;
 	mod_config.smtp_maxidle    = 120;
 	mod_config.smtp_retrydelay = 300;
+	mod_config.popauth_window  = 1800;
 	config_read("srv_smtpd", conf_callback);
 	if (mod_config.smtp_retrydelay<300) {
 		mod_config.smtp_retrydelay=300;

@@ -100,7 +100,6 @@ void *htloop(void *x)
 #endif
 //	setsockopt(conn[sid].socket, SOL_SOCKET, SO_RCVLOWAT, (void *)&lowat, sizeof(lowat));
 	log_error("http", __FILE__, __LINE__, 4, "Opening connection thread [%u]", conn[sid].socket);
-	conn[sid].dat=calloc(1, sizeof(CONNDATA));
 	proc->stats.http_conns++;
 	for (;;) {
 		if (conn[sid].PostData!=NULL) { free(conn[sid].PostData); conn[sid].PostData=NULL; }
@@ -109,6 +108,14 @@ void *htloop(void *x)
 		conn[sid].dat->out_ContentLength=-1;
 		conn[sid].socket.atime=time(NULL);
 		conn[sid].socket.ctime=time(NULL);
+
+		conn[sid].dat->in_RemotePort=ntohs(conn[sid].socket.ClientAddr.sin_port);
+		if (conn[sid].socket.ssl!=NULL) {
+			conn[sid].dat->in_ServerPort=mod_config.http_sslport;
+		} else {
+			conn[sid].dat->in_ServerPort=mod_config.http_port;
+		}
+
 		http_dorequest(&conn[sid]);
 		conn[sid].dat->out_bodydone=1;
 		flushbuffer(&conn[sid]);

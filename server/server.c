@@ -42,6 +42,7 @@ int daemon(int nochdir, int noclose)
 
 void server_shutdown()
 {
+	modules_exit();
 	return;
 }
 

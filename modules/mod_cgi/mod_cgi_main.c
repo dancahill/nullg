@@ -44,7 +44,6 @@ void cgi_makeargs(CONN *sid, char *args[])
 //	}
 	snprintf(args[0], 254, "%s/%s", proc->config.dir_var_cgi, progname);
 	fixslashes(args[0]);
-//	fixslashes(args[0]);
 	if (strlen(sid->dat->in_QueryString)) {
 		args[1]=calloc(255, sizeof(char));
 		snprintf(args[1], 254, "%s", sid->dat->in_QueryString);
@@ -107,9 +106,8 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	}
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "REMOTE_ADDR=%s", sid->dat->in_RemoteAddr);
-	/* FIXME ntohs */
-//	env[n]=calloc(1024, sizeof(char));
-//	snprintf(env[n++], 1023, "REMOTE_PORT=%d", ntohs(sid->ClientAddr.sin_port));
+	env[n]=calloc(1024, sizeof(char));
+	snprintf(env[n++], 1023, "REMOTE_PORT=%d", sid->dat->in_RemotePort);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "REMOTE_USER=%s", sid->dat->user_username);
 	env[n]=calloc(1024, sizeof(char));
@@ -122,9 +120,9 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", sid->dat->in_CGIScriptName);
 	if ((ptemp=strchr(env[n-1], '?'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_NAME=%s", proc->config.http_hostname);
+	snprintf(env[n++], 1023, "SERVER_NAME=%s", sid->dat->in_Host);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_PORT=%d", proc->config.http_port);
+	snprintf(env[n++], 1023, "SERVER_PORT=%d", sid->dat->in_ServerPort);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_PROTOCOL=HTTP/1.1");
 	env[n]=calloc(1024, sizeof(char));
@@ -247,7 +245,6 @@ void mod_main(CONN *sid)
 	si.hStdOutput=(HANDLE)remote.out;
 	si.hStdError=(HANDLE)remote.out;
 	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, CREATE_NEW_CONSOLE|CREATE_NO_WINDOW, Environ, Path, &si, &pi)) {
-//	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, CREATE_NEW_CONSOLE|CREATE_SUSPENDED, Environ, Path, &si, &pi)) {
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
 		CloseHandle((HANDLE)local.in);

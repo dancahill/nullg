@@ -192,6 +192,7 @@ int sanity_checkdirs()
 	if (sanity_dircheck("%s", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s/mail", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s/mqueue", proc.config.dir_var_spool)!=0) exit(-2);
+	if (sanity_dircheck("%s/mqinfo", proc.config.dir_var_spool)!=0) exit(-2);
 	if (sanity_dircheck("%s", proc.config.dir_var_tmp)!=0) exit(-2);
 	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains"))<0) {
 		log_error("core", __FILE__, __LINE__, 0, "Could not read retrieve domain list");

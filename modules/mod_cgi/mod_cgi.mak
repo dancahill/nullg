@@ -31,7 +31,7 @@ ALL : "..\..\distrib\lib\mod_cgi.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\mod_cgi.obj"
+	-@erase "$(INTDIR)\mod_cgi_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_cgi.exp"
 	-@erase "$(OUTDIR)\mod_cgi.lib"
@@ -85,7 +85,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_cgi.def"
 LINK32_OBJS= \
-	"$(INTDIR)\mod_cgi.obj"
+	"$(INTDIR)\mod_cgi_main.obj"
 
 "..\..\distrib\lib\mod_cgi.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -94,9 +94,9 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_cgi - Win32 Release"
-SOURCE=.\mod_cgi.c
+SOURCE=.\mod_cgi_main.c
 
-"$(INTDIR)\mod_cgi.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\mod_cgi_main.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

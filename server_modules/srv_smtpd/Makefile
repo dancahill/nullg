@@ -3,7 +3,7 @@
 include ../../Rules.mak
 
 CFLAGS  = $(LIB_CFLAGS)
-OBJECTS = auth.o conf.o filter.o main.o smtpc.o smtpd.o
+OBJECTS = auth.o bounce.o conf.o filter.o main.o smtpc.o smtpd.o
 TARGET  = $(LIB_TARGETDIR)/srv_smtpd.so
 
 all: srv_http

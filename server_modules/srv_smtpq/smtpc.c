@@ -60,7 +60,7 @@ static int smtp_connect(char *smtpserver)
 	struct hostent *hp;
 	int smtp_sock;
 
-	if ((hp=gethostbyname(smtpserver))==NULL) return -1;
+	if ((hp=gethostbyname(smtpserver))==NULL) return -2;
 	memset((char *)&server, 0, sizeof(server));
 	memmove((char *)&server.sin_addr, hp->h_addr, hp->h_length);
 	server.sin_family=hp->h_addrtype;
@@ -84,64 +84,46 @@ static void smtp_disconnect(int smtp_sock)
 	return;
 }
 
-int smtp_client(FILE *fp)
+int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt)
 {
 	char inbuffer[1024];
-	char host[128];
-	char from[128];
-	char rcpt[128];
 	char mxhost[128];
 	char *ptemp1;
 	char *ptemp2;
 	int smtp_sock;
 
-	memset(from, 0, sizeof(from));
-	memset(host, 0, sizeof(host));
-	gethostname(host, sizeof(host)-1);
-	if (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
-		if (strncasecmp(inbuffer, "X-SMTP-MAIL:", 12)==0) {
-			striprn(inbuffer);
-			ptemp1=inbuffer+12;
-			while ((*ptemp1==' ')||(*ptemp1=='\t')) ptemp1++;
-			snprintf(from, sizeof(from)-1, "%s", ptemp1);
-		}
-	}
-	memset(rcpt, 0, sizeof(rcpt));
-	if (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
-		if (strncasecmp(inbuffer, "X-SMTP-RCPT:", 12)==0) {
-			striprn(inbuffer);
-			ptemp1=inbuffer+12;
-			while ((*ptemp1==' ')||(*ptemp1=='\t')) ptemp1++;
-			snprintf(rcpt, sizeof(rcpt)-1, "%s", ptemp1);
-		}
-	}
 //	if (strlen(from)==0) return -1;
 	if (strlen(rcpt)==0) return -1;
 	memset(inbuffer, 0, sizeof(inbuffer));
 	if (strlen(mod_config.smtp_relayhost)>0) {
 		if ((smtp_sock=smtp_connect(mod_config.smtp_relayhost))<0) {
-			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to relay host '%s'", mod_config.smtp_relayhost);
+			log_error("smtpd", __FILE__, __LINE__, 1, "cannot connect to relay host '%s'", mod_config.smtp_relayhost);
 			return -1;
 		}
 	} else {
 		if ((ptemp1=strchr(rcpt, '@'))==NULL) {
-			log_error("smtpc", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
+			log_error("smtpd", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
 			return -1;
 		}
 		ptemp1++;
 		if (*ptemp1=='\0') {
-			log_error("smtpc", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
+			log_error("smtpd", __FILE__, __LINE__, 1, "invalid recipient e-mail address '%s'", rcpt);
 			return -1;
 		}
 		memset(mxhost, 0, sizeof(mxhost));
 		ptemp2=dns_getmxbyname(mxhost, sizeof(mxhost)-1, ptemp1);
 		if (ptemp2==NULL) {
-			log_error("smtpc", __FILE__, __LINE__, 1, "no MX entry found for '%s'", ptemp1);
+			log_error("smtpd", __FILE__, __LINE__, 1, "no MX entry found for '%s'", ptemp1);
 			memset(mxhost, 0, sizeof(mxhost));
 			snprintf(mxhost, sizeof(mxhost)-1, "%s", ptemp1);
 		}
 		if ((smtp_sock=smtp_connect(mxhost))<0) {
-			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to host '%s'", mxhost);
+			log_error("smtpd", __FILE__, __LINE__, 1, "cannot connect to host '%s'", mxhost);
+			if (smtp_sock==-2) {
+				snprintf(inbuffer, sizeof(inbuffer)-1, "failed to resolve host '%s'", mxhost);
+				bounce_send(from, rcpt, orig_msg, inbuffer);
+				return -2;
+			}
 			return -1;
 		}
 	}
@@ -149,7 +131,7 @@ int smtp_client(FILE *fp)
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
-	smtp_printf(smtp_sock, "HELO %s\r\n", host);
+	smtp_printf(smtp_sock, "HELO %s\r\n", proc->config.hostname);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (smtp_fgets(inbuffer, sizeof(inbuffer)-1, smtp_sock)<0) return -1;
@@ -186,7 +168,12 @@ int smtp_client(FILE *fp)
 	smtp_disconnect(smtp_sock);
 	return 0;
 quit:
-	log_error("smtpc", __FILE__, __LINE__, 1, "remote server response: %s", inbuffer);
+	log_error("smtpd", __FILE__, __LINE__, 1, "remote server response: %s", inbuffer);
 	smtp_disconnect(smtp_sock);
+	if (strncasecmp(inbuffer, "504", 3)!=0) {
+		bounce_send(from, rcpt, orig_msg, inbuffer);
+//		unlink(filename);
+		return -2;
+	}
 	return -1;
 }

@@ -56,6 +56,10 @@ LINK32=link.exe
 # Name "srv_smtpq - Win32 Release"
 # Begin Source File
 
+SOURCE=.\bounce.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\conf.c
 # End Source File
 # Begin Source File

@@ -178,13 +178,13 @@
 #define PACKAGE_NAME "nullgroupware"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "nullgroupware 1.3.14"
+#define PACKAGE_STRING "nullgroupware 1.3.15"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nullgroupware"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.3.14"
+#define PACKAGE_VERSION "1.3.15"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void

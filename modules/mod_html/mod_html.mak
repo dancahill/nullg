@@ -31,7 +31,7 @@ ALL : "..\..\distrib\lib\mod_html.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\mod_html.obj"
+	-@erase "$(INTDIR)\mod_html_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_html.exp"
 	-@erase "$(OUTDIR)\mod_html.lib"
@@ -85,7 +85,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_html.def"
 LINK32_OBJS= \
-	"$(INTDIR)\mod_html.obj"
+	"$(INTDIR)\mod_html_main.obj"
 
 "..\..\distrib\lib\mod_html.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -94,9 +94,9 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_html - Win32 Release"
-SOURCE=.\mod_html.c
+SOURCE=.\mod_html_main.c
 
-"$(INTDIR)\mod_html.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\mod_html_main.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

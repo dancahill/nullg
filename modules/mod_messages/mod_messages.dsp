@@ -56,7 +56,7 @@ LINK32=link.exe
 # Name "mod_messages - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_messages.c
+SOURCE=.\mod_messages_main.c
 # End Source File
 # Begin Source File
 
