@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ static tzentry timezones[]={
 	{  720, 0, "[GMT +12:00] Fiji, Kamchatka" }
 };
 
-char *getbuffer(CONNECTION *sid)
+char *getbuffer(CONN *sid)
 {
 	sid->dat->lastbuf++;
 	if (sid->dat->lastbuf>3) sid->dat->lastbuf=0;
@@ -215,7 +215,7 @@ char *strncatf(char *dest, int maxlen, const char *format, ...)
 	return dest;
 }
 
-int printhex(CONNECTION *sid, const char *format, ...)
+int printhex(CONN *sid, const char *format, ...)
 {
 	char *hex="0123456789ABCDEF";
 	unsigned char buffer[2048];
@@ -236,7 +236,7 @@ int printhex(CONNECTION *sid, const char *format, ...)
 	return 0;
 }
 
-int printht(CONNECTION *sid, const char *format, ...)
+int printht(CONN *sid, const char *format, ...)
 {
 	unsigned char buffer1[2048];
 	unsigned char buffer2[2048];
@@ -280,7 +280,7 @@ int printht(CONNECTION *sid, const char *format, ...)
 	return 0;
 }
 
-void printline(CONNECTION *sid, short int reply, char *msgtext)
+void printline(CONN *sid, short int reply, char *msgtext)
 {
 	char *pmsgbody;
 	char *ptemp;
@@ -314,7 +314,7 @@ void printline(CONNECTION *sid, short int reply, char *msgtext)
 	printht(sid, "%s\r\n", pmsgbody);
 }
 
-void printline2(CONNECTION *sid, int dowrap, char *msgtext)
+void printline2(CONN *sid, int dowrap, char *msgtext)
 {
 	unsigned char buffer[1024];
 	char lastchar='\0';
@@ -383,7 +383,7 @@ void printline2(CONNECTION *sid, int dowrap, char *msgtext)
 	return;
 }
 
-char *str2html(CONNECTION *sid, char *instring)
+char *str2html(CONN *sid, char *instring)
 {
 	unsigned char *buffer=getbuffer(sid);
 	unsigned char ch;
@@ -442,7 +442,7 @@ char *str2html(CONNECTION *sid, char *instring)
 	return buffer;
 }
 
-char *str2sql(CONNECTION *sid, char *instring)
+char *str2sql(CONN *sid, char *instring)
 {
 	char *buffer=getbuffer(sid);
 	unsigned char ch;
@@ -469,7 +469,7 @@ char *str2sql(CONNECTION *sid, char *instring)
 	return buffer;
 }
 
-char *str2sqlbuf(CONNECTION *sid, char *instring, char *outstring, int outsize)
+char *str2sqlbuf(CONN *sid, char *instring, char *outstring, int outsize)
 {
 	int srcindex=0;
 	int dstindex=0;
@@ -495,7 +495,7 @@ char *str2sqlbuf(CONNECTION *sid, char *instring, char *outstring, int outsize)
 	return outstring;
 }
 
-void htselect_timezone(CONNECTION *sid, short int selected)
+void htselect_timezone(CONN *sid, short int selected)
 {
 	int i;
 
@@ -561,7 +561,7 @@ time_t time_sql2unix(char *sqldate)
 	return unixdate;
 }
 
-char *time_sql2text(CONNECTION *sid, char *sqldate)
+char *time_sql2text(CONN *sid, char *sqldate)
 {
 	char *buffer=getbuffer(sid);
 	time_t unixdate=time_sql2unix(sqldate);
@@ -570,7 +570,7 @@ char *time_sql2text(CONNECTION *sid, char *sqldate)
 	return buffer;
 }
 
-char *time_sql2datetext(CONNECTION *sid, char *sqldate)
+char *time_sql2datetext(CONN *sid, char *sqldate)
 {
 	char *buffer=getbuffer(sid);
 	time_t unixdate=time_sql2unix(sqldate);
@@ -579,7 +579,7 @@ char *time_sql2datetext(CONNECTION *sid, char *sqldate)
 	return buffer;
 }
 
-char *time_sql2timetext(CONNECTION *sid, char *sqldate)
+char *time_sql2timetext(CONN *sid, char *sqldate)
 {
 	char *buffer=getbuffer(sid);
 	time_t unixdate=time_sql2unix(sqldate);
@@ -588,7 +588,7 @@ char *time_sql2timetext(CONNECTION *sid, char *sqldate)
 	return buffer;
 }
 
-char *time_sql2lotimetext(CONNECTION *sid, char *sqldate)
+char *time_sql2lotimetext(CONN *sid, char *sqldate)
 {
 	char *buffer=getbuffer(sid);
 	char *ptemp=buffer;
@@ -599,7 +599,7 @@ char *time_sql2lotimetext(CONNECTION *sid, char *sqldate)
 	return buffer;
 }
 
-char *time_unix2sql(CONNECTION *sid, time_t unixdate)
+char *time_unix2sql(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -607,7 +607,7 @@ char *time_unix2sql(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2sqldate(CONNECTION *sid, time_t unixdate)
+char *time_unix2sqldate(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -615,7 +615,7 @@ char *time_unix2sqldate(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2sqltime(CONNECTION *sid, time_t unixdate)
+char *time_unix2sqltime(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -623,7 +623,7 @@ char *time_unix2sqltime(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2text(CONNECTION *sid, time_t unixdate)
+char *time_unix2text(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -631,7 +631,7 @@ char *time_unix2text(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2datetext(CONNECTION *sid, time_t unixdate)
+char *time_unix2datetext(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -639,7 +639,7 @@ char *time_unix2datetext(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2timetext(CONNECTION *sid, time_t unixdate)
+char *time_unix2timetext(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 
@@ -647,7 +647,7 @@ char *time_unix2timetext(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-char *time_unix2lotimetext(CONNECTION *sid, time_t unixdate)
+char *time_unix2lotimetext(CONN *sid, time_t unixdate)
 {
 	char *buffer=getbuffer(sid);
 	char *ptemp=buffer;
@@ -657,7 +657,7 @@ char *time_unix2lotimetext(CONNECTION *sid, time_t unixdate)
 	return buffer;
 }
 
-int time_tzoffset(CONNECTION *sid, time_t unixdate)
+int time_tzoffset(CONN *sid, time_t unixdate)
 {
 	struct tm *today;
 	time_t tzoffset;
@@ -672,7 +672,7 @@ int time_tzoffset(CONNECTION *sid, time_t unixdate)
 	return tzoffset;
 }
 
-int time_tzoffset2(CONNECTION *sid, time_t unixdate, int userid)
+int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
 {
 	int sqr;
 	int tz=-1;
@@ -764,7 +764,7 @@ time_t time_wmgetdate(char *src)
 	return unixdate;
 }
 
-char *DecodeBase64string(CONNECTION *sid, char *src)
+char *DecodeBase64string(CONN *sid, char *src)
 {
 	static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	static char dest[1024];

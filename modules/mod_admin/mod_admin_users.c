@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,24 +18,24 @@
 #include "mod_substub.h"
 #include "mod_admin.h"
 
-void adminuseredit(CONNECTION *sid, REC_USER *user)
+void adminuseredit(CONN *sid, REC_USER *user)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_USER userrec;
 	int userid;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (user==NULL) {
 		if (strcmp(sid->dat->in_RequestURI, "/admin/usereditnew")==0) {
 			userid=0;
-			db_read(sid, 2, DB_USERS, 0, &userrec);
+			dbread_user(sid, 2, 0, &userrec);
 		} else {
 			if (getgetenv(sid, "USERID")==NULL) return;
 			userid=atoi(getgetenv(sid, "USERID"));
-			if (db_read(sid, 2, DB_USERS, userid, &userrec)!=0) {
+			if (dbread_user(sid, 2, userid, &userrec)!=0) {
 				prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 				return;
 			}
@@ -86,96 +86,121 @@ void adminuseredit(CONNECTION *sid, REC_USER *user)
 		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authadmin_a VALUE='1' %s></TD>", (user->authadmin&A_ADMIN)?"checked":"");
 	}
 	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_i VALUE='1' %s></TD>", (user->authbookmarks&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_d VALUE='1' %s></TD>", (user->authbookmarks&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_a VALUE='1' %s></TD>", (user->authbookmarks&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_i VALUE='1' %s></TD>", (user->authcalendar&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_d VALUE='1' %s></TD>", (user->authcalendar&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_a VALUE='1' %s></TD>", (user->authcalendar&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_i VALUE='1' %s></TD>", (user->authcalls&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_d VALUE='1' %s></TD>", (user->authcalls&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_a VALUE='1' %s></TD>", (user->authcalls&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_i VALUE='1' %s></TD>", (user->authcontacts&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_d VALUE='1' %s></TD>", (user->authcontacts&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_a VALUE='1' %s></TD>", (user->authcontacts&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_i VALUE='1' %s></TD>", (user->authwebmail&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_d VALUE='1' %s></TD>", (user->authwebmail&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "</TR>\n");
+	if (module_exists(sid, "mod_bookmarks")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Bookmarks&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_r VALUE='1' %s></TD>", (user->authbookmarks&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_m VALUE='1' %s></TD>", (user->authbookmarks&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_i VALUE='1' %s></TD>", (user->authbookmarks&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_d VALUE='1' %s></TD>", (user->authbookmarks&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authbookmarks_a VALUE='1' %s></TD>", (user->authbookmarks&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_calendar")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calendar&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_r VALUE='1' %s></TD>", (user->authcalendar&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_m VALUE='1' %s></TD>", (user->authcalendar&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_i VALUE='1' %s></TD>", (user->authcalendar&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_d VALUE='1' %s></TD>", (user->authcalendar&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalendar_a VALUE='1' %s></TD>", (user->authcalendar&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_calls")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Calls&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_r VALUE='1' %s></TD>", (user->authcalls&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_m VALUE='1' %s></TD>", (user->authcalls&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_i VALUE='1' %s></TD>", (user->authcalls&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_d VALUE='1' %s></TD>", (user->authcalls&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcalls_a VALUE='1' %s></TD>", (user->authcalls&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_contacts")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Contacts&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_r VALUE='1' %s></TD>", (user->authcontacts&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_m VALUE='1' %s></TD>", (user->authcontacts&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_i VALUE='1' %s></TD>", (user->authcontacts&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_d VALUE='1' %s></TD>", (user->authcontacts&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authcontacts_a VALUE='1' %s></TD>", (user->authcontacts&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_mail")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;E-Mail&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_r VALUE='1' %s></TD>", (user->authwebmail&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_m VALUE='1' %s></TD>", (user->authwebmail&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_i VALUE='1' %s></TD>", (user->authwebmail&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authwebmail_d VALUE='1' %s></TD>", (user->authwebmail&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
 	prints(sid, "</TABLE>\n</TD><TD ALIGN=center VALIGN=top><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_i VALUE='1' %s></TD>", (user->authfiles&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_d VALUE='1' %s></TD>", (user->authfiles&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_a VALUE='1' %s></TD>", (user->authfiles&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_i VALUE='1' %s></TD>", (user->authforums&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_a VALUE='1' %s></TD>", (user->authforums&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_i VALUE='1' %s></TD>", (user->authmessages&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_d VALUE='1' %s></TD>", (user->authmessages&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_i VALUE='1' %s></TD>", (user->authorders&A_INSERT)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_d VALUE='1' %s></TD>", (user->authorders&A_DELETE)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_a VALUE='1' %s></TD>", (user->authorders&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "</TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
-	prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_a VALUE='1' %s></TD>", (user->authquery&A_ADMIN)?"checked":"");
-	prints(sid, "</TR>\n");
+	if (module_exists(sid, "mod_files")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Files&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_r VALUE='1' %s></TD>", (user->authfiles&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_m VALUE='1' %s></TD>", (user->authfiles&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_i VALUE='1' %s></TD>", (user->authfiles&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_d VALUE='1' %s></TD>", (user->authfiles&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authfiles_a VALUE='1' %s></TD>", (user->authfiles&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_forums")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Forums&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_r VALUE='1' %s></TD>", (user->authforums&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_i VALUE='1' %s></TD>", (user->authforums&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authforums_a VALUE='1' %s></TD>", (user->authforums&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_messages")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Messages&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_r VALUE='1' %s></TD>", (user->authmessages&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_i VALUE='1' %s></TD>", (user->authmessages&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authmessages_d VALUE='1' %s></TD>", (user->authmessages&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_orders")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Orders&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_r VALUE='1' %s></TD>", (user->authorders&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_m VALUE='1' %s></TD>", (user->authorders&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_i VALUE='1' %s></TD>", (user->authorders&A_INSERT)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_d VALUE='1' %s></TD>", (user->authorders&A_DELETE)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authorders_a VALUE='1' %s></TD>", (user->authorders&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_profile")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;Profile&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_r VALUE='1' %s></TD>", (user->authprofile&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authprofile_m VALUE='1' %s></TD>", (user->authprofile&A_MODIFY)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	if (module_exists(sid, "mod_searches")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%%><B>&nbsp;SQL Queries&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_r VALUE='1' %s></TD>", (user->authquery&A_READ)?"checked":"");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authquery_a VALUE='1' %s></TD>", (user->authquery&A_ADMIN)?"checked":"");
+		prints(sid, "</TR>\n");
+	}
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>PREFERENCE INFORMATION</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP>\n", config->colour_editform);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:182px'>\n", config->colour_editform);
-	htselect_hour(sid, user->prefdaystart);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:182px'>\n", config->colour_editform);
-	htselect_number(sid, user->prefdaylength, 0, 24);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	if (module_exists(sid, "mod_calendar")) {
+		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaystart style='width:182px'>\n", config->colour_editform);
+		htselect_hour(sid, user->prefdaystart);
+		prints(sid, "</SELECT></TD></TR>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefdaylength style='width:182px'>\n", config->colour_editform);
+		htselect_number(sid, user->prefdaylength, 0, 24);
+		prints(sid, "</SELECT></TD></TR>\n");
+		prints(sid, "</TABLE>\n");
+	}
+	prints(sid, "</TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Max Results/Page&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefmaxlist style='width:182px'>\n", config->colour_editform);
 	htselect_number(sid, user->prefmaxlist, 5, 50);
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -237,7 +262,7 @@ void adminuseredit(CONNECTION *sid, REC_USER *user)
 	}
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_ADMIN)&A_ADMIN)&&(user->userid>1)) {
+	if ((auth_priv(sid, "admin")&A_ADMIN)&&(user->userid>1)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
@@ -252,14 +277,14 @@ void adminuseredit(CONNECTION *sid, REC_USER *user)
 	return;
 }
 
-void adminuserlist(CONNECTION *sid)
+void adminuserlist(CONN *sid)
 {
 	int i, j;
 	int sqr1;
 	int sqr2;
 	int sqr3;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -274,7 +299,7 @@ void adminuserlist(CONNECTION *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Real Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Group&nbsp;</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	if (sql_numtuples(sqr3)>0) {
 		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100><FONT COLOR=%s>&nbsp;Zone&nbsp;</FONT></TH>", config->colour_thtext);
@@ -318,7 +343,7 @@ void adminuserlist(CONNECTION *sid)
 	return;
 }
 
-void adminusersave(CONNECTION *sid)
+void adminusersave(CONN *sid)
 {
 	REC_USER user;
 	char query[4096];
@@ -329,14 +354,14 @@ void adminusersave(CONNECTION *sid)
 	int userid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "USERID"))==NULL) return;
 	userid=atoi(ptemp);
-	if (db_read(sid, 2, DB_USERS, userid, &user)!=0) {
+	if (dbread_user(sid, 2, userid, &user)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -345,78 +370,102 @@ void adminusersave(CONNECTION *sid)
 	if ((ptemp=getpostenv(sid, "PASSWORD"))!=NULL) snprintf(user.password, sizeof(user.password)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) user.groupid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "ENABLED"))!=NULL) user.enabled=atoi(ptemp);
-	user.authadmin=0;
-	if ((ptemp=getpostenv(sid, "AUTHADMIN_R"))!=NULL) user.authadmin+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHADMIN_M"))!=NULL) user.authadmin+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHADMIN_I"))!=NULL) user.authadmin+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHADMIN_D"))!=NULL) user.authadmin+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHADMIN_A"))!=NULL) user.authadmin+=A_ADMIN;
-	user.authbookmarks=0;
-	if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_R"))!=NULL) user.authbookmarks+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_M"))!=NULL) user.authbookmarks+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_I"))!=NULL) user.authbookmarks+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_D"))!=NULL) user.authbookmarks+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_A"))!=NULL) user.authbookmarks+=A_ADMIN;
-	user.authcalendar=0;
-	if ((ptemp=getpostenv(sid, "AUTHCALENDAR_R"))!=NULL) user.authcalendar+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHCALENDAR_M"))!=NULL) user.authcalendar+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHCALENDAR_I"))!=NULL) user.authcalendar+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHCALENDAR_D"))!=NULL) user.authcalendar+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHCALENDAR_A"))!=NULL) user.authcalendar+=A_ADMIN;
-	user.authcalls=0;
-	if ((ptemp=getpostenv(sid, "AUTHCALLS_R"))!=NULL) user.authcalls+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHCALLS_M"))!=NULL) user.authcalls+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHCALLS_I"))!=NULL) user.authcalls+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHCALLS_D"))!=NULL) user.authcalls+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHCALLS_A"))!=NULL) user.authcalls+=A_ADMIN;
-	user.authcontacts=0;
-	if ((ptemp=getpostenv(sid, "AUTHCONTACTS_R"))!=NULL) user.authcontacts+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHCONTACTS_M"))!=NULL) user.authcontacts+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHCONTACTS_I"))!=NULL) user.authcontacts+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHCONTACTS_D"))!=NULL) user.authcontacts+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHCONTACTS_A"))!=NULL) user.authcontacts+=A_ADMIN;
-	user.authfiles=0;
-	if ((ptemp=getpostenv(sid, "AUTHFILES_R"))!=NULL) user.authfiles+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHFILES_M"))!=NULL) user.authfiles+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHFILES_I"))!=NULL) user.authfiles+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHFILES_D"))!=NULL) user.authfiles+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHFILES_A"))!=NULL) user.authfiles+=A_ADMIN;
-	user.authforums=0;
-	if ((ptemp=getpostenv(sid, "AUTHFORUMS_R"))!=NULL) user.authforums+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHFORUMS_M"))!=NULL) user.authforums+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHFORUMS_I"))!=NULL) user.authforums+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHFORUMS_D"))!=NULL) user.authforums+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHFORUMS_A"))!=NULL) user.authforums+=A_ADMIN;
-	user.authmessages=0;
-	if ((ptemp=getpostenv(sid, "AUTHMESSAGES_R"))!=NULL) user.authmessages+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHMESSAGES_M"))!=NULL) user.authmessages+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHMESSAGES_I"))!=NULL) user.authmessages+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHMESSAGES_D"))!=NULL) user.authmessages+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHMESSAGES_A"))!=NULL) user.authmessages+=A_ADMIN;
-	user.authorders=0;
-	if ((ptemp=getpostenv(sid, "AUTHORDERS_R"))!=NULL) user.authorders+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHORDERS_M"))!=NULL) user.authorders+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHORDERS_I"))!=NULL) user.authorders+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHORDERS_D"))!=NULL) user.authorders+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHORDERS_A"))!=NULL) user.authorders+=A_ADMIN;
-	user.authprofile=0;
-	if ((ptemp=getpostenv(sid, "AUTHPROFILE_R"))!=NULL) user.authprofile+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHPROFILE_M"))!=NULL) user.authprofile+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHPROFILE_I"))!=NULL) user.authprofile+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHPROFILE_D"))!=NULL) user.authprofile+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHPROFILE_A"))!=NULL) user.authprofile+=A_ADMIN;
-	user.authquery=0;
-	if ((ptemp=getpostenv(sid, "AUTHQUERY_R"))!=NULL) user.authquery+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHQUERY_M"))!=NULL) user.authquery+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHQUERY_I"))!=NULL) user.authquery+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHQUERY_D"))!=NULL) user.authquery+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHQUERY_A"))!=NULL) user.authquery+=A_ADMIN;
-	user.authwebmail=0;
-	if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_R"))!=NULL) user.authwebmail+=A_READ;
-	if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_M"))!=NULL) user.authwebmail+=A_MODIFY;
-	if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_I"))!=NULL) user.authwebmail+=A_INSERT;
-	if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_D"))!=NULL) user.authwebmail+=A_DELETE;
-	if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_A"))!=NULL) user.authwebmail+=A_ADMIN;
+	if (module_exists(sid, "mod_admin")) {
+		user.authadmin=0;
+		if ((ptemp=getpostenv(sid, "AUTHADMIN_R"))!=NULL) user.authadmin+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHADMIN_M"))!=NULL) user.authadmin+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHADMIN_I"))!=NULL) user.authadmin+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHADMIN_D"))!=NULL) user.authadmin+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHADMIN_A"))!=NULL) user.authadmin+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_bookmarks")) {
+		user.authbookmarks=0;
+		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_R"))!=NULL) user.authbookmarks+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_M"))!=NULL) user.authbookmarks+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_I"))!=NULL) user.authbookmarks+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_D"))!=NULL) user.authbookmarks+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHBOOKMARKS_A"))!=NULL) user.authbookmarks+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_calendar")) {
+		user.authcalendar=0;
+		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_R"))!=NULL) user.authcalendar+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_M"))!=NULL) user.authcalendar+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_I"))!=NULL) user.authcalendar+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_D"))!=NULL) user.authcalendar+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHCALENDAR_A"))!=NULL) user.authcalendar+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_calls")) {
+		user.authcalls=0;
+		if ((ptemp=getpostenv(sid, "AUTHCALLS_R"))!=NULL) user.authcalls+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHCALLS_M"))!=NULL) user.authcalls+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHCALLS_I"))!=NULL) user.authcalls+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHCALLS_D"))!=NULL) user.authcalls+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHCALLS_A"))!=NULL) user.authcalls+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_contacts")) {
+		user.authcontacts=0;
+		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_R"))!=NULL) user.authcontacts+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_M"))!=NULL) user.authcontacts+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_I"))!=NULL) user.authcontacts+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_D"))!=NULL) user.authcontacts+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHCONTACTS_A"))!=NULL) user.authcontacts+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_files")) {
+		user.authfiles=0;
+		if ((ptemp=getpostenv(sid, "AUTHFILES_R"))!=NULL) user.authfiles+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHFILES_M"))!=NULL) user.authfiles+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHFILES_I"))!=NULL) user.authfiles+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHFILES_D"))!=NULL) user.authfiles+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHFILES_A"))!=NULL) user.authfiles+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_forums")) {
+		user.authforums=0;
+		if ((ptemp=getpostenv(sid, "AUTHFORUMS_R"))!=NULL) user.authforums+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHFORUMS_M"))!=NULL) user.authforums+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHFORUMS_I"))!=NULL) user.authforums+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHFORUMS_D"))!=NULL) user.authforums+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHFORUMS_A"))!=NULL) user.authforums+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_messages")) {
+		user.authmessages=0;
+		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_R"))!=NULL) user.authmessages+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_M"))!=NULL) user.authmessages+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_I"))!=NULL) user.authmessages+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_D"))!=NULL) user.authmessages+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHMESSAGES_A"))!=NULL) user.authmessages+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_orders")) {
+		user.authorders=0;
+		if ((ptemp=getpostenv(sid, "AUTHORDERS_R"))!=NULL) user.authorders+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHORDERS_M"))!=NULL) user.authorders+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHORDERS_I"))!=NULL) user.authorders+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHORDERS_D"))!=NULL) user.authorders+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHORDERS_A"))!=NULL) user.authorders+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_profile")) {
+		user.authprofile=0;
+		if ((ptemp=getpostenv(sid, "AUTHPROFILE_R"))!=NULL) user.authprofile+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHPROFILE_M"))!=NULL) user.authprofile+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHPROFILE_I"))!=NULL) user.authprofile+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHPROFILE_D"))!=NULL) user.authprofile+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHPROFILE_A"))!=NULL) user.authprofile+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_searches")) {
+		user.authquery=0;
+		if ((ptemp=getpostenv(sid, "AUTHQUERY_R"))!=NULL) user.authquery+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHQUERY_M"))!=NULL) user.authquery+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHQUERY_I"))!=NULL) user.authquery+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHQUERY_D"))!=NULL) user.authquery+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHQUERY_A"))!=NULL) user.authquery+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_mail")) {
+		user.authwebmail=0;
+		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_R"))!=NULL) user.authwebmail+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_M"))!=NULL) user.authwebmail+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_I"))!=NULL) user.authwebmail+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_D"))!=NULL) user.authwebmail+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHWEBMAIL_A"))!=NULL) user.authwebmail+=A_ADMIN;
+	}
 	if ((ptemp=getpostenv(sid, "PREFDAYSTART"))!=NULL) user.prefdaystart=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFDAYLENGTH"))!=NULL) user.prefdaylength=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFMAXLIST"))!=NULL) user.prefmaxlist=atoi(ptemp);
@@ -459,7 +508,7 @@ void adminusersave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)||(userid<2)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)||(userid<2)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -539,7 +588,7 @@ void adminusersave(CONNECTION *sid)
 		db_log_activity(sid, 1, "users", user.userid, "insert", "%s - %s added user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -614,7 +663,7 @@ void adminusersave(CONNECTION *sid)
 	return;
 }
 
-void adminusertimeedit(CONNECTION *sid)
+void adminusertimeedit(CONN *sid)
 {
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 	char gavailability[170];
@@ -625,13 +674,13 @@ void adminusertimeedit(CONNECTION *sid)
 	int j;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "USERID")==NULL) return;
 	userid=atoi(getgetenv(sid, "USERID"));
-	if (db_read(sid, 2, DB_USERS, userid, &user)!=0) {
+	if (dbread_user(sid, 2, userid, &user)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 		return;
 	}
@@ -673,29 +722,29 @@ void adminusertimeedit(CONNECTION *sid)
 	prints(sid, "function toggle(b,n)\n");
 	prints(sid, "{\n");
 	prints(sid, "	if (b == \"t\" ) {\n");
-	prints(sid, "		if (availability[\"t\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"t\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<7;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + x + \"t\" + n]) {\n");
-	prints(sid, "				availability[\"d\" + x + \"t\" + n].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + x + \"t\" + n]) {\n");
+	prints(sid, "				document.availability[\"d\" + x + \"t\" + n].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	} else {\n");
-	prints(sid, "		if (availability[\"d\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"d\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<24;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + n + \"t\" + x]) {\n");
-	prints(sid, "				availability[\"d\" + n + \"t\" + x].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + n + \"t\" + x]) {\n");
+	prints(sid, "				document.availability[\"d\" + n + \"t\" + x].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	}\n");
@@ -703,7 +752,7 @@ void adminusertimeedit(CONNECTION *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/usertimesave NAME=availability>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", user.userid);
 	for (i=0;i<7;i++) {
@@ -745,7 +794,7 @@ void adminusertimeedit(CONNECTION *sid)
 	return;
 }
 
-void adminusertimesave(CONNECTION *sid)
+void adminusertimesave(CONN *sid)
 {
 	char availability[170];
 	char curdate[40];
@@ -757,7 +806,7 @@ void adminusertimesave(CONNECTION *sid)
 	int i;
 	int j;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}

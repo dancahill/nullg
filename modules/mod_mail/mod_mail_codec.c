@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-char *DecodeRFC2047(CONNECTION *sid, char *src)
+char *DecodeRFC2047(CONN *sid, char *src)
 {
 	char *dest=getbuffer(sid);
 	char *pos;
@@ -117,7 +117,7 @@ char *DecodeRFC2047(CONNECTION *sid, char *src)
 	return dest;
 }
 
-int DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short int crlf)
+int DecodeHTML(CONN *sid, short int reply, char *src, char *ctype, short int crlf)
 {
 	char dest[1024];
 	char *destidx;
@@ -126,48 +126,48 @@ int DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short i
 	memset(dest, 0, sizeof(dest));
 	destidx=dest;
 	while ((*src)&&(strlen(dest)<sizeof(dest))) {
-		if (sid->dat->user_wmcodecstate&2) {
+		if (sid->dat->wm->codecstate&2) {
 			while ((*src)&&(*src!='-')) src++;
 			if ((*src)&&(strncasecmp(src, "-->", 3)==0)) {
-				sid->dat->user_wmcodecstate=0;
+				sid->dat->wm->codecstate=0;
 				src+=3;
 			} else {
-				sid->dat->user_wmcodecstate=2;
+				sid->dat->wm->codecstate=2;
 				src++;
 				continue;
 			}
-		} else if (sid->dat->user_wmcodecstate&1) {
+		} else if (sid->dat->wm->codecstate&1) {
 			while ((*src)&&(*src!='>')) src++;
 			if (*src) {
-				sid->dat->user_wmcodecstate=0;
+				sid->dat->wm->codecstate=0;
 				src++;
 			} else {
-				sid->dat->user_wmcodecstate=1;
+				sid->dat->wm->codecstate=1;
 			}
 		}
 		if (strncasecmp(src, "<!--", 4)==0) {
-			sid->dat->user_wmcodecstate=2;
+			sid->dat->wm->codecstate=2;
 		// KILL THESE EVERYWHERE
 		} else if (strncasecmp(src, "<SCRIPT", 7)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<EMBED", 6)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<HEAD", 5)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<HTML", 5)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<IFRAME", 7)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<LINK", 5)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<OBJECT", 7)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else if (strncasecmp(src, "<PARAM", 6)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		// SPECIAL CASES FOR HTML REPLY FORMATTING
 		} else if ((strncasecmp(src, "<BR>", 4)==0)||(strncasecmp(src, "<P>", 3)==0)||(strncasecmp(src, "<TR", 3)==0)) {
 			if (reply) {
-				sid->dat->user_wmcodecstate=1;
+				sid->dat->wm->codecstate=1;
 				strncat(dest, "\r\n> ", sizeof(dest)-strlen(dest)-1);
 				destidx+=4;
 			} else {
@@ -175,7 +175,7 @@ int DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short i
 			}
 		} else if (strncasecmp(src, "<LI>", 4)==0) {
 			if (reply) {
-				sid->dat->user_wmcodecstate=1;
+				sid->dat->wm->codecstate=1;
 				strncat(dest, "\r\n> * ", sizeof(dest)-strlen(dest)-1);
 				destidx+=6;
 			} else {
@@ -196,20 +196,20 @@ int DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short i
  				(strncasecmp(src, "<U>", 3)==0)||
 				(strncasecmp(src, "<CENTER>", 8)==0)) {
 			if (reply) {
-				sid->dat->user_wmcodecstate=1;
+				sid->dat->wm->codecstate=1;
 			} else {
 				*destidx++=*src++;
 			}
 		// PRESERVE CLOSING TAGS IN READS
 		} else if (strncasecmp(src, "</", 2)==0) {
 			if (reply) {
-				sid->dat->user_wmcodecstate=1;
+				sid->dat->wm->codecstate=1;
 			} else {
 				*destidx++=*src++;
 			}
 		// KILL ANYTHING WE MISSED
 		} else if (strncasecmp(src, "<", 1)==0) {
-			sid->dat->user_wmcodecstate=1;
+			sid->dat->wm->codecstate=1;
 		} else {
 			*destidx++=*src++;
 		}
@@ -226,7 +226,7 @@ int DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short i
 	return (strlen(dest));
 }
 
-int DecodeQP(CONNECTION *sid, short int reply, char *src, char *ctype)
+int DecodeQP(CONN *sid, short int reply, char *src, char *ctype)
 {
 	char dest[1024];
 	char *destidx;
@@ -259,7 +259,7 @@ int DecodeQP(CONNECTION *sid, short int reply, char *src, char *ctype)
 	return (strlen(dest));
 }
 
-int DecodeText(CONNECTION *sid, short int reply, char *src)
+int DecodeText(CONN *sid, short int reply, char *src)
 {
 	char dest[1024];
 	char *destidx;
@@ -280,7 +280,7 @@ int DecodeText(CONNECTION *sid, short int reply, char *src)
 }
 
 /* IS THIS B64 CODE LICENCED?  SOURCE = http://www.jti.net/brad/base64.htm */
-int EncodeBase64(CONNECTION *sid, char *src, int srclen)
+int EncodeBase64(CONN *sid, char *src, int srclen)
 {
 	unsigned char a, b, c, d, *cp;
 	int dst, i, enclen, remlen, linelen;
@@ -368,7 +368,7 @@ int EncodeBase64file(FILE *fp, char *src, int srclen)
 	return dst;
 }
 
-int DecodeBase64(CONNECTION *sid, char *src, char *ctype)
+int DecodeBase64(CONN *sid, char *src, char *ctype)
 {
 	char dest[1024];
 	int destidx, state, ch;
@@ -425,7 +425,7 @@ int DecodeBase64(CONNECTION *sid, char *src, char *ctype)
 	} else if (strncasecmp(ctype, "text/plain", 10)==0) {
 		prints(sid, "%s", dest);
 	} else {
-		if (config->RunAsCGI) {
+		if (proc->RunAsCGI) {
 			fwrite(dest, sizeof(char), destidx, stdout);
 		} else {
 			send(sid->socket, dest, destidx, 0);
@@ -434,7 +434,7 @@ int DecodeBase64(CONNECTION *sid, char *src, char *ctype)
 	return (destidx);
 }
 
-char *EncodeBase64string(CONNECTION *sid, char *src)
+char *EncodeBase64string(CONN *sid, char *src)
 {
 	unsigned char a, b, c, d, *cp;
 	char *dest=getbuffer(sid);
@@ -480,7 +480,7 @@ char *EncodeBase64string(CONNECTION *sid, char *src)
 	return dest;
 }
 
-char *DecodeBase64string(CONNECTION *sid, char *src)
+char *DecodeBase64string(CONN *sid, char *src)
 {
 	static char dest[1024];
 	int destidx, state, ch;

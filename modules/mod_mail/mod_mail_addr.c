@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "mod_substub.h"
 
-void wmaddr_list(CONNECTION *sid)
+void wmaddr_list(CONN *sid)
 {
 	char *ptemp;
 	char field[10];
@@ -27,7 +27,7 @@ void wmaddr_list(CONNECTION *sid)
 	int sqr1;
 	int sqr2;
 
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -73,7 +73,7 @@ void wmaddr_list(CONNECTION *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "//--></SCRIPT>\r\n");
 	if ((sqr1=sql_queryf(sid, "SELECT userid, surname, givenname, email from gw_users ORDER BY surname, givenname ASC"))<0) return;
-	if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		if ((sqr2=sql_queryf(sid, "SELECT contactid, surname, givenname, email from gw_contacts ORDER BY surname, givenname ASC"))<0) return;
 	} else {
 		if ((sqr2=sql_queryf(sid, "SELECT contactid, surname, givenname, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
@@ -87,7 +87,7 @@ void wmaddr_list(CONNECTION *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\n");
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP><A HREF=\"javascript:SendToAll()\">Add Recipients</A></TD>");
 	prints(sid, "</TR></TABLE>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	j=0;
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;User Name&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);

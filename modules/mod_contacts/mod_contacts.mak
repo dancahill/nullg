@@ -24,9 +24,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
 OUTDIR=.\..\..\obj\mod_contacts
 INTDIR=.\..\..\obj\mod_contacts
 
@@ -34,7 +31,8 @@ ALL : "..\..\distrib\lib\mod_contacts.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\mod_contacts.obj"
+	-@erase "$(INTDIR)\mod_contacts_db.obj"
+	-@erase "$(INTDIR)\mod_contacts_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_contacts.exp"
 	-@erase "$(OUTDIR)\mod_contacts.lib"
@@ -43,22 +41,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_contacts.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_contacts.pdb" /machine:I386 /def:".\mod_contacts.def" /out:"..\..\distrib\lib\mod_contacts.dll" /implib:"$(OUTDIR)\mod_contacts.lib" 
-DEF_FILE= \
-	".\mod_contacts.def"
-LINK32_OBJS= \
-	"$(INTDIR)\mod_contacts.obj"
-
-"..\..\distrib\lib\mod_contacts.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
+CPP=cl.exe
 CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
@@ -91,13 +74,36 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /
    $(CPP_PROJ) $< 
 <<
 
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_contacts.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_contacts.pdb" /machine:I386 /def:".\mod_contacts.def" /out:"..\..\distrib\lib\mod_contacts.dll" /implib:"$(OUTDIR)\mod_contacts.lib" 
+DEF_FILE= \
+	".\mod_contacts.def"
+LINK32_OBJS= \
+	"$(INTDIR)\mod_contacts_db.obj" \
+	"$(INTDIR)\mod_contacts_main.obj"
+
+"..\..\distrib\lib\mod_contacts.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
 
 
 !IF "$(CFG)" == "mod_contacts - Win32 Release"
-SOURCE=.\mod_contacts.c
+SOURCE=.\mod_contacts_db.c
 
-"$(INTDIR)\mod_contacts.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\mod_contacts_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_contacts_main.c
+
+"$(INTDIR)\mod_contacts_main.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

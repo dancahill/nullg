@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_searches - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_searches.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_searches.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_searches.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_searches_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_searches_main.c
 # End Source File
 # End Target
 # End Project

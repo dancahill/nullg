@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_tasks - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_tasks.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_tasks.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_tasks.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_tasks_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_tasks_main.c
 # End Source File
 # End Target
 # End Project

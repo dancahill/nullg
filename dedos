@@ -1,0 +1,87 @@
+#!/bin/sh
+
+from_dos() {
+	for i in * ; do
+		if [ ! -d "$i" ]; then
+			fromdos < $i > ${i}.dos
+			mv ${i}.dos ${i}
+		fi
+	done
+}
+
+chmod g-w * -R
+chmod o-w * -R
+
+cd dbutil;from_dos;cd ..
+
+cd distrib;from_dos;
+cd bin;from_dos;cd ..
+cd cgi-bin;from_dos;cd ..
+cd etc;from_dos;cd ..
+cd lib;from_dos;cd ..
+cd var;from_dos
+cd db;from_dos;cd ..
+cd files;from_dos;cd ..
+
+cd htdocs;from_dos
+cd groupware;from_dos
+cd css;from_dos;cd ..
+cd help;from_dos;cd ..
+cd javascript;from_dos;cd ..
+cd ..
+cd ..
+cd log;from_dos;cd ..
+cd mail;from_dos;cd ..
+cd ..
+cd ..
+
+
+cd include;from_dos;cd ..
+
+cd modules;from_dos
+cd include;from_dos;cd ..
+cd mod_admin;from_dos;cd ..
+cd mod_bookmarks;from_dos;cd ..
+cd mod_calendar;from_dos;cd ..
+cd mod_calls;from_dos;cd ..
+cd mod_cgi;from_dos;cd ..
+cd mod_contacts;from_dos;cd ..
+cd mod_files;from_dos;cd ..
+cd mod_forums;from_dos;cd ..
+cd mod_html;from_dos;cd ..
+cd mod_mail;from_dos;cd ..
+cd mod_messages;from_dos;cd ..
+cd mod_notes;from_dos;cd ..
+cd mod_orders;from_dos;cd ..
+cd mod_profile;from_dos;cd ..
+cd mod_searches;from_dos;cd ..
+cd mod_tasks;from_dos;cd ..
+cd mod_xmlrpc;from_dos;cd ..
+cd ..
+cd other;from_dos;cd ..
+cd server;from_dos;cd ..
+
+chmod 0755 distrib -R
+chmod 0644 distrib/COPYING
+chmod 0644 distrib/COPYRIGHT.txt
+chmod 0644 distrib/README.txt
+chmod 0755 distrib/setup
+chmod 0755 distrib/bin/*
+chmod 0755 distrib/cgi-bin/*
+chmod 0644 distrib/etc/*
+chmod 0755 distrib/lib/*
+chmod 0700 distrib/var/db
+chmod 0600 distrib/var/db/*
+chmod 0700 distrib/var/files
+chmod 0600 distrib/var/files/*
+chmod 0644 distrib/var/htdocs/groupware/css/*
+chmod 0644 distrib/var/htdocs/groupware/help/*
+chmod 0644 distrib/var/htdocs/groupware/images/*
+chmod 0755 distrib/var/htdocs/groupware/images/menu2
+chmod 0644 distrib/var/htdocs/groupware/images/menu2/*
+chmod 0644 distrib/var/htdocs/groupware/javascript/*
+chmod 0644 distrib/var/htdocs/groupware/sounds/*
+chmod 0700 distrib/var/log
+chmod 0600 distrib/var/log/*
+chmod 0700 distrib/var/mail
+chmod 0600 distrib/var/mail/*

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_tasks.h"
 
-void taskreminders(CONNECTION *sid)
+void taskreminders(CONN *sid)
 {
 	char posttime[32];
 	int a, b;
@@ -27,7 +28,7 @@ void taskreminders(CONNECTION *sid)
 	time_t duedate;
 	time_t t;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -46,7 +47,7 @@ void taskreminders(CONNECTION *sid)
 			reminders++;
 			if (reminders==1) {
 				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
-				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%%>\n");
+				prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
 				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%%>&nbsp;Task Name&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Date&nbsp;</TH></TR>\n", config->colour_th);
 			}
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -68,7 +69,7 @@ void taskreminders(CONNECTION *sid)
 	return;
 }
 
-void taskreminderstatus(CONNECTION *sid)
+void taskreminderstatus(CONN *sid)
 {
 	char timebuffer[100];
 	int taskid;
@@ -77,7 +78,7 @@ void taskreminderstatus(CONNECTION *sid)
 	time_t duedate;
 	time_t now;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		return;
 	}
 	if (getgetenv(sid, "TASKID")==NULL) return;
@@ -128,26 +129,26 @@ void taskreminderstatus(CONNECTION *sid)
 	return;
 }
 
-void taskedit(CONNECTION *sid)
+void taskedit(CONN *sid)
 {
 	REC_TASK task;
 	char duedate[16];
 	int taskid;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/tasks/editnew")==0) {
 		taskid=0;
-		if (db_read(sid, 2, DB_TASKS, 0, &task)!=0) {
+		if (dbread_task(sid, 2, 0, &task)!=0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 	} else {
 		if (getgetenv(sid, "TASKID")==NULL) return;
 		taskid=atoi(getgetenv(sid, "TASKID"));
-		if (db_read(sid, 2, DB_TASKS, taskid, &task)!=0) {
+		if (dbread_task(sid, 2, taskid, &task)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", taskid);
 			return;
 		}
@@ -170,11 +171,9 @@ void taskedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Task Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=taskname VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, task.taskname));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:217px'>\n", config->colour_editform);
-		htselect_user(sid, task.assignedto);
-		prints(sid, "</SELECT></TD></TR>\n");
-	}
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:217px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	htselect_user(sid, task.assignedto);
+	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:217px'>\n", config->colour_editform);
 	htselect_priority(sid, task.priority);
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -195,14 +194,14 @@ void taskedit(CONNECTION *sid)
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, task.details));
-	if ((task.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)) {
+	if ((task.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, task.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, task.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -236,7 +235,7 @@ void taskedit(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void taskview(CONNECTION *sid)
+void taskview(CONN *sid)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_TASK task;
@@ -245,35 +244,35 @@ void taskview(CONNECTION *sid)
 	int i;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "TASKID")==NULL) return;
 	taskid=atoi(getgetenv(sid, "TASKID"));
-	if (db_read(sid, 1, DB_TASKS, taskid, &task)!=0) {
+	if (dbread_task(sid, 1, taskid, &task)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", taskid);
 		return;
 	}
 	strftime(duedate, sizeof(duedate)-1, "%Y-%m-%d", gmtime(&task.duedate));
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, task.taskname));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_MODIFY) {
+	if (auth_priv(sid, "calendar")&A_MODIFY) {
 		if ((task.assignedby==sid->dat->user_uid)||(task.assignedto==sid->dat->user_uid)||(task.obj_uid==sid->dat->user_uid)||((task.obj_gid==sid->dat->user_gid)&&(task.obj_gperm>=2))||(task.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/tasks/edit?taskid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, task.taskid, config->colour_thlink);
 		}
 	}
 	prints(sid, "</FONT></TH></TR>\n");
 	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users"))<0) return;
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned By</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned By&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedby) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned To</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Assigned To&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==task.assignedto) {
 			prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -281,17 +280,17 @@ void taskview(CONNECTION *sid)
 	}
 	prints(sid, "&nbsp;</TD></TR>\n");
 	sql_freeresult(sqr);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Priority   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Priority&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
 	if (task.priority==0) prints(sid, "Lowest");
 	else if (task.priority==1) prints(sid, "Low");
 	else if (task.priority==2) prints(sid, "Normal");
 	else if (task.priority==3) prints(sid, "High");
 	else if (task.priority==4) prints(sid, "Highest");
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Reminder   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, task.reminder));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Due Date   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_sql2datetext(sid, duedate));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Status     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, task.status));
-	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Reminder&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_reminder(sid, task.reminder));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Due Date&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_sql2datetext(sid, duedate));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Status&nbsp;</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, htview_eventstatus(sid, task.status));
+	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details&nbsp;</B></TD></TR>\n", config->colour_fieldname);
 	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, task.details));
 	if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
 		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP><FONT COLOR=%s>Notes", config->colour_th, config->colour_thtext);
@@ -302,7 +301,7 @@ void taskview(CONNECTION *sid)
 	prints(sid, "</TABLE>\n</CENTER>\n");
 }
 
-void tasks_list(CONNECTION *sid, int userid, int groupid)
+void tasks_list(CONN *sid, int userid, int groupid)
 {
 	char *ptemp;
 	int i;
@@ -312,7 +311,7 @@ void tasks_list(CONNECTION *sid, int userid, int groupid)
 	int status;
 	int tcount=0;
 	
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -321,13 +320,13 @@ void tasks_list(CONNECTION *sid, int userid, int groupid)
 	} else {
 		status=0;
 	}
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
+	if (auth_priv(sid, "calendar")&A_ADMIN) {
 		if ((sqr=sql_queryf(sid, "SELECT taskid, status, assignedto, taskname FROM gw_tasks ORDER BY priority DESC, taskid ASC"))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=200>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=1 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH  ALIGN=LEFT WIDTH=100%%><FONT SIZE=2 COLOR=%s>&nbsp;Tasks</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
@@ -366,29 +365,29 @@ void tasks_list(CONNECTION *sid, int userid, int groupid)
 	return;
 }
 
-void tasksave(CONNECTION *sid)
+void tasksave(CONN *sid)
 {
 	REC_TASK task;
 	char tempdate[40];
 	char *ptemp;
 	int taskid;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "TASKID"))==NULL) return;
 	taskid=atoi(ptemp);
-	if (db_read(sid, 2, DB_TASKS, taskid, &task)!=0) {
+	if (dbread_task(sid, 2, taskid, &task)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
+	if (auth_priv(sid, "calendar")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) task.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) task.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)||(task.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "calendar")&A_ADMIN)||(task.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) task.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) task.obj_operm=atoi(ptemp);
 	}
@@ -406,7 +405,7 @@ void tasksave(CONNECTION *sid)
 	task.duedate=time_sql2unix(tempdate);
 	if ((ptemp=getpostenv(sid, "DETAILS"))!=NULL) snprintf(task.details, sizeof(task.details)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete Task")==0)) {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_DELETE)) {
+		if (!(auth_priv(sid, "calendar")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -414,22 +413,22 @@ void tasksave(CONNECTION *sid)
 		prints(sid, "<CENTER>Task %d deleted successfully</CENTER><BR>\n", task.taskid);
 		db_log_activity(sid, 1, "tasks", task.taskid, "delete", "%s - %s deleted task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else if (task.taskid==0) {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_INSERT)) {
+		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((task.taskid=db_write(sid, DB_TASKS, 0, &task))<1) {
+		if ((task.taskid=dbwrite_task(sid, 0, &task))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Task %d added successfully</CENTER><BR>\n", task.taskid);
 		db_log_activity(sid, 1, "tasks", task.taskid, "insert", "%s - %s added task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (db_write(sid, DB_TASKS, taskid, &task)<1) {
+		if (dbwrite_task(sid, taskid, &task)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -440,7 +439,7 @@ void tasksave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/tasks/reminders", 16)==0) {
@@ -468,12 +467,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_tasks", "", "", "mod_main", "/tasks/", mod_main)!=0) return -1;
 	if (mod_export_function("mod_tasks", "mod_tasks_list", tasks_list)!=0) return -1;

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,16 +32,37 @@ int mysqlDLLInit()
 	static int isloaded=0;
 #ifdef WIN32
 	HINSTANCE hinstLib;
+	char *libext="dll";
 #else
 	void *hinstLib;
+	char *libext="so";
 #endif
+	char libname[255];
 
 	if (isloaded) return 0;
+	memset(libname, 0, sizeof(libname));
+	snprintf(libname, sizeof(libname)-1, "../lib/libmysql.%s", libext);
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "../lib/libmysqlclient.%s", libext);
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 #ifdef WIN32
-	if ((hinstLib=dlopen("libmysql", RTLD_NOW))==NULL) goto fail;
-#else
-	if ((hinstLib=dlopen("libmysqlclient.so", RTLD_NOW))==NULL) goto fail;
+	snprintf(libname, sizeof(libname)-1, "libmysql.%s", libext);
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 #endif
+	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.12", libext);
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+//	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.10", libext);
+//	fixslashes(libname);
+//	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s", libext);
+//	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
+found:
 	if ((libmysql.close=(LIBMYSQL_CLOSE)dlsym(hinstLib, "mysql_close"))==NULL) goto fail;
 	if ((libmysql.data_seek=(LIBMYSQL_DATA_SEEK)dlsym(hinstLib, "mysql_data_seek"))==NULL) goto fail;
 	if ((libmysql.error=(LIBMYSQL_ERROR)dlsym(hinstLib, "mysql_error"))==NULL) goto fail;
@@ -58,9 +79,10 @@ int mysqlDLLInit()
 	isloaded=1;
 	return 0;
 fail:
-	printf("\r\nERROR: Failed to load libmysql\r\n");
+	printf("\r\nERROR: Failed to load %s\r\n", libname);
 	memset((char *)&libmysql, 0, sizeof(libmysql));
 	if (hinstLib!=NULL) dlclose(hinstLib);
+	hinstLib=NULL;
 	return -1;
 #else
 	return -1;
@@ -132,18 +154,18 @@ int SQLiteDLLInit()
 	if (isloaded) return 0;
 	memset(libname, 0, sizeof(libname));
 #ifdef WIN32
-	snprintf(libname, sizeof(libname)-1, "..\\lib\\sqlite.dll");
+	snprintf(libname, sizeof(libname)-1, "..\\lib\\libsqlite.dll");
 //	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "sqlite.dll");
+	snprintf(libname, sizeof(libname)-1, "libsqlite.dll");
 //	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	goto fail;
 #else
-	snprintf(libname, sizeof(libname)-1, "../lib/sqlite.so");
+	snprintf(libname, sizeof(libname)-1, "../lib/libsqlite.so");
 //	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "sqlite.so");
+	snprintf(libname, sizeof(libname)-1, "libsqlite.so");
 //	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	goto fail;

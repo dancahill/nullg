@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,22 +18,22 @@
 #include "mod_substub.h"
 #include "mod_admin.h"
 
-void admingroupedit(CONNECTION *sid)
+void admingroupedit(CONN *sid)
 {
 	REC_GROUP group;
 	int groupid;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/admin/groupeditnew")==0) {
 		groupid=0;
-		db_read(sid, 2, DB_GROUPS, 0, &group);
+		dbread_group(sid, 2, 0, &group);
 	} else {
 		if (getgetenv(sid, "GROUPID")==NULL) return;
 		groupid=atoi(getgetenv(sid, "GROUPID"));
-		if (db_read(sid, 2, DB_GROUPS, groupid, &group)!=0) {
+		if (dbread_group(sid, 2, groupid, &group)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", groupid);
 			return;
 		}
@@ -58,7 +58,7 @@ void admingroupedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=motd ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, group.motd));
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_ADMIN)&A_ADMIN)&&(groupid>1)) {
+	if ((auth_priv(sid, "admin")&A_ADMIN)&&(groupid>1)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
@@ -73,19 +73,19 @@ void admingroupedit(CONNECTION *sid)
 	return;
 }
 
-void admingrouplist(CONNECTION *sid)
+void admingrouplist(CONN *sid)
 {
 	int i;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((sqr=sql_query(sid, "SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) return;
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=150><FONT COLOR=%s>&nbsp;Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -102,7 +102,7 @@ void admingrouplist(CONNECTION *sid)
 	return;
 }
 
-void admingroupsave(CONNECTION *sid)
+void admingroupsave(CONN *sid)
 {
 	REC_GROUP group;
 	char query[2048];
@@ -112,14 +112,14 @@ void admingroupsave(CONNECTION *sid)
 	int groupid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "GROUPID"))==NULL) return;
 	groupid=atoi(ptemp);
-	if (db_read(sid, 2, DB_GROUPS, groupid, &group)!=0) {
+	if (dbread_group(sid, 2, groupid, &group)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -129,7 +129,7 @@ void admingroupsave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -162,7 +162,7 @@ void admingroupsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Group %d added successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "insert", "%s - %s added group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -179,7 +179,7 @@ void admingroupsave(CONNECTION *sid)
 	return;
 }
 
-void admingrouptimeedit(CONNECTION *sid)
+void admingrouptimeedit(CONN *sid)
 {
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 	char availability[170];
@@ -188,13 +188,13 @@ void admingrouptimeedit(CONNECTION *sid)
 	int i;
 	int j;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "GROUPID")==NULL) return;
 	groupid=atoi(getgetenv(sid, "GROUPID"));
-	if (db_read(sid, 2, DB_GROUPS, groupid, &group)!=0) {
+	if (dbread_group(sid, 2, groupid, &group)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", groupid);
 		return;
 	}
@@ -210,29 +210,29 @@ void admingrouptimeedit(CONNECTION *sid)
 	prints(sid, "function toggle(b,n)\n");
 	prints(sid, "{\n");
 	prints(sid, "	if (b == \"t\" ) {\n");
-	prints(sid, "		if (availability[\"t\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"t\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<7;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + x + \"t\" + n]) {\n");
-	prints(sid, "				availability[\"d\" + x + \"t\" + n].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + x + \"t\" + n]) {\n");
+	prints(sid, "				document.availability[\"d\" + x + \"t\" + n].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	} else {\n");
-	prints(sid, "		if (availability[\"d\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"d\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<24;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + n + \"t\" + x]) {\n");
-	prints(sid, "				availability[\"d\" + n + \"t\" + x].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + n + \"t\" + x]) {\n");
+	prints(sid, "				document.availability[\"d\" + n + \"t\" + x].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	}\n");
@@ -240,7 +240,7 @@ void admingrouptimeedit(CONNECTION *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/grouptimesave NAME=availability>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
 	for (i=0;i<7;i++) {
@@ -278,7 +278,7 @@ void admingrouptimeedit(CONNECTION *sid)
 	return;
 }
 
-void admingrouptimesave(CONNECTION *sid)
+void admingrouptimesave(CONN *sid)
 {
 	char availability[170];
 	char curdate[40];
@@ -290,7 +290,7 @@ void admingrouptimesave(CONNECTION *sid)
 	int i;
 	int j;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_searches.h"
 
-void searchform(CONNECTION *sid)
+void searchform(CONN *sid)
 {
 	int i;
 	int sqr;
@@ -51,7 +52,7 @@ void searchform(CONNECTION *sid)
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	if (auth_priv(sid, AUTH_CONTACTS)&A_READ) {
+	if (auth_priv(sid, "contacts")&A_READ) {
 		prints(sid, "<FORM METHOD=GET ACTION=%s/search/contacts NAME=contactsearch>\n", sid->dat->in_ScriptName);
 		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD><SELECT NAME=column>\n", config->colour_editform);
@@ -102,7 +103,7 @@ void searchform(CONNECTION *sid)
 	return;
 }
 
-void searchcontacts(CONNECTION *sid)
+void searchcontacts(CONN *sid)
 {
 	char query[2048];
 	char column[100];
@@ -113,7 +114,7 @@ void searchcontacts(CONNECTION *sid)
 	int i;
 	int sqr1;
 
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -155,7 +156,7 @@ void searchcontacts(CONNECTION *sid)
 			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(sid, string2));
 		}
 	}
-	if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY surname, givenname ASC");
 	} else {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid);
@@ -257,7 +258,7 @@ void searchcontacts(CONNECTION *sid)
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP WIDTH=150>&nbsp;</TD>\n");
 	prints(sid, "</TR>\n");
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
@@ -322,22 +323,22 @@ void searchcontacts(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void searchsqladd(CONNECTION *sid)
+void searchsqladd(CONN *sid)
 {
 	REC_QUERY query;
 	int queryid;
 
-	if (!(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+	if (!(auth_priv(sid, "query")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/search/sqladd")==0) {
 		queryid=0;
-		db_read(sid, 2, DB_QUERIES, 0, &query);
+		dbread_query(sid, 2, 0, &query);
 	} else {
 		if (getgetenv(sid, "QUERYID")==NULL) return;
 		queryid=atoi(getgetenv(sid, "QUERYID"));
-		if (db_read(sid, 2, DB_QUERIES, queryid, &query)!=0) {
+		if (dbread_query(sid, 2, queryid, &query)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", queryid);
 			return;
 		}
@@ -359,14 +360,14 @@ void searchsqladd(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"%s\" SIZE=60></TD></TR>\n", config->colour_editform, str2html(sid, query.queryname));
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><TEXTAREA NAME=query ROWS=3 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, query.query);
-	if ((query.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+	if ((query.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "query")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_QUERIES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, query.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_QUERIES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "query")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, query.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -398,7 +399,7 @@ void searchsqladd(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void searchsqlrun(CONNECTION *sid)
+void searchsqlrun(CONN *sid)
 {
 	REC_QUERY query;
 	char querytype[10];
@@ -409,7 +410,7 @@ void searchsqlrun(CONNECTION *sid)
 	int sqr;
 	int min, max;
 
-	if (!(auth_priv(sid, AUTH_QUERIES)&A_READ)) {
+	if (!(auth_priv(sid, "query")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -420,7 +421,7 @@ void searchsqlrun(CONNECTION *sid)
 		queryid=0;
 	}
 	if (queryid==0) {
-		if (auth_priv(sid, AUTH_QUERIES)&A_ADMIN) {
+		if (auth_priv(sid, "query")&A_ADMIN) {
 			if ((sqr=sql_queryf(sid, "SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC"))<0) return;
 		} else {
 			if ((sqr=sql_queryf(sid, "SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
@@ -428,14 +429,14 @@ void searchsqlrun(CONNECTION *sid)
 		prints(sid, "<CENTER>\n");
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "Saved queries<BR>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s>\n", config->colour_th);
-			if (auth_priv(sid, AUTH_QUERIES)&A_ADMIN) {
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>\n", config->colour_tabletrim, config->colour_th);
+			if (auth_priv(sid, "query")&A_ADMIN) {
 				prints(sid, "<TH ALIGN=LEFT>&nbsp;</TH>");
 			}
 			prints(sid, "<TH ALIGN=LEFT WIDTH=200 NOWRAP><FONT COLOR=%s>Query Name</FONT></TH></TR>\n", config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-				if (auth_priv(sid, AUTH_QUERIES)&A_ADMIN) {
+				if (auth_priv(sid, "query")&A_ADMIN) {
 					prints(sid, "<TD NOWRAP><A HREF=%s/search/sqladd?queryid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 				}
 				prints(sid, "<TD NOWRAP><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
@@ -446,13 +447,13 @@ void searchsqlrun(CONNECTION *sid)
 			prints(sid, "There are no saved queries<BR>\n");
 		}
 		sql_freeresult(sqr);
-		if (auth_priv(sid, AUTH_QUERIES)&A_ADMIN) {
+		if (auth_priv(sid, "query")&A_ADMIN) {
 			prints(sid, "<A HREF=%s/search/sqladd>New Query</A>\n", sid->dat->in_ScriptName);
 		}
 		prints(sid, "</CENTER>\n");
 		return;
 	}
-	if (db_read(sid, 1, DB_QUERIES, queryid, &query)!=0) {
+	if (dbread_query(sid, 1, queryid, &query)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", queryid);
 		return;
 	}
@@ -508,7 +509,7 @@ void searchsqlrun(CONNECTION *sid)
 		return;
 	}
 	prints(sid, "<CENTER>\n%s - %d results<BR>\n", query.queryname, sql_numtuples(sqr));
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_th);
 	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
 		offset=atoi(ptemp);
@@ -566,28 +567,28 @@ void searchsqlrun(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void searchsqlsave(CONNECTION *sid)
+void searchsqlsave(CONN *sid)
 {
 	REC_QUERY query;
 	char *ptemp;
 	int queryid;
 
-	if (!(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+	if (!(auth_priv(sid, "query")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "QUERYID"))==NULL) return;
 	queryid=atoi(ptemp);
-	if (db_read(sid, 2, DB_QUERIES, queryid, &query)!=0) {
+	if (dbread_query(sid, 2, queryid, &query)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_QUERIES)&A_ADMIN) {
+	if (auth_priv(sid, "query")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) query.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) query.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_QUERIES)&A_ADMIN)||(query.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "query")&A_ADMIN)||(query.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
 	}
@@ -595,7 +596,7 @@ void searchsqlsave(CONNECTION *sid)
 	if ((ptemp=getpostenv(sid, "QUERY"))!=NULL) snprintf(query.query, sizeof(query.query)-1, "%s", ptemp);
 	if (strlen(query.queryname)==0) strncpy(query.queryname, "Unnamed Query", sizeof(query.queryname)-1);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+		if (!(auth_priv(sid, "query")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -603,22 +604,22 @@ void searchsqlsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Query %d deleted successfully</CENTER><BR>\n", queryid);
 		db_log_activity(sid, 1, "queries", query.queryid, "delete", "%s - %s deleted query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else if (query.queryid==0) {
-		if (!(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+		if (!(auth_priv(sid, "query")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((query.queryid=db_write(sid, DB_QUERIES, 0, &query))<1) {
+		if ((query.queryid=dbwrite_query(sid, 0, &query))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Query %d added successfully</CENTER><BR>\n", query.queryid);
 		db_log_activity(sid, 1, "queries", query.queryid, "insert", "%s - %s added query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else {
-		if (!(auth_priv(sid, AUTH_QUERIES)&A_ADMIN)) {
+		if (!(auth_priv(sid, "query")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (db_write(sid, DB_QUERIES, queryid, &query)<1) {
+		if (dbwrite_query(sid, queryid, &query)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -637,7 +638,7 @@ void searchsqlsave(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_SEARCHES);
@@ -657,12 +658,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_searches", "SEARCHES", "/search/", "mod_main", "/search/", mod_main)!=0) return -1;
 	return 0;

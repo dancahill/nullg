@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,21 +16,22 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_contacts.h"
 
-void contactsearch1(CONNECTION *sid)
+void contactsearch1(CONN *sid)
 {
 	char *ptemp;
 	int i;
 	int sqr;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	if (auth_priv(sid, AUTH_CONTACTS)&A_READ) {
+	if (auth_priv(sid, "contacts")&A_READ) {
 		prints(sid, "<FORM METHOD=GET ACTION=%s/contacts/search2 NAME=contactsearch>\n", sid->dat->in_ScriptName);
 		prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=3><FONT COLOR=%s>Contact Search Form</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD><SELECT NAME=column>\n", config->colour_editform);
@@ -65,7 +66,7 @@ void contactsearch1(CONNECTION *sid)
 	return;
 }
 
-void contactsearch2(CONNECTION *sid)
+void contactsearch2(CONN *sid)
 {
 	char query[2048];
 	char column[100];
@@ -76,7 +77,7 @@ void contactsearch2(CONNECTION *sid)
 	int i;
 	int sqr1;
 
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -126,7 +127,7 @@ void contactsearch2(CONNECTION *sid)
 			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(sid, string2));
 		}
 	}
-	if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY surname, givenname ASC");
 	} else {
 		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid);
@@ -134,7 +135,11 @@ void contactsearch2(CONNECTION *sid)
 	sql_freeresult(sqr1);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function ContactSync(contactid) {\r\n");
-	prints(sid, "	window.opener.document.calledit.contactid.value=contactid;\r\n");
+	prints(sid, "	if (window.opener.document.calledit) {\r\n");
+	prints(sid, "		window.opener.document.calledit.contactid.value=contactid;\r\n");
+	prints(sid, "	} else if (window.opener.document.eventedit) {\r\n");
+	prints(sid, "		window.opener.document.eventedit.contactid.value=contactid;\r\n");
+	prints(sid, "	}\r\n");
 	prints(sid, "	window.close();\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
@@ -146,7 +151,7 @@ void contactsearch2(CONNECTION *sid)
 		return;
 	}
 	prints(sid, "<B>Found %d matching contact%s</B>\n", sql_numtuples(sqr1), sql_numtuples(sqr1)==1?"":"s");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Home Number&nbsp;</FONT></TH><TH>&nbsp;</TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr1);i++) {
@@ -168,23 +173,23 @@ void contactsearch2(CONNECTION *sid)
 	return;
 }
 
-void contactedit(CONNECTION *sid)
+void contactedit(CONN *sid)
 {
 	REC_CONTACT contact;
 	int contactid;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/contacts/editnew", 17)==0) {
 		contactid=0;
-		db_read(sid, 2, DB_CONTACTS, 0, &contact);
+		dbread_contact(sid, 2, 0, &contact);
 	} else {
 		if (getgetenv(sid, "CONTACTID")==NULL) return;
 		contactid=atoi(getgetenv(sid, "CONTACTID"));
-		if (db_read(sid, 2, DB_CONTACTS, contactid, &contact)!=0) {
+		if (dbread_contact(sid, 2, contactid, &contact)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", contactid);
 			return;
 		}
@@ -260,14 +265,14 @@ void contactedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Country    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workcountry    value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, contact.workcountry));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Work Postal Code&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=workpostalcode value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, contact.workpostalcode));
 	prints(sid, "</TABLE>\n</TD></TR>\n");
-	if ((contact.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_CONTACTS)&A_ADMIN)) {
+	if ((contact.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "contacts")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, contact.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, contact.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -283,7 +288,7 @@ void contactedit(CONNECTION *sid)
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_CONTACTS)&A_DELETE)&&(contactid!=0)) {
+	if ((auth_priv(sid, "contacts")&A_DELETE)&&(contactid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -293,7 +298,7 @@ void contactedit(CONNECTION *sid)
 	return;
 }
 
-void contactview(CONNECTION *sid)
+void contactview(CONN *sid)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_CONTACT contact;
@@ -304,13 +309,13 @@ void contactview(CONNECTION *sid)
 	int sqr;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "CONTACTID")==NULL) return;
 	contactid=atoi(getgetenv(sid, "CONTACTID"));
-	if (db_read(sid, 1, DB_CONTACTS, contactid, &contact)!=0) {
+	if (dbread_contact(sid, 1, contactid, &contact)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", contactid);
 		return;
 	}
@@ -334,11 +339,11 @@ void contactview(CONNECTION *sid)
 		if (*ptemp==' ') *ptemp='+';
 		ptemp++;
 	}
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>%s%s", config->colour_th, config->colour_thtext, str2html(sid, contact.salutation), strlen(contact.salutation)?" ":"");
 	prints(sid, "%s%s", str2html(sid, contact.givenname), strlen(contact.givenname)?" ":"");
 	prints(sid, "%s%s", str2html(sid, contact.surname), strlen(contact.surname)?" ":"");
-	if (auth_priv(sid, AUTH_CONTACTS)&A_MODIFY) {
+	if (auth_priv(sid, "contacts")&A_MODIFY) {
 		if ((contact.obj_uid==sid->dat->user_uid)||((contact.obj_gid==sid->dat->user_gid)&&(contact.obj_gperm>=2))||(contact.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/contacts/edit?contactid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, contactid, config->colour_thlink);
 		}
@@ -397,17 +402,17 @@ void contactview(CONNECTION *sid)
 		mod_notes_sublist(sid, "contacts", contact.contactid, 4);
 	}
 	prints(sid, "</TABLE>\n");
-	if (auth_priv(sid, AUTH_CALLS)&A_READ) {
+	if (module_exists(sid, "mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
 		if ((sqr=sql_queryf(sid, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 		prints(sid, "[<A HREF=%s/contacts/callslist?contactid=%d>%d Calls</A>]\n", sid->dat->in_ScriptName, contactid, atoi(sql_getvalue(sqr, 0, 0)));
 		sql_freeresult(sqr);
 	}
-	if (auth_priv(sid, AUTH_CALENDAR)&A_READ) {
+	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
 		if ((sqr=sql_queryf(sid, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 		prints(sid, "[<A HREF=%s/contacts/eventlist?contactid=%d>%d Events</A>]\n", sid->dat->in_ScriptName, contactid, atoi(sql_getvalue(sqr, 0, 0)));
 		sql_freeresult(sqr);
 	}
-	if (auth_priv(sid, AUTH_ORDERS)&A_READ) {
+	if (module_exists(sid, "mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
 		if ((sqr=sql_queryf(sid, "SELECT count(orderid) FROM gw_orders WHERE contactid = %d", contactid))<0) return;
 		prints(sid, "[<A HREF=%s/contacts/orderlist?contactid=%d>%d Orders</A>]\n", sid->dat->in_ScriptName, contactid, atoi(sql_getvalue(sqr, 0, 0)));
 		sql_freeresult(sqr);
@@ -416,7 +421,7 @@ void contactview(CONNECTION *sid)
 	return;
 }
 
-void contactlist(CONNECTION *sid)
+void contactlist(CONN *sid)
 {
 	char *ptemp;
 	char searchstring[10];
@@ -424,7 +429,7 @@ void contactlist(CONNECTION *sid)
 	int i;
 	int sqr1;
 
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -524,13 +529,13 @@ void contactlist(CONNECTION *sid)
 			strncpy(searchstring, "All", sizeof(searchstring)-1);
 		}
 		if (strcasecmp(searchstring, "All")==0) {
-			if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+			if (auth_priv(sid, "contacts")&A_ADMIN) {
 				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts ORDER BY surname, givenname ASC", searchstring))<0) return;
 			} else {
 				if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
 			}
 		} else {
-			if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+			if (auth_priv(sid, "contacts")&A_ADMIN) {
 				if (strcmp(config->sql_type, "ODBC")==0) {
 					if ((sqr1=sql_queryf(sid, "SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') ORDER BY surname, givenname ASC", searchstring))<0) return;
 				} else {
@@ -555,7 +560,7 @@ void contactlist(CONNECTION *sid)
 		prints(sid, "</TR>\n");
 		if (sql_numtuples(sqr1)>0) {
 			prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=3>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 			prints(sid, "<FORM METHOD=GET NAME=mailform>\n");
 			prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Contact Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Company Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Work Number&nbsp;</FONT></TH><TH ALIGN=LEFT COLSPAN=2 NOWRAP><FONT COLOR=%s>&nbsp;E-Mail&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 			for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
@@ -635,7 +640,7 @@ void contactlist(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void contactcallslist(CONNECTION *sid)
+void contactcallslist(CONN *sid)
 {
 	int contactid=0;
 	int i;
@@ -645,7 +650,11 @@ void contactcallslist(CONNECTION *sid)
 	int duration;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CALLS)&A_READ)) {
+	if (!module_exists(sid, "mod_calls")) {
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (!(auth_priv(sid, "calls")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -666,7 +675,7 @@ void contactcallslist(CONNECTION *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=350>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Call ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Action&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Duration&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -700,7 +709,7 @@ void contactcallslist(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void contacteventlist(CONNECTION *sid)
+void contacteventlist(CONN *sid)
 {
 	char *priority[5]={ "Lowest", "Low", "Normal", "High", "Highest" };
 	int contactid=0;
@@ -709,7 +718,11 @@ void contacteventlist(CONNECTION *sid)
 	int sqr2;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!module_exists(sid, "mod_calendar")) {
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -730,7 +743,7 @@ void contacteventlist(CONNECTION *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=350>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Event ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Status&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Priority&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -758,7 +771,7 @@ void contacteventlist(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void contactorderlist(CONNECTION *sid)
+void contactorderlist(CONN *sid)
 {
 	int contactid=0;
 	int i;
@@ -766,7 +779,11 @@ void contactorderlist(CONNECTION *sid)
 	int sqr2;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_READ)) {
+	if (!module_exists(sid, "mod_orders")) {
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		return;
+	}
+	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -787,7 +804,7 @@ void contactorderlist(CONNECTION *sid)
 	prints(sid, "%s</A><BR>\n", str2html(sid, sql_getvalue(sqr2, 0, 2)));
 	sql_freeresult(sqr2);
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=350>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 		prints(sid, "<TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Order ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Order Date&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Amount Due&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Amount Received&nbsp;</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -806,7 +823,7 @@ void contactorderlist(CONNECTION *sid)
 	return;
 }
 
-void contactsave(CONNECTION *sid)
+void contactsave(CONN *sid)
 {
 	REC_CONTACT contact;
 	char opassword[50];
@@ -814,23 +831,23 @@ void contactsave(CONNECTION *sid)
 	int contactid;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "CONTACTID"))==NULL) return;
 	contactid=atoi(ptemp);
-	if (db_read(sid, 2, DB_CONTACTS, contactid, &contact)!=0) {
+	if (dbread_contact(sid, 2, contactid, &contact)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	snprintf(opassword, sizeof(opassword)-1, "%s", contact.password);
-	if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) contact.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) contact.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_CONTACTS)&A_ADMIN)||(contact.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "contacts")&A_ADMIN)||(contact.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) contact.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) contact.obj_operm=atoi(ptemp);
 	}
@@ -864,7 +881,7 @@ void contactsave(CONNECTION *sid)
 	if ((ptemp=getpostenv(sid, "WORKCOUNTRY"))!=NULL) snprintf(contact.workcountry, sizeof(contact.workcountry)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "WORKPOSTALCODE"))!=NULL) snprintf(contact.workpostalcode, sizeof(contact.workpostalcode)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_CONTACTS)&A_DELETE)) {
+		if (!(auth_priv(sid, "contacts")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -873,12 +890,12 @@ void contactsave(CONNECTION *sid)
 		db_log_activity(sid, 1, "contacts", contact.contactid, "delete", "%s - %s deleted contact %d", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/list\">\n", sid->dat->in_ScriptName);
 	} else if (contact.contactid==0) {
-		if (!(auth_priv(sid, AUTH_CONTACTS)&A_INSERT)) {
+		if (!(auth_priv(sid, "contacts")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
-		if ((contact.contactid=db_write(sid, DB_CONTACTS, 0, &contact))<1) {
+		if ((contact.contactid=dbwrite_contact(sid, 0, &contact))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -890,28 +907,40 @@ void contactsave(CONNECTION *sid)
 			prints(sid, "		var newoption=window.opener.document.createElement(\"OPTION\");\r\n");
 			prints(sid, "		newoption.text='%s';\r\n", htview_contact(sid, contact.contactid));
 			prints(sid, "		newoption.value=%d;\r\n", contact.contactid);
-			prints(sid, "		window.opener.document.calledit.contactid.add(newoption);\r\n");
+			prints(sid, "		if (window.opener.document.calledit) {\r\n");
+			prints(sid, "			window.opener.document.calledit.contactid.add(newoption);\r\n");
+			prints(sid, "		} else if (window.opener.document.eventedit) {\r\n");
+			prints(sid, "			window.opener.document.eventedit.contactid.add(newoption);\r\n");
+			prints(sid, "		}\r\n");
 			prints(sid, "	} else {\r\n");
-			prints(sid, "		obj=window.opener.document.forms[\"calledit\"][\"contactid\"];\r\n");
+			prints(sid, "		if (window.opener.document.calledit) {\r\n");
+			prints(sid, "			obj=window.opener.document.forms[\"calledit\"][\"contactid\"];\r\n");
+			prints(sid, "		} else if (window.opener.document.eventedit) {\r\n");
+			prints(sid, "			obj=window.opener.document.forms[\"eventedit\"][\"contactid\"];\r\n");
+			prints(sid, "		}\r\n");
 			prints(sid, "		text='%s';\r\n", htview_contact(sid, contact.contactid));
 			prints(sid, "		value=%d;\r\n", contact.contactid);
 			prints(sid, "		obj.options[obj.options.length] = new Option(text, value);\r\n");
 			prints(sid, "	}\r\n");
-			prints(sid, "	window.opener.document.calledit.contactid.value=%d;\r\n", contact.contactid);
+			prints(sid, "	if (window.opener.document.calledit) {\r\n");
+			prints(sid, "		window.opener.document.calledit.contactid.value=%d;\r\n", contact.contactid);
+			prints(sid, "	} else if (window.opener.document.eventedit) {\r\n");
+			prints(sid, "		window.opener.document.eventedit.contactid.value=%d;\r\n", contact.contactid);
+			prints(sid, "	}\r\n");
 			prints(sid, "	window.close();\r\n");
 			prints(sid, "// -->\n</SCRIPT>\n");
 		} else {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/contacts/view?contactid=%d\">\n", sid->dat->in_ScriptName, contact.contactid);
 		}
 	} else {
-		if (!(auth_priv(sid, AUTH_CONTACTS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		if (strcmp(opassword, contact.password)!=0) {
 			snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		}
-		if (db_write(sid, DB_CONTACTS, contactid, &contact)<1) {
+		if (dbwrite_contact(sid, contactid, &contact)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -922,7 +951,7 @@ void contactsave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_CONTACTS);
@@ -949,13 +978,14 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_contacts", "CONTACTS", "/contacts/list", "mod_main", "/contacts/", mod_main)!=0) return -1;
+	if (mod_export_function("mod_contacts", "mod_contacts_read", dbread_contact)!=0) return -1;
+	if (mod_export_function("mod_contacts", "mod_contacts_write", dbwrite_contact)!=0) return -1;
 	return 0;
 }

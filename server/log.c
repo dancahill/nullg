@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-int db_log_activity(CONNECTION *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...)
+int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...)
 {
 	char curdate[32];
 	char details[2048];
@@ -47,7 +47,7 @@ int db_log_activity(CONNECTION *sid, int loglevel, char *category, int indexid, 
 	return sql_update(sid, query);
 }
 
-void logaccess(CONNECTION *sid, int loglevel, const char *format, ...)
+void logaccess(CONN *sid, int loglevel, const char *format, ...)
 {
 	char logbuffer[2048];
 	char timebuffer[100];
@@ -57,8 +57,8 @@ void logaccess(CONNECTION *sid, int loglevel, const char *format, ...)
 	struct timeval ttime;
 	struct timezone tzone;
 
-	if ((loglevel>config.server_loglevel)||(config.server_loglevel<1)) return;
-	snprintf(file, sizeof(file)-1, "%s/access.log", config.server_dir_var_log);
+	if ((loglevel>proc.config.server_loglevel)||(proc.config.server_loglevel<1)) return;
+	snprintf(file, sizeof(file)-1, "%s/access.log", proc.config.server_dir_var_log);
 	fixslashes(file);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
@@ -67,7 +67,7 @@ void logaccess(CONNECTION *sid, int loglevel, const char *format, ...)
 		va_end(ap);
 		gettimeofday(&ttime, &tzone);
 		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime(&ttime.tv_sec));
-		if ((config.server_loglevel>=4)&&(sid!=NULL)) {
+		if ((proc.config.server_loglevel>=4)&&(sid!=NULL)) {
 			fprintf(fp, "%s - [%d][0x%08X] %s\n", timebuffer, loglevel, sid->id, logbuffer);
 		} else {
 			fprintf(fp, "%s - [%d] %s\n", timebuffer, loglevel, logbuffer);
@@ -76,7 +76,7 @@ void logaccess(CONNECTION *sid, int loglevel, const char *format, ...)
 	}
 }
 
-void logerror(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
+void logerror(CONN *sid, char *srcfile, int line, const char *format, ...)
 {
 	char logbuffer[2048];
 	char timebuffer[100];
@@ -86,7 +86,7 @@ void logerror(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
 	struct timeval ttime;
 	struct timezone tzone;
 
-	snprintf(file, sizeof(file)-1, "%s/error.log", config.server_dir_var_log);
+	snprintf(file, sizeof(file)-1, "%s/error.log", proc.config.server_dir_var_log);
 	fixslashes(file);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
@@ -95,16 +95,16 @@ void logerror(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
 		va_end(ap);
 		gettimeofday(&ttime, &tzone);
 		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime(&ttime.tv_sec));
-		if ((config.server_loglevel>=4)&&(sid!=NULL)) {
-			fprintf(fp, "%s - %s %d - [0x%08X] %s\n", timebuffer, srcfile, line, sid->id, logbuffer);
+		if ((proc.config.server_loglevel>=4)&&(sid!=NULL)) {
+			fprintf(fp, "%s - %s %d [0x%08X] %s\n", timebuffer, srcfile, line, sid->id, logbuffer);
 		} else {
-			fprintf(fp, "%s - %s %d - %s\n", timebuffer, srcfile, line, logbuffer);
+			fprintf(fp, "%s - %s %d %s\n", timebuffer, srcfile, line, logbuffer);
 		}
 		fclose(fp);
 	}
 }
 
-void logdebug(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
+void logdebug(CONN *sid, char *srcfile, int line, const char *format, ...)
 {
 	char logbuffer[2048];
 	char timebuffer[100];
@@ -114,7 +114,7 @@ void logdebug(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
 	struct timeval ttime;
 	struct timezone tzone;
 
-	snprintf(file, sizeof(file)-1, "%s/debug.log", config.server_dir_var_log);
+	snprintf(file, sizeof(file)-1, "%s/debug.log", proc.config.server_dir_var_log);
 	fixslashes(file);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
@@ -124,11 +124,9 @@ void logdebug(CONNECTION *sid, char *srcfile, int line, const char *format, ...)
 		gettimeofday(&ttime, &tzone);
 		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime(&ttime.tv_sec));
 		if (sid!=NULL) {
-//			fprintf(fp, "%s - [0x%08X] %s %-15s %4d\n", timebuffer, sid->id, logbuffer, srcfile, line);
-//			fprintf(fp, "%s - [0x%08X] %s\n", timebuffer, sid->id, logbuffer);
-			fprintf(fp, "%s - %s %d - [0x%08X] %s\n", timebuffer, srcfile, line, sid->id, logbuffer);
+			fprintf(fp, "%s - %s %d [0x%08X] %s\n", timebuffer, srcfile, line, sid->id, logbuffer);
 		} else {
-			fprintf(fp, "%s - %s\n", timebuffer, logbuffer);
+			fprintf(fp, "%s - %s %d %s\n", timebuffer, srcfile, line, logbuffer);
 		}
 		fclose(fp);
 	}

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_profile.h"
 
-void htselect_layout(CONNECTION *sid, int selected)
+void htselect_layout(CONN *sid, int selected)
 {
 	char *option[]={ "Simple (Frameless)", "Standard", "Outlook" };
 	int i;
@@ -28,7 +29,7 @@ void htselect_layout(CONNECTION *sid, int selected)
 	return;
 }
 
-void htselect_mailaccount(CONNECTION *sid, int selected)
+void htselect_mailaccount(CONN *sid, int selected)
 {
 	int i, j;
 	int sqr;
@@ -42,7 +43,7 @@ void htselect_mailaccount(CONNECTION *sid, int selected)
 	return;
 }
 
-char *EncodeBase64string(CONNECTION *sid, char *src)
+char *EncodeBase64string(CONN *sid, char *src)
 {
 	static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	unsigned char a, b, c, d, *cp;
@@ -89,17 +90,17 @@ char *EncodeBase64string(CONNECTION *sid, char *src)
 	return dest;
 }
 
-void profileedit(CONNECTION *sid)
+void profileedit(CONN *sid)
 {
 	REC_USER user;
 	int i;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_PROFILE)&A_MODIFY)) {
+	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (db_read(sid, 2, DB_PROFILE, sid->dat->user_uid, &user)!=0) {
+	if (dbread_profile(sid, 2, sid->dat->user_uid, &user)!=0) {
 		prints(sid, "<CENTER>Profile information not found</CENTER>\n");
 		return;
 	}
@@ -109,22 +110,32 @@ void profileedit(CONNECTION *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 NOWRAP STYLE='padding:2px'><FONT COLOR=%s>User Profile for %s</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, sid->dat->user_username);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Password             </B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password  VALUE=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", config->colour_editform, str2html(sid, user.password));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start       </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefdaystart style='width:182px'>\n");
-	htselect_hour(sid, user.prefdaystart);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefdaylength style='width:182px'>\n");
-	htselect_number(sid, user.prefdaylength, 0, 24);
-	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Current Mail Account </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefmailcurrent style='width:182px'>\n");
-	htselect_mailaccount(sid, user.prefmailcurrent);
-	prints(sid, "</SELECT></TD></TR>\n");
+	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Start       </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+		prints(sid, "<SELECT NAME=prefdaystart style='width:182px'>\n");
+		htselect_hour(sid, user.prefdaystart);
+		prints(sid, "</SELECT></TD></TR>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Calendar Length      </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+		prints(sid, "<SELECT NAME=prefdaylength style='width:182px'>\n");
+		htselect_number(sid, user.prefdaylength, 0, 24);
+		prints(sid, "</SELECT></TD></TR>\n");
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+		prints(sid, "<SELECT NAME=prefgeozone style='width:182px'>\n");
+		htselect_zone(sid, user.prefgeozone);
+		prints(sid, "</SELECT></TD></TR>\n");
+	}
+	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Current Mail Account </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
+		prints(sid, "<SELECT NAME=prefmailcurrent style='width:182px'>\n");
+		htselect_mailaccount(sid, user.prefmailcurrent);
+		prints(sid, "</SELECT></TD></TR>\n");
+	}
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Default Mail Account </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=prefmaildefault style='width:182px'>\n");
 	prints(sid, "<OPTION VALUE=0%s>External Mail Client\n", user.prefmaildefault!=1?" SELECTED":"");
-	prints(sid, "<OPTION VALUE=1%s>Web E-Mail\n", user.prefmaildefault==1?" SELECTED":"");
+	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
+		prints(sid, "<OPTION VALUE=1%s>Web E-Mail\n", user.prefmaildefault==1?" SELECTED":"");
+	}
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Maximum Results/Page </B>&nbsp;</TD><TD ALIGN=RIGHT>\n", config->colour_editform);
 	prints(sid, "<SELECT NAME=prefmaxlist style='width:182px'>\n");
@@ -138,10 +149,6 @@ void profileedit(CONNECTION *sid)
 	prints(sid, "<SELECT NAME=preftimezone style='width:182px'>\n");
 	htselect_timezone(sid, user.preftimezone);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
-	prints(sid, "<SELECT NAME=prefgeozone style='width:182px'>\n");
-	htselect_zone(sid, user.prefgeozone);
-	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
@@ -150,10 +157,10 @@ void profileedit(CONNECTION *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD></TR>");
 	prints(sid, "<TR><TD ALIGN=CENTER>\n");
-	if (auth_priv(sid, AUTH_WEBMAIL)&A_READ) {
+	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
 		if ((sqr=sql_queryf(sid, "SELECT mailaccountid, accountname, address FROM gw_mailaccounts WHERE obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
 		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 			prints(sid, "<TR BGCOLOR=%s><TH NOWRAP><FONT COLOR=%s>Mail Account Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>E-Mail Address</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/profile/mailedit?account=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -168,29 +175,29 @@ void profileedit(CONNECTION *sid)
 		}
 		sql_freeresult(sqr);
 	}
-	prints(sid, "[<A HREF=%s/profile/timeedit>Edit Availability</A>]\n", sid->dat->in_ScriptName);
+	if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")>0)) {
+		prints(sid, "[<A HREF=%s/profile/timeedit>Edit Availability</A>]\n", sid->dat->in_ScriptName);
+	}
 	prints(sid, "</TD></TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.profileedit.password.focus();\n// -->\n</SCRIPT>\n");
 	return;
 }
 
-void profilesave(CONNECTION *sid)
+void profilesave(CONN *sid)
 {
 	REC_USER user;
 	char curdate[32];
 	char opassword[50];
 	char query[4096];
 	char *ptemp;
-	int userid;
 
-	if (!(auth_priv(sid, AUTH_PROFILE)&A_MODIFY)) {
+	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
-	userid=sid->dat->user_uid;
-	if (db_read(sid, 2, DB_PROFILE, userid, &user)!=0) {
+	if (dbread_profile(sid, 2, sid->dat->user_uid, &user)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -219,34 +226,34 @@ void profilesave(CONNECTION *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefmenustyle = '%d', ", user.prefmenustyle);
 	strncatf(query, sizeof(query)-strlen(query)-1, "preftimezone = '%d', ", user.preftimezone);
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefgeozone = '%d'", user.prefgeozone);
-	strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", user.userid);
+	strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", sid->dat->user_uid);
 	if (sql_update(sid, query)<0) return;
-	prints(sid, "<CENTER>User %d modified successfully</CENTER><BR>\n", userid);
+	prints(sid, "<CENTER>Profile modified successfully</CENTER><BR>\n");
 	db_log_activity(sid, 1, "profile", 0, "modify", "%s - %s modified profile", sid->dat->in_RemoteAddr, sid->dat->user_username);
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/profile/edit\">\n", sid->dat->in_ScriptName);
 	return;
 }
 
-void profilemailedit(CONNECTION *sid)
+void profilemailedit(CONN *sid)
 {
 	REC_MAILACCT mailacct;
 	int accountid;
 	int i;
 
-	if (!(auth_priv(sid, AUTH_WEBMAIL)&A_MODIFY)) {
+	if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/profile/maileditnew", 20)==0) {
 		accountid=0;
-		if (db_read(sid, 2, DB_MAILACCOUNTS, 0, &mailacct)!=0) {
+		if (dbread_mailaccount(sid, 2, 0, &mailacct)!=0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 	} else {
 		if (getgetenv(sid, "ACCOUNT")==NULL) return;
 		accountid=atoi(getgetenv(sid, "ACCOUNT"));
-		if (db_read(sid, 2, DB_MAILACCOUNTS, accountid, &mailacct)!=0) {
+		if (dbread_mailaccount(sid, 2, accountid, &mailacct)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", accountid);
 			return;
 		}
@@ -320,7 +327,7 @@ void profilemailedit(CONNECTION *sid)
 	return;
 }
 
-void profilemailsave(CONNECTION *sid)
+void profilemailsave(CONN *sid)
 {
 	REC_MAILACCT mailacct;
 	char query[2048];
@@ -329,14 +336,14 @@ void profilemailsave(CONNECTION *sid)
 	int accountid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_WEBMAIL)&A_MODIFY)) {
+	if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "MAILACCOUNTID"))==NULL) return;
 	accountid=atoi(ptemp);
-	if (db_read(sid, 2, DB_MAILACCOUNTS, accountid, &mailacct)!=0) {
+	if (dbread_mailaccount(sid, 2, accountid, &mailacct)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -358,7 +365,7 @@ void profilemailsave(CONNECTION *sid)
 	memset(curdate, 0, sizeof(curdate));
 	snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_WEBMAIL)&A_MODIFY)) {
+		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -391,7 +398,7 @@ void profilemailsave(CONNECTION *sid)
 		prints(sid, "<CENTER>E-Mail account %d added successfully</CENTER><BR>\n", mailacct.mailaccountid);
 		db_log_activity(sid, 1, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {
-		if (!(auth_priv(sid, AUTH_WEBMAIL)&A_MODIFY)) {
+		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -424,7 +431,7 @@ void profilemailsave(CONNECTION *sid)
 	return;
 }
 
-void profiletimeedit(CONNECTION *sid)
+void profiletimeedit(CONN *sid)
 {
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 	char gavailability[170];
@@ -433,7 +440,7 @@ void profiletimeedit(CONNECTION *sid)
 	int j;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_PROFILE)&A_MODIFY)) {
+	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -475,29 +482,29 @@ void profiletimeedit(CONNECTION *sid)
 	prints(sid, "function toggle(b,n)\n");
 	prints(sid, "{\n");
 	prints(sid, "	if (b == \"t\" ) {\n");
-	prints(sid, "		if (availability[\"t\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"t\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"t\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"t\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<7;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + x + \"t\" + n]) {\n");
-	prints(sid, "				availability[\"d\" + x + \"t\" + n].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + x + \"t\" + n]) {\n");
+	prints(sid, "				document.availability[\"d\" + x + \"t\" + n].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	} else {\n");
-	prints(sid, "		if (availability[\"d\" + n].value == 'true') {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'false'\n");
+	prints(sid, "		if (document.availability[\"d\" + n].value == 'true') {\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'false'\n");
 	prints(sid, "			var bool = true\n");
 	prints(sid, "		} else {\n");
-	prints(sid, "			availability[\"d\" + n].value = 'true'\n");
+	prints(sid, "			document.availability[\"d\" + n].value = 'true'\n");
 	prints(sid, "			var bool = false\n");
 	prints(sid, "		}\n");
 	prints(sid, "		for (x=0;x<24;x++) {\n");
-	prints(sid, "			if (availability[\"d\" + n + \"t\" + x]) {\n");
-	prints(sid, "				availability[\"d\" + n + \"t\" + x].checked = bool\n");
+	prints(sid, "			if (document.availability[\"d\" + n + \"t\" + x]) {\n");
+	prints(sid, "				document.availability[\"d\" + n + \"t\" + x].checked = bool\n");
 	prints(sid, "			}\n");
 	prints(sid, "		}\n");
 	prints(sid, "	}\n");
@@ -505,7 +512,7 @@ void profiletimeedit(CONNECTION *sid)
 	prints(sid, "// -->\n");
 	prints(sid, "</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<FORM METHOD=POST ACTION=%s/profile/timesave NAME=availability>\n", sid->dat->in_ScriptName);
 	for (i=0;i<7;i++) {
 		prints(sid, "<input type='hidden' name='d%d' value='true'>\n", i);
@@ -546,7 +553,7 @@ void profiletimeedit(CONNECTION *sid)
 	return;
 }
 
-void profiletimesave(CONNECTION *sid)
+void profiletimesave(CONN *sid)
 {
 	char availability[170];
 	char curdate[40];
@@ -556,7 +563,7 @@ void profiletimesave(CONNECTION *sid)
 	int i;
 	int j;
 
-	if (!(auth_priv(sid, AUTH_PROFILE)&A_MODIFY)) {
+	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -591,7 +598,7 @@ void profiletimesave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_PROFILE);
@@ -613,12 +620,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_profile", "", "", "mod_main", "/profile/", mod_main)!=0) return -1;
 	return 0;

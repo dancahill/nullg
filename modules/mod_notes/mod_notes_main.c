@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_notes.h"
 
-void htselect_notefilter(CONNECTION *sid, int selected, char *baseuri)
+void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 {
 	char *option[]={ "All", "Personal", "Calls", "Contacts", "Events", "Notes", "Tasks", "Users" };
 	char *ptemp;
@@ -83,12 +84,12 @@ void htselect_notefilter(CONNECTION *sid, int selected, char *baseuri)
 	return;
 }
 
-void notes_sublist(CONNECTION *sid, char *table, int index, int colspan)
+void notes_sublist(CONN *sid, char *table, int index, int colspan)
 {
 	int i;
 	int sqr;
 
-	if (auth_priv(sid, AUTH_ADMIN)&A_ADMIN) {
+	if (auth_priv(sid, "admin")&A_ADMIN) {
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d ORDER BY noteid ASC", table, index))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid))<0) return;
@@ -105,7 +106,7 @@ void notes_sublist(CONNECTION *sid, char *table, int index, int colspan)
 	return;
 }
 
-void notesedit(CONNECTION *sid)
+void notesedit(CONN *sid)
 {
 	REC_NOTE note;
 	char *ptemp;
@@ -114,7 +115,7 @@ void notesedit(CONNECTION *sid)
 	prints(sid, "<BR>\r\n");
 	if (strncmp(sid->dat->in_RequestURI, "/notes/editnew", 14)==0) {
 		noteid=0;
-		if (db_read(sid, 2, DB_NOTES, 0, &note)!=0) {
+		if (dbread_note(sid, 2, 0, &note)!=0) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -127,7 +128,7 @@ void notesedit(CONNECTION *sid)
 	} else {
 		if (getgetenv(sid, "NOTEID")==NULL) return;
 		noteid=atoi(getgetenv(sid, "NOTEID"));
-		if (db_read(sid, 2, DB_NOTES, noteid, &note)!=0) {
+		if (dbread_note(sid, 2, noteid, &note)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", noteid);
 			return;
 		}
@@ -153,14 +154,14 @@ void notesedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=VIRTUAL NAME=notetext ROWS=15 COLS=70>", config->colour_editform);
 	printline2(sid, 0, note.notetext);
 	prints(sid, "</TEXTAREA></TD></TR>\n");
-	if ((note.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if ((note.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_ADMIN)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "admin")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, note.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_ADMIN)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "admin")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, note.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT>\n", config->colour_editform);
@@ -184,7 +185,7 @@ void notesedit(CONNECTION *sid)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.notesedit.notetitle.focus();\n// -->\n</SCRIPT>\n");
 }
 
-void notesview(CONNECTION *sid)
+void notesview(CONN *sid)
 {
 	REC_NOTE note;
 	int noteid;
@@ -194,13 +195,13 @@ void notesview(CONNECTION *sid)
 	if (getgetenv(sid, "NOTEID")==NULL) return;
 	noteid=atoi(getgetenv(sid, "NOTEID"));
 	prints(sid, "<BR>\r\n");
-	if (db_read(sid, 1, DB_NOTES, noteid, &note)!=0) {
+	if (dbread_note(sid, 1, noteid, &note)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", noteid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=500>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Note %d", config->colour_th, config->colour_thtext, noteid);
-	if (auth_priv(sid, AUTH_ORDERS)&A_ADMIN) {
+	if (auth_priv(sid, "orders")&A_ADMIN) {
 		prints(sid, " [<A HREF=%s/notes/edit?noteid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, noteid, config->colour_thlink);
 	} else if ((note.obj_uid==sid->dat->user_uid)||((note.obj_gid==sid->dat->user_gid)&&(note.obj_gperm>1))||(note.obj_operm>1)) {
 		prints(sid, " [<A HREF=%s/notes/edit?noteid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, noteid, config->colour_thlink);
@@ -278,7 +279,7 @@ void notesview(CONNECTION *sid)
 	prints(sid, "</TABLE>\n</CENTER>\n");
 }
 
-void noteslist(CONNECTION *sid)
+void noteslist(CONN *sid)
 {
 	char tablename[20];
 	char *ptemp;
@@ -305,7 +306,6 @@ void noteslist(CONNECTION *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	htselect_notefilter(sid, userid, "/notes/list");
 	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n</TR></TABLE>\r\n");
-	prints(sid, "<BR>\r\n");
 	prints(sid, "<CENTER>\n");
 	memset(tablename, 0, sizeof(tablename));
 	switch(table) {
@@ -318,13 +318,14 @@ void noteslist(CONNECTION *sid)
 		case 6: { snprintf(tablename, sizeof(tablename)-1, "tasks"); break; }
 		case 7: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
 	}
-	if (auth_priv(sid, AUTH_ADMIN)&A_ADMIN) {
+	if (auth_priv(sid, "admin")&A_ADMIN) {
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' ORDER BY noteid DESC", userid, tablename))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY noteid DESC", userid, tablename, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=450>\n");
+		prints(sid, "<BR>\r\n");
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=450>\r\n", proc->config.colour_tabletrim);
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Note Title&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Reference&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Last Modified&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=offset;(i<sql_numtuples(sqr))&&(i<offset+sid->dat->user_maxlist);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -370,7 +371,7 @@ void noteslist(CONNECTION *sid)
 	return;
 }
 
-void notessave(CONNECTION *sid)
+void notessave(CONN *sid)
 {
 	REC_NOTE note;
 	char notebuffer[8193];
@@ -382,15 +383,15 @@ void notessave(CONNECTION *sid)
 	memset(notebuffer, 0, sizeof(notebuffer));
 	noteid=atoi(ptemp);
 	prints(sid, "<BR>\r\n");
-	if (db_read(sid, 2, DB_NOTES, noteid, &note)!=0) {
+	if (dbread_note(sid, 2, noteid, &note)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_ADMIN)&A_ADMIN) {
+	if (auth_priv(sid, "admin")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) note.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) note.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_ADMIN)&A_ADMIN)||(note.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "admin")&A_ADMIN)||(note.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) note.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) note.obj_operm=atoi(ptemp);
 	}
@@ -421,7 +422,7 @@ void notessave(CONNECTION *sid)
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/list\">\n", sid->dat->in_ScriptName);
 		}
 	} else if (note.noteid==0) {
-		if ((note.noteid=db_write(sid, DB_NOTES, 0, &note))<1) {
+		if ((note.noteid=dbwrite_note(sid, 0, &note))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -429,7 +430,7 @@ void notessave(CONNECTION *sid)
 		db_log_activity(sid, 1, "notes", note.noteid, "insert", "%s - %s added note %d", sid->dat->in_RemoteAddr, sid->dat->user_username, note.noteid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.noteid);
 	} else {
-		if (db_write(sid, DB_NOTES, noteid, &note)<1) {
+		if (dbwrite_note(sid, noteid, &note)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -440,7 +441,7 @@ void notessave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_NOTES);
@@ -457,12 +458,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_notes", "NOTEBOOK", "/notes/list", "mod_main", "/notes/", mod_main)!=0) return -1;
 	if (mod_export_function("mod_notes", "mod_notes_sublist", notes_sublist)!=0) return -1;

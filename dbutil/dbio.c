@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -420,6 +420,7 @@ int init_db(void)
 	if (sqlUpdate(1, DBDATA_18)<0) { printf("\r\nError inserting dbdata_18\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_19)<0) { printf("\r\nError inserting dbdata_19\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_20)<0) { printf("\r\nError inserting dbdata_20\r\n"); return -1; }
+	if (sqlUpdate(1, DBDATA_21)<0) { printf("\r\nError inserting dbdata_21\r\n"); return -1; }
 	if (strcasecmp(sql.sql_type, "PGSQL")==0) {
 		init_pgsqlseq();
 	}

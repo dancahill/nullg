@@ -9,25 +9,25 @@ A:HOVER {
 BODY {
 	BACKGROUND-COLOR: rgb(255,255,255);
 	COLOR: #000000;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
 
 DIV {
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
 
 FONT {
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
 
 P {
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
@@ -44,7 +44,7 @@ TABLE {
 TD {
 	BORDER-COLOR: #000000;
 	COLOR: #000000;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
@@ -52,18 +52,18 @@ TH {
 	BORDER-COLOR: #000000;
 	BACKGROUND-COLOR: #0000A0;
 	COLOR: #FFFFFF;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 	FONT-STYLE: normal;
 }
 
 FORM {
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	FONT-SIZE: 12px;
 }
 INPUT {
 	FONT-SIZE: 12px;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	COLOR: #000000;
 }
 TEXTAREA {
@@ -74,7 +74,7 @@ SELECT {
 	BORDER: 0px solid;
 	BORDER-COLOR: #000000;
 	FONT-SIZE: 12px;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	COLOR: #000000;
 }
 
@@ -87,7 +87,7 @@ SELECT {
 	BORDER: 1px solid;
 	BORDER-COLOR: #000000;
 	FONT-SIZE: 12px;
-	FONT-FAMILY: Arial, Helvetica;
+	FONT-FAMILY: Arial, Verdana, Helvetica;
 	BACKGROUND-COLOR: #E0E0E0;
 	COLOR: #000000;
 	PADDING: 0px;

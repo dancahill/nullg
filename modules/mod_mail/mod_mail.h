@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,47 +45,47 @@ typedef struct {
 } wmheader;
 
 /* mod_mail_addr.c */
-void wmaddr_list(CONNECTION *sid);
+void wmaddr_list(CONN *sid);
 /* mod_mail_codec.c */
-char *DecodeRFC2047(CONNECTION *sid, char *src);
-int  DecodeHTML(CONNECTION *sid, short int reply, char *src, char *ctype, short int crlf);
-int  DecodeQP(CONNECTION *sid, short int reply, char *src, char *ctype);
-int  DecodeText(CONNECTION *sid, short int reply, char *src);
-int  EncodeBase64(CONNECTION *sid, char *src, int srclen);
+char *DecodeRFC2047(CONN *sid, char *src);
+int  DecodeHTML(CONN *sid, short int reply, char *src, char *ctype, short int crlf);
+int  DecodeQP(CONN *sid, short int reply, char *src, char *ctype);
+int  DecodeText(CONN *sid, short int reply, char *src);
+int  EncodeBase64(CONN *sid, char *src, int srclen);
 int  EncodeBase64file(FILE *fp, char *src, int srclen);
-int  DecodeBase64(CONNECTION *sid, char *src, char *ctype);
-char *EncodeBase64string(CONNECTION *sid, char *src);
-char *DecodeBase64string(CONNECTION *sid, char *src);
+int  DecodeBase64(CONN *sid, char *src, char *ctype);
+char *EncodeBase64string(CONN *sid, char *src);
+char *DecodeBase64string(CONN *sid, char *src);
 /* mod_mail_html.c */
-void htselect_mailjump(CONNECTION *sid, int selected);
-void htselect_mailmbox(CONNECTION *sid, char *selected);
+void htselect_mailjump(CONN *sid, int selected);
+void htselect_mailmbox(CONN *sid, char *selected);
 /* mod_mail_main.c */
-void wmloginform(CONNECTION *sid);
-int  webmailheader(CONNECTION *sid, wmheader *header);
+void wmloginform(CONN *sid);
+int  webmailheader(CONN *sid, wmheader *header);
 /* mod_mail_mime.c */
-int webmailheader(CONNECTION *sid, wmheader *header);
-void webmailfiledl(CONNECTION *sid);
-char *webmailfileul(CONNECTION *sid, char *xfilename, char *xfilesize);
-int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth);
+int webmailheader(CONN *sid, wmheader *header);
+void webmailfiledl(CONN *sid);
+char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
+int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth);
 /* mod_mail_server.c */
-int  wmprints(CONNECTION *sid, const char *format, ...);
-int  wmfgets(CONNECTION *sid, char *buffer, int max, int fd);
-int  wmffgets(CONNECTION *sid, char *buffer, int max, FILE **fp);
-void wmclose(CONNECTION *sid);
-int  wmserver_smtpconnect(CONNECTION *sid);
-int  wmserver_smtpauth(CONNECTION *sid);
-void wmserver_smtpdisconnect(CONNECTION *sid);
-int  wmserver_connect(CONNECTION *sid, int verbose);
-void wmserver_disconnect(CONNECTION *sid);
-int  wmserver_count(CONNECTION *sid);
-int  wmserver_msgdele(CONNECTION *sid, int message);
-int  wmserver_msghead(CONNECTION *sid, int message);
-int  wmserver_msgretr(CONNECTION *sid, int message);
-int  wmserver_msgsize(CONNECTION *sid, int message);
-int  wmserver_uidl(CONNECTION *sid, int message, char *uidl);
-int  is_msg_end(CONNECTION *sid, char *buffer);
-int  wmserver_msgsync(CONNECTION *sid, int remoteid, int localid, int verbose);
-int  wmserver_mlistsync(CONNECTION *sid, char ***uidl_list);
-void wmserver_purge(CONNECTION *sid, int remove);
-int  wmserver_send(CONNECTION *sid, int mailid, int verbose);
-int  wmsync(CONNECTION *sid, int verbose);
+int  wmprints(CONN *sid, const char *format, ...);
+int  wmfgets(CONN *sid, char *buffer, int max, int fd);
+int  wmffgets(CONN *sid, char *buffer, int max, FILE **fp);
+void wmclose(CONN *sid);
+int  wmserver_smtpconnect(CONN *sid);
+int  wmserver_smtpauth(CONN *sid);
+void wmserver_smtpdisconnect(CONN *sid);
+int  wmserver_connect(CONN *sid, int verbose);
+void wmserver_disconnect(CONN *sid);
+int  wmserver_count(CONN *sid);
+int  wmserver_msgdele(CONN *sid, int message);
+int  wmserver_msghead(CONN *sid, int message);
+int  wmserver_msgretr(CONN *sid, int message);
+int  wmserver_msgsize(CONN *sid, int message);
+int  wmserver_uidl(CONN *sid, int message, char *uidl);
+int  is_msg_end(CONN *sid, char *buffer);
+int  wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose);
+int  wmserver_mlistsync(CONN *sid, char ***uidl_list);
+void wmserver_purge(CONN *sid, int remove);
+int  wmserver_send(CONN *sid, int mailid, int verbose);
+int  wmsync(CONN *sid, int verbose);

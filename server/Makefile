@@ -1,16 +1,17 @@
 # Makefile for NullLogic Groupware
 CC       = gcc
-CFLAGS   = -Wall -O2 -s -I../include
+CFLAGS   = -Wall -O2 -I../include
 #CFLAGS   = -Wall -O -g -I../include
-LDFLAGS  = -ldl -lpthread
+LDFLAGS  = -s -ldl -lpthread
 OBJECTS  = \
-	auth.o cgi.o config.o db.o format.o html.o http.o io.o logging.o \
-	main.o md5.o modctl.o sanity.o server.o sql.o xmlrpc.o
+	auth.o config.o format.o html.o http.o io.o log.o main.o md5.o \
+	modctl.o sanity.o server.o sql.o
+TARGET = ../distrib/bin/groupware
 
-all: groupware
+all: server
 
-groupware: $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o ../distrib/bin/groupware
+server: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
-	rm -f ../distrib/bin/groupware $(OBJECTS)
+	rm -f $(TARGET) $(OBJECTS) *~

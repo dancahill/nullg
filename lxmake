@@ -1,6 +1,6 @@
 #!/bin/sh
-OUTFILE=nullgroupware-1.2.1-x86-linux
-FILEDATE="2003-03-15 01:02"
+OUTFILE=nullgroupware-1.2.2-x86-linux
+FILEDATE="2003-05-07 01:02"
 
 build_clean() {
 	rm -f distrib/setup
@@ -15,8 +15,9 @@ build_pack() {
 	cp -av other/rc.groupware distrib/bin/rc.groupware
 	cp -av other/setup distrib/setup
 
-	cp -av other/sqlite.so distrib/lib/sqlite.so
+	cp -av contrib/libsqlite.so distrib/lib/libsqlite.so
 
+	fromdos < distrib/COPYING > temp.dos       ; mv temp.dos distrib/COPYING
 	fromdos < distrib/COPYRIGHT.txt > temp.dos ; mv temp.dos distrib/COPYRIGHT.txt
 	fromdos < distrib/README.txt > temp.dos    ; mv temp.dos distrib/README.txt
 	for i in distrib/cgi-bin/* ; do
@@ -38,6 +39,7 @@ build_pack() {
 		fromdos < $i > ${i}.dos ; mv ${i}.dos ${i}
 	done
 	chmod 0755 distrib -R
+	chmod 0644 distrib/COPYING
 	chmod 0644 distrib/COPYRIGHT.txt
 	chmod 0644 distrib/README.txt
 	chmod 0755 distrib/setup
@@ -45,7 +47,10 @@ build_pack() {
 	chmod 0755 distrib/cgi-bin/*
 	chmod 0644 distrib/etc/*
 	chmod 0755 distrib/lib/*
-	chmod 0644 distrib/var/files/*
+	chmod 0700 distrib/var/db
+	chmod 0600 distrib/var/db/*
+	chmod 0700 distrib/var/files
+	chmod 0600 distrib/var/files/*
 	chmod 0644 distrib/var/htdocs/groupware/css/*
 	chmod 0644 distrib/var/htdocs/groupware/help/*
 	chmod 0644 distrib/var/htdocs/groupware/images/*
@@ -53,6 +58,10 @@ build_pack() {
 	chmod 0644 distrib/var/htdocs/groupware/images/menu2/*
 	chmod 0644 distrib/var/htdocs/groupware/javascript/*
 	chmod 0644 distrib/var/htdocs/groupware/sounds/*
+	chmod 0700 distrib/var/log
+	chmod 0600 distrib/var/log/*
+	chmod 0700 distrib/var/mail
+	chmod 0600 distrib/var/mail/*
 
 	touch --date="$FILEDATE" *
 	touch --date="$FILEDATE" distrib/*

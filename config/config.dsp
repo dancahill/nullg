@@ -1,10 +1,10 @@
-# Microsoft Developer Studio Project File - Name="Config" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="config" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Application" 0x0101
 
-CFG=Config - Win32 Release
+CFG=config - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,11 +13,11 @@ CFG=Config - Win32 Release
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "config.mak" CFG="Config - Win32 Release"
+!MESSAGE NMAKE /f "config.mak" CFG="config - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "Config - Win32 Release" (based on "Win32 (x86) Application")
+!MESSAGE "config - Win32 Release" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
@@ -53,7 +53,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386
 # Begin Target
 
-# Name "Config - Win32 Release"
+# Name "config - Win32 Release"
 # Begin Source File
 
 SOURCE=.\config.c

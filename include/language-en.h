@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@
 #define ADM_CFG_SAVED \
 "Groupware configuration modified successfully.\n" \
 "In order to make sure all settings take effect, you\n" \
-"may need to restart the Groupware server.\n"
+"may need to restart the server.\n"
 #define ADM_CFG_LOG	"%s - %s modified configuration"
 #define ADM_LIC_TITLE	"LICENSE INFORMATION"
 #define ADM_LIC_NAME	"Name"

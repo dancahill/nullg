@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_profile - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_profile.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_profile.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_profile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_profile_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_profile_main.c
 # End Source File
 # End Target
 # End Project

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,26 +15,33 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
 /* mod_admin_config.c */
-void adminconfigedit(CONNECTION *sid);
-void adminconfigsave(CONNECTION *sid);
+void adminconfigedit(CONN *sid);
+void adminconfigsave(CONN *sid);
+/* mod_admin_db.c */
+int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group);
+int dbread_user(CONN *sid, short int perm, int index, REC_USER *user);
+int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone);
 /* mod_admin_groups.c */
-void admingroupedit(CONNECTION *sid);
-void admingrouplist(CONNECTION *sid);
-void admingroupsave(CONNECTION *sid);
-void admingrouptimeedit(CONNECTION *sid);
-void admingrouptimesave(CONNECTION *sid);
+void admingroupedit(CONN *sid);
+void admingrouplist(CONN *sid);
+void admingroupsave(CONN *sid);
+void admingrouptimeedit(CONN *sid);
+void admingrouptimesave(CONN *sid);
 /* mod_admin_logs.c */
-void adminaccess(CONNECTION *sid);
-void adminerror(CONNECTION *sid);
-void adminactivitylist(CONNECTION *sid);
-void adminactivityview(CONNECTION *sid);
+void adminaccess(CONN *sid);
+void adminerror(CONN *sid);
+void adminactivitylist(CONN *sid);
+void adminactivityview(CONN *sid);
 /* mod_admin_syscheck.c */
-void admin_syscheck(CONNECTION *sid);
+void admin_syscheck(CONN *sid);
 /* mod_admin_users.c */
-void adminuseredit(CONNECTION *sid, REC_USER *user);
-void adminuserlist(CONNECTION *sid);
-void adminusersave(CONNECTION *sid);
-void adminusertimeedit(CONNECTION *sid);
-void adminusertimesave(CONNECTION *sid);
+void adminuseredit(CONN *sid, REC_USER *user);
+void adminuserlist(CONN *sid);
+void adminusersave(CONN *sid);
+void adminusertimeedit(CONN *sid);
+void adminusertimesave(CONN *sid);
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/resource.h>
+#endif

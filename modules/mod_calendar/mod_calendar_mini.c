@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_calendar.h"
 
-void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
+void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 {
 	char *ptemp;
 	char posttime1[100];
@@ -34,7 +34,7 @@ void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 	int sqr2;
 	int status;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -53,12 +53,12 @@ void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 		status=0;
 	}
 	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&unixdate));
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=200>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<FORM METHOD=GET ACTION=%s/calendar/list>", sid->dat->in_ScriptName);
 	if (userid>0) prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", userid);
 	if (groupid>0) prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
 	prints(sid, "<INPUT TYPE=hidden NAME=status VALUE='%d'>\n", status);
-	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP><FONT SIZE=2>\n", config->colour_th);
+	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP STYLE='font-weight:normal'><FONT SIZE=2>\n", config->colour_th);
 	prints(sid, "<SELECT NAME=month>\n");
 	htselect_month(sid, posttime1);
 	prints(sid, "</SELECT>\n");
@@ -83,19 +83,7 @@ void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 	t=(unixdate+42)*86400;
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		}
-	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		}
-	}
+	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid FROM gw_users"))<0) return;
 	for (;;) {
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
@@ -105,13 +93,13 @@ void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 			strftime(showtime, sizeof(showtime), "%d", gmtime(&t));
 			t-=time_tzoffset(sid, t);
 			for (j=0,b=0;j<sql_numtuples(sqr);j++) {
-				t2=time_sql2unix(sql_getvalue(sqr, j, 0));
+				t2=time_sql2unix(sql_getvalue(sqr, j, 1));
 				if ((t2<t)||(t2>t+86399)) continue;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, j, 1)))) continue;
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, j, 2)))) continue;
+				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, j, 3)))) continue;
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, j, 4)))) continue;
 				if (groupid>0) {
 					for (k=0;k<sql_numtuples(sqr2);k++) {
-						if (atoi(sql_getvalue(sqr, j, 2))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
+						if (atoi(sql_getvalue(sqr, j, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
 						if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
 						break;
 					}
@@ -147,7 +135,7 @@ void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 	return;
 }
 
-void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid)
+void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 {
 	char *ptemp;
 	char posttime1[100];
@@ -164,7 +152,7 @@ void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 	int sqr2;
 	int status;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -183,7 +171,7 @@ void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 		status=0;
 	}
 	strftime(posttime1, sizeof(posttime1), "%B", gmtime(&unixdate));
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=200>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=200>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH NOWRAP><FONT SIZE=2>", config->colour_th);
 	prints(sid, "<A HREF=%s/calendar/mlist?month=%d&year=%d", sid->dat->in_ScriptName, today.tm_mon, today.tm_year);
 	if (userid>0) prints(sid, "&userid=%d", userid);
@@ -204,19 +192,7 @@ void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 	t=(unixdate+42)*86400;
 	t+=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		}
-	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventstart, status, assignedto FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		}
-	}
+	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid FROM gw_users"))<0) return;
 	for (;;) {
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
@@ -227,14 +203,14 @@ void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid)
 			t-=time_tzoffset(sid, t);
 			b=0;
 			while (index<sql_numtuples(sqr)) {
-				t2=time_sql2unix(sql_getvalue(sqr, index, 0));
+				t2=time_sql2unix(sql_getvalue(sqr, index, 1));
 				if (t2<t) { index++; continue; }
 				if (t2>t+86399) break;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 1)))) { index++; continue; }
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 2)))) { index++; continue; }
+				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
 				if (groupid>0) {
 					for (j=0;j<sql_numtuples(sqr2);j++) {
-						if (atoi(sql_getvalue(sqr, index, 2))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
+						if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
 						if (groupid!=atoi(sql_getvalue(sqr2, j, 1))) continue;
 						break;
 					}

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ void usage(char *arg0)
 {
 	char *progname;
 
-	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.1]\r\n");
+	printf("\r\nNullLogic Groupware Database Utility [NullLogic Groupware 1.2.2]\r\n");
 #ifdef WIN32
 	progname=strrchr(arg0, '\\');
 #else

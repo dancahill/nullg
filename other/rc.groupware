@@ -1,5 +1,5 @@
 #!/bin/sh
-# Init script to start/stop/restart the Null Groupware server.
+# Init script to start/stop/restart the NullLogic Groupware server.
 RUN_AS_USER="groupware"
 
 groupware_start() {

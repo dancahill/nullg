@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_admin.h"
 
-void admin_syscheck(CONNECTION *sid)
+void admin_syscheck(CONN *sid)
 {
 	int errors=0;
 	int warnings=0;
@@ -27,7 +27,7 @@ void admin_syscheck(CONNECTION *sid)
 	int sqr2=-1;
 	int sqr3=-1;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-void flushheader(CONNECTION *sid)
+void flushheader(CONN *sid)
 {
 	char line[256];
 
@@ -38,7 +38,7 @@ void flushheader(CONNECTION *sid)
 	} else {
 		snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
 	}
-	if (RunAsCGI) {
+	if (proc.RunAsCGI) {
 		if (strlen(sid->dat->out_CacheControl)) {
 			snprintf(line, sizeof(line)-1, "Cache-Control: %s\r\n", sid->dat->out_CacheControl);
 			printf("%s", line);
@@ -134,7 +134,7 @@ void flushheader(CONNECTION *sid)
 			snprintf(line, sizeof(line)-1, "Pragma: %s\r\n", sid->dat->out_Pragma);
 			send(sid->socket, line, strlen(line), 0);
 		}
-		snprintf(line, sizeof(line)-1, "Server: %s\r\n", SERVER_NAME);
+		snprintf(line, sizeof(line)-1, "Server: %s %s\r\n", SERVER_NAME, SERVER_VERSION);
 		send(sid->socket, line, strlen(line), 0);
 		if (strlen(sid->dat->out_SetCookieUser)) {
 			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser);
@@ -156,7 +156,7 @@ void flushheader(CONNECTION *sid)
 	return;
 }
 
-void flushbuffer(CONNECTION *sid)
+void flushbuffer(CONN *sid)
 {
 	char *pTemp=sid->dat->out_ReplyData;
 	unsigned int dcount;
@@ -167,7 +167,7 @@ void flushbuffer(CONNECTION *sid)
 	while (strlen(pTemp)) {
 		dcount=512;
 		if (strlen(pTemp)<dcount) dcount=strlen(pTemp);
-		if (RunAsCGI) {
+		if (proc.RunAsCGI) {
 			fwrite(pTemp, sizeof(char), dcount, stdout);
 		} else {
 			send(sid->socket, pTemp, dcount, 0);
@@ -178,7 +178,7 @@ void flushbuffer(CONNECTION *sid)
 	return;
 }
 
-int prints(CONNECTION *sid, const char *format, ...)
+int prints(CONN *sid, const char *format, ...)
 {
 	unsigned char buffer[2048];
 	va_list ap;
@@ -199,14 +199,14 @@ int prints(CONNECTION *sid, const char *format, ...)
 	return 0;
 }
 
-int sgets(CONNECTION *sid, char *buffer, int max, int fd)
+int sgets(CONN *sid, char *buffer, int max, int fd)
 {
 	int n=0;
 	int rc;
 
 //	if (sid==-1) return -1;
 	sid->atime=time(NULL);
-	if (RunAsCGI) {
+	if (proc.RunAsCGI) {
 		fgets(buffer, sizeof(buffer)-1, stdin);
 		return strlen(buffer);
 	}
@@ -226,7 +226,7 @@ int sgets(CONNECTION *sid, char *buffer, int max, int fd)
 	return n;
 }
 
-int filesend(CONNECTION *sid, unsigned char *file)
+int filesend(CONN *sid, unsigned char *file)
 {
 	struct stat sb;
 	FILE *fp;
@@ -256,7 +256,7 @@ int filesend(CONNECTION *sid, unsigned char *file)
 	blocksize=0;
 	while ((ich=getc(fp))!=EOF) {
 		if (blocksize>sizeof(fileblock)-1) {
-			if (RunAsCGI) {
+			if (proc.RunAsCGI) {
 				fwrite(fileblock, sizeof(char), blocksize, stdout);
 			} else {
 				send(sid->socket, fileblock, blocksize, 0);
@@ -267,7 +267,7 @@ int filesend(CONNECTION *sid, unsigned char *file)
 		blocksize++;
 	}
 	if (blocksize) {
-		if (RunAsCGI) {
+		if (proc.RunAsCGI) {
 			fwrite(fileblock, sizeof(char), blocksize, stdout);
 		} else {
 			send(sid->socket, fileblock, blocksize, 0);
@@ -281,4 +281,9 @@ int filesend(CONNECTION *sid, unsigned char *file)
 	sid->dat->out_ReplyData[0]='\0';
 	flushbuffer(sid);
 	return 0;
+}
+
+int tcp_send(int s, const char *buffer, int len, int flags)
+{
+	return send(s, buffer, len, flags);
 }

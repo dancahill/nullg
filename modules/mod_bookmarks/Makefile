@@ -3,7 +3,7 @@
 TOPDIR=../
 include $(TOPDIR)Rules.mak
 
-OBJECTS  = mod_bookmarks.o
+OBJECTS  = mod_bookmarks_db.o mod_bookmarks_main.o
 TARGET   = $(TARGETDIR)/mod_bookmarks.so
 
 all: mod_bookmarks

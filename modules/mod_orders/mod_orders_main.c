@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_orders.h"
 
-void htselect_product(CONNECTION *sid, int selected)
+void htselect_product(CONN *sid, int selected)
 {
 	int i, j;
 	int sqr;
@@ -32,7 +33,7 @@ void htselect_product(CONNECTION *sid, int selected)
 	return;
 }
 
-char *htview_product(CONNECTION *sid, int selected)
+char *htview_product(CONN *sid, int selected)
 {
 	char *buffer=getbuffer(sid);
 	int sqr;
@@ -53,12 +54,12 @@ char *htview_product(CONNECTION *sid, int selected)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderitemedit(CONNECTION *sid)
+void orderitemedit(CONN *sid)
 {
 	REC_ORDERITEM orderitem;
 	int orderitemid;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -101,12 +102,12 @@ void orderitemedit(CONNECTION *sid)
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Discount %%&nbsp;  </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=discount     value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, orderitem.discount);
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Unit Price&nbsp;   </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=unitprice    value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, orderitem.unitprice);
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Internal Cost&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=internalcost value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, orderitem.internalcost);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, config->info.tax1name, orderitem.tax1);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, config->info.tax2name, orderitem.tax2);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, proc->info.tax1name, orderitem.tax1);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;%s&nbsp;           </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value='%1.2f' SIZE=25></TD></TR>\n", config->colour_editform, proc->info.tax2name, orderitem.tax2);
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_ORDERS)&A_DELETE)&&(orderitem.orderitemid!=0)) {
+	if ((auth_priv(sid, "orders")&A_DELETE)&&(orderitem.orderitemid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -123,34 +124,38 @@ void orderitemedit(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderitemlist(CONNECTION *sid, int orderid)
+void orderitemlist(CONN *sid, int orderid)
 {
 	int i;
 	int sqr;
 
-	if ((sqr=sql_queryf(sid, "SELECT orderitemid, productid, quantity, discount, unitprice, tax1, tax2 FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%><TR BGCOLOR=%s>", config->colour_th);
-		if (auth_priv(sid, AUTH_ORDERS)&A_MODIFY) {
-			prints(sid, "<TH>&nbsp;</TH>");
-		}
-		prints(sid, "<TH><FONT COLOR=%s>Product</FONT></TH><TH><FONT COLOR=%s>Quantity</FONT></TH><TH><FONT COLOR=%s>Discount</FONT></TH><TH NOWRAP><FONT COLOR=%s>Unit Price</FONT></TH><TH><FONT COLOR=%s>%s</FONT></TH><TH><FONT COLOR=%s>%s</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->info.tax1name, config->colour_thtext, config->info.tax2name);
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_editform);
-			if (auth_priv(sid, AUTH_ORDERS)&A_MODIFY) {
-				prints(sid, "<TD NOWRAP><A HREF=%s/orders/itemedit?orderitemid=%s>edit</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-			}
-			prints(sid, "<TD NOWRAP>%s&nbsp;</TD>", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s&nbsp;</TD>", sql_getvalue(sqr, i, 2));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3))*100.0);
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 4)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 5))*100.0);
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 6))*100.0);
-			prints(sid, "</TR>\n");
-		}
-		prints(sid, "</TABLE>\n");
+	if ((sqr=sql_queryf(sid, "SELECT orderitemid, productid, quantity, unitprice, discount FROM gw_orderitems WHERE orderid = %d", orderid))<0) return;
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_fieldname);
+	prints(sid, "<TD NOWRAP><B>Product</B></TD><TD NOWRAP><B>Quantity</B></TD><TD NOWRAP><B>Unit Price</B></TD><TD NOWRAP><B>Discount</B></TD><TD NOWRAP><B>Extended</B></TD></TR>\n");
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemedit?orderitemid=%d'\" TITLE='Edit Item'>", config->colour_editform, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "<TD NOWRAP>");
+		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "<A HREF=%s/orders/itemedit?orderitemid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+		prints(sid, "%s", htview_product(sid, atoi(sql_getvalue(sqr, i, 1))));
+		if (auth_priv(sid, "orders")&A_MODIFY) prints(sid, "</A>");
+		prints(sid, "&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 3)));
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>%1.0f%%&nbsp;</TD>", atof(sql_getvalue(sqr, i, 4))*100.0);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>$%1.2f&nbsp;</TD>", atof(sql_getvalue(sqr, i, 2))*atof(sql_getvalue(sqr, i, 3)));
+		prints(sid, "</TR>\n");
 	}
 	sql_freeresult(sqr);
+	if (auth_priv(sid, "orders")&A_MODIFY) {
+		prints(sid, "<TR BGCOLOR=%s style=\"cursor:hand\" onClick=\"window.location.href='%s/orders/itemeditnew?orderid=%d'\" TITLE='Add Item'>", config->colour_editform, sid->dat->in_ScriptName, orderid);
+		prints(sid, "<TD NOWRAP WIDTH=100%%><A HREF=%s/orders/itemeditnew?orderid=%d>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, orderid);
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD>");
+		prints(sid, "</TR>\n");
+	}
+	prints(sid, "</TABLE>\n");
 }
 
 /****************************************************************************
@@ -161,7 +166,7 @@ void orderitemlist(CONNECTION *sid, int orderid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderitemsave(CONNECTION *sid)
+void orderitemsave(CONN *sid)
 {
 	REC_ORDERITEM orderitem;
 	REC_PRODUCT product;
@@ -175,7 +180,7 @@ void orderitemsave(CONNECTION *sid)
 	int orderitemid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -197,7 +202,7 @@ void orderitemsave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_DELETE)) {
+		if (!(auth_priv(sid, "orders")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -205,7 +210,7 @@ void orderitemsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Order item %d deleted successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "delete", "%s - %s deleted order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else if (orderitem.orderitemid==0) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -236,7 +241,7 @@ void orderitemsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Order item %d added successfully</CENTER><BR>\n", orderitem.orderitemid);
 		db_log_activity(sid, 1, "orderitems", orderitem.orderitemid, "insert", "%s - %s added order item %d", sid->dat->in_RemoteAddr, sid->dat->user_username, orderitem.orderitemid);
 	} else {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -285,13 +290,13 @@ void orderitemsave(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderedit(CONNECTION *sid)
+void orderedit(CONN *sid)
 {
 	REC_ORDER order;
 	char *ptemp;
 	int orderid;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -360,7 +365,6 @@ void orderedit(CONNECTION *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TR><TD ALIGN=center>\n");
 	orderitemlist(sid, orderid);
-	prints(sid, "<A HREF=%s/orders/itemeditnew?orderid=%d>Add Item</A>\n", sid->dat->in_ScriptName, order.orderid);
 	prints(sid, "</TD></TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.orderedit.orderdate.focus();\n// -->\n</SCRIPT>\n");
@@ -374,13 +378,12 @@ void orderedit(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderview(CONNECTION *sid)
+void orderview(CONN *sid)
 {
 	REC_ORDER order;
 	int orderid;
-	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_READ)) {
+	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -393,35 +396,31 @@ void orderview(CONNECTION *sid)
 	order.orderdate+=time_tzoffset(sid, order.orderdate);
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400><TR><TD><CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Order %d", config->colour_th, config->colour_thtext, orderid);
-	if (auth_priv(sid, AUTH_ORDERS)&A_MODIFY) {
+	if (auth_priv(sid, "orders")&A_MODIFY) {
 		prints(sid, " [<A HREF=%s/orders/edit?orderid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, orderid, config->colour_thlink);
 	}
 	prints(sid, "</TH></TR>\n");
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Date      </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
-	prints(sid, "<TR><TD BGCOLOR=%s><B>Customer        </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
-	if ((sqr=sql_queryf(sid, "SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", order.contactid))<0) return;
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<A HREF=%s/contacts/view?contactid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, 0, 0));
-		prints(sid, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
-		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) prints(sid, ", ");
-		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, 0, 2)));
-	} else {
-		prints(sid, "&nbsp;</TD></TR>\n");
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Date</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, time_unix2text(sid, order.orderdate));
+	prints(sid, "<TR><TD BGCOLOR=%s><B>Customer</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>", config->colour_fieldname, config->colour_fieldval);
+	prints(sid, "<A HREF=%s/contacts/view?contactid=%d>", sid->dat->in_ScriptName, order.contactid);
+	prints(sid, "%s</A>&nbsp;</TD></TR>\n", htview_contact(sid, order.contactid));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Employee        </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Type      </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Method of Payment</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
+	if (strlen(order.details)) {
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
 	}
-	sql_freeresult(sqr);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Employee        </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, htview_user(sid, order.userid)));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Order Type      </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.ordertype));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Payment Method  </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>%s&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, str2html(sid, order.paymentmethod));
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Payment Due     </B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, order.paymentdue);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Payment Received</B></TD><TD ALIGN=right BGCOLOR=%s NOWRAP WIDTH=100%%>$%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, order.paymentreceived);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, order.details));
+	prints(sid, "<TR STYLE='spacing:0px'><TD NOWRAP COLSPAN=2 STYLE='padding:0px'>");
+	orderitemlist(sid, orderid);
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>SubTotal</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>Net Due </B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentdue);
+	prints(sid, "<TR><TD ALIGN=right BGCOLOR=%s COLSPAN=2 NOWRAP WIDTH=100%%><B>Received</B> $%1.2f&nbsp;</TD></TR>\n", config->colour_fieldval, order.paymentreceived);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<CENTER>\n");
-	orderitemlist(sid, orderid);
-	prints(sid, "<A HREF=%s/orders/itemeditnew?orderid=%d>Add Item</A>\n", sid->dat->in_ScriptName, orderid);
 	prints(sid, "</CENTER></TD></TR></TABLE>\n");
 	prints(sid, "</CENTER>\n");
 }
@@ -434,7 +433,7 @@ void orderview(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void orderlist(CONNECTION *sid)
+void orderlist(CONN *sid)
 {
 	char *ptemp;
 	char query[8192];
@@ -447,7 +446,7 @@ void orderlist(CONNECTION *sid)
 	float due;
 	float received;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_READ)) {
+	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -465,6 +464,7 @@ void orderlist(CONNECTION *sid)
 			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_uid")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(sqr1, i), "obj_did")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
 			prints(sid, "<OPTION>%s\n", sql_getname(sqr1, i));
@@ -474,7 +474,7 @@ void orderlist(CONNECTION *sid)
 		prints(sid, "<TD><INPUT TYPE=TEXT NAME=searchstring value='*' SIZE=20></TD>\n");
 		prints(sid, "<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n");
 		prints(sid, "</FORM></TABLE>\n");
-		if (auth_priv(sid, AUTH_ORDERS)&A_INSERT) {
+		if (auth_priv(sid, "orders")&A_INSERT) {
 			prints(sid, "<A HREF=%s/orders/editnew>New Order</A>\n", sid->dat->in_ScriptName);
 		}
 		prints(sid, "</CENTER>\n");
@@ -496,6 +496,7 @@ void orderlist(CONNECTION *sid)
 			if (strcmp(sql_getname(sqr1, i), "obj_mtime")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_uid")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_gid")==0) continue;
+			if (strcmp(sql_getname(sqr1, i), "obj_did")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_gperm")==0) continue;
 			if (strcmp(sql_getname(sqr1, i), "obj_operm")==0) continue;
 			if (strcmp(config->sql_type, "ODBC")==0) {
@@ -530,7 +531,7 @@ void orderlist(CONNECTION *sid)
 		return;
 	}
 	if ((sqr2=sql_query(sid, "SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s>", config->colour_th);
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 	prints(sid, "<TH NOWRAP><FONT COLOR=%s>Order ID</FONT></TH><TH NOWRAP><FONT COLOR=%s>Customer Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>Order Date</FONT></TH><TH NOWRAP><FONT COLOR=%s>Amount Due</FONT></TH><TH NOWRAP><FONT COLOR=%s>Amount Received</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	for (i=offset;(i<sql_numtuples(sqr1))&&(i<offset+sid->dat->user_maxlist);i++) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -584,7 +585,7 @@ void orderlist(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void ordersave(CONNECTION *sid)
+void ordersave(CONN *sid)
 {
 	REC_ORDER order;
 	char query[2048];
@@ -594,7 +595,7 @@ void ordersave(CONNECTION *sid)
 	int orderid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -617,7 +618,7 @@ void ordersave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_DELETE)) {
+		if (!(auth_priv(sid, "orders")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -625,7 +626,7 @@ void ordersave(CONNECTION *sid)
 		prints(sid, "<CENTER>Order %d deleted successfully</CENTER><BR>\n", order.orderid);
 		db_log_activity(sid, 1, "orders", order.orderid, "delete", "%s - %s deleted order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else if (order.orderid==0) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_INSERT)) {
+		if (!(auth_priv(sid, "orders")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -647,7 +648,7 @@ void ordersave(CONNECTION *sid)
 		prints(sid, "<CENTER>Order %d added successfully</CENTER><BR>\n", order.orderid);
 		db_log_activity(sid, 1, "orders", order.orderid, "insert", "%s - %s added order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -674,12 +675,12 @@ void ordersave(CONNECTION *sid)
 }
 
 
-void productedit(CONNECTION *sid)
+void productedit(CONN *sid)
 {
 	REC_PRODUCT product;
 	int productid;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -716,13 +717,13 @@ void productedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Discount      </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=discount     value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, product.discount);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Unit Price    </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=unitprice    value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, product.unitprice);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> Internal Cost </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=internalcost value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, product.internalcost);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, config->info.tax1name, product.tax1);
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, config->info.tax2name, product.tax2);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax1         value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, proc->info.tax1name, product.tax1);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B> %s            </B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=tax2         value=\"%1.2f\" SIZE=25></TD></TR>\n", config->colour_editform, proc->info.tax2name, product.tax2);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=3 COLS=40>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, product.details));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_ORDERS)&A_ADMIN)&&(product.productid!=0)) {
+	if ((auth_priv(sid, "orders")&A_ADMIN)&&(product.productid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -730,12 +731,12 @@ void productedit(CONNECTION *sid)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.productedit.productname.focus();\n// -->\n</SCRIPT>\n");
 }
 
-void productview(CONNECTION *sid)
+void productview(CONN *sid)
 {
 	REC_PRODUCT product;
 	int productid;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_READ)) {
+	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -745,9 +746,9 @@ void productview(CONNECTION *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", productid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Product %d", config->colour_th, config->colour_thtext, productid);
-	if (auth_priv(sid, AUTH_ORDERS)&A_ADMIN) {
+	if (auth_priv(sid, "orders")&A_ADMIN) {
 		prints(sid, " [<A HREF=%s/orders/productedit?productid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, productid, config->colour_thlink);
 	}
 	prints(sid, "</FONT></TH></TR>\n");
@@ -756,19 +757,19 @@ void productview(CONNECTION *sid)
 	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Discount     </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.discount);
 	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Unit Price   </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.unitprice);
 	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>Internal Cost</B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->colour_fieldval, product.internalcost);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->info.tax1name, config->colour_fieldval, product.tax1);
-	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, config->info.tax2name, config->colour_fieldval, product.tax2);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax1name, config->colour_fieldval, product.tax1);
+	prints(sid, "<TR><TD BGCOLOR=%s NOWRAP><B>%s           </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%%>%1.2f&nbsp;</TD></TR>\n", config->colour_fieldname, proc->info.tax2name, config->colour_fieldval, product.tax2);
 	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><B>Details</B></TD></TR>\n", config->colour_fieldname);
 	prints(sid, "<TR><TD BGCOLOR=%s COLSPAN=2><PRE>%s&nbsp;</PRE></TD></TR>\n", config->colour_fieldval, str2html(sid, product.details));
 	prints(sid, "</TABLE>\n<BR>\n</CENTER>\n");
 }
 
-void productlist(CONNECTION *sid)
+void productlist(CONN *sid)
 {
 	int i;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_READ)) {
+	if (!(auth_priv(sid, "orders")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -776,7 +777,7 @@ void productlist(CONNECTION *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(sqr));
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s>", config->colour_th);
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
 		prints(sid, "<TH NOWRAP><FONT COLOR=%s>Product Name</FONT></TH><TH NOWRAP><FONT COLOR=%s>Category</FONT></TH><TH NOWRAP><FONT COLOR=%s>Unit Price</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -788,7 +789,7 @@ void productlist(CONNECTION *sid)
 		}
 		prints(sid, "</TABLE>\n");
 	}
-	if (auth_priv(sid, AUTH_ORDERS)&A_ADMIN) {
+	if (auth_priv(sid, "orders")&A_ADMIN) {
 		prints(sid, "<A HREF=%s/orders/producteditnew>New Product</A>\n", sid->dat->in_ScriptName);
 	}
 	prints(sid, "</CENTER>\n");
@@ -796,7 +797,7 @@ void productlist(CONNECTION *sid)
 	return;
 }
 
-void productsave(CONNECTION *sid)
+void productsave(CONN *sid)
 {
 	REC_PRODUCT product;
 	char query[2048];
@@ -806,7 +807,7 @@ void productsave(CONNECTION *sid)
 	int productid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_ORDERS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -828,7 +829,7 @@ void productsave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_ADMIN)) {
+		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -836,7 +837,7 @@ void productsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Product %d deleted successfully</CENTER><BR>\n", product.productid);
 		db_log_activity(sid, 1, "products", product.productid, "delete", "%s - %s deleted product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else if (product.productid==0) {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_ADMIN)) {
+		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -858,7 +859,7 @@ void productsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Product %d added successfully</CENTER><BR>\n", product.productid);
 		db_log_activity(sid, 1, "products", product.productid, "insert", "%s - %s added product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else {
-		if (!(auth_priv(sid, AUTH_ORDERS)&A_ADMIN)) {
+		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -888,7 +889,7 @@ void productsave(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_ORDERS);
@@ -918,12 +919,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_orders", "ORDERS", "/orders/list", "mod_main", "/orders/", mod_main)!=0) return -1;
 	return 0;

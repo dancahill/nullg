@@ -24,9 +24,6 @@ NULL=
 NULL=nul
 !ENDIF 
 
-CPP=cl.exe
-MTL=midl.exe
-RSC=rc.exe
 OUTDIR=.\..\..\obj\mod_admin
 INTDIR=.\..\..\obj\mod_admin
 
@@ -35,6 +32,7 @@ ALL : "..\..\distrib\lib\mod_admin.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_admin_config.obj"
+	-@erase "$(INTDIR)\mod_admin_db.obj"
 	-@erase "$(INTDIR)\mod_admin_groups.obj"
 	-@erase "$(INTDIR)\mod_admin_logs.obj"
 	-@erase "$(INTDIR)\mod_admin_main.obj"
@@ -47,28 +45,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_admin.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_admin.pdb" /machine:I386 /def:".\mod_admin.def" /out:"..\..\distrib\lib\mod_admin.dll" /implib:"$(OUTDIR)\mod_admin.lib" 
-DEF_FILE= \
-	".\mod_admin.def"
-LINK32_OBJS= \
-	"$(INTDIR)\mod_admin_config.obj" \
-	"$(INTDIR)\mod_admin_groups.obj" \
-	"$(INTDIR)\mod_admin_logs.obj" \
-	"$(INTDIR)\mod_admin_main.obj" \
-	"$(INTDIR)\mod_admin_syscheck.obj" \
-	"$(INTDIR)\mod_admin_users.obj"
-
-"..\..\distrib\lib\mod_admin.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP=cl.exe
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -100,13 +78,41 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /I "../../include" /D "WIN32" /
    $(CPP_PROJ) $< 
 <<
 
+MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_admin.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\mod_admin.pdb" /machine:I386 /def:".\mod_admin.def" /out:"..\..\distrib\lib\mod_admin.dll" /implib:"$(OUTDIR)\mod_admin.lib" 
+DEF_FILE= \
+	".\mod_admin.def"
+LINK32_OBJS= \
+	"$(INTDIR)\mod_admin_config.obj" \
+	"$(INTDIR)\mod_admin_db.obj" \
+	"$(INTDIR)\mod_admin_groups.obj" \
+	"$(INTDIR)\mod_admin_logs.obj" \
+	"$(INTDIR)\mod_admin_main.obj" \
+	"$(INTDIR)\mod_admin_syscheck.obj" \
+	"$(INTDIR)\mod_admin_users.obj"
+
+"..\..\distrib\lib\mod_admin.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
 
 
 !IF "$(CFG)" == "mod_admin - Win32 Release"
 SOURCE=.\mod_admin_config.c
 
 "$(INTDIR)\mod_admin_config.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_admin_db.c
+
+"$(INTDIR)\mod_admin_db.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_admin_groups.c

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_admin.h"
 
-void htselect_logfilter(CONNECTION *sid, int selected, char *baseuri)
+void htselect_logfilter(CONN *sid, int selected, char *baseuri)
 {
 	char *option[]={ "All", "Bookmarks", "Calls", "Contacts", "Events", "Files", "Groups", "Login", "Notes", "Profile", "Tasks", "Users", "Zones" };
 	char *ptemp;
@@ -88,13 +88,13 @@ void htselect_logfilter(CONNECTION *sid, int selected, char *baseuri)
 	return;
 }
 
-void adminaccess(CONNECTION *sid)
+void adminaccess(CONN *sid)
 {
 	char file[200];
 	char line[512];
 	FILE *fp;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -115,13 +115,13 @@ void adminaccess(CONNECTION *sid)
 	prints(sid, "</PRE><HR>\n");
 }
 
-void adminerror(CONNECTION *sid)
+void adminerror(CONN *sid)
 {
 	char file[200];
 	char line[512];
 	FILE *fp;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -142,7 +142,7 @@ void adminerror(CONNECTION *sid)
 	prints(sid, "</PRE><HR>\n");
 }
 
-void adminactivitylist(CONNECTION *sid)
+void adminactivitylist(CONN *sid)
 {
 	char category[50];
 	char *ptemp;
@@ -153,7 +153,7 @@ void adminactivitylist(CONNECTION *sid)
 	int userid;
 	time_t mdate;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -187,7 +187,7 @@ void adminactivitylist(CONNECTION *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "Listing %d Log Entries\r\n", sql_numtuples(sqr));
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400>\n");
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", config->colour_tabletrim);
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Log ID&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;IP Address&nbsp;</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
 		if (userid==0) {
 			prints(sid, "<TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Username&nbsp;</FONT></TH>", config->colour_thtext);
@@ -258,7 +258,7 @@ void adminactivitylist(CONNECTION *sid)
 	sql_freeresult(sqr);
 }
 
-void adminactivityview(CONNECTION *sid)
+void adminactivityview(CONN *sid)
 {
 	int logid;
 	int sqr1;
@@ -266,7 +266,7 @@ void adminactivityview(CONNECTION *sid)
 	time_t mdate;
 
 	prints(sid, "<BR>\n");
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -277,7 +277,7 @@ void adminactivityview(CONNECTION *sid)
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", logid);
 		return;
 	}
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=500>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=500>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Activity Log Entry %d</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, logid);
 	mdate=time_sql2unix(sql_getvalue(sqr1, 0, 1));
 	mdate+=time_tzoffset(sid, mdate);
@@ -307,4 +307,5 @@ void adminactivityview(CONNECTION *sid)
 	printline2(sid, 1, sql_getvalue(sqr1, 0, 7));
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "</TABLE>\n</CENTER>\n");
+	sql_freeresult(sqr1);
 }

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_mail.h"
 
-void htselect_mailjump(CONNECTION *sid, int selected)
+void htselect_mailjump(CONN *sid, int selected)
 {
 	int i;
 	int sqr;
@@ -57,7 +57,7 @@ void htselect_mailjump(CONNECTION *sid, int selected)
 	return;
 }
 
-void htselect_mailmbox(CONNECTION *sid, char *selected)
+void htselect_mailmbox(CONN *sid, char *selected)
 {
 	char *option[]={ "Inbox", "Drafts", "Outbox", "Saved Items", "Sent Items", "Trash" };
 	int i;

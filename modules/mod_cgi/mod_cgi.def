@@ -1,0 +1,5 @@
+LIBRARY		mod_cgi
+VERSION		1.2.2
+EXPORTS
+	mod_init
+	mod_main

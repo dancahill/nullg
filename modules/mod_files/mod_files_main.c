@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_files.h"
 #ifndef WIN32
 #include <dirent.h>
 #include <unistd.h>
@@ -23,7 +24,7 @@
 #include <sys/types.h>
 #endif
 
-int fileperm(CONNECTION *sid, int perm, char *dir, char *file)
+int fileperm(CONN *sid, int perm, char *dir, char *file)
 {
 	struct stat sb;
 	char filename[512];
@@ -48,22 +49,20 @@ int fileperm(CONNECTION *sid, int perm, char *dir, char *file)
 	if ((perm==A_INSERT)&&(x==0)) { DEBUG_OUT(sid, "fileperm()"); return -3; }
 //	if (sb.st_mode&S_IFDIR)
 	/* if A_ADMIN is true and the file exists, then permission is granted */
-	if (auth_priv(sid, AUTH_FILES)&A_ADMIN) { DEBUG_OUT(sid, "fileperm()"); return 0; }
-	if ((perm==A_READ)&&(!auth_priv(sid, AUTH_FILES)&A_READ)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-	if ((perm==A_INSERT)&&(!auth_priv(sid, AUTH_FILES)&A_INSERT)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-	if ((perm==A_MODIFY)&&(!auth_priv(sid, AUTH_FILES)&A_MODIFY)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
-	if ((perm==A_DELETE)&&(!auth_priv(sid, AUTH_FILES)&A_DELETE)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+	if (auth_priv(sid, "files")&A_ADMIN) { DEBUG_OUT(sid, "fileperm()"); return 0; }
+	if ((perm==A_READ)&&(!auth_priv(sid, "files")&A_READ)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+	if ((perm==A_INSERT)&&(!auth_priv(sid, "files")&A_INSERT)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+	if ((perm==A_MODIFY)&&(!auth_priv(sid, "files")&A_MODIFY)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+	if ((perm==A_DELETE)&&(!auth_priv(sid, "files")&A_DELETE)) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if ((strcmp(dir, "/files/")==0)&&((perm==A_INSERT)||(perm==A_DELETE))) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	if (perm==A_READ) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=1) OR obj_operm>=1)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
-		if (tuples!=1) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	} else if (perm==A_MODIFY) {
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", file, dir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
-		if (tuples!=1) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	} else if ((perm==A_INSERT)||(perm==A_DELETE)) {
 		memset(subdir, 0, sizeof(subdir));
 		memset(subfile, 0, sizeof(subfile));
@@ -76,20 +75,18 @@ int fileperm(CONNECTION *sid, int perm, char *dir, char *file)
 			snprintf(subfile, sizeof(subfile)-1, "%s", ptemp);
 			*ptemp='\0';
 		}
-//		logerror(sid, __FILE__, __LINE__, "subdir[%s]subfile[%s]", subdir, subfile);
-		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
+		if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s' AND (obj_uid = %d OR (obj_gid = %d AND obj_gperm>=2) OR obj_operm>=2)", subfile, subdir, sid->dat->user_uid, sid->dat->user_gid))<0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 		tuples=sql_numtuples(sqr);
 		sql_freeresult(sqr);
-		if (tuples!=1) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	} else {
-		DEBUG_OUT(sid, "fileperm()");
-		return -1;
+		tuples=0;
 	}
 	DEBUG_OUT(sid, "fileperm()");
+	if (tuples!=1) return -1;
 	return 0;
 }
 
-int dirlist(CONNECTION *sid)
+int dirlist(CONN *sid)
 {
 #ifdef WIN32
 	struct	direct *dentry;
@@ -120,7 +117,7 @@ int dirlist(CONNECTION *sid)
 	int def_gperm;
 	int def_operm;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_READ)) {
+	if (!(auth_priv(sid, "files")&A_READ)) {
 		return -1;
 	}
 	memset(uri, 0, sizeof(uri));
@@ -159,7 +156,7 @@ int dirlist(CONNECTION *sid)
 		snprintf(file.filename, sizeof(file.filename)-1, "%s", ptemp);
 		*ptemp='\0';
 	}
-	if ((strlen(file.filepath)>1)&&(!(auth_priv(sid, AUTH_FILES)&A_ADMIN))) {
+	if ((strlen(file.filepath)>1)&&(!(auth_priv(sid, "files")&A_ADMIN))) {
 		if ((rc=fileperm(sid, A_READ, file.filepath, file.filename))<0) {
 			send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 			htpage_topmenu(sid, MENU_FILES);
@@ -247,18 +244,35 @@ int dirlist(CONNECTION *sid)
 		sql_freeresult(sqr);
 		if ((sqr=sql_queryf(sid, "SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
 	}
-	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d>", config->colour_th, (auth_priv(sid, AUTH_FILES)&A_MODIFY)?5:4);
-	prints(sid, "<FONT COLOR=%s>Index of %s</FONT></TH></TR>\n", config->colour_thtext, uri);
+	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d>", config->colour_th, (auth_priv(sid, "files")&A_MODIFY)?5:4);
+	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
+	memset(uri2, 0, sizeof(uri2));
+	i=0;
+	if (uri[i]=='/') {
+		uri2[i]=uri[i];
+		prints(sid, "/");
+		i++;
+		while (uri[i]) {
+			if (uri[i]=='/') {
+				prints(sid, "<A HREF=\"%s/\" STYLE='color: %s'>%s</A>/", uri2, config->colour_thtext, strrchr(uri2, '/')+1);
+			}
+			uri2[i]=uri[i];
+			i++;
+		}
+	} else {
+		prints(sid, "%s", uri);
+	}
+	prints(sid, "</FONT></TH></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
-	if (auth_priv(sid, AUTH_FILES)&A_MODIFY) {
+	if (auth_priv(sid, "files")&A_MODIFY) {
 		prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 	}
 	prints(sid, "<TD width=20%%><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%%><B>&nbsp;Date&nbsp;</B></TD>");
 	prints(sid, "<TD width=10%%><B>&nbsp;Size&nbsp;</B></TD><TD width=60%%><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
 	if ((strncmp(uri, "/files/", 7)==0)&&(strlen(file.filepath)>1)) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		if (auth_priv(sid, AUTH_FILES)&A_MODIFY) {
+		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
 		prints(sid, "<TD COLSPAN=4><A HREF=%s", sid->dat->in_ScriptName);
@@ -277,14 +291,14 @@ int dirlist(CONNECTION *sid)
 		memset(showfile, 0, sizeof(showfile));
 		snprintf(showfile, sizeof(showfile)-1, "%s", sql_getvalue(sqr, i, 1));
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		if (auth_priv(sid, AUTH_FILES)&A_MODIFY) {
+		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
 		}
-		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='");
+		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style=\"cursor:hand\" onClick=window.location.href=\"");
 		printhex(sid, "%s", showfile);
-		prints(sid, "%s'\">", (strcmp(sql_getvalue(sqr, i, 5), "dir")==0)?"/":"");
+		prints(sid, "%s\" TITLE=\"%s\">", (strcmp(sql_getvalue(sqr, i, 5), "dir")==0)?"/":"", showfile);
 		prints(sid, "<A HREF=");
 		printhex(sid, "%s", showfile);
 		if (strcmp(sql_getvalue(sqr, i, 5), "dir")==0) {
@@ -316,17 +330,17 @@ int dirlist(CONNECTION *sid)
 	return 0;
 }
 
-int fileul(CONNECTION *sid)
+int fileul(CONN *sid)
 {
 	REC_FILE file;
 	char directory[255];
 	char filename[255];
 
 	htpage_header(sid, "File Upload");
-	if (!(auth_priv(sid, AUTH_FILES)&A_INSERT)) {
+	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		return -1;
 	}
-	if (db_read(sid, 2, DB_FILES, 0, &file)!=0) {
+	if (dbread_file(sid, 2, 0, &file)!=0) {
 		return -1;
 	}
 	if (getgetenv(sid, "LOCATION")!=NULL) {
@@ -354,7 +368,7 @@ int fileul(CONNECTION *sid)
 	prints(sid, "		output+=\"|\"\n");
 	prints(sid, "		x=0;\n");
 	prints(sid, "	}\n");
-	prints(sid, "	document.all.Text.innerText=output;\n");
+	prints(sid, "	document.getElementById('Text').innerHTML=output;\n");
 	prints(sid, "	window.setTimeout('UploadStatus()', 500);\n");
 	prints(sid, "}\n");
 	prints(sid, "function waitForCompletion() {\n");
@@ -370,14 +384,14 @@ int fileul(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
-	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_FILES)&A_ADMIN)) {
+	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -406,17 +420,17 @@ int fileul(CONNECTION *sid)
 	return 0;
 }
 
-int filemkdir(CONNECTION *sid)
+int filemkdir(CONN *sid)
 {
 	REC_FILE file;
 	char directory[255];
 	char filename[255];
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_INSERT)) {
+	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
-	if (db_read(sid, 2, DB_FILES, 0, &file)!=0) {
+	if (dbread_file(sid, 2, 0, &file)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
@@ -438,14 +452,14 @@ int filemkdir(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50></TEXTAREA></TD></TR>\n", config->colour_editform);
-	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_FILES)&A_ADMIN)) {
+	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, file.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, file.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -468,19 +482,19 @@ int filemkdir(CONNECTION *sid)
 	return 0;
 }
 
-void fileinfoedit(CONNECTION *sid)
+void fileinfoedit(CONN *sid)
 {
 	REC_FILE file;
 	int editperms=0;
 	int fileid;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_MODIFY)) {
+	if (!(auth_priv(sid, "files")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "FILEID")==NULL) return;
 	fileid=atoi(getgetenv(sid, "FILEID"));
-	if (db_read(sid, 2, DB_FILES, fileid, &file)!=0) {
+	if (dbread_file(sid, 2, fileid, &file)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", fileid);
 		return;
 	}
@@ -499,14 +513,14 @@ void fileinfoedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, file.description));
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, file.obj_uid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_FILES)&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
 	htselect_group(sid, file.obj_gid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_FILES)&A_ADMIN)) editperms=1;
+	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) editperms=1;
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", file.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", file.obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
@@ -519,7 +533,7 @@ void fileinfoedit(CONNECTION *sid)
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_FILES)&A_DELETE)&&(fileid!=0)) {
+	if ((auth_priv(sid, "files")&A_DELETE)&&(fileid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -536,7 +550,7 @@ void fileinfoedit(CONNECTION *sid)
 	return;
 }
 
-int filerecv(CONNECTION *sid)
+int filerecv(CONN *sid)
 {
 	REC_FILE filerec;
 	char query[2048];
@@ -564,23 +578,23 @@ int filerecv(CONNECTION *sid)
 	DEBUG_IN(sid, "filerecv()");
 	htpage_header(sid, "File Upload");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR><TD>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=0 CELLSPACING=1 WIDTH=100%%><TR><TD>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=left>&nbsp;</TD><TD ALIGN=right>&nbsp;</TD></TR>\n", config->colour_topmenu);
 	prints(sid, "</TABLE>\n</TD></TR></TABLE>\n<BR>\n");
-	if (!(auth_priv(sid, AUTH_FILES)&A_INSERT)) {
+	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		DEBUG_OUT(sid, "filerecv()");
 		return -1;
 	}
-	if (db_read(sid, 2, DB_FILES, 0, &filerec)!=0) {
+	if (dbread_file(sid, 2, 0, &filerec)!=0) {
 		DEBUG_OUT(sid, "filerecv()");
 		return -1;
 	}
-	if (auth_priv(sid, AUTH_FILES)&A_ADMIN) {
+	if (auth_priv(sid, "files")&A_ADMIN) {
 		if ((ptemp=getmimeenv(sid, "OBJ_UID", &mimesize))!=NULL) filerec.obj_uid=atoi(ptemp);
 		if ((ptemp=getmimeenv(sid, "OBJ_GID", &mimesize))!=NULL) filerec.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_FILES)&A_ADMIN)||(filerec.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "files")&A_ADMIN)||(filerec.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getmimeenv(sid, "OBJ_GPERM", &mimesize))!=NULL) filerec.obj_gperm=atoi(ptemp);
 		if ((ptemp=getmimeenv(sid, "OBJ_OPERM", &mimesize))!=NULL) filerec.obj_operm=atoi(ptemp);
 	}
@@ -712,7 +726,7 @@ int filerecv(CONNECTION *sid)
 	return 0;
 }
 
-int filedirsave(CONNECTION *sid)
+int filedirsave(CONN *sid)
 {
 	REC_FILE filerec;
 	char file[1024];
@@ -724,19 +738,19 @@ int filedirsave(CONNECTION *sid)
 	int fileid;
 	time_t t;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_INSERT)) {
+	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
-	if (db_read(sid, 2, DB_FILES, 0, &filerec)!=0) {
+	if (dbread_file(sid, 2, 0, &filerec)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
-	if (auth_priv(sid, AUTH_FILES)&A_ADMIN) {
+	if (auth_priv(sid, "files")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) filerec.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) filerec.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_FILES)&A_ADMIN)||(filerec.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "files")&A_ADMIN)||(filerec.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) filerec.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) filerec.obj_operm=atoi(ptemp);
 	}
@@ -793,7 +807,7 @@ int filedirsave(CONNECTION *sid)
 	return 0;
 }
 
-void fileinfosave(CONNECTION *sid)
+void fileinfosave(CONN *sid)
 {
 	struct stat sb;
 	REC_FILE file;
@@ -805,22 +819,22 @@ void fileinfosave(CONNECTION *sid)
 	int fileid;
 	int rc;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_MODIFY)) {
+	if (!(auth_priv(sid, "files")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
-	if (db_read(sid, 2, DB_FILES, fileid, &file)!=0) {
+	if (dbread_file(sid, 2, fileid, &file)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_FILES)&A_ADMIN) {
+	if (auth_priv(sid, "files")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) file.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) file.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_FILES)&A_ADMIN)||(file.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "files")&A_ADMIN)||(file.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) file.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) file.obj_operm=atoi(ptemp);
 	}
@@ -833,7 +847,7 @@ void fileinfosave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_FILES)&A_DELETE)) {
+		if (!(auth_priv(sid, "files")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -867,7 +881,7 @@ void fileinfosave(CONNECTION *sid)
 		prints(sid, "<CENTER>file %d deleted successfully</CENTER><BR>\n", file.fileid);
 		db_log_activity(sid, 1, "files", file.fileid, "delete", "%s - %s deleted file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	} else {
-		if (!(auth_priv(sid, AUTH_FILES)&A_MODIFY)) {
+		if (!(auth_priv(sid, "files")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -899,7 +913,7 @@ void fileinfosave(CONNECTION *sid)
 	return;
 }
 
-void fileedit(CONNECTION *sid)
+void fileedit(CONN *sid)
 {
 	REC_FILE file;
 	char filename[255];
@@ -910,13 +924,13 @@ void fileedit(CONNECTION *sid)
 	FILE *fp;
 	int ich;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_MODIFY)) {
+	if (!(auth_priv(sid, "files")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
-	if (db_read(sid, 2, DB_FILES, fileid, &file)!=0) {
+	if (dbread_file(sid, 2, fileid, &file)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -963,7 +977,7 @@ void fileedit(CONNECTION *sid)
 	return;
 }
 
-void filesave(CONNECTION *sid)
+void filesave(CONN *sid)
 {
 	REC_FILE file;
 	char filename[255];
@@ -977,14 +991,14 @@ void filesave(CONNECTION *sid)
 	int mimesize;
 	FILE *fp;
 
-	if (!(auth_priv(sid, AUTH_FILES)&A_MODIFY)) {
+	if (!(auth_priv(sid, "files")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getmimeenv(sid, "FILEID", &mimesize))==NULL) return;
 	fileid=atoi(ptemp);
 	if ((filebody=getmimeenv(sid, "FILEBODY", &filesize))==NULL) return;
-	if (db_read(sid, 2, DB_FILES, fileid, &file)!=0) {
+	if (dbread_file(sid, 2, fileid, &file)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -1021,7 +1035,7 @@ void filesave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	if (dirlist(sid)==0) return;
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
@@ -1050,12 +1064,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_files", "FILES", "/files/", "mod_main", "/file", mod_main)!=0) return -1;
 	return 0;

@@ -3,7 +3,7 @@
 TOPDIR=../
 include $(TOPDIR)Rules.mak
 
-OBJECTS  = mod_tasks.o
+OBJECTS  = mod_tasks_db.o mod_tasks_main.o
 TARGET   = $(TARGETDIR)/mod_tasks.so
 
 all: mod_tasks

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,9 +15,46 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "main.h"
+#include "mod_stub.h"
+#include <stdarg.h>
 
-int xmlrpc_auth_checkpass(CONNECTION *sid, char *username, char *password)
+void xmlrpc_addmember(CONN *sid, char *name, char *type, const char *format, ...)
+{
+	char value[1024];
+	char timebuf[20];
+	va_list ap;
+	time_t t;
+
+	memset(value, 0, sizeof(value));
+	va_start(ap, format);
+	vsnprintf(value, sizeof(value)-1, format, ap);
+	va_end(ap);
+	if (strncasecmp(type, "dateTime", 8)==0) type="dateTime.iso8601";
+	prints(sid, "<member><name>%s</name><value><%s>", name, type);
+	if (strcasecmp("dateTime.iso8601", type)==0) {
+		t=atoi(value);
+		strftime(timebuf, sizeof(timebuf)-1, "%Y%m%dT%H:%M:%S", gmtime(&t));
+		prints(sid, "%s", timebuf);
+	} else {
+		prints(sid, "%s", str2html(sid, value));
+	}
+	prints(sid, "</%s></value></member>\r\n", type);
+	return;
+}
+
+void xmlrpc_fault(CONN *sid, int faultid, char *fault)
+{
+	prints(sid, "<?xml version=\"1.0\"?>\r\n");
+	prints(sid, "<methodResponse>\r\n<fault>\r\n");
+	prints(sid, "<value>\r\n<struct>\r\n");
+	xmlrpc_addmember(sid, "faultCode",   "int",    "%d", faultid);
+	xmlrpc_addmember(sid, "faultString", "string", "%s", fault);
+	prints(sid, "</struct>\r\n</value>\r\n");
+	prints(sid, "</fault>\r\n</methodResponse>\r\n");
+	return;
+}
+
+int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 {
 	char cpassword[64];
 	char salt[10];
@@ -43,14 +80,14 @@ int xmlrpc_auth_checkpass(CONNECTION *sid, char *username, char *password)
 		salt[5]=cpassword[8];
 		salt[6]=cpassword[9];
 		salt[7]=cpassword[10];
-		if (strcmp(cpassword, MD5Crypt(password, salt))!=0) return -1;
+		if (strcmp(cpassword, md5_crypt(sid, password, salt))!=0) return -1;
 	} else {
 		return -1;
 	}
 	return contactid;
 }
 
-int xmlrpc_auth_login(CONNECTION *sid)
+int xmlrpc_auth_login(CONN *sid)
 {
 	MD5_CTX c;
 	unsigned char md[MD5_SIZE];
@@ -119,10 +156,10 @@ int xmlrpc_auth_login(CONNECTION *sid)
 				return -1;
 			}
 			snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, time(NULL)));
-			MD5Init(&c);
-			MD5Update(&c, username, strlen(username));
-			MD5Update(&c, timebuffer, strlen(timebuffer));
-			MD5Final(&(md[0]),&c);
+			md5_init(&c);
+			md5_update(&c, username, strlen(username));
+			md5_update(&c, timebuffer, strlen(timebuffer));
+			md5_final(&(md[0]),&c);
 			memset(token, 0, sizeof(token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(token, sizeof(token)-strlen(token)-1, "%02x", md[i]);
 			sql_updatef(sid, "UPDATE gw_contacts SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", raddress, timebuffer, token, username);
@@ -135,7 +172,7 @@ int xmlrpc_auth_login(CONNECTION *sid)
 	return -1;
 }
 /*
-void xmlrpc_auth_logout(CONNECTION *sid)
+void xmlrpc_auth_logout(CONN *sid)
 {
 	time_t t;
 	char timebuffer[100];
@@ -149,52 +186,21 @@ void xmlrpc_auth_logout(CONNECTION *sid)
 }
 */
 
-void xmlrpc_addmember(CONNECTION *sid, char *name, char *type, const char *format, ...)
+void xmlrpc_contactread(CONN *sid, int contactid)
 {
-	char value[1024];
-	char timebuf[20];
-	va_list ap;
-	time_t t;
-
-	memset(value, 0, sizeof(value));
-	va_start(ap, format);
-	vsnprintf(value, sizeof(value)-1, format, ap);
-	va_end(ap);
-	if (strncasecmp(type, "dateTime", 8)==0) type="dateTime.iso8601";
-	prints(sid, "<member><name>%s</name><value><%s>", name, type);
-	if (strcasecmp("dateTime.iso8601", type)==0) {
-		t=atoi(value);
-		strftime(timebuf, sizeof(timebuf)-1, "%Y%m%dT%H:%M:%S", gmtime(&t));
-		prints(sid, "%s", timebuf);
-	} else {
-		prints(sid, "%s", str2html(sid, value));
-	}
-	prints(sid, "</%s></value></member>\r\n", type);
-	return;
-}
-
-void xmlrpc_fault(CONNECTION *sid, int faultid, char *fault)
-{
-	prints(sid, "<?xml version=\"1.0\"?>\r\n");
-	prints(sid, "<methodResponse>\r\n<fault>\r\n");
-	prints(sid, "<value>\r\n<struct>\r\n");
-	xmlrpc_addmember(sid, "faultCode",   "int",    "%d", faultid);
-	xmlrpc_addmember(sid, "faultString", "string", "%s", fault);
-	prints(sid, "</struct>\r\n</value>\r\n");
-	prints(sid, "</fault>\r\n</methodResponse>\r\n");
-	return;
-}
-
-void xmlrpc_contactread(CONNECTION *sid, int contactid)
-{
+	MOD_CONTACTS_READ mod_contacts_read;
 	REC_CONTACT contact;
 
 	send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_READ)) {
+	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
 	}
-	if (db_read(sid, 2, DB_CONTACTS, contactid, &contact)!=0) {
+	if ((mod_contacts_read=module_call(sid, "mod_contacts_read"))==NULL) {
+		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		return;
+	}
+	if (mod_contacts_read(sid, 2, contactid, &contact)!=0) {
 		xmlrpc_fault(sid, -1, "No matching record found");
 		return;
 	}
@@ -206,6 +212,7 @@ void xmlrpc_contactread(CONNECTION *sid, int contactid)
 	xmlrpc_addmember(sid, "obj_mtime",      "dateTime", "%d", contact.obj_mtime);
 	xmlrpc_addmember(sid, "obj_uid",        "int",      "%d", contact.obj_uid);
 	xmlrpc_addmember(sid, "obj_gid",        "int",      "%d", contact.obj_gid);
+	xmlrpc_addmember(sid, "obj_did",        "int",      "%d", contact.obj_did);
 	xmlrpc_addmember(sid, "obj_gperm",      "int",      "%d", contact.obj_gperm);
 	xmlrpc_addmember(sid, "obj_operm",      "int",      "%d", contact.obj_operm);
 	xmlrpc_addmember(sid, "loginip",        "string",   "%s", contact.loginip);
@@ -245,14 +252,16 @@ void xmlrpc_contactread(CONNECTION *sid, int contactid)
 	return;
 }
 
-void xmlrpc_contactwrite(CONNECTION *sid)
+void xmlrpc_contactwrite(CONN *sid)
 {
+	MOD_CONTACTS_READ mod_contacts_read;
+	MOD_CONTACTS_WRITE mod_contacts_write;
 	REC_CONTACT contact;
 	char opassword[50];
 	char *ptemp;
 	int contactid;
 
-	if (!(auth_priv(sid, AUTH_CONTACTS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 		xmlrpc_fault(sid, -1, ERR_NOACCESS);
 		return;
 	}
@@ -260,21 +269,30 @@ void xmlrpc_contactwrite(CONNECTION *sid)
 		xmlrpc_fault(sid, -1, "Incorrect Method");
 		return;
 	}
+	if ((mod_contacts_read=module_call(sid, "mod_contacts_read"))==NULL) {
+		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		return;
+	}
+	if ((mod_contacts_write=module_call(sid, "mod_contacts_write"))==NULL) {
+		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		return;
+	}
 	if ((ptemp=getxmlstruct(sid, "CONTACTID", "INT"))==NULL) {
 		xmlrpc_fault(sid, -1, "No matching record found");
 		return;
 	}
 	contactid=atoi(ptemp);
-	if (db_read(sid, 2, DB_CONTACTS, contactid, &contact)!=0) {
+	if (mod_contacts_read(sid, 2, contactid, &contact)!=0) {
 		xmlrpc_fault(sid, -1, "No matching record found");
 		return;
 	}
 	snprintf(opassword, sizeof(opassword)-1, "%s", contact.password);
-	if (auth_priv(sid, AUTH_CONTACTS)&A_ADMIN) {
+	if (auth_priv(sid, "contacts")&A_ADMIN) {
 		if ((ptemp=getxmlstruct(sid, "OBJ_UID", "INT"))!=NULL) contact.obj_uid=atoi(ptemp);
 		if ((ptemp=getxmlstruct(sid, "OBJ_GID", "INT"))!=NULL) contact.obj_gid=atoi(ptemp);
+		if ((ptemp=getxmlstruct(sid, "OBJ_DID", "INT"))!=NULL) contact.obj_did=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_CONTACTS)&A_ADMIN)||(contact.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "contacts")&A_ADMIN)||(contact.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getxmlstruct(sid, "OBJ_GPERM", "INT"))!=NULL) contact.obj_gperm=atoi(ptemp);
 		if ((ptemp=getxmlstruct(sid, "OBJ_OPERM", "INT"))!=NULL) contact.obj_operm=atoi(ptemp);
 	}
@@ -308,25 +326,25 @@ void xmlrpc_contactwrite(CONNECTION *sid)
 	if ((ptemp=getxmlstruct(sid, "WORKCOUNTRY",    "STRING"))!=NULL) snprintf(contact.workcountry, sizeof(contact.workcountry)-1, "%s", ptemp);
 	if ((ptemp=getxmlstruct(sid, "WORKPOSTALCODE", "STRING"))!=NULL) snprintf(contact.workpostalcode, sizeof(contact.workpostalcode)-1, "%s", ptemp);
 	if (contact.contactid==0) {
-		if (!(auth_priv(sid, AUTH_CONTACTS)&A_INSERT)) {
+		if (!(auth_priv(sid, "contacts")&A_INSERT)) {
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
 		snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
-		if ((contact.contactid=db_write(sid, DB_CONTACTS, 0, &contact))<1) {
+		if ((contact.contactid=mod_contacts_write(sid, 0, &contact))<1) {
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
 		db_log_activity(sid, 1, "contacts", contact.contactid, "insert", "%s - %s added contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 	} else {
-		if (!(auth_priv(sid, AUTH_CONTACTS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
 		if (strcmp(opassword, contact.password)!=0) {
 			snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		}
-		if (db_write(sid, DB_CONTACTS, contactid, &contact)<1) {
+		if (mod_contacts_write(sid, contactid, &contact)<1) {
 			xmlrpc_fault(sid, -1, ERR_NOACCESS);
 			return;
 		}
@@ -336,13 +354,18 @@ void xmlrpc_contactwrite(CONNECTION *sid)
 	return;
 }
 
-void xmlrpc_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	char methodname[40];
 	char *ptemp;
 	int index;
 
 	DEBUG_IN(sid, "xmlrpc_main()");
+	if (auth_setcookie(sid)!=0) {
+		send_header(sid, 0, 200, "OK", "1", "text/xml", -1, -1);
+		xmlrpc_fault(sid, -1, "Authentication failure");
+		return;
+	}
 	if ((ptemp=getxmlenv(sid, "methodName"))==NULL) {
 		if (strncmp(sid->dat->in_RequestURI, "/xml-rpc/contacts/read", 22)==0) {
 			if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) {
@@ -385,4 +408,15 @@ void xmlrpc_main(CONNECTION *sid)
 	}
 	DEBUG_OUT(sid, "xmlrpc_main()");
 	return;
+}
+
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+{
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
+	if (mod_import()!=0) return -1;
+	if (mod_export_main("mod_xmlrpc", "", "", "mod_main", "/xml-rpc/", mod_main)!=0) return -1;
+//	if (mod_export_function("mod_xmlrpc", "mod_main", mod_main)!=0) return -1;
+	return 0;
 }

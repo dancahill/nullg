@@ -1,8 +1,8 @@
 # Makefile for NullLogic Groupware
 
 all: _dbutil _groupware _modules
-	@cp -av other/sqlite/sqlite.so distrib/lib/sqlite.so
-	@chmod 755 distrib/lib/sqlite.so
+	@cp -av contrib/libsqlite.so distrib/lib/libsqlite.so
+	@chmod 755 distrib/lib/libsqlite.so
 
 _dbutil:
 	@cd dbutil;make
@@ -14,13 +14,10 @@ _modules:
 	@cd modules;make
 
 clean:
-	@chmod 0755 fromdos lxmake
-	@./fromdos
-	@chmod 0755 fromdos lxmake
-	@cd dbutil;make clean;../fromdos
-	@cd server;make clean;../fromdos
-	@cd modules;make clean;../fromdos
-	@cd include;../fromdos
+	@chmod 0755 dedos lxmake
+	@cd dbutil;make clean
+	@cd server;make clean
+	@cd modules;make clean
 	@./lxmake clean
 	rm -f distrib/bin/dbutil distrib/bin/groupware *~
 
@@ -31,6 +28,9 @@ install:
 	@cp -av distrib/bin/dbutil /usr/local/groupware/bin/dbutil
 	@cp -av distrib/lib/* /usr/local/groupware/lib/
 	@/etc/rc.d/rc.groupware start
+
+linecount:
+	wc `find -name *.[ch]`
 
 dist:
 	@chmod 0755 lxmake

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,13 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /* mod_calendar_auto.c */
-int db_availcheck(CONNECTION *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
-int db_autoschedule(CONNECTION *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
-int db_autoassign(CONNECTION *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish);
+int db_autoassign(CONN *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish);
+/* mod_calendar_db.c */
+int dblist_events(CONN *sid, char *startdate, char *enddate);
+int dbread_event(CONN *sid, short int perm, int index, REC_EVENT *event);
+int dbwrite_event(CONN *sid, int index, REC_EVENT *event);
 /* mod_calendar_mini.c */
-void calendarmini(CONNECTION *sid, time_t unixdate, int userid, int groupid);
-void calendarmini2(CONNECTION *sid, time_t unixdate, int userid, int groupid);
+void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid);
+void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid);

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,6 @@
 #include "defines.h"
 #include "typedefs.h"
 #include "functions.h"
-#include "md5.h"
 
 struct {
 	pthread_mutex_t Global;
@@ -95,19 +94,7 @@ struct {
 	pthread_mutex_t FileList;
 	pthread_mutex_t SQL;
 } Lock;
-#ifdef WIN32
-HINSTANCE hInst;
-WSADATA wsaData;
-#endif
-unsigned char program_name[255];
-int RunAsCGI;
-int ListenSocket;
-pthread_t ListenThread;
-pthread_t DaemonThread;
-CONFIG config;
-STATS stats;
-CONNECTION *conn;
-SQLRES *sqlreply;
 
-MODULE_MENU mod_menuitems[MAX_MOD_MENUITEMS+1];
-MODULE_FUNC mod_functions[MAX_MOD_FUNCTIONS+1];
+_PROC   proc;
+CONN   *conn;
+SQLRES *sqlreply;

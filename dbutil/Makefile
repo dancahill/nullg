@@ -1,4 +1,4 @@
-# Makefile for Null Groupware dbutil
+# Makefile for NullLogic Groupware dbutil
 CC       = gcc
 CFLAGS   = -Wall -O2 -s -I../include
 LDFLAGS  = -ldl

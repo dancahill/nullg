@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_files - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_files.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_files.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_files.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_files_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_files_main.c
 # End Source File
 # End Target
 # End Project

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,89 +40,101 @@
 #include "language-en.h"
 #include "defines.h"
 #include "typedefs.h"
+#include "mod_typedefs.h"
 
-typedef	int   (*MAIN_AUTH_PRIV)(CONNECTION *, int);
-typedef	char *(*MAIN_AUTH_SETPASS)(CONNECTION *, char *);
-typedef	int   (*MAIN_DB_READ)(CONNECTION *, short int, short int, int, void *);
-typedef	int   (*MAIN_DB_WRITE)(CONNECTION *, short int, int, void *);
-typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONNECTION *, int, char *, int, char *, const char *, ...);
-typedef	void  (*MAIN_LOGACCESS)(CONNECTION *, int, const char *, ...);
-typedef	void  (*MAIN_LOGERROR)(CONNECTION *, char *, int, const char *, ...);
-typedef	void  (*MAIN_HTPAGE_HEADER)(CONNECTION *, char *);
-typedef	void  (*MAIN_HTPAGE_FOOTER)(CONNECTION *);
-typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_CONTACT)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_DAY)(CONNECTION *, char *);
-typedef	void  (*MAIN_HTSELECT_EVENTSTATUS)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_GROUP)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_HOUR)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_MINUTES)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_MONTH)(CONNECTION *, char *);
-typedef	void  (*MAIN_HTSELECT_NUMBER)(CONNECTION *, int, int, int);
-typedef	void  (*MAIN_HTSELECT_PRIORITY)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_QHOURS)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_QMINUTES)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_REMINDER)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_TIME)(CONNECTION *, time_t);
-typedef	void  (*MAIN_HTSELECT_TIMEZONE)(CONNECTION *, short int);
-typedef	void  (*MAIN_HTSELECT_USER)(CONNECTION *, int);
-typedef	void  (*MAIN_HTSELECT_YEAR)(CONNECTION *, int, char *);
-typedef	void  (*MAIN_HTSELECT_ZONE)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_CALLACTION)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_CONTACT)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTCLOSINGSTATUS)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTSTATUS)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTTYPE)(CONNECTION *, int);
+typedef	int   (*MAIN_AUTH_SETCOOKIE)(CONN *);
+typedef	int   (*MAIN_AUTH_PRIV)(CONN *, char *);
+typedef	char *(*MAIN_AUTH_SETPASS)(CONN *, char *);
+typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
+typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
+typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, int, char *, int, char *, const char *, ...);
+typedef	void  (*MAIN_LOGACCESS)(CONN *, int, const char *, ...);
+typedef	void  (*MAIN_LOGERROR)(CONN *, char *, int, const char *, ...);
+typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
+typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
+typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_DAY)(CONN *, char *);
+typedef	void  (*MAIN_HTSELECT_EVENTSTATUS)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_HOUR)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_MINUTES)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_MONTH)(CONN *, char *);
+typedef	void  (*MAIN_HTSELECT_NUMBER)(CONN *, int, int, int);
+typedef	void  (*MAIN_HTSELECT_PRIORITY)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_QHOURS)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_QMINUTES)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_REMINDER)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_TIME)(CONN *, time_t);
+typedef	void  (*MAIN_HTSELECT_TIMEZONE)(CONN *, short int);
+typedef	void  (*MAIN_HTSELECT_USER)(CONN *, int);
+typedef	void  (*MAIN_HTSELECT_YEAR)(CONN *, int, char *);
+typedef	void  (*MAIN_HTSELECT_ZONE)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_CALLACTION)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_CONTACT)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_EVENTCLOSINGSTATUS)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_EVENTSTATUS)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_EVENTTYPE)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_HOLIDAY)(char *);
-typedef	char *(*MAIN_HTVIEW_REMINDER)(CONNECTION *, int);
-typedef	char *(*MAIN_HTVIEW_USER)(CONNECTION *, int);
+typedef	char *(*MAIN_HTVIEW_REMINDER)(CONN *, int);
+typedef	char *(*MAIN_HTVIEW_USER)(CONN *, int);
+typedef	void  (*MAIN_MD5_INIT)(struct MD5Context *);
+typedef	void  (*MAIN_MD5_UPDATE)(struct MD5Context *, unsigned char const *, unsigned);
+typedef	void  (*MAIN_MD5_FINAL)(unsigned char*, struct MD5Context *);
+typedef	char *(*MAIN_MD5_CRYPT)(CONN *, char *, char *);
 typedef	void  (*MAIN_SQL_FREERESULT)(int);
 typedef	char *(*MAIN_SQL_GETNAME)(int, int);
 typedef	char *(*MAIN_SQL_GETVALUE)(int, int, int);
 typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(int, int, char *);
 typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
 typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
-typedef	int   (*MAIN_SQL_QUERY)(CONNECTION *, char *);
-typedef	int   (*MAIN_SQL_QUERYF)(CONNECTION *, char *, ...);
-typedef	int   (*MAIN_SQL_UPDATE)(CONNECTION *, char *);
-typedef	int   (*MAIN_SQL_UPDATEF)(CONNECTION *, const char *, ...);
-typedef	char *(*MAIN_TIME_SQL2DATETEXT)(CONNECTION *, char *);
-typedef	char *(*MAIN_TIME_SQL2TIMETEXT)(CONNECTION *, char *);
+typedef	int   (*MAIN_SQL_QUERY)(CONN *, char *);
+typedef	int   (*MAIN_SQL_QUERYF)(CONN *, char *, ...);
+typedef	int   (*MAIN_SQL_UPDATE)(CONN *, char *);
+typedef	int   (*MAIN_SQL_UPDATEF)(CONN *, const char *, ...);
+typedef	char *(*MAIN_TIME_SQL2DATETEXT)(CONN *, char *);
+typedef	char *(*MAIN_TIME_SQL2TIMETEXT)(CONN *, char *);
 typedef	time_t(*MAIN_TIME_SQL2UNIX)(char *);
-typedef	int   (*MAIN_TIME_TZOFFSET)(CONNECTION *, time_t);
-typedef	int   (*MAIN_TIME_TZOFFSET2)(CONNECTION *, time_t, int);
-typedef	char *(*MAIN_TIME_UNIX2SQL)(CONNECTION *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2TEXT)(CONNECTION *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2LOTIMETEXT)(CONNECTION *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2TIMETEXT)(CONNECTION *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2DATETEXT)(CONNECTION *, time_t);
+typedef	int   (*MAIN_TIME_TZOFFSET)(CONN *, time_t);
+typedef	int   (*MAIN_TIME_TZOFFSET2)(CONN *, time_t, int);
+typedef	char *(*MAIN_TIME_UNIX2SQL)(CONN *, time_t);
+typedef	char *(*MAIN_TIME_UNIX2TEXT)(CONN *, time_t);
+typedef	char *(*MAIN_TIME_UNIX2LOTIMETEXT)(CONN *, time_t);
+typedef	char *(*MAIN_TIME_UNIX2TIMETEXT)(CONN *, time_t);
+typedef	char *(*MAIN_TIME_UNIX2DATETEXT)(CONN *, time_t);
 typedef	time_t(*MAIN_TIME_WMGETDATE)(char *);
-typedef	char *(*MAIN_GETBUFFER)(CONNECTION *);
-typedef	char *(*MAIN_GETGETENV)(CONNECTION *, char *);
-typedef	char *(*MAIN_GETMIMEENV)(CONNECTION *, char *, unsigned int *);
-typedef	char *(*MAIN_GETPOSTENV)(CONNECTION *, char *);
-typedef	int   (*MAIN_PRINTS)(CONNECTION *, const char *, ...);
-typedef	int   (*MAIN_PRINTHEX)(CONNECTION *, const char *, ...);
-typedef	int   (*MAIN_PRINTHT)(CONNECTION *, const char *, ...);
-typedef	void  (*MAIN_PRINTLINE)(CONNECTION *, short int, char *);
-typedef	void  (*MAIN_PRINTLINE2)(CONNECTION *, int, char *);
-typedef	char *(*MAIN_STR2HTML)(CONNECTION *, char *);
+typedef	char *(*MAIN_GETBUFFER)(CONN *);
+typedef	char *(*MAIN_GETGETENV)(CONN *, char *);
+typedef	char *(*MAIN_GETMIMEENV)(CONN *, char *, unsigned int *);
+typedef	char *(*MAIN_GETPOSTENV)(CONN *, char *);
+typedef	char *(*MAIN_GETXMLENV)(CONN *, char *);
+typedef	char *(*MAIN_GETXMLPARAM)(CONN *, int, char *);
+typedef	char *(*MAIN_GETXMLSTRUCT)(CONN *, char *, char *);
+typedef	int   (*MAIN_PRINTS)(CONN *, const char *, ...);
+typedef	int   (*MAIN_PRINTHEX)(CONN *, const char *, ...);
+typedef	int   (*MAIN_PRINTHT)(CONN *, const char *, ...);
+typedef	void  (*MAIN_PRINTLINE)(CONN *, short int, char *);
+typedef	void  (*MAIN_PRINTLINE2)(CONN *, int, char *);
+typedef	char *(*MAIN_STR2HTML)(CONN *, char *);
 typedef	char *(*MAIN_STRNCATF)(char *, int, const char *, ...);
-typedef	void  (*MAIN_SEND_ERROR)(CONNECTION *, int, char *, char *);
-typedef	void  (*MAIN_SEND_HEADER)(CONNECTION *, int, int, char *, char *, char *, int, time_t);
+typedef	void  (*MAIN_SEND_ERROR)(CONN *, int, char *, char *);
+typedef	void  (*MAIN_SEND_HEADER)(CONN *, int, int, char *, char *, char *, int, time_t);
 typedef	void  (*MAIN_DECODEURL)(unsigned char *);
+typedef	char *(*MAIN_DECODE_B64S)(CONN *, char *);
 typedef	void  (*MAIN_FIXSLASHES)(char *);
 typedef	void  (*MAIN_STRIPRN)(char *);
-typedef	void  (*MAIN_FLUSHBUFFER)(CONNECTION *);
-typedef	char *(*MAIN_STR2SQL)(CONNECTION *, char *);
-typedef	char *(*MAIN_STR2SQLBUF)(CONNECTION *, char *, char *, int);
+typedef	void  (*MAIN_FLUSHBUFFER)(CONN *);
+typedef	char *(*MAIN_STR2SQL)(CONN *, char *);
+typedef	char *(*MAIN_STR2SQLBUF)(CONN *, char *, char *, int);
 typedef	char *(*MAIN_GET_MIME_TYPE)(char *);
-typedef	int   (*MAIN_FILESEND)(CONNECTION *, char *);
-typedef	int   (*MAIN_CLOSECONNECT)(CONNECTION *, int);
+typedef	int   (*MAIN_FILESEND)(CONN *, char *);
+typedef	int   (*MAIN_TCP_SEND)(int, const char *, int, int);
+typedef	int   (*MAIN_CLOSECONNECT)(CONN *, int);
 typedef	int   (*MAIN_HEX2INT)(char *);
 typedef	char *(*MAIN_P_STRCASESTR)(char *, char *);
 typedef	char *(*MAIN_SRV_RESTART)(void);
-typedef	void *(*MAIN_MODULE_CALL)(CONNECTION *, char *);
+typedef	int   (*MAIN_MODULE_EXISTS)(CONN *, char *);
+typedef	void *(*MAIN_MODULE_CALL)(CONN *, char *);
 #ifdef WIN32
 typedef	int   (*MAIN_GETTIMEOFDAY)(struct timeval *, struct timezone *);
 typedef	DIR  *(*MAIN_OPENDIR)(char *);
@@ -133,17 +145,17 @@ typedef	void  (*MAIN_CLOSEDIR)(DIR *);
 
 /* auth.c functions */
 MAIN_AUTH_PRIV				auth_priv;
+MAIN_AUTH_SETCOOKIE			auth_setcookie;
 MAIN_AUTH_SETPASS			auth_setpass;
+/* config.c functions */
+MAIN_CONFIG_READ			config_read;
+MAIN_CONFIG_WRITE			config_write;
 /* connio.c functions */
 MAIN_PRINTS				prints;
 MAIN_PRINTHEX				printhex;
 MAIN_PRINTHT				printht;
 MAIN_PRINTLINE				printline;
 MAIN_PRINTLINE2				printline2;
-/* dbio.c */
-MAIN_DB_READ				db_read;
-MAIN_DB_WRITE				db_write;
-MAIN_DB_LOG_ACTIVITY			db_log_activity;
 /* format.c */
 MAIN_TIME_SQL2DATETEXT			time_sql2datetext;
 MAIN_TIME_SQL2TIMETEXT			time_sql2timetext;
@@ -190,9 +202,18 @@ MAIN_GET_MIME_TYPE			get_mime_type;
 MAIN_GETGETENV				getgetenv;
 MAIN_GETMIMEENV				getmimeenv;
 MAIN_GETPOSTENV				getpostenv;
-/* logging.c functions */
+MAIN_GETXMLENV				getxmlenv;
+MAIN_GETXMLPARAM			getxmlparam;
+MAIN_GETXMLSTRUCT			getxmlstruct;
+/* log.c functions */
+MAIN_DB_LOG_ACTIVITY			db_log_activity;
 MAIN_LOGACCESS				logaccess;
 MAIN_LOGERROR				logerror;
+/* md5.c functions */
+MAIN_MD5_INIT				md5_init;
+MAIN_MD5_UPDATE				md5_update;
+MAIN_MD5_FINAL				md5_final;
+MAIN_MD5_CRYPT				md5_crypt;
 /* sql.c functions */
 MAIN_SQL_FREERESULT			sql_freeresult;
 MAIN_SQL_GETNAME			sql_getname;
@@ -206,6 +227,7 @@ MAIN_SQL_UPDATE				sql_update;
 MAIN_SQL_UPDATEF			sql_updatef;
 
 MAIN_DECODEURL				decodeurl;
+MAIN_DECODE_B64S			decode_b64s;
 MAIN_GETBUFFER				getbuffer;
 MAIN_STR2HTML				str2html;
 MAIN_STRNCATF				strncatf;
@@ -217,10 +239,12 @@ MAIN_FLUSHBUFFER			flushbuffer;
 MAIN_STR2SQL				str2sql;
 MAIN_STR2SQLBUF				str2sqlbuf;
 MAIN_FILESEND				filesend;
+MAIN_TCP_SEND				tcp_send;
 MAIN_HEX2INT				hex2int;
 MAIN_CLOSECONNECT			closeconnect;
 MAIN_P_STRCASESTR			p_strcasestr;
 MAIN_SRV_RESTART			srv_restart;
+MAIN_MODULE_EXISTS			module_exists;
 MAIN_MODULE_CALL			module_call;
 #ifdef WIN32
 MAIN_GETTIMEOFDAY			gettimeofday;
@@ -229,9 +253,6 @@ MAIN_READDIR				readdir;
 MAIN_CLOSEDIR				closedir;
 #endif
 
-//MAIN_NOTESSUBLIST			notessublist;
-
-CONFIG      *config;
-FUNCTION    *functions;
-MODULE_FUNC *mod_functions;
-MODULE_MENU *mod_menuitems;
+CONFIG   *config;
+FUNCTION *functions;
+_PROC    *proc;

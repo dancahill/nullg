@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_forums.h"
 
 typedef struct {
 	int lastref;
@@ -27,10 +28,10 @@ typedef struct {
 	int numchildren;
 } _ptree;
 
-void forumsave(CONNECTION *sid);
-void fmessagesave(CONNECTION *sid);
+void forumsave(CONN *sid);
+void fmessagesave(CONN *sid);
 
-void htselect_forumgroup(CONNECTION *sid, int selected)
+void htselect_forumgroup(CONN *sid, int selected)
 {
 	int i, j;
 	int sqr;
@@ -45,7 +46,7 @@ void htselect_forumgroup(CONNECTION *sid, int selected)
 	return;
 }
 
-char *htview_forumgroup(CONNECTION *sid, int selected)
+char *htview_forumgroup(CONN *sid, int selected)
 {
 	char *buffer=getbuffer(sid);
 	int sqr;
@@ -58,22 +59,22 @@ char *htview_forumgroup(CONNECTION *sid, int selected)
 	return buffer;
 }
 
-void forumgroupedit(CONNECTION *sid)
+void forumgroupedit(CONN *sid)
 {
 	REC_FORUMGROUP forumgroup;
 	int forumgroupid;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/forums/groupeditnew")==0) {
 		forumgroupid=0;
-		db_read(sid, 2, DB_FORUMGROUPS, 0, &forumgroup);
+		dbread_forumgroup(sid, 2, 0, &forumgroup);
 	} else {
 		if (getgetenv(sid, "FORUMGROUPID")==NULL) return;
 		forumgroupid=atoi(getgetenv(sid, "FORUMGROUPID"));
-		if (db_read(sid, 2, DB_FORUMGROUPS, forumgroupid, &forumgroup)!=0) {
+		if (dbread_forumgroup(sid, 2, forumgroupid, &forumgroup)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", forumgroupid);
 			return;
 		}
@@ -98,7 +99,7 @@ void forumgroupedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=description ROWS=6 COLS=60>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, forumgroup.description));
 	prints(sid, "<TR><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
-//	if ((auth_priv(sid, AUTH_FORUMS)&A_ADMIN)&&(forumgroupid>1)) {
+//	if ((auth_priv(sid, "forums")&A_ADMIN)&&(forumgroupid>1)) {
 //		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 //	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
@@ -110,19 +111,19 @@ void forumgroupedit(CONNECTION *sid)
 	return;
 }
 
-void forumgrouplist(CONNECTION *sid)
+void forumgrouplist(CONN *sid)
 {
 	int i;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((sqr=sql_query(sid, "SELECT forumgroupid, title FROM gw_forumgroups ORDER BY title ASC"))<0) return;
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", config->colour_tabletrim);
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP WIDTH=150><FONT COLOR=%s>&nbsp;Forum Group Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s><TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/forums/groupedit?forumgroupid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -139,20 +140,20 @@ void forumgrouplist(CONNECTION *sid)
 	return;
 }
 
-void forumgroupsave(CONNECTION *sid)
+void forumgroupsave(CONN *sid)
 {
 	REC_FORUMGROUP forumgroup;
 	char *ptemp;
 	int forumgroupid;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FORUMGROUPID"))==NULL) return;
 	forumgroupid=atoi(ptemp);
-	if (db_read(sid, 2, DB_FORUMGROUPS, forumgroupid, &forumgroup)!=0) {
+	if (dbread_forumgroup(sid, 2, forumgroupid, &forumgroup)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -163,14 +164,14 @@ void forumgroupsave(CONNECTION *sid)
 		prints(sid, "<CENTER>Forum Group %d deleted successfully</CENTER><BR>\n", forumgroup.forumgroupid);
 		db_log_activity(sid, 1, "forumgroups", forumgroup.forumgroupid, "delete", "%s - %s deleted forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else if (forumgroup.forumgroupid==0) {
-		if ((forumgroup.forumgroupid=db_write(sid, DB_FORUMGROUPS, 0, &forumgroup))<1) {
+		if ((forumgroup.forumgroupid=dbwrite_forumgroup(sid, 0, &forumgroup))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Forum Group %d added successfully</CENTER><BR>\n", forumgroup.forumgroupid);
 		db_log_activity(sid, 1, "forumgroups", forumgroup.forumgroupid, "insert", "%s - %s added forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else {
-		if (db_write(sid, DB_FORUMGROUPS, forumgroupid, &forumgroup)<1) {
+		if (dbwrite_forumgroup(sid, forumgroupid, &forumgroup)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -181,19 +182,25 @@ void forumgroupsave(CONNECTION *sid)
 	return;
 }
 
-void forumview(CONNECTION *sid, int forumid)
+void forumview(CONN *sid, int forumid)
 {
+	int forumgroupid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_READ)) {
+	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_queryf(sid, "SELECT forumid, postername, posttime, subject, message FROM gw_forums WHERE forumid = %d", forumid))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT forumid, forumgroupid, postername, subject, message FROM gw_forums WHERE forumid = %d", forumid))<0) return;
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%\n");
+	forumgroupid=atoi(sql_getvalue(sqr, 0, 1));
+	if (forumgroupid) {
+		prints(sid, "<B><FONT COLOR=%s STYLE='font-size: 14px'>", config->colour_links);
+		prints(sid, "<A HREF=\"%s/forums/list?forumgroupid=%d\">%s</A></FONT></B><BR><BR>\n", sid->dat->in_ScriptName, forumgroupid, htview_forumgroup(sid, forumgroupid));
+	}
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s NOWRAP><FONT COLOR=%s>&nbsp;<B>%s</B>", config->colour_th, config->colour_thtext, str2html(sid, sql_getvalue(sqr, 0, 3)));
-	prints(sid, " by <B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 1)));
+	prints(sid, " by <B>%s</B>", str2html(sid, sql_getvalue(sqr, 0, 2)));
 	prints(sid, "</FONT></TH></TR>\n<TR><TD BGCOLOR=%s>\n", config->colour_fieldval);
 	printline2(sid, 1, sql_getvalue(sqr, 0, 4));
 	prints(sid, "<FONT SIZE=2>\n<BR><BR>[<A HREF=%s/forums/msglist?forum=%d>Top</A>]&nbsp;[<A HREF=%s/forums/msgpost?forum=%d>Reply</A>]</FONT>\n", sid->dat->in_ScriptName, forumid, sid->dat->in_ScriptName, forumid);
@@ -203,7 +210,7 @@ void forumview(CONNECTION *sid, int forumid)
 	return;
 }
 
-void fmessageview(CONNECTION *sid, int forumid, int messageid)
+void fmessageview(CONN *sid, int forumid, int messageid)
 {
 	_btree *btree;
 	_ptree *ptree;
@@ -215,7 +222,7 @@ void fmessageview(CONNECTION *sid, int forumid, int messageid)
 	int j;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_READ)) {
+	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -262,7 +269,7 @@ void fmessageview(CONNECTION *sid, int forumid, int messageid)
 	sql_freeresult(sqr);
 	if ((sqr=sql_queryf(sid, "SELECT messageid, postername, posttime, subject, message FROM gw_forumposts WHERE messageid = %d and forumid = %d", messageid, forumid))<0) return;
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s NOWRAP><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	prints(sid, "&nbsp;<B>%s</B><BR>", str2html(sid, sql_getvalue(sqr, 0, 3)));
 	prints(sid, "&nbsp;By <B>%s</B> on ", str2html(sid, sql_getvalue(sqr, 0, 1)));
@@ -300,7 +307,7 @@ void fmessageview(CONNECTION *sid, int forumid, int messageid)
 	return;
 }
 
-void forumpost(CONNECTION *sid)
+void forumpost(CONN *sid)
 {
 	char message[12288];
 	char subject[64];
@@ -308,7 +315,7 @@ void forumpost(CONNECTION *sid)
 	char *pTemp;
 	int forumgroupid=0;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -328,7 +335,7 @@ void forumpost(CONNECTION *sid)
 		if ((pTemp=getpostenv(sid, "SUBJECT"))!=NULL) strncpy(subject, pTemp, sizeof(subject)-1);
 		if (strcmp(submit, "Preview")==0) {
 			prints(sid, "<CENTER>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 			prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s NOWRAP><FONT COLOR=%s>\n", config->colour_th, config->colour_thtext);
 			prints(sid, "<B>%s</B> by ", str2html(sid, subject));
 			prints(sid, "<B>%s</B>\n", str2html(sid, sid->dat->user_username));
@@ -359,7 +366,7 @@ void forumpost(CONNECTION *sid)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>document.forumpost.subject.focus();</SCRIPT>\n");
 }
 
-void fmessagepost(CONNECTION *sid)
+void fmessagepost(CONN *sid)
 {
 	char message[12288];
 	char subject[64];
@@ -369,7 +376,7 @@ void fmessagepost(CONNECTION *sid)
 	int sqr;
 	char *pTemp;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_READ)) {
+	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -390,7 +397,7 @@ void fmessagepost(CONNECTION *sid)
 		if ((pTemp=getpostenv(sid, "SUBJECT"))!=NULL)   strncpy(subject, pTemp, sizeof(subject)-1);
 		if (strcmp(submit, "Preview")==0) {
 			prints(sid, "<CENTER>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 			prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s NOWRAP><FONT COLOR=%s>\n", config->colour_th, config->colour_thtext);
 			prints(sid, "<B>%s</B> by ", str2html(sid, subject));
 			prints(sid, "<B>%s</B>\n", str2html(sid, sid->dat->user_username));
@@ -415,7 +422,7 @@ void fmessagepost(CONNECTION *sid)
 			forumview(sid, forumid);
 		}
 	}
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_INSERT)) return;
+	if (!(auth_priv(sid, "forums")&A_INSERT)) return;
 	if ((sqr=sql_queryf(sid, "SELECT subject FROM gw_forumposts WHERE messageid = %d and forumid = %d", referenceid, forumid))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		if (strncasecmp(sql_getvalue(sqr, 0, 0), "RE:", 3)!=0) {
@@ -443,7 +450,7 @@ void fmessagepost(CONNECTION *sid)
 	prints(sid, "</CENTER>\n");
 }
 
-void forumlist(CONNECTION *sid, int longlist)
+void forumlist(CONN *sid, int longlist)
 {
 	char body[512];
 	char *ptemp;
@@ -453,7 +460,7 @@ void forumlist(CONNECTION *sid, int longlist)
 	int sqr;
 	int sqr2;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_READ)) {
+	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -468,7 +475,7 @@ void forumlist(CONNECTION *sid, int longlist)
 		}
 		if (selected!=2) {
 			prints(sid, "<CENTER>\n");
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=250>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=250>\r\n", config->colour_tabletrim);
 			prints(sid, "<TR><TH BGCOLOR=%s COLSPAN=2 NOWRAP><FONT COLOR=%s>Forum Groups</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -493,13 +500,13 @@ void forumlist(CONNECTION *sid, int longlist)
 	}
 	sql_freeresult(sqr);
 	prints(sid, "<CENTER>\n");
-	if (selected==2) {
-		prints(sid, "<FONT COLOR=%s><H2>%s</H2></FONT>\n", config->colour_links, htview_forumgroup(sid, forumgroupid));
+	if ((selected==2)&&(forumgroupid)) {
+		prints(sid, "<B><FONT COLOR=%s STYLE='font-size: 14px'>%s</FONT></B><BR><BR>\n", config->colour_links, htview_forumgroup(sid, forumgroupid));
 	}
 	if (longlist==0) {
 		if ((sqr=sql_queryf(sid, "SELECT forumid, postername, posttime, subject FROM gw_forums WHERE forumgroupid = %d ORDER BY forumid ASC", forumgroupid))<0) return;
 		if (sql_numtuples(sqr)>0) {
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%>\n");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 			prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left><FONT COLOR=%s>Forum List</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>", config->colour_fieldval);
@@ -519,7 +526,7 @@ void forumlist(CONNECTION *sid, int longlist)
 		if ((sqr=sql_queryf(sid, "SELECT forumid, postername, posttime, subject, message FROM gw_forums WHERE forumgroupid = %d ORDER BY forumid DESC", forumgroupid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			for (i=0;i<sql_numtuples(sqr);i++) {
-				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%%\n");
+				prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=90%%>\r\n", config->colour_tabletrim);
 				prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s NOWRAP><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 				prints(sid, "&nbsp;%s by ", str2html(sid, sql_getvalue(sqr, i, 3)));
 				prints(sid, "%s", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -546,7 +553,7 @@ void forumlist(CONNECTION *sid, int longlist)
 
 // heh..  if this code makes sense to you, please explain it to me..
 // it's just a recursive depth first binary tree sorting algorithm, after all...
-void fmessagelist(CONNECTION *sid)
+void fmessagelist(CONN *sid)
 {
 	_btree *btree;
 	_ptree *ptree;
@@ -560,7 +567,7 @@ void fmessagelist(CONNECTION *sid)
 	int x;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_READ)) {
+	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -666,7 +673,7 @@ void fmessagelist(CONNECTION *sid)
 	return;
 }
 
-void forumsave(CONNECTION *sid)
+void forumsave(CONN *sid)
 {
 	char query[16384];
 	char message[12288];
@@ -678,7 +685,7 @@ void forumsave(CONNECTION *sid)
 	int sqr;
 	char *pTemp;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -709,7 +716,7 @@ void forumsave(CONNECTION *sid)
 	return;
 }
 
-void fmessagesave(CONNECTION *sid)
+void fmessagesave(CONN *sid)
 {
 	char query[16384];
 	char message[12288];
@@ -722,7 +729,7 @@ void fmessagesave(CONNECTION *sid)
 	int sqr;
 	char *pTemp;
 
-	if (!(auth_priv(sid, AUTH_FORUMS)&A_INSERT)) {
+	if (!(auth_priv(sid, "forums")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -756,7 +763,7 @@ void fmessagesave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_FORUMS);
@@ -786,12 +793,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_forums", "FORUMS", "/forums/list", "mod_main", "/forums/", mod_main)!=0) return -1;
 	return 0;

@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_bookmarks - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_bookmarks.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_bookmarks.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_bookmarks.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_bookmarks_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_bookmarks_main.c
 # End Source File
 # End Target
 # End Project

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,19 +18,19 @@
 #include "mod_stub.h"
 #include "mod_mail.h"
 
-void wmnotice(CONNECTION *sid)
+void wmnotice(CONN *sid)
 {
 	int i;
 	int newmessages;
 	int nummessages;
 	int sqr1, sqr2;
 
-	if (!(auth_priv(sid, AUTH_WEBMAIL)&A_READ)) {
+	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Groupware E-Mail Notice</FONT></B>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left WIDTH=100%%>Account Name</TH><TH>New</TH><TH>Total</TH></TR>\n", config->colour_th);
 	if ((sqr1=sql_queryf(sid, "SELECT mailaccountid, accountname, poppassword FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return;
 	for (i=0;i<sql_numtuples(sqr1);i++) {
@@ -41,7 +41,7 @@ void wmnotice(CONNECTION *sid)
 		if ((sqr2=sql_queryf(sid, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND folder = 'Inbox' AND status = 'n'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) continue;
 		newmessages=atoi(sql_getvalue(sqr2, 0, 0));
 		sql_freeresult(sqr2);
-		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT NOWRAP>", config->colour_fieldval);
+		prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT NOWRAP style=\"cursor:hand\" onClick=\"window.opener.top.gwmain.location.href='%s/mail/main?accountid=%d'\">", config->colour_fieldval, sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)), sql_getvalue(sqr1, i, 1));
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s%d%s</TD><TD ALIGN=RIGHT NOWRAP>%d</TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"", nummessages);
 	}
@@ -51,7 +51,7 @@ void wmnotice(CONNECTION *sid)
 	return;
 }
 
-void wmloginform(CONNECTION *sid)
+void wmloginform(CONN *sid)
 {
 	char msgto[512];
 	int sqr;
@@ -64,8 +64,8 @@ void wmloginform(CONNECTION *sid)
 	for (;;) {
 		if ((sqr=sql_queryf(sid, "SELECT popusername, poppassword FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) break;
 		if (sql_numtuples(sqr)==1) {
-			strncpy(sid->dat->user_wmusername, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->user_wmusername)-1);
-			strncpy(sid->dat->user_wmpassword, DecodeBase64string(sid, sql_getvalue(sqr, 0, 1)), sizeof(sid->dat->user_wmpassword)-1);
+			strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->username)-1);
+			strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 1)), sizeof(sid->dat->wm->password)-1);
 		}
 		sql_freeresult(sqr);
 		break;
@@ -74,18 +74,18 @@ void wmloginform(CONNECTION *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/sync AUTOCOMPLETE=OFF NAME=wmlogin>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE CELLPADDING=0 CELLSPACING=0 BORDER=0>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2 STYLE='padding:1px'><FONT COLOR=%s>Webmail Login</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=wmusername SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->user_wmusername);
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=wmpassword SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->user_wmpassword);
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=wmusername SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->wm->username);
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=wmpassword SIZE=25 VALUE='%s'></TD></TR>\n", config->colour_editform, sid->dat->wm->password);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Login'></CENTER></TD></TR>\n", config->colour_editform);
 	prints(sid, "</TABLE></FORM></CENTER>\n");
-	if (strlen(sid->dat->user_wmusername)<1) {
+	if (strlen(sid->dat->wm->username)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.wmlogin.wmusername.focus();\n// -->\n</SCRIPT>\n");
 	} else {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.wmlogin.wmpassword.focus();\n// -->\n</SCRIPT>\n");
 	}
 }
 
-void wmlogout(CONNECTION *sid)
+void wmlogout(CONN *sid)
 {
 	char timebuffer[32];
 
@@ -95,7 +95,7 @@ void wmlogout(CONNECTION *sid)
 	return;
 }
 
-void webmailraw(CONNECTION *sid)
+void webmailraw(CONN *sid)
 {
 	FILE *fp;
 	char inbuffer[1024];
@@ -136,7 +136,7 @@ void webmailraw(CONNECTION *sid)
 	return;
 }
 
-void webmaillist(CONNECTION *sid)
+void webmaillist(CONN *sid)
 {
 	char *option[]={ "Inbox", "Drafts", "Saved Items", "Trash" };
 	char *ptemp;
@@ -265,7 +265,7 @@ void webmaillist(CONNECTION *sid)
 	if (i<1) i=1;
 	prints(sid, "<TD ALIGN=RIGHT NOWRAP>Listing %d-%d of %d</TD></TR>\n", nummessages-offset, i, nummessages);
 	prints(sid, "<TR><TD COLSPAN=2>");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=1 CELLSPACING=1 WIDTH=100%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_th);
 	prints(sid, "<TH ALIGN=LEFT>&nbsp;</TH>");
 	prints(sid, "<TH ALIGN=LEFT>&nbsp;<A HREF=\"list?mbox=%s&orderby=%s\"><FONT COLOR=%s>From</FONT></A>&nbsp;</TH>", mbox, strcasecmp(sortval, "from_d")==0?"from_a":"from_d", config->colour_thtext);
@@ -290,14 +290,14 @@ void webmaillist(CONNECTION *sid)
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		}
 		prints(sid, "<TD NOWRAP STYLE='padding:0px'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 4));
-		prints(sid, "<TD NOWRAP TITLE='%s'>", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 5))));
+		prints(sid, "<TD NOWRAP TITLE=\"%s\">", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 5))));
 		prints(sid, "%s&nbsp;</TD>", str2html(sid, fromtemp));
 		if (sid->dat->user_menustyle>0) {
 			prints(sid, "<TD NOWRAP style=\"cursor:hand\" onClick=\"window.parent.wmread.location.href='%s/mail/read?msg=%d'\" ", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		} else {
 			prints(sid, "<TD NOWRAP style=\"cursor:hand\" onClick=\"window.location.href='%s/mail/read?msg=%d'\" ", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 		}
-		prints(sid, "TITLE='%s'>", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
+		prints(sid, "TITLE=\"%s\">", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
 		prints(sid, "<A HREF=%s/mail/read?msg=%d%s TITLE=\"%s\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_menustyle>0?" TARGET=wmread":"", DecodeRFC2047(sid, sql_getvalue(sqr, i, 9)));
 		prints(sid, "%.40s</A>&nbsp;</TD>", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
 		unixdate=time_sql2unix(sql_getvalue(sqr, i, 8));
@@ -345,7 +345,7 @@ void webmaillist(CONNECTION *sid)
 	return;
 }
 
-void webmailread(CONNECTION *sid)
+void webmailread(CONN *sid)
 {
 	wmheader header;
 	char folder[20];
@@ -420,7 +420,7 @@ void webmailread(CONNECTION *sid)
 	} else {
 		prints(sid, "[Next]\n");
 	}
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", config->colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:1px'><TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n", config->colour_fieldval);
 	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;From   &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;<A HREF=javascript:MsgTo(\"%s\")>", config->colour_th, config->colour_thtext, config->colour_fieldval, header.ReplyTo);
 	printht(sid, "%s", DecodeRFC2047(sid, header.From));
@@ -455,14 +455,14 @@ void webmailread(CONNECTION *sid)
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, localid);
 	fixslashes(msgfilename);
-	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d", str2sql(sid, uidl), sid->dat->user_uid);
+	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(sid, uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	fp=fopen(msgfilename, "r");
 	if (fp!=NULL) {
 		while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
 			striprn(inbuffer);
 			if (strlen(inbuffer)==0) break;
 		}
-		webmailmime(sid, fp, header.contenttype, header.encoding, header.boundary, localid, 0, 0);
+		webmailmime(sid, &fp, header.contenttype, header.encoding, header.boundary, localid, 0, 0);
 	} else {
 		prints(sid, "<B>Could not retrieve message body!</B>\n");
 	}
@@ -492,7 +492,7 @@ void webmailread(CONNECTION *sid)
 	return;
 }
 
-void webmailwrite(CONNECTION *sid)
+void webmailwrite(CONN *sid)
 {
 	FILE *fp=NULL;
 	wmheader header;
@@ -559,6 +559,15 @@ void webmailwrite(CONNECTION *sid)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function AddressBook(field) {\r\n");
 	prints(sid, "	window.open('%s/mail/addresses?field='+field,'wmaddrbook','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=440,height=440');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "}\r\n");
+	prints(sid, "function selOn(ctrl)\r\n");
+	prints(sid, "{\r\n");
+	prints(sid, "	ctrl.style.borderColor = '#000000';\r\n");
+	prints(sid, "	ctrl.style.cursor = 'hand';\r\n");
+	prints(sid, "}\r\n");
+	prints(sid, "function selOff(ctrl)\r\n");
+	prints(sid, "{\r\n");
+	prints(sid, "	ctrl.style.borderColor = '#F0F0F0';\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
@@ -627,7 +636,7 @@ void webmailwrite(CONNECTION *sid)
 				striprn(inbuffer);
 				if (strlen(inbuffer)==0) break;
 			}
-			webmailmime(sid, fp, header.contenttype, header.encoding, header.boundary, msgnum, 1, 0);
+			webmailmime(sid, &fp, header.contenttype, header.encoding, header.boundary, msgnum, 1, 0);
 		} else {
 			prints(sid, "\r\nCould not retrieve message body!\r\n");
 		}
@@ -638,15 +647,13 @@ void webmailwrite(CONNECTION *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Send Mail'>\n");
 	prints(sid, "</FORM>\n</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript SRC=/groupware/javascript/wmedit.js TYPE=text/javascript></SCRIPT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
-	prints(sid, "init();\r\n");
 	prints(sid, "document.wmcompose.msgto.focus();\r\n");
 	prints(sid, "//-->\r\n</script>\r\n");
 	return;
 }
 
-void webmailsave(CONNECTION *sid)
+void webmailsave(CONN *sid)
 {
 	struct stat sb;
 	FILE *fp;
@@ -686,17 +693,17 @@ void webmailsave(CONNECTION *sid)
 		if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, hosttype, pophost, popport, smtphost, smtpport, address, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
 	}
 	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->user_wmrealname, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->user_wmrealname)-1);
-		strncpy(sid->dat->user_wmorganization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->user_wmorganization)-1);
-		strncpy(sid->dat->user_wmusername, sql_getvalue(sqr, 0, 2), sizeof(sid->dat->user_wmusername)-1);
-		strncpy(sid->dat->user_wmpassword, DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->user_wmpassword)-1);
-		strncpy(sid->dat->user_wmservertype, sql_getvalue(sqr, 0, 4), sizeof(sid->dat->user_wmservertype)-1);
-		strncpy(sid->dat->user_wmpopserver, sql_getvalue(sqr, 0, 5), sizeof(sid->dat->user_wmpopserver)-1);
-		sid->dat->user_wmpopport=atoi(sql_getvalue(sqr, 0, 6));
-		strncpy(sid->dat->user_wmsmtpserver, sql_getvalue(sqr, 0, 7), sizeof(sid->dat->user_wmsmtpserver)-1);
-		sid->dat->user_wmsmtpport=atoi(sql_getvalue(sqr, 0, 8));
-		strncpy(sid->dat->user_wmreplyto, sql_getvalue(sqr, 0, 9), sizeof(sid->dat->user_wmreplyto)-1);
-		strncpy(sid->dat->user_wmsignature, sql_getvalue(sqr, 0, 10), sizeof(sid->dat->user_wmsignature)-1);
+		strncpy(sid->dat->wm->realname, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
+		strncpy(sid->dat->wm->organization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
+		strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
+		strncpy(sid->dat->wm->servertype, sql_getvalue(sqr, 0, 4), sizeof(sid->dat->wm->servertype)-1);
+		strncpy(sid->dat->wm->popserver, sql_getvalue(sqr, 0, 5), sizeof(sid->dat->wm->popserver)-1);
+		sid->dat->wm->popport=atoi(sql_getvalue(sqr, 0, 6));
+		strncpy(sid->dat->wm->smtpserver, sql_getvalue(sqr, 0, 7), sizeof(sid->dat->wm->smtpserver)-1);
+		sid->dat->wm->smtpport=atoi(sql_getvalue(sqr, 0, 8));
+		strncpy(sid->dat->wm->replyto, sql_getvalue(sqr, 0, 9), sizeof(sid->dat->wm->replyto)-1);
+		strncpy(sid->dat->wm->signature, sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->signature)-1);
 	}
 	sql_freeresult(sqr);
 	prints(sid, ".");
@@ -752,7 +759,7 @@ void webmailsave(CONNECTION *sid)
 	} else {
 		snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", msgctype);
 	}
-	if ((sqr=sql_query(sid, "SELECT max(mailheaderid) FROM gw_mailheaders"))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent))<0) return;
 	headerid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	sql_freeresult(sqr);
 	if (headerid<1) headerid=1;
@@ -765,8 +772,8 @@ void webmailsave(CONNECTION *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "', 'r");
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '0"); // MSG SIZE !!!
 	strncatf(query, sizeof(query)-strlen(query)-1, "', 'uidl");
-	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s <%s>", str2sql(sid, sid->dat->user_wmrealname), str2sql(sid, sid->dat->user_wmreplyto));
-	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, sid->dat->user_wmreplyto));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s <%s>", str2sql(sid, sid->dat->wm->realname), str2sql(sid, sid->dat->wm->replyto));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, sid->dat->wm->replyto));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.To));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.CC));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.BCC));
@@ -801,10 +808,10 @@ void webmailsave(CONNECTION *sid)
 		return;
 	}
 
-	fprintf(fp, "From: \"%s\" <%s>\r\n", sid->dat->user_wmrealname, sid->dat->user_wmreplyto);
-	fprintf(fp, "Reply-To: <%s>\r\n", sid->dat->user_wmreplyto);
-	if (strlen(sid->dat->user_wmorganization)>0) {
-		fprintf(fp, "Organization: %s\r\n", sid->dat->user_wmorganization);
+	fprintf(fp, "From: \"%s\" <%s>\r\n", sid->dat->wm->realname, sid->dat->wm->replyto);
+	fprintf(fp, "Reply-To: <%s>\r\n", sid->dat->wm->replyto);
+	if (strlen(sid->dat->wm->organization)>0) {
+		fprintf(fp, "Organization: %s\r\n", sid->dat->wm->organization);
 	}
 	fprintf(fp, "To: %s\r\n", header.To);
 	if (strlen(header.CC)) {
@@ -818,7 +825,7 @@ void webmailsave(CONNECTION *sid)
 	} else {
 		fprintf(fp, "Content-Type: %s\r\n", header.contenttype);
 	}
-	fprintf(fp, "X-Mailer: %s\r\n", SERVER_NAME);
+	fprintf(fp, "X-Mailer: %s %s\r\n", SERVER_NAME, SERVER_VERSION);
 	fprintf(fp, "\r\n");
 	if (filesize>0) {
 		fprintf(fp, "This is a multi-part message in MIME format.\r\n\r\n");
@@ -851,10 +858,10 @@ void webmailsave(CONNECTION *sid)
 	snprintf(line, 78, "%s", pmsgbody);
 	if (strlen(line)) fprintf(fp, "%s\r\n", line);
 	free(msgbody);
-	if (strlen(sid->dat->user_wmsignature)>0) {
+	if (strlen(sid->dat->wm->signature)>0) {
 		fprintf(fp, "\r\n");
 		if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "<PRE>");
-		fprintf(fp, "%s", sid->dat->user_wmsignature);
+		fprintf(fp, "%s", sid->dat->wm->signature);
 		if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "</PRE>");
 		fprintf(fp, "\r\n");
 	}
@@ -869,14 +876,14 @@ void webmailsave(CONNECTION *sid)
 	fclose(fp);
 	prints(sid, ".");
 	if ((stat(msgfilename, &sb)!=0)||(sb.st_mode&S_IFDIR)) return;
-	sql_updatef(sid, "UPDATE gw_mailheaders SET size = '%d' WHERE mailheaderid = %d", sb.st_size, headerid);
+	sql_updatef(sid, "UPDATE gw_mailheaders SET size = '%d' WHERE mailheaderid = %d AND accountid = %d", sb.st_size, headerid, sid->dat->user_mailcurrent);
 	prints(sid, "OK<BR>\r\n");
 	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]<BR>\n", sid->dat->in_ScriptName);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\nwindow.close();\n// -->\n</SCRIPT>\n");
 	return;
 }
 
-void webmailmove(CONNECTION *sid)
+void webmailmove(CONN *sid)
 {
 	char *ptemp1;
 	char *ptemp2;
@@ -949,7 +956,7 @@ void webmailmove(CONNECTION *sid)
 	return;
 }
 
-void webmailframeset(CONNECTION *sid)
+void webmailframeset(CONN *sid)
 {
 	char *ptemp;
 	int sqr;
@@ -981,22 +988,25 @@ void webmailframeset(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
+	if (sid->dat->wm==NULL) {
+		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return;
+	}
 	if (strncmp(sid->dat->in_RequestURI, "/mail/main", 10)==0) {
 		webmailframeset(sid);
-		return;
+		goto done;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/mail/file", 10)==0) {
 		webmailfiledl(sid);
-		return;
+		goto done;
 	}
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/mail/notice", 12)==0) {
 		htpage_header(sid, "E-Mail Notice");
 		wmnotice(sid);
 		htpage_footer(sid);
-		return;
+		goto done;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/mail/quit", 10)==0) {
 		wmlogout(sid);
@@ -1023,15 +1033,19 @@ void mod_main(CONNECTION *sid)
 		webmailraw(sid);
 	}
 	htpage_footer(sid);
+done:
+	if (sid->dat->wm!=NULL) {
+		free(sid->dat->wm);
+		sid->dat->wm=NULL;
+	}
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_mail", "E-MAIL", "/mail/main", "mod_main", "/mail/", mod_main)!=0) return -1;
 	if (mod_export_function("mod_mail", "mod_mail_sync", wmsync)!=0) return -1;

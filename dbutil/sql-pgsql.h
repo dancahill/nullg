@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ CREATE TABLE gw_activity (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	userid		int4		NOT NULL DEFAULT 0,\n\
@@ -76,6 +77,7 @@ CREATE TABLE gw_bookmarks (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	folderid	int4		NOT NULL DEFAULT 0,\n\
@@ -91,6 +93,7 @@ CREATE TABLE gw_bookmarkfolders (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	parentid	int4		NOT NULL DEFAULT 0,\n\
@@ -105,6 +108,7 @@ CREATE TABLE gw_calls (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
@@ -126,6 +130,7 @@ CREATE TABLE gw_callactions (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	actionname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -139,6 +144,7 @@ CREATE TABLE gw_contacts (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	loginip		varchar(20)	NOT NULL DEFAULT '0.0.0.0',\n\
@@ -183,6 +189,7 @@ CREATE TABLE gw_events (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
@@ -208,6 +215,7 @@ CREATE TABLE gw_eventclosings (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	closingname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -221,6 +229,7 @@ CREATE TABLE gw_eventtypes (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	eventtypename	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -234,6 +243,7 @@ CREATE TABLE gw_files (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	filename	varchar(255)	NOT NULL DEFAULT '',\n\
@@ -253,6 +263,7 @@ CREATE TABLE gw_forums (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	forumgroupid	int4		NOT NULL DEFAULT 0,\n\
@@ -270,6 +281,7 @@ CREATE TABLE gw_forumgroups (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	title		varchar(50)	NOT NULL DEFAULT '',\n\
@@ -284,6 +296,7 @@ CREATE TABLE gw_forumposts (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	forumid		int4		NOT NULL DEFAULT 0,\n\
@@ -302,6 +315,7 @@ CREATE TABLE gw_groups (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	groupname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -318,6 +332,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	accountname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -346,6 +361,7 @@ CREATE TABLE gw_mailheaders (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	accountid	int4		NOT NULL DEFAULT 0,\n\
@@ -363,7 +379,7 @@ CREATE TABLE gw_mailheaders (\n\
 	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
 	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
-	PRIMARY KEY (mailheaderid)\n\
+	PRIMARY KEY (mailheaderid, accountid)\n\
 );\n\n"
 
 #define PGSQLDB_MESSAGES "\
@@ -373,6 +389,7 @@ CREATE TABLE gw_messages (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	sender		int4		NOT NULL DEFAULT 0,\n\
@@ -389,6 +406,7 @@ CREATE TABLE gw_notes (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	tablename	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -405,6 +423,7 @@ CREATE TABLE gw_orders (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	contactid	int4		NOT NULL DEFAULT 0,\n\
@@ -425,6 +444,7 @@ CREATE TABLE gw_orderitems (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	orderid		int4		NOT NULL DEFAULT 0,\n\
@@ -445,6 +465,7 @@ CREATE TABLE gw_products (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	productname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -465,6 +486,7 @@ CREATE TABLE gw_queries (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	queryname	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -479,6 +501,7 @@ CREATE TABLE gw_tasks (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	assignedby	int4		NOT NULL DEFAULT 0,\n\
@@ -495,14 +518,15 @@ CREATE TABLE gw_tasks (\n\
 #define PGSQLDB_USERS "\
 CREATE TABLE gw_users (\n\
 	userid		int4		NOT NULL DEFAULT nextval('userid_seq'::text),\n\
-	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
-	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
-	loginip		varchar(20)	NOT NULL DEFAULT '0.0.0.0',\n\
-	logintime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	loginip		varchar(20)	NOT NULL DEFAULT '',\n\
+	logintime	datetime	NOT NULL DEFAULT '1970-01-01',\n\
 	logintoken	varchar(50)	NOT NULL DEFAULT '',\n\
 	username	varchar(50)	NOT NULL DEFAULT '',\n\
 	password	varchar(50)	NOT NULL DEFAULT '',\n\
@@ -559,6 +583,7 @@ CREATE TABLE gw_zones (\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
 	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	zonename	varchar(50)	NOT NULL DEFAULT '',\n\

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ typedef	MYSQL_FIELD  *(STDCALL *LIBMYSQL_FETCH_FIELD_DIRECT)(MYSQL_RES *, unsign
 typedef	MYSQL_ROW     (STDCALL *LIBMYSQL_FETCH_ROW)(MYSQL_RES *);
 typedef	void          (STDCALL *LIBMYSQL_FREE_RESULT)(MYSQL_RES *);
 typedef	MYSQL        *(STDCALL *LIBMYSQL_INIT)(MYSQL *);
-typedef	unsigned int *(STDCALL *LIBMYSQL_NUM_FIELDS)(MYSQL_RES *);
-typedef	my_ulonglong *(STDCALL *LIBMYSQL_NUM_ROWS)(MYSQL_RES *);
+typedef	unsigned int  (STDCALL *LIBMYSQL_NUM_FIELDS)(MYSQL_RES *);
+typedef	my_ulonglong  (STDCALL *LIBMYSQL_NUM_ROWS)(MYSQL_RES *);
 typedef	int           (STDCALL *LIBMYSQL_PING)(MYSQL *);
 typedef	int           (STDCALL *LIBMYSQL_QUERY)(MYSQL *, const char *);
 typedef	MYSQL        *(STDCALL *LIBMYSQL_REAL_CONNECT)(MYSQL *, const char *, const char *, const char *, const char *, unsigned int, const char *, unsigned int);
@@ -126,12 +126,37 @@ static void *hinstLib=NULL;
  ***************************************************************************/
 int mysqlDLLInit()
 {
-	if (hinstLib!=NULL) return 0;
 #ifdef WIN32
-	if ((hinstLib=dlopen("libmysql", RTLD_NOW))==NULL) goto fail;
+	char *libext="dll";
 #else
-	if ((hinstLib=dlopen("libmysqlclient.so", RTLD_NOW))==NULL) goto fail;
+	char *libext="so";
 #endif
+	char libname[255];
+
+	if (hinstLib!=NULL) return 0;
+	memset(libname, 0, sizeof(libname));
+	snprintf(libname, sizeof(libname)-1, "%s/libmysql.%s", proc.config.server_dir_lib, libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "%s/libmysqlclient.%s", proc.config.server_dir_lib, libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+#ifdef WIN32
+	snprintf(libname, sizeof(libname)-1, "libmysql.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+#endif
+	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.12", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+//	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.10", libext);
+//	fixslashes(libname);
+//	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
+found:
 	if ((libmysql.close=(LIBMYSQL_CLOSE)dlsym(hinstLib, "mysql_close"))==NULL) goto fail;
 	if ((libmysql.data_seek=(LIBMYSQL_DATA_SEEK)dlsym(hinstLib, "mysql_data_seek"))==NULL) goto fail;
 	if ((libmysql.error=(LIBMYSQL_ERROR)dlsym(hinstLib, "mysql_error"))==NULL) goto fail;
@@ -147,7 +172,7 @@ int mysqlDLLInit()
 	if ((libmysql.use_result=(LIBMYSQL_USE_RESULT)dlsym(hinstLib, "mysql_use_result"))==NULL) goto fail;
 	return 0;
 fail:
-	logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to load libmysql");
+	logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to load %s", libname);
 	memset((char *)&libmysql, 0, sizeof(libmysql));
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
@@ -165,12 +190,23 @@ int odbcDLLInit()
 
 int pgsqlDLLInit()
 {
-	if (hinstLib!=NULL) return 0;
 #ifdef WIN32
-	if ((hinstLib=dlopen("libpq", RTLD_NOW))==NULL) goto fail;
+	char *libext="dll";
 #else
-	if ((hinstLib=dlopen("libpq.so", RTLD_NOW))==NULL) goto fail;
+	char *libext="so";
 #endif
+	char libname[255];
+
+	if (hinstLib!=NULL) return 0;
+	memset(libname, 0, sizeof(libname));
+	snprintf(libname, sizeof(libname)-1, "%s/libpq.%s", proc.config.server_dir_lib, libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libpq.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
+found:
 	if ((libpgsql.clear=(LIBPGSQL_CLEAR)dlsym(hinstLib, "PQclear"))==NULL) goto fail;
 	if ((libpgsql.errormessage=(LIBPGSQL_ERRORMESSAGE)dlsym(hinstLib, "PQerrorMessage"))==NULL) goto fail;
 	if ((libpgsql.exec=(LIBPGSQL_EXEC)dlsym(hinstLib, "PQexec"))==NULL) goto fail;
@@ -184,7 +220,7 @@ int pgsqlDLLInit()
 	if ((libpgsql.status=(LIBPGSQL_STATUS)dlsym(hinstLib, "PQstatus"))==NULL) goto fail;
 	return 0;
 fail:
-	logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to load libpq");
+	logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to load %s", libname);
 	memset((char *)&libpgsql, 0, sizeof(libpgsql));
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
@@ -193,28 +229,29 @@ fail:
 
 int SQLiteDLLInit()
 {
+#ifdef WIN32
+	char *libext="dll";
+#else
+	char *libext="so";
+#endif
 	char libname[255];
 
 #ifdef HAVE_SQLITE
 	if (hinstLib!=NULL) return 0;
 	memset(libname, 0, sizeof(libname));
-#ifdef WIN32
-	snprintf(libname, sizeof(libname)-1, "%s/sqlite.dll", config.server_dir_lib);
+	snprintf(libname, sizeof(libname)-1, "%s/libsqlite.%s", proc.config.server_dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "sqlite.dll");
+	snprintf(libname, sizeof(libname)-1, "%s/sqlite.%s", proc.config.server_dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	goto fail;
-#else
-	snprintf(libname, sizeof(libname)-1, "%s/sqlite.so", config.server_dir_lib);
+	snprintf(libname, sizeof(libname)-1, "libsqlite.%s", libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "sqlite.so");
+	snprintf(libname, sizeof(libname)-1, "sqlite.%s", libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	goto fail;
-#endif
 found:
 	if ((libsqlite.open=(SQLITE_OPEN)dlsym(hinstLib, "sqlite_open"))==NULL) goto fail;
 	if ((libsqlite.exec=(SQLITE_EXEC)dlsym(hinstLib, "sqlite_exec"))==NULL) goto fail;
@@ -308,13 +345,13 @@ void sqliteDisconnect()
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-int mysqlConnect(CONNECTION *sid)
+int mysqlConnect(CONN *sid)
 {
 #ifdef HAVE_MYSQL
 	if(mysqlDLLInit()!=0) return -1;
 	if (sql_is_connected) return 0;
 	libmysql.init(&mysql);
-	if (!(mysock=libmysql.real_connect(&mysql, config.sql_hostname, config.sql_username, config.sql_password, config.sql_dbname, config.sql_port, NULL, 0))) {
+	if (!(mysock=libmysql.real_connect(&mysql, proc.config.sql_hostname, proc.config.sql_username, proc.config.sql_password, proc.config.sql_dbname, proc.config.sql_port, NULL, 0))) {
 		logerror(sid, __FILE__, __LINE__, "MYSQL error: %s", libmysql.error(&mysql));
 		return -1;
 	}
@@ -325,7 +362,7 @@ int mysqlConnect(CONNECTION *sid)
 #endif
 }
 
-int odbcConnect(CONNECTION *sid)
+int odbcConnect(CONN *sid)
 {
 #ifdef HAVE_ODBC
 	SQLCHAR szConnStr[255];
@@ -353,7 +390,7 @@ int odbcConnect(CONNECTION *sid)
 		odbcDisconnect();
 		return -1;
 	}
-	rc=SQLDriverConnect(hDBC, NULL, config.sql_odbc_dsn, (short int)strlen(config.sql_odbc_dsn), szConnStr, sizeof(szConnStr), &cbConnStr, SQL_DRIVER_NOPROMPT);
+	rc=SQLDriverConnect(hDBC, NULL, proc.config.sql_odbc_dsn, (short int)strlen(proc.config.sql_odbc_dsn), szConnStr, sizeof(szConnStr), &cbConnStr, SQL_DRIVER_NOPROMPT);
 	if ((rc!=SQL_SUCCESS)&&(rc!=SQL_SUCCESS_WITH_INFO)) {
 		SQLError(hEnv, hDBC, hStmt, sqlstate, NULL, buf, sizeof(buf), NULL);
 		logerror(sid, __FILE__, __LINE__, "ODBC Connect - SQLDriverConnect %s", buf);
@@ -367,7 +404,7 @@ int odbcConnect(CONNECTION *sid)
 #endif
 }
 
-int pgsqlConnect(CONNECTION *sid)
+int pgsqlConnect(CONN *sid)
 {
 #ifdef HAVE_PGSQL
 	char port[12];
@@ -375,8 +412,8 @@ int pgsqlConnect(CONNECTION *sid)
 	if(pgsqlDLLInit()!=0) return -1;
 	if (sql_is_connected) return 0;
 	memset (port, 0, sizeof(port));
-	snprintf(port, sizeof(port)-1, "%d", config.sql_port);
-	pgconn=libpgsql.setdblogin(config.sql_hostname, port, NULL, NULL, config.sql_dbname, config.sql_username, config.sql_password);
+	snprintf(port, sizeof(port)-1, "%d", proc.config.sql_port);
+	pgconn=libpgsql.setdblogin(proc.config.sql_hostname, port, NULL, NULL, proc.config.sql_dbname, proc.config.sql_username, proc.config.sql_password);
 	if (libpgsql.status(pgconn)==CONNECTION_BAD) {
 		logerror(sid, __FILE__, __LINE__, "PGSQL Connect - %s", libpgsql.errormessage(pgconn));
 		return -1;
@@ -388,7 +425,7 @@ int pgsqlConnect(CONNECTION *sid)
 #endif
 }
 
-int sqliteConnect(CONNECTION *sid)
+int sqliteConnect(CONN *sid)
 {
 #ifdef HAVE_SQLITE
 	char dbname[255];
@@ -396,7 +433,7 @@ int sqliteConnect(CONNECTION *sid)
 
 	if (SQLiteDLLInit()!=0) return -1;
 	if (sql_is_connected) return 0;
-	snprintf(dbname, sizeof(dbname)-1, "%s/groupware.db", config.server_dir_var_db);
+	snprintf(dbname, sizeof(dbname)-1, "%s/%s.db", proc.config.server_dir_var_db, SERVER_BASENAME);
 	fixslashes(dbname);
 	db=libsqlite.open(dbname, 0, &zErrMsg);
 	if (db==0) {
@@ -418,7 +455,7 @@ int sqliteConnect(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-int mysqlUpdate(CONNECTION *sid, char *sqlquery)
+int mysqlUpdate(CONN *sid, char *sqlquery)
 {
 #ifdef HAVE_MYSQL
 	if (libmysql.query(mysock, sqlquery)) {
@@ -432,7 +469,7 @@ int mysqlUpdate(CONNECTION *sid, char *sqlquery)
 #endif
 }
 
-int odbcUpdate(CONNECTION *sid, char *sqlquery)
+int odbcUpdate(CONN *sid, char *sqlquery)
 {
 #ifdef HAVE_ODBC
 	char sqlstate[15];
@@ -462,7 +499,7 @@ int odbcUpdate(CONNECTION *sid, char *sqlquery)
 #endif
 }
 
-int pgsqlUpdate(CONNECTION *sid, char *sqlquery)
+int pgsqlUpdate(CONN *sid, char *sqlquery)
 {
 #ifdef HAVE_PGSQL
 	pgres=libpgsql.exec(pgconn, "BEGIN");
@@ -486,7 +523,7 @@ int pgsqlUpdate(CONNECTION *sid, char *sqlquery)
 #endif
 }
 
-int sqliteUpdate(CONNECTION *sid, char *sqlquery)
+int sqliteUpdate(CONN *sid, char *sqlquery)
 {
 #ifdef HAVE_SQLITE
 	char *zErrMsg=0;
@@ -512,7 +549,7 @@ int sqliteUpdate(CONNECTION *sid, char *sqlquery)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-int mysqlQuery(CONNECTION *sid, int sqr, char *sqlquery)
+int mysqlQuery(CONN *sid, int sqr, char *sqlquery)
 {
 #ifdef HAVE_MYSQL
 	MYSQL_RES *myres;
@@ -574,7 +611,7 @@ int mysqlQuery(CONNECTION *sid, int sqr, char *sqlquery)
 #endif
 }
 
-int odbcQuery(CONNECTION *sid, int sqr, char *sqlquery)
+int odbcQuery(CONN *sid, int sqr, char *sqlquery)
 {
 #ifdef HAVE_ODBC
 	SQLSMALLINT pccol;
@@ -654,7 +691,7 @@ int odbcQuery(CONNECTION *sid, int sqr, char *sqlquery)
 #endif
 }
 
-int pgsqlQuery(CONNECTION *sid, int sqr, char *sqlquery)
+int pgsqlQuery(CONN *sid, int sqr, char *sqlquery)
 {
 #ifdef HAVE_PGSQL
 	char query[8192];
@@ -763,7 +800,7 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-int sqliteQuery(CONNECTION *sid, int sqr, char *sqlquery)
+int sqliteQuery(CONN *sid, int sqr, char *sqlquery)
 {
 #ifdef HAVE_SQLITE
 	char *zErrMsg=0;
@@ -792,34 +829,34 @@ int sqliteQuery(CONNECTION *sid, int sqr, char *sqlquery)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void sql_disconnect(CONNECTION *sid)
+void sql_disconnect(CONN *sid)
 {
-	if (!RunAsCGI) pthread_mutex_lock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_lock(&Lock.SQL);
 	logaccess(sid, 4, "SQL Disconnection");
-	if (strcmp(config.sql_type, "ODBC")==0) {
+	if (strcmp(proc.config.sql_type, "ODBC")==0) {
 		odbcDisconnect();
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 		mysqlDisconnect();
-	} else if (strcmp(config.sql_type, "PGSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		pgsqlDisconnect();
-	} else if (strcmp(config.sql_type, "SQLITE")==0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
 		sqliteDisconnect();
 	}
 	sql_dll_unload();
-	if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 	return;
 }
 
-void sql_unsafedisconnect(CONNECTION *sid)
+void sql_unsafedisconnect(CONN *sid)
 {
 	logaccess(sid, 4, "SQL Disconnection");
-	if (strcmp(config.sql_type, "ODBC")==0) {
+	if (strcmp(proc.config.sql_type, "ODBC")==0) {
 		odbcDisconnect();
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 		mysqlDisconnect();
-	} else if (strcmp(config.sql_type, "PGSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		pgsqlDisconnect();
-	} else if (strcmp(config.sql_type, "SQLITE")==0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
 		sqliteDisconnect();
 	}
 	sql_dll_unload();
@@ -830,7 +867,7 @@ void sql_freeresult(int sqr)
 {
 	unsigned int tuple;
 
-	if (!RunAsCGI) pthread_mutex_lock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_lock(&Lock.SQL);
 	memset(sqlreply[sqr].fields, 0, sizeof(sqlreply[sqr].fields));
 	if (sqlreply[sqr].cursor!=NULL) {
 		for (tuple=0;tuple<sqlreply[sqr].NumTuples;tuple++) {
@@ -844,51 +881,52 @@ void sql_freeresult(int sqr)
 	}
 	sqlreply[sqr].NumFields=0;
 	sqlreply[sqr].NumTuples=0;
+	proc.stats.sql_handlecount--;
 //	logaccess(sid, 3, "SQL query [%d] freed", sqr);
-	if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 	return;
 }
 
-int sql_update(CONNECTION *sid, char *sqlquery)
+int sql_update(CONN *sid, char *sqlquery)
 {
 	int rc=-1;
 
-	if (!RunAsCGI) pthread_mutex_lock(&Lock.SQL);
-	stats.updates++;
+	if (!proc.RunAsCGI) pthread_mutex_lock(&Lock.SQL);
+	proc.stats.sql_updates++;
 	if (sid==NULL) {
 		logaccess(sid, 2, "SQL update by system: %s", sqlquery);
 	} else {
 		logaccess(sid, 2, "SQL update by %s: %s", sid->dat->user_username, sqlquery);
 	}
-	if (strcmp(config.sql_type, "ODBC")==0) {
+	if (strcmp(proc.config.sql_type, "ODBC")==0) {
 		if (odbcConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		rc=odbcUpdate(sid, sqlquery);
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect(sid)<0) {
 			return -1;
 		}
 		rc=mysqlUpdate(sid, sqlquery);
-	} else if (strcmp(config.sql_type, "PGSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		rc=pgsqlUpdate(sid, sqlquery);
-	} else if (strcmp(config.sql_type, "SQLITE")==0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
 		if (sqliteConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		rc=sqliteUpdate(sid, sqlquery);
 	}
-	if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }
 
-int sql_updatef(CONNECTION *sid, char *format, ...)
+int sql_updatef(CONN *sid, char *format, ...)
 {
 	unsigned char sqlquery[8192];
 	va_list ap;
@@ -900,56 +938,57 @@ int sql_updatef(CONNECTION *sid, char *format, ...)
 	return sql_update(sid, sqlquery);
 }
 
-int sql_query(CONNECTION *sid, char *query)
+int sql_query(CONN *sid, char *query)
 {
 	int i;
 	int rc=-1;
 
-	if (!RunAsCGI) pthread_mutex_lock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_lock(&Lock.SQL);
 	for (i=0;;i++) {
-		if (i>=config.sql_maxconn) {
+		if (i>=proc.config.sql_maxconn) {
 			sleep(1);
 			i=0;
 			continue;
 		}
 		if (sqlreply[i].cursor==NULL) break;
 	}
-	stats.queries++;
+	proc.stats.sql_queries++;
+	proc.stats.sql_handlecount++;
 	if (sid==NULL) {
 		logaccess(sid, 3, "SQL query [%d] by system: %s", i, query);
 	} else {
 		logaccess(sid, 3, "SQL query [%d] by %s: %s", i, sid->dat->user_username, query);
 	}
-	if (strcmp(config.sql_type, "ODBC")==0) {
+	if (strcmp(proc.config.sql_type, "ODBC")==0) {
 		if (odbcConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		if ((rc=odbcQuery(sid, i, query))<0) {
 			odbcDisconnect();
 			odbcConnect(sid);
 		}
-	} else if (strcmp(config.sql_type, "MYSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 		if (mysqlConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		if ((rc=mysqlQuery(sid, i, query))<0) {
 			mysqlDisconnect();
 			mysqlConnect(sid);
 		}
-	} else if (strcmp(config.sql_type, "PGSQL")==0) {
+	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		if (pgsqlConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		if ((rc=pgsqlQuery(sid, i, query))<0) {
 			pgsqlDisconnect();
 			pgsqlConnect(sid);
 		}
-	} else if (strcmp(config.sql_type, "SQLITE")==0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
 		if (sqliteConnect(sid)<0) {
-			if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+			if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
 		if ((rc=sqliteQuery(sid, i, query))<0) {
@@ -957,11 +996,11 @@ int sql_query(CONNECTION *sid, char *query)
 			sqliteConnect(sid);
 		}
 	}
-	if (!RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
+	if (!proc.RunAsCGI) pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }
 
-int sql_queryf(CONNECTION *sid, char *format, ...)
+int sql_queryf(CONN *sid, char *format, ...)
 {
 	unsigned char sqlquery[8192];
 	va_list ap;

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ char *get_mime_type(char *name)
 	return "application/octet-stream";
 }
 
-void ReadPOSTData(CONNECTION *sid) {
+void ReadPOSTData(CONN *sid) {
 	char *pPostData;
 	int bytesleft;
 	int rc;
@@ -110,7 +110,7 @@ void ReadPOSTData(CONNECTION *sid) {
 		closeconnect(sid, 1);
 	}
 	pPostData=sid->PostData;
-	if (RunAsCGI) {
+	if (proc.RunAsCGI) {
 		while (bytesleft>0) {
 			rc=read(fileno(stdin), pPostData, bytesleft);
 			if (rc<1) {
@@ -135,7 +135,7 @@ void ReadPOSTData(CONNECTION *sid) {
 	return;
 }
 
-char *getgetenv(CONNECTION *sid, char *query)
+char *getgetenv(CONN *sid, char *query)
 {
 	char *buffer=getbuffer(sid);
 	char *pToken;
@@ -171,76 +171,91 @@ char *getgetenv(CONNECTION *sid, char *query)
 	return NULL;
 }
 
-char *getmimeenv(CONNECTION *sid, char *query, unsigned int *buffersize)
+char *getmimeenv(CONN *sid, char *query, unsigned int *buffersize)
 {
 	char *buffer=NULL;
 	char boundary1[100];
 	char boundary2[100];
-	char pQuery[64];
+	char queryl[64];
+	char queryt[64];
 	char *pPostData;
-	int i;
+	int index=0;
+	unsigned int i;
 
 	if (sid->PostData==NULL) return NULL;
-	strncpy(pQuery, query, sizeof(pQuery)-1);
-	pPostData=sid->PostData;
 	*buffersize=0;
 	memset(boundary1, 0, sizeof(boundary1));
 	memset(boundary2, 0, sizeof(boundary2));
-	i=0;
-	while (pQuery[i]) {
-//	FIXME: not fatal yet, but case sensitivity needs to be removed properly
-		pQuery[i]=tolower(pQuery[i]);
-		i++;
+	memset(queryl, 0, sizeof(queryl));
+	memset(queryt, 0, sizeof(queryt));
+	for (i=0;query[i]!='\0';i++) {
+		queryl[i]=tolower(query[i]);
 	}
+	pPostData=sid->PostData;
 	i=0;
-	/* get the mime boundary */
-	while ((*pPostData!='\r')&&(*pPostData!='\n')&&(i<sid->dat->in_ContentLength)&&(strlen(boundary1)<sizeof(boundary1)-1)) {
+	while ((*pPostData!='\r')&&(*pPostData!='\n')&&(index<sid->dat->in_ContentLength)&&(i<sizeof(boundary1)-1)) {
 		boundary1[i]=*pPostData;
 		pPostData++;
+		index++;
 		i++;
 	}
 	snprintf(boundary2, sizeof(boundary2)-1, "%s--", boundary1);
-	while ((strncmp(pPostData, boundary2, sizeof(boundary2))!=0)&&(i<sid->dat->in_ContentLength)) {
-		/* eat newline garbage */
+	while ((strncmp(pPostData, boundary2, sizeof(boundary2))!=0)&&(index<sid->dat->in_ContentLength)) {
 		while ((*pPostData=='\r')||(*pPostData=='\n')) {
 			pPostData++;
-			i++;
+			index++;
 		}
-		if (strncmp(pPostData, "Content-Disposition: form-data; name=\"", 38)==0) {
-			pPostData+=38;
-			if (strncmp(pPostData, pQuery, strlen(pQuery)-1)==0) {
-				pPostData+=strlen(pQuery)+1;
-				while ((*pPostData=='\r')||(*pPostData=='\n')) {
+		if (strncasecmp(pPostData, "Content-Disposition: form-data; name=", 37)==0) {
+			pPostData+=37;
+			if (*pPostData=='\"') pPostData++;
+			memset(queryt, 0, sizeof(queryt));
+			i=0;
+			while ((*pPostData)&&(*pPostData!='\"')&&(*pPostData!='\r')&&(*pPostData!='\n')) {
+				queryt[i++]=tolower(*pPostData++);
+				index++;
+			}
+			while ((*pPostData)&&(*pPostData!='\r')&&(*pPostData!='\n')) {
+				pPostData++;
+				index++;
+			}
+			if (*pPostData=='\r') { pPostData++; index++; }
+			if (*pPostData=='\n') { pPostData++; index++; }
+			while ((*pPostData)&&(*pPostData!='\r')&&(*pPostData!='\n')) {
+				while ((*pPostData)&&(*pPostData!='\r')&&(*pPostData!='\n')) {
 					pPostData++;
-					i++;
+					index++;
 				}
-				if (strncmp(pPostData, boundary1, strlen(boundary1))==0) {
-					*buffersize=0;
-					return NULL;
-				}
+				if (*pPostData=='\r') { pPostData++; index++; }
+				if (*pPostData=='\n') { pPostData++; index++; }
+			}
+			if (*pPostData=='\r') { pPostData++; index++; }
+			if (*pPostData=='\n') { pPostData++; index++; }
+			if (strcmp(queryl, queryt)==0) {
 				buffer=pPostData;
-				while ((strncmp(pPostData, boundary1, strlen(boundary1))!=0)&&(i<sid->dat->in_ContentLength)) {
+				for (i=0;;i++) {
+					if (strncmp(pPostData, boundary1, strlen(boundary1))==0) break;
+					if (index>sid->dat->in_ContentLength) break;
 					*buffersize+=1;
 					pPostData++;
-					i++;
+					index++;
 				}
 				if (buffer[*buffersize-1]=='\n') *buffersize-=1;
 				if (buffer[*buffersize-1]=='\r') *buffersize-=1;
-				if (*buffersize<=0) {
+				if (*buffersize<0) {
 					*buffersize=0;
-					return NULL;
+					buffer=NULL;
 				}
 				return buffer;
 			}
 		} else {
 			pPostData++;
-			i++;
+			index++;
 		}
 	}
 	return NULL;
 }
 
-char *getpostenv(CONNECTION *sid, char *query)
+char *getpostenv(CONN *sid, char *query)
 {
 	char *buffer=sid->dat->largebuf;
 	char *pToken;
@@ -268,7 +283,7 @@ char *getpostenv(CONNECTION *sid, char *query)
 	return NULL;
 }
 
-char *getxmlenv(CONNECTION *sid, char *query)
+char *getxmlenv(CONN *sid, char *query)
 {
 	char *buffer=getbuffer(sid);
 	char *pToken;
@@ -299,7 +314,7 @@ char *getxmlenv(CONNECTION *sid, char *query)
 	return NULL;
 }
 
-char *getxmlparam(CONNECTION *sid, int param, char *reqtype)
+char *getxmlparam(CONN *sid, int param, char *reqtype)
 {
 	char *buffer=getbuffer(sid);
 	char *pToken;
@@ -340,7 +355,7 @@ char *getxmlparam(CONNECTION *sid, int param, char *reqtype)
 	return NULL;
 }
 
-char *getxmlstruct(CONNECTION *sid, char *reqmember, char *reqtype)
+char *getxmlstruct(CONN *sid, char *reqmember, char *reqtype)
 {
 	char *buffer=getbuffer(sid);
 	char *pToken;
@@ -410,38 +425,33 @@ char *getxmlstruct(CONNECTION *sid, char *reqmember, char *reqtype)
 	return NULL;
 }
 
-void read_cgienv(CONNECTION *sid)
+void read_cgienv(CONN *sid)
 {
-	if (getenv("CONTENT_LENGTH")!=NULL) {
-		sid->dat->in_ContentLength=atoi(getenv("CONTENT_LENGTH"));
+	char *ptemp;
+
+	if ((ptemp=getenv("CONTENT_LENGTH"))!=NULL) {
+		sid->dat->in_ContentLength=atoi(ptemp);
 		if (sid->dat->in_ContentLength<0) {
 			logerror(sid, __FILE__, __LINE__, "ERROR: negative Content-Length of %d provided by client.", sid->dat->in_ContentLength);
 			sid->dat->in_ContentLength=0;
 		}
 	}
-	if (getenv("HTTP_COOKIE")!=NULL)
-		strncpy(sid->dat->in_Cookie, getenv("HTTP_COOKIE"), sizeof(sid->dat->in_Cookie)-1);
-	if (getenv("HTTP_HOST")!=NULL)
-		strncpy(sid->dat->in_Host, getenv("HTTP_HOST"), sizeof(sid->dat->in_Host)-1);
-	if (getenv("HTTP_USER_AGENT")!=NULL)
-		strncpy(sid->dat->in_UserAgent, getenv("HTTP_USER_AGENT"), sizeof(sid->dat->in_UserAgent)-1);
-	if (getenv("PATH_INFO")!=NULL)
-		strncpy(sid->dat->in_PathInfo, getenv("PATH_INFO"), sizeof(sid->dat->in_PathInfo)-1);
-	if (getenv("QUERY_STRING")!=NULL)
-		strncat(sid->dat->in_QueryString, getenv("QUERY_STRING"), sizeof(sid->dat->in_QueryString)-1);
-	if (getenv("REMOTE_ADDR")!=NULL)
-		strncat(sid->dat->in_RemoteAddr, getenv("REMOTE_ADDR"), sizeof(sid->dat->in_RemoteAddr)-1);
-	if (getenv("REQUEST_METHOD")!=NULL)
-		strncpy(sid->dat->in_RequestMethod, getenv("REQUEST_METHOD"), sizeof(sid->dat->in_RequestMethod)-1);
-	if (getenv("SCRIPT_NAME")!=NULL)
-		strncat(sid->dat->in_ScriptName, getenv("SCRIPT_NAME"), sizeof(sid->dat->in_ScriptName)-1);
+	if ((ptemp=getenv("HTTP_COOKIE"))!=NULL)     strncpy(sid->dat->in_Cookie, ptemp, sizeof(sid->dat->in_Cookie)-1);
+	if ((ptemp=getenv("HTTP_HOST"))!=NULL)       strncpy(sid->dat->in_Host, ptemp, sizeof(sid->dat->in_Host)-1);
+	if ((ptemp=getenv("HTTP_USER_AGENT"))!=NULL) strncpy(sid->dat->in_UserAgent, ptemp, sizeof(sid->dat->in_UserAgent)-1);
+	if ((ptemp=getenv("PATH_INFO"))!=NULL)       strncpy(sid->dat->in_PathInfo, ptemp, sizeof(sid->dat->in_PathInfo)-1);
+	if ((ptemp=getenv("QUERY_STRING"))!=NULL)    strncat(sid->dat->in_QueryString, ptemp, sizeof(sid->dat->in_QueryString)-1);
+	if ((ptemp=getenv("REMOTE_ADDR"))!=NULL)     strncat(sid->dat->in_RemoteAddr, ptemp, sizeof(sid->dat->in_RemoteAddr)-1);
+	if ((ptemp=getenv("REQUEST_METHOD"))!=NULL)  strncpy(sid->dat->in_RequestMethod, ptemp, sizeof(sid->dat->in_RequestMethod)-1);
+	if ((ptemp=getenv("SCRIPT_NAME"))!=NULL)     strncat(sid->dat->in_ScriptName, ptemp, sizeof(sid->dat->in_ScriptName)-1);
 	strncpy(sid->dat->in_RequestURI, sid->dat->in_PathInfo, sizeof(sid->dat->in_RequestURI)-1);
 	if (strlen(sid->dat->in_QueryString)>0) {
 		strncat(sid->dat->in_RequestURI, "?", sizeof(sid->dat->in_RequestURI)-strlen(sid->dat->in_RequestURI)-1);
 		strncat(sid->dat->in_RequestURI, sid->dat->in_QueryString, sizeof(sid->dat->in_RequestURI)-strlen(sid->dat->in_RequestURI)-1);
 	}
-	if (strlen(sid->dat->in_RequestURI)==0)
+	if (strlen(sid->dat->in_RequestURI)==0) {
 		strncpy(sid->dat->in_RequestURI, "/", sizeof(sid->dat->in_RequestURI)-1);
+	}
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
 		if (sid->dat->in_ContentLength<MAX_POSTSIZE) {
 			ReadPOSTData(sid);
@@ -454,7 +464,7 @@ void read_cgienv(CONNECTION *sid)
 	return;
 }
 
-int read_header(CONNECTION *sid)
+int read_header(CONN *sid)
 {
 	char line[2048];
 	char *ptemp;
@@ -570,26 +580,24 @@ int read_header(CONNECTION *sid)
 	return 0;
 }
 
-void send_error(CONNECTION *sid, int status, char* title, char* text)
+void send_error(CONN *sid, int status, char* title, char* text)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
-	prints(sid, "<HTML>\r\n");
-	prints(sid, "<HEAD>\r\n");
+	prints(sid, "<HTML>\r\n<HEAD>\r\n");
 	prints(sid, "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=us-ascii\">\r\n");
-	prints(sid, "<TITLE>%d %s</TITLE>\r\n", status, title);
-	prints(sid, "</HEAD>\r\n", status, title);
+	prints(sid, "<TITLE>%d %s</TITLE>\r\n</HEAD>\r\n", status, title);
 	prints(sid, "<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\">\r\n");
 	prints(sid, "<H1>%d %s</H1>\r\n", status, title);
 	prints(sid, "%s\r\n", str2html(sid, text));
-	prints(sid, "<HR>\r\n<ADDRESS>%s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME);
+	prints(sid, "<HR>\r\n<ADDRESS>%s %s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME, SERVER_VERSION);
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
 	closeconnect(sid, 1);
 	return;
 }
 
-void send_header(CONNECTION *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
+void send_header(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
 {
 	char timebuf[100];
 	time_t now;
@@ -624,7 +632,7 @@ void send_header(CONNECTION *sid, int cacheable, int status, char *title, char *
 	}
 }
 
-void send_fileheader(CONNECTION *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
+void send_fileheader(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod)
 {
 	send_header(sid, cacheable, status, title, extra_header, mime_type, length, mod);
 	flushheader(sid);

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,27 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
-
-/*
-void htselect_bookmarkfolder(CONNECTION *sid, int selected)
-{
-	int i, j;
-	int sqr;
-
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
-		if ((sqr=sql_queryf(sid, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders ORDER BY foldername ASC"))<0) return;
-	} else {
-		if ((sqr=sql_queryf(sid, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY foldername ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
-	}
-	prints(sid, "<OPTION VALUE='0'>Root Folder\n");
-	for (i=0;i<sql_numtuples(sqr);i++) {
-		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 2)));
-	}
-	sql_freeresult(sqr);
-	return;
-}
-*/
+#include "mod_bookmarks.h"
 
 typedef struct {
 	int lastref;
@@ -45,10 +25,9 @@ typedef struct {
 typedef struct {
 	int id;
 	int depth;
-	int numchildren;
 } _ptree;
 
-void htselect_bookmarkfolder(CONNECTION *sid, int selected)
+void htselect_bookmarkfolder(CONN *sid, int selected)
 {
 	_btree *btree;
 	_ptree *ptree;
@@ -59,7 +38,7 @@ void htselect_bookmarkfolder(CONNECTION *sid, int selected)
 	int x;
 	int sqr;
 
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders ORDER BY parentid ASC, foldername ASC"))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, parentid, foldername FROM gw_bookmarkfolders WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY parentid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
@@ -94,7 +73,6 @@ void htselect_bookmarkfolder(CONNECTION *sid, int selected)
 	if (base<sql_numtuples(sqr)) {
 		goto widthloop;
 	}
-//	logerror(sid, __FILE__, __LINE__, "[%d][================]", sql_numtuples(sqr));
 	for (i=0;i<sql_numtuples(sqr);i++) {
 //		logerror(sid, __FILE__, __LINE__, "[%d][%s][%s][%s]", i, sql_getvalue(sqr, ptree[i].id, 0), sql_getvalue(sqr, ptree[i].id, 1), sql_getvalue(sqr, ptree[i].id, 2));
 		x=atoi(sql_getvalue(sqr, ptree[i].id, 0));
@@ -102,31 +80,30 @@ void htselect_bookmarkfolder(CONNECTION *sid, int selected)
 		for (indent=0;indent<ptree[i].depth;indent++) prints(sid, "&nbsp;&nbsp;");
 		prints(sid, "%s\n", str2html(sid, sql_getvalue(sqr, ptree[i].id, 2)));
 	}
-//	logerror(sid, __FILE__, __LINE__, "[================]");
 	free(ptree);
 	free(btree);
 	sql_freeresult(sqr);
 	return;
 }
 
-void bookmarkfolderedit(CONNECTION *sid)
+void bookmarkfolderedit(CONN *sid)
 {
 	REC_BOOKMARKFOLDER bookmarkfolder;
 	int folderid;
 
-	if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/foldereditnew", 24)==0) {
 		folderid=0;
-		db_read(sid, 2, DB_BOOKMARKFOLDERS, 0, &bookmarkfolder);
+		dbread_bookmarkfolder(sid, 2, 0, &bookmarkfolder);
 		if (getgetenv(sid, "PARENT")==NULL) return;
 		bookmarkfolder.parentid=atoi(getgetenv(sid, "PARENT"));
 	} else {
 		if (getgetenv(sid, "FOLDERID")==NULL) return;
 		folderid=atoi(getgetenv(sid, "FOLDERID"));
-		if (db_read(sid, 2, DB_BOOKMARKFOLDERS, folderid, &bookmarkfolder)!=0) {
+		if (dbread_bookmarkfolder(sid, 2, folderid, &bookmarkfolder)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", folderid);
 			return;
 		}
@@ -138,7 +115,7 @@ void bookmarkfolderedit(CONNECTION *sid)
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/bookmarks/foldersave NAME=folderedit>\n", sid->dat->in_ScriptName);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<INPUT TYPE=hidden NAME=folderid VALUE='%d'>\n", bookmarkfolder.folderid);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (folderid!=0) {
@@ -146,26 +123,29 @@ void bookmarkfolderedit(CONNECTION *sid)
 	} else {
 		prints(sid, "New Bookmark Folder</FONT></TH></TR>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=parentid style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'>\n", config->colour_editform);
 	htselect_bookmarkfolder(sid, bookmarkfolder.parentid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, bookmarkfolder.foldername));
-	if ((bookmarkfolder.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, bookmarkfolder.foldername));
+	prints(sid, "</TABLE></TD></TR>\n");
+	if ((bookmarkfolder.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s STYLE='padding:0px'><TD><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, bookmarkfolder.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, bookmarkfolder.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmarkfolder.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", bookmarkfolder.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", bookmarkfolder.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", bookmarkfolder.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", bookmarkfolder.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", bookmarkfolder.obj_operm==2?" CHECKED":"");
@@ -173,7 +153,7 @@ void bookmarkfolderedit(CONNECTION *sid)
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)&&(folderid>0)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)&&(folderid>0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "</FORM>\n");
@@ -182,7 +162,7 @@ void bookmarkfolderedit(CONNECTION *sid)
 	return;
 }
 
-void bookmarkfoldersave(CONNECTION *sid)
+void bookmarkfoldersave(CONN *sid)
 {
 	REC_BOOKMARKFOLDER bookmarkfolder;
 	char query[2048];
@@ -192,22 +172,22 @@ void bookmarkfoldersave(CONNECTION *sid)
 	int folderid;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FOLDERID"))==NULL) return;
 	folderid=atoi(ptemp);
-	if (db_read(sid, 2, DB_BOOKMARKFOLDERS, folderid, &bookmarkfolder)!=0) {
+	if (dbread_bookmarkfolder(sid, 2, folderid, &bookmarkfolder)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN) {
+	if (auth_priv(sid, "bookmarks")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) bookmarkfolder.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) bookmarkfolder.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)||(bookmarkfolder.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)||(bookmarkfolder.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) bookmarkfolder.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) bookmarkfolder.obj_operm=atoi(ptemp);
 	}
@@ -216,7 +196,7 @@ void bookmarkfoldersave(CONNECTION *sid)
 	t=time(NULL);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -256,7 +236,7 @@ void bookmarkfoldersave(CONNECTION *sid)
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/bookmarks/list?folder=%d\">\n", sid->dat->in_ScriptName, bookmarkfolder.folderid);
 		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "insert", "%s - %s added bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
 	} else {
-		if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -272,20 +252,20 @@ void bookmarkfoldersave(CONNECTION *sid)
 	return;
 }
 
-void bookmarksedit(CONNECTION *sid)
+void bookmarksedit(CONN *sid)
 {
 	REC_BOOKMARK bookmark;
 	char *ptemp;
 	int bookmarkid;
 	int err;
 
-	if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/editnew", 18)==0) {
 		bookmarkid=0;
-		if ((err=db_read(sid, 2, DB_BOOKMARKS, 0, &bookmark))==-2) {
+		if ((err=dbread_bookmark(sid, 2, 0, &bookmark))==-2) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", bookmarkid);
 			return;
 		} else if (err!=0) {
@@ -296,7 +276,7 @@ void bookmarksedit(CONNECTION *sid)
 	} else {
 		if (getgetenv(sid, "BOOKMARKID")==NULL) return;
 		bookmarkid=atoi(getgetenv(sid, "BOOKMARKID"));
-		if ((err=db_read(sid, 2, DB_BOOKMARKS, bookmarkid, &bookmark))==-2) {
+		if ((err=dbread_bookmark(sid, 2, bookmarkid, &bookmark))==-2) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", bookmarkid);
 			return;
 		} else if (err!=0) {
@@ -311,7 +291,7 @@ void bookmarksedit(CONNECTION *sid)
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/bookmarks/save NAME=bookmarkedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=bookmarkid VALUE='%d'>\n", bookmark.bookmarkid);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
 	if (bookmarkid!=0) {
 		prints(sid, "Bookmark Number %d</FONT></TH></TR>\n", bookmark.bookmarkid);
@@ -326,22 +306,22 @@ void bookmarksedit(CONNECTION *sid)
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Bookmark Name   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=bookmarkname    VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, bookmark.bookmarkname));
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Bookmark Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=bookmarkurl     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, bookmark.bookmarkurl));
 	prints(sid, "</TABLE></TD></TR>\n");
-	if ((bookmark.obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if ((bookmark.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s STYLE='padding:0px'><TD><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, bookmark.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, bookmark.obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmark.obj_gperm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", bookmark.obj_gperm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", bookmark.obj_gperm==2?" CHECKED":"");
 		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", bookmark.obj_operm==0?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", bookmark.obj_operm==1?" CHECKED":"");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", bookmark.obj_operm==2?" CHECKED":"");
@@ -349,7 +329,7 @@ void bookmarksedit(CONNECTION *sid)
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_DELETE)&&(bookmarkid!=0)) {
+	if ((auth_priv(sid, "bookmarks")&A_DELETE)&&(bookmarkid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "</FORM>\n</CENTER>\n");
@@ -357,7 +337,7 @@ void bookmarksedit(CONNECTION *sid)
 	return;
 }
 
-void bookmarkslist(CONNECTION *sid)
+void bookmarkslist(CONN *sid)
 {
 	char *ptemp;
 	int folderid=0;
@@ -365,43 +345,43 @@ void bookmarkslist(CONNECTION *sid)
 	int numfolders=0;
 	int sqr;
 	
-	if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_READ)) {
+	if (!(auth_priv(sid, "bookmarks")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FOLDER"))!=NULL) folderid=atoi(ptemp);
 	prints(sid, "<CENTER>\n");
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d ORDER BY foldername ASC", folderid))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s><TH", config->colour_th);
-		if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) prints(sid, " COLSPAN=2");
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s><TH", config->colour_tabletrim, config->colour_th);
+		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
 		prints(sid, "><FONT COLOR=%s>%s</FONT></TH></TR>\n", config->colour_thtext, str2html(sid, sql_getvalue(sqr, 0, 1)));
 		prints(sid, "<TR BGCOLOR=%s><TD", config->colour_fieldval);
-		if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) prints(sid, " COLSPAN=2");
+		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
 		prints(sid, " WIDTH=300><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
 		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.gif HEIGHT=16 WIDTH=16>&nbsp;");
 		prints(sid, "Parent Directory</A></TD></TR>\n");
 		numfolders++;
 	}
 	sql_freeresult(sqr);
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d ORDER BY foldername ASC", folderid))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT folderid, foldername FROM gw_bookmarkfolders WHERE parentid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
 		if (numfolders==0) {
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s><TH", config->colour_th);
-			if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) prints(sid, " COLSPAN=2");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s><TH", config->colour_tabletrim, config->colour_th);
+			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
 			prints(sid, "><FONT COLOR=%s>Bookmarks</FONT></TH></TR>\n", config->colour_thtext);
 		}
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) {
+			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
 				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			}
 			prints(sid, "<TD NOWRAP WIDTH=300><NOBR><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -411,20 +391,20 @@ void bookmarkslist(CONNECTION *sid)
 		numfolders++;
 	}
 	sql_freeresult(sqr);
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)) {
 		if ((sqr=sql_queryf(sid, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d ORDER BY bookmarkname ASC", folderid))<0) return;
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY bookmarkname ASC", folderid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
 		if (numfolders==0) {
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n<TR BGCOLOR=%s>", config->colour_th);
-			if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) prints(sid, "<TH>&nbsp;</TH>");
+			prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n<TR BGCOLOR=%s>", config->colour_tabletrim, config->colour_th);
+			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, "<TH>&nbsp;</TH>");
 			prints(sid, "<TH ALIGN=left WIDTH=250><FONT COLOR=%s>Name</FONT></TH></TR>\n", config->colour_thtext);
 		}
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			if ((auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) {
+			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
 				prints(sid, "<TD NOWRAP><A HREF=%s/bookmarks/edit?bookmarkid=%s>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 			}
 			prints(sid, "<TD NOWRAP WIDTH=300><NOBR><A HREF=\"%s\" TARGET=_blank>", sql_getvalue(sqr, i, 2));
@@ -441,28 +421,28 @@ void bookmarkslist(CONNECTION *sid)
 	return;
 }
 
-void bookmarkssave(CONNECTION *sid)
+void bookmarkssave(CONN *sid)
 {
 	REC_BOOKMARK bookmark;
 	char *ptemp;
 	int bookmarkid;
 
-	if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) {
+	if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "BOOKMARKID"))==NULL) return;
 	bookmarkid=atoi(ptemp);
-	if (db_read(sid, 2, DB_BOOKMARKS, bookmarkid, &bookmark)!=0) {
+	if (dbread_bookmark(sid, 2, bookmarkid, &bookmark)!=0) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN) {
+	if (auth_priv(sid, "bookmarks")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) bookmark.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) bookmark.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_BOOKMARKS)&A_ADMIN)||(bookmark.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "bookmarks")&A_ADMIN)||(bookmark.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) bookmark.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) bookmark.obj_operm=atoi(ptemp);
 	}
@@ -470,7 +450,7 @@ void bookmarkssave(CONNECTION *sid)
 	if ((ptemp=getpostenv(sid, "BOOKMARKNAME"))!=NULL) snprintf(bookmark.bookmarkname, sizeof(bookmark.bookmarkname)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "BOOKMARKURL"))!=NULL) snprintf(bookmark.bookmarkurl, sizeof(bookmark.bookmarkurl)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_DELETE)) {
+		if (!(auth_priv(sid, "bookmarks")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -478,22 +458,22 @@ void bookmarkssave(CONNECTION *sid)
 		prints(sid, "<CENTER>Bookmark %d deleted successfully</CENTER><BR>\n", bookmark.bookmarkid);
 		db_log_activity(sid, 1, "bookmarks", bookmark.bookmarkid, "delete", "%s - %s deleted bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else if (bookmark.bookmarkid==0) {
-		if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_INSERT)) {
+		if (!(auth_priv(sid, "bookmarks")&A_INSERT)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((bookmark.bookmarkid=db_write(sid, DB_BOOKMARKS, 0, &bookmark))<1) {
+		if ((bookmark.bookmarkid=dbwrite_bookmark(sid, 0, &bookmark))<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
 		prints(sid, "<CENTER>Bookmark %d added successfully</CENTER><BR>\n", bookmark.bookmarkid);
 		db_log_activity(sid, 1, "bookmarks", bookmark.bookmarkid, "insert", "%s - %s added bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else {
-		if (!(auth_priv(sid, AUTH_BOOKMARKS)&A_MODIFY)) {
+		if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if (db_write(sid, DB_BOOKMARKS, bookmarkid, &bookmark)<1) {
+		if (dbwrite_bookmark(sid, bookmarkid, &bookmark)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -509,7 +489,7 @@ void bookmarkssave(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	htpage_topmenu(sid, MENU_BOOKMARKS);
@@ -529,12 +509,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_bookmarks", "BOOKMARKS", "/bookmarks/list", "mod_main", "/bookmarks/", mod_main)!=0) return -1;
 	return 0;

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_stub.h"
 #include "mod_calendar.h"
 
-void htselect_eventclosingstatus(CONNECTION *sid, int selected)
+void htselect_eventclosingstatus(CONN *sid, int selected)
 {
 	int i, j;
 	int sqr;
@@ -33,7 +33,7 @@ void htselect_eventclosingstatus(CONNECTION *sid, int selected)
 	return;
 }
 
-void htselect_eventfilter(CONNECTION *sid, int userid, int groupid, char *baseuri)
+void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 {
 	char *option[]={ "Open", "Closed", "All" };
 	char *ptemp;
@@ -131,14 +131,12 @@ void htselect_eventfilter(CONNECTION *sid, int userid, int groupid, char *baseur
 		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
 	}
 	prints(sid, "</SELECT>\r\n");
-
 	prints(sid, "<SELECT NAME=groupid>\r\n");
 	for (i=0;i<sql_numtuples(sqr2);i++) {
 		j=atoi(sql_getvalue(sqr2, i, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
 	}
 	prints(sid, "</SELECT>\r\n");
-
 	prints(sid, "<SELECT NAME=status>\r\n");
 	prints(sid, "<OPTION VALUE='2'%s>%s\n", status==2?" SELECTED":"", option[2]);
 	prints(sid, "<OPTION VALUE='0'%s>%s\n", status==0?" SELECTED":"", option[0]);
@@ -152,7 +150,7 @@ void htselect_eventfilter(CONNECTION *sid, int userid, int groupid, char *baseur
 	return;
 }
 
-void htselect_eventtype(CONNECTION *sid, int selected)
+void htselect_eventtype(CONN *sid, int selected)
 {
 	int i, j;
 	int sqr;
@@ -167,7 +165,7 @@ void htselect_eventtype(CONNECTION *sid, int selected)
 	return;
 }
 
-void calendarreminders(CONNECTION *sid)
+void calendarreminders(CONN *sid)
 {
 	char posttime[32];
 	int a, b;
@@ -177,7 +175,7 @@ void calendarreminders(CONNECTION *sid)
 	time_t eventdate;
 	time_t t;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -196,7 +194,7 @@ void calendarreminders(CONNECTION *sid)
 			reminders++;
 			if (reminders==1) {
 				prints(sid, "<BGSOUND SRC=/groupware/sounds/reminder.wav LOOP=1>\n");
-				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%%>\n");
+				prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=95%%>\r\n", proc->config.colour_tabletrim);
 				prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%%>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT>&nbsp;Time&nbsp;</TH></TR>\n", config->colour_th, CAL_EVENT_NAME);
 			}
 			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -219,7 +217,7 @@ void calendarreminders(CONNECTION *sid)
 	return;
 }
 
-void reminderstatus(CONNECTION *sid)
+void reminderstatus(CONN *sid)
 {
 	char timebuffer[100];
 	int eventid;
@@ -228,7 +226,7 @@ void reminderstatus(CONNECTION *sid)
 	time_t eventstart;
 	time_t now;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		return;
 	}
 	if (getgetenv(sid, "EVENTID")==NULL) return;
@@ -307,7 +305,7 @@ void reminderstatus(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendaredit(CONNECTION *sid, REC_EVENT *event)
+void calendaredit(CONN *sid, REC_EVENT *event)
 {
 	REC_EVENT eventrec;
 	char startdate[30];
@@ -317,7 +315,7 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 	int eventid;
 	int duration;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -325,7 +323,7 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 		prints(sid, "<BR>");
 		if (strncmp(sid->dat->in_RequestURI, "/calendar/editnew", 17)==0) {
 			eventid=0;
-			if (db_read(sid, 2, DB_EVENTS, 0, &eventrec)!=0) {
+			if (dbread_event(sid, 2, 0, &eventrec)!=0) {
 				prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 				return;
 			}
@@ -338,7 +336,7 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 		} else {
 			if (getgetenv(sid, "EVENTID")==NULL) return;
 			eventid=atoi(getgetenv(sid, "EVENTID"));
-			if (db_read(sid, 2, DB_EVENTS, eventid, &eventrec)!=0) {
+			if (dbread_event(sid, 2, eventid, &eventrec)!=0) {
 				prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", eventid);
 				return;
 			}
@@ -355,6 +353,14 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 	strftime(startdate, sizeof(startdate)-1, "%Y-%m-%d", gmtime(&event->eventstart));
 	strftime(finishdate, sizeof(finishdate)-1, "%Y-%m-%d", gmtime(&event->eventfinish));
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "function ContactView() {\r\n");
+	prints(sid, "	var contactid=document.eventedit.contactid.value;\r\n");
+	prints(sid, "	if (contactid<1) {\r\n");
+	prints(sid, "		window.open('%s/contacts/search1','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=410');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "	} else {\r\n");
+	prints(sid, "		window.open('%s/contacts/view?contactid='+contactid,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=610,height=410');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "	}\r\n");
+	prints(sid, "}\r\n");
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
@@ -382,17 +388,17 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Event Name&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=eventname value=\"%s\" SIZE=25 style='width:182px'></TD></TR>\n", str2html(sid, event->eventname));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:182px'>\n", config->colour_editform);
-		htselect_user(sid, event->assignedto);
-		prints(sid, "</SELECT></TD></TR>\n");
-	}
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:182px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	htselect_user(sid, event->assignedto);
+	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Event Type&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventtype style='width:182px'>\n", config->colour_editform);
 	htselect_eventtype(sid, event->eventtype);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Contact&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n", config->colour_editform);
-	htselect_contact(sid, event->contactid);
-	prints(sid, "</SELECT></TD></TR>\n");
+	if (module_exists(sid, "mod_contacts")) {
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'>\n", config->colour_editform, config->colour_fieldnametext);
+		htselect_contact(sid, event->contactid);
+		prints(sid, "</SELECT></TD></TR>\n");
+	}
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:182px'>\n", config->colour_editform);
 	htselect_priority(sid, event->priority);
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -438,14 +444,14 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 	prints(sid, "</TABLE></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=4 COLS=60 style='width:100%%'>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, event->details));
-	if ((event->obj_uid==sid->dat->user_uid)||(auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)) {
+	if ((event->obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) {
 		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, event->obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)?"":" DISABLED");
+		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_group(sid, event->obj_gid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
@@ -461,12 +467,14 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
 	}
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Autoschedule'>\n");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Autoassign'>");
-	prints(sid, "<SELECT NAME=autogroup>\n");
-	htselect_group(sid, autogroup);
-	prints(sid, "</SELECT><BR>\n");
+	if (auth_priv(sid, "calendar")&A_ADMIN) {
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Autoassign'>");
+		prints(sid, "<SELECT NAME=autogroup>\n");
+		htselect_group(sid, autogroup);
+		prints(sid, "</SELECT><BR>\n");
+	}
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\n");
-	if ((auth_priv(sid, AUTH_CALENDAR)&A_DELETE)&&(event->eventid!=0)) {
+	if ((auth_priv(sid, "calendar")&A_DELETE)&&(event->eventid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\n");
@@ -484,7 +492,7 @@ void calendaredit(CONNECTION *sid, REC_EVENT *event)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendarview(CONNECTION *sid)
+void calendarview(CONN *sid)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_EVENT event;
@@ -493,21 +501,21 @@ void calendarview(CONNECTION *sid)
 	int sqr;
 
 	prints(sid, "<BR>\r\n");
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (getgetenv(sid, "EVENTID")==NULL) return;
 	eventid=atoi(getgetenv(sid, "EVENTID"));
-	if (db_read(sid, 1, DB_EVENTS, eventid, &event)!=0) {
+	if (dbread_event(sid, 1, eventid, &event)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", eventid);
 		return;
 	}
 	event.eventstart+=time_tzoffset(sid, event.eventstart);
 	event.eventfinish+=time_tzoffset(sid, event.eventfinish);
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=400>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=400>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=4 NOWRAP><FONT COLOR=%s>%s", config->colour_th, config->colour_thtext, str2html(sid, event.eventname));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_MODIFY) {
+	if (auth_priv(sid, "calendar")&A_MODIFY) {
 		if ((event.assignedby==sid->dat->user_uid)||(event.assignedto==sid->dat->user_uid)||(event.obj_uid==sid->dat->user_uid)||((event.obj_gid==sid->dat->user_gid)&&(event.obj_gperm>=2))||(event.obj_operm>=2)) {
 			prints(sid, " [<A HREF=%s/calendar/edit?eventid=%d STYLE='color: %s'>edit</A>]", sid->dat->in_ScriptName, event.eventid, config->colour_thlink);
 		}
@@ -577,7 +585,7 @@ void calendarview(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendarlistday(CONNECTION *sid)
+void calendarlistday(CONN *sid)
 {
 	MOD_TASKS_LIST mod_tasks_list;
 	char *ptemp;
@@ -596,7 +604,7 @@ void calendarlistday(CONNECTION *sid)
 	int groupid=-1;
 	int status;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -654,21 +662,9 @@ void calendarlistday(CONNECTION *sid)
 	t=unixdate+86400;
 	t-=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		}
-	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		}
-	}
+	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BGCOLOR=#000000 BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100%%><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<24;i++) {
 		snprintf(showtime, sizeof(showtime)-1, "%02d:00:00", i);
@@ -684,11 +680,11 @@ void calendarlistday(CONNECTION *sid)
 			t2=time_sql2unix(sql_getvalue(sqr, index, 1));
 			if (t2<t) { index++; continue; }
 			if (t2>=t+3600) break;
-			if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 2)))) { index++; continue; }
-			if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
+			if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
+			if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
 			if (groupid>0) {
 				for (j=0;j<sql_numtuples(sqr2);j++) {
-					if (atoi(sql_getvalue(sqr, index, 3))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
+					if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
 					if (groupid!=atoi(sql_getvalue(sqr2, j, 1))) continue;
 					break;
 				}
@@ -704,7 +700,7 @@ void calendarlistday(CONNECTION *sid)
 			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), time_unix2timetext(sid, t2));
 			prints(sid, "</FONT></TD><TD NOWRAP WIDTH=100%%><FONT SIZE=2>");
 			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
-			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), str2html(sid, sql_getvalue(sqr, index, 4)));
+			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), str2html(sid, sql_getvalue(sqr, index, 5)));
 			prints(sid, "</FONT></TD></TR>\n");
 			index++;
 		}
@@ -731,7 +727,7 @@ void calendarlistday(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendarlistweek(CONNECTION *sid)
+void calendarlistweek(CONN *sid)
 {
 	MOD_TASKS_LIST mod_tasks_list;
 	char *ptemp;
@@ -750,7 +746,7 @@ void calendarlistweek(CONNECTION *sid)
 	int userid=-1;
 	int groupid=-1;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -813,23 +809,11 @@ void calendarlistweek(CONNECTION *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		}
-	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		}
-	}
+	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
 	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
 	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 	for (i=0;i<7;i++) {
 		t=unixdate+(i*86400);
 		strftime(showtime, sizeof(showtime), "%Y-%m-%d", gmtime(&t));
@@ -893,8 +877,15 @@ void calendarlistweek(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendarlistmonth(CONNECTION *sid)
+void calendarlistmonth(CONN *sid)
 {
+	char *colourkey[]={
+		"#0000BF", "#00BF00", "#00BFBF", "#BF0000", "#BF00BF", "#BFBF00", "#707070",
+		"#0000FF", "#00FF00", "#00FFFF", "#FF0000", "#FF00FF", "#FFFF00", "#BFBFBF",
+		NULL
+	};
+	int colours=14;
+	char *colour;
 	typedef struct {
 		int day;
 		int week;
@@ -923,7 +914,7 @@ void calendarlistmonth(CONNECTION *sid)
 	int tempmonth;
 	int tempyear;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -1006,7 +997,7 @@ void calendarlistmonth(CONNECTION *sid)
 	if (groupid>0) prints(sid, "&groupid=%d", groupid);
 	prints(sid, ">&gt;&gt;</A>");
 	prints(sid, "</B></FONT><BR>\n");
-	prints(sid, "<CENTER>\n<TABLE BGCOLOR=#000000 BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<CENTER>\n<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Sunday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Monday</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Tuesday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Wednesday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Thursday</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext);
 	prints(sid, "<TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Friday</FONT></TH><TH WIDTH=200 style='width:14%%'><FONT COLOR=%s>Saturday</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext);
@@ -1021,20 +1012,8 @@ void calendarlistmonth(CONNECTION *sid)
 	t=(unixdate+j)*86400;
 	t-=time_tzoffset(sid, t);
 	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", posttime1, posttime2))<0) return;
-		}
-	} else {
-		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= #%s# and eventstart < #%s# and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		} else {
-			if ((sqr=sql_queryf(sid, "SELECT eventid, eventstart, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
-		}
-	}
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
+	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users WHERE groupid = %d ORDER BY userid ASC", groupid))<0) return;
 	for (i=printdate;i<dim[today.month-1]+1;i+=7) {
 		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
 		for (j=0;j<7;j++) {
@@ -1066,23 +1045,30 @@ void calendarlistmonth(CONNECTION *sid)
 				t2=time_sql2unix(sql_getvalue(sqr, index, 1));
 				if (t2<t) { index++; continue; }
 				if (t2>=t+86400) break;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 2))))  { index++; continue; }
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 3))))  { index++; continue; }
+				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
+				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
+				colour="#000000";
 				if (groupid>0) {
 					for (k=0;k<sql_numtuples(sqr2);k++) {
-						if (atoi(sql_getvalue(sqr, index, 3))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
+						if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
 						if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
 						break;
 					}
 					if (k==sql_numtuples(sqr2)) { index++; continue; }
+					if (k<colours) {
+						colour=colourkey[k];
+					}
 				}
 				t2+=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
 				prints(sid, "<FONT SIZE=1 STYLE='font-size:10px'><NOBR>%s ", time_unix2lotimetext(sid, t2));
 				prints(sid, "<A HREF=%s/calendar/view?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, index, 0)));
-				if (groupid>0) prints(sid, "[%s] ", sql_getvalue(sqr2, k, 2));
-				prints(sid, "%s\">", sql_getvalue(sqr, index, 4));
-				prints(sid, "%-.15s", str2html(sid, sql_getvalue(sqr, index, 4)));
-				if (strlen(sql_getvalue(sqr, index, 4))>15) prints(sid, "..");
+				if (groupid>0) {
+					prints(sid, "[%s] %s\" STYLE='color:%s'>", sql_getvalue(sqr2, k, 2), sql_getvalue(sqr, index, 5), colour);
+				} else {
+					prints(sid, "%s\">", sql_getvalue(sqr, index, 5));
+				}
+				prints(sid, "%-.15s", str2html(sid, sql_getvalue(sqr, index, 5)));
+				if (strlen(sql_getvalue(sqr, index, 5))>15) prints(sid, "..");
 				prints(sid, "</A>&nbsp;</NOBR></FONT><BR>\n");
 				index++;
 				if (lines>0) lines--;
@@ -1094,14 +1080,37 @@ void calendarlistmonth(CONNECTION *sid)
 		}
 		prints(sid, "</TR>\n");
 	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
+	prints(sid, "</CENTER>\n");
+	if ((groupid>0)&&(sql_numtuples(sqr2)>0)) {
+		prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1>\r\n", proc->config.colour_tabletrim);
+		prints(sid, "<TR BGCOLOR=%s><TH><FONT COLOR=%s>&nbsp;Colour Key&nbsp;</FONT></TH></TR>", config->colour_th, config->colour_thtext);
+		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>", config->colour_fieldval);
+		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\r\n");
+		j=0;
+		for (i=0;i<sql_numtuples(sqr2);i++) {
+			if (j==0) prints(sid, "<TR>");
+			colour="#000000";
+			if (i<colours) {
+				colour=colourkey[i];
+			}
+			prints(sid, "<TD style='width:20%%'><FONT COLOR=%s><NOBR>%s</NOBR></FONT></TD>\n", colour, sql_getvalue(sqr2, i, 2));
+			j++;
+			if (j>4) {
+				prints(sid, "</TR>\n");
+				j=0;
+			}
+		}
+		prints(sid, "</TABLE>");
+		prints(sid, "</TD></TR></TABLE>");
+	}
+	sql_freeresult(sqr2);
+	sql_freeresult(sqr);
 	return;
 }
 
-void calendarlistyear(CONNECTION *sid)
+void calendarlistyear(CONN *sid)
 {
 	char *ptemp;
 	char posttime1[100];
@@ -1115,7 +1124,7 @@ void calendarlistyear(CONNECTION *sid)
 	time_t unixdate;
 	time_t t;
 
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_READ)) {
+	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -1199,7 +1208,7 @@ void calendarlistyear(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void calendarsave(CONNECTION *sid)
+void calendarsave(CONN *sid)
 {
 	REC_EVENT event;
 	char tempdate[40];
@@ -1212,22 +1221,22 @@ void calendarsave(CONNECTION *sid)
 	u_avail uavail;
 
 	prints(sid, "<BR>");
-	if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "EVENTID"))==NULL) return;
 	eventid=atoi(ptemp);
-	if (db_read(sid, 2, DB_EVENTS, eventid, &event)!=0) {
+	if (dbread_event(sid, 2, eventid, &event)!=0) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (auth_priv(sid, AUTH_CALENDAR)&A_ADMIN) {
+	if (auth_priv(sid, "calendar")&A_ADMIN) {
 		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) event.obj_uid=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) event.obj_gid=atoi(ptemp);
 	}
-	if ((auth_priv(sid, AUTH_CALENDAR)&A_ADMIN)||(event.obj_uid==sid->dat->user_uid)) {
+	if ((auth_priv(sid, "calendar")&A_ADMIN)||(event.obj_uid==sid->dat->user_uid)) {
 		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) event.obj_gperm=atoi(ptemp);
 		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) event.obj_operm=atoi(ptemp);
 	}
@@ -1295,7 +1304,7 @@ void calendarsave(CONNECTION *sid)
 		return;
 	}
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_DELETE)) {
+		if (!(auth_priv(sid, "calendar")&A_DELETE)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -1304,7 +1313,7 @@ void calendarsave(CONNECTION *sid)
 		db_log_activity(sid, 1, "events", event.eventid, "delete", "%s - %s deleted calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/list\">\n", sid->dat->in_ScriptName);
 	} else if (event.eventid==0) {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_INSERT)) {
+		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -1322,7 +1331,7 @@ void calendarsave(CONNECTION *sid)
 			calendaredit(sid, &event);
 			return;
 		}
-		if ((event.eventid=db_write(sid, DB_EVENTS, 0, &event))<1) {
+		if ((event.eventid=dbwrite_event(sid, 0, &event))<1) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -1330,7 +1339,7 @@ void calendarsave(CONNECTION *sid)
 		db_log_activity(sid, 1, "events", event.eventid, "insert", "%s - %s added calendar event %d", sid->dat->in_RemoteAddr, sid->dat->user_username, event.eventid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/view?eventid=%d\">\n", sid->dat->in_ScriptName, event.eventid);
 	} else {
-		if (!(auth_priv(sid, AUTH_CALENDAR)&A_MODIFY)) {
+		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -1348,7 +1357,7 @@ void calendarsave(CONNECTION *sid)
 			calendaredit(sid, &event);
 			return;
 		}
-		if (db_write(sid, DB_EVENTS, eventid, &event)<1) {
+		if (dbwrite_event(sid, eventid, &event)<1) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
@@ -1367,7 +1376,7 @@ void calendarsave(CONNECTION *sid)
  *	Returns	: void
  *	Notes	: None
  ***************************************************************************/
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/calendar/reminders", 19)==0) {
@@ -1401,12 +1410,11 @@ void mod_main(CONNECTION *sid)
 	return;
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_calendar", "CALENDAR", "/calendar/list", "mod_main", "/calendar/", mod_main)!=0) return -1;
 	return 0;

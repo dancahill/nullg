@@ -36,18 +36,12 @@ thoroughly tested with MySQL, PostgreSQL, SQLite and ODBC.
 ---------------
 To install NullLogic Groupware, you will need to run 'SETUP.EXE' (Windows) or
 'setup' (Linux).  If any information is required during this process, you will
-be prompted for the appropriate information.  Once the setup program is
-finished, you will need to provide a 'Licence Key' file.  This file should be
-named 'license.txt', and should be placed in the 'etc' subdirectory of
-NullLogic Groupware.
+be prompted for the appropriate information.
 
-If you do not already have a License Key, a free 30 day evaluation key can be
-obtained by visiting http://www.nulllogic.com/groupware/evaluate.php.
-
-Once you have finished running the setup program and supplied the license key,
-you should have a fully functional installation of NullLogic Groupware.  There
-are, however, several different ways of configuring NullLogic Groupware which
-may be much better suited to its desired task.
+Once you have finished running the setup program, you should have a fully
+functional installation of NullLogic Groupware.  There are, however, several
+different ways of configuring NullLogic Groupware which may be much better
+suited to its desired task.
 
 NullLogic Groupware can be configured to run either as a standalone server or
 as a CGI with Apache, IIS, or almost any other web server.
@@ -80,8 +74,8 @@ your server's library path.
 2b. DATA ACCESS
 ---------------
 Although the default installation uses SQLite for database access, this
-configuration is the slowest and least flexible.  It is recommended that you
-consider using MySQL or PostgreSQL instead.
+configuration is the least flexible.  It is recommended that you consider
+using MySQL or PostgreSQL instead.
 
 First, you will need to make an account in your SQL server for NullLogic
 Groupware.  It is probably wise not to give this account permission to create
@@ -116,11 +110,12 @@ following:
 If you believe you have found a bug, the first question is can you reproduce
 it?  If you can, then it is really a bug.
 
-Next, please visit http://www.nulllogic.com/groupware/bugs.php for a list of
-already corrected bugs.
+Next, please visit http://nullgroupware.sourceforge.net/ and check the forums
+to see if anyone else is having the same problem, or if the problem has already
+been fixed.
 
 If the bug you just found is not on the list, please send an e-mail to
 groupware@nulllogic.com with the Subject line 'NullLogic Groupware Bug'. In the
 body of the message please describe the bug, how it can be reproduced, the
-full version number (e.g. 1.2.1), the operating system of the server, and the
+full version number (e.g. 1.2.2), the operating system of the server, and the
 name and version number of your third party web server (if you are using one).

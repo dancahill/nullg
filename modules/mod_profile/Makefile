@@ -3,7 +3,7 @@
 TOPDIR=../
 include $(TOPDIR)Rules.mak
 
-OBJECTS  = mod_profile.o
+OBJECTS  = mod_profile_db.o mod_profile_main.o
 TARGET   = $(TARGETDIR)/mod_profile.so
 
 all: mod_profile

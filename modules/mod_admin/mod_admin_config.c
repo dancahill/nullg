@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 #include "mod_substub.h"
 #include "mod_admin.h"
 
-void adminconfigedit(CONNECTION *sid)
+void adminconfigedit(CONN *sid)
 {
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -133,83 +133,51 @@ void adminconfigedit(CONNECTION *sid)
 	return;
 }
 
-void adminconfigsave(CONNECTION *sid)
+void adminconfigsave(CONN *sid)
 {
 	CONFIG cfg;
-	char *pval;
-	FILE *fp;
+	char *ptemp;
 
-	if (!(auth_priv(sid, AUTH_ADMIN)&A_ADMIN)) {
+	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod, "POST")!=0) return;
 	memset((char *)&cfg, 0, sizeof(cfg));
-	if ((pval=getpostenv(sid, "SERVER_DIR_BASE"))!=NULL)   strncpy(cfg.server_dir_base, pval, sizeof(cfg.server_dir_base)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_BIN"))!=NULL)    strncpy(cfg.server_dir_bin,  pval, sizeof(cfg.server_dir_bin)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_CGI"))!=NULL)    strncpy(cfg.server_dir_cgi,  pval, sizeof(cfg.server_dir_cgi)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_ETC"))!=NULL)    strncpy(cfg.server_dir_etc,  pval, sizeof(cfg.server_dir_etc)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_LIB"))!=NULL)    strncpy(cfg.server_dir_lib,  pval, sizeof(cfg.server_dir_lib)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR"))!=NULL)    strncpy(cfg.server_dir_var,  pval, sizeof(cfg.server_dir_var)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_BACKUP"))!=NULL) strncpy(cfg.server_dir_var_backup, pval, sizeof(cfg.server_dir_var_backup)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_DB"))!=NULL)     strncpy(cfg.server_dir_var_db,     pval, sizeof(cfg.server_dir_var_db)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_FILES"))!=NULL)  strncpy(cfg.server_dir_var_files,  pval, sizeof(cfg.server_dir_var_files)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_HTDOCS"))!=NULL) strncpy(cfg.server_dir_var_htdocs, pval, sizeof(cfg.server_dir_var_htdocs)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_LOG"))!=NULL)    strncpy(cfg.server_dir_var_log,    pval, sizeof(cfg.server_dir_var_log)-1);
-	if ((pval=getpostenv(sid, "SERVER_DIR_VAR_MAIL"))!=NULL)   strncpy(cfg.server_dir_var_mail,   pval, sizeof(cfg.server_dir_var_mail)-1);
-	if ((pval=getpostenv(sid, "SERVER_LOGLEVEL"))!=NULL)   cfg.server_loglevel=atoi(pval);
-	if ((pval=getpostenv(sid, "SERVER_HOSTNAME"))!=NULL)   strncpy(cfg.server_hostname, pval, sizeof(cfg.server_hostname)-1);
-	if ((pval=getpostenv(sid, "SERVER_PORT"))!=NULL)       cfg.server_port=atoi(pval);
-	if ((pval=getpostenv(sid, "SQL_TYPE"))!=NULL)          strncpy(cfg.sql_type, pval, sizeof(cfg.sql_type)-1);
-	if ((pval=getpostenv(sid, "SQL_HOSTNAME"))!=NULL)      strncpy(cfg.sql_hostname, pval, sizeof(cfg.sql_hostname)-1);
-	if ((pval=getpostenv(sid, "SQL_PORT"))!=NULL)          cfg.sql_port=atoi(pval);
-	if ((pval=getpostenv(sid, "SQL_DBNAME"))!=NULL)        strncpy(cfg.sql_dbname, pval, sizeof(cfg.sql_dbname)-1);
-	if ((pval=getpostenv(sid, "SQL_USERNAME"))!=NULL)      strncpy(cfg.sql_username, pval, sizeof(cfg.sql_username)-1);
-	if ((pval=getpostenv(sid, "SQL_PASSWORD"))!=NULL)      strncpy(cfg.sql_password, pval, sizeof(cfg.sql_password)-1);
+	config_read(&cfg);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_BASE"))!=NULL)       strncpy(cfg.server_dir_base,       ptemp, sizeof(cfg.server_dir_base)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_BIN"))!=NULL)        strncpy(cfg.server_dir_bin,        ptemp, sizeof(cfg.server_dir_bin)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_CGI"))!=NULL)        strncpy(cfg.server_dir_cgi,        ptemp, sizeof(cfg.server_dir_cgi)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_ETC"))!=NULL)        strncpy(cfg.server_dir_etc,        ptemp, sizeof(cfg.server_dir_etc)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_LIB"))!=NULL)        strncpy(cfg.server_dir_lib,        ptemp, sizeof(cfg.server_dir_lib)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR"))!=NULL)        strncpy(cfg.server_dir_var,        ptemp, sizeof(cfg.server_dir_var)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_BACKUP"))!=NULL) strncpy(cfg.server_dir_var_backup, ptemp, sizeof(cfg.server_dir_var_backup)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_DB"))!=NULL)     strncpy(cfg.server_dir_var_db,     ptemp, sizeof(cfg.server_dir_var_db)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_FILES"))!=NULL)  strncpy(cfg.server_dir_var_files,  ptemp, sizeof(cfg.server_dir_var_files)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_HTDOCS"))!=NULL) strncpy(cfg.server_dir_var_htdocs, ptemp, sizeof(cfg.server_dir_var_htdocs)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_LOG"))!=NULL)    strncpy(cfg.server_dir_var_log,    ptemp, sizeof(cfg.server_dir_var_log)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_DIR_VAR_MAIL"))!=NULL)   strncpy(cfg.server_dir_var_mail,   ptemp, sizeof(cfg.server_dir_var_mail)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_LOGLEVEL"))!=NULL)       cfg.server_loglevel=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "SERVER_HOSTNAME"))!=NULL)       strncpy(cfg.server_hostname,       ptemp, sizeof(cfg.server_hostname)-1);
+	if ((ptemp=getpostenv(sid, "SERVER_PORT"))!=NULL)           cfg.server_port=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "SQL_TYPE"))!=NULL)              strncpy(cfg.sql_type,              ptemp, sizeof(cfg.sql_type)-1);
+	if ((ptemp=getpostenv(sid, "SQL_HOSTNAME"))!=NULL)          strncpy(cfg.sql_hostname,          ptemp, sizeof(cfg.sql_hostname)-1);
+	if ((ptemp=getpostenv(sid, "SQL_PORT"))!=NULL)              cfg.sql_port=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "SQL_DBNAME"))!=NULL)            strncpy(cfg.sql_dbname,            ptemp, sizeof(cfg.sql_dbname)-1);
+	if ((ptemp=getpostenv(sid, "SQL_USERNAME"))!=NULL)          strncpy(cfg.sql_username,          ptemp, sizeof(cfg.sql_username)-1);
+	if ((ptemp=getpostenv(sid, "SQL_PASSWORD"))!=NULL)          strncpy(cfg.sql_password,          ptemp, sizeof(cfg.sql_password)-1);
 #ifdef WIN32
-	if ((pval=getpostenv(sid, "SQL_ODBC_DSN"))!=NULL)      strncpy(cfg.sql_odbc_dsn, pval, sizeof(cfg.sql_odbc_dsn)-1);
+	if ((ptemp=getpostenv(sid, "SQL_ODBC_DSN"))!=NULL)          strncpy(cfg.sql_odbc_dsn,          ptemp, sizeof(cfg.sql_odbc_dsn)-1);
 #endif
-	cfg.server_maxconn=config->server_maxconn;
-	cfg.server_maxidle=config->server_maxidle;
-
-	fp=fopen(config->config_filename, "w");
-	if (fp==NULL) {
-		logerror(sid, __FILE__, __LINE__, ADM_CFG_NOFILE, config->config_filename);
-		prints(sid, ADM_CFG_NOFILE, config->config_filename);
+	if (config_write(&cfg)!=0) {
+		logerror(sid, __FILE__, __LINE__, ADM_CFG_NOFILE, proc->config_filename);
+		prints(sid, ADM_CFG_NOFILE, proc->config_filename);
 		return;
 	}
-	fprintf(fp, "# %s\n\n", ADM_CFG_HEAD);
-	fprintf(fp, "SERVER.DIR.BASE       = \"%s\"\n", cfg.server_dir_base);
-	fprintf(fp, "SERVER.DIR.BIN        = \"%s\"\n", cfg.server_dir_bin);
-	fprintf(fp, "SERVER.DIR.CGI        = \"%s\"\n", cfg.server_dir_cgi);
-	fprintf(fp, "SERVER.DIR.ETC        = \"%s\"\n", cfg.server_dir_etc);
-	fprintf(fp, "SERVER.DIR.LIB        = \"%s\"\n", cfg.server_dir_lib);
-	fprintf(fp, "SERVER.DIR.VAR        = \"%s\"\n", cfg.server_dir_var);
-	fprintf(fp, "SERVER.DIR.VAR.BACKUP = \"%s\"\n", cfg.server_dir_var_backup);
-	fprintf(fp, "SERVER.DIR.VAR.DB     = \"%s\"\n", cfg.server_dir_var_db);
-	fprintf(fp, "SERVER.DIR.VAR.FILES  = \"%s\"\n", cfg.server_dir_var_files);
-	fprintf(fp, "SERVER.DIR.VAR.HTDOCS = \"%s\"\n", cfg.server_dir_var_htdocs);
-	fprintf(fp, "SERVER.DIR.VAR.LOG    = \"%s\"\n", cfg.server_dir_var_log);
-	fprintf(fp, "SERVER.DIR.VAR.MAIL   = \"%s\"\n", cfg.server_dir_var_mail);
-	fprintf(fp, "SERVER.LOGLEVEL       = \"%d\"\n", cfg.server_loglevel);
-	fprintf(fp, "SERVER.HOSTNAME       = \"%s\"\n", cfg.server_hostname);
-	fprintf(fp, "SERVER.PORT           = \"%d\"\n", cfg.server_port);
-	fprintf(fp, "SERVER.MAXCONN        = \"%d\"\n", cfg.server_maxconn);
-	fprintf(fp, "SERVER.MAXIDLE        = \"%d\"\n", cfg.server_maxidle);
-	fprintf(fp, "SQL.TYPE              = \"%s\"\n", cfg.sql_type);
-	fprintf(fp, "SQL.HOSTNAME          = \"%s\"\n", cfg.sql_hostname);
-	fprintf(fp, "SQL.PORT              = \"%d\"\n", cfg.sql_port);
-	fprintf(fp, "SQL.DBNAME            = \"%s\"\n", cfg.sql_dbname);
-	fprintf(fp, "SQL.USERNAME          = \"%s\"\n", cfg.sql_username);
-	fprintf(fp, "SQL.PASSWORD          = \"%s\"\n", cfg.sql_password);
-#ifdef WIN32
-	fprintf(fp, "SQL.ODBC_DSN          = \"%s\"\n", cfg.sql_odbc_dsn);
-#endif
-	fclose(fp);
 	prints(sid, "<CENTER>\n<TABLE><TR><TD><PRE>");
 	prints(sid, ADM_CFG_SAVED);
 	prints(sid, "</PRE></TD><TR></TABLE>\n</CENTER>\n");
-	logaccess(sid, 1, ADM_CFG_LOG, sid->dat->in_RemoteAddr, sid->dat->user_username);
+	db_log_activity(sid, 1, "config", 0, "modify", "%s - %s modified config", sid->dat->in_RemoteAddr, sid->dat->user_username);
 	flushbuffer(sid);
 //	server_restart();
 	return;

@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_contacts - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_contacts.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_contacts.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_contacts.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_contacts_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_contacts_main.c
 # End Source File
 # End Target
 # End Project

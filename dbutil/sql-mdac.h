@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
 #define MDB_DBINFO "\
 CREATE TABLE gw_dbinfo (\n\
 	dbversion	varchar(10)	NOT NULL,\n\
@@ -32,6 +31,7 @@ CREATE TABLE gw_activity (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	userid		integer,\n\
@@ -50,6 +50,7 @@ CREATE TABLE gw_bookmarks (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	folderid	integer,\n\
@@ -65,6 +66,7 @@ CREATE TABLE gw_bookmarkfolders (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	parentid	integer,\n\
@@ -79,6 +81,7 @@ CREATE TABLE gw_calls (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	assignedby	integer,\n\
@@ -100,6 +103,7 @@ CREATE TABLE gw_callactions (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	actionname	varchar(50)	NOT NULL,\n\
@@ -113,6 +117,7 @@ CREATE TABLE gw_contacts (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	loginip		varchar(20),\n\
@@ -157,6 +162,7 @@ CREATE TABLE gw_events (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	assignedby	integer,\n\
@@ -182,6 +188,7 @@ CREATE TABLE gw_eventclosings (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	closingname	varchar(50)	NOT NULL,\n\
@@ -195,6 +202,7 @@ CREATE TABLE gw_eventtypes (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	eventtypename	varchar(50)	NOT NULL,\n\
@@ -208,6 +216,7 @@ CREATE TABLE gw_files (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	filename	varchar(255)	NOT NULL,\n\
@@ -227,6 +236,7 @@ CREATE TABLE gw_forums (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	forumgroupid	integer,\n\
@@ -244,6 +254,7 @@ CREATE TABLE gw_forumgroups (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	title		varchar(50)	NOT NULL,\n\
@@ -258,6 +269,7 @@ CREATE TABLE gw_forumposts (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	forumid		integer		NOT NULL,\n\
@@ -276,6 +288,7 @@ CREATE TABLE gw_groups (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	groupname	varchar(50)	NOT NULL,\n\
@@ -292,6 +305,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	accountname	varchar(50)	NOT NULL,\n\
@@ -320,6 +334,7 @@ CREATE TABLE gw_mailheaders (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	accountid	integer,\n\
@@ -337,7 +352,7 @@ CREATE TABLE gw_mailheaders (\n\
 	hdr_contenttype	varchar(100)	NOT NULL,\n\
 	hdr_boundary	varchar(100)	NOT NULL,\n\
 	hdr_encoding	varchar(100)	NOT NULL,\n\
-	PRIMARY KEY (mailheaderid)\n\
+	PRIMARY KEY (mailheaderid, accountid)\n\
 );"
 
 #define MDB_MESSAGES "\
@@ -347,6 +362,7 @@ CREATE TABLE gw_messages (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	sender		integer,\n\
@@ -363,6 +379,7 @@ CREATE TABLE gw_notes (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	tablename	varchar(50)	NOT NULL,\n\
@@ -379,6 +396,7 @@ CREATE TABLE gw_orders (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	contactid	integer		NOT NULL,\n\
@@ -399,6 +417,7 @@ CREATE TABLE gw_orderitems (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	orderid		integer		NOT NULL,\n\
@@ -419,6 +438,7 @@ CREATE TABLE gw_products (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	productname	varchar(50)	NOT NULL,\n\
@@ -439,6 +459,7 @@ CREATE TABLE gw_queries (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	queryname	varchar(50)	NOT NULL,\n\
@@ -453,6 +474,7 @@ CREATE TABLE gw_tasks (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	assignedby	integer,\n\
@@ -473,6 +495,7 @@ CREATE TABLE gw_users (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	loginip		varchar(20),\n\
@@ -533,6 +556,7 @@ CREATE TABLE gw_zones (\n\
 	obj_mtime	datetime	NOT NULL,\n\
 	obj_uid		integer,\n\
 	obj_gid		integer,\n\
+	obj_did		integer,\n\
 	obj_gperm	integer,\n\
 	obj_operm	integer,\n\
 	zonename	varchar(50)	NOT NULL,\n\

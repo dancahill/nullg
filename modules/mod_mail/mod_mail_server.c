@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 static const char Base64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-int wmprints(CONNECTION *sid, const char *format, ...)
+int wmprints(CONN *sid, const char *format, ...)
 {
 	char buffer[1024];
 	va_list ap;
@@ -30,14 +30,14 @@ int wmprints(CONNECTION *sid, const char *format, ...)
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof(buffer)-1, format, ap);
 	va_end(ap);
-	send(sid->dat->user_wmsocket, buffer, strlen(buffer), 0);
+	send(sid->dat->wm->socket, buffer, strlen(buffer), 0);
 
 //	striprn(buffer);
 //	logerror(sid, __FILE__, __LINE__, "> %s", buffer);
 	return 0;
 }
 
-int wmfgets(CONNECTION *sid, char *buffer, int max, int fd)
+int wmfgets(CONN *sid, char *buffer, int max, int fd)
 {
 	char *pbuffer=buffer;
 	char temp[2];
@@ -53,9 +53,9 @@ int wmfgets(CONNECTION *sid, char *buffer, int max, int fd)
 			closeconnect(sid, 1);
 			return -1;
 		}
-		sid->dat->user_wmimapmread++;
+		sid->dat->wm->imapmread++;
 		n++;
-		if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 			if ((temp[0]=='.')&&(pbuffer[0]=='.')&&(n==2)) {
 				popflag=1;
 				continue;
@@ -77,7 +77,7 @@ int wmfgets(CONNECTION *sid, char *buffer, int max, int fd)
 	return n;
 }
 
-int wmffgets(CONNECTION *sid, char *buffer, int max, FILE **fp)
+int wmffgets(CONN *sid, char *buffer, int max, FILE **fp)
 {
 	int n=0;
 
@@ -95,16 +95,16 @@ int wmffgets(CONNECTION *sid, char *buffer, int max, FILE **fp)
 	return n;
 }
 
-void wmclose(CONNECTION *sid)
+void wmclose(CONN *sid)
 {
 	/* shutdown(x,0=recv, 1=send, 2=both) */
-	shutdown(sid->dat->user_wmsocket, 2);
-	closesocket(sid->dat->user_wmsocket);
+	shutdown(sid->dat->wm->socket, 2);
+	closesocket(sid->dat->wm->socket);
 	fflush(stdout);
 	return;
 }
 
-int wmserver_smtpconnect(CONNECTION *sid)
+int wmserver_smtpconnect(CONN *sid)
 {
 	struct hostent *hp;
 	struct sockaddr_in server;
@@ -113,57 +113,57 @@ int wmserver_smtpconnect(CONNECTION *sid)
 //	/* some smtp servers like pop auth before smtp */
 //	if (wmserver_connect(sid, 1)!=0) return -1;
 //	wmserver_disconnect(sid);
-	if ((hp=gethostbyname(sid->dat->user_wmsmtpserver))==NULL) {
-		prints(sid, "<CENTER>Could not find SMTP server '%s'</CENTER>\n", sid->dat->user_wmsmtpserver);
+	if ((hp=gethostbyname(sid->dat->wm->smtpserver))==NULL) {
+		prints(sid, "<CENTER>Could not find SMTP server '%s'</CENTER>\n", sid->dat->wm->smtpserver);
 		return -1;
 	}
 	memset((char *)&server, 0, sizeof(server));
 	memmove((char *)&server.sin_addr, hp->h_addr, hp->h_length);
 	server.sin_family=hp->h_addrtype;
-	server.sin_port=(unsigned short)htons(sid->dat->user_wmsmtpport);
-	if ((sid->dat->user_wmsocket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
+	server.sin_port=(unsigned short)htons(sid->dat->wm->smtpport);
+	if ((sid->dat->wm->socket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
 //	setsockopt(wmsocket, SOL_SOCKET, SO_KEEPALIVE, 0, 0);
-	if (connect(sid->dat->user_wmsocket, (struct sockaddr *)&server, sizeof(server))<0) {
-		prints(sid, "<CENTER>Could not connect to SMTP server '%s'</CENTER>\n", sid->dat->user_wmsmtpserver);
+	if (connect(sid->dat->wm->socket, (struct sockaddr *)&server, sizeof(server))<0) {
+		prints(sid, "<CENTER>Could not connect to SMTP server '%s'</CENTER>\n", sid->dat->wm->smtpserver);
 		return -1;
 	}
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	return 0;
 }
 
-int wmserver_smtpauth(CONNECTION *sid)
+int wmserver_smtpauth(CONN *sid)
 {
 	char authstring[200];
 	char inbuffer[1024];
 
 	wmprints(sid, "AUTH PLAIN ");
-	snprintf(authstring, sizeof(authstring)-1, "%s%c%s%c%s", sid->dat->user_wmusername, '\0', sid->dat->user_wmusername, '\0', sid->dat->user_wmpassword);
-	EncodeBase64(sid, authstring, (strlen(sid->dat->user_wmusername)*2)+strlen(sid->dat->user_wmpassword)+2);
+	snprintf(authstring, sizeof(authstring)-1, "%s%c%s%c%s", sid->dat->wm->username, '\0', sid->dat->wm->username, '\0', sid->dat->wm->password);
+	EncodeBase64(sid, authstring, (strlen(sid->dat->wm->username)*2)+strlen(sid->dat->wm->password)+2);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "502", 3)==0) return 0;
 	if (strncasecmp(inbuffer, "235", 3)!=0) return -1;
 	return 0;
 }
 
-void wmserver_smtpdisconnect(CONNECTION *sid)
+void wmserver_smtpdisconnect(CONN *sid)
 {
 	char inbuffer[1024];
 
 	wmprints(sid, "QUIT\r\n");
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	wmclose(sid);
 }
 
-int wmserver_connect(CONNECTION *sid, int verbose)
+int wmserver_connect(CONN *sid, int verbose)
 {
 	struct hostent *hp;
 	struct sockaddr_in server;
@@ -172,8 +172,8 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 	char *ptemp;
 	int sqr;
 
-	if (sid->dat->user_wmconnected) return 0;
-	if (!(auth_priv(sid, AUTH_WEBMAIL)&A_READ)) {
+	if (sid->dat->wm->connected) return 0;
+	if (!(auth_priv(sid, "webmail")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
@@ -191,59 +191,59 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 		if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, hosttype, pophost, popport, smtphost, smtpport, address, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
 	}
 	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->user_wmrealname, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->user_wmrealname)-1);
-		strncpy(sid->dat->user_wmorganization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->user_wmorganization)-1);
-		strncpy(sid->dat->user_wmusername, sql_getvalue(sqr, 0, 2), sizeof(sid->dat->user_wmusername)-1);
-		strncpy(sid->dat->user_wmpassword, DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->user_wmpassword)-1);
-		strncpy(sid->dat->user_wmservertype, sql_getvalue(sqr, 0, 4), sizeof(sid->dat->user_wmservertype)-1);
-		strncpy(sid->dat->user_wmpopserver, sql_getvalue(sqr, 0, 5), sizeof(sid->dat->user_wmpopserver)-1);
-		sid->dat->user_wmpopport=atoi(sql_getvalue(sqr, 0, 6));
-		strncpy(sid->dat->user_wmsmtpserver, sql_getvalue(sqr, 0, 7), sizeof(sid->dat->user_wmsmtpserver)-1);
-		sid->dat->user_wmsmtpport=atoi(sql_getvalue(sqr, 0, 8));
-		strncpy(sid->dat->user_wmreplyto, sql_getvalue(sqr, 0, 9), sizeof(sid->dat->user_wmreplyto)-1);
-		sid->dat->user_wmremove=atoi(sql_getvalue(sqr, 0, 10));
-		strncpy(sid->dat->user_wmsignature, sql_getvalue(sqr, 0, 11), sizeof(sid->dat->user_wmsignature)-1);
+		strncpy(sid->dat->wm->realname, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
+		strncpy(sid->dat->wm->organization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
+		strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
+		strncpy(sid->dat->wm->servertype, sql_getvalue(sqr, 0, 4), sizeof(sid->dat->wm->servertype)-1);
+		strncpy(sid->dat->wm->popserver, sql_getvalue(sqr, 0, 5), sizeof(sid->dat->wm->popserver)-1);
+		sid->dat->wm->popport=atoi(sql_getvalue(sqr, 0, 6));
+		strncpy(sid->dat->wm->smtpserver, sql_getvalue(sqr, 0, 7), sizeof(sid->dat->wm->smtpserver)-1);
+		sid->dat->wm->smtpport=atoi(sql_getvalue(sqr, 0, 8));
+		strncpy(sid->dat->wm->replyto, sql_getvalue(sqr, 0, 9), sizeof(sid->dat->wm->replyto)-1);
+		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 10));
+		strncpy(sid->dat->wm->signature, sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->signature)-1);
 	}
 	sql_freeresult(sqr);
 	if (strcmp(sid->dat->in_RequestMethod,"POST")==0) {
 		if (getpostenv(sid, "WMUSERNAME")!=NULL) {
-			strncpy(sid->dat->user_wmusername, getpostenv(sid, "WMUSERNAME"), sizeof(sid->dat->user_wmusername)-1);
+			strncpy(sid->dat->wm->username, getpostenv(sid, "WMUSERNAME"), sizeof(sid->dat->wm->username)-1);
 		}
 		if (getpostenv(sid, "WMPASSWORD")!=NULL) {
-			strncpy(sid->dat->user_wmpassword, getpostenv(sid, "WMPASSWORD"), sizeof(sid->dat->user_wmpassword)-1);
+			strncpy(sid->dat->wm->password, getpostenv(sid, "WMPASSWORD"), sizeof(sid->dat->wm->password)-1);
 		}
 	}
-	if ((strlen(sid->dat->user_wmusername)==0)||(strlen(sid->dat->user_wmpassword)==0)||(strlen(sid->dat->user_wmpopserver)==0)||(strlen(sid->dat->user_wmsmtpserver)==0)) {
+	if ((strlen(sid->dat->wm->username)==0)||(strlen(sid->dat->wm->password)==0)||(strlen(sid->dat->wm->popserver)==0)||(strlen(sid->dat->wm->smtpserver)==0)) {
 		if (verbose) {
 			wmloginform(sid);
 		}
 		return -1;
 	}
-	if ((hp=gethostbyname(sid->dat->user_wmpopserver))==NULL) {
+	if ((hp=gethostbyname(sid->dat->wm->popserver))==NULL) {
 		if (verbose) {
-			prints(sid, "<CENTER>Could not find POP3 server '%s'</CENTER>\n", sid->dat->user_wmpopserver);
+			prints(sid, "<CENTER>Could not find POP3 server '%s'</CENTER>\n", sid->dat->wm->popserver);
 		}
 		return -1;
 	}
 	memset((char *)&server, 0, sizeof(server));
 	memmove((char *)&server.sin_addr, hp->h_addr, hp->h_length);
 	server.sin_family=hp->h_addrtype;
-	server.sin_port=htons(sid->dat->user_wmpopport);
-	if ((sid->dat->user_wmsocket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
-//	setsockopt(sid->dat->user_wmsocket, SOL_SOCKET, SO_KEEPALIVE, 0, 0);
-	if (connect(sid->dat->user_wmsocket, (struct sockaddr *)&server, sizeof(server))<0) {
+	server.sin_port=htons(sid->dat->wm->popport);
+	if ((sid->dat->wm->socket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
+//	setsockopt(sid->dat->wm->socket, SOL_SOCKET, SO_KEEPALIVE, 0, 0);
+	if (connect(sid->dat->wm->socket, (struct sockaddr *)&server, sizeof(server))<0) {
 		if (verbose) {
-			prints(sid, "<CENTER>Could not connect to POP3 server '%s'</CENTER>\n", sid->dat->user_wmpopserver);
+			prints(sid, "<CENTER>Could not connect to POP3 server '%s'</CENTER>\n", sid->dat->wm->popserver);
 		}
 		return -1;
 	}
-	sid->dat->user_wmconnected=1;
+	sid->dat->wm->connected=1;
 	/* Check current status */
-	wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		/* Send user name */
-		wmprints(sid, "USER %s\r\n", sid->dat->user_wmusername);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmprints(sid, "USER %s\r\n", sid->dat->wm->username);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			if (verbose) {
 				ptemp=strchr(inbuffer, ' ');
@@ -257,8 +257,8 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 			return -1;
 		}
 		/* Send password */
-		wmprints(sid, "PASS %s\r\n", sid->dat->user_wmpassword);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmprints(sid, "PASS %s\r\n", sid->dat->wm->password);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			if (verbose) {
 				ptemp=strchr(inbuffer, ' ');
@@ -271,12 +271,12 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 			}
 			return -1;
 		}
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 		/* Send user name & password */
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d LOGIN %s %s\r\n", sid->dat->user_wmimapidx, sid->dat->user_wmusername, sid->dat->user_wmpassword);
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d LOGIN %s %s\r\n", sid->dat->wm->imapidx, sid->dat->wm->username, sid->dat->wm->password);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -293,10 +293,10 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 			}
 			return -1;
 		}
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d SELECT INBOX\r\n", sid->dat->user_wmimapidx);
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d SELECT INBOX\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -316,54 +316,54 @@ int wmserver_connect(CONNECTION *sid, int verbose)
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")==0) {
 		snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, time(NULL)));
-		sql_updatef(sid, "UPDATE gw_mailaccounts SET obj_mtime = '%s', popusername = '%s', poppassword = '%s' WHERE obj_uid = %d AND mailaccountid = %d", timebuffer, sid->dat->user_wmusername, EncodeBase64string(sid, sid->dat->user_wmpassword), sid->dat->user_uid, sid->dat->user_mailcurrent);
+		sql_updatef(sid, "UPDATE gw_mailaccounts SET obj_mtime = '%s', popusername = '%s', poppassword = '%s' WHERE obj_uid = %d AND mailaccountid = %d", timebuffer, sid->dat->wm->username, EncodeBase64string(sid, sid->dat->wm->password), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	}
 	return 0;
 }
 
-void wmserver_disconnect(CONNECTION *sid)
+void wmserver_disconnect(CONN *sid)
 {
 	char inbuffer[1024];
 
 	if (sid<0) return;
-	if (!sid->dat->user_wmconnected) return;
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (!sid->dat->wm->connected) return;
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "QUIT\r\n");
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		wmclose(sid);
-		sid->dat->user_wmconnected=0;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d LOGOUT\r\n", sid->dat->user_wmimapidx);
+		sid->dat->wm->connected=0;
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d LOGOUT\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 		}
 		wmclose(sid);
-		sid->dat->user_wmconnected=0;
+		sid->dat->wm->connected=0;
 	}
 	return;
 }
 
-int wmserver_count(CONNECTION *sid)
+int wmserver_count(CONN *sid)
 {
 	char inbuffer[1024];
 	char *ptemp;
 	int count=-1;
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "STAT\r\n");
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
 		ptemp++;
 		return atoi(ptemp);
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d STATUS INBOX (MESSAGES)\r\n", sid->dat->user_wmimapidx);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d STATUS INBOX (MESSAGES)\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 			if (strncasecmp(inbuffer, "* STATUS", 8)==0) {
 				ptemp=inbuffer;
@@ -387,27 +387,27 @@ int wmserver_count(CONNECTION *sid)
 	return -1;
 }
 
-int wmserver_msgdele(CONNECTION *sid, int message)
+int wmserver_msgdele(CONN *sid, int message)
 {
 	char inbuffer[1024];
 	char *ptemp;
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "DELE %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d STORE %d +FLAGS (\\Deleted)\r\n", sid->dat->user_wmimapidx, message);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d STORE %d +FLAGS (\\Deleted)\r\n", sid->dat->wm->imapidx, message);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 		}
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d EXPUNGE\r\n", sid->dat->user_wmimapidx);
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d EXPUNGE\r\n", sid->dat->wm->imapidx);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 		}
 		ptemp=inbuffer;
@@ -425,60 +425,60 @@ int wmserver_msgdele(CONNECTION *sid, int message)
 	return -1;
 }
 
-int wmserver_msghead(CONNECTION *sid, int message)
+int wmserver_msghead(CONN *sid, int message)
 {
 	char inbuffer[1024];
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "TOP %d 0\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH %d BODY[HEADER]\r\n", sid->dat->user_wmimapidx, message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH %d BODY[HEADER]\r\n", sid->dat->wm->imapidx, message);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		return 0;
 	}
 	return -1;
 }
 
-int wmserver_msgretr(CONNECTION *sid, int message)
+int wmserver_msgretr(CONN *sid, int message)
 {
 	char inbuffer[1024];
 	char *ptemp;
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "RETR %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		return 0;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->user_wmimapidx, message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->wm->imapidx, message);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		ptemp=strchr(inbuffer, '{');
 		if (*ptemp) ptemp++;
 		if (*ptemp) {
-			sid->dat->user_wmimapmsize=atoi(ptemp);
+			sid->dat->wm->imapmsize=atoi(ptemp);
 		} else {
-			sid->dat->user_wmimapmsize=-1;
+			sid->dat->wm->imapmsize=-1;
 		}
-		sid->dat->user_wmimapmread=0;
+		sid->dat->wm->imapmread=0;
 		return 0;
 	}
 	return -1;
 }
 
-int wmserver_msgsize(CONNECTION *sid, int message)
+int wmserver_msgsize(CONN *sid, int message)
 {
 	char inbuffer[1024];
 	char *ptemp;
 	int size=-1;
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "LIST %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -486,11 +486,11 @@ int wmserver_msgsize(CONNECTION *sid, int message)
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
 		ptemp++;
 		return atoi(ptemp);
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH %d RFC822.SIZE\r\n", sid->dat->user_wmimapidx, message);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH %d RFC822.SIZE\r\n", sid->dat->wm->imapidx, message);
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 			if (p_strcasestr(inbuffer, "FETCH")!=NULL) {
 				ptemp=inbuffer;
@@ -520,7 +520,7 @@ int wmserver_msgsize(CONNECTION *sid, int message)
 	return -1;
 }
 
-int wmserver_uidl(CONNECTION *sid, int message, char *uidl)
+int wmserver_uidl(CONN *sid, int message, char *uidl)
 {
 	char uidltemp[71];
 	unsigned char a, b, c, d;
@@ -529,9 +529,9 @@ int wmserver_uidl(CONNECTION *sid, int message, char *uidl)
 	char *ptemp;
 
 	memset(uidltemp, 0, sizeof(uidltemp));
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "UIDL %d\r\n", message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		ptemp=inbuffer;
 		while ((*ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -539,10 +539,10 @@ int wmserver_uidl(CONNECTION *sid, int message, char *uidl)
 		while ((*ptemp)&&(*ptemp!=' ')) ptemp++;
 		ptemp++;
 		snprintf(uidltemp, 70, "%s", ptemp);
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH %d UID\r\n", sid->dat->user_wmimapidx, message);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH %d UID\r\n", sid->dat->wm->imapidx, message);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		ptemp=inbuffer;
 		while ((ptemp)&&(*ptemp!=' ')) ptemp++;
 		if (*ptemp) ptemp++;
@@ -556,7 +556,7 @@ int wmserver_uidl(CONNECTION *sid, int message, char *uidl)
 		ptemp=uidltemp;
 		while ((ptemp)&&(*ptemp!=')')) ptemp++;
 		if (*ptemp) *ptemp='\0';
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	}
 	ptemp=uidltemp;
 	dst=0;
@@ -592,20 +592,20 @@ int wmserver_uidl(CONNECTION *sid, int message, char *uidl)
 	return 0;
 }
 
-int is_msg_end(CONNECTION *sid, char *buffer)
+int is_msg_end(CONN *sid, char *buffer)
 {
 	char inbuffer[1024];
 
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		if (strcmp(buffer, ".")==0) return 1;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		if ((sid->dat->user_wmimapmsize>0)&&(sid->dat->user_wmimapmread<sid->dat->user_wmimapmsize)) return 0;
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		if ((sid->dat->wm->imapmsize>0)&&(sid->dat->wm->imapmread<sid->dat->wm->imapmsize)) return 0;
 		if (strcmp(buffer, ")")==0) {
 			for (;;) {
 				if (isdigit(inbuffer[0])) {
-					if (atoi(inbuffer)==sid->dat->user_wmimapidx) break;
+					if (atoi(inbuffer)==sid->dat->wm->imapidx) break;
 				}
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			}
 			return 1;
 		}
@@ -613,7 +613,7 @@ int is_msg_end(CONNECTION *sid, char *buffer)
 	return 0;
 }
 
-int wmserver_msgsync(CONNECTION *sid, int remoteid, int localid, int verbose)
+int wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose)
 {
 	char inbuffer[1024];
 	char msgfilename[512];
@@ -656,23 +656,23 @@ int wmserver_msgsync(CONNECTION *sid, int remoteid, int localid, int verbose)
 		flushbuffer(sid);
 		verbose=0;
 	}
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "RETR %d\r\n", remoteid);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
 		goto sync;
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->user_wmimapidx, remoteid);
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH %d RFC822\r\n", sid->dat->wm->imapidx, remoteid);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		ptemp=strchr(inbuffer, '{');
 		if (*ptemp) ptemp++;
 		if (*ptemp) {
-			sid->dat->user_wmimapmsize=atoi(ptemp);
+			sid->dat->wm->imapmsize=atoi(ptemp);
 		} else {
-			sid->dat->user_wmimapmsize=-1;
+			sid->dat->wm->imapmsize=-1;
 		}
-		sid->dat->user_wmimapmread=0;
+		sid->dat->wm->imapmread=0;
 		goto sync;
 	}
 	return -1;
@@ -683,18 +683,37 @@ sync:
 		return -1;
 	} else {
 		for (;;) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (is_msg_end(sid, inbuffer)) break;
 			fprintf(fp, "%s\r\n", inbuffer);
 		}
 		fclose(fp);
 		if ((stat(msgfilename, &sb)!=0)||(sb.st_mode&S_IFDIR)) return 0;
-		sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d", sb.st_size, localid);
+		sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", sb.st_size, localid, sid->dat->user_mailcurrent);
+	}
+	if (sid->dat->wm->remove==1) {
+		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
+			wmprints(sid, "NOOP\r\n");
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+			if (strncasecmp(inbuffer, "+OK", 3)!=0) return -1;
+		} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+			sid->dat->wm->imapidx++;
+			wmprints(sid, "%d NOOP\r\n", sid->dat->wm->imapidx);
+			for (;;) {
+				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
+				if (isdigit(inbuffer[0])) break;
+			}
+			ptemp=inbuffer;
+			while ((ptemp)&&(*ptemp!=' ')) ptemp++;
+			if (*ptemp) ptemp++;
+			if (strncasecmp(ptemp, "OK", 2)!=0) return -1;
+		}
+		wmserver_msgdele(sid, remoteid);
 	}
 	return 0;
 }
 
-int wmserver_mlistsync(CONNECTION *sid, char ***uidl_list)
+int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 {
 	wmheader header;
 	char lockfile[512];
@@ -777,15 +796,15 @@ int wmserver_mlistsync(CONNECTION *sid, char ***uidl_list)
 	uidls=(char **)calloc(nummessages, sizeof(char *));
 	*uidl_list=uidls;
 	for (i=0;i<nummessages;i++) uidls[i]=calloc(120, sizeof(char));
-	if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+	if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 		wmprints(sid, "UIDL\r\n");
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		if (strncasecmp(inbuffer, "+OK", 3)!=0) {
 			nummessages=-1;
 			goto cleanup;
 		}
 		for (i=0;;i++) {
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (strcmp(inbuffer, ".")==0) break;
 			if (atoi(inbuffer)<1) break;
 			if (i<nummessages) {
@@ -802,12 +821,12 @@ int wmserver_mlistsync(CONNECTION *sid, char ***uidl_list)
 				};
 			}
 		}
-	} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
-		sid->dat->user_wmimapidx++;
-		wmprints(sid, "%d FETCH 1:* UID\r\n", sid->dat->user_wmimapidx);
+	} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
+		sid->dat->wm->imapidx++;
+		wmprints(sid, "%d FETCH 1:* UID\r\n", sid->dat->wm->imapidx);
 		for (;;) {
 			memset(uidltemp, 0, sizeof(uidltemp));
-			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+			wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			if (isdigit(inbuffer[0])) break;
 			ptemp=inbuffer;
 			while ((*ptemp)&&(*ptemp!=' ')) ptemp++;
@@ -852,7 +871,7 @@ int wmserver_mlistsync(CONNECTION *sid, char ***uidl_list)
 		}
 		if (found>-1) continue;
 //		if (!RunAsCGI) pthread_mutex_lock(&Lock.DB_mheader);
-		if ((sqr2=sql_query(sid, "SELECT max(mailheaderid) FROM gw_mailheaders"))<0) {
+		if ((sqr2=sql_queryf(sid, "SELECT max(mailheaderid) FROM gw_mailheaders where accountid = %d", sid->dat->user_mailcurrent))<0) {
 //			if (!RunAsCGI) pthread_mutex_unlock(&Lock.DB_mheader);
 			nummessages=-1;
 			goto cleanup;
@@ -870,14 +889,14 @@ int wmserver_mlistsync(CONNECTION *sid, char ***uidl_list)
 			nummessages=-1;
 			goto cleanup;
 		}
-		if (strncasecmp(sid->dat->user_wmservertype, "pop3", 4)==0) {
+		if (strncasecmp(sid->dat->wm->servertype, "pop3", 4)==0) {
 			for (;;) {
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 				if (strcmp(inbuffer, ".")==0) break;
 			}
-		} else if (strncasecmp(sid->dat->user_wmservertype, "imap", 4)==0) {
+		} else if (strncasecmp(sid->dat->wm->servertype, "imap", 4)==0) {
 			for (;;) {
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 				if (isdigit(inbuffer[0])) break;
 			}
 		}
@@ -926,7 +945,7 @@ cleanup:
 	return nummessages;
 }
 
-void wmserver_purge(CONNECTION *sid, int remove)
+void wmserver_purge(CONN *sid, int remove)
 {
 	char **uidls;
 	int numlocal;
@@ -935,7 +954,7 @@ void wmserver_purge(CONNECTION *sid, int remove)
 	int sqr;
 
 	if (wmserver_connect(sid, 0)!=0) return;
-	if (sid->dat->user_wmremove<1) {
+	if (sid->dat->wm->remove<1) {
 		wmserver_disconnect(sid);
 		return;
 	}
@@ -945,9 +964,9 @@ void wmserver_purge(CONNECTION *sid, int remove)
 		wmserver_disconnect(sid);
 		return;
 	}
-	if (sid->dat->user_wmremove==1) {
+	if (sid->dat->wm->remove==1) {
 		if ((sqr=sql_queryf(sid, "SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
-	} else if (sid->dat->user_wmremove==2) {
+	} else if (sid->dat->wm->remove==2) {
 		if ((sqr=sql_queryf(sid, "SELECT mailheaderid, uidl FROM gw_mailheaders WHERE obj_uid = %d AND accountid = %d AND status = 'd' ORDER BY hdr_date DESC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
 	} else {
 		goto cleanup;
@@ -962,6 +981,7 @@ void wmserver_purge(CONNECTION *sid, int remove)
 			}
 		}
 	}
+	sql_freeresult(sqr);
 cleanup:
 	wmserver_disconnect(sid);
 	for (i=0;i<numremote;i++) free(uidls[i]);
@@ -970,7 +990,7 @@ cleanup:
 }
 
 /*
-void wmtestsend(CONNECTION *sid, int mailid, int verbose)
+void wmtestsend(CONN *sid, int mailid, int verbose)
 {
 	wmheader header;
 	char *ptemp;
@@ -1038,7 +1058,7 @@ void wmtestsend(CONNECTION *sid, int mailid, int verbose)
 	return;
 }
 */
-int wmserver_send(CONNECTION *sid, int mailid, int verbose)
+int wmserver_send(CONN *sid, int mailid, int verbose)
 {
 	wmheader header;
 	FILE *fp;
@@ -1069,19 +1089,19 @@ int wmserver_send(CONNECTION *sid, int mailid, int verbose)
 	snprintf(header.encoding,    sizeof(header.encoding)-1,    "%s", sql_getvalue(sqr, 0, 10));
 	sql_freeresult(sqr);
 	if (wmserver_smtpconnect(sid)!=0) return -1;
-	snprintf(outbuffer, sizeof(outbuffer)-1, "HELO %s\r\n", sid->dat->user_wmsmtpserver);
+	snprintf(outbuffer, sizeof(outbuffer)-1, "HELO %s\r\n", sid->dat->wm->smtpserver);
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 //	if (use_auth) if (wmserver_smtpauth(sid)!=0) goto quit;
-	snprintf(outbuffer, sizeof(outbuffer)-1, "MAIL From: <%s>\r\n", sid->dat->user_wmreplyto);
+	snprintf(outbuffer, sizeof(outbuffer)-1, "MAIL From: <%s>\r\n", sid->dat->wm->replyto);
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 	for (i=0;i<3;i++) {
@@ -1106,14 +1126,14 @@ int wmserver_send(CONNECTION *sid, int mailid, int verbose)
 					memset(msgaddr, 0, sizeof(msgaddr));
 					ptemp++;
 					do {
-						if (strlen(msgaddr)<sizeof(msgaddr)) {
+						if (strlen(msgaddr)<sizeof(msgaddr)-1) {
 							msgaddr[strlen(msgaddr)]=*ptemp;
 						}
 						ptemp++;
 					} while ((*ptemp)&&(*ptemp!='>'));
 					if (*ptemp=='>') ptemp++;
 				} else {
-					if (strlen(msgaddr)<sizeof(msgaddr)) {
+					if (strlen(msgaddr)<sizeof(msgaddr)-1) {
 						msgaddr[strlen(msgaddr)]=*ptemp;
 					}
 					ptemp++;
@@ -1123,7 +1143,7 @@ int wmserver_send(CONNECTION *sid, int mailid, int verbose)
 			wmprints(sid, "%s", outbuffer);
 			do {
 				memset(inbuffer, 0, sizeof(inbuffer));
-				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+				wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 			} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 			if (strncasecmp(inbuffer, "250", 3)!=0) goto quit;
 		}
@@ -1142,7 +1162,7 @@ int wmserver_send(CONNECTION *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "354", 3)!=0) goto quit;
 	for (;;) {
@@ -1156,14 +1176,14 @@ int wmserver_send(CONNECTION *sid, int mailid, int verbose)
 	wmprints(sid, "%s", outbuffer);
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)==0) {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (verbose) prints(sid, "<BR><B>Message %d Sent.</B>\n", mailid);
 		flushbuffer(sid);
 		wmserver_smtpdisconnect(sid);
-		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 'Sent Items' WHERE mailheaderid = %d", mailid);
+		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 'Sent Items' WHERE mailheaderid = %d AND accountid = %d", mailid, sid->dat->user_mailcurrent);
 		return 0;
 	}
 quit:
@@ -1174,49 +1194,33 @@ quit:
 	return -1;
 }
 
-int wmsync(CONNECTION *sid, int verbose)
+int wmsync(CONN *sid, int verbose)
 {
 	char **uidls;
 	int numremote;
 	int numlocal;
-	int popauthed=0;
 	int i, j;
 	int sqr;
 	int smtperror=0;
 
-	if (verbose) {
-		if ((sqr=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = 'Outbox'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return -1;
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			if (!popauthed) {
-				/* some smtp servers like pop auth before smtp */
-				if (wmserver_connect(sid, 1)!=0) {
-					sql_freeresult(sqr);
-					return -1;
-				}
-				wmserver_disconnect(sid);
-				popauthed=1;
-			}
-			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
-//			wmtestsend(sid, atoi(sql_getvalue(sqr, i, 0)), verbose);
-		}
-		sql_freeresult(sqr);
+	if (sid->dat->wm==NULL) {
+		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return -1;
 	}
-	if ((wmserver_connect(sid, verbose)!=0)&&(verbose)) return -1;
-	if (verbose) prints(sid, "<BR><B><NOBR>Checking for new mail</NOBR> ");
+	if (verbose) {
+		prints(sid, "<BR><B><NOBR>Checking for new mail</NOBR> ");
+		flushbuffer(sid);
+	}
+	if (wmserver_connect(sid, verbose)!=0) {
+		if (sid->dat->wm!=NULL) {
+			free(sid->dat->wm);
+			sid->dat->wm=NULL;
+		}
+		return -1;
+	}
 	numremote=wmserver_mlistsync(sid, &uidls);
 	if ((verbose)&&(numremote==-2)) prints(sid, "<BR><B>Mailbox is locked!</B>\n");
 	sql_updatef(sid, "UPDATE gw_mailaccounts SET lastcount = %d, lastcheck = '%s' WHERE obj_uid = %d AND mailaccountid = %d", numremote, time_unix2sql(sid, time(NULL)), sid->dat->user_uid, sid->dat->user_mailcurrent);
-	if (numremote<1) {
-		if (verbose) {
-			prints(sid, " OK.</B>\r\n");
-			if (!smtperror) prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/list\">\r\n", sid->dat->in_ScriptName);
-		}
-		wmserver_disconnect(sid);
-		return -1;
-	}
-	if (numremote<1) {
-		goto cleanup;
-	}
+	if (numremote<1) goto cleanup;
 	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' ORDER BY hdr_date ASC", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) goto cleanup;
 	numlocal=sql_numtuples(sqr);
 	for (i=0;i<numlocal;i++) {
@@ -1228,13 +1232,26 @@ int wmsync(CONNECTION *sid, int verbose)
 		}
 	}
 	sql_freeresult(sqr);
-	wmserver_disconnect(sid);
-	if (verbose) {
-		prints(sid, " OK</B>\r\n");
-		if (!smtperror) prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/list\">\r\n", sid->dat->in_ScriptName);
-	}
 cleanup:
+	if (verbose) {
+		prints(sid, " OK.</B>\r\n");
+		flushbuffer(sid);
+	}
+	wmserver_disconnect(sid);
 	for (i=0;i<numremote;i++) free(uidls[i]);
 	free(uidls);
+	if (verbose) {
+		if ((sqr=sql_queryf(sid, "SELECT mailheaderid FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = 'Outbox'", sid->dat->user_uid, sid->dat->user_mailcurrent))<0) return -1;
+		for (i=0;i<sql_numtuples(sqr);i++) {
+			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
+//			wmtestsend(sid, atoi(sql_getvalue(sqr, i, 0)), verbose);
+		}
+		sql_freeresult(sqr);
+		if (!smtperror) prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/list\">\r\n", sid->dat->in_ScriptName);
+	}
+	if (sid->dat->wm!=NULL) {
+		free(sid->dat->wm);
+		sid->dat->wm=NULL;
+	}
 	return numremote;
 }

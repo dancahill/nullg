@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,11 +32,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	pthread_t rc;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
-	RunAsCGI=0;
+	proc.RunAsCGI=0;
 	conn=NULL;
-	snprintf(program_name, sizeof(program_name)-1, "%s", GetCommandLine());
-	memset((char *)&stats, 0, sizeof(stats));
-	stats.starttime=time(NULL);
+	memset((char *)&proc, 0, sizeof(proc));
+	proc.stats.starttime=time(NULL);
+	snprintf(proc.program_name, sizeof(proc.program_name)-1, "%s", GetCommandLine());
 	if (getenv("REQUEST_METHOD")!=NULL) {
 		cgiinit();
 		return 0;
@@ -44,12 +44,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		init();
 		if (pthread_attr_init(&thr_attr)) exit(1);
 		if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
-		if (pthread_create(&ListenThread, &thr_attr, accept_loop, NULL)==-1) {
+		if (pthread_create(&proc.ListenThread, &thr_attr, accept_loop, NULL)==-1) {
 			logerror(NULL, __FILE__, __LINE__, "accept() loop failed to start.");
 			exit(0);
 		}
 		if (strstr(lpCmdLine, "noicon")!=NULL) {
-			DaemonThread=(pthread_t)pthread_self();
+			proc.DaemonThread=(pthread_t)pthread_self();
 			conn_reaper(NULL);
 			logerror(NULL, __FILE__, __LINE__, "conn_reaper() loop failed to start.");
 			exit(0);
@@ -60,8 +60,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				logerror(NULL, __FILE__, __LINE__, "conn_reaper() thread failed to start.");
 				exit(0);
 			}
-			DaemonThread=rc;
-			hInst=hInstance;
+			proc.DaemonThread=rc;
+			proc.hInst=hInstance;
 			DialogBox(hInstance, MAKEINTRESOURCE(IDD_NULLDIALOG), NULL, NullDlgProc);
 		}
 	}
@@ -81,12 +81,11 @@ int main(int argc, char *argv[])
 	pthread_attr_t thr_attr;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
-	umask(077);
-	RunAsCGI=0;
+//	umask(077);
 	conn=NULL;
-	snprintf(program_name, sizeof(program_name)-1, "%s", argv[0]);
-	memset((char *)&stats, 0, sizeof(stats));
-	stats.starttime=time(NULL);
+	memset((char *)&proc, 0, sizeof(proc));
+	proc.stats.starttime=time(NULL);
+	snprintf(proc.program_name, sizeof(proc.program_name)-1, "%s", argv[0]);
 	if (getenv("REQUEST_METHOD")!=NULL) {
 		cgiinit();
 		return 0;
@@ -95,11 +94,11 @@ int main(int argc, char *argv[])
 		daemon(0, 0);
 		if (pthread_attr_init(&thr_attr)) exit(1);
 		if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(1);
-		if (pthread_create(&ListenThread, &thr_attr, accept_loop, NULL)==-1) {
+		if (pthread_create(&proc.ListenThread, &thr_attr, accept_loop, NULL)==-1) {
 			logerror(NULL, __FILE__, __LINE__, "accept() loop failed to start.");
 			exit(0);
 		}
-		DaemonThread=pthread_self();
+		proc.DaemonThread=pthread_self();
 		conn_reaper(NULL);
 	}
 	return 0;

@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_notes - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_notes.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_notes.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_notes.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_notes_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_notes_main.c
 # End Source File
 # End Target
 # End Project

@@ -14,20 +14,18 @@
 * needed on buffers full of bytes, and then call MD5Final, which
 * will fill a supplied 16-byte array with the digest.
 */
-//#include <string.h>	/* for memcpy() */
-//#include "md5.h"
 #include "main.h"
 
 #ifndef HIGHFIRST
 #define byteReverse(buf, len)	/* Nothing */
 #else
-void byteReverse(unsigned char *buf, unsigned longs);
+static void byteReverse(unsigned char *buf, unsigned longs);
 
 #ifndef ASM_MD5
 /*
 * Note: this code is harmless on little-endian machines.
 */
-void byteReverse(unsigned char *buf, unsigned longs)
+static void byteReverse(unsigned char *buf, unsigned longs)
 {
 	uint32 t;
 
@@ -44,7 +42,7 @@ void byteReverse(unsigned char *buf, unsigned longs)
 * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
 * initialization constants.
 */
-void MD5Init(struct MD5Context *ctx)
+void md5_init(struct MD5Context *ctx)
 {
 	ctx->buf[0]=0x67452301;
 	ctx->buf[1]=0xefcdab89;
@@ -58,7 +56,7 @@ void MD5Init(struct MD5Context *ctx)
 * Update context to reflect the concatenation of another buffer full
 * of bytes.
 */
-void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
+void md5_update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
 {
 	uint32 t;
 
@@ -80,7 +78,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
 		}
 		memcpy(p, buf, t);
 		byteReverse(ctx->in, 16);
-		MD5Transform(ctx->buf, (uint32 *)ctx->in);
+		md5_transform(ctx->buf, (uint32 *)ctx->in);
 		buf+=t;
 		len-=t;
 	}
@@ -88,7 +86,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
 	while (len>=64) {
 		memcpy(ctx->in, buf, 64);
 		byteReverse(ctx->in, 16);
-		MD5Transform(ctx->buf, (uint32 *)ctx->in);
+		md5_transform(ctx->buf, (uint32 *)ctx->in);
 		buf+=64;
 		len-=64;
 	}
@@ -100,7 +98,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
 * Final wrapup - pad to 64-byte boundary with the bit pattern
 * 1 0* (64-bit count of bits processed, MSB-first)
 */
-void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
+void md5_final(unsigned char digest[16], struct MD5Context *ctx)
 {
 	unsigned count;
 	unsigned char *p;
@@ -118,7 +116,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 		/* Two lots of padding:  Pad the first block to 64 bytes */
 		memset(p, 0, count);
 		byteReverse(ctx->in, 16);
-		MD5Transform(ctx->buf, (uint32 *)ctx->in);
+		md5_transform(ctx->buf, (uint32 *)ctx->in);
 		/* Now fill the next block with 56 bytes */
 		memset(ctx->in, 0, 56);
 	} else {
@@ -129,7 +127,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 	/* Append length in bits and transform */
 	((uint32 *)ctx->in)[14]=ctx->bits[0];
 	((uint32 *)ctx->in)[15]=ctx->bits[1];
-	MD5Transform(ctx->buf, (uint32 *)ctx->in);
+	md5_transform(ctx->buf, (uint32 *)ctx->in);
 	byteReverse((unsigned char *)ctx->buf, 4);
 	memcpy(digest, ctx->buf, 16);
 	memset((char *)ctx, 0, sizeof(ctx));	/* In case it's sensitive */
@@ -151,7 +149,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 * reflect the addition of 16 longwords of new data.  MD5Update blocks
 * the data and converts bytes into longwords for this routine.
 */
-void MD5Transform(uint32 buf[4], uint32 const in[16])
+void md5_transform(uint32 buf[4], uint32 const in[16])
 {
 	register uint32 a, b, c, d;
 
@@ -240,7 +238,7 @@ void MD5Transform(uint32 buf[4], uint32 const in[16])
 //static const char rcsid[]="$FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $";
 static unsigned char itoa64[]="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-void _crypt_to64(char *s, unsigned long v, int n)
+static void _crypt_to64(char *s, unsigned long v, int n)
 {
 	while (--n >= 0) {
 		*s++ = itoa64[v&0x3f];
@@ -248,21 +246,16 @@ void _crypt_to64(char *s, unsigned long v, int n)
 	}
 }
 
-char *MD5Crypt(char *pw, char *salt)
+char *md5_crypt(CONN *sid, char *pw, char *salt)
 {
 //	static char passwd[120];
-	CONNECTION *sid=NULL;
-	int _sid=getsid();
-	char *passwd;
+	char *passwd=getbuffer(sid);
 	char *magic="$1$";
 	char *sp,*ep, *p;
 	unsigned char final[MD5_SIZE];
 	int sl,pl,i;
 	MD5_CTX	ctx,ctx1;
 	unsigned long l;
-
-	if (_sid>=0) sid=&conn[_sid];
-	passwd=getbuffer(sid);
 
 	/* Refine the Salt first */
 	sp=salt;
@@ -272,58 +265,58 @@ char *MD5Crypt(char *pw, char *salt)
 	for (ep=sp;*ep&&*ep!='$'&&ep<(sp+8);ep++) continue;
 	/* get the length of the true salt */
 	sl=ep-sp;
-	MD5Init(&ctx);
+	md5_init(&ctx);
 	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx, pw, strlen(pw));
+	md5_update(&ctx, pw, strlen(pw));
 	/* Then our magic string */
-	MD5Update(&ctx, magic, strlen(magic));
+	md5_update(&ctx, magic, strlen(magic));
 	/* Then the raw salt */
-	MD5Update(&ctx, sp, sl);
+	md5_update(&ctx, sp, sl);
 	/* Then just as many characters of the MD5(pw,salt,pw) */
-	MD5Init(&ctx1);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Update(&ctx1,sp,sl);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Final(final,&ctx1);
+	md5_init(&ctx1);
+	md5_update(&ctx1,pw,strlen(pw));
+	md5_update(&ctx1,sp,sl);
+	md5_update(&ctx1,pw,strlen(pw));
+	md5_final(final,&ctx1);
 	for (pl = strlen(pw); pl > 0; pl -= MD5_SIZE)
-		MD5Update(&ctx,final,pl>MD5_SIZE ? MD5_SIZE : pl);
+		md5_update(&ctx,final,pl>MD5_SIZE ? MD5_SIZE : pl);
 	/* Don't leave anything around in vm they could use. */
 	memset(final,0,sizeof final);
 	/* Then something really weird... */
 	for (i = strlen(pw); i ; i >>= 1)
 		if(i&1)
-		    MD5Update(&ctx, final, 1);
+		    md5_update(&ctx, final, 1);
 		else
-		    MD5Update(&ctx, pw, 1);
+		    md5_update(&ctx, pw, 1);
 
 	/* Now make the output string */
 	strncpy(passwd,magic, sizeof(passwd)-1);
 	strncat(passwd,sp,sl);
 	strcat(passwd,"$");
-	MD5Final(final,&ctx);
+	md5_final(final,&ctx);
 	/*
 	 * and now, just to make sure things don't run too fast
 	 * On a 60 Mhz Pentium this takes 34 msec, so you would
 	 * need 30 seconds to build a 1000 entry dictionary...
 	 */
 	for(i=0;i<1000;i++) {
-		MD5Init(&ctx1);
+		md5_init(&ctx1);
 		if(i & 1)
-			MD5Update(&ctx1,pw,strlen(pw));
+			md5_update(&ctx1,pw,strlen(pw));
 		else
-			MD5Update(&ctx1,final,MD5_SIZE);
+			md5_update(&ctx1,final,MD5_SIZE);
 
 		if(i % 3)
-			MD5Update(&ctx1,sp,sl);
+			md5_update(&ctx1,sp,sl);
 
 		if(i % 7)
-			MD5Update(&ctx1,pw,strlen(pw));
+			md5_update(&ctx1,pw,strlen(pw));
 
 		if(i & 1)
-			MD5Update(&ctx1,final,MD5_SIZE);
+			md5_update(&ctx1,final,MD5_SIZE);
 		else
-			MD5Update(&ctx1,pw,strlen(pw));
-		MD5Final(final,&ctx1);
+			md5_update(&ctx1,pw,strlen(pw));
+		md5_final(final,&ctx1);
 	}
 	p = passwd + strlen(passwd);
 	l = (final[ 0]<<16) | (final[ 6]<<8) | final[12];
@@ -357,7 +350,7 @@ int main(int argc, char *argv[])
 		snprintf(rpassword, sizeof(rpassword)-1, "visual");
 	}
 	printf("[%s]\r\n", original);
-	printf("[%s]\r\n", MD5_crypt(rpassword, salt));
+	printf("[%s]\r\n", md5_crypt(rpassword, salt));
 	return 0;
 }
 */

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,9 +64,9 @@ BOOL TrayMessage(DWORD dwMessage)
 	NOTIFYICONDATA tnd;
 
 	if (iconstatus) {
-                hIcon=LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON2), IMAGE_ICON, 16, 16, 0);
+		hIcon=LoadImage(proc.hInst, MAKEINTRESOURCE(IDI_ICON2), IMAGE_ICON, 16, 16, 0);
 	} else {
-                hIcon=LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
+		hIcon=LoadImage(proc.hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, 0);
 	}
 	tnd.cbSize		= sizeof(NOTIFYICONDATA);
 	tnd.hWnd		= hDLG;
@@ -74,7 +74,7 @@ BOOL TrayMessage(DWORD dwMessage)
 	tnd.uFlags		= NIF_MESSAGE|NIF_ICON|NIF_TIP;
 	tnd.uCallbackMessage	= MYWM_NOTIFYICON;
 	tnd.hIcon		= hIcon;
-	snprintf(tnd.szTip, sizeof(tnd.szTip)-1, "NullLogic Groupware Server");
+	snprintf(tnd.szTip, sizeof(tnd.szTip)-1, "%s Server", SERVER_NAME);
 	res=Shell_NotifyIcon(dwMessage, &tnd);
 	if (hIcon) {
 		DestroyIcon(hIcon);
@@ -137,10 +137,10 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		nNewMode=GET_WM_COMMAND_ID(wParam, lParam)-(MYWM_NOTIFYICON+10);
 		switch (nNewMode) {
 		case 0:
-			if ((strcasecmp("ANY", config.server_hostname)==0)||(strcasecmp("INADDR_ANY", config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/groupware/help/index.html", config.server_port);
+			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
+				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/%s/help/index.html", proc.config.server_port, SERVER_BASENAME);
 			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/groupware/help/index.html", config.server_hostname, config.server_port);
+				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/%s/help/index.html", proc.config.server_hostname, proc.config.server_port, SERVER_BASENAME);
 			}
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;
@@ -148,10 +148,10 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			winsystem(".\\config.exe");
 			break;
 		case 2:
-			if ((strcasecmp("ANY", config.server_hostname)==0)||(strcasecmp("INADDR_ANY", config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", config.server_port);
+			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
+				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", proc.config.server_port);
 			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", config.server_hostname, config.server_port);
+				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", proc.config.server_hostname, proc.config.server_port);
 			}
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;
@@ -165,10 +165,10 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case MYWM_NOTIFYICON:
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
-			if ((strcasecmp("ANY", config.server_hostname)==0)||(strcasecmp("INADDR_ANY", config.server_hostname)==0)) {
-				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", config.server_port);
+			if ((strcasecmp("ANY", proc.config.server_hostname)==0)||(strcasecmp("INADDR_ANY", proc.config.server_hostname)==0)) {
+				snprintf(commandline, sizeof(commandline)-1, "http://localhost:%d/", proc.config.server_port);
 			} else {
-				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", config.server_hostname, config.server_port);
+				snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", proc.config.server_hostname, proc.config.server_port);
 			}
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;

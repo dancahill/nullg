@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_orders - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_orders.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_orders.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_orders.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_orders_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_orders_main.c
 # End Source File
 # End Target
 # End Project

@@ -1,8 +1,9 @@
 # Makefile for NullLogic Groupware mods
 
-all: _mod_admin _mod_bookmarks _mod_calendar _mod_calls _mod_contacts \
-	_mod_files _mod_forums _mod_mail _mod_messages _mod_notes \
-	_mod_orders _mod_profile _mod_searches _mod_tasks
+all: _mod_admin _mod_bookmarks _mod_calendar _mod_calls _mod_cgi \
+	_mod_contacts _mod_files _mod_forums _mod_html _mod_mail \
+	_mod_messages _mod_notes _mod_orders _mod_profile _mod_searches \
+	_mod_tasks _mod_xmlrpc
 
 _mod_admin:
 	@cd mod_admin;make
@@ -16,6 +17,9 @@ _mod_calendar:
 _mod_calls:
 	@cd mod_calls;make
 
+_mod_cgi:
+	@cd mod_cgi;make
+
 _mod_contacts:
 	@cd mod_contacts;make
 
@@ -24,6 +28,9 @@ _mod_files:
 
 _mod_forums:
 	@cd mod_forums;make
+
+_mod_html:
+	@cd mod_html;make
 
 _mod_mail:
 	@cd mod_mail;make
@@ -46,19 +53,25 @@ _mod_searches:
 _mod_tasks:
 	@cd mod_tasks;make
 
+_mod_xmlrpc:
+	@cd mod_xmlrpc;make
+
 clean:
-	@cd mod_admin;make clean;../../fromdos
-	@cd mod_bookmarks;make clean;../../fromdos
-	@cd mod_calendar;make clean;../../fromdos
-	@cd mod_calls;make clean;../../fromdos
-	@cd mod_contacts;make clean;../../fromdos
-	@cd mod_files;make clean;../../fromdos
-	@cd mod_forums;make clean;../../fromdos
-	@cd mod_mail;make clean;../../fromdos
-	@cd mod_messages;make clean;../../fromdos
-	@cd mod_notes;make clean;../../fromdos
-	@cd mod_orders;make clean;../../fromdos
-	@cd mod_profile;make clean;../../fromdos
-	@cd mod_searches;make clean;../../fromdos
-	@cd mod_tasks;make clean;../../fromdos
+	@cd mod_admin;make clean
+	@cd mod_bookmarks;make clean
+	@cd mod_calendar;make clean
+	@cd mod_calls;make clean
+	@cd mod_cgi;make clean
+	@cd mod_contacts;make clean
+	@cd mod_files;make clean
+	@cd mod_forums;make clean
+	@cd mod_html;make clean
+	@cd mod_mail;make clean
+	@cd mod_messages;make clean
+	@cd mod_notes;make clean
+	@cd mod_orders;make clean
+	@cd mod_profile;make clean
+	@cd mod_searches;make clean
+	@cd mod_tasks;make clean
+	@cd mod_xmlrpc;make clean
 	@rm -f *~

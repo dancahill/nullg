@@ -76,10 +76,6 @@ SOURCE=..\include\main.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\include\md5.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\include\mysql.h
 # End Source File
 # Begin Source File
@@ -104,15 +100,7 @@ SOURCE=.\auth.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\cgi.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\config.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\db.c
 # End Source File
 # Begin Source File
 
@@ -132,7 +120,7 @@ SOURCE=.\io.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\logging.c
+SOURCE=.\log.c
 # End Source File
 # Begin Source File
 
@@ -161,10 +149,6 @@ SOURCE=.\sql.c
 # Begin Source File
 
 SOURCE=.\win32.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\xmlrpc.c
 # End Source File
 # End Group
 # Begin Group "Resources"

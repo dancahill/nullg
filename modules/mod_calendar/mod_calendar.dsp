@@ -68,6 +68,10 @@ SOURCE=.\mod_calendar_assign.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_calendar_db.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_calendar_main.c
 # End Source File
 # Begin Source File

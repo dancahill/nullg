@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,20 +27,20 @@ unsigned sleep(unsigned seconds)
 #include <unistd.h>
 #endif
 
-void messagestatus(CONNECTION *sid, int messageid, char status)
+void messagestatus(CONN *sid, int messageid, char status)
 {
 	char timebuffer[100];
 	time_t t;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_READ)) {
+	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if ((messageid==0)&&(getgetenv(sid, "MESSAGEID")!=NULL)) {
 		messageid=atoi(getgetenv(sid, "MESSAGEID"));
 	}
-	if ((sqr=sql_queryf(sid, "SELECT * FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT messageid FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		sql_freeresult(sqr);
 		return;
@@ -56,13 +56,13 @@ void messagestatus(CONNECTION *sid, int messageid, char status)
 	return;
 }
 
-void messages_userlist(CONNECTION *sid)
+void messages_userlist(CONN *sid)
 {
 	int i;
 	int sqr;
 
 	htpage_header(sid, "Null Messenger");
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_READ)) {
+	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -78,7 +78,7 @@ void messages_userlist(CONNECTION *sid)
 	prints(sid, "}\r\n");
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=left WIDTH=100%%><FONT COLOR=%s>&nbsp;User&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;History&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='cursor:hand' onClick=\"SendMessage('%d', '%s')\" TITLE='%s %s'><A HREF=\"javascript:SendMessage('%d', '%s')\">%s</A>&nbsp;</TD>\n", config->colour_fieldval, atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 2), sql_getvalue(sqr, i, 3), atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 1), sql_getvalue(sqr, i, 1));
@@ -89,14 +89,14 @@ void messages_userlist(CONNECTION *sid)
 	return;
 }
 
-void messages_frameset(CONNECTION *sid)
+void messages_frameset(CONN *sid)
 {
 	char *ptemp;
 	char username[40];
 	int userid=0;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_READ)) {
+	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -121,14 +121,14 @@ void messages_frameset(CONNECTION *sid)
 	prints(sid, "</HTML>\r\n");
 }
 
-void messages_white(CONNECTION *sid)
+void messages_white(CONN *sid)
 {
 	char *ptemp;
 	char username[40];
 	int userid=0;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_READ)) {
+	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -153,7 +153,7 @@ void messages_white(CONNECTION *sid)
 	prints(sid, "</BODY>\r\n</HTML>\r\n");
 }
 
-void messages_send(CONNECTION *sid)
+void messages_send(CONN *sid)
 {
 	char *ptemp;
 	char curdate[50];
@@ -163,7 +163,7 @@ void messages_send(CONNECTION *sid)
 	int userid=0;
 	int sqr;
 
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_INSERT)) {
+	if (!(auth_priv(sid, "messages")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -210,7 +210,7 @@ void messages_send(CONNECTION *sid)
 	return;
 }
 
-void messages_reload(CONNECTION *sid)
+void messages_reload(CONN *sid)
 {
 	char *ptemp;
 	char username[40];
@@ -219,7 +219,7 @@ void messages_reload(CONNECTION *sid)
 	int userid=0;
 	int retry;
 
-	if (!auth_priv(sid, AUTH_MESSAGES)&A_READ) return;
+	if (!auth_priv(sid, "messages")&A_READ) return;
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
 	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
@@ -280,7 +280,7 @@ void messages_reload(CONNECTION *sid)
 	return;
 }
 
-void messages_history(CONNECTION *sid)
+void messages_history(CONN *sid)
 {
 	char *ptemp;
 	char username[40];
@@ -290,7 +290,7 @@ void messages_history(CONNECTION *sid)
 	time_t msgdate;
 
 	htpage_header(sid, "Null Messenger");
-	if (!(auth_priv(sid, AUTH_MESSAGES)&A_READ)) {
+	if (!(auth_priv(sid, "messages")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
@@ -317,7 +317,7 @@ void messages_history(CONNECTION *sid)
 		sql_freeresult(sqr);
 		return;
 	}
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TABLE BGCOLOR=%s BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%>\r\n", proc->config.colour_tabletrim);
 	prints(sid, "<TR BGCOLOR=%s><TH>&nbsp;</TH><TH ALIGN=left WIDTH=100%%><FONT COLOR=%s>&nbsp;Message&nbsp;</FONT></TH><TH ALIGN=left><FONT COLOR=%s>&nbsp;Date&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
@@ -337,7 +337,7 @@ void messages_history(CONNECTION *sid)
 	return;
 }
 
-void mod_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/messages/userlist", 18)==0) {
@@ -358,12 +358,11 @@ void mod_main(CONNECTION *sid)
 	}
 }
 
-DllExport int mod_init(CONFIG *cfg, FUNCTION *fns, MODULE_MENU *menu, MODULE_FUNC *func)
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	config=cfg;
-	functions=fns;
-	mod_menuitems=menu;
-	mod_functions=func;
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
 	if (mod_import()!=0) return -1;
 	if (mod_export_main("mod_messages", "MESSENGER", "javascript:ListUsers()", "mod_main", "/messages/", mod_main)!=0) return -1;
 	return 0;

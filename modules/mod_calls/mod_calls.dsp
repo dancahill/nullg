@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_calls - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_calls.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_calls.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_calls.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calls_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calls_main.c
 # End Source File
 # End Target
 # End Project

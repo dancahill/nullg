@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_calendar.h"
 
-char *db_avail_getweek(CONNECTION *sid, int userid, char *availability)
+char *db_avail_getweek(CONN *sid, int userid, char *availability)
 {
 	char availbuff[170];
 	char gavailability[673];
@@ -73,7 +73,7 @@ char *db_avail_getweek(CONNECTION *sid, int userid, char *availability)
 	return availability;
 }
 
-char *db_avail_getfullweek(CONNECTION *sid, int userid, int record, time_t eventstart, char *availability)
+char *db_avail_getfullweek(CONN *sid, int userid, int record, time_t eventstart, char *availability)
 {
 	char timebuf1[40];
 	char timebuf2[40];
@@ -120,7 +120,7 @@ char *db_avail_getfullweek(CONNECTION *sid, int userid, int record, time_t event
 	return availability;
 }
 
-int db_availcheck(CONNECTION *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_availcheck(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	char availability[673];
 	char timebuf1[40];
@@ -168,7 +168,7 @@ int db_availcheck(CONNECTION *sid, int userid, int record, int busy, time_t even
 	return 0;
 }
 
-int db_autoschedule(CONNECTION *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_autoschedule(CONN *sid, int userid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	char availability[673];
 	char availweekbuf[673];
@@ -226,7 +226,7 @@ int db_autoschedule(CONNECTION *sid, int userid, int record, int busy, time_t ev
 	return newtime;
 }
 
-int db_autoassign(CONNECTION *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish)
+int db_autoassign(CONN *sid, u_avail *uavail, int groupid, int zoneid, int record, int busy, time_t eventstart, time_t eventfinish)
 {
 	int i;
 	int j;

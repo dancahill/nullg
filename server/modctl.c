@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@
 #include "main.h"
 
 static FUNCTION functions[]={
+	{ "auth_setcookie",		auth_setcookie			},
 	{ "auth_setpass",		auth_setpass			},
 	{ "auth_priv",			auth_priv			},
-	{ "db_read",			db_read				},
-	{ "db_write",			db_write			},
+	{ "config_read",		config_read			},
+	{ "config_write",		config_write			},
 	{ "db_log_activity",		db_log_activity			},
 	{ "htpage_header",		htpage_header			},
 	{ "htpage_footer",		htpage_footer			},
@@ -51,6 +52,10 @@ static FUNCTION functions[]={
 	{ "htview_holiday",		htview_holiday			},
 	{ "htview_reminder",		htview_reminder			},
 	{ "htview_user",		htview_user			},
+	{ "md5_init",			md5_init			},
+	{ "md5_update",			md5_update			},
+	{ "md5_final",			md5_final			},
+	{ "md5_crypt",			md5_crypt			},
 	{ "sql_freeresult",		sql_freeresult			},
 	{ "sql_update",			sql_update			},
 	{ "sql_updatef",		sql_updatef			},
@@ -73,12 +78,16 @@ static FUNCTION functions[]={
 	{ "time_unix2datetext",		time_unix2datetext		},
 	{ "time_wmgetdate",		time_wmgetdate			},
 	{ "getmimeenv",			getmimeenv			},
+	{ "getxmlenv",			getxmlenv			},
+	{ "getxmlparam",		getxmlparam			},
+	{ "getxmlstruct",		getxmlstruct			},
 	{ "get_mime_type",		get_mime_type			},
 	{ "getgetenv",			getgetenv			},
 	{ "getpostenv",			getpostenv			},
 	{ "logaccess",			logaccess			},
 	{ "logerror",			logerror			},
 	{ "decodeurl",			decodeurl			},
+	{ "decode_b64s",		DecodeBase64string		},
 	{ "filesend",			filesend			},
 	{ "str2html",			str2html			},
 	{ "strncatf",			strncatf			},
@@ -97,8 +106,10 @@ static FUNCTION functions[]={
 	{ "str2sqlbuf",			str2sqlbuf			},
 	{ "hex2int",			hex2int				},
 	{ "closeconnect",		closeconnect			},
+	{ "tcp_send",			tcp_send			},
 	{ "p_strcasestr",		strcasestr			},
 	{ "srv_restart",		server_restart			},
+	{ "module_exists",		module_exists			},
 	{ "module_call",		module_call			},
 #ifdef WIN32
 	{ "gettimeofday",		gettimeofday			},
@@ -118,28 +129,39 @@ static HINSTANCE hinstLib=NULL;
 static void *hinstLib=NULL;
 #endif
 
-void *module_call(CONNECTION *sid, char *fn_name)
+int module_exists(CONN *sid, char *mod_name)
 {
 	int i;
 
 	for (i=0;;i++) {
-		if ((mod_functions[i].fn_name==NULL)||(mod_functions[i].fn_ptr==NULL)) break;
-		if (strcmp(mod_functions[i].fn_name, fn_name)==0) {
-			return mod_functions[i].fn_ptr;
+		if ((proc.mod_menuitems[i].fn_name==NULL)||(proc.mod_menuitems[i].fn_ptr==NULL)) break;
+		if (strcmp(proc.mod_menuitems[i].mod_name, mod_name)==0) return 1;
+	}
+	return 0;
+}
+
+void *module_call(CONN *sid, char *fn_name)
+{
+	int i;
+
+	for (i=0;;i++) {
+		if ((proc.mod_functions[i].fn_name==NULL)||(proc.mod_functions[i].fn_ptr==NULL)) break;
+		if (strcmp(proc.mod_functions[i].fn_name, fn_name)==0) {
+			return proc.mod_functions[i].fn_ptr;
 		}
 	}
 	return NULL;
 }
 
-int module_menucall(CONNECTION *sid)
+int module_menucall(CONN *sid)
 {
 	int i;
 
 	for (i=0;;i++) {
-		if ((mod_menuitems[i].fn_name==NULL)||(mod_menuitems[i].fn_ptr==NULL)) break;
-		if (strlen(mod_menuitems[i].fn_uri)<1) continue;
-		if (strncmp(sid->dat->in_RequestURI, mod_menuitems[i].fn_uri, strlen(mod_menuitems[i].fn_uri))==0) {
-			mod_main=mod_menuitems[i].fn_ptr;
+		if ((proc.mod_menuitems[i].fn_name==NULL)||(proc.mod_menuitems[i].fn_ptr==NULL)) break;
+		if (strlen(proc.mod_menuitems[i].fn_uri)<1) continue;
+		if (strncmp(sid->dat->in_RequestURI, proc.mod_menuitems[i].fn_uri, strlen(proc.mod_menuitems[i].fn_uri))==0) {
+			mod_main=proc.mod_menuitems[i].fn_ptr;
 			mod_main(sid);
 			return 1;
 		}
@@ -157,11 +179,11 @@ int module_load(char *modname)
 	char libname[255];
 
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/%s.%s", config.server_dir_lib, modname, ext);
+	snprintf(libname, sizeof(libname)-1, "%s/%s.%s", proc.config.server_dir_lib, modname, ext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))==NULL) goto fail;
 	if ((mod_init=(MOD_INIT)dlsym(hinstLib, "mod_init"))==NULL) goto fail;
-	if (mod_init(&config, functions, mod_menuitems, mod_functions)!=0) return -1;
+	if (mod_init(&proc, functions)!=0) return -1;
 	return 0;
 fail:
 	logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to load %s.%s", modname, ext);
@@ -172,12 +194,67 @@ fail:
 
 int modules_init()
 {
-	memset((char *)&mod_menuitems, 0, sizeof(mod_menuitems));
-	memset((char *)&mod_functions, 0, sizeof(mod_functions));
+	FILE *fp=NULL;
+	char line[512];
+	char file[256];
+	int i;
+
+	memset((char *)&proc.mod_menuitems, 0, sizeof(MODULE_MENU));
+	memset((char *)&proc.mod_functions, 0, sizeof(MODULE_FUNC));
+	snprintf(file, sizeof(file)-1, "%s/modules.cfg", proc.config.server_dir_etc);
+	fixslashes(file);
+	fp=fopen(file, "r");
+	if (fp==NULL) {
+		fp=fopen(file, "w");
+		if (fp==NULL) {
+			logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to create modules.cfg");
+			return -1;
+		}
+		fprintf(fp, "# This file specifies which modules NullLogic Groupware should load.\r\n\r\n");
+		fprintf(fp, "mod_html\r\n");
+		fprintf(fp, "mod_admin\r\n");
+		fprintf(fp, "mod_bookmarks\r\n");
+		fprintf(fp, "mod_calendar\r\n");
+		fprintf(fp, "mod_calls\r\n");
+		fprintf(fp, "#mod_cgi\r\n");
+		fprintf(fp, "mod_contacts\r\n");
+		fprintf(fp, "mod_files\r\n");
+		fprintf(fp, "mod_forums\r\n");
+		fprintf(fp, "mod_mail\r\n");
+		fprintf(fp, "mod_messages\r\n");
+		fprintf(fp, "mod_notes\r\n");
+		fprintf(fp, "#mod_orders\r\n");
+		fprintf(fp, "mod_profile\r\n");
+		fprintf(fp, "mod_searches\r\n");
+		fprintf(fp, "mod_tasks\r\n");
+		fprintf(fp, "#mod_xmlrpc\r\n");
+		fclose(fp);
+		fp=fopen(file, "r");
+	}
+	if (fp==NULL) {
+		logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to read modules.cfg");
+		return -1;
+	}
+	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
+		while (1) {
+			i=strlen(line);
+			if (i<1) break;
+			if (line[i-1]=='\r') { line[i-1]='\0'; continue; }
+			if (line[i-1]=='\n') { line[i-1]='\0'; continue; }
+			break;
+		};
+		if (isalpha(line[0])) {
+			module_load(line);
+		}
+	}
+	fclose(fp);
+/*
+	module_load("mod_html");
 	module_load("mod_admin");
 	module_load("mod_bookmarks");
 	module_load("mod_calendar");
 	module_load("mod_calls");
+	module_load("mod_cgi");
 	module_load("mod_contacts");
 	module_load("mod_files");
 	module_load("mod_forums");
@@ -188,5 +265,7 @@ int modules_init()
 	module_load("mod_profile");
 	module_load("mod_searches");
 	module_load("mod_tasks");
+	module_load("mod_xmlrpc");
+*/
 	return 0;
 }

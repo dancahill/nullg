@@ -56,15 +56,19 @@ LINK32=link.exe
 # Name "mod_forums - Win32 Release"
 # Begin Source File
 
-SOURCE=.\mod_forums.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\mod_forums.def
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_forums.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_forums_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_forums_main.c
 # End Source File
 # End Target
 # End Project

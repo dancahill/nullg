@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
+static int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
 {
 	int sqr;
 
@@ -34,14 +34,6 @@ int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
 	return 0;
 }
 
-/****************************************************************************
- *	sanity_dbcheck()
- *
- *	Purpose	: Test database version, structure and integrity
- *	Args	: None
- *	Returns	: 0 on success
- *	Notes	: None
- ***************************************************************************/
 int sanity_dbcheck()
 {
 	char commandline[200];
@@ -57,8 +49,8 @@ int sanity_dbcheck()
 //	int x, y;
 
 #ifdef WIN32
-	if (strcmp(config.sql_type, "ODBC")==0) {
-		snprintf(file, sizeof(file)-1, "%s/groupware.mdb", config.server_dir_var_db);
+	if (strcmp(proc.config.sql_type, "ODBC")==0) {
+		snprintf(file, sizeof(file)-1, "%s/%s.mdb", proc.config.server_dir_var_db, SERVER_BASENAME);
 		fixslashes(file);
 		if (stat(file, &sb)!=0) {
 #ifdef WIN32
@@ -71,18 +63,10 @@ int sanity_dbcheck()
 		}
 	}
 #endif
-	if (strcmp(config.sql_type, "SQLITE")==0) {
-		snprintf(file, sizeof(file)-1, "%s/groupware.db", config.server_dir_var_db);
+	if (strcmp(proc.config.sql_type, "SQLITE")==0) {
+		snprintf(file, sizeof(file)-1, "%s/%s.db", proc.config.server_dir_var_db, SERVER_BASENAME);
 		fixslashes(file);
-		if (stat(file, &sb)!=0) {
-#ifdef WIN32
-			snprintf(commandline, sizeof(commandline)-1, "./dbutil.exe init");
-#else
-			snprintf(commandline, sizeof(commandline)-1, "./dbutil init");
-#endif
-			fixslashes(commandline);
-			system(commandline);
-		} else if (sb.st_size==0) {
+		if ((stat(file, &sb)!=0)||(sb.st_size==0)) {
 #ifdef WIN32
 			snprintf(commandline, sizeof(commandline)-1, "./dbutil.exe init");
 #else
@@ -98,17 +82,18 @@ int sanity_dbcheck()
 		sleep(5);
 		i++;
 		if (i>6) {
-			snprintf(msgbuffer, sizeof(msgbuffer)-1, "%s responded abnormally.", config.sql_type);
-			if (strcmp(config.sql_type, "ODBC")==0) {
+			snprintf(msgbuffer, sizeof(msgbuffer)-1, "%s responded abnormally.", proc.config.sql_type);
+			logerror(NULL, __FILE__, __LINE__, "%s", msgbuffer);
+			if (strcmp(proc.config.sql_type, "ODBC")==0) {
 				strcat(msgbuffer, "\n\nPlease verify the integrity of your data source, ");
 				strcat(msgbuffer, "and make sure your MDAC and JET drivers are up to date.\n");
-			} else if (strcmp(config.sql_type, "MYSQL")==0) {
+			} else if (strcmp(proc.config.sql_type, "MYSQL")==0) {
 				strcat(msgbuffer, "\n\nPlease verify that the MYSQL server is running and properly configured.\n");
-			} else if (strcmp(config.sql_type, "PGSQL")==0) {
+			} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 				strcat(msgbuffer, "\n\nPlease verify that the PGSQL server is running and properly configured.\n");
 			}
 			strcat(msgbuffer, "\nSee error.log for more information on this error.");
-			if (RunAsCGI) {
+			if (proc.RunAsCGI) {
 				printf("Content-type: text/html\n\n");
 				printf("<HTML><CENTER>\r\n%s\r\n</CENTER></HTML>\n", msgbuffer);
 				closeconnect(0, 1);
@@ -132,13 +117,13 @@ int sanity_dbcheck()
 		logerror(NULL, __FILE__, __LINE__, "Missing dbinfo data");
 		exit(0);
 	}
-	snprintf(config.info.version, sizeof(config.info.version)-1, "%s", sql_getvalue(sqr, 0, 0));
-	snprintf(config.info.tax1name, sizeof(config.info.tax1name)-1, "%s", sql_getvalue(sqr, 0, 1));
-	snprintf(config.info.tax2name, sizeof(config.info.tax2name)-1, "%s", sql_getvalue(sqr, 0, 2));
-	config.info.tax1percent=(float)atof(sql_getvalue(sqr, 0, 3));
-	config.info.tax2percent=(float)atof(sql_getvalue(sqr, 0, 4));
+	snprintf(proc.info.version, sizeof(proc.info.version)-1, "%s", sql_getvalue(sqr, 0, 0));
+	snprintf(proc.info.tax1name, sizeof(proc.info.tax1name)-1, "%s", sql_getvalue(sqr, 0, 1));
+	snprintf(proc.info.tax2name, sizeof(proc.info.tax2name)-1, "%s", sql_getvalue(sqr, 0, 2));
+	proc.info.tax1percent=(float)atof(sql_getvalue(sqr, 0, 3));
+	proc.info.tax2percent=(float)atof(sql_getvalue(sqr, 0, 4));
 	sql_freeresult(sqr);
-	if ((!RunAsCGI)&&(strcasecmp(config.sql_type, "SQLITE")!=0)) {
+	if ((!proc.RunAsCGI)&&(strcasecmp(proc.config.sql_type, "SQLITE")!=0)) {
 		if (sanity_dbcheck_table("gw_activity",		"activityid",		ACTIVITYFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_bookmarkfolders",	"folderid",		BOOKMARKFOLDERFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_bookmarks",	"bookmarkid",		BOOKMARKFIELDS)==-1) checkerror++;
@@ -164,7 +149,10 @@ int sanity_dbcheck()
 		if (sanity_dbcheck_table("gw_tasks",		"taskid",		TASKFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_users",		"userid",		USERFIELDS)==-1) checkerror++;
 		if (sanity_dbcheck_table("gw_zones",		"zoneid",		ZONEFIELDS)==-1) checkerror++;
-		if (checkerror!=0) exit(0);
+		if (checkerror!=0) {
+			logerror(NULL, __FILE__, __LINE__, "Please use dbutil to dump and restore the database");
+			exit(0);
+		}
 	}
 /*
 	gettimeofday(&ttime, &tzone);
@@ -175,7 +163,7 @@ int sanity_dbcheck()
 	}
 	gettimeofday(&ttime, &tzone);
 	x=((ttime.tv_sec-x)*1000000)-y+ttime.tv_usec;
-	logerror(NULL, __FILE__, __LINE__, "Query speed test finished [%s][queries=100][time=%1.3f seconds]", config.sql_type, (float)x/(float)1000000);
+	logerror(NULL, __FILE__, __LINE__, "Query speed test finished [%s][queries=100][time=%1.3f seconds]", proc.config.sql_type, (float)x/(float)1000000);
 */
 	return 0;
 }

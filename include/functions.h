@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,31 +52,16 @@ int pthread_kill(pthread_t handle, int sig);
 void pthread_exit(unsigned A);
 #endif
 /* auth.c functions */
-char *auth_setpass(CONNECTION *sid, char *rpassword);
-int   auth_getcookie(CONNECTION *sid);
-int   auth_setcookie(CONNECTION *sid);
-void  auth_logout(CONNECTION *sid);
-int   auth_priv(CONNECTION *sid, int service);
-/* cgi.c */
-int   cgi_main(CONNECTION *sid);
+char   *auth_setpass(CONN *sid, char *rpassword);
+int     auth_getcookie(CONN *sid);
+int     auth_setcookie(CONN *sid);
+void    auth_logout(CONN *sid);
+int     auth_priv(CONN *sid, char *service);
 /* config.c functions */
-int   config_read(void);
-/* connio.c functions */
-void  flushheader(CONNECTION *sid);
-void  flushbuffer(CONNECTION *sid);
-int   prints(CONNECTION *sid, const char *format, ...);
-int   sgets(CONNECTION *sid, char *buffer, int max, int fd);
-/* dbio.c */
-int   db_read(CONNECTION *sid, short int perm, short int table, int index, void *record);
-int   db_write(CONNECTION *sid, short int table, int index, void *record);
-int   db_log_activity(CONNECTION *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...);
-/* fileio.c functions */
-int   dirlist(CONNECTION *sid);
-int   fileul(CONNECTION *sid);
-int   filesend(CONNECTION *sid, unsigned char *file);
-int   filerecv(CONNECTION *sid);
+int     config_read(CONFIG *config);
+int     config_write(CONFIG *config);
 /* format.c */
-char   *getbuffer(CONNECTION *sid);
+char   *getbuffer(CONN *sid);
 void    decodeurl(unsigned char *pEncoded);
 void    fixslashes(char *pOriginal);
 int     hex2int(char *pChars);
@@ -84,191 +69,146 @@ void    striprn(char *string);
 void    swapchar(char *string, char oldchar, char newchar);
 char   *strcasestr(char *src, char *query);
 char   *strncatf(char *dest, int max, const char *format, ...);
-int     printhex(CONNECTION *sid, const char *format, ...);
-int     printht(CONNECTION *sid, const char *format, ...);
-void    printline(CONNECTION *sid, short int reply, char *msgtext);
-void    printline2(CONNECTION *sid, int dowrap, char *msgtext);
-char   *str2html(CONNECTION *sid, char *instring);
-char   *str2sql(CONNECTION *sid, char *inbuffer);
-char   *str2sqlbuf(CONNECTION *sid, char *instring, char *outstring, int outsize);
-void    htselect_timezone(CONNECTION *sid, short int selected);
+int     printhex(CONN *sid, const char *format, ...);
+int     printht(CONN *sid, const char *format, ...);
+void    printline(CONN *sid, short int reply, char *msgtext);
+void    printline2(CONN *sid, int dowrap, char *msgtext);
+char   *str2html(CONN *sid, char *instring);
+char   *str2sql(CONN *sid, char *inbuffer);
+char   *str2sqlbuf(CONN *sid, char *instring, char *outstring, int outsize);
+void    htselect_timezone(CONN *sid, short int selected);
 time_t  time_sql2unix(char *sqldate);
-char   *time_sql2datetext(CONNECTION *sid, char *sqldate);
-char   *time_sql2timetext(CONNECTION *sid, char *sqldate);
-char   *time_sql2lotimetext(CONNECTION *sid, char *sqldate);
-char   *time_unix2sql(CONNECTION *sid, time_t unixdate);
-char   *time_unix2sqldate(CONNECTION *sid, time_t unixdate);
-char   *time_unix2sqltime(CONNECTION *sid, time_t unixdate);
-char   *time_unix2text(CONNECTION *sid, time_t unixdate);
-char   *time_unix2datetext(CONNECTION *sid, time_t unixdate);
-char   *time_unix2timetext(CONNECTION *sid, time_t unixdate);
-char   *time_unix2lotimetext(CONNECTION *sid, time_t unixdate);
-int     time_tzoffset(CONNECTION *sid, time_t unixdate);
-int     time_tzoffset2(CONNECTION *sid, time_t unixdate, int userid);
+char   *time_sql2datetext(CONN *sid, char *sqldate);
+char   *time_sql2timetext(CONN *sid, char *sqldate);
+char   *time_sql2lotimetext(CONN *sid, char *sqldate);
+char   *time_unix2sql(CONN *sid, time_t unixdate);
+char   *time_unix2sqldate(CONN *sid, time_t unixdate);
+char   *time_unix2sqltime(CONN *sid, time_t unixdate);
+char   *time_unix2text(CONN *sid, time_t unixdate);
+char   *time_unix2datetext(CONN *sid, time_t unixdate);
+char   *time_unix2timetext(CONN *sid, time_t unixdate);
+char   *time_unix2lotimetext(CONN *sid, time_t unixdate);
+int     time_tzoffset(CONN *sid, time_t unixdate);
+int     time_tzoffset2(CONN *sid, time_t unixdate, int userid);
 time_t  time_wmgetdate(char *src);
+char   *DecodeBase64string(CONN *sid, char *src);
 /* html.c functions */
-void  htpage_login(CONNECTION *sid);
-void  htpage_logout(CONNECTION *sid);
-void  htpage_stats(CONNECTION *sid);
-void  htpage_frameset(CONNECTION *sid);
-void  htpage_sidemenu(CONNECTION *sid);
-void  htpage_topmenu(CONNECTION *sid, int menu);
-void  htpage_reload(CONNECTION *sid);
-void  htpage_motd(CONNECTION *sid);
-void  htpage_header(CONNECTION *sid, char *title);
-void  htpage_footer(CONNECTION *sid);
-void  htselect_callfilter(CONNECTION *sid, int selected, char *baseuri);
-void  htselect_eventfilter(CONNECTION *sid, int userid, int groupid, char *baseuri);
-void  htselect_logfilter(CONNECTION *sid, int selected, char *baseuri);
-void  htselect_notefilter(CONNECTION *sid, int selected, char *baseuri);
-void  htselect_mailjump(CONNECTION *sid, int selected);
-void  htselect_mailmbox(CONNECTION *sid, char *selected);
-void  htselect_day(CONNECTION *sid, char *selected);
-void  htselect_hour(CONNECTION *sid, int selected);
-void  htselect_month(CONNECTION *sid, char *selected);
-void  htselect_qhours(CONNECTION *sid, int selected);
-void  htselect_qminutes(CONNECTION *sid, int selected);
-void  htselect_minutes(CONNECTION *sid, int selected);
-void  htselect_time(CONNECTION *sid, time_t unixtime);
-void  htselect_year(CONNECTION *sid, int startyear, char *selected);
-void  htselect_bookmarkfolder(CONNECTION *sid, int selected);
-void  htselect_callaction(CONNECTION *sid, int selected);
-void  htselect_contact(CONNECTION *sid, int selected);
-void  htselect_eventclosingstatus(CONNECTION *sid, int selected);
-void  htselect_eventstatus(CONNECTION *sid, int selected);
-void  htselect_eventtype(CONNECTION *sid, int selected);
-void  htselect_forumgroup(CONNECTION *sid, int selected);
-void  htselect_group(CONNECTION *sid, int selected);
-void  htselect_layout(CONNECTION *sid, int selected);
-void  htselect_mailaccount(CONNECTION *sid, int selected);
-void  htselect_number(CONNECTION *sid, int selected, int start, int end);
-void  htselect_priority(CONNECTION *sid, int selected);
-void  htselect_product(CONNECTION *sid, int selected);
-void  htselect_reminder(CONNECTION *sid, int selected);
-void  htselect_user(CONNECTION *sid, int selected);
-void  htselect_zone(CONNECTION *sid, int selected);
-char  *htview_callaction(CONNECTION *sid, int selected);
-char  *htview_contact(CONNECTION *sid, int selected);
-char  *htview_eventclosingstatus(CONNECTION *sid, int selected);
-char  *htview_eventstatus(CONNECTION *sid, int selected);
-char  *htview_eventtype(CONNECTION *sid, int selected);
-char  *htview_forumgroup(CONNECTION *sid, int selected);
-char  *htview_holiday(char *date);
-char  *htview_product(CONNECTION *sid, int selected);
-char  *htview_reminder(CONNECTION *sid, int selected);
-char  *htview_user(CONNECTION *sid, int selected);
+void    htpage_login(CONN *sid);
+void    htpage_logout(CONN *sid);
+void    htpage_stats(CONN *sid);
+void    htpage_frameset(CONN *sid);
+void    htpage_sidemenu(CONN *sid);
+void    htpage_topmenu(CONN *sid, int menu);
+void    htpage_reload(CONN *sid);
+void    htpage_motd(CONN *sid);
+void    htpage_header(CONN *sid, char *title);
+void    htpage_footer(CONN *sid);
+void    htselect_callfilter(CONN *sid, int selected, char *baseuri);
+void    htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri);
+void    htselect_logfilter(CONN *sid, int selected, char *baseuri);
+void    htselect_notefilter(CONN *sid, int selected, char *baseuri);
+void    htselect_mailjump(CONN *sid, int selected);
+void    htselect_mailmbox(CONN *sid, char *selected);
+void    htselect_day(CONN *sid, char *selected);
+void    htselect_hour(CONN *sid, int selected);
+void    htselect_month(CONN *sid, char *selected);
+void    htselect_qhours(CONN *sid, int selected);
+void    htselect_qminutes(CONN *sid, int selected);
+void    htselect_minutes(CONN *sid, int selected);
+void    htselect_time(CONN *sid, time_t unixtime);
+void    htselect_year(CONN *sid, int startyear, char *selected);
+void    htselect_bookmarkfolder(CONN *sid, int selected);
+void    htselect_callaction(CONN *sid, int selected);
+void    htselect_contact(CONN *sid, int selected);
+void    htselect_eventclosingstatus(CONN *sid, int selected);
+void    htselect_eventstatus(CONN *sid, int selected);
+void    htselect_eventtype(CONN *sid, int selected);
+void    htselect_forumgroup(CONN *sid, int selected);
+void    htselect_group(CONN *sid, int selected);
+void    htselect_layout(CONN *sid, int selected);
+void    htselect_mailaccount(CONN *sid, int selected);
+void    htselect_number(CONN *sid, int selected, int start, int end);
+void    htselect_priority(CONN *sid, int selected);
+void    htselect_product(CONN *sid, int selected);
+void    htselect_reminder(CONN *sid, int selected);
+void    htselect_user(CONN *sid, int selected);
+void    htselect_zone(CONN *sid, int selected);
+char   *htview_callaction(CONN *sid, int selected);
+char   *htview_contact(CONN *sid, int selected);
+char   *htview_eventclosingstatus(CONN *sid, int selected);
+char   *htview_eventstatus(CONN *sid, int selected);
+char   *htview_eventtype(CONN *sid, int selected);
+char   *htview_forumgroup(CONN *sid, int selected);
+char   *htview_holiday(char *date);
+char   *htview_product(CONN *sid, int selected);
+char   *htview_reminder(CONN *sid, int selected);
+char   *htview_user(CONN *sid, int selected);
 /* http.c functions */
-char *get_mime_type(char *name);
-void ReadPOSTData(CONNECTION *sid);
-char *getgetenv(CONNECTION *sid, char *query);
-char *getmimeenv(CONNECTION *sid, char *query, unsigned int *buffersize);
-char *getpostenv(CONNECTION *sid, char *query);
-char *getxmlenv(CONNECTION *sid, char *query);
-char *getxmlparam(CONNECTION *sid, int param, char *reqtype);
-char *getxmlstruct(CONNECTION *sid, char *reqmember, char *reqtype);
-void read_cgienv(CONNECTION *sid);
-int read_header(CONNECTION *sid);
-void send_error(CONNECTION *sid, int status, char* title, char* text);
-void send_fileheader(CONNECTION *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
-void send_header(CONNECTION *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
+char   *get_mime_type(char *name);
+void    ReadPOSTData(CONN *sid);
+char   *getgetenv(CONN *sid, char *query);
+char   *getmimeenv(CONN *sid, char *query, unsigned int *buffersize);
+char   *getpostenv(CONN *sid, char *query);
+char   *getxmlenv(CONN *sid, char *query);
+char   *getxmlparam(CONN *sid, int param, char *reqtype);
+char   *getxmlstruct(CONN *sid, char *reqmember, char *reqtype);
+void    read_cgienv(CONN *sid);
+int     read_header(CONN *sid);
+void    send_error(CONN *sid, int status, char* title, char* text);
+void    send_fileheader(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
+void    send_header(CONN *sid, int cacheable, int status, char *title, char *extra_header, char *mime_type, int length, time_t mod);
+/* io.c functions */
+void    flushheader(CONN *sid);
+void    flushbuffer(CONN *sid);
+int     prints(CONN *sid, const char *format, ...);
+int     sgets(CONN *sid, char *buffer, int max, int fd);
+int     filesend(CONN *sid, unsigned char *file);
+int     tcp_send(int s, const char *buffer, int len, int flags);
+/* md5.c functions */
+void    md5_init(struct MD5Context *context);
+void    md5_update(struct MD5Context *context, unsigned char const *buf, unsigned len);
+void    md5_final(unsigned char digest[16], struct MD5Context *context);
+void    md5_transform(uint32 buf[4], uint32 const in[16]);
+char   *md5_crypt(CONN *sid, char *pw, char *salt);	/* FreBSD password hashing */
 /* modctl.c functions */
-void *module_call(CONNECTION *sid, char *fn_name);
-int module_menucall(CONNECTION *sid);
-int modules_init(void);
+int     module_exists(CONN *sid, char *mod_name);
+void   *module_call(CONN *sid, char *fn_name);
+int     module_menucall(CONN *sid);
+int     modules_init(void);
 /* sanity.c functions */
-int sanity_dbcheck(void);
+int     sanity_dbcheck(void);
 /* logging.c functions */
-void logaccess(CONNECTION *sid, int loglevel, const char *format, ...);
-void logerror(CONNECTION *sid, char *srcfile, int line, const char *format, ...);
-void logdebug(CONNECTION *sid, char *srcfile, int line, const char *format, ...);
+int     db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *action, const char *format, ...);
+void    logaccess(CONN *sid, int loglevel, const char *format, ...);
+void    logerror(CONN *sid, char *srcfile, int line, const char *format, ...);
+void    logdebug(CONN *sid, char *srcfile, int line, const char *format, ...);
 #ifdef DEBUG
-void logdata(const char *format, ...);
+void    logdata(const char *format, ...);
 #endif
 /* server.c functions */
-int getsid(void);
-int closeconnect(CONNECTION *sid, int exitflag);
-void server_restart(void);
-void server_shutdown(void);
-void dorequest(CONNECTION *sid);
-void cgiinit(void);
-void init(void);
+int     closeconnect(CONN *sid, int exitflag);
+void    server_restart(void);
+void    server_shutdown(void);
+void    dorequest(CONN *sid);
+void    cgiinit(void);
+void    init(void);
 #ifdef WIN32
 unsigned _stdcall conn_reaper(void *x);
 unsigned _stdcall accept_loop(void *x);
 #else
-void *conn_reaper(void *x);
-void *accept_loop(void *x);
+void   *conn_reaper(void *x);
+void   *accept_loop(void *x);
 #endif
 /* sql.c functions */
-void  sql_disconnect(CONNECTION *sid);
-void  sql_unsafedisconnect(CONNECTION *sid);
-void  sql_freeresult(int sqr);
-int   sql_update(CONNECTION *sid, char *sqlquery);
-int   sql_updatef(CONNECTION *sid, char *format, ...);
-int   sql_query(CONNECTION *sid, char *query);
-int   sql_queryf(CONNECTION *sid, char *format, ...);
-char *sql_getname(int sqr, int field);
-char *sql_getvalue(int sqr, int tuple, int field);
-char *sql_getvaluebyname(int sqr, int tuple, char *fieldname);
-int   sql_numfields(int sqr);
-int   sql_numtuples(int sqr);
-/* xml-rpc.c */
-void xmlrpc_fault(CONNECTION *sid, int faultid, char *fault);
-void xmlrpc_main(CONNECTION *sid);
-
-
-/* wmcodec.c functions */
-char *DecodeRFC2047(CONNECTION *sid, char *src);
-int DecodeHTML(short int reply, char *src, char *ctype, short int crlf);
-int DecodeQP(short int reply, char *src, char *ctype);
-int DecodeText(short int reply, char *src);
-int EncodeBase64(CONNECTION *sid, char *src, int srclen);
-int EncodeBase64file(FILE *fp, char *src, int srclen);
-int DecodeBase64(CONNECTION *sid, char *src, char *ctype);
-char *EncodeBase64string(CONNECTION *sid, char *src);
-char *DecodeBase64string(CONNECTION *sid, char *src);
-/* wmmain.c functions */
-void wmsync(CONNECTION *sid, int verbose);
-void wmloginform(CONNECTION *sid);
-//int webmailheader(CONNECTION *sid, wmheader *header);
-/* wmserver.c functions */
-void wmclose(CONNECTION *sid);
-int  wmfgets(CONNECTION *sid, char *buffer, int max, int fd);
-int  wmffgets(CONNECTION *sid, char *buffer, int max, FILE **fp);
-int  wmprints(CONNECTION *sid, const char *format, ...);
-int  wmserver_connect(CONNECTION *sid, int verbose);
-void wmserver_disconnect(CONNECTION *sid);
-int  wmserver_smtpconnect(CONNECTION *sid);
-int  wmserver_smtpauth(CONNECTION *sid);
-void wmserver_smtpdisconnect(CONNECTION *sid);
-int  wmserver_count(CONNECTION *sid);
-int  wmserver_msgdele(CONNECTION *sid, int message);
-int  wmserver_msghead(CONNECTION *sid, int message);
-int  wmserver_msgretr(CONNECTION *sid, int message);
-int  wmserver_msgsync(CONNECTION *sid, int remoteid, int localid, int verbose);
-int  wmserver_msgsize(CONNECTION *sid, int message);
-int  wmserver_uidl(CONNECTION *sid, int message, char *uidl);
-int  is_msg_end(CONNECTION *sid, char *buffer);
-//int  wmserver_mlistsync(CONNECTION *sid, char **uid_plist);
-int  wmserver_mlistsync(CONNECTION *sid, char ***uidls);
-
-void adminmain(CONNECTION *sid);			/* admin.c     */
-void bookmarksmain(CONNECTION *sid);			/* bookmarks.c */
-void calendarmain(CONNECTION *sid);			/* calendar.c  */
-void callsmain(CONNECTION *sid);			/* calls.c     */
-void contactmain(CONNECTION *sid);			/* contacts.c  */
-void filemain(CONNECTION *sid);				/* files.c     */
-void forummain(CONNECTION *sid);			/* forums.c    */
-void printmenu(CONNECTION *sid);			/* menu.c      */
-void messageautocheck(CONNECTION *sid);			/* messages.c  */
-void messagemain(CONNECTION *sid);			/* messages.c  */
-void notessublist(CONNECTION *sid, char *table, int index, int colspan); /* notes.c */
-void notesmain(CONNECTION *sid);			/* notes.c     */
-void ordermain(CONNECTION *sid);			/* orders.c    */
-void productmain(CONNECTION *sid);			/* products.c  */
-void searchmain(CONNECTION *sid);			/* searches.c  */
-void tasklist(CONNECTION *sid, int userid, int groupid);/* tasks.c     */
-void taskmain(CONNECTION *sid);				/* tasks.c     */
-void profilemain(CONNECTION *sid);			/* users.c     */
-void wmaddr_main(CONNECTION *sid);			/* wmaddr.c    */
-void webmailmain(CONNECTION *sid);			/* wmmain.c    */
+void    sql_disconnect(CONN *sid);
+void    sql_unsafedisconnect(CONN *sid);
+void    sql_freeresult(int sqr);
+int     sql_update(CONN *sid, char *sqlquery);
+int     sql_updatef(CONN *sid, char *format, ...);
+int     sql_query(CONN *sid, char *query);
+int     sql_queryf(CONN *sid, char *format, ...);
+char   *sql_getname(int sqr, int field);
+char   *sql_getvalue(int sqr, int tuple, int field);
+char   *sql_getvaluebyname(int sqr, int tuple, char *fieldname);
+int     sql_numfields(int sqr);
+int     sql_numtuples(int sqr);

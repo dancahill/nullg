@@ -24,6 +24,9 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
 OUTDIR=.\..\distrib\bin
 INTDIR=.\..\obj\server
 # Begin Custom Macros
@@ -35,14 +38,12 @@ ALL : "$(OUTDIR)\groupware.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\auth.obj"
-	-@erase "$(INTDIR)\cgi.obj"
 	-@erase "$(INTDIR)\config.obj"
-	-@erase "$(INTDIR)\db.obj"
 	-@erase "$(INTDIR)\format.obj"
 	-@erase "$(INTDIR)\html.obj"
 	-@erase "$(INTDIR)\http.obj"
 	-@erase "$(INTDIR)\io.obj"
-	-@erase "$(INTDIR)\logging.obj"
+	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\modctl.obj"
@@ -52,7 +53,6 @@ CLEAN :
 	-@erase "$(INTDIR)\sql.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\win32.obj"
-	-@erase "$(INTDIR)\xmlrpc.obj"
 	-@erase "$(OUTDIR)\groupware.exe"
 
 "$(OUTDIR)" :
@@ -61,7 +61,34 @@ CLEAN :
 "$(INTDIR)" :
     if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
 
-CPP=cl.exe
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\server.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libcmt.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"$(OUTDIR)\groupware.exe" 
+LINK32_OBJS= \
+	"$(INTDIR)\auth.obj" \
+	"$(INTDIR)\config.obj" \
+	"$(INTDIR)\format.obj" \
+	"$(INTDIR)\html.obj" \
+	"$(INTDIR)\http.obj" \
+	"$(INTDIR)\io.obj" \
+	"$(INTDIR)\log.obj" \
+	"$(INTDIR)\main.obj" \
+	"$(INTDIR)\md5.obj" \
+	"$(INTDIR)\modctl.obj" \
+	"$(INTDIR)\sanity.obj" \
+	"$(INTDIR)\server.obj" \
+	"$(INTDIR)\sql.obj" \
+	"$(INTDIR)\win32.obj" \
+	"$(INTDIR)\server.res"
+
+"$(OUTDIR)\groupware.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
 CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
@@ -94,40 +121,8 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "../include" /D "WIN32" /D "NDEBUG" /D "_WIN
    $(CPP_PROJ) $< 
 <<
 
-MTL=midl.exe
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\server.res" /d "NDEBUG" 
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\server.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libcmt.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"$(OUTDIR)\groupware.exe" 
-LINK32_OBJS= \
-	"$(INTDIR)\auth.obj" \
-	"$(INTDIR)\cgi.obj" \
-	"$(INTDIR)\config.obj" \
-	"$(INTDIR)\db.obj" \
-	"$(INTDIR)\format.obj" \
-	"$(INTDIR)\html.obj" \
-	"$(INTDIR)\http.obj" \
-	"$(INTDIR)\io.obj" \
-	"$(INTDIR)\logging.obj" \
-	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\md5.obj" \
-	"$(INTDIR)\modctl.obj" \
-	"$(INTDIR)\sanity.obj" \
-	"$(INTDIR)\server.obj" \
-	"$(INTDIR)\sql.obj" \
-	"$(INTDIR)\win32.obj" \
-	"$(INTDIR)\xmlrpc.obj" \
-	"$(INTDIR)\server.res"
-
-"$(OUTDIR)\groupware.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
 
 
 !IF "$(CFG)" == "server - Win32 Release"
@@ -136,19 +131,9 @@ SOURCE=.\auth.c
 "$(INTDIR)\auth.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\cgi.c
-
-"$(INTDIR)\cgi.obj" : $(SOURCE) "$(INTDIR)"
-
-
 SOURCE=.\config.c
 
 "$(INTDIR)\config.obj" : $(SOURCE) "$(INTDIR)"
-
-
-SOURCE=.\db.c
-
-"$(INTDIR)\db.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\format.c
@@ -171,9 +156,9 @@ SOURCE=.\io.c
 "$(INTDIR)\io.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=.\logging.c
+SOURCE=.\log.c
 
-"$(INTDIR)\logging.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\log.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\main.c
@@ -209,11 +194,6 @@ SOURCE=.\sql.c
 SOURCE=.\win32.c
 
 "$(INTDIR)\win32.obj" : $(SOURCE) "$(INTDIR)"
-
-
-SOURCE=.\xmlrpc.c
-
-"$(INTDIR)\xmlrpc.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\server.rc

@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,11 +15,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "main.h"
+#include "mod_stub.h"
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 #define BUFF_SIZE 8192
 
-void cgi_makeargs(CONNECTION *sid, char *args[])
+void cgi_makeargs(CONN *sid, char *args[])
 {
 	char *ptemp;
 	char progname[255];
@@ -38,11 +41,11 @@ void cgi_makeargs(CONNECTION *sid, char *args[])
 		snprintf(args[2], 254, "%s", ptemp);
 		*ptemp='\0';
 	}
-	snprintf(args[0], 254, "%s/%s", config.server_dir_cgi, progname);
+	snprintf(args[0], 254, "%s/%s", proc->config.server_dir_cgi, progname);
 	fixslashes(args[0]);
 }
 
-void cgi_makeenv(CONNECTION *sid, char *env[], char *args[])
+void cgi_makeenv(CONN *sid, char *env[], char *args[])
 {
 	char *ptemp;
 	int n=0;
@@ -62,7 +65,7 @@ void cgi_makeenv(CONNECTION *sid, char *env[], char *args[])
 		snprintf(env[n++], 1023, "CONTENT_TYPE=%s", sid->dat->in_ContentType);
 	}
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s", config.server_dir_var_htdocs);
+	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s", proc->config.server_dir_var_htdocs);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "GATEWAY_INTERFACE=CGI/1.1");
 	env[n]=calloc(1024, sizeof(char));
@@ -90,8 +93,9 @@ void cgi_makeenv(CONNECTION *sid, char *env[], char *args[])
 	}
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "REMOTE_ADDR=%s", sid->dat->in_RemoteAddr);
-	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "REMOTE_PORT=%d", ntohs(sid->ClientAddr.sin_port));
+	/* FIXME ntohs */
+//	env[n]=calloc(1024, sizeof(char));
+//	snprintf(env[n++], 1023, "REMOTE_PORT=%d", ntohs(sid->ClientAddr.sin_port));
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "REMOTE_USER=%s", sid->dat->user_username);
 	env[n]=calloc(1024, sizeof(char));
@@ -105,15 +109,15 @@ void cgi_makeenv(CONNECTION *sid, char *env[], char *args[])
 	if ((ptemp=strchr(env[n-1], '?'))!=NULL) *ptemp='\0';
 	if ((ptemp=strchr(env[n-1]+21, '/'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_NAME=%s", config.server_hostname);
+	snprintf(env[n++], 1023, "SERVER_NAME=%s", proc->config.server_hostname);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_PORT=%d", config.server_port);
+	snprintf(env[n++], 1023, "SERVER_PORT=%d", proc->config.server_port);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_PROTOCOL=HTTP/1.1");
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_SIGNATURE=<ADDRESS>%s</ADDRESS>", SERVER_NAME);
+	snprintf(env[n++], 1023, "SERVER_SIGNATURE=<ADDRESS>%s %s</ADDRESS>", SERVER_NAME, SERVER_VERSION);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_SOFTWARE=%s", SERVER_NAME);
+	snprintf(env[n++], 1023, "SERVER_SOFTWARE=%s %s", SERVER_NAME, SERVER_VERSION);
 #ifdef WIN32
 	if ((ptemp=getenv("WINDIR"))!=NULL) {
 		env[n]=calloc(1024, sizeof(char));
@@ -126,7 +130,7 @@ void cgi_makeenv(CONNECTION *sid, char *env[], char *args[])
 	args[2]=NULL;
 }
 
-int cgi_main(CONNECTION *sid)
+void mod_main(CONN *sid)
 {
 #ifdef WIN32
 	char *cgi_types[3][2]={
@@ -203,7 +207,7 @@ int cgi_main(CONNECTION *sid)
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
-		return -1;
+		return;
 	}
 	if (!CreatePipe((HANDLE)&local.in, (HANDLE)&remote.out, NULL, BUFF_SIZE)) {
 		for (i=0;i<10;i++) free(args[i]);
@@ -211,7 +215,7 @@ int cgi_main(CONNECTION *sid)
 		CloseHandle((HANDLE)remote.in);
 		CloseHandle((HANDLE)local.out);
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
-		return -1;
+		return;
 	}
 	si.cb=sizeof(si);
 	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
@@ -228,7 +232,7 @@ int cgi_main(CONNECTION *sid)
 		CloseHandle((HANDLE)remote.out);
 		logerror(sid, __FILE__, __LINE__, "CGI failed. [%s]", Command);
 		send_error(sid, 500, "Internal Server Error", "There was a problem running the requested CGI.");
-		return -1;
+		return;
 	}
 	pid=pi.dwProcessId;
 	CloseHandle(si.hStdInput);
@@ -241,7 +245,7 @@ int cgi_main(CONNECTION *sid)
 		close(pset1[1]);
 		logerror(sid, __FILE__, __LINE__, "pipe() error");
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
-		return -1;
+		return;
 	}
 	local.in=pset1[0]; remote.out=pset1[1];
 	remote.in=pset2[0]; local.out=pset2[1];
@@ -249,7 +253,7 @@ int cgi_main(CONNECTION *sid)
 	pid=fork();
 	if (pid<0) {
 		logerror(sid, __FILE__, __LINE__, "fork() error");
-		return -1;
+		return;
 	} else if (pid==0) {
 		close(local.in);
 		close(local.out);
@@ -276,13 +280,13 @@ int cgi_main(CONNECTION *sid)
 	}
 	sid->dat->out_headdone=1;
 	sid->dat->out_status=200;
-	if (strcasestr(sid->dat->in_Protocol, "HTTP/1.1")!=NULL) {
+	if (p_strcasestr(sid->dat->in_Protocol, "HTTP/1.1")!=NULL) {
 		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.1");
 	} else {
 		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
 	}
 	snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
-	if (!RunAsCGI) {
+	if (!proc->RunAsCGI) {
 		prints(sid, "%s %d OK\r\n", sid->dat->out_Protocol, sid->dat->out_status);
 		prints(sid, "Connection: %s\r\n", sid->dat->out_Connection);
 	}
@@ -295,10 +299,10 @@ int cgi_main(CONNECTION *sid)
 		nOutRead=read(local.in, szBuffer, BUFF_SIZE-1);
 #endif
 		if (nOutRead>0) {
-			if (RunAsCGI) {
+			if (proc->RunAsCGI) {
 				fwrite(szBuffer, sizeof(char), nOutRead, stdout);
 			} else {
-				send(sid->socket, szBuffer, nOutRead, 0);
+				tcp_send(sid->socket, szBuffer, nOutRead, 0);
 			}
 		};
 	} while (nOutRead>0);
@@ -320,5 +324,15 @@ int cgi_main(CONNECTION *sid)
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
 	closeconnect(sid, 1);
+	return;
+}
+
+DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
+{
+	proc=_proc;
+	config=&proc->config;
+	functions=_functions;
+	if (mod_import()!=0) return -1;
+	if (mod_export_main("mod_cgi", "", "", "mod_main", "/cgi-bin/", mod_main)!=0) return -1;
 	return 0;
 }

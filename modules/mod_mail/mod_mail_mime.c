@@ -1,5 +1,5 @@
 /*
-    Null Groupware - Copyright (C) 2000-2003 Dan Cahill
+    NullLogic Groupware - Copyright (C) 2000-2003 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include "mod_substub.h"
 #include "mod_mail.h"
 
-int webmailheader(CONNECTION *sid, wmheader *header)
+int webmailheader(CONN *sid, wmheader *header)
 {
 	char inbuffer[1024];
 	char *prevheader=NULL;
@@ -27,7 +27,7 @@ int webmailheader(CONNECTION *sid, wmheader *header)
 
 	header->status='n';
 	for (;;) {
-		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->user_wmsocket);
+		wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket);
 		striprn(inbuffer);
 		if (strcmp(inbuffer, "")==0) break;
 		if (strncasecmp(inbuffer, "Reply-To:", 9)==0) {
@@ -35,12 +35,7 @@ int webmailheader(CONNECTION *sid, wmheader *header)
 			prevheadersize=sizeof(header->ReplyTo);
 			ptemp=inbuffer+9;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			while ((*ptemp)&&(*ptemp!='<')) ptemp++;
-			if (*ptemp=='<') ptemp++;
-			while ((*ptemp)&&(*ptemp!='>')&&(strlen(header->ReplyTo)<sizeof(header->ReplyTo)-1)) {
-				header->ReplyTo[strlen(header->ReplyTo)]=*ptemp;
-				ptemp++;
-			}
+			strncpy(header->ReplyTo, ptemp, sizeof(header->ReplyTo)-1);
 		} else if (strncasecmp(inbuffer, "From:", 5)==0) {
 			prevheader=header->From;
 			prevheadersize=sizeof(header->From);
@@ -134,7 +129,7 @@ int webmailheader(CONNECTION *sid, wmheader *header)
 	return 0;
 }
 
-int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, char *boundary, char *filename, short int depth)
+static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, char *filename, short int depth)
 {
 	char inbuffer[1024];
 	char fnamebuf[512];
@@ -150,12 +145,16 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 	int prevheadersize=0;
 
 	depth++;
-	for (;;) {
-		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-		if (fp==NULL) break;
-		if (p_strcasestr(inbuffer, boundary)!=NULL) {
-			head=1;
-			break;
+	if (strncasecmp(contenttype, "message/rfc822", 14)==0) {
+		head=1;
+	} else {
+		for (;;) {
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
+			if (p_strcasestr(inbuffer, boundary)!=NULL) {
+				head=1;
+				break;
+			}
 		}
 	}
 	memset(cdisp, 0, sizeof(cdisp));
@@ -165,7 +164,7 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 	snprintf(tbound, sizeof(tbound)-1, "%s--", boundary);
 	prevheader=NULL;
 	for (;;) {
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return 0;
 		if (head) {
 			memset(cfile, 0, sizeof(cfile));
@@ -174,8 +173,8 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 			memset(cencode, 0, sizeof(cencode));
 			prevheader=NULL;
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) return 0;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) return 0;
 				if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return 0;
 				if (strcmp(inbuffer, "")==0) {
 					head=0;
@@ -247,6 +246,11 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 				}
 			}
 		}
+		if (strncasecmp(ctype, "message/rfc822", 14)==0) {
+			webmailfiledl_r(sid, fp, ctype, cencode, boundary, filename, depth);
+			head=1;
+			continue;
+		}
 		if ((ptemp=p_strcasestr(ctype, "boundary="))!=NULL) {
 			ptemp+=9;
 			if (*ptemp=='\"') ptemp++;
@@ -264,7 +268,7 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 				continue;
 			}
 		}
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if ((strlen(cencode))&&(strlen(cfile))) {
 			ptemp=get_mime_type(cfile);
 			if (strncasecmp(ptemp, "image/", 6)!=0) {
@@ -273,8 +277,8 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 			send_header(sid, 1, 200, "OK", "1", ptemp, -1, -1);
 			flushbuffer(sid);
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) return 1;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) return 1;
 				if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) break;
 				if (strncasecmp(cencode, "base64", 6)==0) {
 					DecodeBase64(sid, inbuffer, "");
@@ -287,13 +291,13 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 				}
 			}
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) return 1;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) return 1;
 			}
 		} else {
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) break;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) break;
 				if (strcmp(inbuffer, "")==0) {
 					break;
 				}
@@ -307,7 +311,7 @@ int webmailfiledl_r(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding
 	return 0;
 }
 
-void webmailfiledl(CONNECTION *sid)
+void webmailfiledl(CONN *sid)
 {
 	FILE *fp=NULL;
 	wmheader header;
@@ -357,13 +361,13 @@ void webmailfiledl(CONNECTION *sid)
 		striprn(inbuffer);
 		if (strlen(inbuffer)==0) break;
 	}
-	if (webmailfiledl_r(sid, fp, header.contenttype, header.encoding, header.boundary, filename, 0)==0) {
+	if (webmailfiledl_r(sid, &fp, header.contenttype, header.encoding, header.boundary, filename, 0)==0) {
 		send_error(sid, 400, "Bad Request", "Attachment not found.");
 	}
 	return;
 }
 
-char *webmailfileul(CONNECTION *sid, char *xfilename, char *xfilesize)
+char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize)
 {
 	char *filebody=NULL;
 	char lfilename[1024];
@@ -452,7 +456,7 @@ char *webmailfileul(CONNECTION *sid, char *xfilename, char *xfilesize)
 	return filebody;
 }
 
-int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth)
+int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth)
 {
 	char inbuffer[1024];
 	char cencode[100];
@@ -465,15 +469,18 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 	int msgdone=0;
 	int i;
 
-	memset(sid->dat->user_wmfiles, 0, sizeof(sid->dat->user_wmfiles));
+	if (depth==0) {
+		memset(sid->dat->wm->files, 0, sizeof(sid->dat->wm->files));
+		sid->dat->wm->numfiles=0;
+	}
 	depth++;
 	if ((p_strcasestr(contenttype, "multipart")==NULL)&&(p_strcasestr(contenttype, "message/rfc822")==NULL)) {
 		if ((!reply)&&(strncasecmp(contenttype, "text/html", 9)!=0)) {
 			prints(sid, "<PRE><FONT FACE=Arial, Verdana>");
 		}
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-			if (fp==NULL) break;
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
 			if (strncasecmp(encoding, "quoted-printable", 16)==0) {
 				DecodeQP(sid, reply, inbuffer, contenttype);
 			} else if (strncasecmp(encoding, "base64", 6)==0) {
@@ -493,8 +500,8 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 		head=1;
 	} else {
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-			if (fp==NULL) break;
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
 			if (p_strcasestr(inbuffer, boundary)!=NULL) {
 				head=1;
 				break;
@@ -505,7 +512,7 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 	memset(tbound, 0, sizeof(tbound));
 	snprintf(tbound, sizeof(tbound)-1, "%s--", boundary);
 	for (;;) {
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
 			if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
 		}
@@ -513,8 +520,8 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 			memset(ctype, 0, sizeof(ctype));
 			memset(cencode, 0, sizeof(cencode));
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) break;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) break;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
 					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
 				}
@@ -532,7 +539,7 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 					while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 					strncpy(ctype, ptemp, sizeof(ctype)-1);
 					while (inbuffer[strlen(inbuffer)-1]==';') {
-						wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
+						wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 						striprn(inbuffer);
 						strncat(ctype, inbuffer, sizeof(ctype)-strlen(ctype)-1);
 					}
@@ -543,23 +550,22 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 				if (ptemp!=NULL) {
 					ptemp+=5;
 					if (*ptemp=='\"') ptemp++;
-					while ((*ptemp)&&(*ptemp!='\"')&&(strlen(sid->dat->user_wmfiles[sid->dat->user_wmnumfiles])<sizeof(sid->dat->user_wmfiles[sid->dat->user_wmnumfiles])-1)) {
-						sid->dat->user_wmfiles[sid->dat->user_wmnumfiles][strlen(sid->dat->user_wmfiles[sid->dat->user_wmnumfiles])]=*ptemp;
+					while ((*ptemp)&&(*ptemp!='\"')&&(strlen(sid->dat->wm->files[sid->dat->wm->numfiles])<sizeof(sid->dat->wm->files[sid->dat->wm->numfiles])-1)) {
+						sid->dat->wm->files[sid->dat->wm->numfiles][strlen(sid->dat->wm->files[sid->dat->wm->numfiles])]=*ptemp;
 						ptemp++;
 					}
 					file=1;
-					sid->dat->user_wmnumfiles++;
+					sid->dat->wm->numfiles++;
 				}
 			}
 		}
-
+		if (*fp==NULL) break;
 		if (strncasecmp(ctype, "message/rfc822", 14)==0) {
 			if (!reply) prints(sid, "<HR>");
 			webmailmime(sid, fp, ctype, cencode, boundary, nummessage, reply, depth);
 			head=1;
 			continue;
 		}
-
 		if ((ptemp=p_strcasestr(ctype, "boundary="))!=NULL) {
 			ptemp+=9;
 			if (*ptemp=='\"') ptemp++;
@@ -574,11 +580,11 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 			head=1;
 			continue;
 		}
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if (file) {
 			for (;;) {
-				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-				if (fp==NULL) break;
+				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+				if (*fp==NULL) break;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
 					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
 				}
@@ -593,16 +599,16 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 				}
 			}
 		}
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if (head) continue;
 		// start reading the part body
 		for (;;) {
 			if (strcmp(inbuffer, "")==0) break;
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-			if (fp==NULL) break;
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
 			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
 		}
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if (!reply) {
 			if (strncasecmp(contenttype, "multipart/report", 16)==0) {
 				prints(sid, "<HR>");
@@ -614,8 +620,8 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 			}
 		}
 		for (;;) {
-			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
-			if (fp==NULL) break;
+			wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
+			if (*fp==NULL) break;
 			if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) break;
 			if (p_strcasestr(inbuffer, boundary)!=NULL) {
 				head=1;
@@ -656,20 +662,20 @@ int webmailmime(CONNECTION *sid, FILE *fp, char *contenttype, char *encoding, ch
 		if ((strncasecmp(ctype, "text/plain", 10)==0)&&(strncasecmp(contenttype, "multipart/alternative", 21)!=0)) {
 			msgdone=1;
 		}
-		if (fp==NULL) break;
+		if (*fp==NULL) break;
 		if ((p_strcasestr(contenttype, "multipart")!=NULL)&&(depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
 	}
-	if ((!reply)&&(sid->dat->user_wmnumfiles>0)) {
+	if ((!reply)&&(sid->dat->wm->numfiles>0)&&(depth<2)) {
 		prints(sid, "<HR>Attachments<BR>\n");
-		for (i=0;i<sid->dat->user_wmnumfiles;i++) {
+		for (i=0;i<sid->dat->wm->numfiles;i++) {
 			prints(sid, "[<A HREF=%s/mail/file/%d/", sid->dat->in_ScriptName, nummessage);
-			printhex(sid, "%s", DecodeRFC2047(sid, sid->dat->user_wmfiles[i]));
-			ptemp=get_mime_type(sid->dat->user_wmfiles[i]);
+			printhex(sid, "%s", DecodeRFC2047(sid, sid->dat->wm->files[i]));
+			ptemp=get_mime_type(sid->dat->wm->files[i]);
 			if (strncasecmp(ptemp, "image/", 6)==0) {
 				prints(sid, " TARGET=_blank");
 			}
 			prints(sid, ">");
-			printht(sid, "%s", DecodeRFC2047(sid, sid->dat->user_wmfiles[i]));
+			printht(sid, "%s", DecodeRFC2047(sid, sid->dat->wm->files[i]));
 			prints(sid, "</A>]<BR>\n");
 		}
 	}
