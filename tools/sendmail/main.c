@@ -93,6 +93,20 @@ int main(int argc, char *argv[])
 	int i;
 	time_t t=time(NULL);
 
+
+/*
+	FILE *fp=NULL;
+	short int status;
+
+	if (argc<2) return -1;
+	if ((fp=fopen(argv[1], "rb"))!=NULL) {
+		status=smtp_client(fp);
+		fclose(fp);
+	}
+	return 0;
+*/
+
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 //	memset(salt, 0, sizeof(salt));
 //	memset(function, 0, sizeof(function));

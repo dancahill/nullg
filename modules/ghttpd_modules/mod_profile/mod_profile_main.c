@@ -229,7 +229,7 @@ void profilesave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefmenustyle = '%d', ", user.prefmenustyle);
 	strncatf(query, sizeof(query)-strlen(query)-1, "preftimezone = '%d', ", user.preftimezone);
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefgeozone = '%d', ", user.prefgeozone);
-	strncatf(query, sizeof(query)-strlen(query)-1, "preflanguage = '%s'", user.preflanguage);
+	strncatf(query, sizeof(query)-strlen(query)-1, "preflanguage = '%s', ", user.preflanguage);
 	strncatf(query, sizeof(query)-strlen(query)-1, "preftheme = '%s'", user.preftheme);
 	strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", sid->dat->user_uid);
 	if (sql_update(query)<0) return;

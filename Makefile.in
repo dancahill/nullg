@@ -29,7 +29,7 @@ all: _all
 	@echo "Thank you for using NullLogic Groupware."
 	@echo ""
 
-_all: _sqlite _misc _dbutil _server _core_modules _ghttpd_modules _httpd_modules
+_all: _misc _sqlite _dbutil _server _core_modules _ghttpd_modules _httpd_modules
 
 _sqlite:
 	@echo "sqlite"
@@ -42,8 +42,10 @@ _misc:
 	@cp -p scripts/setup distrib/setup
 	@cp -p scripts/nullgw-backup distrib/bin/nullgw-backup
 	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
-	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
-	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/rc.groupware
+	@cp -p scripts/nullgw-init distrib/bin/nullgw-init
+	@cp -p scripts/nullgw-init debian/nullgroupware.init
+	@chmod 0644 distrib/COPYING distrib/COPYRIGHT distrib/README
+	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/nullgw-init
 
 _dbutil:
 	@echo "dbutil"
@@ -71,39 +73,42 @@ _httpd_modules:
 sslcert:
 	openssl req -new -x509 -nodes -out distrib/etc/ssl-cert.pem -keyout distrib/etc/ssl-priv.pem -days 365
 
-autoconf:
-	@echo ifnames *.[ch]
-	@echo autoscan
-	@echo mv configure.scan configure.in
-	@echo autoheader
-	@echo autoconf
-
 clean:
-	@echo -n "Cleaning..."
-	@chmod 0755 scripts/lxtool
 	@cd dbutil;$(MAKE) clean
 	@cd server;$(MAKE) clean
 	@cd modules/core_modules;$(MAKE) clean
 	@cd modules/ghttpd_modules;$(MAKE) clean
 	@cd modules/httpd_modules;$(MAKE) clean
-	@./scripts/lxtool clean
 	@rm -f distrib/bin/* distrib/lib/*.so distrib/lib/ghttpd/*.so distrib/lib/httpd/*.so *~
 	@rm -f distrib/etc/ssl-cert.pem distrib/etc/ssl-priv.pem
-	@echo "done."
 
 distclean: clean
 	@cd sqlite;./libsqlite_make clean
-	@rm -f `find -name *~`
-	@echo -n "Running autoconf..."
-	@autoconf
-	@rm -rf autom4te.cache
-	@rm -f config.log config.status include/config.h Makefile Rules.mak
+	@chmod -R 0755 distrib
+	@chmod -R 0755 distrib/bin
+	@chmod -R 0770 distrib/etc
+	@chmod -R 0755 distrib/lib
+	@chmod -R 0770 distrib/var
+	@chmod -R 0755 distrib/var/htdocs
+	@chmod -R 0755 distrib/var/lang
+	@chmod -R 0660 `find distrib/etc -name '*' -type f`
+	@chmod -R 0660 `find distrib/var -name '*' -type f`
+	@chmod -R 0644 `find distrib/var/htdocs -name '*' -type f`
+	@chmod -R 0644 `find distrib/var/lang -name '*' -type f`
 	@chown -R 0:0 *
-	@echo "done."
+	@rm -f distrib/COPYING distrib/COPYRIGHT distrib/README
+	@rm -f distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/nullgw-init
+	@rm -f build-stamp config.log config.status include/config.h Makefile Rules.mak
+	@rm -f `find -name *~`
+	@rm -rf autom4te.cache
 
 install: _all
 	@chown -R 0:0 distrib/*
 	@cd distrib;./setup
+
+debinstall: _all
+	@chown -R 0:0 distrib/*
+	@cd distrib;./setup debian
 
 upgrade: _all
 	@chown -R 0:0 distrib/*
@@ -113,13 +118,9 @@ wc:
 	wc `find . -name *.[ch] ! -path './sqlite/*'`
 
 dist:
-	@chmod 0755 scripts/lxtool
-	@./scripts/lxtool clean
 	@$(MAKE)
-	@./scripts/lxtool pack
+	@./scripts/pack pack
 
 slackdist:
-	@chmod 0755 scripts/lxtool
-	@./scripts/lxtool clean
 	@$(MAKE)
-	@./scripts/lxtool slackpack
+	@./scripts/pack slackpack

@@ -33,6 +33,9 @@
 	#include "sql/pgsql.h"
 	#endif
 #endif
+#ifdef HAVE_SQLITE2
+	#include "sql/sqlite2.h"
+#endif
 #ifdef HAVE_SQLITE3
 	#include "sql/sqlite3.h"
 #endif
@@ -65,10 +68,15 @@ typedef	ExecStatusType (*LIBPGSQL_RESULTSTATUS)(const PGresult *);
 typedef	PGconn        *(*LIBPGSQL_SETDBLOGIN)(const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 typedef	ConnStatusType (*LIBPGSQL_STATUS)(const PGconn *);
 #endif
+#ifdef HAVE_SQLITE2
+typedef	sqlite *(*SQLITE2_OPEN)(const char *, int, char **);
+typedef	int     (*SQLITE2_EXEC)(sqlite *, const char *, sqlite_callback, void *, char **);
+typedef	void    (*SQLITE2_CLOSE)(sqlite *);
+#endif
 #ifdef HAVE_SQLITE3
-typedef	int  (*SQLITE_OPEN)(const char *filename, sqlite3 **ppDb);
-typedef	int  (*SQLITE_EXEC)(sqlite3 *, const char *sql, sqlite_callback, void *, char **errmsg);
-typedef	void (*SQLITE_CLOSE)(sqlite3 *);
+typedef	int  (*SQLITE3_OPEN)(const char *, sqlite3 **);
+typedef	int  (*SQLITE3_EXEC)(sqlite3 *, const char *, sqlite3_callback, void *, char **);
+typedef	void (*SQLITE3_CLOSE)(sqlite3 *);
 #endif
 
 /* global vars */
@@ -104,12 +112,19 @@ static struct {
 	LIBPGSQL_STATUS status;
 } libpgsql;
 #endif
+#ifdef HAVE_SQLITE2
+static struct {
+	SQLITE2_OPEN open;
+	SQLITE2_CLOSE close;
+	SQLITE2_EXEC exec;
+} libsqlite2;
+#endif
 #ifdef HAVE_SQLITE3
 static struct {
-	SQLITE_OPEN open;
-	SQLITE_CLOSE close;
-	SQLITE_EXEC exec;
-} libsqlite;
+	SQLITE3_OPEN open;
+	SQLITE3_CLOSE close;
+	SQLITE3_EXEC exec;
+} libsqlite3;
 #endif
 
 #ifdef HAVE_MYSQL
@@ -125,8 +140,11 @@ static SQLHSTMT hStmt=NULL;
 static PGconn *pgconn=NULL;
 static PGresult *pgres=NULL;
 #endif
+#ifdef HAVE_SQLITE2
+static sqlite *db2;
+#endif
 #ifdef HAVE_SQLITE3
-static sqlite3 *db;
+static sqlite3 *db3;
 #endif
 /* shared vars */
 static short int sql_is_connected=0;

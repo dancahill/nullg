@@ -115,6 +115,7 @@
 #define HAVE_ODBC
 #endif
 #define HAVE_PGSQL
+#define HAVE_SQLITE2
 #define HAVE_SQLITE3
 
 #define HAVE_SSL

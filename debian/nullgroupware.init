@@ -17,9 +17,13 @@ fi
 if [ -x /etc/sysconfig/network ]; then
 	. /etc/sysconfig/network
 fi
+# Include nullgroupware defaults if available
+if [ -f /etc/default/nullgroupware ]; then
+	. /etc/default/nullgroupware
+fi
 
-BASE_PATH="/usr/local/nullgroupware"
-PATH=$BASE_PATH/bin:$PATH
+BIN_DIR="/usr/local/nullgroupware/bin"
+PATH=$BIN_DIR:$PATH
 
 check_status() {
 	ps axw > /tmp/_gw_proclist
@@ -36,7 +40,7 @@ groupware_start() {
 		echo "NullLogic Groupware appears to be running already."
 	else
 		echo -n "Starting NullLogic Groupware services: "
-		cd ${BASE_PATH}/bin
+		cd ${BIN_DIR}
 		echo -n "ghttpd " ; nullgw-server ghttpd
 #		echo -n "httpd " ; nullgw-server httpd
 #		echo -n "pop3d " ; nullgw-server pop3d

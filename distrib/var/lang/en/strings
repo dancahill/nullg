@@ -72,6 +72,7 @@
    MAIL_REPLY         = "Reply"
    MAIL_REPLYALL      = "Reply All"
    MAIL_FORWARD       = "Forward"
+   MAIL_PRINT         = "Print"
    MAIL_DELETE        = "Delete"
    MAIL_CHECKING      = "Checking for new mail"
    MAIL_OK            = "OK"

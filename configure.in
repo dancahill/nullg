@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(nullgroupware, 1.3.28, nulllogic@users.sourceforge.net)
+AC_INIT(nullgroupware, 1.3.29, nulllogic@users.sourceforge.net)
 AC_CONFIG_HEADER([include/config.h])
 AC_CANONICAL_HOST
 

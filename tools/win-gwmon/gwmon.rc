@@ -53,8 +53,8 @@ END
 //
 
 IDR_VERSION VERSIONINFO
- FILEVERSION 1,3,28
- PRODUCTVERSION 1,3,28
+ FILEVERSION 1,3,29
+ PRODUCTVERSION 1,3,29
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "NullLogic\0"
             VALUE "FileDescription", "NullLogic Groupware Monitor\0"
-            VALUE "FileVersion", "1.3.28\0"
+            VALUE "FileVersion", "1.3.29\0"
             VALUE "InternalName", "GWMON.EXE\0"
             VALUE "LegalCopyright", "Copyright © 2000-2005\0"
             VALUE "OriginalFilename", "GWMON.EXE\0"
             VALUE "ProductName", "NullLogic Groupware\0"
-            VALUE "ProductVersion", "1.3.28\0"
+            VALUE "ProductVersion", "1.3.29\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -34,6 +34,7 @@
 	#define HAVE_MYSQL
 	#define HAVE_ODBC
 	#define HAVE_PGSQL
+	#define HAVE_SQLITE2
 	#define HAVE_SQLITE3
 	#define WIN32_LEAN_AND_MEAN
 	#define _MT 1
@@ -58,6 +59,7 @@
 #else
 	#define HAVE_MYSQL
 	#define HAVE_PGSQL
+	#define HAVE_SQLITE2
 	#define HAVE_SQLITE3
 	#include <dirent.h>
 	#include <dlfcn.h>

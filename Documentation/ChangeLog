@@ -1,3 +1,10 @@
+1.3.29
+------
+- debian packaging now works
+- failed htmod calls can now trigger a secondary response
+- upgraded SQLite to 3.1.3
+- added legacy support for SQLite 2.8.x to make upgrading easier
+
 1.3.28
 ------
 - mod_php was rewritten and tested with 4.3.10 and 5.0.3

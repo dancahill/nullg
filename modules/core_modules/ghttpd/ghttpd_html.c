@@ -35,8 +35,6 @@ void htpage_header(CONN *sid, char *title)
 	prints(sid, ".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial,Verdana; font-size: 8pt; }\r\n");
 	prints(sid, "A        { text-decoration: none; }\r\n");
 	prints(sid, "A:HOVER  { text-decoration: underline; }\r\n");
-	prints(sid, "TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
-	prints(sid, "TH       { background-color: 0000A0; color: FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n");
 	prints(sid, "</STYLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/%s/themes/%s/style.css\">\r\n", SERVER_BASENAME, sid->dat->user_theme);
 	prints(sid, "</HEAD>\r\n");

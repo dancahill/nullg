@@ -40,6 +40,7 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	}
 	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&unixdate));
 	sscanf(posttime1, "%d %d %d %d", &today.tm_wday, &today.tm_mday, &today.tm_mon, &today.tm_year);
+//	(year)%4==0&&((year)%100!=0||(year)%400==0)
 	if ((today.tm_year/4.0f)==(int)(today.tm_year/4)) {
 		if ((today.tm_year/400.0f)==(int)(today.tm_year/400)) {
 			dim[1]++;

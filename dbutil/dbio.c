@@ -28,57 +28,57 @@ int dump_table(FILE *fp, char *table, char *index)
 	char *ptemp;
 	int i;
 	int j;
-	int sqr;
+	SQLRES sqr;
 
 	snprintf(query, sizeof(query)-1, "SELECT * FROM %s ORDER BY %s ASC", table, index);
-	if ((sqr=sqlQuery(query))<0) {
+	if (sql_query(&sqr, query)<0) {
 		printf("\r\nError dumping %s\r\n", table);
 		return -1;
 	}
-	for (i=0;i<sqlNumtuples(sqr);i++) {
+	for (i=0;i<sql_numtuples(&sqr);i++) {
 		fprintf(fp, "INSERT INTO %s (", table);
-		for (j=0;j<sqlNumfields(sqr);j++) {
-			ptemp=sqlGetfieldname(sqr, j);
+		for (j=0;j<sql_numfields(&sqr);j++) {
+			ptemp=sql_getname(&sqr, j);
 			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
 				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
 					continue;
 				}
 			}
-			fprintf(fp, "%s", sqlGetfieldname(sqr, j));
-			if (j<sqlNumfields(sqr)-1) fprintf(fp, ", ");
+			fprintf(fp, "%s", sql_getname(&sqr, j));
+			if (j<sql_numfields(&sqr)-1) fprintf(fp, ", ");
 		}
 		fprintf(fp, ") VALUES (");
-		for (j=0;j<sqlNumfields(sqr);j++) {
-			ptemp=sqlGetfieldname(sqr, j);
+		for (j=0;j<sql_numfields(&sqr);j++) {
+			ptemp=sql_getname(&sqr, j);
 			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
 				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
 					continue;
 				}
 			}
 			fprintf(fp, "'");
-			sqlfprintf(fp, "%s", sqlGetvalue(sqr, i, j));
+			sqlfprintf(fp, "%s", sql_getvalue(&sqr, i, j));
 			fprintf(fp, "'");
-			if (j<sqlNumfields(sqr)-1) fprintf(fp, ", ");
+			if (j<sql_numfields(&sqr)-1) fprintf(fp, ", ");
 		}
 		fprintf(fp, ");\n");
 	}
-	sqlFreeconnect(sqr);
+	sql_freeresult(&sqr);
 	return 0;
 }
 
 int init_table(char *query, char *tablename)
 {
 	if (strcasecmp(config.sql_type, "MYSQL")==0) {
-		sqlUpdatef(0, "DROP TABLE IF EXISTS %s;", tablename);
+		sql_updatef(0, "DROP TABLE IF EXISTS %s;", tablename);
 #ifdef WIN32
 	} else if (strcasecmp(config.sql_type, "ODBC")==0) {
 #endif
 	} else if (strcasecmp(config.sql_type, "PGSQL")==0) {
-		sqlUpdatef(0, "DROP TABLE %s;", tablename);
-	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
-		sqlUpdatef(0, "DROP TABLE %s;", tablename);
+		sql_updatef(0, "DROP TABLE %s;", tablename);
+	} else if (strncasecmp(config.sql_type, "SQLITE", 6)==0) {
+		sql_updatef(0, "DROP TABLE %s;", tablename);
 	}
-	if (sqlUpdate(1, query)<0) {
+	if (sql_update(1, query)<0) {
 		printf("\r\nError inserting %s\r\n", tablename);
 		return -1;
 	}
@@ -89,105 +89,105 @@ int pgsql_sequence_sync(void)
 {
 	int max;
 	int seq;
-	int sqr;
+	SQLRES sqr;
 	int i;
 
 	for (i=0;;i++) {
 		if (pgsqldb_tables[i].seqname==NULL) break;
-		if ((sqr=sqlQueryf("SELECT max(%s) FROM %s", pgsqldb_tables[i].index, pgsqldb_tables[i].name))<0) return -1;
-		if (sqlNumtuples(sqr)!=1) {
-			sqlFreeconnect(sqr);
+		if (sql_queryf(&sqr, "SELECT max(%s) FROM %s", pgsqldb_tables[i].index, pgsqldb_tables[i].name)<0) return -1;
+		if (sql_numtuples(&sqr)!=1) {
+			sql_freeresult(&sqr);
 			return -1;
 		}
-		max=atoi(sqlGetvalue(sqr, 0, 0))+1;
-		sqlFreeconnect(sqr);
-		if ((sqr=sqlQueryf("SELECT last_value FROM %s", pgsqldb_tables[i].seqname))<0) return -1;
-		if (sqlNumtuples(sqr)!=1) {
-			sqlFreeconnect(sqr);
+		max=atoi(sql_getvalue(&sqr, 0, 0))+1;
+		sql_freeresult(&sqr);
+		if (sql_queryf(&sqr, "SELECT last_value FROM %s", pgsqldb_tables[i].seqname)<0) return -1;
+		if (sql_numtuples(&sqr)!=1) {
+			sql_freeresult(&sqr);
 			return -1;
 		}
-		seq=atoi(sqlGetvalue(sqr, 0, 0));
-		sqlFreeconnect(sqr);
+		seq=atoi(sql_getvalue(&sqr, 0, 0));
+		sql_freeresult(&sqr);
 		if (seq<max) seq=max;
-		if ((sqr=sqlQueryf("SELECT setval ('\"%s\"', %d, false);", pgsqldb_tables[i].seqname, seq))<0) return -1;
-		if (sqlNumtuples(sqr)!=1) {
-			sqlFreeconnect(sqr);
+		if (sql_queryf(&sqr, "SELECT setval ('\"%s\"', %d, false);", pgsqldb_tables[i].seqname, seq)<0) return -1;
+		if (sql_numtuples(&sqr)!=1) {
+			sql_freeresult(&sqr);
 			return -1;
 		}
-		sqlFreeconnect(sqr);
+		sql_freeresult(&sqr);
 	}
 	return 0;
 }
 
 int table_check()
 {
-	int sqr;
+	SQLRES sqr;
 	int i;
 	int x;
 
 	/* CHECK gw_dbinfo TABLE */
-	if ((sqr=sqlQuery("SELECT count(*) FROM gw_dbinfo"))<0) return -1;
-	x=atoi(sqlGetvalue(sqr, 0, 0));
-	sqlFreeconnect(sqr);
+	if (sql_query(&sqr, "SELECT count(*) FROM gw_dbinfo")<0) return -1;
+	x=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (x==0) {
 		for (i=0;sqldata_new[i]!=NULL;i++) {
-			if (sqlUpdate(1, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
+			if (sql_update(1, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
 		}
 	}
 	/* CHECK gw_callactions TABLE */
-	if ((sqr=sqlQuery("SELECT count(*) FROM gw_callactions"))<0) return -1;
-	x=atoi(sqlGetvalue(sqr, 0, 0));
-	sqlFreeconnect(sqr);
+	if (sql_query(&sqr, "SELECT count(*) FROM gw_callactions")<0) return -1;
+	x=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (x==0) {
 		for (i=0;sqldata_callactions[i]!=NULL;i++) {
-			if (sqlUpdate(1, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
+			if (sql_update(1, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
 		}
 	}
 	/* CHECK gw_domains TABLE */
-	if ((sqr=sqlQuery("SELECT count(*) FROM gw_domains"))<0) return -1;
-	x=atoi(sqlGetvalue(sqr, 0, 0));
-	sqlFreeconnect(sqr);
+	if (sql_query(&sqr, "SELECT count(*) FROM gw_domains")<0) return -1;
+	x=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (x==0) {
 		for (i=0;sqldata_domains[i]!=NULL;i++) {
-			if (sqlUpdate(1, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
+			if (sql_update(1, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
 		}
 	}
 	/* CHECK gw_eventclosings TABLE */
-	if ((sqr=sqlQuery("SELECT count(*) FROM gw_eventclosings"))<0) return -1;
-	x=atoi(sqlGetvalue(sqr, 0, 0));
-	sqlFreeconnect(sqr);
+	if (sql_query(&sqr, "SELECT count(*) FROM gw_eventclosings")<0) return -1;
+	x=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (x==0) {
 		for (i=0;sqldata_eventclosings[i]!=NULL;i++) {
-			if (sqlUpdate(1, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
+			if (sql_update(1, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
 		}
 	}
 	/* CHECK gw_eventtypes TABLE */
-	if ((sqr=sqlQuery("SELECT count(*) FROM gw_eventtypes"))<0) return -1;
-	x=atoi(sqlGetvalue(sqr, 0, 0));
-	sqlFreeconnect(sqr);
+	if (sql_query(&sqr, "SELECT count(*) FROM gw_eventtypes")<0) return -1;
+	x=atoi(sql_getvalue(&sqr, 0, 0));
+	sql_freeresult(&sqr);
 	if (x==0) {
 		for (i=0;sqldata_eventtypes[i]!=NULL;i++) {
-			if (sqlUpdate(1, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
+			if (sql_update(1, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
 		}
 	}
 	/* Assign all orphaned records to domain 1 */
-	sqlUpdatef(1, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
-	sqlUpdatef(1, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_bookmarkfolders SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_mailaccounts SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_mailfolders SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_mailheaders SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_orders SET obj_did = 1 WHERE obj_did = 0");
-	sqlUpdatef(1, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
+	sql_updatef(1, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_bookmarkfolders SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_mailaccounts SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_mailfolders SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_mailheaders SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_orders SET obj_did = 1 WHERE obj_did = 0");
+	sql_updatef(1, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
 	/* Update the db version */
-	sqlUpdatef(1, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
+	sql_updatef(1, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
 	return 0;
 }
 
@@ -240,7 +240,7 @@ int dump_db(char *filename)
 	dump_table(fp, "gw_zones",               "zoneid");
 	fclose(fp);
 	printf("done.\r\n");
-	sqlDisconnect();
+	sql_disconnect();
 	return -1;
 }
 
@@ -266,14 +266,14 @@ int init_db(void)
 		printf("Initialising PostgreSQL database...");
 		for (i=0;;i++) {
 			if (pgsqldb_tables[i].seqname==NULL) break;
-			sqlUpdatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
-			sqlUpdatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
+			sql_updatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
+			sql_updatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
 		}
 		for (i=0;;i++) {
 			if (pgsqldb_tables[i].name==NULL) break;
 			if (init_table(pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
 		}
-	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
+	} else if (strncasecmp(config.sql_type, "SQLITE", 6)==0) {
 		printf("Initialising SQLite database...");
 		for (i=0;;i++) {
 			if (sqlitedb_tables[i].name==NULL) break;
@@ -285,13 +285,13 @@ int init_db(void)
 		pgsql_sequence_sync();
 	}
 	if (strlen(rootpass)>0) {
-		if (sqlUpdatef(1, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass)<0) {
+		if (sql_updatef(1, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass)<0) {
 			printf("\r\nError setting root password\r\n");
 			return -1;
 		}
 	}
 	printf("done.\r\n");
-	sqlDisconnect();
+	sql_disconnect();
 	return 0;
 }
 
@@ -325,14 +325,14 @@ int restore_db(char *filename)
 		printf("Restoring PostgreSQL database from %s...", filename);
 		for (i=0;;i++) {
 			if (pgsqldb_tables[i].seqname==NULL) break;
-			sqlUpdatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
-			sqlUpdatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
+			sql_updatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
+			sql_updatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
 		}
 		for (i=0;;i++) {
 			if (pgsqldb_tables[i].name==NULL) break;
 			if (init_table(pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
 		}
-	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
+	} else if (strncasecmp(config.sql_type, "SQLITE", 6)==0) {
 		printf("Restoring SQLite database from %s...", filename);
 		for (i=0;;i++) {
 			if (sqlitedb_tables[i].name==NULL) break;
@@ -352,7 +352,7 @@ int restore_db(char *filename)
 				}
 				pTemp++;
 			}
-			if (sqlUpdate(1, line)<0) return -1;
+			if (sql_update(1, line)<0) return -1;
 		}
 	}
 	if (strcasecmp(config.sql_type, "PGSQL")==0) {
@@ -361,6 +361,6 @@ int restore_db(char *filename)
 	fclose(fp);
 	table_check();
 	printf("done.\r\n");
-	sqlDisconnect();
+	sql_disconnect();
 	return 0;
 }

@@ -63,7 +63,7 @@ int module_menucall(CONN *sid)
 		if (strlen(http_proc.mod_menuitems[i].fn_uri)<1) continue;
 		if (strncmp(sid->dat->in_RequestURI, http_proc.mod_menuitems[i].fn_uri, strlen(http_proc.mod_menuitems[i].fn_uri))==0) {
 			htmod_main=http_proc.mod_menuitems[i].fn_main;
-			htmod_main(sid);
+			if (htmod_main(sid)==-1) continue;
 			return 1;
 		}
 	}

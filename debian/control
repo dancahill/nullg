@@ -1,7 +1,7 @@
 Source: nullgroupware
 Section: main/net
 Priority: optional
-Maintainer: Dan Cahill <nulllogic@users.sourceforge.net>
+Maintainer: Dan Cahill <nulllogic@users.sf.net>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.0
 

@@ -20,6 +20,7 @@
 #define HAVE_ODBC
 #endif
 #define HAVE_PGSQL
+#define HAVE_SQLITE2
 #define HAVE_SQLITE3
 
 #ifdef HAVE_MYSQL
@@ -40,6 +41,9 @@
 	#include "sql/pgsql.h"
 	#endif
 #endif
+#ifdef HAVE_SQLITE2
+	#include "sql/sqlite2.h"
+#endif
 #ifdef HAVE_SQLITE3
 	#include "sql/sqlite3.h"
 #endif
@@ -52,8 +56,8 @@ typedef	MYSQL_FIELD  *(STDCALL *LIBMYSQL_FETCH_FIELD_DIRECT)(MYSQL_RES *, unsign
 typedef	MYSQL_ROW     (STDCALL *LIBMYSQL_FETCH_ROW)(MYSQL_RES *);
 typedef	void          (STDCALL *LIBMYSQL_FREE_RESULT)(MYSQL_RES *);
 typedef	MYSQL        *(STDCALL *LIBMYSQL_INIT)(MYSQL *);
-typedef	unsigned int *(STDCALL *LIBMYSQL_NUM_FIELDS)(MYSQL_RES *);
-typedef	my_ulonglong *(STDCALL *LIBMYSQL_NUM_ROWS)(MYSQL_RES *);
+typedef	unsigned int  (STDCALL *LIBMYSQL_NUM_FIELDS)(MYSQL_RES *);
+typedef	my_ulonglong  (STDCALL *LIBMYSQL_NUM_ROWS)(MYSQL_RES *);
 typedef	int           (STDCALL *LIBMYSQL_PING)(MYSQL *);
 typedef	int           (STDCALL *LIBMYSQL_QUERY)(MYSQL *, const char *);
 typedef	MYSQL        *(STDCALL *LIBMYSQL_REAL_CONNECT)(MYSQL *, const char *, const char *, const char *, const char *, unsigned int, const char *, unsigned int);
@@ -72,10 +76,15 @@ typedef	ExecStatusType (*LIBPGSQL_RESULTSTATUS)(const PGresult *);
 typedef	PGconn        *(*LIBPGSQL_SETDBLOGIN)(const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 typedef	ConnStatusType (*LIBPGSQL_STATUS)(const PGconn *);
 #endif
+#ifdef HAVE_SQLITE2
+typedef	sqlite *(*SQLITE2_OPEN)(const char *, int, char **);
+typedef	int     (*SQLITE2_EXEC)(sqlite *, const char *, sqlite_callback, void *, char **);
+typedef	void    (*SQLITE2_CLOSE)(sqlite *);
+#endif
 #ifdef HAVE_SQLITE3
-typedef	int  (*SQLITE_OPEN)(const char *filename, sqlite3 **ppDb);
-typedef	int  (*SQLITE_EXEC)(sqlite3 *, const char *sql, sqlite_callback, void *, char **errmsg);
-typedef	void (*SQLITE_CLOSE)(sqlite3 *);
+typedef	int  (*SQLITE3_OPEN)(const char *, sqlite3 **);
+typedef	int  (*SQLITE3_EXEC)(sqlite3 *, const char *, sqlite3_callback, void *, char **);
+typedef	void (*SQLITE3_CLOSE)(sqlite3 *);
 #endif
 
 /* global vars */
@@ -111,18 +120,24 @@ struct {
 	LIBPGSQL_STATUS status;
 } libpgsql;
 #endif
+#ifdef HAVE_SQLITE2
+struct {
+	SQLITE2_OPEN open;
+	SQLITE2_CLOSE close;
+	SQLITE2_EXEC exec;
+} libsqlite2;
+#endif
 #ifdef HAVE_SQLITE3
 struct {
-	SQLITE_OPEN open;
-	SQLITE_CLOSE close;
-	SQLITE_EXEC exec;
-} libsqlite;
+	SQLITE3_OPEN open;
+	SQLITE3_CLOSE close;
+	SQLITE3_EXEC exec;
+} libsqlite3;
 #endif
 
 #ifdef HAVE_MYSQL
 static MYSQL mysql;
 static MYSQL *mysock=NULL;
-static MYSQL_RES *myres=NULL;
 #endif
 #ifdef HAVE_ODBC
 static SQLHENV hEnv=NULL;
@@ -133,20 +148,17 @@ static SQLHSTMT hStmt=NULL;
 static PGconn *pgconn=NULL;
 static PGresult *pgres=NULL;
 #endif
+#ifdef HAVE_SQLITE2
+static sqlite *db2;
+#endif
 #ifdef HAVE_SQLITE3
-static sqlite3 *db;
+static sqlite3 *db3;
 #endif
 
 /* shared vars */
-#define MAX_TUPLE_SIZE 16384
-#define MAX_FIELD_SIZE 12288
-#define MAX_QUERIES 2
-typedef struct {
-	unsigned int ctime;
-	unsigned int NumFields;
-	unsigned int NumTuples;
-	char fields[1024];
-	char **cursor;
-} sql_reply;
-static sql_reply sqlreply[MAX_QUERIES];
-static unsigned int Connected=0;
+static short int sql_is_connected=0;
+#ifdef WIN32
+static HINSTANCE hinstLib=NULL;
+#else
+static void *hinstLib=NULL;
+#endif

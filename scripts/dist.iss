@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 [Setup]
 AppName=NullLogic Groupware
-AppVerName=NullLogic Groupware 1.3.28
+AppVerName=NullLogic Groupware 1.3.29
 AppPublisher=NullLogic
 AppPublisherURL=http://nullgroupware.sourceforge.net/
 AppSupportURL=http://nullgroupware.sourceforge.net/

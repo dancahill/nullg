@@ -50,6 +50,7 @@ typedef struct {
 	char mail_reply[STR_LEN];
 	char mail_replyall[STR_LEN];
 	char mail_forward[STR_LEN];
+	char mail_print[STR_LEN];
 	char mail_delete[STR_LEN];
 	char mail_checking[STR_LEN];
 	char mail_ok[STR_LEN];

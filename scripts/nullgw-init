@@ -1,0 +1,97 @@
+#!/bin/sh
+# Init script to start/stop/restart the NullLogic Groupware servers.
+#
+# On SYSV init systems, this script is usually called 'nullgroupware',
+# and located in '/etc/init.d'.
+#
+# basic IRIX-style chkconfig (RedHat uses this)
+# chkconfig: 2345 85 10
+# description: NullLogic Groupware Server Suite. \
+#	Starts and stops NullLogic Groupware services as requested.
+
+# Source function library.
+if [ -x /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
+# Source networking configuration.
+if [ -x /etc/sysconfig/network ]; then
+	. /etc/sysconfig/network
+fi
+# Include nullgroupware defaults if available
+if [ -f /etc/default/nullgroupware ]; then
+	. /etc/default/nullgroupware
+fi
+
+BIN_DIR="/usr/local/nullgroupware/bin"
+PATH=$BIN_DIR:$PATH
+
+check_status() {
+	ps axw > /tmp/_gw_proclist
+	if test `grep -c nullgw-server /tmp/_gw_proclist` -gt 0; then
+		SERVER_STATUS="running"
+	else
+		SERVER_STATUS="not running"
+	fi
+	rm -f /tmp/_gw_proclist
+}
+
+groupware_start() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "NullLogic Groupware appears to be running already."
+	else
+		echo -n "Starting NullLogic Groupware services: "
+		cd ${BIN_DIR}
+		echo -n "ghttpd " ; nullgw-server ghttpd
+#		echo -n "httpd " ; nullgw-server httpd
+#		echo -n "pop3d " ; nullgw-server pop3d
+#		echo -n "smtpd " ; nullgw-server smtpd
+#		echo -n "smtpq " ; nullgw-server smtpq
+		echo ""
+	fi
+}
+
+groupware_stop() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "Stopping NullLogic Groupware services"
+		killall -15 nullgw-server 2>/dev/null
+		sleep 2
+		killall -9 nullgw-server 2>/dev/null
+	else
+		echo "NullLogic Groupware does not appear to be running."
+	fi
+}
+
+groupware_status() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "NullLogic Groupware appears to be running"
+	else
+		echo "NullLogic Groupware does not appear to be running."
+	fi
+}
+
+groupware_restart() {
+	groupware_stop
+	check_status
+	groupware_start
+}
+
+check_status
+case "$1" in
+start)
+	groupware_start
+	;;
+stop)
+	groupware_stop
+	exit 0
+	;;
+status)
+	groupware_status
+	;;
+restart|reload)
+	groupware_restart
+	;;
+*)
+	echo "Usage: $0 {start|stop|status|restart|reload}"
+esac
+
+exit $?

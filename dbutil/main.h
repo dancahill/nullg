@@ -40,8 +40,17 @@
 	#include <stdarg.h>
 	#include <stdlib.h>
 	#include <string.h>
+	#include <unistd.h>
 #endif
+#include "common/defines.h"
 
+typedef struct {
+	unsigned int ctime;
+	unsigned int NumFields;
+	unsigned int NumTuples;
+	char fields[1024];
+	char **cursor;
+} SQLRES;
 typedef struct {
 	char name[40];
 	char value[512];
@@ -78,18 +87,20 @@ int restore_db(char *filename);
 /* md5.c functions */
 char *MD5Crypt(char *pw, char *salt);
 /* sql.c functions */
-void sqlDisconnect();
-void sqlFreeconnect(int sqr);
-int  sqlUpdate(int verbose, char *sqlquery);
-int  sqlUpdatef(int verbose, char *format, ...);
-int  sqlQuery(char *query);
-int  sqlQueryf(char *format, ...);
-char *sqlGetfieldname(int sqr, int fieldnumber);
-char *sqlGetvalue(int sqr, int tuple, int field);
-int  sqlNumfields(int sqr);
-int  sqlNumtuples(int sqr);
+int   sql_dll_unload();
+void  sql_disconnect();
+void  sql_freeresult(SQLRES *sqr);
+int   sql_update(int verbose, char *sqlquery);
+int   sql_updatef(int verbose, char *format, ...);
+int   sql_query(SQLRES *sqr, char *query);
+int   sql_queryf(SQLRES *sqr, char *format, ...);
+char *sql_getname(SQLRES *sqr, int fieldnumber);
+char *sql_getvalue(SQLRES *sqr, int tuple, int field);
+char *sql_getvaluebyname(SQLRES *sqr, int tuple, char *fieldname);
+int   sql_numfields(SQLRES *sqr);
+int   sql_numtuples(SQLRES *sqr);
 char *str2sql(char *inbuffer);
-int  sqlfprintf(FILE *fp, const char *format, ...);
+int   sqlfprintf(FILE *fp, const char *format, ...);
 
 #ifdef WIN32
 #define dlopen(x, y) LoadLibrary(x)

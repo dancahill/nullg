@@ -1,6 +1,6 @@
 Summary: NullLogic Groupware
 Name: nullgroupware
-Version: 1.3.28
+Version: 1.3.29
 Release: 1
 License: GPL
 Packager: Dan Cahill <nulllogic@users.sourceforge.net>
@@ -25,7 +25,7 @@ rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/nullgroupware
 cp -a distrib/* ${RPM_BUILD_ROOT}/usr/local/nullgroupware/
-install scripts/rc.groupware ${RPM_BUILD_ROOT}/etc/init.d/nullgroupware
+install scripts/nullgw-init ${RPM_BUILD_ROOT}/etc/init.d/nullgroupware
 
 %post
 /usr/sbin/groupadd nullgw 1>/dev/null 2>/dev/null

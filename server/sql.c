@@ -473,74 +473,75 @@ static int pgsqlQuery(SQLRES *sqr, char *sqlquery)
 }
 #endif /* HAVE_PGSQL */
 
-#ifdef HAVE_SQLITE3
-static int SQLiteDLLInit()
+#ifdef HAVE_SQLITE2
+static int SQLite2DLLInit()
 {
 	char libname[255];
 
 	if (hinstLib!=NULL) return 0;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/libsqlite.%s", proc.config.dir_lib, LIBEXT);
+	snprintf(libname, sizeof(libname)-1, "%s/libsqlite2.%s", proc.config.dir_lib, LIBEXT);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "%s/sqlite.%s", proc.config.dir_lib, LIBEXT);
+	snprintf(libname, sizeof(libname)-1, "%s/sqlite2.%s", proc.config.dir_lib, LIBEXT);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "libsqlite.%s", LIBEXT);
+	snprintf(libname, sizeof(libname)-1, "libsqlite2.%s", LIBEXT);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "sqlite.%s", LIBEXT);
+	snprintf(libname, sizeof(libname)-1, "sqlite2.%s", LIBEXT);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	goto fail;
 found:
-	if ((libsqlite.open=(SQLITE_OPEN)dlsym(hinstLib, "sqlite3_open"))==NULL) goto fail;
-	if ((libsqlite.exec=(SQLITE_EXEC)dlsym(hinstLib, "sqlite3_exec"))==NULL) goto fail;
-	if ((libsqlite.close=(SQLITE_CLOSE)dlsym(hinstLib, "sqlite3_close"))==NULL) goto fail;
+	if ((libsqlite2.open=(SQLITE2_OPEN)dlsym(hinstLib, "sqlite_open"))==NULL) goto fail;
+	if ((libsqlite2.exec=(SQLITE2_EXEC)dlsym(hinstLib, "sqlite_exec"))==NULL) goto fail;
+	if ((libsqlite2.close=(SQLITE2_CLOSE)dlsym(hinstLib, "sqlite_close"))==NULL) goto fail;
 	return 0;
 fail:
 	log_error("sql", __FILE__, __LINE__, 0, "ERROR: Failed to load %s", libname);
-	memset((char *)&libsqlite, 0, sizeof(libsqlite));
+	memset((char *)&libsqlite2, 0, sizeof(libsqlite2));
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
 	return -1;
 }
 
-static void sqliteDisconnect()
+static void sqlite2Disconnect()
 {
 	if (sql_is_connected==0) return;
-	libsqlite.close(db);
+	libsqlite2.close(db2);
 	sql_is_connected=0;
 	return;
 }
 
-static int sqliteConnect()
+static int sqlite2Connect()
 {
 	char dbname[255];
 	char *zErrMsg=0;
 
-	if (SQLiteDLLInit()!=0) return -1;
+	if (SQLite2DLLInit()!=0) return -1;
 	if (sql_is_connected) return 0;
 	snprintf(dbname, sizeof(dbname)-1, "%s/%s.db", proc.config.dir_var_db, SERVER_BASENAME);
 	fixslashes(dbname);
-	if (libsqlite.open(dbname, &db)!=SQLITE_OK) {
-		printf("\nSQLite Connect error");
+	db2=libsqlite2.open(dbname, 0, &zErrMsg);
+	if (db2==0) {
+		log_error("sql", __FILE__, __LINE__, 1, "SQLite Connect - %s", zErrMsg);
 		return -1;
 	}
 	sql_is_connected=1;
-	libsqlite.exec(db, "PRAGMA default_synchronous = TRUE;", NULL, 0, &zErrMsg);
-	libsqlite.exec(db, "PRAGMA empty_result_callbacks = ON;", NULL, 0, &zErrMsg);
+	libsqlite2.exec(db2, "PRAGMA default_synchronous = TRUE;", NULL, 0, &zErrMsg);
+	libsqlite2.exec(db2, "PRAGMA empty_result_callbacks = ON;", NULL, 0, &zErrMsg);
 	return 0;
 }
 
-static int sqliteUpdate(char *sqlquery)
+static int sqlite2Update(char *sqlquery)
 {
 	char *zErrMsg=0;
 	int rc;
 	short int retries=10;
 
 retry:
-	rc=libsqlite.exec(db, sqlquery, NULL, 0, &zErrMsg);
+	rc=libsqlite2.exec(db2, sqlquery, NULL, 0, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
 		return 0;
@@ -559,7 +560,7 @@ retry:
 	return 0;
 }
 
-static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
+static int sqlite2Callback(void *vpsqr, int argc, char **argv, char **azColName)
 {
 	char *column;
 	static unsigned int rowsalloc;
@@ -602,7 +603,7 @@ static int sqliteCallback(void *vpsqr, int argc, char **argv, char **azColName)
 	return 0;
 }
 
-static int sqliteQuery(SQLRES *sqr, char *sqlquery)
+static int sqlite2Query(SQLRES *sqr, char *sqlquery)
 {
 	char *zErrMsg=0;
 	int rc;
@@ -611,7 +612,162 @@ static int sqliteQuery(SQLRES *sqr, char *sqlquery)
 	sqr->NumFields=0;
 	sqr->NumTuples=0;
 retry:
-	rc=libsqlite.exec(db, sqlquery, sqliteCallback, (void *)sqr, &zErrMsg);
+	rc=libsqlite2.exec(db2, sqlquery, sqlite2Callback, (void *)sqr, &zErrMsg);
+	switch (rc) {
+	case SQLITE_OK:
+		return 0;
+	case SQLITE_BUSY:
+	case SQLITE_CORRUPT:
+		if (retries>0) { retries--; msleep(5); goto retry; }
+		break;
+	default:
+		break;
+	}
+	log_error("sql", __FILE__, __LINE__, 1, "SQLite error: %d %s", rc, zErrMsg);
+	log_error("sql", __FILE__, __LINE__, 2, "SQLite: [%s]", sqlquery);
+	return -1;
+}
+#endif /* HAVE_SQLITE2 */
+
+#ifdef HAVE_SQLITE3
+static int SQLite3DLLInit()
+{
+	char libname[255];
+
+	if (hinstLib!=NULL) return 0;
+	memset(libname, 0, sizeof(libname));
+	snprintf(libname, sizeof(libname)-1, "%s/libsqlite3.%s", proc.config.dir_lib, LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "%s/sqlite3.%s", proc.config.dir_lib, LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libsqlite3.%s", LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "sqlite3.%s", LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
+	goto fail;
+found:
+	if ((libsqlite3.open=(SQLITE3_OPEN)dlsym(hinstLib, "sqlite3_open"))==NULL) goto fail;
+	if ((libsqlite3.exec=(SQLITE3_EXEC)dlsym(hinstLib, "sqlite3_exec"))==NULL) goto fail;
+	if ((libsqlite3.close=(SQLITE3_CLOSE)dlsym(hinstLib, "sqlite3_close"))==NULL) goto fail;
+	return 0;
+fail:
+	log_error("sql", __FILE__, __LINE__, 0, "ERROR: Failed to load %s", libname);
+	memset((char *)&libsqlite3, 0, sizeof(libsqlite3));
+	if (hinstLib!=NULL) dlclose(hinstLib);
+	hinstLib=NULL;
+	return -1;
+}
+
+static void sqlite3Disconnect()
+{
+	if (sql_is_connected==0) return;
+	libsqlite3.close(db3);
+	sql_is_connected=0;
+	return;
+}
+
+static int sqlite3Connect()
+{
+	char dbname[255];
+	char *zErrMsg=0;
+
+	if (SQLite3DLLInit()!=0) return -1;
+	if (sql_is_connected) return 0;
+	snprintf(dbname, sizeof(dbname)-1, "%s/%s.db", proc.config.dir_var_db, SERVER_BASENAME);
+	fixslashes(dbname);
+	if (libsqlite3.open(dbname, &db3)!=SQLITE_OK) {
+		printf("\nSQLite Connect error");
+		return -1;
+	}
+	sql_is_connected=1;
+	libsqlite3.exec(db3, "PRAGMA default_synchronous = TRUE;", NULL, 0, &zErrMsg);
+	libsqlite3.exec(db3, "PRAGMA empty_result_callbacks = ON;", NULL, 0, &zErrMsg);
+	return 0;
+}
+
+static int sqlite3Update(char *sqlquery)
+{
+	char *zErrMsg=0;
+	int rc;
+	short int retries=10;
+
+retry:
+	rc=libsqlite3.exec(db3, sqlquery, NULL, 0, &zErrMsg);
+	switch (rc) {
+	case SQLITE_OK:
+		return 0;
+	case SQLITE_BUSY:
+	case SQLITE_CORRUPT:
+		if (retries>0) { retries--; msleep(5); goto retry; }
+		break;
+	default:
+		break;
+	}
+	if (rc!=SQLITE_OK) {
+		log_error("sql", __FILE__, __LINE__, 1, "SQLite error: %s", zErrMsg);
+		log_error("sql", __FILE__, __LINE__, 2, "SQLite: [%s]", sqlquery);
+		return -1;
+	}
+	return 0;
+}
+
+static int sqlite3Callback(void *vpsqr, int argc, char **argv, char **azColName)
+{
+	char *column;
+	static unsigned int rowsalloc;
+	unsigned int field;
+	SQLRES *sqr=vpsqr;
+
+	if (sqr->cursor==NULL) {
+		sqr->NumFields=argc;
+		/* retreive the field names */
+		column=sqr->fields;
+		for (field=0;field<sqr->NumFields;field++) {
+			snprintf(column, MAX_FIELD_SIZE, "%s", azColName[field]);
+			column+=strlen(column)+1;
+		}
+		/* build our cursor and track the number of tuples */
+		sqr->NumTuples=0;
+		rowsalloc=50;
+		if ((sqr->cursor=(char **)calloc(rowsalloc, sizeof(char *)))==NULL) {
+			log_error("sql", __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor.");
+			exit(-1);
+		}
+	}
+	/* now to populate the cursor */
+	if (argv!=NULL) {
+		if ((sqr->cursor[sqr->NumTuples]=calloc(MAX_TUPLE_SIZE, sizeof(char)))==NULL) {
+			log_error("sql", __FILE__, __LINE__, 1, "Memory allocation error while creating SQL cursor tuple.");
+			exit(-1);
+		}
+		column=sqr->cursor[sqr->NumTuples];
+		for (field=0;field<sqr->NumFields;field++) {
+			snprintf(column, MAX_FIELD_SIZE, "%s", argv[field]?argv[field]:"NULL");
+			column+=strlen(column)+1;
+		}
+		if (sqr->NumTuples+2>rowsalloc) {
+			rowsalloc+=50;
+			sqr->cursor=(char **)realloc(sqr->cursor, rowsalloc*sizeof(char *));
+		}
+		sqr->NumTuples++;
+	}
+	return 0;
+}
+
+static int sqlite3Query(SQLRES *sqr, char *sqlquery)
+{
+	char *zErrMsg=0;
+	int rc;
+	short int retries=10;
+
+	sqr->NumFields=0;
+	sqr->NumTuples=0;
+retry:
+	rc=libsqlite3.exec(db3, sqlquery, sqlite3Callback, (void *)sqr, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
 		return 0;
@@ -632,7 +788,8 @@ int sql_dll_unload()
 {
 	memset((char *)&libmysql, 0, sizeof(libmysql));
 	memset((char *)&libpgsql, 0, sizeof(libpgsql));
-	memset((char *)&libsqlite, 0, sizeof(libsqlite));
+	memset((char *)&libsqlite2, 0, sizeof(libsqlite2));
+	memset((char *)&libsqlite3, 0, sizeof(libsqlite3));
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
 	return 0;
@@ -650,8 +807,10 @@ void sql_disconnect()
 #endif
 	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		pgsqlDisconnect();
-	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
-		sqliteDisconnect();
+	} else if (strcmp(proc.config.sql_type, "SQLITE2")==0) {
+		sqlite2Disconnect();
+	} else if ((strcmp(proc.config.sql_type, "SQLITE3")==0)||(strcmp(proc.config.sql_type, "SQLITE")==0)) {
+		sqlite3Disconnect();
 	}
 	sql_dll_unload();
 	pthread_mutex_unlock(&Lock.SQL);
@@ -669,8 +828,10 @@ void sql_unsafedisconnect()
 #endif
 	} else if (strcmp(proc.config.sql_type, "PGSQL")==0) {
 		pgsqlDisconnect();
-	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
-		sqliteDisconnect();
+	} else if (strcmp(proc.config.sql_type, "SQLITE2")==0) {
+		sqlite2Disconnect();
+	} else if ((strcmp(proc.config.sql_type, "SQLITE3")==0)||(strcmp(proc.config.sql_type, "SQLITE")==0)) {
+		sqlite3Disconnect();
 	}
 	sql_dll_unload();
 	return;
@@ -726,12 +887,18 @@ int sql_update(char *sqlquery)
 			return -1;
 		}
 		rc=pgsqlUpdate(sqlquery);
-	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
-		if (sqliteConnect()<0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE2")==0) {
+		if (sqlite2Connect()<0) {
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		rc=sqliteUpdate(sqlquery);
+		rc=sqlite2Update(sqlquery);
+	} else if ((strcmp(proc.config.sql_type, "SQLITE3")==0)||(strcmp(proc.config.sql_type, "SQLITE")==0)) {
+		if (sqlite3Connect()<0) {
+			pthread_mutex_unlock(&Lock.SQL);
+			return -1;
+		}
+		rc=sqlite3Update(sqlquery);
 	}
 	pthread_mutex_unlock(&Lock.SQL);
 	return rc;
@@ -786,14 +953,23 @@ int sql_query(SQLRES *sqr, char *query)
 			pgsqlDisconnect();
 			pgsqlConnect();
 		}
-	} else if (strcmp(proc.config.sql_type, "SQLITE")==0) {
-		if (sqliteConnect()<0) {
+	} else if (strcmp(proc.config.sql_type, "SQLITE2")==0) {
+		if (sqlite2Connect()<0) {
 			pthread_mutex_unlock(&Lock.SQL);
 			return -1;
 		}
-		if ((rc=sqliteQuery(sqr, query))<0) {
-			sqliteDisconnect();
-			sqliteConnect();
+		if ((rc=sqlite2Query(sqr, query))<0) {
+			sqlite2Disconnect();
+			sqlite2Connect();
+		}
+	} else if ((strcmp(proc.config.sql_type, "SQLITE3")==0)||(strcmp(proc.config.sql_type, "SQLITE")==0)) {
+		if (sqlite3Connect()<0) {
+			pthread_mutex_unlock(&Lock.SQL);
+			return -1;
+		}
+		if ((rc=sqlite3Query(sqr, query))<0) {
+			sqlite3Disconnect();
+			sqlite3Connect();
 		}
 	}
 	if (rc>-1) proc.stats.sql_handlecount++;

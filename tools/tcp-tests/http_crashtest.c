@@ -15,7 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "mail_basher.h"
+#include "http_crashtest.h"
+#include <signal.h>
 
 #ifdef WIN32
 static WSADATA wsaData;
@@ -23,10 +24,11 @@ static WSADATA wsaData;
 
 char *host="localhost";
 #ifdef HAVE_SSL
-short int port=465;
+short int port=443;
 #else
-short int port=25;
+short int port=4110;
 #endif
+char *uri="/";
 
 short int numconn;
 short int perconn;
@@ -88,7 +90,7 @@ retry:
 		if (rc<0) {
 			return -1;
 		} else if (rc<1) {
-//			msleep(1);
+			msleep(1);
 			if (retries-->0) goto retry;
 		}
 		sid->recvbufsize+=rc;
@@ -117,11 +119,11 @@ retry:
 		if (retries>0) goto retry;
 	}
 //printf("%s", buffer);
-	striprn(buffer);
+//	striprn(buffer);
 	return n;
 }
 
-static int smtp_connect(CONN *sid, char *host, short int port)
+static int http_connect(CONN *sid, char *host, short int port)
 {
 	struct hostent *hp;
 	struct sockaddr_in server;
@@ -150,7 +152,7 @@ static int smtp_connect(CONN *sid, char *host, short int port)
 	SSL_set_fd(sid->ssl, sid->socket);
 	if (SSL_connect(sid->ssl)==-1) { perror("socket: "); exit -1; }
 	/* the rest is optional */
-	printf("SSL connection using %s\r\n", SSL_get_cipher(sid->ssl));
+//	printf("SSL connection using %s\r\n", SSL_get_cipher(sid->ssl));
 	if ((server_cert=SSL_get_peer_certificate(sid->ssl))==NULL) exit-1;
 //	printf("Server certificate:\r\n");
 	X509_free(server_cert);
@@ -159,14 +161,18 @@ static int smtp_connect(CONN *sid, char *host, short int port)
 }
 
 #ifdef WIN32
-unsigned _stdcall smtp_test1(void *x)
+unsigned _stdcall http_test1(void *x)
 #else
-void *smtp_test1(void *x)
+void *http_test1(void *x)
 #endif
 {
 	int sid=(int)x;
 	char inbuffer[8192];
-	char outbuffer[16384];
+	char tmpbuf[1024];
+	char postbuf[8192];
+	short int postsize=0;
+	short int insize=0;
+	short int rc;
 	int i;
 #ifdef HAVE_SSL
 	SSL_METHOD *meth;
@@ -178,35 +184,60 @@ void *smtp_test1(void *x)
 	SSL_load_error_strings();
 	conn[sid].ctx=SSL_CTX_new(meth);
 #endif
-	for (i=0;i<perconn;i++) {
-		if (smtp_connect(&conn[sid], host, port)<0) {
-			conn[sid].socket=-1;
-			return 0;
-		}
-		memset(outbuffer, 'x', sizeof(outbuffer));
-		outbuffer[sizeof(outbuffer)-1]='\0';
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-//		wmprintf(&conn[sid], "HELO %s", outbuffer);
-//		wmprintf(&conn[sid], "\r\n");
-		wmprintf(&conn[sid], "HELO localhost\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-		wmprintf(&conn[sid], "MAIL FROM: <me@here.com>\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-		wmprintf(&conn[sid], "RCPT TO: <nobody@here.com>\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-		wmprintf(&conn[sid], "DATA\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-		wmprintf(&conn[sid], "Subject: Testing\r\n");
-		wmprintf(&conn[sid], "\r\n");
-		wmprintf(&conn[sid], "this is a test.\r\n");
-		wmprintf(&conn[sid], ".\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-		wmprintf(&conn[sid], "QUIT\r\n");
-		if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) goto done;
-done:
-		closesocket(conn[sid].socket);
-		printf(".");
+	if (http_connect(&conn[sid], host, port)<0) {
+		conn[sid].socket=-1;
+		return 0;
 	}
+	for (i=0;i<perconn;i++) {
+//		memset(tmpbuf, 'x', sizeof(tmpbuf));
+//		tmpbuf[sizeof(tmpbuf)-1]='\0';
+//		snprintf(postbuf, sizeof(postbuf)-1, "blah=testing\r\n");
+//		postsize=strlen(postbuf);
+		wmprintf(&conn[sid],
+			"GET %s HTTP/1.1\r\n"
+			"Host: %s\r\n"
+			"User-Agent: NGW_Bench/1.0a\r\n"
+			"Connection: Keep-Alive\r\n"
+			"Content-Length: %d\r\n"
+			"\r\n",
+			uri, host, postsize
+		);
+//		wmprintf(&conn[sid], "%s", postbuf);
+//		printf("\r\n\r\n");
+		for (;;) {
+			rc=wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket);
+			if (rc<0) { printf("x"); break; }
+			if (strncmp(inbuffer, "Content-Length: ", 16)==0) { insize=atoi(inbuffer+16); }
+			if (strlen(inbuffer)<3) break;
+			striprn(inbuffer);
+//			printf("%s\r\n", inbuffer);
+		}
+//		printf("%s\r\n", inbuffer);
+		for (;;) {
+			rc=wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket);
+//			printf("pid=%d rc=%d insize=%d\r\n", getpid(), rc, insize);
+			if (rc<0) { printf("x"); break; }
+			insize-=rc;
+			if (insize<1) break;
+
+//			if (wmfgets(&conn[sid], inbuffer, sizeof(inbuffer)-1, conn[sid].socket)<0) break;
+//			if (!strlen(inbuffer)) break;
+//			printf("%s\r\n", inbuffer);
+		}
+//		printf(".");
+	}
+
+#ifdef HAVE_SSL
+	SSL_shutdown(conn[sid].ssl);
+#endif
+	closesocket(conn[sid].socket);
+#ifdef HAVE_SSL
+	SSL_free(conn[sid].ssl);
+#endif
+
+#ifdef HAVE_SSL
+	SSL_CTX_free(conn[sid].ctx);
+#endif
 	conn[sid].socket=-1;
 	return 0;
 }
@@ -221,12 +252,16 @@ int main(int argc, char *argv[])
 	struct timezone tzone;
 	int x, y;
 
+	printf("HTTP Basher\r\n");
 #ifdef WIN32
 	if (WSAStartup(0x101, &wsaData)) {
 		printf("Winsock init error\r\n");
 		return -1;
 	}
 #endif
+
+	signal(SIGPIPE, SIG_IGN);
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 	if (argc!=3) {
 		printf("progname numconn perconn\r\n");
@@ -243,19 +278,19 @@ int main(int argc, char *argv[])
 	}
 	gettimeofday(&ttime, &tzone);
 	x=ttime.tv_sec; y=ttime.tv_usec;
+	if (pthread_attr_init(&thr_attr)) exit(-2);
+#ifndef OLDLINUX
+	if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-2);
+#endif
 	for (i=0;i<numconn;i++) {
 		conn[i].socket=-1;
-		if (pthread_attr_init(&thr_attr)) exit(-2);
-#ifndef OLDLINUX
-		if (pthread_attr_setstacksize(&thr_attr, 65536L)) exit(-2);
-#endif
-		if (pthread_create(&blah, &thr_attr, smtp_test1, (void *)i)==-1) {
+		if (pthread_create(&blah, &thr_attr, http_test1, (void *)i)==-1) {
 			printf("thread failed to start.\r\n");
 			exit(-2);
 		}
 	}
 sleeper:
-	sleep(1);
+	msleep(10);
 	found=0;
 	for (i=0;i<numconn;i++) {
 		if (conn[i].socket>0) found=1;

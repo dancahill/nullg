@@ -35,8 +35,6 @@ void mod_html_header(CONN *sid, char *title)
 		".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial, Verdana; font-size: 8pt; }\r\n"
 		"A        { color: #0000FF; text-decoration: none; }\r\n"
 		"A:HOVER  { text-decoration: underline; }\r\n"
-		"TD       { color: #000000; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n"
-		"TH       { background-color: #0000A0; color: #FFFFFF; font-family: Arial, Helvetica; font-size: 12px; font-style: normal; }\r\n"
 		"</STYLE>\r\n"
 		"<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/groupware/themes/%s/style.css\">\r\n"
 		"%s"
@@ -630,7 +628,7 @@ void mod_html_menuframe(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	if (sid->dat->user_menustyle==1) {
 		prints(sid, "</HEAD>\r\n");
-		prints(sid, "<BODY BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false'>\r\n");
+		prints(sid, "<BODY BGCOLOR=#808080 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false'>\r\n");
 		prints(sid, "<CENTER>\r\n");
 		prints(sid, "<A HREF=%s/frames/motd target='gwmain' onclick=\"window.open('%s/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/groupware/images/groupware.png HEIGHT=50 WIDTH=125 ALT='%s logged in'></A><BR><BR>\r\n", sid->dat->in_ScriptName, sid->dat->in_ScriptName, sid->dat->user_username);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");

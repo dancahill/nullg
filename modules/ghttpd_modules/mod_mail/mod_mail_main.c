@@ -439,6 +439,7 @@ void webmailread(CONN *sid)
 		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_replyall);
 		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_forward);
 	}
+	prints(sid, "[<A HREF=javascript:window.print()>%s</A>]\n", lang.mail_print);
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
 		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid, 0)), order, searchstring, lang.mail_next);
@@ -521,6 +522,7 @@ void webmailread(CONN *sid)
 		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_replyall);
 		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_forward);
 	}
+	prints(sid, "[<A HREF=javascript:window.print()>%s</A>]\n", lang.mail_print);
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
 		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(&sqr, remoteid, 0)), order, searchstring, lang.mail_next);
