@@ -21,34 +21,25 @@
 char *wmsearch_makestring(CONN *sid)
 {
 	char *searchstring=getbuffer(sid);
-	char *ptemp;
+	char *ptemp1;
+	char *ptemp2;
 
+	ptemp1=getgetenv(sid, "C");
+	ptemp2=getgetenv(sid, "TEXT");
 	searchstring[0]='\0';
-	if ((ptemp=getgetenv(sid, "C"))!=NULL) {
-		if (strcmp(ptemp, "addr")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=addr&text=%s", ptemp);
-			}
-		} else if (strcmp(ptemp, "from")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=from&text=%s", ptemp);
-			}
-		} else if (strcmp(ptemp, "to")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=to&text=%s", ptemp);
-			}
-		} else if (strcmp(ptemp, "cc")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=cc&text=%s", ptemp);
-			}
-		} else if (strcmp(ptemp, "subject")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=subject&text=%s", ptemp);
-			}
-		} else if (strcmp(ptemp, "body")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=body&text=%s", ptemp);
-			}
+	if ((ptemp1!=NULL)&&(ptemp2!=NULL)) {
+		if (strcmp(ptemp1, "addr")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=addr&text=%s", ptemp2);
+		} else if (strcmp(ptemp1, "from")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=from&text=%s", ptemp2);
+		} else if (strcmp(ptemp1, "to")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=to&text=%s", ptemp2);
+		} else if (strcmp(ptemp1, "cc")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=cc&text=%s", ptemp2);
+		} else if (strcmp(ptemp1, "subject")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=subject&text=%s", ptemp2);
+		} else if (strcmp(ptemp1, "body")==0) {
+			snprintf(searchstring, sizeof(sid->dat->smallbuf[0])-1, "&c=body&text=%s", ptemp2);
 		}
 	}
 	return searchstring;
@@ -56,40 +47,31 @@ char *wmsearch_makestring(CONN *sid)
 
 int wmsearch_doquery(CONN *sid, const char *order_by, int folderid)
 {
-	char *ptemp;
+	char *ptemp1;
+	char *ptemp2;
 	int sqr;
 
-	if ((ptemp=getgetenv(sid, "C"))!=NULL) {
-		if (strcmp(ptemp, "addr")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, ptemp, ptemp, order_by);
-				return sqr;
-			}
-		} else if (strcmp(ptemp, "from")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, order_by);
-				return sqr;
-			}
-		} else if (strcmp(ptemp, "to")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_to LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, order_by);
-				return sqr;
-			}
-		} else if (strcmp(ptemp, "cc")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, order_by);
-				return sqr;
-			}
-		} else if (strcmp(ptemp, "subject")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_subject LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, order_by);
-				return sqr;
-			}
-		} else if (strcmp(ptemp, "body")==0) {
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp, order_by);
-				return sqr;
-			}
+	ptemp1=getgetenv(sid, "C");
+	ptemp2=getgetenv(sid, "TEXT");
+	if ((ptemp1!=NULL)&&(ptemp2!=NULL)) {
+		if (strcmp(ptemp1, "addr")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, order_by);
+			return sqr;
+		} else if (strcmp(ptemp1, "from")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
+			return sqr;
+		} else if (strcmp(ptemp1, "to")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_to LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
+			return sqr;
+		} else if (strcmp(ptemp1, "cc")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
+			return sqr;
+		} else if (strcmp(ptemp1, "subject")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND hdr_subject LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
+			return sqr;
+		} else if (strcmp(ptemp1, "body")==0) {
+			sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
+			return sqr;
 		}
 	}
 	sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, order_by);
@@ -105,9 +87,12 @@ void wmsearch_form(CONN *sid)
 	prints(sid, "<BR><CENTER>\n");
 	prints(sid, "<FORM METHOD=GET ACTION=%s/mail/main NAME=search>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
-	prints(sid, "<TR><TH COLSPAN=2>New Mail Filter</TH></TR>\n");
+	prints(sid, "<TR><TH COLSPAN=2>Mail Search</TH></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP COLSPAN=2>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+//	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Mail Account &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=accountid style='width:217px'>\n");
+//	htselect_mailaccount(sid, sid->dat->user_mailcurrent);
+//	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Search Header &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=c style='width:217px'>\n");
 	prints(sid, "<OPTION VALUE='from'>From Address\n");
 	prints(sid, "<OPTION VALUE='to'>To Address\n");

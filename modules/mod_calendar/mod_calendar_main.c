@@ -305,6 +305,7 @@ void reminderstatus(CONN *sid)
  ***************************************************************************/
 void calendaredit(CONN *sid, REC_EVENT *event)
 {
+	HTMOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_EVENT eventrec;
 	char startdate[30];
 	char finishdate[30];
@@ -375,16 +376,47 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "	}\n");
 	prints(sid, "	return;\n");
 	prints(sid, "}\n");
+	prints(sid, "function ShowCalendar() {\n");
+	prints(sid, "	show_calendar('eventedit.eventstart', document.eventedit.eventstart3.value, document.eventedit.eventstart2.value, document.eventedit.eventstart1.value);\n");
+	prints(sid, "	return;\n");
+	prints(sid, "}\n");
+	htscript_showpage(sid, 4);
 	prints(sid, "// -->\n</SCRIPT>\n");
+	prints(sid, "<script language=JavaScript src=\"%s/groupware/javascript/calpopup.js\"></script>\n", sid->dat->in_ScriptName);
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
+	if (event->eventid>0) {
+		prints(sid, "<B><A HREF=%s/calendar/view?eventid=%d>Calendar Event %d</A></B>\n", sid->dat->in_ScriptName, event->eventid, event->eventid);
+	} else {
+		prints(sid, "<B>New Calendar Event</B>\n");
+	}
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=550>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/calendar/save NAME=eventedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=eventid VALUE='%d'>\n", event->eventid);
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>EVENT INFO</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>SETTINGS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>DETAILS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Event Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%%>");
+	prints(sid, "%s", str2html(sid, event->eventname));
+	prints(sid, "</TD>\n");
 	if (event->eventid>0) {
-		prints(sid, "<TR><TH COLSPAN=2><A HREF=%s/calendar/view?eventid=%d>Calendar Event %d</TH></TR>\n", sid->dat->in_ScriptName, event->eventid, event->eventid);
+		prints(sid, "<TD ALIGN=right><A HREF=%s/calendar/vcardexport?eventid=%d>iCalendar</A></TD>\n", sid->dat->in_ScriptName, event->eventid);
 	} else {
-		prints(sid, "<TR><TH COLSPAN=2>New Calendar Event</TH></TR>\n");
+		prints(sid, "<TD ALIGN=right>&nbsp;</TD>\n");
 	}
+	prints(sid, "</TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Event Name&nbsp;</B></TD>");
@@ -407,8 +439,8 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=reminder style='width:182px'>\n");
 	htselect_reminder(sid, event->reminder);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventstart2>\n");
+	prints(sid, "</TABLE></TD><TD><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;<A HREF=javascript:ShowCalendar()>Date</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=eventstart2>\n");
 	htselect_month(sid, startdate);
 	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=eventstart1>\n");
@@ -439,14 +471,20 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:182px' onchange=CloseUpdate();>\n");
 	htselect_eventstatus(sid, event->status);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Closing Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=closingstatus style='width:182px'>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Closing Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=closingstatus style='width:182px'>\n");
 	htselect_eventclosingstatus(sid, event->closingstatus);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=PHYSICAL NAME=details ROWS=4 COLS=60 style='width:100%%'>%s</TEXTAREA></TD></TR>\n", str2html(sid, event->details));
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((event->obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) {
-		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, event->obj_uid);
@@ -467,6 +505,22 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 		prints(sid, "</TD></TR>\n");
 	}
 	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
+	if (event->eventid>0) {
+		if ((mod_notes_sublist=module_call(sid, "mod_notes_sublist"))!=NULL) {
+			prints(sid, "<TR><TD NOWRAP>");
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
+			prints(sid, " [<A HREF=%s/notes/editnew?table=events&index=%d>new</A>]", sid->dat->in_ScriptName, event->eventid);
+			prints(sid, "</FONT></TH></TR>\n");
+			mod_notes_sublist(sid, "events", event->eventid, 1);
+			prints(sid, "</TABLE>\n");
+			prints(sid, "</TD></TR>\n");
+		}
+	}
+	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Autoschedule'>\n");
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Autoassign'>");
@@ -482,8 +536,17 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	if ((auth_priv(sid, "calendar")&A_INSERT)&&(event->eventid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Copy'>\n");
 	}
-	prints(sid, "</FORM>\n</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.eventedit.eventname.focus();\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "</FORM>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	if (event->eventid>0) {
+		prints(sid, "showpage(1);\n");
+	} else {
+		prints(sid, "showpage(2);\n");
+		prints(sid, "document.eventedit.eventname.focus();\n");
+	}
 	prints(sid, "CloseUpdate();\n// -->\n</SCRIPT>\n");
 	return;
 }
@@ -767,6 +830,14 @@ void calendarsave(CONN *sid)
  ***************************************************************************/
 void mod_main(CONN *sid)
 {
+	if (strncmp(sid->dat->in_RequestURI, "/calendar/vcardexport", 21)==0) {
+		event_vcalexport(sid);
+		return;
+	} else if (strncmp(sid->dat->in_RequestURI, "/calendar/vcardimport", 21)==0) {
+		send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
+		event_vcalimport(sid);
+		return;
+	}
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
 	if (strncmp(sid->dat->in_RequestURI, "/calendar/reminders", 19)==0) {
 		htpage_header(sid, "Groupware Event Reminder");

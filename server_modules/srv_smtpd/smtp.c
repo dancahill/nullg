@@ -46,6 +46,25 @@ typedef struct {
 	char **rcpt;
 } MAILCONN;
 
+static int allow_relay(CONN *sid)
+{
+	char curdate[32];
+	int sqr;
+	int allowed;
+
+	memset(curdate, 0, sizeof(curdate));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL)-600);
+	sql_updatef("DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND obj_mtime < '%s'", curdate);
+	if ((sqr=sql_queryf("SELECT * FROM gw_smtp_relayrules WHERE ipaddress = '%s'", sid->dat->user_RemoteAddr))<0) return 0;
+	if (sql_numtuples(sqr)>0) {
+		allowed=1;
+	} else {
+		allowed=0;
+	}
+	sql_freeresult(sqr);
+	return allowed;
+}
+
 static void smtp_accept(CONN *sid, MAILCONN *mconn)
 {
 	FILE *fp;
@@ -215,7 +234,8 @@ static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
 	} else {
 		host="localhost";
 	}
-	if (domain_getid(host)>0) mconn->sender_is_local=1;
+//	if (domain_getid(host)>0) mconn->sender_is_local=1;
+	mconn->sender_is_local=allow_relay(sid);
 	if (strlen(mconn->from)) {
 		tcp_fprintf(&sid->socket, "250 Sender '%s' OK\r\n", mconn->from);
 	} else {
@@ -283,6 +303,7 @@ void smtp_dorequest(CONN *sid)
 	int i;
 
 	memset((char *)&mconn, 0, sizeof(mconn));
+	strncpy(sid->dat->user_RemoteAddr, inet_ntoa(sid->socket.ClientAddr.sin_addr), sizeof(sid->dat->user_RemoteAddr)-1);
 	tcp_fprintf(&sid->socket, "250 Welcome to %s SMTPd\r\n", SERVER_NAME);
 	do {
 		memset(line, 0, sizeof(line));

@@ -40,6 +40,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_calendar_listy.obj"
 	-@erase "$(INTDIR)\mod_calendar_main.obj"
 	-@erase "$(INTDIR)\mod_calendar_mini.obj"
+	-@erase "$(INTDIR)\mod_calendar_vcal.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_calendar.exp"
 	-@erase "$(OUTDIR)\mod_calendar.lib"
@@ -101,7 +102,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_calendar_listm.obj" \
 	"$(INTDIR)\mod_calendar_listy.obj" \
 	"$(INTDIR)\mod_calendar_main.obj" \
-	"$(INTDIR)\mod_calendar_mini.obj"
+	"$(INTDIR)\mod_calendar_mini.obj" \
+	"$(INTDIR)\mod_calendar_vcal.obj"
 
 "..\..\distrib\lib\mod_calendar.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -154,6 +156,10 @@ SOURCE=.\mod_calendar_mini.c
 
 "$(INTDIR)\mod_calendar_mini.obj" : $(SOURCE) "$(INTDIR)"
 
+
+SOURCE=.\mod_calendar_vcal.c
+
+"$(INTDIR)\mod_calendar_vcal.obj" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

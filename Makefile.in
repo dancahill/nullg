@@ -67,7 +67,9 @@ clean:
 distclean: clean
 	@cd sqlite;./make_sqlite clean
 	@rm -f `find -name *~`
+	@echo -n "Running autoconf..."
 	@autoconf
+	@echo "done."
 	@rm -rf autom4te.cache
 	@rm -f config.log config.status include/config.h Makefile Rules.mak
 

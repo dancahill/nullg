@@ -17,7 +17,7 @@
 */
 #include "srv_mod.h"
 #include "http_typedefs.h"
-#include "i18n/httpd.h"
+#include "i18n/srv_httpd.h"
 
 #ifdef WIN32
 #pragma comment(lib, "ws2_32.lib")

@@ -184,10 +184,11 @@ int sanity_dbcheck()
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		domainid=atoi(sql_getvalue(sqr, i, 0));
-		if (sanity_dircheck("%s/%04d", proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/%04d/files", proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/%04d/mail", proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
-		if (sanity_dircheck("%s/mail/%04d", proc.config.server_dir_var_spool, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d",			proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/attachments",	proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/files",		proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/%04d/mail",		proc.config.server_dir_var_domains, domainid)!=0) exit(-2);
+		if (sanity_dircheck("%s/mail/%04d",		proc.config.server_dir_var_spool, domainid)!=0) exit(-2);
 	}
 	sql_freeresult(sqr);
 /*

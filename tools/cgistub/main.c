@@ -27,7 +27,7 @@ static WSADATA wsaData;
 char *str2hex(const char *format, ...)
 {
 	char *hex="0123456789ABCDEF";
-	char *ptemp1, *ptemp2;
+	unsigned char *ptemp1, *ptemp2;
 	static char inbuffer[2048];
 	static char outbuffer[2048];
 	va_list ap;

@@ -19,5 +19,5 @@
 #include "_language.h"
 
 #ifdef LANGUAGE_EN
-	#include "i18n/en/pop3d.h"
+	#include "i18n/en/srv_httpd.h"
 #endif

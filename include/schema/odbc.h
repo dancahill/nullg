@@ -525,6 +525,21 @@ CREATE TABLE gw_queries (\n\
 	PRIMARY KEY (queryid)\n\
 );"
 
+#define MDB_SMTP_RELAYRULES "\
+CREATE TABLE gw_smtp_relayrules (\n\
+	relayruleid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	persistence	varchar(8)	NOT NULL,\n\
+	ipaddress	varchar(16)	NOT NULL,\n\
+	PRIMARY KEY (relayruleid)\n\
+);"
+
 #define MDB_TASKS "\
 CREATE TABLE gw_tasks (\n\
 	taskid		autoincrement,\n\

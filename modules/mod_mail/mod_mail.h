@@ -34,6 +34,7 @@
 typedef struct {
 	int localid;
 	int accountid;
+	int folderid;
 	char From[128];
 	char FromName[128];
 	char FromAddr[128];
@@ -62,9 +63,9 @@ void wmaccount_save(CONN *sid);
 void wmaddr_list(CONN *sid);
 /* mod_mail_codec.c */
 char *DecodeRFC2047(CONN *sid, char *src);
-int   DecodeHTML(CONN *sid, char *dest, int szdest, char *src, short int reply);
-int   DecodeQP(CONN *sid, char *dest, int szdest, char *src);
-int   DecodeText(CONN *sid, char *dest, int szdest, char *src);
+int   DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int reply);
+int   DecodeQP(CONN *sid, char *dest, unsigned int szdest, char *src);
+int   DecodeText(CONN *sid, char *dest, unsigned int szdest, char *src);
 int   DecodeBase64file(CONN *sid, char *src);
 char *DecodeBase64string(CONN *sid, char *src);
 int   EncodeBase64(CONN *sid, char *src, int srclen);

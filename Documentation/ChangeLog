@@ -1,3 +1,13 @@
+1.3.9
+-----
+- added mini calendar popup for easier date selection
+- forwarded e-mail messages are now sent as attachments
+- event form now uses tabbed layout
+- converted all gif files to png
+- added pop-before-smtp authentication method
+- added iCalendar export support
+- fixed missing message body error when doing cross-mailbox searches
+
 1.3.8
 -----
 - fixed truncated display of html e-mails

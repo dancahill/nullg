@@ -154,12 +154,12 @@ void wmfolder_list(CONN *sid, int accountid)
 			for (k=i-1;k>-1;k--) {
 				if (indent==ptree[i].depth-1) {
 					if (ptree[k].numchildren>1) {
-						prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-t.gif HEIGHT=21 WIDTH=9>");
+						prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-t.png HEIGHT=21 WIDTH=9>");
 						ptree[k].numchildren--;
 						x=1;
 						break;
 					} else if (ptree[k].numchildren==1) {
-						prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-l.gif HEIGHT=21 WIDTH=9>");
+						prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-l.png HEIGHT=21 WIDTH=9>");
 						ptree[k].numchildren--;
 						x=1;
 						break;
@@ -167,7 +167,7 @@ void wmfolder_list(CONN *sid, int accountid)
 				} else if (indent<ptree[i].depth-1) {
 					if (indent==ptree[k].depth) {
 						if (ptree[k].numchildren>0) {
-							prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-i.gif HEIGHT=21 WIDTH=9>");
+							prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-i.png HEIGHT=21 WIDTH=9>");
 							x=1;
 							break;
 						}
@@ -175,15 +175,15 @@ void wmfolder_list(CONN *sid, int accountid)
 				}
 			}
 			if (!x) {
-				prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/blank.gif HEIGHT=21 WIDTH=9>");
+				prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/blank.png HEIGHT=21 WIDTH=9>");
 			}
 		}
 		if (ptree[i].numchildren>0) {
-			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-m.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-m.png HEIGHT=21 WIDTH=9>");
 		} else if (ptree[i].depth<1) {
-			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-o.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-o.png HEIGHT=21 WIDTH=9>");
 		} else {
-			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/forum-c.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG ALIGN=top BORDER=0 SRC=/groupware/images/tree-c.png HEIGHT=21 WIDTH=9>");
 		}
 		prints(sid, "&nbsp;<A HREF=%s/mail/%s", sid->dat->in_ScriptName, (sid->dat->user_menustyle>0)?"main":"list");
 		prints(sid, "?accountid=%d&folderid=%d><B>%s</B></A> ", accountid, atoi(sql_getvalue(sqr1, j, 0)), str2html(sid, sql_getvalue(sqr1, j, 2)));

@@ -319,7 +319,7 @@ void webmaillist(CONN *sid)
 		}
 		prints(sid, "</TD>\r\n<TD STYLE='border-style:solid'>");
 		if (p_strcasestr(header.contenttype, "multipart/mixed")!=NULL) {
-			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/paperclip.gif HEIGHT=16 WIDTH=11 ALT='File Attachments'>");
+			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/paperclip.png HEIGHT=16 WIDTH=11 ALT='File Attachments'>");
 		} else {
 			prints(sid, "&nbsp;&nbsp;&nbsp;");
 		}
@@ -479,11 +479,11 @@ void webmailread(CONN *sid)
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");
 	sql_updatef("UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, folderid, localid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, header.folderid, localid);
 	fixslashes(msgfilename);
 	if (stat(msgfilename, &sb)!=0) {
 		memset(oldfilename, 0, sizeof(oldfilename));
-		snprintf(oldfilename, sizeof(oldfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, localid);
+		snprintf(oldfilename, sizeof(oldfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, localid);
 		fixslashes(oldfilename);
 		if (stat(oldfilename, &sb)==0) {
 			if (rename(oldfilename, msgfilename)==0) {
@@ -606,6 +606,10 @@ void webmailwrite(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/save NAME=wmcompose ENCTYPE=multipart/form-data onSubmit=\"copy_submit()\">\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=inreplyto VALUE=\"%s\">\n", header.MessageID);
+	if (forward>0) {
+		prints(sid, "<INPUT TYPE=hidden NAME=forward VALUE=\"%d\">\n", forward);
+		prints(sid, "<INPUT TYPE=hidden NAME=fwdacct VALUE=\"%d\">\n", accountid);
+	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", MOD_MAIL_FROM);
 	prints(sid, "<SELECT NAME=accountid style='width:433px'>\n");
@@ -657,24 +661,22 @@ void webmailwrite(CONN *sid)
 	prints(sid, "</DIV>");
 	prints(sid, "<CENTER><TEXTAREA NAME=msgbody COLS=78 ROWS=16 WRAP=VIRTUAL>\n");
 	if (msgnum) {
-		prints(sid, "--- %s wrote:\n", header.From);
 		if (forward>0) {
-			prints(sid, "> From:    %s\n", header.From);
-			prints(sid, "> Subject: %s\n", header.Subject);
-			prints(sid, "> Date:    %s\n", header.Date);
-			prints(sid, ">\n");
-		}
-		memset(msgfilename, 0, sizeof(msgfilename));
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid, msgnum);
-		fixslashes(msgfilename);
-		if ((fp=fopen(msgfilename, "r"))!=NULL) {
-			while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
-				striprn(inbuffer);
-				if (strlen(inbuffer)==0) break;
-			}
-			webmailmime(sid, &fp, header.contenttype, header.encoding, header.boundary, msgnum, 1, 0);
+			prints(sid, "Note: forwarded message attached.\n");
 		} else {
-			prints(sid, "\r\nCould not retrieve message body!\r\n");
+			prints(sid, "--- %s wrote:\n", header.From);
+			memset(msgfilename, 0, sizeof(msgfilename));
+			snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid, msgnum);
+			fixslashes(msgfilename);
+			if ((fp=fopen(msgfilename, "r"))!=NULL) {
+				while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
+					striprn(inbuffer);
+					if (strlen(inbuffer)==0) break;
+				}
+				webmailmime(sid, &fp, header.contenttype, header.encoding, header.boundary, msgnum, 1, 0);
+			} else {
+				prints(sid, "\r\nCould not retrieve message body!\r\n");
+			}
 		}
 	}
 	prints(sid, "</TEXTAREA></CENTER>\n");
@@ -693,12 +695,14 @@ void webmailsave(CONN *sid)
 {
 	struct stat sb;
 	FILE *fp;
+	FILE *fp2;
 	wmheader header;
 	char *filebody=NULL;
 	char *msgbody=NULL;
 	char *pmsgbody;
 	char *ptemp;
 	char query[8192];
+	char boundary[128];
 	char filename[512];
 	char cfilesize[10];
 	char msgctype[16];
@@ -711,7 +715,10 @@ void webmailsave(CONN *sid)
 	struct timezone tzone;
 	unsigned int mimesize;
 	int sqr;
+	int forward;
+	int fwdacct;
 	int headerid;
+	int folderid;
 
 	if (strcasecmp(sid->dat->in_RequestMethod, "POST")!=0) return;
 	prints(sid, "Saving File");
@@ -724,6 +731,7 @@ void webmailsave(CONN *sid)
 	if (dbread_mailcurrent(sid, sid->dat->user_mailcurrent)<0) return;
 	prints(sid, ".");
 	memset((char *)&header, 0, sizeof(header));
+	memset(boundary, 0, sizeof(boundary));
 	memset(msgctype, 0, sizeof(msgctype));
 	memset(filename, 0, sizeof(filename));
 	memset(cfilesize, 0, sizeof(cfilesize));
@@ -732,7 +740,7 @@ void webmailsave(CONN *sid)
 		msgbody=NULL;
 	}
 	gettimeofday(&ttime, &tzone);
-	snprintf(header.boundary, sizeof(header.boundary)-1, "------------NGW%d", (int)ttime.tv_sec);
+	snprintf(boundary, sizeof(boundary)-1, "------------NGW%d", (int)ttime.tv_sec);
 	msgbody=calloc(sid->dat->in_ContentLength+1024, sizeof(char));
 	if ((ptemp=getmimeenv(sid, "MSGTO", &mimesize))!=NULL) {
 		strncpy(header.To, ptemp, sizeof(header.To)-1);
@@ -769,6 +777,18 @@ void webmailsave(CONN *sid)
 		filesize=atoi(cfilesize);
 		if (strlen(filename)==0) filesize=0;
 	}
+	forward=0;
+	if ((ptemp=getmimeenv(sid, "FORWARD", &mimesize))!=NULL) {
+		strncpy(line, ptemp, sizeof(line)-1);
+		if (mimesize<strlen(line)) line[mimesize]='\0';
+		forward=atoi(line);
+	}
+	fwdacct=0;
+	if ((ptemp=getmimeenv(sid, "FWDACCT", &mimesize))!=NULL) {
+		strncpy(line, ptemp, sizeof(line)-1);
+		if (mimesize<strlen(line)) line[mimesize]='\0';
+		fwdacct=atoi(line);
+	}
 	gettimeofday(&ttime, &tzone);
 	snprintf(header.MessageID, sizeof(header.MessageID)-1, "<%d%03d.%s>", (int)ttime.tv_sec, (int)(ttime.tv_usec/1000), sid->dat->wm->address);
 	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", gmtime((time_t *)&ttime.tv_sec));
@@ -776,8 +796,8 @@ void webmailsave(CONN *sid)
 	strftime(header.Date, sizeof(header.Date), "%a, %d %b %Y %H:%M:%S", gmtime((time_t *)&ttime.tv_sec));
 	snprintf(date_tz, sizeof(date_tz)-1, " %+.4d", +time_tzoffset(sid, ttime.tv_sec)/36);
 	strncat(header.Date, date_tz, sizeof(header.Date)-strlen(header.Date)-1);
-	if (filesize>0) {
-		snprintf(header.contenttype, sizeof(header.contenttype)-1, "multipart/mixed; boundary=\"%s\"", header.boundary);
+	if ((filesize>0)||(forward>0)) {
+		snprintf(header.contenttype, sizeof(header.contenttype)-1, "multipart/mixed; boundary=\"%s\"", boundary);
 	} else {
 		snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", msgctype);
 	}
@@ -803,7 +823,7 @@ void webmailsave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.MessageID));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.InReplyTo));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.contenttype));
-	strncatf(query, sizeof(query)-strlen(query)-1, "', '--%s", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.boundary));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '--%s", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, boundary));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.encoding));
 	if (sql_update(query)<0) return;
 	prints(sid, ".");
@@ -835,19 +855,19 @@ void webmailsave(CONN *sid)
 	if (strlen(header.InReplyTo)) {
 		fprintf(fp, "In-Reply-To: %s\r\n", header.InReplyTo);
 	}
-	if ((filesize>0)||(strcasecmp(header.contenttype, "text/html")==0)) {
+	if ((filesize>0)||(forward>0)||(strcasecmp(header.contenttype, "text/html")==0)) {
 		fprintf(fp, "MIME-Version: 1.0\r\n");
 	}
-	if (filesize>0) {
-		fprintf(fp, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", header.boundary);
+	if ((filesize>0)||(forward>0)) {
+		fprintf(fp, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary);
 	} else {
 		fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "iso-8859-1");
 	}
 	fprintf(fp, "X-Mailer: %s %s\r\n", SERVER_NAME, PACKAGE_VERSION);
 	fprintf(fp, "\r\n");
-	if (filesize>0) {
+	if ((filesize>0)||(forward>0)) {
 		fprintf(fp, "This is a multi-part message in MIME format.\r\n\r\n");
-		fprintf(fp, "--%s\r\n", header.boundary);
+		fprintf(fp, "--%s\r\n", boundary);
 		fprintf(fp, "Content-Type: %s\r\n", msgctype);
 		fprintf(fp, "Content-Transfer-Encoding: 8bit\r\n\r\n");
 	}
@@ -886,12 +906,38 @@ void webmailsave(CONN *sid)
 	}
 	if (strcasecmp(header.contenttype, "text/html")==0) fprintf(fp, "</HTML>\r\n");
 	if (filesize>0) {
-		fprintf(fp, "\r\n--%s\r\n", header.boundary);
+		fprintf(fp, "\r\n--%s\r\n", boundary);
 		fprintf(fp, "Content-Type: application/octet-stream; name=\"%s\"\r\n", filename);
 		fprintf(fp, "Content-Transfer-Encoding: base64\r\n");
 		fprintf(fp, "Content-Disposition: attachment; filename=\"%s\"\r\n\r\n", filename);
 		EncodeBase64file(fp, filebody, filesize);
-		fprintf(fp, "\r\n--%s--\r\n\r\n", header.boundary);
+	}
+	if (forward>0) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, fwdacct, forward))<0) goto stuff;
+		if (sql_numtuples(sqr)!=1) {
+			sql_freeresult(sqr);
+			goto stuff;
+		} else {
+			folderid=atoi(sql_getvaluebyname(sqr, 0, "folder"));
+		}
+		dbread_getheader(sid, sqr, 0, &header);
+		sql_freeresult(sqr);
+		memset(msgfilename, 0, sizeof(msgfilename));
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, fwdacct, folderid, forward);
+		fixslashes(msgfilename);
+		if ((fp2=fopen(msgfilename, "r"))!=NULL) {
+			fprintf(fp, "\r\n--%s\r\n", boundary);
+			fprintf(fp, "Content-Type: message/rfc822\r\n");
+			fprintf(fp, "Content-Disposition: inline\r\n\r\n");
+			while (fgets(line, sizeof(line)-1, fp2)!=NULL) {
+				fprintf(fp, "%s", line);
+			}
+			fclose(fp2);
+		}
+	}
+stuff:
+	if ((filesize>0)||(forward>0)) {
+		fprintf(fp, "\r\n--%s--\r\n\r\n", boundary);
 	}
 	fclose(fp);
 	prints(sid, ".");

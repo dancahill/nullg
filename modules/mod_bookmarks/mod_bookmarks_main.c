@@ -340,7 +340,7 @@ void bookmarkslist(CONN *sid)
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD");
 		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
 		prints(sid, " WIDTH=300 STYLE='border-style:solid'><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
-		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.gif HEIGHT=16 WIDTH=16>&nbsp;");
+		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16>&nbsp;");
 		prints(sid, "Parent Directory</A></TD></TR>\n");
 		numfolders++;
 	}
@@ -362,7 +362,7 @@ void bookmarkslist(CONN *sid)
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			}
 			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.gif HEIGHT=16 WIDTH=16>&nbsp;");
+			prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.png HEIGHT=16 WIDTH=16>&nbsp;");
 			prints(sid, "%s</A>&nbsp;</NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
 		numfolders++;

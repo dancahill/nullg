@@ -40,3 +40,7 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri);
 /* mod_calendar_mini.c */
 void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid);
 void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid);
+
+/* mod_calendar_vcal.c */
+void event_vcalexport(CONN *sid);
+void event_vcalimport(CONN *sid);

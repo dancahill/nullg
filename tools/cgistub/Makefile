@@ -3,7 +3,7 @@ CC       = gcc
 CFLAGS   = -Wall -O2
 LDFLAGS  = -s
 OBJECTS  = main.o
-TARGET = ../distrib/bin/fastcgi
+TARGET   = gw.cgi
 
 all: fastcgi
 

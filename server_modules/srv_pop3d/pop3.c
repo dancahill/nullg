@@ -426,6 +426,7 @@ cleanup:
 
 void pop3_dorequest(CONN *sid)
 {
+	char curdate[32];
 	char line[128];
 	char username[64];
 	char domain[64];
@@ -437,6 +438,7 @@ void pop3_dorequest(CONN *sid)
 	memset(domain, 0, sizeof(domain));
 	memset(password, 0, sizeof(password));
 	mbox=0;
+	strncpy(sid->dat->user_RemoteAddr, inet_ntoa(sid->socket.ClientAddr.sin_addr), sizeof(sid->dat->user_RemoteAddr)-1);
 	tcp_fprintf(&sid->socket, "+OK Welcome to %s POP3d\r\n", SERVER_NAME);
 	do {
 		memset(line, 0, sizeof(line));
@@ -480,6 +482,9 @@ void pop3_dorequest(CONN *sid)
 	} while (1);
 	sid->state=1;
 	log_access("pop3d", "SUCCESSFUL AUTH: %s", username);
+	memset(curdate, 0, sizeof(curdate));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	sql_updatef("INSERT INTO gw_smtp_relayrules (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, persistence, ipaddress) values ('%s', '%s', %d, 0, %d, 'temp', '%s')", curdate, curdate, sid->dat->user_did, sid->dat->user_did, sid->dat->user_RemoteAddr);
 	if (mbox>0) {
 		pop3_remote(sid);
 	} else {

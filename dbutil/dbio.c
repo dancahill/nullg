@@ -67,35 +67,36 @@ int dump_db(char *filename)
 	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '4' WHERE folder = 'Trash')");
 	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '5' WHERE folder = 'Drafts')");
 	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '6' WHERE folder = 'Saved Items')");
-	if (dump_table(fp, "gw_dbinfo", "dbversion")<0)			printf("\r\nError dumping gw_dbinfo\r\n");
-	if (dump_table(fp, "gw_users", "userid")<0) 			printf("\r\nError dumping gw_users\r\n");
-	if (dump_table(fp, "gw_activity", "activityid")<0)		printf("\r\nError dumping gw_activity\r\n");
-	if (dump_table(fp, "gw_bookmarkfolders", "folderid")<0)		printf("\r\nError dumping gw_bookmarkfolders\r\n");
-	if (dump_table(fp, "gw_bookmarks", "bookmarkid")<0)		printf("\r\nError dumping gw_bookmarks\r\n");
-	if (dump_table(fp, "gw_calls", "callid")<0)			printf("\r\nError dumping gw_calls\r\n");
-	if (dump_table(fp, "gw_callactions", "callactionid")<0)		printf("\r\nError dumping gw_callactions\r\n");
-	if (dump_table(fp, "gw_contacts", "contactid")<0)		printf("\r\nError dumping gw_contacts\r\n");
-	if (dump_table(fp, "gw_domains", "domainid")<0)			printf("\r\nError dumping gw_domains\r\n");
-	if (dump_table(fp, "gw_events", "eventid")<0)			printf("\r\nError dumping gw_events\r\n");
-	if (dump_table(fp, "gw_eventclosings", "eventclosingid")<0)	printf("\r\nError dumping gw_eventclosings\r\n");
-	if (dump_table(fp, "gw_eventtypes", "eventtypeid")<0)		printf("\r\nError dumping gw_eventtypes\r\n");
-	if (dump_table(fp, "gw_files", "fileid")<0)			printf("\r\nError dumping gw_files\r\n");
-	if (dump_table(fp, "gw_forums", "forumid")<0)			printf("\r\nError dumping gw_forums\r\n");
-	if (dump_table(fp, "gw_forumgroups", "forumgroupid")<0)		printf("\r\nError dumping gw_forumgroups\r\n");
-	if (dump_table(fp, "gw_forumposts", "messageid")<0) 		printf("\r\nError dumping gw_forumposts\r\n");
-	if (dump_table(fp, "gw_groups", "groupid")<0) 			printf("\r\nError dumping gw_groups\r\n");
-	if (dump_table(fp, "gw_mailaccounts", "mailaccountid")<0) 	printf("\r\nError dumping gw_mailaccounts\r\n");
-	if (dump_table(fp, "gw_mailfilters", "mailfilterid")<0) 	printf("\r\nError dumping gw_mailfilters\r\n");
-	if (dump_table(fp, "gw_mailfolders", "mailfolderid")<0) 	printf("\r\nError dumping gw_mailfolders\r\n");
-	if (dump_table(fp, "gw_mailheaders", "mailheaderid")<0) 	printf("\r\nError dumping gw_mailheaders\r\n");
-	if (dump_table(fp, "gw_messages", "messageid")<0) 		printf("\r\nError dumping gw_messages\r\n");
-	if (dump_table(fp, "gw_notes", "noteid")<0) 			printf("\r\nError dumping gw_notes\r\n");
-	if (dump_table(fp, "gw_orders", "orderid")<0) 			printf("\r\nError dumping gw_orders\r\n");
-	if (dump_table(fp, "gw_orderitems", "orderitemid")<0) 		printf("\r\nError dumping gw_orderitems\r\n");
-	if (dump_table(fp, "gw_products", "productid")<0) 		printf("\r\nError dumping gw_products\r\n");
-	if (dump_table(fp, "gw_queries", "queryid")<0) 			printf("\r\nError dumping gw_queries\r\n");
-	if (dump_table(fp, "gw_tasks", "taskid")<0) 			printf("\r\nError dumping gw_tasks\r\n");
-	if (dump_table(fp, "gw_zones", "zoneid")<0) 			printf("\r\nError dumping gw_zones\r\n");
+	if (dump_table(fp, "gw_dbinfo",			"dbversion")<0)		printf("\r\nError dumping gw_dbinfo\r\n");
+	if (dump_table(fp, "gw_users",			"userid")<0) 		printf("\r\nError dumping gw_users\r\n");
+	if (dump_table(fp, "gw_activity",		"activityid")<0)	printf("\r\nError dumping gw_activity\r\n");
+	if (dump_table(fp, "gw_bookmarkfolders",	"folderid")<0)		printf("\r\nError dumping gw_bookmarkfolders\r\n");
+	if (dump_table(fp, "gw_bookmarks",		"bookmarkid")<0)	printf("\r\nError dumping gw_bookmarks\r\n");
+	if (dump_table(fp, "gw_calls",			"callid")<0)		printf("\r\nError dumping gw_calls\r\n");
+	if (dump_table(fp, "gw_callactions",		"callactionid")<0)	printf("\r\nError dumping gw_callactions\r\n");
+	if (dump_table(fp, "gw_contacts",		"contactid")<0)		printf("\r\nError dumping gw_contacts\r\n");
+	if (dump_table(fp, "gw_domains",		"domainid")<0)		printf("\r\nError dumping gw_domains\r\n");
+	if (dump_table(fp, "gw_events",			"eventid")<0)		printf("\r\nError dumping gw_events\r\n");
+	if (dump_table(fp, "gw_eventclosings",		"eventclosingid")<0)	printf("\r\nError dumping gw_eventclosings\r\n");
+	if (dump_table(fp, "gw_eventtypes",		"eventtypeid")<0)	printf("\r\nError dumping gw_eventtypes\r\n");
+	if (dump_table(fp, "gw_files",			"fileid")<0)		printf("\r\nError dumping gw_files\r\n");
+	if (dump_table(fp, "gw_forums",			"forumid")<0)		printf("\r\nError dumping gw_forums\r\n");
+	if (dump_table(fp, "gw_forumgroups",		"forumgroupid")<0)	printf("\r\nError dumping gw_forumgroups\r\n");
+	if (dump_table(fp, "gw_forumposts",		"messageid")<0) 	printf("\r\nError dumping gw_forumposts\r\n");
+	if (dump_table(fp, "gw_groups",			"groupid")<0) 		printf("\r\nError dumping gw_groups\r\n");
+	if (dump_table(fp, "gw_mailaccounts",		"mailaccountid")<0) 	printf("\r\nError dumping gw_mailaccounts\r\n");
+	if (dump_table(fp, "gw_mailfilters",		"mailfilterid")<0) 	printf("\r\nError dumping gw_mailfilters\r\n");
+	if (dump_table(fp, "gw_mailfolders",		"mailfolderid")<0) 	printf("\r\nError dumping gw_mailfolders\r\n");
+	if (dump_table(fp, "gw_mailheaders",		"mailheaderid")<0) 	printf("\r\nError dumping gw_mailheaders\r\n");
+	if (dump_table(fp, "gw_messages",		"messageid")<0) 	printf("\r\nError dumping gw_messages\r\n");
+	if (dump_table(fp, "gw_notes",			"noteid")<0) 		printf("\r\nError dumping gw_notes\r\n");
+	if (dump_table(fp, "gw_orders",			"orderid")<0) 		printf("\r\nError dumping gw_orders\r\n");
+	if (dump_table(fp, "gw_orderitems",		"orderitemid")<0) 	printf("\r\nError dumping gw_orderitems\r\n");
+	if (dump_table(fp, "gw_products",		"productid")<0) 	printf("\r\nError dumping gw_products\r\n");
+	if (dump_table(fp, "gw_queries",		"queryid")<0) 		printf("\r\nError dumping gw_queries\r\n");
+	if (dump_table(fp, "gw_smtp_relayrules",	"relayruleid")<0) 	printf("\r\nError dumping gw_smtp_relayrules\r\n");
+	if (dump_table(fp, "gw_tasks",			"taskid")<0) 		printf("\r\nError dumping gw_tasks\r\n");
+	if (dump_table(fp, "gw_zones",			"zoneid")<0) 		printf("\r\nError dumping gw_zones\r\n");
 	fclose(fp);
 	printf("done.\r\n");
 	sqlDisconnect();
@@ -105,35 +106,36 @@ int dump_db(char *filename)
 #ifdef WIN32
 int init_mdb(void)
 {
-	if (sqlUpdate(1, MDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
-	if (sqlUpdate(1, MDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
-	if (sqlUpdate(1, MDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
-	if (sqlUpdate(1, MDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
-	if (sqlUpdate(1, MDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }
-	if (sqlUpdate(1, MDB_CALLACTIONS)<0)     { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
-	if (sqlUpdate(1, MDB_CONTACTS)<0)        { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
-	if (sqlUpdate(1, MDB_DOMAINS)<0)         { printf("\r\nError inserting gw_domains\r\n");         return -1; }
-	if (sqlUpdate(1, MDB_EVENTS)<0)          { printf("\r\nError inserting gw_events\r\n");          return -1; }
-	if (sqlUpdate(1, MDB_EVENTCLOSINGS)<0)   { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
-	if (sqlUpdate(1, MDB_EVENTTYPES)<0)      { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
-	if (sqlUpdate(1, MDB_FILES)<0)           { printf("\r\nError inserting gw_files\r\n");           return -1; }
-	if (sqlUpdate(1, MDB_FORUMS)<0)          { printf("\r\nError inserting gw_forums\r\n");          return -1; }
-	if (sqlUpdate(1, MDB_FORUMGROUPS)<0)     { printf("\r\nError inserting gw_forumgroups\r\n");     return -1; }
-	if (sqlUpdate(1, MDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
-	if (sqlUpdate(1, MDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
-	if (sqlUpdate(1, MDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, MDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
-	if (sqlUpdate(1, MDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
-	if (sqlUpdate(1, MDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
-	if (sqlUpdate(1, MDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
-	if (sqlUpdate(1, MDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
-	if (sqlUpdate(1, MDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
-	if (sqlUpdate(1, MDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
-	if (sqlUpdate(1, MDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
-	if (sqlUpdate(1, MDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
-	if (sqlUpdate(1, MDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
-	if (sqlUpdate(1, MDB_USERS1 MDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");         return -1; }
-	if (sqlUpdate(1, MDB_ZONES)<0)           { printf("\r\nError inserting gw_zones\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_DBINFO)<0)            { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_ACTIVITY)<0)          { printf("\r\nError inserting gw_activity\r\n");        return -1; }
+	if (sqlUpdate(1, MDB_BOOKMARKFOLDERS)<0)   { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
+	if (sqlUpdate(1, MDB_BOOKMARKS)<0)         { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
+	if (sqlUpdate(1, MDB_CALLS)<0)             { printf("\r\nError inserting gw_calls\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_CALLACTIONS)<0)       { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_CONTACTS)<0)          { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
+	if (sqlUpdate(1, MDB_DOMAINS)<0)           { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, MDB_EVENTS)<0)            { printf("\r\nError inserting gw_events\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_EVENTCLOSINGS)<0)     { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
+	if (sqlUpdate(1, MDB_EVENTTYPES)<0)        { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
+	if (sqlUpdate(1, MDB_FILES)<0)             { printf("\r\nError inserting gw_files\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_FORUMS)<0)            { printf("\r\nError inserting gw_forums\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_FORUMGROUPS)<0)       { printf("\r\nError inserting gw_forumgroups\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_FORUMPOSTS)<0)        { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
+	if (sqlUpdate(1, MDB_GROUPS)<0)            { printf("\r\nError inserting gw_groups\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_MAILACCOUNTS)<0)      { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
+	if (sqlUpdate(1, MDB_MAILFILTERS)<0)       { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_MAILFOLDERS)<0)       { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_MAILHEADERS)<0)       { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_MESSAGES)<0)          { printf("\r\nError inserting gw_messages\r\n");        return -1; }
+	if (sqlUpdate(1, MDB_NOTES)<0)             { printf("\r\nError inserting gw_notes\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_ORDERS)<0)            { printf("\r\nError inserting gw_orders\r\n");          return -1; }
+	if (sqlUpdate(1, MDB_ORDERITEMS)<0)        { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
+	if (sqlUpdate(1, MDB_PRODUCTS)<0)          { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, MDB_QUERIES)<0)           { printf("\r\nError inserting gw_queries\r\n");         return -1; }
+	if (sqlUpdate(1, MDB_SMTP_RELAYRULES)<0)   { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
+	if (sqlUpdate(1, MDB_TASKS)<0)             { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_USERS1 MDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");           return -1; }
+	if (sqlUpdate(1, MDB_ZONES)<0)             { printf("\r\nError inserting gw_zones\r\n");           return -1; }
 	return 0;
 }
 #endif
@@ -166,38 +168,40 @@ int init_mysql(void)
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_products;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_queries;");
+	sqlUpdate(0, "DROP TABLE IF EXISTS gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_tasks;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_users;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_zones;");
-	if (sqlUpdate(1, MYSQLDB_DBINFO)<0)          { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
-	if (sqlUpdate(1, MYSQLDB_ACTIVITY)<0)        { printf("\r\nError inserting gw_activity\r\n");        return -1; }
-	if (sqlUpdate(1, MYSQLDB_BOOKMARKFOLDERS)<0) { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
-	if (sqlUpdate(1, MYSQLDB_BOOKMARKS)<0)       { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
-	if (sqlUpdate(1, MYSQLDB_CALLS)<0)           { printf("\r\nError inserting gw_calls\r\n");           return -1; }
-	if (sqlUpdate(1, MYSQLDB_CALLACTIONS)<0)     { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_CONTACTS)<0)        { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
-	if (sqlUpdate(1, MYSQLDB_DOMAINS)<0)         { printf("\r\nError inserting gw_domains\r\n");         return -1; }
-	if (sqlUpdate(1, MYSQLDB_EVENTS)<0)          { printf("\r\nError inserting gw_events\r\n");          return -1; }
-	if (sqlUpdate(1, MYSQLDB_EVENTCLOSINGS)<0)   { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
-	if (sqlUpdate(1, MYSQLDB_EVENTTYPES)<0)      { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
-	if (sqlUpdate(1, MYSQLDB_FILES)<0)           { printf("\r\nError inserting gw_files\r\n");           return -1; }
-	if (sqlUpdate(1, MYSQLDB_FORUMS)<0)          { printf("\r\nError inserting gw_forums\r\n");          return -1; }
-	if (sqlUpdate(1, MYSQLDB_FORUMGROUPS)<0)     { printf("\r\nError inserting gw_forumgroups\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
-	if (sqlUpdate(1, MYSQLDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
-	if (sqlUpdate(1, MYSQLDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, MYSQLDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
-	if (sqlUpdate(1, MYSQLDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
-	if (sqlUpdate(1, MYSQLDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
-	if (sqlUpdate(1, MYSQLDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
-	if (sqlUpdate(1, MYSQLDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
-	if (sqlUpdate(1, MYSQLDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
-	if (sqlUpdate(1, MYSQLDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
-	if (sqlUpdate(1, MYSQLDB_USERS1 MYSQLDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");     return -1; }
-	if (sqlUpdate(1, MYSQLDB_ZONES)<0)           { printf("\r\nError inserting gw_zones\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_DBINFO)<0)                { printf("\r\nError inserting gw_dbinfo\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_ACTIVITY)<0)              { printf("\r\nError inserting gw_activity\r\n");        return -1; }
+	if (sqlUpdate(1, MYSQLDB_BOOKMARKFOLDERS)<0)       { printf("\r\nError inserting gw_bookmarkfolders\r\n"); return -1; }
+	if (sqlUpdate(1, MYSQLDB_BOOKMARKS)<0)             { printf("\r\nError inserting gw_bookmarks\r\n");       return -1; }
+	if (sqlUpdate(1, MYSQLDB_CALLS)<0)                 { printf("\r\nError inserting gw_calls\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_CALLACTIONS)<0)           { printf("\r\nError inserting gw_callactions\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_CONTACTS)<0)              { printf("\r\nError inserting gw_contacts\r\n");        return -1; }
+	if (sqlUpdate(1, MYSQLDB_DOMAINS)<0)               { printf("\r\nError inserting gw_domains\r\n");         return -1; }
+	if (sqlUpdate(1, MYSQLDB_EVENTS)<0)                { printf("\r\nError inserting gw_events\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_EVENTCLOSINGS)<0)         { printf("\r\nError inserting gw_eventclosings\r\n");   return -1; }
+	if (sqlUpdate(1, MYSQLDB_EVENTTYPES)<0)            { printf("\r\nError inserting gw_eventtypes\r\n");      return -1; }
+	if (sqlUpdate(1, MYSQLDB_FILES)<0)                 { printf("\r\nError inserting gw_files\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_FORUMS)<0)                { printf("\r\nError inserting gw_forums\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_FORUMGROUPS)<0)           { printf("\r\nError inserting gw_forumgroups\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_FORUMPOSTS)<0)            { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
+	if (sqlUpdate(1, MYSQLDB_GROUPS)<0)                { printf("\r\nError inserting gw_groups\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILACCOUNTS)<0)          { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILFILTERS)<0)           { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILFOLDERS)<0)           { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILHEADERS)<0)           { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_MESSAGES)<0)              { printf("\r\nError inserting gw_messages\r\n");        return -1; }
+	if (sqlUpdate(1, MYSQLDB_NOTES)<0)                 { printf("\r\nError inserting gw_notes\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_ORDERS)<0)                { printf("\r\nError inserting gw_orders\r\n");          return -1; }
+	if (sqlUpdate(1, MYSQLDB_ORDERITEMS)<0)            { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
+	if (sqlUpdate(1, MYSQLDB_PRODUCTS)<0)              { printf("\r\nError inserting gw_products\r\n");        return -1; }
+	if (sqlUpdate(1, MYSQLDB_QUERIES)<0)               { printf("\r\nError inserting gw_queries\r\n");         return -1; }
+	if (sqlUpdate(1, MYSQLDB_SMTP_RELAYRULES)<0)       { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
+	if (sqlUpdate(1, MYSQLDB_TASKS)<0)                 { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_USERS1 MYSQLDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");           return -1; }
+	if (sqlUpdate(1, MYSQLDB_ZONES)<0)                 { printf("\r\nError inserting gw_zones\r\n");           return -1; }
 	return 0;
 }
 
@@ -227,6 +231,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP SEQUENCE ordiid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE prodid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE querid_seq;");
+	sqlUpdate(0, "DROP SEQUENCE smtrid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE taskid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE userid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE zoneid_seq;");
@@ -256,6 +261,7 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP TABLE gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE gw_products;");
 	sqlUpdate(0, "DROP TABLE gw_queries;");
+	sqlUpdate(0, "DROP TABLE gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE gw_tasks;");
 	sqlUpdate(0, "DROP TABLE gw_users;");
 	sqlUpdate(0, "DROP TABLE gw_zones;");
@@ -287,6 +293,7 @@ int init_pgsql(void)
 	if (sqlUpdate(1, PGSQLDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, PGSQLDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
 	if (sqlUpdate(1, PGSQLDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
+	if (sqlUpdate(1, PGSQLDB_SMTP_RELAYRULES)<0) { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, PGSQLDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
 	if (sqlUpdate(1, PGSQLDB_USERS1 PGSQLDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");     return -1; }
 	if (sqlUpdate(1, PGSQLDB_ZONES)<0)           { printf("\r\nError inserting gw_zones\r\n");           return -1; }
@@ -349,6 +356,7 @@ int init_pgsqlseq(void)
 	pgsql_seqsync("gw_orderitems",      "orderitemid",    "ordiid_seq");
 	pgsql_seqsync("gw_products",        "productid",      "prodid_seq");
 	pgsql_seqsync("gw_queries",         "queryid",        "querid_seq");
+	pgsql_seqsync("gw_smtp_relayrules", "relayruleid",    "smtrid_seq");
 	pgsql_seqsync("gw_tasks",           "taskid",         "taskid_seq");
 	pgsql_seqsync("gw_users",           "userid",         "userid_seq");
 	pgsql_seqsync("gw_zones",           "zoneid",         "zoneid_seq");
@@ -383,6 +391,7 @@ int init_sqlite(void)
 	sqlUpdate(0, "DROP TABLE gw_orderitems;");
 	sqlUpdate(0, "DROP TABLE gw_products;");
 	sqlUpdate(0, "DROP TABLE gw_queries;");
+	sqlUpdate(0, "DROP TABLE gw_smtp_relayrules;");
 	sqlUpdate(0, "DROP TABLE gw_tasks;");
 	sqlUpdate(0, "DROP TABLE gw_users;");
 	sqlUpdate(0, "DROP TABLE gw_zones;");
@@ -412,6 +421,7 @@ int init_sqlite(void)
 	if (sqlUpdate(1, SQLITEDB_ORDERITEMS)<0)      { printf("\r\nError inserting gw_orderitems\r\n");      return -1; }
 	if (sqlUpdate(1, SQLITEDB_PRODUCTS)<0)        { printf("\r\nError inserting gw_products\r\n");        return -1; }
 	if (sqlUpdate(1, SQLITEDB_QUERIES)<0)         { printf("\r\nError inserting gw_queries\r\n");         return -1; }
+	if (sqlUpdate(1, SQLITEDB_SMTP_RELAYRULES)<0) { printf("\r\nError inserting gw_smtp_relayrules\r\n"); return -1; }
 	if (sqlUpdate(1, SQLITEDB_TASKS)<0)           { printf("\r\nError inserting gw_tasks\r\n");           return -1; }
 	if (sqlUpdate(1, SQLITEDB_USERS1 SQLITEDB_USERS2)<0) { printf("\r\nError inserting gw_users\r\n");    return -1; }
 	if (sqlUpdate(1, SQLITEDB_ZONES)<0)           { printf("\r\nError inserting gw_zones\r\n");           return -1; }

@@ -120,7 +120,7 @@ done:
 	return dest;
 }
 
-int DecodeHTML(CONN *sid, char *dest, int szdest, char *src, short int reply)
+int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int reply)
 {
 	char *destidx;
 
@@ -219,7 +219,7 @@ int DecodeHTML(CONN *sid, char *dest, int szdest, char *src, short int reply)
 	return (strlen(dest));
 }
 
-int DecodeQP(CONN *sid, char *dest, int szdest, char *src)
+int DecodeQP(CONN *sid, char *dest, unsigned int szdest, char *src)
 {
 	char *destidx;
 	short int crlf=1;
@@ -244,7 +244,7 @@ int DecodeQP(CONN *sid, char *dest, int szdest, char *src)
 	return (strlen(dest));
 }
 
-int DecodeText(CONN *sid, char *dest, int szdest, char *src)
+int DecodeText(CONN *sid, char *dest, unsigned int szdest, char *src)
 {
 	char *destidx;
 

@@ -102,7 +102,7 @@
 	#include "sql/sqlite.h"
 #endif
 
-#include "i18n/httpd.h"
+#include "i18n/srv_httpd.h"
 #include "defines.h"
 #include "typedefs.h"
 #include "functions.h"

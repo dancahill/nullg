@@ -329,7 +329,7 @@ int dirlist(CONN *sid)
 		}
 		prints(sid, "<TD COLSPAN=4 STYLE='border-style:solid'><A HREF=%s", sid->dat->in_ScriptName);
 		printhex(sid, "%s", file.filepath);
-		prints(sid, "><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.gif HEIGHT=16 WIDTH=16> Parent Directory</A></TD>\n");
+		prints(sid, "><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16> Parent Directory</A></TD>\n");
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 1))!=sid->dat->user_did) continue;
@@ -365,9 +365,9 @@ int dirlist(CONN *sid)
 		prints(sid, "<A HREF=");
 		printhex(sid, "%s", showfile);
 		if (strcmp(sql_getvalue(sqr, i, 6), "dir")==0) {
-			prints(sid, "/ TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.gif HEIGHT=16 WIDTH=16>", showfile);
+			prints(sid, "/ TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.png HEIGHT=16 WIDTH=16>", showfile);
 		} else {
-			prints(sid, " TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-default.gif HEIGHT=16 WIDTH=16>", showfile);
+			prints(sid, " TITLE=\"%s\"><IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-default.png HEIGHT=16 WIDTH=16>", showfile);
 		}
 		prints(sid, " %.25s%s</A></TD>", sql_getvalue(sqr, i, 2), strlen(sql_getvalue(sqr, i, 2))>25?"..":"");
 		if (isvalid) {

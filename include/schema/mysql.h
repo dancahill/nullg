@@ -525,6 +525,21 @@ CREATE TABLE gw_queries (\n\
 	PRIMARY KEY (queryid)\n\
 );"
 
+#define MYSQLDB_SMTP_RELAYRULES "\
+CREATE TABLE gw_smtp_relayrules (\n\
+	relayruleid	int4			NOT NULL auto_increment,\n\
+	obj_ctime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4			NOT NULL DEFAULT 0,\n\
+	obj_gid		int4			NOT NULL DEFAULT 0,\n\
+	obj_did		int4			NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4			NOT NULL DEFAULT 0,\n\
+	obj_operm	int4			NOT NULL DEFAULT 0,\n\
+	persistence	enum('perm','temp')	NOT NULL DEFAULT 'temp',\n\
+	ipaddress	varchar(16)		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (relayruleid)\n\
+);"
+
 #define MYSQLDB_TASKS "\
 CREATE TABLE gw_tasks (\n\
 	taskid		int4		NOT NULL auto_increment,\n\

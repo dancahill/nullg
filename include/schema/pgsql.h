@@ -41,6 +41,7 @@ CREATE SEQUENCE ordeid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE ordiid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE prodid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE querid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE smtrid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE taskid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE userid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE zoneid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\n"
@@ -553,6 +554,21 @@ CREATE TABLE gw_queries (\n\
 	queryname	varchar(50)	NOT NULL DEFAULT '',\n\
 	query		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (queryid)\n\
+);\n\n"
+
+#define PGSQLDB_SMTP_RELAYRULES "\
+CREATE TABLE gw_smtp_relayrules (\n\
+	relayruleid	int4			NOT NULL DEFAULT nextval('smtrid_seq'::text),\n\
+	obj_ctime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime		NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4			NOT NULL DEFAULT 0,\n\
+	obj_gid		int4			NOT NULL DEFAULT 0,\n\
+	obj_did		int4			NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4			NOT NULL DEFAULT 0,\n\
+	obj_operm	int4			NOT NULL DEFAULT 0,\n\
+	persistence	varchar(8)		NOT NULL DEFAULT '',\n\
+	ipaddress	varchar(16)		NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (relayruleid)\n\
 );\n\n"
 
 #define PGSQLDB_TASKS "\

@@ -5,7 +5,7 @@ REM DELTREE /Y DISTRIB\LIB\*.*
 MKDIR obj
 MKDIR distrib\bin
 MKDIR distrib\lib
-COPY CONTRIB\LIBSQLITE.DLL distrib\lib
+COPY SQLITE\LIBSQLITE.DLL distrib\lib
 CLS
 
 CD TOOLS

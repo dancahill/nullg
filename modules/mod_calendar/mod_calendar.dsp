@@ -98,5 +98,9 @@ SOURCE=.\mod_calendar_main.c
 
 SOURCE=.\mod_calendar_mini.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\mod_calendar_vcal.c
+# End Source File
 # End Target
 # End Project

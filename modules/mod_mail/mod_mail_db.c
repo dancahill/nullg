@@ -139,6 +139,7 @@ int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header)
 	header->localid=atoi(sql_getvalue(sqr, tuple, 0));
 	snprintf(header->status,      sizeof(header->status)-1,      "%s", sql_getvalue(sqr, tuple, 10));
 	header->accountid=atoi(sql_getvalue(sqr, tuple, 8));
+	header->folderid=atoi(sql_getvalue(sqr, tuple, 9));
 	header->size=atoi(sql_getvalue(sqr, tuple, 11));
 	snprintf(header->uidl,        sizeof(header->uidl)-1,        "%s", sql_getvalue(sqr, tuple, 12));
 	snprintf(header->From,        sizeof(header->From)-1,        "%s", DecodeRFC2047(sid, sql_getvalue(sqr, tuple, 13)));

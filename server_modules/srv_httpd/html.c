@@ -41,8 +41,8 @@ void htpage_header(CONN *sid, char *title)
 	prints(sid, "</STYLE>\r\n");
 	prints(sid, "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/%s/themes/%s/style.css\">\r\n", SERVER_BASENAME, sid->dat->user_theme);
 	prints(sid, "</HEAD>\r\n");
-	prints(sid, "<BODY BACKGROUND=\"/%s/themes/%s/bgmain.gif\" BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"", SERVER_BASENAME, sid->dat->user_theme);
-	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\">\r\n", SERVER_BASENAME);
+	prints(sid, "<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"");
+	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\">\r\n");
 }
 
 void htpage_footer(CONN *sid)
@@ -441,7 +441,7 @@ void htselect_day(CONN *sid, char *selected)
 		pdate++;
 	}
 	for (i=1;i<32;i++) {
-		prints(sid, "<OPTION VALUE='%02d'%s>%02d\n", i, i==atoi(day)?" SELECTED":"", i);
+		prints(sid, "<OPTION VALUE='%d'%s>%02d\n", i, i==atoi(day)?" SELECTED":"", i);
 	}
 	return;
 }
@@ -481,7 +481,7 @@ void htselect_month(CONN *sid, char *selected)
 		pdate++;
 	}
 	for (i=1;i<13;i++) {
-		prints(sid, "<OPTION VALUE='%02d'%s>%s\n", i, i==atoi(month)?" SELECTED":"", option[i-1]);
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", i, i==atoi(month)?" SELECTED":"", option[i-1]);
 	}
 	return;
 }

@@ -42,8 +42,7 @@ void mod_html_header(CONN *sid, char *title)
 		prints(sid, "<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/groupware/javascript/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n");
 	}
 	prints(sid, "</HEAD>\r\n");
-	prints(sid, "<BODY BACKGROUND=\"/groupware/themes/%s/bg_main.gif\"", sid->dat->user_theme);
-	prints(sid, " BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"");
+	prints(sid, "<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"");
 	prints(sid, " TOPMARGIN=0 LEFTMARGIN=0 MARGINHEIGHT=0 MARGINWIDTH=0 CLASS=\"MAINBACK\"");
 	if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
 		prints(sid, " onLoad=init();");
@@ -631,9 +630,9 @@ void mod_html_menuframe(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	if (sid->dat->user_menustyle==1) {
 		prints(sid, "</HEAD>\r\n");
-		prints(sid, "<BODY BACKGROUND=/groupware/themes/%s/bg_menu.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false'>\r\n", sid->dat->user_theme);
+		prints(sid, "<BODY BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false'>\r\n");
 		prints(sid, "<CENTER>\r\n");
-		prints(sid, "<A HREF=%s/frames/motd target='gwmain' onclick=\"window.open('%s/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/groupware/images/groupware.gif HEIGHT=50 WIDTH=125 ALT='%s logged in'></A><BR><BR>\r\n", sid->dat->in_ScriptName, sid->dat->in_ScriptName, sid->dat->user_username);
+		prints(sid, "<A HREF=%s/frames/motd target='gwmain' onclick=\"window.open('%s/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/groupware/images/groupware.png HEIGHT=50 WIDTH=125 ALT='%s logged in'></A><BR><BR>\r\n", sid->dat->in_ScriptName, sid->dat->in_ScriptName, sid->dat->user_username);
 		prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");
 		for (i=0;;i++) {
 			if (strlen(http_proc->mod_menuitems[i].mod_name)==0) break;
@@ -676,16 +675,16 @@ void mod_html_menuframe(CONN *sid)
 					if (!auth_priv(sid, http_proc->mod_menuitems[j].mod_menuperm)) continue;
 				}
 				prints(sid, "p.addButton('/groupware/images/menu2/");
-				if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_admin")==0)          prints(sid, "admin.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_bookmarks")==0) prints(sid, "bookmarks.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calendar")==0)  prints(sid, "calendar.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calls")==0)     prints(sid, "default.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_contacts")==0)  prints(sid, "contacts.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_mail")==0)      prints(sid, "email.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_forums")==0)    prints(sid, "default.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_messages")==0)  prints(sid, "messenger.gif");
-				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_orders")==0)    prints(sid, "orders.gif");
-				else prints(sid, "default.gif");
+				if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_admin")==0)          prints(sid, "admin.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_bookmarks")==0) prints(sid, "bookmarks.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calendar")==0)  prints(sid, "calendar.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_calls")==0)     prints(sid, "default.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_contacts")==0)  prints(sid, "contacts.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_mail")==0)      prints(sid, "email.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_forums")==0)    prints(sid, "default.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_messages")==0)  prints(sid, "messenger.png");
+				else if (strcmp(http_proc->mod_menuitems[j].mod_name, "mod_orders")==0)    prints(sid, "orders.png");
+				else prints(sid, "default.png");
 				if (strncasecmp(http_proc->mod_menuitems[j].mod_menuuri, "javascript:", 11)==0) {
 					prints(sid, "', '%s', '%s');\n", http_proc->mod_menuitems[j].mod_menuname, http_proc->mod_menuitems[j].mod_menuuri);
 				} else {
@@ -698,7 +697,7 @@ void mod_html_menuframe(CONN *sid)
 		prints(sid, "o.showPanel(0);\n");
 		prints(sid, "// -->\r\n</SCRIPT>\r\n");
 		prints(sid, "</HEAD>\r\n");
-		prints(sid, "<BODY BACKGROUND=/groupware/themes/%s/bg_menu.gif BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false' onLoad=resize_op5(); onResize=myOnResize();>\r\n", sid->dat->user_theme);
+		prints(sid, "<BODY BGCOLOR=#000050 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onContextMenu='return false' onLoad=resize_op5(); onResize=myOnResize();>\r\n");
 		prints(sid, "</BODY>\r\n</HTML>\r\n");
 	}
 	return;

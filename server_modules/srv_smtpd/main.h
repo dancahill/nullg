@@ -26,6 +26,7 @@
 typedef struct {
 	char      user_username[64];
 //	char      user_token[64];
+	char      user_RemoteAddr[16];
 	short int user_uid;
 	short int user_gid;
 	short int user_did;

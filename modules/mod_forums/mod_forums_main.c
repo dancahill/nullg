@@ -638,12 +638,12 @@ void fmessagelist(CONN *sid)
 			for (j=i-1;j>-1;j--) {
 				if (indent==xtree[i].depth-1) {
 					if (xtree[j].numchildren>1) {
-						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-t.gif HEIGHT=21 WIDTH=9>");
+						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-t.png HEIGHT=21 WIDTH=9>");
 						xtree[j].numchildren--;
 						x=1;
 						break;
 					} else if (xtree[j].numchildren==1) {
-						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-l.gif HEIGHT=21 WIDTH=9>");
+						prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-l.png HEIGHT=21 WIDTH=9>");
 						xtree[j].numchildren--;
 						x=1;
 						break;
@@ -651,7 +651,7 @@ void fmessagelist(CONN *sid)
 				} else if (indent<xtree[i].depth-1) {
 					if (indent==xtree[j].depth) {
 						if (xtree[j].numchildren>0) {
-							prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-i.gif HEIGHT=21 WIDTH=9>");
+							prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-i.png HEIGHT=21 WIDTH=9>");
 							x=1;
 							break;
 						}
@@ -659,15 +659,15 @@ void fmessagelist(CONN *sid)
 				}
 			}
 			if (!x) {
-				prints(sid, "<IMG BORDER=0 SRC=/groupware/images/blank.gif HEIGHT=21 WIDTH=9>");
+				prints(sid, "<IMG BORDER=0 SRC=/groupware/images/blank.png HEIGHT=21 WIDTH=9>");
 			}
 		}
 		if (xtree[i].numchildren>0) {
-			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-m.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-m.png HEIGHT=21 WIDTH=9>");
 		} else if (xtree[i].depth<1) {
-			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-o.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-o.png HEIGHT=21 WIDTH=9>");
 		} else {
-			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/forum-c.gif HEIGHT=21 WIDTH=9>");
+			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/tree-c.png HEIGHT=21 WIDTH=9>");
 		}
 		prints(sid, "</TD><TD NOWRAP WIDTH=100%% style=\"cursor:hand\" onClick=\"window.location.href='%s/forums/msgread?forum=%d&message=%d'\">", sid->dat->in_ScriptName, forumid, xtree[i].id);
 		prints(sid, "<A HREF=%s/forums/msgread?forum=%d&message=%d>", sid->dat->in_ScriptName, forumid, xtree[i].id);

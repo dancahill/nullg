@@ -34,6 +34,12 @@
 	#define strcasecmp stricmp
 	#define strncasecmp strnicmp
 #else
+	#include <netdb.h>
+	#include <stdarg.h>
+	#include <string.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/socket.h>
 	#define closesocket close
 #endif
 
