@@ -70,17 +70,18 @@ void contacts_vcardexport(CONN *sid)
 
 void contacts_vcardimport(CONN *sid)
 {
-	char *buffer=getbuffer(sid);
+	char buffer[4096];
+	char line[256];
+	char linetemp[256];
 	char *pbuffer;
 	char *ptemp;
 	char *ptemp2;
-	char line[256];
-	char linetemp[256];
 	unsigned int lineindex;
 	unsigned int mimesize;
 	unsigned int newfields=0;
 
 	htpage_header(sid, "vCard Import");
+	memset(buffer, 0, sizeof(buffer));
 	memset(line, 0, sizeof(line));
 	memset(linetemp, 0, sizeof(linetemp));
 	if (strcasecmp(sid->dat->in_RequestMethod, "POST")!=0) {
@@ -94,7 +95,7 @@ void contacts_vcardimport(CONN *sid)
 		prints(sid, "</CENTER>\n");
 	} else {
 		if ((ptemp=getmimeenv(sid, "USERFILE", &mimesize))!=NULL) {
-			strncpy(buffer, ptemp, sizeof(sid->dat->smallbuf[0])-1);
+			strncpy(buffer, ptemp, sizeof(buffer)-1);
 			if (mimesize<strlen(buffer)) buffer[mimesize]='\0';
 		}
 		pbuffer=buffer;

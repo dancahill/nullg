@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_messages.h"
 
 #ifdef WIN32
 unsigned sleep(unsigned seconds)
@@ -30,6 +31,7 @@ unsigned sleep(unsigned seconds)
 void messagestatus(CONN *sid, int messageid, char status)
 {
 	char timebuffer[100];
+	char *ptemp;
 	time_t t;
 	int sqr;
 
@@ -37,8 +39,8 @@ void messagestatus(CONN *sid, int messageid, char status)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((messageid==0)&&(getgetenv(sid, "MESSAGEID")!=NULL)) {
-		messageid=atoi(getgetenv(sid, "MESSAGEID"));
+	if ((messageid==0)&&((ptemp=getgetenv(sid, "MESSAGEID"))!=NULL)) {
+		messageid=atoi(ptemp);
 	}
 	if ((sqr=sql_queryf(sid, "SELECT messageid FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
 	if (sql_numtuples(sqr)<1) {
@@ -150,6 +152,7 @@ void messages_white(CONN *sid)
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "</HEAD>\r\n<BODY onload=\"doLoad();\" onresize=\"window.scrollTo(0, 99999);\">\r\n");
 	prints(sid, "<B>Starting session with <FONT COLOR=red>%s</FONT>.</B><BR>\r\n", username);
+	prints(sid, "<SPAN ID=text></SPAN>\r\n");
 	prints(sid, "</BODY>\r\n</HTML>\r\n");
 }
 
@@ -158,48 +161,22 @@ void messages_send(CONN *sid)
 	char *ptemp;
 	char curdate[50];
 	char message[1024];
-	char username[40];
-	int messageid;
 	int userid=0;
-	int sqr;
 
 	if (!(auth_priv(sid, "messages")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
-		return;
-	}
-	snprintf(username, sizeof(username)-1, "%s", sql_getvalue(sqr, 0, 1));
-	sql_freeresult(sqr);
 	if (strcmp(sid->dat->in_RequestMethod,"POST")==0) {
-		if ((sqr=sql_query(sid, "SELECT max(messageid) FROM gw_messages"))<0) return;
-		messageid=atoi(sql_getvalue(sqr, 0, 0))+1;
-		if (messageid<1) messageid=1;
-		sql_freeresult(sqr);
 		memset(message, 0, sizeof(message));
 		if ((ptemp=getpostenv(sid, "MESSAGE"))!=NULL) snprintf(message, sizeof(message)-1, "%s", ptemp);
 		if (strlen(message)>0) {
 			snprintf(curdate, sizeof(curdate)-1, "%s", time_unix2sql(sid, time(NULL)));
-			if (sql_updatef(sid, "INSERT INTO gw_messages (messageid, obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values (%d, '%s', '%s', %d, %d, %d, 3, '%s')", messageid, curdate, curdate, userid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
-			if (sql_updatef(sid, "INSERT INTO gw_messages (messageid, obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values (%d, '%s', '%s', %d, %d, %d, 3, '%s')", messageid+1, curdate, curdate, sid->dat->user_uid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
-//			db_log_activity(sid, 1, "messages", messageid, "insert", "%s - %s sent message %d", sid->dat->in_RemoteAddr, sid->dat->user_username, messageid);
+			if (sql_updatef(sid, "INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, userid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
+			if (sql_updatef(sid, "INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, sid->dat->user_uid, sid->dat->user_uid, userid, str2sql(sid, message))<0) return;
 		}
 	}
-//	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-//	prints(sid, "function doupdate() {\n");
-//	prints(sid, "	window.parent.msgwinbot_%s.location.replace(\"%s/messages/reload?userid=%d\");\n", username, sid->dat->in_ScriptName, userid);
-//	prints(sid, "}\n");
-//	prints(sid, "function updates() {\n");
-//	prints(sid, "	doupdate();\n");
-//	prints(sid, "	setTimeout(\"updates()\", 60000);\n");
-//	prints(sid, "}\n");
-//	prints(sid, "setTimeout(\"updates()\", 60000);\n");
-//	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/messages/send?userid=%d NAME=msgcompose>\n", sid->dat->in_ScriptName, userid);
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_editform);
@@ -231,50 +208,34 @@ void messages_reload(CONN *sid)
 	sql_freeresult(sqr);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>%s - Null Messenger</TITLE>\r\n", username);
-//	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"5; URL=%s/messages/reload?userid=%d\">\r\n", sid->dat->in_ScriptName, userid);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	prints(sid, "function WriteTop(output) {\r\n");
 	prints(sid, "	if (output!=\"\") {\r\n");
-	prints(sid, "		if (navigator.userAgent.indexOf('MSIE')>-1) {\r\n");
-	prints(sid, "			window.parent.msgwintop_%s.document.body.insertAdjacentHTML(\"BeforeEnd\", output);\r\n", username);
-	prints(sid, "		} else if (navigator.userAgent.indexOf('Opera')>-1) {\r\n");
-	prints(sid, "			window.parent.msgwintop_%s.document.body.insertAdjacentHTML(\"BeforeEnd\", output);\r\n", username);
-	prints(sid, "		} else {\r\n");
-	prints(sid, "			window.parent.msgwintop_%s.document.writeln(output);\r\n", username, sid->dat->user_username);
-	prints(sid, "		}\r\n");
+	prints(sid, "		window.parent.msgwintop_%s.document.getElementById('text').innerHTML+=output;\r\n", username);
 	prints(sid, "		window.parent.msgwintop_%s.scrollTo(0, 99999);\r\n", username);
 	prints(sid, "	}\r\n");
 	prints(sid, "}\r\n");
-//	prints(sid, "// -->\n</SCRIPT>\n");
-	for (retry=0;retry<5;retry++) {
+	flushbuffer(sid);
+	for (retry=0;retry<10;retry++) {
 		if ((sqr=sql_queryf(sid, "SELECT messageid, sender, rcpt, message FROM gw_messages WHERE obj_uid = %d AND status > 2 AND (rcpt = %d OR sender = %d) ORDER BY obj_ctime, messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
 		if (sql_numtuples(sqr)>0) {
-//			prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-
-//			prints(sid, "setTimeout(\"\", 1000);\n");
-
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				if (atoi(sql_getvalue(sqr, i, 1))==sid->dat->user_uid) {
-					prints(sid, "WriteTop(\"<B><FONT COLOR=black>%s: </FONT></B>%s<BR>\");\r\n", sid->dat->user_username, str2html(sid, sql_getvalue(sqr, i, 3)));
+					if (raw_prints(sid, "WriteTop(\"<B><FONT COLOR=black>%s: </FONT></B>%s<BR>\");\r\n", sid->dat->user_username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
 				} else {
-					prints(sid, "WriteTop(\"<B><FONT COLOR=blue>%s: </FONT></B>%s<BR>\");\r\n", username, str2html(sid, sql_getvalue(sqr, i, 3)));
+					if (raw_prints(sid, "WriteTop(\"<B><FONT COLOR=blue>%s: </FONT></B>%s<BR>\");\r\n", username, str2html(sid, sql_getvalue(sqr, i, 3)))<0) break;
 				}
 				messagestatus(sid, atoi(sql_getvalue(sqr, i, 0)), '2');
 			}
 			sql_freeresult(sqr);
-			prints(sid, "window.focus();\r\n");
 			prints(sid, "window.parent.msgwinmid_%s.document.msgcompose.message.focus();\r\n", username);
 			break;
-//			prints(sid, "setTimeout(\"location.replace(\\\"%s/messages/reload?userid=%d\\\")\", 1000);\n", sid->dat->in_ScriptName, userid);
-//			prints(sid, "// -->\n</SCRIPT>\n");
-//			prints(sid, "</HEAD>\r\n<BODY>\r\n</BODY>\r\n</HTML>\r\n");
-//			return;
 		}
 		sql_freeresult(sqr);
 		sleep(1);
 	}
-//	if (sql_numtuples(sqr)>0) prints(sid, "window.parent.msgwinmid_%s.document.msgcompose.message.focus();\r\n", username);
-	prints(sid, "setTimeout(\"location.replace(\\\"%s/messages/reload?userid=%d\\\")\", 2000);\n", sid->dat->in_ScriptName, userid);
+//	prints(sid, "setTimeout(\"location.replace(\\\"%s/messages/reload?userid=%d\\\")\", 2000);\n", sid->dat->in_ScriptName, userid);
+	prints(sid, "location.replace(\"%s/messages/reload?userid=%d\");\n", sid->dat->in_ScriptName, userid);
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "</HEAD>\r\n<BODY>\r\n</BODY>\r\n</HTML>\r\n");
 	return;
@@ -330,7 +291,12 @@ void messages_history(CONN *sid)
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		prints(sid, "<TD NOWRAP VALIGN=TOP><A HREF=%s/messages/delete?userid=%d&messageid=%s>delete</A></TD>", sid->dat->in_ScriptName, userid, sql_getvalue(sqr, i, 0));
 		prints(sid, "<TD VALIGN=TOP WIDTH=100%%><B><FONT COLOR=%s>", atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid?"black":"blue");
-		prints(sid, "%s (%s): </FONT></B>%s</TD>", sid->dat->user_username, time_unix2timetext(sid, msgdate), str2html(sid, sql_getvalue(sqr, i, 5)));
+		if (atoi(sql_getvalue(sqr, i, 2))==sid->dat->user_uid) {
+			prints(sid, "%s", str2html(sid, sid->dat->user_username));
+		} else {
+			prints(sid, "%s", str2html(sid, username));
+		}
+		prints(sid, " (%s): </FONT></B>%s</TD>", time_unix2timetext(sid, msgdate), str2html(sid, sql_getvalue(sqr, i, 5)));
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE></CENTER>\n");
@@ -361,21 +327,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_messages",		// mod_name
+		1,			// mod_submenu
+		"MESSENGER",		// mod_menuname
+		"javascript:ListUsers();",// mod_menuuri
+		"messages",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/messages/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=1;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_messages");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "MESSENGER");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "messages");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "javascript:ListUsers();");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/messages/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

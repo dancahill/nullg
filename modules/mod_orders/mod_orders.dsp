@@ -68,7 +68,15 @@ SOURCE=.\mod_orders_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_orders_items.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_orders_main.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_orders_products.c
 # End Source File
 # End Target
 # End Project

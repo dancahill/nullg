@@ -31,8 +31,10 @@ ALL : "..\..\distrib\lib\mod_searches.dll"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\mod_searches_contacts.obj"
 	-@erase "$(INTDIR)\mod_searches_db.obj"
 	-@erase "$(INTDIR)\mod_searches_main.obj"
+	-@erase "$(INTDIR)\mod_searches_sql.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_searches.exp"
 	-@erase "$(OUTDIR)\mod_searches.lib"
@@ -86,8 +88,10 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_searches.def"
 LINK32_OBJS= \
+	"$(INTDIR)\mod_searches_contacts.obj" \
 	"$(INTDIR)\mod_searches_db.obj" \
-	"$(INTDIR)\mod_searches_main.obj"
+	"$(INTDIR)\mod_searches_main.obj" \
+	"$(INTDIR)\mod_searches_sql.obj"
 
 "..\..\distrib\lib\mod_searches.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -96,6 +100,11 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_searches - Win32 Release"
+SOURCE=.\mod_searches_contacts.c
+
+"$(INTDIR)\mod_searches_contacts.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\mod_searches_db.c
 
 "$(INTDIR)\mod_searches_db.obj" : $(SOURCE) "$(INTDIR)"
@@ -104,6 +113,11 @@ SOURCE=.\mod_searches_db.c
 SOURCE=.\mod_searches_main.c
 
 "$(INTDIR)\mod_searches_main.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_searches_sql.c
+
+"$(INTDIR)\mod_searches_sql.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

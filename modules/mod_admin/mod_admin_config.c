@@ -89,26 +89,26 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "<FORM METHOD=POST ACTION=%s/admin/configsave NAME=configedit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TR><TD ALIGN=LEFT COLSPAN=2>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
-	prints(sid, "<TD ID=page1tab STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(1)>SERVER</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page2tab STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(2)>PATHS</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page3tab STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(3)>COLOURS</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page4tab STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(4)>SQL</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page1tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SERVER</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>PATHS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>COLOURS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page4tab STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>SQL</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:3px'>", config->colour_editform);
 	prints(sid, "<HR>\r\n");
 	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_hostname   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHOST, str2html(sid, cfg.server_hostname));
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=server_port       VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVPORT, cfg.server_port);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_hostname   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVHOST, str2html(sid, cfg.http_hostname));
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=http_port       VALUE=\"%d\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, ADM_CFG_SRVPORT, cfg.http_port);
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>%s</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=server_loglevel STYLE='width:255px'>", config->colour_editform, ADM_CFG_SRVLOG);
 	htselect_number(sid, cfg.server_loglevel, 0, 4, 1);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Connections</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=server_maxconn STYLE='width:255px'>", config->colour_editform);
-	htselect_number(sid, cfg.server_maxconn, 5, 200, 5);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Connections</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxconn STYLE='width:255px'>", config->colour_editform);
+	htselect_number(sid, cfg.http_maxconn, 5, 200, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Idle Time</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=server_maxidle STYLE='width:255px'>", config->colour_editform);
-	htselect_number(sid, cfg.server_maxidle, 5, 300, 5);
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Max Idle Time</B>&nbsp;</TD><TD ALIGN=RIGHT><SELECT NAME=http_maxidle STYLE='width:255px'>", config->colour_editform);
+	htselect_number(sid, cfg.http_maxidle, 5, 300, 5);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP>&nbsp;<B>Virus Scanner</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=util_virusscan   VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, cfg.util_virusscan));
 	prints(sid, "</TABLE>");
@@ -182,7 +182,7 @@ void adminconfigedit(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-	prints(sid, "document.configedit.server_hostname.focus();\n");
+	prints(sid, "document.configedit.http_hostname.focus();\n");
 	prints(sid, "showpage(1);\n");
 	prints(sid, "SQLTypeUpdate();\n");
 	prints(sid, "// -->\n</SCRIPT>\n");
@@ -202,11 +202,11 @@ void adminconfigsave(CONN *sid)
 	memset((char *)&cfg, 0, sizeof(cfg));
 	config_read(&cfg);
 
-	if ((ptemp=getpostenv(sid, "SERVER_HOSTNAME"))!=NULL)       strncpy(cfg.server_hostname,       ptemp, sizeof(cfg.server_hostname)-1);
-	if ((ptemp=getpostenv(sid, "SERVER_PORT"))!=NULL)           cfg.server_port=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "HTTP_HOSTNAME"))!=NULL)         strncpy(cfg.http_hostname,         ptemp, sizeof(cfg.http_hostname)-1);
+	if ((ptemp=getpostenv(sid, "HTTP_PORT"))!=NULL)             cfg.http_port=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "SERVER_LOGLEVEL"))!=NULL)       cfg.server_loglevel=atoi(ptemp);
-	if ((ptemp=getpostenv(sid, "SERVER_MAXCONN"))!=NULL)        cfg.server_maxconn=atoi(ptemp);
-	if ((ptemp=getpostenv(sid, "SERVER_MAXIDLE"))!=NULL)        cfg.server_maxidle=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "HTTP_MAXCONN"))!=NULL)          cfg.http_maxconn=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "HTTP_MAXIDLE"))!=NULL)          cfg.http_maxidle=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_BASE"))!=NULL)       strncpy(cfg.server_dir_base,       ptemp, sizeof(cfg.server_dir_base)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_BIN"))!=NULL)        strncpy(cfg.server_dir_bin,        ptemp, sizeof(cfg.server_dir_bin)-1);
 	if ((ptemp=getpostenv(sid, "SERVER_DIR_CGI"))!=NULL)        strncpy(cfg.server_dir_cgi,        ptemp, sizeof(cfg.server_dir_cgi)-1);
@@ -242,7 +242,7 @@ void adminconfigsave(CONN *sid)
 #endif
 	if ((ptemp=getpostenv(sid, "UTIL_VIRUSSCAN"))!=NULL)        strncpy(cfg.util_virusscan,        ptemp, sizeof(cfg.util_virusscan)-1);
 	if (config_write(&cfg)!=0) {
-		logerror(sid, __FILE__, __LINE__, ADM_CFG_NOFILE, proc->config_filename);
+		logerror(sid, __FILE__, __LINE__, 1, ADM_CFG_NOFILE, proc->config_filename);
 		prints(sid, ADM_CFG_NOFILE, proc->config_filename);
 		return;
 	}

@@ -1,0 +1,16 @@
+# Rules.mak for NullLogic Groupware executables (Linux 2.2, 2.4, +)
+CC            = gcc
+MAKE          = make -s
+
+#BIN_CFLAGS    = -Wall -O2 -DLINUX -DSIGCONTEXT -I../include
+BIN_CFLAGS    = -Wall -O2 -DLINUX -I../include
+BIN_LDFLAGS   = -s -ldl
+BIN_LDFLAGS_T = -s -ldl -lpthread
+BIN_TARGETDIR = ../distrib/bin
+
+MOD_CFLAGS    = -Wall -O2 -fPIC -DLINUX -I../../include
+MOD_LDFLAGS   = -s -shared
+MOD_TARGETDIR = ../../distrib/lib
+
+.c.o:
+	@echo "  CC $@" ; $(CC) $(CFLAGS) -c $< -o $@

@@ -101,6 +101,7 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 		user->prefmaxlist=15;
 		user->prefmenustyle=1;
 		user->preftimezone=10;
+		user->prefgeozone=1;
 		strncpy(user->availability, "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", sizeof(user->availability)-1);
 		return 0;
 	}

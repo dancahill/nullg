@@ -20,7 +20,7 @@
 
 void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 {
-	char *option[]={ "All", "Personal", "Calls", "Contacts", "Events", "Notes", "Tasks", "Users" };
+	char *option[]={ "All", "Personal", "Calls", "Contacts", "Events", "Notes", "Orders", "Tasks", "Users" };
 	char *ptemp;
 	int i;
 	int j;
@@ -53,7 +53,7 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "	location=document.notefilter.table.options[document.notefilter.table.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=table onChange=\"go2()\">');\r\n");
-	for (i=0;i<8;i++) {
+	for (i=0;i<9;i++) {
 		prints(sid, "document.write('<OPTION VALUE=\"%s%s?userid=%d&table=%d", sid->dat->in_ScriptName, baseuri, selected, i);
 		prints(sid, "\"%s>%s');\n", i==table?" SELECTED":"", option[i]);
 	}
@@ -76,6 +76,7 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<OPTION VALUE='5'%s>%s\n", table==5?" SELECTED":"", option[5]);
 	prints(sid, "<OPTION VALUE='6'%s>%s\n", table==6?" SELECTED":"", option[6]);
 	prints(sid, "<OPTION VALUE='7'%s>%s\n", table==7?" SELECTED":"", option[7]);
+	prints(sid, "<OPTION VALUE='8'%s>%s\n", table==8?" SELECTED":"", option[8]);
 	prints(sid, "</SELECT>\r\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
@@ -126,8 +127,8 @@ void notesedit(CONN *sid)
 		}
 		if ((ptemp=getgetenv(sid, "INDEX"))!=NULL) note.tableindex=atoi(ptemp);
 	} else {
-		if (getgetenv(sid, "NOTEID")==NULL) return;
-		noteid=atoi(getgetenv(sid, "NOTEID"));
+		if ((ptemp=getgetenv(sid, "NOTEID"))==NULL) return;
+		noteid=atoi(ptemp);
 		if (dbread_note(sid, 2, noteid, &note)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", noteid);
 			return;
@@ -188,12 +189,13 @@ void notesedit(CONN *sid)
 void notesview(CONN *sid)
 {
 	REC_NOTE note;
+	char *ptemp;
 	int noteid;
 	int sqr;
 	time_t mdate;
 
-	if (getgetenv(sid, "NOTEID")==NULL) return;
-	noteid=atoi(getgetenv(sid, "NOTEID"));
+	if ((ptemp=getgetenv(sid, "NOTEID"))==NULL) return;
+	noteid=atoi(ptemp);
 	prints(sid, "<BR>\r\n");
 	if (dbread_note(sid, 1, noteid, &note)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", noteid);
@@ -246,6 +248,15 @@ void notesview(CONN *sid)
 		}
 		sql_freeresult(sqr);
 		prints(sid, "&nbsp;</TD></TR>\n");
+	} else if (strcmp(note.tablename, "orders")==0) {
+		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Order </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
+		if ((sqr=sql_queryf(sid, "SELECT orderid, contactid FROM gw_orders WHERE orderid = %d", note.tableindex))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<A HREF=%s/orders/view?orderid=%d>", sid->dat->in_ScriptName, note.tableindex);
+			prints(sid, "%s</A>", htview_contact(sid, atoi(sql_getvalue(sqr, 0, 1))));
+		}
+		sql_freeresult(sqr);
+		prints(sid, "&nbsp;</TD></TR>\n");
 	} else if (strcmp(note.tablename, "tasks")==0) {
 		prints(sid, "<TR><TD BGCOLOR=%s NOWRAP STYLE='border-style:solid'><B>Task </B></TD><TD BGCOLOR=%s NOWRAP WIDTH=100%% STYLE='border-style:solid'>", config->colour_fieldname, config->colour_fieldval);
 		if ((sqr=sql_queryf(sid, "SELECT taskid, taskname FROM gw_tasks WHERE taskid = %d", note.tableindex))<0) return;
@@ -290,9 +301,7 @@ void noteslist(CONN *sid)
 	int table;
 	time_t mdate;
 
-	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) {
-		offset=atoi(ptemp);
-	}
+	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
 	if ((ptemp=getgetenv(sid, "TABLE"))!=NULL) {
 		table=atoi(ptemp);
 	} else {
@@ -315,8 +324,9 @@ void noteslist(CONN *sid)
 		case 3: { snprintf(tablename, sizeof(tablename)-1, "contacts"); break; }
 		case 4: { snprintf(tablename, sizeof(tablename)-1, "events"); break; }
 		case 5: { snprintf(tablename, sizeof(tablename)-1, "notes"); break; }
-		case 6: { snprintf(tablename, sizeof(tablename)-1, "tasks"); break; }
-		case 7: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
+		case 6: { snprintf(tablename, sizeof(tablename)-1, "orders"); break; }
+		case 7: { snprintf(tablename, sizeof(tablename)-1, "tasks"); break; }
+		case 8: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
 	}
 	if (auth_priv(sid, "admin")&A_ADMIN) {
 		if ((sqr=sql_queryf(sid, "SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' ORDER BY noteid DESC", userid, tablename))<0) return;
@@ -339,6 +349,8 @@ void noteslist(CONN *sid)
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%d>Event</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "notes")==0) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/notes/view?noteid=%d>Note</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
+			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "orders")==0) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/orders/view?orderid=%d>Order</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "tasks")==0) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/tasks/view?taskid=%d>Task</A></TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 4)));
 			} else if (strcasecmp(sql_getvalue(sqr, i, 3), "users")==0) {
@@ -414,6 +426,8 @@ void notessave(CONN *sid)
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/view?eventid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "notes")==0) {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
+		} else if (strcmp(note.tablename, "orders")==0) {
+			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/orders/view?orderid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "tasks")==0) {
 			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/tasks/view?taskid=%d\">\n", sid->dat->in_ScriptName, note.tableindex);
 		} else if (strcmp(note.tablename, "users")==0) {
@@ -460,20 +474,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_notes",		// mod_name
+		3,			// mod_submenu
+		"NOTEBOOK",		// mod_menuname
+		"/notes/list",		// mod_menuuri
+		"calendar",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/notes/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=3;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_notes");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "NOTEBOOK");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/notes/list");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/notes/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_notes", "mod_notes_sublist", notes_sublist)!=0) return -1;
 	return 0;

@@ -75,14 +75,14 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	int x;
 
 	DEBUG_IN(sid, "fileperm()");
-//	logerror(sid, __FILE__, __LINE__, "dir[%s]file[%s]", dir, file);
+//	logerror(sid, __FILE__, __LINE__, 1, "dir[%s]file[%s]", dir, file);
 	if (strncmp(dir, "/files/", 7)!=0) { DEBUG_OUT(sid, "fileperm()"); return -1; }
 	memset(filename, 0, sizeof(filename));
 	ptemp=dir;
 	if (strlen(ptemp)>=7) ptemp+=7;
 	snprintf(filename, sizeof(filename)-1, "%s/%s%s", config->server_dir_var_files, ptemp, file);
 	fixslashes(filename);
-//	logerror(sid, __FILE__, __LINE__, "[%s]", filename);
+//	logerror(sid, __FILE__, __LINE__, 1, "[%s]", filename);
 	x=stat(filename, &sb);
 	if ((perm==A_READ)&&(x!=0)) { DEBUG_OUT(sid, "fileperm()"); return -2; }
 	if ((perm==A_INSERT)&&(x==0)) { DEBUG_OUT(sid, "fileperm()"); return -3; }
@@ -270,7 +270,7 @@ int dirlist(CONN *sid)
 			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", sb.st_mode&S_IFDIR?"dir":"file");
 			strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '')", timebuf, timebuf);
 			if (sql_update(sid, query)<0) {
-				logerror(sid, __FILE__, __LINE__, "%s - ERROR: Cannot upload file [%s].", sid->dat->in_RemoteAddr, dentry->d_name);
+				logerror(sid, __FILE__, __LINE__, 1, "%s - ERROR: Cannot upload file [%s].", sid->dat->in_RemoteAddr, dentry->d_name);
 			} else {
 //				db_log_activity(sid, 1, "files", fileid, "insert", "%s - system uploaded file %d %s", sid->dat->in_RemoteAddr, fileid, dentry->d_name);
 			}
@@ -284,7 +284,10 @@ int dirlist(CONN *sid)
 		if ((sqr=sql_queryf(sid, "SELECT fileid, filename, lastdldate, numdownloads, description, filetype FROM gw_files WHERE filepath = '%s' ORDER BY filetype, filename ASC", uri))<0) return -1;
 	}
 	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, (auth_priv(sid, "files")&A_MODIFY)?5:4);
+	i=4;
+	if (auth_priv(sid, "files")&A_MODIFY) i++;
+	if (strlen(config->util_virusscan)) i++;
+	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=%d STYLE='border-style:solid'>", config->colour_th, i);
 	prints(sid, "<FONT COLOR=%s>&nbsp;Index of ", config->colour_thtext);
 	memset(uri2, 0, sizeof(uri2));
 	i=0;
@@ -294,7 +297,7 @@ int dirlist(CONN *sid)
 		i++;
 		while (uri[i]) {
 			if (uri[i]=='/') {
-				prints(sid, "<A HREF=\"%s/\" STYLE='color: %s'>%s</A>/", uri2, config->colour_thtext, strrchr(uri2, '/')+1);
+				prints(sid, "<A HREF=\"%s%s/\" STYLE='color: %s'>%s</A>/", sid->dat->in_ScriptName, uri2, config->colour_thtext, strrchr(uri2, '/')+1);
 			}
 			uri2[i]=uri[i];
 			i++;
@@ -305,14 +308,20 @@ int dirlist(CONN *sid)
 	prints(sid, "</FONT></TH></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
 	if (auth_priv(sid, "files")&A_MODIFY) {
-		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
+		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
+	}
+	if (strlen(config->util_virusscan)) {
+		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
 	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
 	prints(sid, "<TD width=10%% STYLE='border-style:solid'><B>&nbsp;Size&nbsp;</B></TD><TD width=60%% STYLE='border-style:solid'><B>&nbsp;Description&nbsp;</B></TD></TR>\n");
 	if ((strncmp(uri, "/files/", 7)==0)&&(strlen(file.filepath)>1)) {
 		prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
 		if (auth_priv(sid, "files")&A_MODIFY) {
-			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
+			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
+		}
+		if (strlen(config->util_virusscan)) {
+			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
 		prints(sid, "<TD COLSPAN=4 STYLE='border-style:solid'><A HREF=%s", sid->dat->in_ScriptName);
 		printhex(sid, "%s", file.filepath);
@@ -334,6 +343,16 @@ int dirlist(CONN *sid)
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'><A HREF=%s/fileinfoedit?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
+		}
+		if (strlen(config->util_virusscan)) {
+			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>");
+			if (!(sb.st_mode & S_IFDIR)) {
+				prints(sid, "<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+				printhex(sid, "%s", sid->dat->in_RequestURI);
+				prints(sid, ">scan</A></TD>\n");
+			} else {
+				prints(sid, "&nbsp;</TD>\n");
+			}
 		}
 		prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP style='cursor:hand; border-style:solid' onClick=window.location.href=\"");
 		printhex(sid, "%s", showfile);
@@ -372,18 +391,18 @@ int dirlist(CONN *sid)
 int fileul(CONN *sid)
 {
 	REC_FILE file;
+	char *ptemp;
 	char directory[255];
 	char filename[255];
+	char location[255];
 
 	htpage_header(sid, "File Upload");
-	if (!(auth_priv(sid, "files")&A_INSERT)) {
-		return -1;
-	}
-	if (dbread_file(sid, 2, 0, &file)!=0) {
-		return -1;
-	}
-	if (getgetenv(sid, "LOCATION")!=NULL) {
-		snprintf(directory, sizeof(directory)-1, "%s", getgetenv(sid, "LOCATION"));
+	if (!(auth_priv(sid, "files")&A_INSERT)) return -1;
+	if (dbread_file(sid, 2, 0, &file)!=0) return -1;
+	memset(location, 0, sizeof(location));
+	if ((ptemp=getgetenv(sid, "LOCATION"))!=NULL) {
+		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
+		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
 	snprintf(filename, sizeof(filename)-1, "%s/%s", config->server_dir_var_files, directory+7);
 	decodeurl(filename);
@@ -418,7 +437,7 @@ int fileul(CONN *sid)
 	prints(sid, "<CENTER>\n<BR>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/filerecv NAME=filesend ENCTYPE=multipart/form-data onSubmit=waitForCompletion();>\n", sid->dat->in_ScriptName);
-	prints(sid, "<INPUT TYPE=hidden NAME=location value='%s'>\n", getgetenv(sid, "LOCATION"));
+	prints(sid, "<INPUT TYPE=hidden NAME=location value='%s'>\n", location);
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>Uploading new file to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;File&nbsp;</B></TD><TD><INPUT TYPE=file NAME=userfile SIZE=35></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
@@ -462,8 +481,10 @@ int fileul(CONN *sid)
 int filemkdir(CONN *sid)
 {
 	REC_FILE file;
+	char *ptemp;
 	char directory[255];
 	char filename[255];
+	char location[255];
 
 	if (!(auth_priv(sid, "files")&A_INSERT)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -474,8 +495,10 @@ int filemkdir(CONN *sid)
 		return -1;
 	}
 	snprintf(file.filename, sizeof(file.filename)-1, "New Folder");
-	if (getgetenv(sid, "LOCATION")!=NULL) {
-		snprintf(directory, sizeof(directory)-1, "%s", getgetenv(sid, "LOCATION"));
+	memset(location, 0, sizeof(location));
+	if ((ptemp=getgetenv(sid, "LOCATION"))!=NULL) {
+		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
+		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
 	snprintf(filename, sizeof(filename)-1, "%s/%s", config->server_dir_var_files, directory+7);
 	decodeurl(filename);
@@ -484,9 +507,9 @@ int filemkdir(CONN *sid)
 	if (strstr(filename, "..")!=NULL) return -1;
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave?location=%s NAME=filedirsave>\n", sid->dat->in_ScriptName, directory);
+	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave?location=\"%s\" NAME=filedirsave>\n", sid->dat->in_ScriptName, directory);
 //	prints(sid, "<FORM METHOD=POST ACTION=%s/filedirsave NAME=filedirsave>\n", sid->dat->in_ScriptName);
-	prints(sid, "<INPUT TYPE=hidden NAME=filepath value='%s'>\n", getgetenv(sid, "LOCATION"));
+	prints(sid, "<INPUT TYPE=hidden NAME=filepath value='%s'>\n", location);
 	prints(sid, "<TR><TH BGCOLOR=%s COLSPAN=2><FONT COLOR=%s>Adding folder to '%s'</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, directory);
 	prints(sid, "<TR BGCOLOR=%s><TD>&nbsp;<B>Folder Name</B>&nbsp;</TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=filename SIZE=40 VALUE='%s'></TD></TR>\n", config->colour_editform, file.filename);
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2>&nbsp;<B>Description</B>&nbsp;</TD></TR>\n", config->colour_editform);
@@ -524,6 +547,7 @@ int filemkdir(CONN *sid)
 void fileinfoedit(CONN *sid)
 {
 	REC_FILE file;
+	char *ptemp;
 	int editperms=0;
 	int fileid;
 
@@ -531,8 +555,8 @@ void fileinfoedit(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "FILEID")==NULL) return;
-	fileid=atoi(getgetenv(sid, "FILEID"));
+	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
+	fileid=atoi(ptemp);
 	if (dbread_file(sid, 2, fileid, &file)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", fileid);
 		return;
@@ -733,7 +757,7 @@ int filerecv(CONN *sid)
 			fixslashes(file);
 			fp=fopen(file, "wb");
 			if (fp==NULL) {
-				logerror(sid, __FILE__, __LINE__, "ERROR: Cannot create file [%s].", file);
+				logerror(sid, __FILE__, __LINE__, 1, "ERROR: Cannot create file [%s].", file);
 				DEBUG_OUT(sid, "filerecv()");
 				return -1;
 			}
@@ -749,11 +773,16 @@ int filerecv(CONN *sid)
 		strncpy(description, ptemp, sizeof(description)-1);
 		if (mimesize<strlen(description)) description[mimesize]='\0';
 	}
-	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
+	if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(sid, filename), str2sql(sid, location)))<0) return -1;
+	if (sql_numtuples(sqr)>0) {
+		sql_updatef(sid, "DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
+	}
+	sql_freeresult(sqr);
 	if ((sqr=sql_query(sid, "SELECT max(fileid) FROM gw_files"))<0) { DEBUG_OUT(sid, "filerecv()"); return -1; }
 	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
 	sql_freeresult(sqr);
+	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	strcpy(query, "INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, filename, filepath, filetype, uldate, lastdldate, numdownloads, description) VALUES (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", fileid, datebuf, datebuf, filerec.obj_uid, filerec.obj_gid, filerec.obj_gperm, filerec.obj_operm);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(sid, filename));
@@ -834,6 +863,11 @@ int filedirsave(CONN *sid)
 		prints(sid, "<BR><CENTER>Error creating folder.</CENTER><BR>\n");
 		return -1;
 	}
+	if ((sqr=sql_queryf(sid, "SELECT fileid FROM gw_files WHERE filename = '%s' AND filepath = '%s'", str2sql(sid, filerec.filename), str2sql(sid, filerec.filepath)))<0) return -1;
+	if (sql_numtuples(sqr)>0) {
+		sql_updatef(sid, "DELETE FROM gw_files WHERE fileid = %d", atoi(sql_getvalue(sqr, 0, 0)));
+	}
+	sql_freeresult(sqr);
 	if ((sqr=sql_query(sid, "SELECT max(fileid) FROM gw_files"))<0) return -1;
 	fileid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	if (fileid<1) fileid=1;
@@ -849,7 +883,7 @@ int filedirsave(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	prints(sid, "File folder '%s%s' has been created.", filerec.filepath, filerec.filename);
 	prints(sid, "</CENTER>\n");
-	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s%s%s/\">\n", sid->dat->in_ScriptName, filerec.filepath, filerec.filename);
+	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s%s%s/\">\n", sid->dat->in_ScriptName, encodeurl(sid, filerec.filepath), encodeurl(sid, filerec.filename));
 	return 0;
 }
 
@@ -1006,7 +1040,6 @@ void fileedit(CONN *sid)
 	fp=fopen(filename, "rb");
 	if (fp!=NULL) {
 		while ((ich=getc(fp))!=EOF) {
-//			if (ich>127) logerror(sid, __FILE__, __LINE__, "high ascii [%d][%c].", ich, (unsigned char)ich);
 			if (ich=='&') {
 				prints(sid, "&amp;");
 			} else if  (ich=='<') {
@@ -1063,12 +1096,11 @@ void filesave(CONN *sid)
 	fixslashes(filename);
 	fp=fopen(filename, "wb");
 	if (fp==NULL) {
-		logerror(sid, __FILE__, __LINE__, "ERROR: Cannot write to file [%s].", filename);
+		logerror(sid, __FILE__, __LINE__, 1, "ERROR: Cannot write to file [%s].", filename);
 		prints(sid, "<BR><CENTER>Error writing to file %s</CENTER><BR>\n", filename);
 		return;
 	}
 	for (i=0;i<filesize;i++) {
-//		if (*filebody>127) logerror(sid, __FILE__, __LINE__, "high ascii [%d][%c].", *filebody, *filebody);
 		fprintf(fp, "%c", *filebody);
 		filebody++;
 	}
@@ -1087,21 +1119,21 @@ void filescan(CONN *sid)
 	FILE *fp;
 	struct stat sb;
 	int fileid;
-	char cmdline[512];
+	char line[512];
 	char filename[255];
 	char tempname[255];
 	char *directory;
-	int err;
-	int ich;
+	char *ptemp;
+	short int err;
 
 	if (!(auth_priv(sid, "files")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (strlen(config->util_virusscan)==0) return;
-	if (getgetenv(sid, "FILEID")==NULL) return;
-	fileid=atoi(getgetenv(sid, "FILEID"));
-	if (dbread_file(sid, 2, fileid, &file)!=0) {
+	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
+	fileid=atoi(ptemp);
+	if (dbread_file(sid, 1, fileid, &file)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", fileid);
 		return;
 	}
@@ -1119,33 +1151,35 @@ void filescan(CONN *sid)
 		return;
 	}
 //	prints(sid, "I would scan %s if I knew how.<BR>\n", filename);
-//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /DUMB /LIST /NOBOOT /NOBREAK /NOMEM /OLD /REPORT=\"%s\" \"%s\"", tempname, filename);
-//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /REPORT=\"%s\" \"%s\"", tempname, filename);
-	snprintf(cmdline, sizeof(cmdline)-1, config->util_virusscan, filename);
-	strncatf(cmdline, sizeof(cmdline)-strlen(cmdline)-1, " > %s", tempname);
-//	snprintf(cmdline, sizeof(cmdline)-1, "C:\\UTILS\\F-PROT\\F-PROT.EXE /DUMB /NOBOOT /NOMEM \"%s\" > %s", filename, tempname);
-//	prints(sid, "[%d][%s]<BR>\n", strlen(cmdline), cmdline);
+//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /DUMB /LIST /NOBOOT /NOBREAK /NOMEM /OLD /REPORT=\"%s\" \"%s\"", tempname, filename);
+//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /REPORT=\"%s\" \"%s\"", tempname, filename);
+	snprintf(line, sizeof(line)-1, config->util_virusscan, filename);
+	strncatf(line, sizeof(line)-strlen(line)-1, " > %s", tempname);
+#ifndef WIN32
+	strncatf(line, sizeof(line)-strlen(line)-1, " 2>&1");
+#endif
+//	snprintf(line, sizeof(line)-1, "C:\\F-PROT\\F-PROT.EXE /DUMB /NOBOOT /NOMEM \"%s\" > %s", filename, tempname);
+//	prints(sid, "[%d][%s]<BR>\n", strlen(line), line);
 	prints(sid, "Scanning '%s'<BR>\n", filename);
 	flushbuffer(sid);
 #ifdef WIN32
-	err=winsystem(cmdline);
+	err=winsystem(line);
 #else
-	err=system(cmdline);
+	err=system(line);
 #endif
 	if (err>0) {
 		prints(sid, "<FONT COLOR=red><B>INFECTED AND/OR POTENTIALLY DANGEROUS</B></FONT><BR>\n");
 	} else if (err==0) {
 		prints(sid, "<FONT COLOR=green><B>LOOKS OK TO ME</B></FONT><BR>\n");
 	} else {
-		prints(sid, "<FONT COLOR=yellow><B>PROGRAM ERROR?</B></FONT><BR>\n");
+		prints(sid, "<FONT COLOR=orange><B>PROGRAM ERROR?</B></FONT><BR>\n");
 	}
 	prints(sid, "Scanner returned %d\n", err);
 	if (err!=0) {
 		prints(sid, "<HR><PRE>");
-		fp=fopen(tempname, "r");
-		if (fp!=NULL) {
-			while ((ich=getc(fp))!=EOF) {
-				prints(sid, "%c", ich);
+		if ((fp=fopen(tempname, "r"))!=NULL) {
+			while (fgets(line, sizeof(line)-1, fp)!=NULL) {
+				prints(sid, "%s", line);
 			}
 			fclose(fp);
 		}
@@ -1188,21 +1222,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_files",		// mod_name
+		3,			// mod_submenu
+		"FILES",		// mod_menuname
+		"/files/",		// mod_menuuri
+		"files",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/file",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=3;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_files");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "FILES");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "files");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/files/");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/file");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

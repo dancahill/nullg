@@ -21,6 +21,7 @@
 void adminzoneedit(CONN *sid)
 {
 	REC_ZONE zone;
+	char *ptemp;
 	int zoneid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
@@ -31,8 +32,8 @@ void adminzoneedit(CONN *sid)
 		zoneid=0;
 		dbread_zone(sid, 2, 0, &zone);
 	} else {
-		if (getgetenv(sid, "ZONEID")==NULL) return;
-		zoneid=atoi(getgetenv(sid, "ZONEID"));
+		if ((ptemp=getgetenv(sid, "ZONEID"))==NULL) return;
+		zoneid=atoi(ptemp);
 		if (dbread_zone(sid, 2, zoneid, &zone)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", zoneid);
 			return;

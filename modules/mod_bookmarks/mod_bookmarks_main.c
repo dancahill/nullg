@@ -67,7 +67,7 @@ void htselect_bookmarkfolder(CONN *sid, int selected)
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		x=atoi(sql_getvalue(sqr, ptree[i].id, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>", x, x==selected?" SELECTED":"");
-		for (indent=0;indent<ptree[i].depth;indent++) prints(sid, "&nbsp;&nbsp;");
+		for (indent=0;indent<ptree[i].depth;indent++) prints(sid, "&nbsp;&nbsp;&nbsp;&nbsp;");
 		prints(sid, "%s\n", str2html(sid, sql_getvalue(sqr, ptree[i].id, 2)));
 	}
 	free(ptree);
@@ -79,6 +79,7 @@ void htselect_bookmarkfolder(CONN *sid, int selected)
 void bookmarkfolderedit(CONN *sid)
 {
 	REC_BOOKMARKFOLDER bookmarkfolder;
+	char *ptemp;
 	int folderid;
 
 	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
@@ -88,11 +89,11 @@ void bookmarkfolderedit(CONN *sid)
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/foldereditnew", 24)==0) {
 		folderid=0;
 		dbread_bookmarkfolder(sid, 2, 0, &bookmarkfolder);
-		if (getgetenv(sid, "PARENT")==NULL) return;
-		bookmarkfolder.parentid=atoi(getgetenv(sid, "PARENT"));
+		if ((ptemp=getgetenv(sid, "PARENT"))==NULL) return;
+		bookmarkfolder.parentid=atoi(ptemp);
 	} else {
-		if (getgetenv(sid, "FOLDERID")==NULL) return;
-		folderid=atoi(getgetenv(sid, "FOLDERID"));
+		if ((ptemp=getgetenv(sid, "FOLDERID"))==NULL) return;
+		folderid=atoi(ptemp);
 		if (dbread_bookmarkfolder(sid, 2, folderid, &bookmarkfolder)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", folderid);
 			return;
@@ -265,8 +266,8 @@ void bookmarksedit(CONN *sid)
 		}
 		if ((ptemp=getgetenv(sid, "FOLDER"))!=NULL) bookmark.folderid=atoi(ptemp);
 	} else {
-		if (getgetenv(sid, "BOOKMARKID")==NULL) return;
-		bookmarkid=atoi(getgetenv(sid, "BOOKMARKID"));
+		if ((ptemp=getgetenv(sid, "BOOKMARKID"))==NULL) return;
+		bookmarkid=atoi(ptemp);
 		if ((err=dbread_bookmark(sid, 2, bookmarkid, &bookmark))==-2) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", bookmarkid);
 			return;
@@ -502,21 +503,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_bookmarks",	// mod_name
+		3,			// mod_submenu
+		"BOOKMARKS",		// mod_menuname
+		"/bookmarks/list",	// mod_menuuri
+		"bookmarks",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/bookmarks/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=3;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_bookmarks");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "BOOKMARKS");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "bookmarks");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/bookmarks/list");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/bookmarks/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

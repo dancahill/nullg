@@ -59,7 +59,7 @@ void taskreminders(CONN *sid)
 	sql_freeresult(sqr);
 	if (reminders==0) {
 		prints(sid, "<BR>No approaching due tasks\n</CENTER>\n");
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
+//		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
 	} else {
 		prints(sid, "</TABLE></CENTER>\n");
 	}
@@ -69,6 +69,7 @@ void taskreminders(CONN *sid)
 void taskreminderstatus(CONN *sid)
 {
 	char timebuffer[100];
+	char *ptemp;
 	int taskid;
 	int reminder;
 	int sqr;
@@ -78,8 +79,8 @@ void taskreminderstatus(CONN *sid)
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		return;
 	}
-	if (getgetenv(sid, "TASKID")==NULL) return;
-	taskid=atoi(getgetenv(sid, "TASKID"));
+	if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
+	taskid=atoi(ptemp);
 	if ((sqr=sql_queryf(sid, "SELECT reminder, duedate FROM gw_tasks where taskid = %d and assignedto = %d", taskid, sid->dat->user_uid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -130,6 +131,8 @@ void taskedit(CONN *sid)
 {
 	REC_TASK task;
 	char duedate[16];
+	char *ptemp;
+	int editperms=0;
 	int taskid;
 
 	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
@@ -143,8 +146,8 @@ void taskedit(CONN *sid)
 			return;
 		}
 	} else {
-		if (getgetenv(sid, "TASKID")==NULL) return;
-		taskid=atoi(getgetenv(sid, "TASKID"));
+		if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
+		taskid=atoi(ptemp);
 		if (dbread_task(sid, 2, taskid, &task)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", taskid);
 			return;
@@ -155,72 +158,97 @@ void taskedit(CONN *sid)
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
+	htscript_showpage(sid, 3);
 	prints(sid, "// -->\n</SCRIPT>\n");
-	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/tasks/save NAME=taskedit>\n", sid->dat->in_ScriptName);
-	prints(sid, "<INPUT TYPE=hidden NAME=taskid VALUE='%d'>\n", task.taskid);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
+	prints(sid, "<CENTER>\n");
 	if (taskid>0) {
-		prints(sid, "<A HREF=%s/tasks/view?taskid=%d STYLE='color: %s'>Task Number %d</FONT></TH></TR>\n", sid->dat->in_ScriptName, task.taskid, config->colour_thtext, task.taskid);
+		prints(sid, "<B><A HREF=%s/tasks/view?taskid=%d>Task Number %d</A></B>\n", sid->dat->in_ScriptName, task.taskid, task.taskid);
 	} else {
-		prints(sid, "New Task</FONT></TH></TR>\n");
+		prints(sid, "<B>New Task</B>\n");
 	}
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP COLSPAN=2>\n", config->colour_editform);
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\n");
+	prints(sid, "<FORM METHOD=POST ACTION=%s/tasks/save NAME=taskedit>\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=hidden NAME=taskid VALUE='%d'>\n", task.taskid);
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>TASK INFO</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>DETAILS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Task Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=taskname VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", config->colour_editform, str2html(sid, task.taskname));
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:217px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Task Name&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=taskname VALUE=\"%s\" SIZE=45 STYLE='width:255px'></TD></TR>\n", config->colour_editform, str2html(sid, task.taskname));
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", config->colour_editform, (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, task.assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Priority&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=priority style='width:255px'>\n", config->colour_editform);
 	htselect_priority(sid, task.priority);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Reminder&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=reminder style='width:217px'>\n");
+	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=reminder style='width:255px'>\n");
 	htselect_reminder(sid, task.reminder);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Due Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=duedate2>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Due Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=duedate2 style='width:127px'>\n", config->colour_editform);
 	htselect_month(sid, duedate);
-	prints(sid, "</SELECT><SELECT NAME=duedate1>\n");
+	prints(sid, "</SELECT><SELECT NAME=duedate1 style='width:64px'>\n");
 	htselect_day(sid, duedate);
-	prints(sid, "</SELECT><SELECT NAME=duedate3>\n");
+	prints(sid, "</SELECT><SELECT NAME=duedate3 style='width:64px'>\n");
 	htselect_year(sid, 2000, duedate);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:217px'>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:255px'>\n", config->colour_editform);
 	htselect_eventstatus(sid, task.status);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
 	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=5 COLS=50>%s</TEXTAREA></TD></TR>\n", config->colour_editform, str2html(sid, task.details));
-	if ((task.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) {
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
-		htselect_user(sid, task.obj_uid);
-		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
-		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, task.obj_gid);
-		prints(sid, "</SELECT></TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", task.obj_gperm==0?" CHECKED":"");
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s>Read\n", task.obj_gperm==1?" CHECKED":"");
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s>Write\n", task.obj_gperm==2?" CHECKED":"");
-		prints(sid, "</TD></TR>\n");
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s>None\n", task.obj_operm==0?" CHECKED":"");
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s>Read\n", task.obj_operm==1?" CHECKED":"");
-		prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s>Write\n", task.obj_operm==2?" CHECKED":"");
-		prints(sid, "</TD></TR>\n");
-	}
 	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	if ((task.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calendar")&A_ADMIN)) editperms=1;
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	htselect_user(sid, task.obj_uid);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>", config->colour_editform);
+	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calendar")&A_ADMIN)?"":" DISABLED");
+	htselect_group(sid, task.obj_gid);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", task.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\n", task.obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\n", task.obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n", config->colour_editform);
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\n", task.obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\n", task.obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", task.obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	if (taskid!=0) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save Task'>\n");
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete Task' onClick=\"return ConfirmDelete();\">\n");
 	} else {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Add Task'>\n");
 	}
-	prints(sid, "</FORM>\n</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.taskedit.taskname.focus();\n// -->\n</SCRIPT>\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "</FORM>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "showpage(1);\n");
+	prints(sid, "document.taskedit.taskname.focus();\n");
+	prints(sid, "// -->\n</SCRIPT>\n");
 	return;
 }
 
@@ -237,6 +265,7 @@ void taskview(CONN *sid)
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_TASK task;
 	char duedate[16];
+	char *ptemp;
 	int taskid;
 	int i;
 	int sqr;
@@ -245,8 +274,8 @@ void taskview(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "TASKID")==NULL) return;
-	taskid=atoi(getgetenv(sid, "TASKID"));
+	if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
+	taskid=atoi(ptemp);
 	if (dbread_task(sid, 1, taskid, &task)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", taskid);
 		return;
@@ -322,7 +351,10 @@ void tasks_list(CONN *sid, int userid, int groupid)
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
 	}
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
+	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) {
+		sql_freeresult(sqr);
+		return;
+	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=200 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR BGCOLOR=%s><TH  ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2 COLOR=%s>&nbsp;Tasks</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	for (i=0;i<sql_numtuples(sqr);i++) {
@@ -337,20 +369,17 @@ void tasks_list(CONN *sid, int userid, int groupid)
 			if (j==sql_numtuples(sqr2)) continue;
 		}
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
+		prints(sid, "<SPAN STYLE='width:196px;overflow:hidden'>&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 		if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
-		prints(sid, "%s\">%-.25s", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
-		if (strlen(sql_getvalue(sqr, i, 3))>25) prints(sid, "..");
-		prints(sid, "</A>&nbsp;</TD></TR>\n");
+		prints(sid, "%s\">%s</A>&nbsp;</SPAN></TD></TR>\n", sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
 		tcount++;
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, i, 1)))) continue;
 		if (atoi(sql_getvalue(sqr, i, 2))!=0) continue;
 		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP WIDTH=100%% style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/tasks/view?taskid=%s'\">", config->colour_fieldval, sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
-		prints(sid, "&nbsp;*&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"[UNASSIGNED] %s\">%-.25s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
-		if (strlen(sql_getvalue(sqr, i, 3))>25) prints(sid, "..");
-		prints(sid, "</A>&nbsp;</TD></TR>\n");
+		prints(sid, "<SPAN STYLE='width:196px;overflow:hidden'>&nbsp;*&nbsp;<A HREF=%s/tasks/view?taskid=%s TITLE=\"[UNASSIGNED] %s\">%s", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), sql_getvalue(sqr, i, 3), str2html(sid, sql_getvalue(sqr, i, 3)));
+		prints(sid, "</A>&nbsp;</SPAN></TD></TR>\n");
 		tcount++;
 	}
 	sql_freeresult(sqr2);
@@ -466,18 +495,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_tasks",		// mod_name
+		0,			// mod_submenu
+		"",			// mod_menuname
+		"",			// mod_menuuri
+		"calendar",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/tasks/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_tasks");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calendar");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/tasks/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_tasks", "mod_tasks_list", tasks_list)!=0) return -1;
 	return 0;

@@ -1,0 +1,223 @@
+#!/bin/sh
+FILEDATE="`date +%Y-%m-%d` 01:02"
+OUTFILE=nullgroupware-1.2.4-x86
+if [ "`uname`" = "FreeBSD" ]; then
+	OUTFILE=$OUTFILE-freebsd
+elif [ "`uname`" = "Linux" ]; then
+	if [ "`uname -r | awk -F'.' '{ print $1"."$2 }'`" = "2.0" ]; then
+		OUTFILE=$OUTFILE-oldlinux-libc5
+	else
+		OUTFILE=$OUTFILE-linux
+	fi
+else
+	OUTFILE=$OUTFILE-unknown
+fi
+
+set_perms() {
+	chown -R root:root distrib
+	chmod 0644 distrib/COPYING
+	chmod 0644 distrib/COPYRIGHT.txt
+	chmod 0644 distrib/README.txt
+	chmod 0755 distrib/setup
+	chmod 0755 distrib/bin/*
+	chmod 0644 distrib/cgi-bin/*
+	chmod 0600 distrib/etc/*
+	chmod 0755 distrib/lib/*
+	chmod 0700 distrib/var/db
+	chmod 0600 distrib/var/db/*
+	chmod 0700 distrib/var/files
+	chmod 0600 distrib/var/files/*
+	chmod 0755 distrib/var/htdocs
+	chmod 0755 distrib/var/htdocs/groupware
+	chmod 0755 distrib/var/htdocs/groupware/css
+	chmod 0644 distrib/var/htdocs/groupware/css/*
+	chmod 0755 distrib/var/htdocs/groupware/help
+	chmod 0755 distrib/var/htdocs/groupware/help/en
+	chmod 0644 distrib/var/htdocs/groupware/help/en/*
+	chmod 0755 distrib/var/htdocs/groupware/images
+	chmod 0644 distrib/var/htdocs/groupware/images/*
+	chmod 0755 distrib/var/htdocs/groupware/images/menu2
+	chmod 0644 distrib/var/htdocs/groupware/images/menu2/*
+	chmod 0755 distrib/var/htdocs/groupware/javascript
+	chmod 0644 distrib/var/htdocs/groupware/javascript/*
+	chmod 0755 distrib/var/htdocs/groupware/sounds
+	chmod 0644 distrib/var/htdocs/groupware/sounds/*
+	chmod 0700 distrib/var/log
+	chmod 0600 distrib/var/log/*
+	chmod 0700 distrib/var/mail
+	chmod 0700 distrib/var/mail/local
+	chmod 0600 distrib/var/mail/local/*
+	chmod 0700 distrib/var/mail/queue
+	chmod 0600 distrib/var/mail/queue/*
+	chmod 0700 distrib/var/tmp
+	chmod 0600 distrib/var/tmp/*
+}
+
+build_clean() {
+	rm -f distrib/setup
+	rm -f distrib/bin/configure
+#	rm -f distrib/bin/*
+}
+
+build_pack() {
+	rm -rf ${OUTFILE}
+	rm -rf ${OUTFILE}.tar.gz
+	cp -p other/rc.groupware distrib/bin/rc.groupware
+	cp -p other/configure distrib/bin/configure
+	cp -p other/setup distrib/setup
+	set_perms
+	cd distrib
+	touch --date="$FILEDATE" `find *`
+	cd ..
+	cp -pR distrib ${OUTFILE}
+	tar zcf ${OUTFILE}.tar.gz ${OUTFILE}
+	rm -rf ${OUTFILE}
+	touch --date="$FILEDATE" ${OUTFILE}.tar.gz
+}
+
+build_slackpack() {
+	rm -rf slackroot
+	rm -rf ${OUTFILE}.tgz
+	cp -p other/rc.groupware distrib/bin/rc.groupware
+	cp -p other/configure distrib/bin/configure
+	cp -p other/setup distrib/setup
+	set_perms
+	cd distrib
+	touch --date="$FILEDATE" `find -name "*"`
+	cd ..
+	mkdir -p slackroot/usr/local
+	mkdir -p slackroot/install
+	cp -pR distrib slackroot/usr/local/nullgroupware
+	cp -p other/slack/doinst.sh other/slack/slack-desc slackroot/install
+	cd slackroot
+	tar zcf ../${OUTFILE}.tgz *
+	cd ..
+	rm -rf slackroot
+	touch --date="$FILEDATE" ${OUTFILE}.tgz
+}
+
+from_dos() {
+	if [ -x /usr/bin/fromdos ]; then
+		for i in * ; do
+			if [ ! -d "$i" ]; then
+				/usr/bin/fromdos < $i > ${i}.dos
+				mv ${i}.dos ${i}
+			fi
+		done
+	else
+		exit 0
+	fi
+}
+
+dedos() {
+	rm -f contrib/libsqlite.dll 2>/dev/null
+	rm -f distrib/bin/* 2>/dev/null
+	rm -f distrib/lib/* 2>/dev/null
+	rm -rf obj 2>/dev/null
+	if [ -e copying ]; then
+		mv copying COPYING
+	fi
+	if [ -e distrib/copying ]; then
+		mv distrib/copying distrib/COPYING
+	fi
+	if [ -e distrib/readme.txt ]; then
+		mv distrib/readme.txt distrib/README.txt
+	fi
+
+	ln -sf Rules/Linux Rules.mak
+	chmod 644 contrib/sqlite-*.tar.gz
+	chmod g-w * -R
+	chmod o-w * -R
+
+	cd dbutil;from_dos;cd ..
+	cd httpd;from_dos;cd ..
+	cd pop3d;from_dos;cd ..
+	cd smtpd;from_dos;cd ..
+	cd Rules;from_dos;cd ..
+
+	cd distrib;from_dos
+	cd cgi-bin;from_dos;cd ..
+	cd etc;from_dos;cd ..
+	cd var;from_dos
+	cd db;from_dos;cd ..
+	cd files;from_dos;cd ..
+	cd htdocs;from_dos
+	cd groupware;from_dos
+	cd css;from_dos;cd ..
+	cd help;from_dos
+	cd en;from_dos;cd ..
+	cd ..
+	cd javascript;from_dos;cd ..
+	cd ../..
+	cd log;from_dos;cd ..
+	cd mail;from_dos
+	cd local;from_dos;cd ..
+	cd queue;from_dos;cd ..
+	cd ../../..
+
+	cd include;from_dos
+	cd i18n;from_dos
+	cd en;from_dos;cd ..
+	cd ..
+	cd sql;from_dos;cd ..
+	cd ..
+	cd modules;from_dos
+	cd mod_admin;from_dos;cd ..
+	cd mod_bookmarks;from_dos;cd ..
+	cd mod_calendar;from_dos;cd ..
+	cd mod_calls;from_dos;cd ..
+	cd mod_cgi;from_dos;cd ..
+	cd mod_contacts;from_dos;cd ..
+	cd mod_files;from_dos;cd ..
+	cd mod_forums;from_dos;cd ..
+	cd mod_html;from_dos;cd ..
+	cd mod_mail;from_dos;cd ..
+	cd mod_messages;from_dos;cd ..
+	cd mod_notes;from_dos;cd ..
+	cd mod_orders;from_dos;cd ..
+	cd mod_profile;from_dos;cd ..
+	cd mod_searches;from_dos;cd ..
+	cd mod_tasks;from_dos;cd ..
+	cd mod_xmlrpc;from_dos;cd ..
+	cd ..
+
+	cd other;from_dos
+	cd fastcgi;from_dos;cd ..
+	cd msosync;from_dos;cd ..
+	cd php;from_dos;cd ..
+	cd xmlsync;from_dos;cd ..
+	cd ..
+
+	cd win32
+	cd config;from_dos;cd ..
+	cd gwmon;from_dos;cd ..
+	cd icons;chmod 644 *;cd ..
+	cd ..
+
+	chmod 0755 other/configure
+	chmod 0755 other/fromdos
+	chmod 0755 other/make_sqlite
+	chmod 0755 other/rc.groupware
+	chmod 0755 other/setup
+	chmod 0755 distrib -R
+	set_perms
+	cp -av other/make_sqlite contrib/make_sqlite
+}
+
+case "$1" in
+'clean')
+	build_clean
+	;;
+'pack')
+	build_pack
+	;;
+'slackpack')
+	build_slackpack
+	;;
+'dedos')
+	dedos
+	;;
+*)
+	echo "Usage: $0 {clean|pack}"
+esac
+exit 0

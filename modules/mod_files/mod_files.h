@@ -15,5 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#include "i18n/mod_files.h"
+
 /* mod_files_db.c */
 int dbread_file(CONN *sid, short int perm, int index, REC_FILE *file);

@@ -15,6 +15,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#include "i18n/mod_contacts.h"
+
 /* mod_contacts_db.c */
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact);
 int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact);

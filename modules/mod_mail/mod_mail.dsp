@@ -64,11 +64,23 @@ SOURCE=.\mod_mail.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\mod_mail_addr.c
+SOURCE=.\mod_mail_accounts.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_mail_address.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\mod_mail_codec.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_mail_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_mail_filters.c
 # End Source File
 # Begin Source File
 
@@ -85,6 +97,10 @@ SOURCE=.\mod_mail_main.c
 # Begin Source File
 
 SOURCE=.\mod_mail_mime.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_mail_search.c
 # End Source File
 # Begin Source File
 

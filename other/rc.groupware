@@ -1,29 +1,69 @@
 #!/bin/sh
-# Init script to start/stop/restart the NullLogic Groupware server.
-RUN_AS_USER="groupware"
-BASE_PATH="/usr/local/groupware"
+#
+# basic IRIX-style chkconfig (RedHat uses this)
+# chkconfig: 2345 85 10
+# description: NullLogic Groupware Server Suite. \
+#	Starts and stops NullLogic Groupware services as requested.
+#
+# Init script to start/stop/restart the NullLogic Groupware servers.
+BASE_PATH="/usr/local/nullgroupware"
 
 groupware_start() {
-	ps axwm > /tmp/_gw_proclist
-	if test `grep -c groupware /tmp/_gw_proclist` -gt 1
+	ps axw > /tmp/_gw_proclist
+	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
 	then
 		echo "NullLogic Groupware appears to be running already."
 	else
-		su - ${RUN_AS_USER} -c "cd ${BASE_PATH}/bin;${BASE_PATH}/bin/groupware"
+		echo -n "Starting NullLogic Groupware services: "
+		cd ${BASE_PATH}/bin
+		echo -n "httpd "
+		${BASE_PATH}/bin/nullgw-httpd
+#		echo -n "pop3d "
+#		${BASE_PATH}/bin/nullgw-pop3d
+#		echo -n "smtpd "
+#		${BASE_PATH}/bin/nullgw-smtpd
+		echo ""
 	fi
 	rm -f /tmp/_gw_proclist
 }
 
 groupware_stop() {
-	ps axwm > /tmp/_gw_proclist
-	if test `grep -c groupware /tmp/_gw_proclist` -gt 1
+	ps axw > /tmp/_gw_proclist
+	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
 	then
-		echo "Stopping NullLogic Groupware..."
-		killall -15 -q groupware
+		echo "Stopping NullLogic Groupware services"
+		killall -15 nullgw-httpd 2>/dev/null
+#		killall -15 nullgw-pop3d 2>/dev/null
+#		killall -15 nullgw-smtpd 2>/dev/null
 		sleep 2
-		killall -9 -q groupware
+		killall -9 nullgw-httpd 2>/dev/null
+#		killall -9 nullgw-pop3d 2>/dev/null
+#		killall -9 nullgw-smtpd 2>/dev/null
 	else
 		echo "NullLogic Groupware does not appear to be running."
+	fi
+	rm -f /tmp/_gw_proclist
+}
+
+groupware_status() {
+	ps axw > /tmp/_gw_proclist
+	if test `grep -c nullgw-httpd /tmp/_gw_proclist` -gt 0
+	then
+		echo "NullLogic Groupware httpd appears to be running"
+	else
+		echo "NullLogic Groupware httpd does not appear to be running."
+	fi
+	if test `grep -c nullgw-pop3d /tmp/_gw_proclist` -gt 0
+	then
+		echo "NullLogic Groupware pop3d appears to be running"
+	else
+		echo "NullLogic Groupware pop3d does not appear to be running."
+	fi
+	if test `grep -c nullgw-smtpd /tmp/_gw_proclist` -gt 0
+	then
+		echo "NullLogic Groupware smtpd appears to be running"
+	else
+		echo "NullLogic Groupware smtpd does not appear to be running."
 	fi
 	rm -f /tmp/_gw_proclist
 }
@@ -40,10 +80,13 @@ case "$1" in
 'stop')
 	groupware_stop
 	;;
+'status')
+	groupware_status
+	;;
 'restart')
 	groupware_restart
 	;;
 *)
-	echo "Usage: $0 {start|stop|restart}"
+	echo "Usage: $0 {start|stop|status|restart}"
 esac
 exit 0

@@ -117,17 +117,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_xmlrpc",		// mod_name
+		0,			// mod_submenu
+		"",			// mod_menuname
+		"",			// mod_menuuri
+		"",			// mod_menuperm
+		"mod_main",		// fn_name
+		"/xml-rpc/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_xmlrpc");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/xml-rpc/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

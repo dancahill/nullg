@@ -1,15 +1,15 @@
 # Makefile for NullLogic Groupware module
 
-TOPDIR=../
-include $(TOPDIR)Rules.mak
+include ../../Rules.mak
 
-OBJECTS  = mod_forums_db.o mod_forums_main.o
-TARGET   = $(TARGETDIR)/mod_forums.so
+CFLAGS  = $(MOD_CFLAGS)
+OBJECTS = mod_forums_db.o mod_forums_main.o
+TARGET  = $(MOD_TARGETDIR)/mod_forums.so
 
 all: mod_forums
 
 mod_forums: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(MOD_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

@@ -36,15 +36,15 @@ void htselect_eventclosingstatus(CONN *sid, int selected)
 void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 {
 	char *option[]={ "Open", "Closed", "All" };
-	char *ptemp;
+	char *ptemp1, *ptemp2;
 	int i;
 	int j;
 	int sqr;
 	int sqr2;
 	int status;
 
-	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
-		status=atoi(ptemp);
+	if ((ptemp1=getgetenv(sid, "STATUS"))!=NULL) {
+		status=atoi(ptemp1);
 	} else {
 		status=0;
 	}
@@ -68,22 +68,22 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	if ((sqr2=sql_queryf(sid, "SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
 	for (i=0;i<sql_numtuples(sqr2);i++) {
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr2, i, 0)));
-		if ((ptemp=getgetenv(sid, "DAY"))!=NULL) {
-			prints(sid, "&day=%d", atoi(ptemp));
-		} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-			prints(sid, "&month=%d", atoi(getgetenv(sid, "MONTH")));
-			prints(sid, "&year=%d", atoi(getgetenv(sid, "YEAR")));
+		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
+			prints(sid, "&day=%d", atoi(ptemp1));
+		} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
+			prints(sid, "&month=%d", atoi(ptemp1));
+			prints(sid, "&year=%d", atoi(ptemp2));
 		}
 		prints(sid, "&status=%d", status);
 		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(sqr2, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
 		for (j=0;j<sql_numtuples(sqr);j++) {
 			if (atoi(sql_getvalue(sqr, j, 1))!=atoi(sql_getvalue(sqr2, i, 0))) continue;
 			prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, j, 0)));
-			if ((ptemp=getgetenv(sid, "DAY"))!=NULL) {
-				prints(sid, "&day=%d", atoi(ptemp));
-			} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-				prints(sid, "&month=%d", atoi(getgetenv(sid, "MONTH")));
-				prints(sid, "&year=%d", atoi(getgetenv(sid, "YEAR")));
+			if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
+				prints(sid, "&day=%d", atoi(ptemp1));
+			} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
+				prints(sid, "&month=%d", atoi(ptemp1));
+				prints(sid, "&year=%d", atoi(ptemp2));
 			}
 			prints(sid, "&status=%d", status);
 			prints(sid, "'%s>&nbsp;&nbsp;%s\");\n", atoi(sql_getvalue(sqr, j, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, j, 2)));
@@ -95,11 +95,11 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 		}
 		if (j<sql_numtuples(sqr2)) continue;
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?userid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
-		if ((ptemp=getgetenv(sid, "DAY"))!=NULL) {
-			prints(sid, "&day=%d", atoi(ptemp));
-		} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-			prints(sid, "&month=%d", atoi(getgetenv(sid, "MONTH")));
-			prints(sid, "&year=%d", atoi(getgetenv(sid, "YEAR")));
+		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
+			prints(sid, "&day=%d", atoi(ptemp1));
+		} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
+			prints(sid, "&month=%d", atoi(ptemp1));
+			prints(sid, "&year=%d", atoi(ptemp2));
 		}
 		prints(sid, "&status=%d", status);
 		prints(sid, "'%s>*%s\");\n", atoi(sql_getvalue(sqr, i, 0))==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 2)));
@@ -113,11 +113,11 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 		} else {
 			prints(sid, "document.write('<OPTION VALUE=\"%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, groupid);
 		}
-		if ((ptemp=getgetenv(sid, "DAY"))!=NULL) {
-			prints(sid, "&day=%d", atoi(ptemp));
-		} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-			prints(sid, "&month=%d", atoi(getgetenv(sid, "MONTH")));
-			prints(sid, "&year=%d", atoi(getgetenv(sid, "YEAR")));
+		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
+			prints(sid, "&day=%d", atoi(ptemp1));
+		} else if (((ptemp1=getgetenv(sid, "MONTH"))!=NULL)&&((ptemp2=getgetenv(sid, "YEAR"))!=NULL)) {
+			prints(sid, "&month=%d", atoi(ptemp1));
+			prints(sid, "&year=%d", atoi(ptemp2));
 		}
 		prints(sid, "&status=%d\"%s>%s');\n", j, j==status?" SELECTED":"", option[j]);
 	}
@@ -128,20 +128,20 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "<SELECT NAME=userid>\r\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==userid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 2)));
 	}
-	prints(sid, "</SELECT>\r\n");
-	prints(sid, "<SELECT NAME=groupid>\r\n");
-	for (i=0;i<sql_numtuples(sqr2);i++) {
-		j=atoi(sql_getvalue(sqr2, i, 0));
-		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
-	}
-	prints(sid, "</SELECT>\r\n");
+	prints(sid, "</SELECT>");
+//	prints(sid, "<SELECT NAME=groupid>\r\n");
+//	for (i=0;i<sql_numtuples(sqr2);i++) {
+//		j=atoi(sql_getvalue(sqr2, i, 0));
+//		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr2, i, 1)));
+//	}
+//	prints(sid, "</SELECT>\r\n");
 	prints(sid, "<SELECT NAME=status>\r\n");
 	prints(sid, "<OPTION VALUE='2'%s>%s\n", status==2?" SELECTED":"", option[2]);
 	prints(sid, "<OPTION VALUE='0'%s>%s\n", status==0?" SELECTED":"", option[0]);
 	prints(sid, "<OPTION VALUE='1'%s>%s\n", status==1?" SELECTED":"", option[1]);
-	prints(sid, "</SELECT>\r\n");
+	prints(sid, "</SELECT>");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
@@ -185,7 +185,6 @@ void calendarreminders(CONN *sid)
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", CAL_EVENT_TITLE);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
-		a-=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, i, 2)));
 		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
 		if (b<0) {
 			reminders++;
@@ -206,8 +205,8 @@ void calendarreminders(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	if (reminders==0) {
-		prints(sid, "%s\n</CENTER>\n", CAL_EVENT_NONE);
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
+		prints(sid, "<BR>" CAL_EVENT_NONE "</CENTER>\n");
+//		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
 	} else {
 		prints(sid, "</TABLE></CENTER>\n");
 	}
@@ -216,7 +215,8 @@ void calendarreminders(CONN *sid)
 
 void reminderstatus(CONN *sid)
 {
-	char timebuffer[100];
+	char timebuffer[50];
+	char *ptemp;
 	int eventid;
 	int reminder;
 	int sqr;
@@ -226,8 +226,8 @@ void reminderstatus(CONN *sid)
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		return;
 	}
-	if (getgetenv(sid, "EVENTID")==NULL) return;
-	eventid=atoi(getgetenv(sid, "EVENTID"));
+	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
+	eventid=atoi(ptemp);
 	if ((sqr=sql_queryf(sid, "SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d", eventid, sid->dat->user_uid))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -325,6 +325,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 				return;
 			}
 			if ((ptemp=getgetenv(sid, "CONTACTID"))!=NULL) eventrec.contactid=atoi(ptemp);
+			if ((ptemp=getgetenv(sid, "USERID"))!=NULL) eventrec.assignedto=atoi(ptemp);
 			if ((ptemp=getgetenv(sid, "TIME"))!=NULL) {
 				eventrec.eventstart=atoi(ptemp)-time_tzoffset(sid, eventrec.eventstart);
 				eventrec.eventfinish=atoi(ptemp)-time_tzoffset(sid, eventrec.eventfinish)+900;
@@ -493,6 +494,7 @@ void calendarview(CONN *sid)
 {
 	MOD_NOTES_SUBLIST mod_notes_sublist;
 	REC_EVENT event;
+	char *ptemp;
 	int eventid;
 	int i;
 	int sqr;
@@ -502,8 +504,8 @@ void calendarview(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "EVENTID")==NULL) return;
-	eventid=atoi(getgetenv(sid, "EVENTID"));
+	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
+	eventid=atoi(ptemp);
 	if (dbread_event(sid, 1, eventid, &event)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", eventid);
 		return;
@@ -574,627 +576,6 @@ void calendarview(CONN *sid)
 		mod_notes_sublist(sid, "events", event.eventid, 4);
 	}
 	prints(sid, "</TABLE>\n</CENTER>\n");
-}
-
-/****************************************************************************
- *	calendarlistday()
- *
- *	Purpose	: List calendar events for a given day
- *	Args	: None
- *	Returns	: void
- *	Notes	: None
- ***************************************************************************/
-void calendarlistday(CONN *sid)
-{
-	MOD_TASKS_LIST mod_tasks_list;
-	char *ptemp;
-	char posttime1[100];
-	char posttime2[100];
-	char showtime[100];
-	struct tm today;
-	time_t t, t2;
-	time_t unixdate;
-	int index=0;
-	int i;
-	int j=0;
-	int sqr;
-	int sqr2;
-	int userid=-1;
-	int groupid=-1;
-	int status;
-
-	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
-		return;
-	}
-	if (getgetenv(sid, "DAY")!=NULL) {
-		unixdate=atoi(getgetenv(sid, "DAY"));
-	} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-		today.tm_year=atoi(getgetenv(sid, "YEAR"));
-		today.tm_mon=atoi(getgetenv(sid, "MONTH"));
-		today.tm_mday=1;
-		if (today.tm_year>2037) {
-			today.tm_year=2037;
-			today.tm_mon=12;
-			today.tm_mday=31;
-		}
-		snprintf(posttime1, sizeof(posttime1)-1, "%d-%d-%d", today.tm_year, today.tm_mon, today.tm_mday);
-		unixdate=time_sql2unix(posttime1)/86400;
-	} else {
-		unixdate=(time(NULL)+time_tzoffset(sid, time(NULL)))/86400;
-	}
-	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
-		status=atoi(ptemp);
-	} else {
-		status=0;
-	}
-	if ((ptemp=getgetenv(sid, "USERID"))!=NULL) {
-		userid=atoi(ptemp);
-	} else if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
-		groupid=atoi(ptemp);
-	} else {
-		userid=sid->dat->user_uid;
-	}
-	if (unixdate<0) unixdate=0;
-	if (unixdate>24836) unixdate=24836;
-	unixdate*=86400;
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
-	htselect_eventfilter(sid, userid, groupid, "/calendar/list");
-	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n</TR></TABLE>\r\n");
-	strftime(showtime, sizeof(showtime), "%A %B %d, %Y", gmtime(&unixdate));
-	prints(sid, "<CENTER>\n<FONT COLOR=#000000><B><A HREF=%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, (unixdate/86400)-1, status);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&lt;&lt;</A>");
-	prints(sid, " Calendar Events for %s ", showtime);
-	if (strlen(htview_holiday(posttime1))>0) prints(sid, "- %s ", htview_holiday(posttime1));
-	prints(sid, "<A HREF=%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, (unixdate/86400)+1, status);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&gt;&gt;</A>");
-	prints(sid, "</B></FONT>\n");
-	prints(sid, "<BR>\n<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
-	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
-	t=unixdate;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	t=unixdate+86400;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Time&nbsp;</FONT></TH><TH ALIGN=LEFT NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Event Name&nbsp;</FONT></TH></TR>\n", config->colour_th, config->colour_thtext, config->colour_thtext);
-	for (i=0;i<24;i++) {
-		snprintf(showtime, sizeof(showtime)-1, "%02d:00:00", i);
-		if ((i>=sid->dat->user_daystart)&&(i<sid->dat->user_daystart+sid->dat->user_daylength)) {
-			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
-			prints(sid, "<FONT SIZE=2><A HREF=%s/calendar/editnew?", sid->dat->in_ScriptName);
-			prints(sid, "time=%d>%s</A></FONT></TD>", unixdate+(i*3600), time_sql2timetext(sid, showtime));
-			prints(sid, "<TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n");
-		}
-		while (index<sql_numtuples(sqr)) {
-			t=unixdate+i*3600;
-			t-=time_tzoffset(sid, t);
-			t2=time_sql2unix(sql_getvalue(sqr, index, 1));
-			if (t2<t) { index++; continue; }
-			if (t2>=t+3600) break;
-			if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
-			if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
-			if (groupid>0) {
-				for (j=0;j<sql_numtuples(sqr2);j++) {
-					if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, j, 0))) continue;
-					if (groupid!=atoi(sql_getvalue(sqr2, j, 1))) continue;
-					break;
-				}
-				if (j==sql_numtuples(sqr2)) { index++; continue; }
-			}
-			if ((i>=sid->dat->user_daystart)&&(i<=sid->dat->user_daystart+sid->dat->user_daylength)) {
-				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			} else {
-				prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldname);
-			}
-			t2+=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
-			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), time_unix2timetext(sid, t2));
-			prints(sid, "</FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>");
-			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, j, 2)));
-			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s</A>&nbsp;", sid->dat->in_ScriptName, sql_getvalue(sqr, index, 0), str2html(sid, sql_getvalue(sqr, index, 5)));
-			prints(sid, "</FONT></TD></TR>\n");
-			index++;
-		}
-	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
-	prints(sid, "</TABLE>\n");
-	prints(sid, "</TD><TD VALIGN=TOP>\n");
-	calendarmini(sid, unixdate, userid, groupid);
-	if ((mod_tasks_list=module_call(sid, "mod_tasks_list"))!=NULL) {
-		prints(sid, "<BR>\n");
-		mod_tasks_list(sid, userid, groupid);
-	}
-	prints(sid, "</TD></TR></TABLE>\n");
-	prints(sid, "</CENTER>\n");
-	return;
-}
-
-/****************************************************************************
- *	calendarlistweek()
- *
- *	Purpose	: List calendar events for a given day
- *	Args	: None
- *	Returns	: void
- *	Notes	: None
- ***************************************************************************/
-void calendarlistweek(CONN *sid)
-{
-	MOD_TASKS_LIST mod_tasks_list;
-	char *ptemp;
-	char posttime1[32];
-	char posttime2[32];
-	char showtime[50];
-	struct tm today;
-	time_t t, t2;
-	time_t unixdate;
-	int i, j;
-	int k=0;
-	int line;
-	int sqr;
-	int sqr2;
-	int status;
-	int userid=-1;
-	int groupid=-1;
-
-	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
-		return;
-	}
-	if (getgetenv(sid, "DAY")!=NULL) {
-		unixdate=atoi(getgetenv(sid, "DAY"));
-	} else if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-		today.tm_year=atoi(getgetenv(sid, "YEAR"));
-		today.tm_mon=atoi(getgetenv(sid, "MONTH"));
-		today.tm_mday=1;
-		if (today.tm_year>2037) {
-			today.tm_year=2037;
-			today.tm_mon=12;
-			today.tm_mday=31;
-		}
-		snprintf(posttime1, sizeof(posttime1)-1, "%d-%d-%d", today.tm_year, today.tm_mon, today.tm_mday);
-		unixdate=time_sql2unix(posttime1)/86400;
-	} else {
-		unixdate=(time(NULL)+time_tzoffset(sid, time(NULL)))/86400;
-	}
-	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
-		status=atoi(ptemp);
-	} else {
-		status=0;
-	}
-	if ((ptemp=getgetenv(sid, "USERID"))!=NULL) {
-		userid=atoi(ptemp);
-	} else if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
-		groupid=atoi(ptemp);
-	} else {
-		userid=sid->dat->user_uid;
-	}
-	if (unixdate<0) unixdate=0;
-	if (unixdate>24836) unixdate=24836;
-	unixdate*=86400;
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
-	htselect_eventfilter(sid, userid, groupid, "/calendar/listweek");
-	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n");
-	prints(sid, "</TR></TABLE>\r\n");
-	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&unixdate));
-	sscanf(posttime1, "%d %d %d %d", &today.tm_wday, &today.tm_mday, &today.tm_mon, &today.tm_year);
-	unixdate=unixdate-(today.tm_wday*86400);
-	t=unixdate;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	t=unixdate+604800;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	prints(sid, "<CENTER>\n<FONT COLOR=#000000><B><A HREF=%s/calendar/listweek?day=%d&status=%d", sid->dat->in_ScriptName, (unixdate/86400)-7, status);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&lt;&lt;</A>");
-	strftime(showtime, sizeof(showtime), "%B %d, %Y", gmtime(&unixdate));
-	prints(sid, " Calendar Events for %s", showtime);
-	unixdate+=518400;
-	strftime(showtime, sizeof(showtime), "%B %d, %Y", gmtime(&unixdate));
-	unixdate-=518400;
-	prints(sid, " to %s ", showtime);
-	prints(sid, "<A HREF=%s/calendar/listweek?day=%d&status=%d", sid->dat->in_ScriptName, (unixdate/86400)+7, status);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&gt;&gt;</A>");
-	prints(sid, "</B></FONT><BR>\n");
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users"))<0) return;
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=1 WIDTH=100%%><TR>\n");
-	prints(sid, "<TD VALIGN=TOP WIDTH=100%%>\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	for (i=0;i<7;i++) {
-		t=unixdate+(i*86400);
-		strftime(showtime, sizeof(showtime), "%Y-%m-%d", gmtime(&t));
-		t-=time_tzoffset(sid, t);
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'>", config->colour_th);
-		prints(sid, "<FONT SIZE=2><B><A HREF=%s/calendar/list?day=%d", sid->dat->in_ScriptName, (int)(t/86400));
-		if (userid>0) prints(sid, "&userid=%d", userid);
-		if (groupid>0) prints(sid, "&groupid=%d", groupid);
-		prints(sid, "&status=%d", status);
-		prints(sid, " STYLE='color: %s'>%s</A></B></FONT></TH></TR>\n", config->colour_thlink, time_sql2datetext(sid, showtime));
-		line=1;
-		for (j=0;j<sql_numtuples(sqr);j++) {
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1));
-			if ((t2<t)||(t2>t+86399)) continue;
-			if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, j, 3)))) continue;
-			if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, j, 4)))) continue;
-			if (groupid>0) {
-				for (k=0;k<sql_numtuples(sqr2);k++) {
-					if (atoi(sql_getvalue(sqr, j, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-					if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
-					break;
-				}
-				if (k==sql_numtuples(sqr2)) continue;
-			}
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
-			t2=time_sql2unix(sql_getvalue(sqr, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 1)));
-			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>%s", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0), time_unix2timetext(sid, t2));
-			t2=time_sql2unix(sql_getvalue(sqr, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, j, 2)));
-			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>", time_unix2timetext(sid, t2));
-			if (groupid>0) prints(sid, "[%s] ", str2html(sid, sql_getvalue(sqr2, k, 2)));
-			prints(sid, "<A HREF=%s/calendar/view?eventid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, j, 0));
-			prints(sid, "%s</A>&nbsp;", str2html(sid, sql_getvalue(sqr, j, 5)));
-			prints(sid, "</FONT></TD></TR>\n");
-			if (line>0) line--;
-		}
-		while (line>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\n", config->colour_fieldval);
-			line--;
-		}
-	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
-	prints(sid, "</TABLE>\n");
-	prints(sid, "</TD><TD VALIGN=TOP>\n");
-	calendarmini(sid, unixdate, userid, groupid);
-	if ((mod_tasks_list=module_call(sid, "mod_tasks_list"))!=NULL) {
-		prints(sid, "<BR>\n");
-		mod_tasks_list(sid, userid, groupid);
-	}
-	prints(sid, "</TD></TR></TABLE>\n");
-	prints(sid, "</CENTER>\n");
-	return;
-}
-
-/****************************************************************************
- *	calendarlistmonth()
- *
- *	Purpose	: List calendar events for a given month
- *	Args	: None
- *	Returns	: void
- *	Notes	: None
- ***************************************************************************/
-void calendarlistmonth(CONN *sid)
-{
-	char *colourkey[]={
-		"#0000BF", "#00BF00", "#00BFBF", "#BF0000", "#BF00BF", "#BFBF00", "#707070",
-		"#0000FF", "#00FF00", "#00FFFF", "#FF0000", "#FF00FF", "#FFFF00", "#BFBFBF",
-		NULL
-	};
-	int colours=14;
-	char *colour;
-	typedef struct {
-		int day;
-		int week;
-		int month;
-		int year;
- 	} daterec;
-	daterec today;
-	time_t unixdate;
-	int dim[12]={ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-	time_t t, t2;
-	char *ptemp;
-	char posttime1[100];
-	char posttime2[100];
-	char showtime[100];
-	int now=(time(NULL)+time_tzoffset(sid, time(NULL)))/86400;
-	int printdate;
-	int i, j;
-	int k=0;
-	int lines;
-	int index=0;
-	int sqr;
-	int sqr2;
-	int status;
-	int userid=-1;
-	int groupid=-1;
-	int tempmonth;
-	int tempyear;
-
-	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
-		return;
-	}
-	memset(posttime1, 0, sizeof(posttime1));
-	if ((getgetenv(sid, "MONTH")!=NULL)&&(getgetenv(sid, "YEAR")!=NULL)) {
-		today.year=atoi(getgetenv(sid, "YEAR"));
-		today.month=atoi(getgetenv(sid, "MONTH"));
-		today.day=2;
-		if (today.year>2037) {
-			today.year=2037;
-			today.month=12;
-			today.day=2;
-		}
-		snprintf(posttime1, sizeof(posttime1)-1, "%d-%d-%d", today.year, today.month, today.day);
-		unixdate=time_sql2unix(posttime1);
-		unixdate+=time_tzoffset(sid, unixdate);
-		unixdate/=86400;
-		if (unixdate<0) unixdate=0;
-		if (unixdate>24836) unixdate=24836;
-		unixdate*=86400;
-	} else {
-		t=time(NULL)+time_tzoffset(sid, time(NULL));
-		strftime(posttime1, sizeof(posttime1), "%Y-%m-02", gmtime(&t));
-		unixdate=time_sql2unix(posttime1);
-		unixdate+=time_tzoffset(sid, unixdate);
-		unixdate/=86400;
-		if (unixdate<0) unixdate=0;
-		if (unixdate>24836) unixdate=24836;
-		unixdate*=86400;
-	}
-	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
-		status=atoi(ptemp);
-	} else {
-		status=0;
-	}
-	if ((ptemp=getgetenv(sid, "USERID"))!=NULL) {
-		userid=atoi(ptemp);
-	} else if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
-		groupid=atoi(ptemp);
-	} else {
-		userid=sid->dat->user_uid;
-	}
-	t=unixdate;
-	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&t));
-	sscanf(posttime1, "%d %d %d %d", &today.week, &today.day, &today.month, &today.year);
-	if ((today.month==2)&&((today.year/4.0f)==(int)(today.year/4))) {
-		if (((today.year/100.0f)!=(int)(today.year/100))||((today.year/400.0f)==(int)(today.year/400))) {
-			dim[1]++;
-		}
-	}
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
-	htselect_eventfilter(sid, userid, groupid, "/calendar/mlist");
-	prints(sid, "<FORM METHOD=GET ACTION=%s/calendar/mlist>", sid->dat->in_ScriptName);
-	if (userid>0) prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", userid);
-	if (groupid>0) prints(sid, "<INPUT TYPE=hidden NAME=groupid VALUE='%d'>\n", groupid);
-	prints(sid, "<INPUT TYPE=hidden NAME=status VALUE='%d'>\n", status);
-	prints(sid, "<TD ALIGN=RIGHT>\n<SELECT NAME=month>\n");
-	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d", gmtime(&t));
-	htselect_month(sid, posttime1);
-	prints(sid, "</SELECT>");
-	prints(sid, "<SELECT NAME=year>\n");
-	htselect_year(sid, 2000, posttime1);
-	prints(sid, "</SELECT>");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>");
-	prints(sid, "</TD\n</FORM>\n</TR></TABLE>\r\n");
-	strftime(showtime, sizeof(showtime), "%B, %Y", gmtime(&unixdate));
-	tempmonth=today.month-1;
-	tempyear=today.year;
-	if (tempmonth<1) { tempmonth=12; tempyear--; }
-	prints(sid, "<CENTER>\n<FONT COLOR=#000000><B><A HREF=%s/calendar/mlist?&status=%d&month=%d&year=%d", sid->dat->in_ScriptName, status, tempmonth, tempyear);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&lt;&lt;</A>");
-	prints(sid, " Calendar Events for %s ", showtime);
-	tempmonth=today.month+1;
-	tempyear=today.year;
-	if (tempmonth>12) { tempmonth=1; tempyear++; }
-	prints(sid, "<A HREF=%s/calendar/mlist?&status=%d&month=%d&year=%d", sid->dat->in_ScriptName, status, tempmonth, tempyear);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&gt;&gt;</A>");
-	prints(sid, "</B></FONT><BR>\n");
-	prints(sid, "<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Sunday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid''><FONT COLOR=%s>Monday</FONT></TH>", config->colour_th, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Tuesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Wednesday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Thursday</FONT></TH>", config->colour_thtext, config->colour_thtext, config->colour_thtext);
-	prints(sid, "<TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Friday</FONT></TH><TH WIDTH=200 style='width:14%%; border-style:solid'><FONT COLOR=%s>Saturday</FONT></TH></TR>\n", config->colour_thtext, config->colour_thtext);
-	printdate=today.day-35-today.week;
-	unixdate=unixdate/86400-35-today.week;
-	while (printdate<-5) { printdate+=7; unixdate+=7; }
-	t=unixdate*86400;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	j=0;
-	for (i=printdate;i<dim[today.month-1]+1;i+=7) { j+=7; }
-	t=(unixdate+j)*86400;
-	t-=time_tzoffset(sid, t);
-	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=dblist_events(sid, posttime1, posttime2))<0) return;
-	if ((sqr2=sql_queryf(sid, "SELECT userid, groupid, username FROM gw_users WHERE groupid = %d ORDER BY userid ASC", groupid))<0) return;
-	for (i=printdate;i<dim[today.month-1]+1;i+=7) {
-		prints(sid, "<TR BGCOLOR=%s>\n", config->colour_fieldval);
-		for (j=0;j<7;j++) {
-			if (unixdate==now) {
-				prints(sid, "<TD BGCOLOR=#E0E0FF");
-			} else if ((printdate>0)&&(printdate<=dim[today.month-1])) {
-				prints(sid, "<TD BGCOLOR=%s", config->colour_fieldval);
-			} else {
-				prints(sid, "<TD BGCOLOR=#D0D0D0");
-			}
-			prints(sid, " VALIGN=TOP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, unixdate, status);
-			if (userid>0) prints(sid, "&userid=%d", userid);
-			if (groupid>0) prints(sid, "&groupid=%d", groupid);
-			prints(sid, "'\">");
-			t=unixdate*86400;
-			strftime(showtime, sizeof(showtime), "%d", gmtime(&t));
-			strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-			t-=time_tzoffset(sid, t);
-			prints(sid, "<NOBR><FONT SIZE=2><A HREF=%s/calendar/list?day=%d&status=%d", sid->dat->in_ScriptName, unixdate, status);
-			if (userid>0) prints(sid, "&userid=%d", userid);
-			if (groupid>0) prints(sid, "&groupid=%d", groupid);
-			prints(sid, ">%s</A>", showtime);
-			if (strlen(htview_holiday(posttime1))>0) {
-				prints(sid, "</FONT><FONT SIZE=1 STYLE='font-size:10px'> - %s", htview_holiday(posttime1));
-			}
-			prints(sid, "</FONT></NOBR><BR>");
-			lines=3;
-			while (index<sql_numtuples(sqr)) {
-				t2=time_sql2unix(sql_getvalue(sqr, index, 1));
-				if (t2<t) { index++; continue; }
-				if (t2>=t+86400) break;
-				if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, index, 3)))) { index++; continue; }
-				if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, index, 4)))) { index++; continue; }
-				colour="#000000";
-				if (groupid>0) {
-					for (k=0;k<sql_numtuples(sqr2);k++) {
-						if (atoi(sql_getvalue(sqr, index, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-						if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
-						break;
-					}
-					if (k==sql_numtuples(sqr2)) { index++; continue; }
-					if (k<colours) {
-						colour=colourkey[k];
-					}
-				}
-				t2+=time_tzoffset(sid, time_sql2unix(sql_getvalue(sqr, index, 1)));
-				prints(sid, "<FONT SIZE=1 STYLE='font-size:10px'><NOBR>%s ", time_unix2lotimetext(sid, t2));
-				prints(sid, "<A HREF=%s/calendar/view?eventid=%d TITLE=\"", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, index, 0)));
-				if (groupid>0) {
-					prints(sid, "[%s] %s\" STYLE='color:%s'>", sql_getvalue(sqr2, k, 2), sql_getvalue(sqr, index, 5), colour);
-				} else {
-					prints(sid, "%s\">", sql_getvalue(sqr, index, 5));
-				}
-				prints(sid, "%-.15s", str2html(sid, sql_getvalue(sqr, index, 5)));
-				if (strlen(sql_getvalue(sqr, index, 5))>15) prints(sid, "..");
-				prints(sid, "</A>&nbsp;</NOBR></FONT><BR>\n");
-				index++;
-				if (lines>0) lines--;
-			}
-			while (lines>0) { prints(sid, "<BR>"); lines--; }
-			prints(sid, "</TD>\n");
-			printdate++;
-			unixdate++;
-		}
-		prints(sid, "</TR>\n");
-	}
-	prints(sid, "</TABLE>\n");
-	prints(sid, "</CENTER>\n");
-	prints(sid, "</CENTER>\n");
-	if ((groupid>0)&&(sql_numtuples(sqr2)>0)) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=%s><TH STYLE='border-style:solid'><FONT COLOR=%s>&nbsp;Colour Key&nbsp;</FONT></TH></TR>", config->colour_th, config->colour_thtext);
-		prints(sid, "<TR BGCOLOR=%s><TD NOWRAP STYLE='border-style:solid'>", config->colour_fieldval);
-		prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\r\n");
-		j=0;
-		for (i=0;i<sql_numtuples(sqr2);i++) {
-			if (j==0) prints(sid, "<TR>");
-			colour="#000000";
-			if (i<colours) colour=colourkey[i];
-			prints(sid, "<TD style='width:20%%'><FONT COLOR=%s><NOBR>%s</NOBR></FONT></TD>\n", colour, sql_getvalue(sqr2, i, 2));
-			j++;
-			if (j>4) {
-				prints(sid, "</TR>\n");
-				j=0;
-			}
-		}
-		prints(sid, "</TABLE>");
-		prints(sid, "</TD></TR></TABLE>");
-	}
-	sql_freeresult(sqr2);
-	sql_freeresult(sqr);
-	return;
-}
-
-void calendarlistyear(CONN *sid)
-{
-	char *ptemp;
-	char posttime1[100];
-	struct tm today;
-	int dim[12]={ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-	int tempyear;
-	int i, j;
-	int status;
-	int userid=-1;
-	int groupid=-1;
-	time_t unixdate;
-	time_t t;
-
-	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
-		return;
-	}
-	memset(posttime1, 0, sizeof(posttime1));
-	if (getgetenv(sid, "YEAR")!=NULL) {
-		today.tm_year=atoi(getgetenv(sid, "YEAR"));
-		if (today.tm_year<1970) {
-			today.tm_year=1970;
-		} else if (today.tm_year>2037) {
-			today.tm_year=2037;
-		}
-		snprintf(posttime1, sizeof(posttime1)-1, "%d-01-01", today.tm_year);
-		unixdate=time_sql2unix(posttime1)/86400;
-		if (unixdate<0) unixdate=0;
-		if (unixdate>24836) unixdate=24836;
-		unixdate*=86400;
-	} else {
-		t=time(NULL)+time_tzoffset(sid, time(NULL));
-		strftime(posttime1, sizeof(posttime1), "%Y-01-01", gmtime(&t));
-		unixdate=time_sql2unix(posttime1)/86400;
-		if (unixdate<0) unixdate=0;
-		if (unixdate>24836) unixdate=24836;
-		unixdate*=86400;
-	}
-	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
-		status=atoi(ptemp);
-	} else {
-		status=0;
-	}
-	if ((ptemp=getgetenv(sid, "USERID"))!=NULL) {
-		userid=atoi(ptemp);
-	} else if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
-		groupid=atoi(ptemp);
-	} else {
-		userid=sid->dat->user_uid;
-	}
-	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&unixdate));
-	sscanf(posttime1, "%d %d %d %d", &today.tm_wday, &today.tm_mday, &today.tm_mon, &today.tm_year);
-	if ((today.tm_year/4.0f)==(int)(today.tm_year/4)) {
-		if ((today.tm_year/400.0f)==(int)(today.tm_year/400)) {
-			dim[1]++;
-		} else if ((today.tm_year/100.0f)!=(int)(today.tm_year/100)) {
-			dim[1]++;
-		}
-	}
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
-	htselect_eventfilter(sid, userid, groupid, "/calendar/ylist");
-	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\n</TR></TABLE>\r\n");
-	tempyear=today.tm_year-1;
-	prints(sid, "<CENTER>\n<FONT COLOR=#000000><B><A HREF=%s/calendar/ylist?status=%d&year=%d", sid->dat->in_ScriptName, status, tempyear);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&lt;&lt;</A>");
-	prints(sid, " Calendar Events for %d ", today.tm_year);
-	tempyear=today.tm_year+1;
-	prints(sid, "<A HREF=%s/calendar/ylist?status=%d&year=%d", sid->dat->in_ScriptName, status, tempyear);
-	if (userid>0) prints(sid, "&userid=%d", userid);
-	if (groupid>0) prints(sid, "&groupid=%d", groupid);
-	prints(sid, ">&gt;&gt;</A>");
-	prints(sid, "</B></FONT><BR>\n");
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\n");
-	for (i=0;i<4;i++) {
-		prints(sid, "<TR>\n");
-		for (j=0;j<3;j++) {
-			prints(sid, "<TD VALIGN=TOP>\n");
-			calendarmini2(sid, unixdate, userid, groupid);
-			unixdate+=(dim[j*i+i]*86400);
-			prints(sid, "</TD>\n");
-		}
-		prints(sid, "</TR>\n");
-	}
-	prints(sid, "</TABLE>\n");
-	return;
 }
 
 /****************************************************************************
@@ -1393,14 +774,16 @@ void mod_main(CONN *sid)
 		calendaredit(sid, NULL);
 	else if (strncmp(sid->dat->in_RequestURI, "/calendar/view", 14)==0)
 		calendarview(sid);
-	else if (strncmp(sid->dat->in_RequestURI, "/calendar/listweek", 18)==0)
-		calendarlistweek(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/calendar/list", 14)==0)
 		calendarlistday(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/calendar/wlist", 15)==0)
+		calendarlistweek(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/calendar/mlist", 15)==0)
 		calendarlistmonth(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/calendar/ylist", 15)==0)
 		calendarlistyear(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/calendar/availmap", 18)==0)
+		calendar_availmap(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/calendar/save", 14)==0)
 		calendarsave(sid);
 	htpage_footer(sid);
@@ -1409,21 +792,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_calendar",		// mod_name
+		2,			// mod_submenu
+		"CALENDAR",		// mod_menuname
+		"/calendar/list",	// mod_menuuri
+		"calendar",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/calendar/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=2;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_calendar");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "CALENDAR");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calendar");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/calendar/list");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/calendar/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

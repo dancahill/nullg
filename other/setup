@@ -1,190 +1,135 @@
 #!/bin/sh
-RUN_AS_USER="groupware"
-RUN_AS_GROUP="groupware"
-INSTALL_PATH="/usr/local/groupware"
-SERVER_LOGLEVEL="1"
-SERVER_HOSTNAME="localhost"
-SERVER_PORT="4110"
-SQL_TYPE="SQLITE"
-SQL_HOSTNAME="localhost"
-SQL_DBNAME="groupware"
-SQL_USERNAME="groupware"
-SQL_PASSWORD="password"
+MAIN_TITLE="NullLogic Groupware Setup v1.2.4"
+HAVE_CONFIG="no"
+HAVE_DIALOG="no"
+LOGFILE="/tmp/nullgw_install-`date +%s`.log"
+DEFAULT_PATH="/usr/local/nullgroupware"
+TMP=/tmp
 
-clear 2>/dev/null
-echo "NullLogic Groupware Configuration"
-echo "================================="
-# Get config information
-echo -n "Install to what directory? [$INSTALL_PATH]: "
-read TMP
-if [ ! -z $TMP ]; then
-	INSTALL_PATH=$TMP
-fi
+SERVER_DIR_BASE="$DEFAULT_PATH"
 
+do_copying() {
+	if [ "$HAVE_DIALOG" = "yes" ]; then
+		echo "Copying files to $SERVER_DIR_BASE ... "	1>>$LOGFILE 2>>$LOGFILE
+	fi
+	mkdir -p $SERVER_DIR_BASE/bin			1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/cgi-bin		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/etc			1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/lib			1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var			1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/backup		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/db		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/files		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/htdocs		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/log		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/mail		1>>$LOGFILE 2>>$LOGFILE
+	mkdir -p $SERVER_DIR_BASE/var/tmp		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR bin/* $SERVER_DIR_BASE/bin		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR cgi-bin/* $SERVER_DIR_BASE/cgi-bin	1>>$LOGFILE 2>>$LOGFILE
+	cp -pR etc/* $SERVER_DIR_BASE/etc		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR lib/* $SERVER_DIR_BASE/lib		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR var/* $SERVER_DIR_BASE/var		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR COPYING $SERVER_DIR_BASE			1>>$LOGFILE 2>>$LOGFILE
+	cp -pR COPYRIGHT.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
+	cp -pR README.txt $SERVER_DIR_BASE		1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/db/groupware.db	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/http-access.log	1>>$LOGFILE 2>>$LOGFILE
+	touch $SERVER_DIR_BASE/var/log/http-error.log	1>>$LOGFILE 2>>$LOGFILE
+	chmod 0644 $SERVER_DIR_BASE/COPYING		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0644 $SERVER_DIR_BASE/COPYRIGHT.txt	1>>$LOGFILE 2>>$LOGFILE
+	chmod 0644 $SERVER_DIR_BASE/README.txt		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0755 $SERVER_DIR_BASE/bin			1>>$LOGFILE 2>>$LOGFILE
+	chmod 0755 $SERVER_DIR_BASE/bin/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/etc			1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/etc/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0755 $SERVER_DIR_BASE/lib			1>>$LOGFILE 2>>$LOGFILE
+	chmod 0644 $SERVER_DIR_BASE/lib/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var			1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/backup		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/db		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/var/db/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/files		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0755 $SERVER_DIR_BASE/var/htdocs		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/log		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0600 $SERVER_DIR_BASE/var/log/*		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/mail		1>>$LOGFILE 2>>$LOGFILE
+	chmod 0700 $SERVER_DIR_BASE/var/tmp		1>>$LOGFILE 2>>$LOGFILE
+	if [ "$HAVE_DIALOG" = "yes" ]; then
+		echo "done." 1>>$LOGFILE 2>>$LOGFILE
+	fi
+}
 
-if [ ! -r "$INSTALL_PATH/etc/groupware.cfg" ]; then
-	echo -n "Will you be using SQLITE, MYSQL or PGSQL [$SQL_TYPE]: "
+setup_console() {
+	clear 2>/dev/null
+	echo "NullLogic Groupware Configuration"
+	echo "================================="
+	echo -n "Install to what directory? [$SERVER_DIR_BASE]: "
 	read TMP
 	if [ ! -z $TMP ]; then
-		SQL_TYPE=$TMP
+		SERVER_DIR_BASE=$TMP
 	fi
-	case "$SQL_TYPE" in
-		MYSQL)
-		SQL_PORT="3306"
-		SQL_USERNAME="mysql"
-		;;
-		PGSQL)
-		SQL_PORT="5432"
-		SQL_USERNAME="postgres"
-		;;
-		SQLITE)
-		SQL_PORT="0"
-		SQL_USERNAME=""
-		;;
-		*)
-		echo "Unknown SQL server type $SQL_TYPE. Exiting."
-		exit
-		;;
-	esac
-
-	case "$SQL_TYPE" in
-		SQLITE)
-		SQL_PORT="0"
-		SQL_USERNAME=""
-		SQL_HOSTNAME=""
-		SQL_DBNAME=""
-		SQL_USERNAME=""
-		SQL_PASSWORD=""
-		;;
-		*)
-		echo -n "What is the host name of the $SQL_TYPE server? [$SQL_HOSTNAME]: "
-		read TMP
-		if [ ! -z $TMP ]; then
-			SQL_HOSTNAME=$TMP
-		fi
-		echo -n "What TCP/IP port is the $SQL_TYPE server listening on? [$SQL_PORT]: "
-		read TMP
-		if [ ! -z $TMP ]; then
-			SQL_PORT=$TMP
-		fi
-		echo -n "What is the name of the database NullLogic Groupware should use? [$SQL_DBNAME]: "
-		read TMP
-		if [ ! -z $TMP ]; then
-			SQL_DBNAME=$TMP
-		fi
-		echo -n "What username should NullLogic Groupware use to access the database? [$SQL_USERNAME]: "
-		read TMP
-		if [ ! -z $TMP ]; then
-			SQL_USERNAME=$TMP
-		fi
-		echo -n "What is the password for the '$SQL_USERNAME' account? [$SQL_PASSWORD]: "
-		read TMP
-		if [ ! -z $TMP ]; then
-			SQL_PASSWORD=$TMP
-		fi
-		;;
-	esac
-fi
-
-# Copy files to destination
-echo -n "Copy NullLogic Groupware files to $INSTALL_PATH..."
-mkdir -p $INSTALL_PATH/bin
-mkdir -p $INSTALL_PATH/cgi-bin
-mkdir -p $INSTALL_PATH/etc
-mkdir -p $INSTALL_PATH/lib
-mkdir -p $INSTALL_PATH/var
-mkdir -p $INSTALL_PATH/var/backup
-mkdir -p $INSTALL_PATH/var/db
-mkdir -p $INSTALL_PATH/var/files
-mkdir -p $INSTALL_PATH/var/htdocs
-mkdir -p $INSTALL_PATH/var/log
-mkdir -p $INSTALL_PATH/var/mail
-mkdir -p $INSTALL_PATH/var/tmp
-cp -a bin/* $INSTALL_PATH/bin
-cp -a cgi-bin/* $INSTALL_PATH/cgi-bin
-cp -a etc/* $INSTALL_PATH/etc
-cp -a lib/* $INSTALL_PATH/lib
-cp -a var/* $INSTALL_PATH/var
-cp -a COPYING $INSTALL_PATH
-cp -a COPYRIGHT.txt $INSTALL_PATH
-cp -a README.txt $INSTALL_PATH
-touch $INSTALL_PATH/var/db/groupware.db
-touch $INSTALL_PATH/var/log/access.log
-touch $INSTALL_PATH/var/log/error.log
-
-if [ ! -r "$INSTALL_PATH/etc/groupware.cfg" ]; then
-	# Write groupware.cfg configuration file
-	echo -e "# This file contains settings for NullLogic Groupware."> $INSTALL_PATH/etc/groupware.cfg
-	echo -e ""							>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.BASE   = \"$INSTALL_PATH\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.BIN    = \"$INSTALL_PATH/bin\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.CGI    = \"$INSTALL_PATH/cgi-bin\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.ETC    = \"$INSTALL_PATH/etc\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.LIB    = \"$INSTALL_PATH/lib\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.DIR.VAR    = \"$INSTALL_PATH/var\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.LOGLEVEL   = \"1\""				>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.HOSTNAME   = \"$SERVER_HOSTNAME\""		>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.PORT       = \"4110\""				>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.MAXCONN    = \"50\""				>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SERVER.MAXIDLE    = \"300\""				>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.TYPE          = \"$SQL_TYPE\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.HOSTNAME      = \"$SQL_HOSTNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.PORT          = \"$SQL_PORT\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.DBNAME        = \"$SQL_DBNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.USERNAME      = \"$SQL_USERNAME\""			>> $INSTALL_PATH/etc/groupware.cfg
-	echo -e "SQL.PASSWORD      = \"$SQL_PASSWORD\""			>> $INSTALL_PATH/etc/groupware.cfg
-	chmod 0600 $INSTALL_PATH/etc/groupware.cfg
-fi
-
-chmod 0755 $INSTALL_PATH -R
-chmod 0644 $INSTALL_PATH/COPYING
-chmod 0644 $INSTALL_PATH/COPYRIGHT.txt
-chmod 0644 $INSTALL_PATH/README.txt
-chmod 0755 $INSTALL_PATH/bin/*
-chmod 0755 $INSTALL_PATH/cgi-bin/*
-chmod 0700 $INSTALL_PATH/etc
-chmod 0600 $INSTALL_PATH/etc/*
-chmod 0644 $INSTALL_PATH/lib/*
-chmod 0700 $INSTALL_PATH/var
-chmod 0600 $INSTALL_PATH/var/db/*
-chmod 0600 $INSTALL_PATH/var/files/*
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/css/*
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/help/*
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/images/*
-chmod 0755 $INSTALL_PATH/var/htdocs/groupware/images/menu2
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/images/menu2/*
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/javascript/*
-chmod 0644 $INSTALL_PATH/var/htdocs/groupware/sounds/*
-chmod 0600 $INSTALL_PATH/var/log/*
-chmod 0700 $INSTALL_PATH/var/mail
-
-useradd -c "NullLogic Groupware" -d $INSTALL_PATH/bin $RUN_AS_USER 2>/dev/null
-groupadd $RUN_AS_GROUP 2>/dev/null
-chown $RUN_AS_USER.$RUN_AS_GROUP $INSTALL_PATH/etc -R
-chown $RUN_AS_USER.$RUN_AS_GROUP $INSTALL_PATH/var -R
-
-echo "done."
-echo
-echo "Press enter to read the README file."
-read TMP
-less README.txt
-clear 2>/dev/null
-echo "In order to complete the install, you will need to manually create the"
-echo "SQL database $SQL_DBNAME as follows."
-case "$SQL_TYPE" in
-	MYSQL)
-	echo "  mysqladmin create $SQL_DBNAME"
-	;;
-	PGSQL)
-	echo "  createdb $SQL_DBNAME"
-	;;
-	*)
+	# Copy files to destination
+	echo ""
+	echo -n "Copying files to $SERVER_DIR_BASE ... "
+	do_copying
+	cat $LOGFILE
+	echo "done."
 	echo
-	;;
-esac
-echo "After creating the database, please run $INSTALL_PATH/bin/dbutil to"
-echo "initialise the database."
+	echo "Press enter to read the README file."
+	read TMP
+}
+
+setup_dialog() {
+	if [ "`whoami`" != "root" ]; then
+		dialog --backtitle "$MAIN_TITLE" --title "WARNING" --yesno "
+NullLogic Groupware should be installed by root.
+
+Do you want to continue with the installation?" 12 70
+		FLAG=$?
+		if [ ! $FLAG = 0 -a ! $FLAG = 1 ]; then
+			exit 1
+		fi
+		if [ $FLAG = 0 ]; then # yes
+			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --msgbox "\nYou've been warned." 12 70
+		else
+			clear 2>/dev/null
+			exit
+		fi
+	fi
+	while [ 0 ]; do
+		dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --inputbox "
+Install to what directory?
+" 10 70 $SERVER_DIR_BASE 2> $TMP/gw_tmpout
+		if [ $? = 1 -o $? = 255 ]; then
+			rm -f $TMP/tempmsg $TMP/gw_tmpout
+			exit
+		fi
+		SERVER_DIR_BASE="`cat $TMP/gw_tmpout`"
+		rm -f $TMP/tempmsg $TMP/gw_tmpout
+		if [ ! "$SERVER_DIR_BASE" = "" ]; then
+			break;
+		fi
+	done
+	dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE SETUP" --infobox "\nCopying files to $SERVER_DIR_BASE ..." 5 50
+	do_copying
+	clear 2>/dev/null
+}
+
+rm -f $LOGFILE
+touch $LOGFILE
+if [ -x /bin/dialog ]; then
+	HAVE_DIALOG="yes"
+	setup_dialog
+else
+	setup_console
+fi
+rm -f $LOGFILE
+cd $SERVER_DIR_BASE ; less README.txt
+cd $SERVER_DIR_BASE/bin ; ./configure
+
+echo "To reconfigure the server, run 'cd $SERVER_DIR_BASE/bin;./configure'."
 echo
-echo "To start the server, run '$INSTALL_PATH/bin/rc.groupware'."
+echo "To start the server, run 'cd $SERVER_DIR_BASE/bin;./rc.groupware start'."
 echo
-cd ${INSTALL_PATH}/bin
+
+exit

@@ -38,8 +38,8 @@ void adminuseredit(CONN *sid, REC_USER *user)
 			userid=0;
 			dbread_user(sid, 2, 0, &userrec);
 		} else {
-			if (getgetenv(sid, "USERID")==NULL) return;
-			userid=atoi(getgetenv(sid, "USERID"));
+			if ((ptemp=getgetenv(sid, "USERID"))==NULL) return;
+			userid=atoi(ptemp);
 			if (dbread_user(sid, 2, userid, &userrec)!=0) {
 				prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 				return;
@@ -67,12 +67,12 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<INPUT TYPE=hidden NAME=userid VALUE='%d'>\n", user->userid);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
-	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(2)>USER</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(3)>NAME</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(4)>ADDRESS</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(5)>PREFERENCES</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A HREF=javascript:showpage(6)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>USER</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>NAME</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>ADDRESS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=javascript:showpage(5)>PREFERENCES</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=javascript:showpage(6)>PERMISSIONS</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
@@ -756,6 +756,7 @@ void adminusersave(CONN *sid)
 void adminusertimeedit(CONN *sid)
 {
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+	char *ptemp;
 	char gavailability[170];
 	char uavailability[170];
 	REC_USER user;
@@ -768,8 +769,8 @@ void adminusertimeedit(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "USERID")==NULL) return;
-	userid=atoi(getgetenv(sid, "USERID"));
+	if ((ptemp=getgetenv(sid, "USERID"))==NULL) return;
+	userid=atoi(ptemp);
 	if (dbread_user(sid, 2, userid, &user)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", userid);
 		return;
@@ -879,6 +880,7 @@ void adminusertimeedit(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
+	prints(sid, "<BR>[<A HREF=%s/admin/grouptimeedit?groupid=%d>Group Availability</A>]\n", sid->dat->in_ScriptName, user.groupid);
 	prints(sid, "</FORM>\n");
 	prints(sid, "</CENTER>\n");
 	return;

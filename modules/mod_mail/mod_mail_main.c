@@ -18,6 +18,11 @@
 #include "mod_stub.h"
 #include "mod_mail.h"
 
+static const char *order_by[]={
+	"hdr_date DESC", "hdr_date ASC", "hdr_from DESC", "hdr_from ASC",
+	"hdr_subject DESC", "hdr_subject ASC", "size DESC", "size ASC"
+};
+
 void wmnotice(CONN *sid)
 {
 	int i;
@@ -26,7 +31,7 @@ void wmnotice(CONN *sid)
 	int sqr1, sqr2;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
 		return;
 	}
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Groupware E-Mail Notice</FONT></B>\n");
@@ -54,22 +59,19 @@ void wmnotice(CONN *sid)
 void wmloginform(CONN *sid)
 {
 	char msgto[512];
+	char *ptemp;
 	int sqr;
 
 	memset(msgto, 0, sizeof(msgto));
-	if (getgetenv(sid, "MSGTO")!=NULL) {
-		strncpy(msgto, getgetenv(sid, "MSGTO"), sizeof(msgto)-1);
+	if ((ptemp=getgetenv(sid, "MSGTO"))!=NULL) {
+		strncpy(msgto, ptemp, sizeof(msgto)-1);
 	}
-	/* don't ask...  heh..  it was either this or a goto */
-	for (;;) {
-		if ((sqr=sql_queryf(sid, "SELECT popusername, poppassword FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) break;
-		if (sql_numtuples(sqr)==1) {
-			strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->username)-1);
-			strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 1)), sizeof(sid->dat->wm->password)-1);
-		}
-		sql_freeresult(sqr);
-		break;
+	if ((sqr=sql_queryf(sid, "SELECT popusername, poppassword FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
+	if (sql_numtuples(sqr)==1) {
+		strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->username)-1);
+		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 1)), sizeof(sid->dat->wm->password)-1);
 	}
+	sql_freeresult(sqr);
 	prints(sid, "<BR><CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/sync AUTOCOMPLETE=OFF NAME=wmlogin>\n", sid->dat->in_ScriptName);
 	prints(sid, "<TABLE CELLPADDING=0 CELLSPACING=0 BORDER=0>\n");
@@ -92,6 +94,7 @@ void wmlogout(CONN *sid)
 	memset(timebuffer, 0, sizeof(timebuffer));
 	snprintf(timebuffer, sizeof(timebuffer)-1, "%s", time_unix2sql(sid, time(NULL)));
 	sql_updatef(sid, "UPDATE gw_mailaccounts SET obj_mtime = '%s',  poppassword = '' WHERE obj_uid = %d AND mailaccountid = %d", timebuffer, sid->dat->user_uid, sid->dat->user_mailcurrent);
+	wmloginform(sid);
 	return;
 }
 
@@ -106,7 +109,7 @@ void webmailraw(CONN *sid)
 
 	send_header(sid, 1, 200, "OK", "1", "text/plain", -1, -1);
 	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) msgnum=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, status, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, status FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		prints(sid, "No such message.<BR>");
 		sql_freeresult(sqr);
@@ -118,221 +121,231 @@ void webmailraw(CONN *sid)
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {
+		prints(sid, "Message body not found.<BR>");
 		return;
 	}
 	prints(sid, "<PRE>\r\n");
+	prints(sid, "<HR>\r\n");
 	for (;;) {
 		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
 		if (strcmp(inbuffer, "")==0) break;
 		printht(sid, "%s\r\n", inbuffer);
 	}
-	prints(sid, "\r\n");
+	prints(sid, "<HR>\r\n");
 	for (;;) {
 		wmffgets(sid, inbuffer, sizeof(inbuffer)-1, &fp);
 		if (fp==NULL) break;
 		printht(sid, "%s\r\n", inbuffer);
 	}
+	prints(sid, "<HR>\r\n");
 	prints(sid, "</PRE>\r\n");
 	return;
 }
 
 void webmaillist(CONN *sid)
 {
+	wmheader header;
 	char *ptemp;
 	char curdate[40];
-	char fromtemp[26];
-	char msgsize[20];
-	char sortval[40];
-	char sortorder[40];
+	char searchstring[256];
+	short int neworder;
+	short int order=0;
 	int folderid;
-	int msize;
 	int nummessages;
 	int offset=0;
 	int i;
 	int sqr;
 	time_t unixdate;
 
-	memset(sortorder, 0, sizeof(sortorder));
-	memset(sortval, 0, sizeof(sortval));
-	if ((ptemp=getgetenv(sid, "ORDERBY"))!=NULL) {
-		snprintf(sortval, sizeof(sortval)-1, "%s", ptemp);
-	}
-	if (strcasecmp(sortval, "from_a")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_from ASC");
-	} else if (strcasecmp(sortval, "from_d")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_from DESC");
-	} else if (strcasecmp(sortval, "sub_a")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_subject ASC");
-	} else if (strcasecmp(sortval, "sub_d")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_subject DESC");
-	} else if (strcasecmp(sortval, "date_a")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_date ASC");
-	} else if (strcasecmp(sortval, "date_d")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_date DESC");
-	} else if (strcasecmp(sortval, "size_a")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "size ASC");
-	} else if (strcasecmp(sortval, "size_d")==0) {
-		snprintf(sortorder, sizeof(sortorder)-1, "size DESC");
-	} else {
-		snprintf(sortorder, sizeof(sortorder)-1, "hdr_date ASC");
-		snprintf(sortval, sizeof(sortval)-1, "date_a");
-	}
+	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
+	if (order<0) order=0;
+	if (order>7) order=7;
 	if ((sqr=sql_queryf(sid, "SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-		prints(sid, "location.replace(\"%s/profile/maileditnew\");\n", sid->dat->in_ScriptName);
-		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/profile/maileditnew\">\n", sid->dat->in_ScriptName);
-		prints(sid, "</NOSCRIPT>\n");
+		prints(sid, "location.replace(\"%s/mail/accounts/editnew\");\n", sid->dat->in_ScriptName);
+		prints(sid, "// -->\n</SCRIPT>\n");
+		prints(sid, "<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/accounts/editnew\"></NOSCRIPT>\n", sid->dat->in_ScriptName);
 		sql_freeresult(sqr);
 		return;
 	}
 	sql_freeresult(sqr);
-	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
-		if (sql_updatef(sid, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->user_username)==0) {
-			sid->dat->user_mailcurrent=atoi(ptemp);
-		}
-	}
 	if ((ptemp=getgetenv(sid, "FOLDERID"))!=NULL) {
 		folderid=atoi(ptemp);
 	} else {
 		folderid=1;
 	}
-	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
-	if (offset<0) offset=0;
+	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
+		if (sid->dat->user_mailcurrent!=atoi(ptemp)) {
+			sql_updatef(sid, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->user_username);
+			sid->dat->user_mailcurrent=atoi(ptemp);
+			folderid=1;
+		}
+	}
+/*
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
+	prints(sid, "<FORM METHOD=GET NAME=mailjump ACTION=%s/mail/list onChange=\"mailjump()\">\r\n", sid->dat->in_ScriptName);
+	prints(sid, "<TD ALIGN=LEFT>\r\n");
+	htselect_mailjump(sid, sid->dat->user_mailcurrent, folderid);
+	prints(sid, "</TD></FORM>\r\n");
+	prints(sid, "<TD ALIGN=RIGHT>&nbsp;");
+	prints(sid, "</TD></TR></TABLE>\r\n");
+*/
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailmbox ACTION=%s/mail/list onChange=\"mailmbox()\">\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
-	htselect_mailfolder(sid, folderid);
+	htselect_mailfolderjump(sid, folderid);
 	prints(sid, "</TD></FORM>\r\n");
 	prints(sid, "<FORM METHOD=GET NAME=mailjump ACTION=%s/mail/list onChange=\"mailjump()\">\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<TD ALIGN=RIGHT>\r\n");
 	htselect_mailjump(sid, sid->dat->user_mailcurrent);
 	prints(sid, "</TD></FORM></TR></TABLE>\r\n");
+
 	flushbuffer(sid);
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d AND folder = '%d' AND status != 'd' ORDER BY %s", sid->dat->user_uid, sid->dat->user_mailcurrent, folderid, sortorder))<0) return;
+	snprintf(searchstring, sizeof(searchstring)-1, "%s", search_makestring(sid));
+	if ((sqr=search_doquery(sid, order_by[order], folderid))<0) return;
 	nummessages=sql_numtuples(sqr);
 	if (nummessages<1) {
-		prints(sid, "<CENTER><B>You have no messages in this mailbox</B></CENTER><BR>\n");
+		prints(sid, "<BR><CENTER><B>You have no messages in this mailbox</B></CENTER><BR>\n");
 		sql_freeresult(sqr);
 		return;
 	}
-	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", sid->dat->user_mailcurrent, sid->dat->user_uid);
-	prints(sid, "<CENTER>\n");
-	if (nummessages>sid->dat->user_maxlist) {
-		if (offset>0) {
-			prints(sid, "[<A HREF=%s/mail/list?offset=%d>Previous Page</A>]", sid->dat->in_ScriptName, offset-sid->dat->user_maxlist);
-		} else {
-			prints(sid, "[Previous Page]");
-		}
-		if (offset+sid->dat->user_maxlist<nummessages) {
-			prints(sid, "[<A HREF=%s/mail/list?offset=%d>Next Page</A>]", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist);
-		} else {
-			prints(sid, "[Next Page]");
-		}
-		prints(sid, "<BR>\r\n");
-	}
+	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
+	if (offset>nummessages-sid->dat->user_maxlist) offset=nummessages-sid->dat->user_maxlist;
+	if (offset<0) offset=0;
 	prints(sid, "<script language='JavaScript'>\n<!--\n");
-	prints(sid, "function CheckAll()\n{\n");
+	prints(sid, "function CheckAll(x)\n{\n");
 	prints(sid, "	for (var i=0;i<document.webmail.elements.length;i++) {\n");
 	prints(sid, "		var e=document.webmail.elements[i];\n");
-	prints(sid, "		if (e.name!='allbox') {\n");
-	prints(sid, "			e.checked=document.webmail.allbox.checked;\n");
-	prints(sid, "		}\n");
-	prints(sid, "	}\n");
-	prints(sid, "}\n");
-	prints(sid, "function CheckAll2()\n{\n");
-	prints(sid, "	for (var i=0;i<document.webmail.elements.length;i++) {\n");
-	prints(sid, "		var e=document.webmail.elements[i];\n");
-	prints(sid, "		if (e.name!='allbox2') {\n");
+	prints(sid, "		if ((x==1)&&(e.name!='allbox1')) {\n");
+	prints(sid, "			e.checked=document.webmail.allbox1.checked;\n");
+	prints(sid, "		} else if ((x==2)&&(e.name!='allbox2')) {\n");
 	prints(sid, "			e.checked=document.webmail.allbox2.checked;\n");
 	prints(sid, "		}\n");
 	prints(sid, "	}\n");
 	prints(sid, "}\n//-->\n</script>\n");
+	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", sid->dat->user_mailcurrent, sid->dat->user_uid);
+	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<FORM METHOD=POST NAME=webmail ACTION=%s/mail/move%s>\n", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=wmread":"");
-	prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox onclick='CheckAll();'>");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"Delete\">\n");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"Move to\"><SELECT NAME=dest1>\n");
-	htselect_mailfolder2(sid, 0);
-	prints(sid, "</SELECT></NOBR></TD>");
-	i=nummessages-offset-sid->dat->user_maxlist+1;
-	if (i<1) i=1;
-	prints(sid, "<TD ALIGN=RIGHT NOWRAP>Listing %d-%d of %d</TD></TR>\n", nummessages-offset, i, nummessages);
+	if (searchstring[0]=='\0') {
+		prints(sid, "<FORM METHOD=POST NAME=webmail ACTION=%s/mail/move%s>\n", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=wmread":"");
+		prints(sid, "<INPUT TYPE=hidden NAME=offset VALUE=%d>\n", offset);
+		prints(sid, "<INPUT TYPE=hidden NAME=order VALUE=%d>\n", order);
+	}
+	if (searchstring[0]=='\0') {
+		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox1 onclick='CheckAll(1);'>");
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest1>\n", MOD_MAIL_MOVETO);
+		htselect_mailfolder(sid, 0, 1);
+		prints(sid, "</SELECT></NOBR></TD>");
+	} else {
+		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP>&nbsp;</TD>");
+	}
+	prints(sid, "<TD ALIGN=RIGHT NOWRAP><B>");
+	if (nummessages>sid->dat->user_maxlist) {
+		if (offset>0) {
+			i=offset-sid->dat->user_maxlist;
+			if (i<0) i=0;
+			prints(sid, "<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>&lt;&lt;</A>", sid->dat->in_ScriptName, folderid, i, order, searchstring);
+		} else {
+			prints(sid, "&lt;&lt;");
+		}
+		prints(sid, " Listing %d-%d of %d ", offset+1, offset+sid->dat->user_maxlist, nummessages);
+		if (offset+sid->dat->user_maxlist<nummessages) {
+			i=offset+sid->dat->user_maxlist;
+			if (i>nummessages-sid->dat->user_maxlist) i=nummessages-sid->dat->user_maxlist;
+			prints(sid, "<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>&gt;&gt;</A>", sid->dat->in_ScriptName, folderid, i, order, searchstring);
+		} else {
+			prints(sid, "&gt;&gt;");
+		}
+	} else {
+		prints(sid, "Listing %d-%d of %d", offset+1, nummessages, nummessages);
+	}
+	prints(sid, "</B></TD></TR>\n");
 	prints(sid, "<TR><TD COLSPAN=2>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR BGCOLOR=%s>\n", config->colour_th);
-	prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
-	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&orderby=%s'\">", sid->dat->in_ScriptName, folderid, strcasecmp(sortval, "from_d")==0?"from_a":"from_d");
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&orderby=%s\"><FONT COLOR=%s>From</FONT></A>&nbsp;</TH>\r\n", folderid, strcasecmp(sortval, "from_d")==0?"from_a":"from_d", config->colour_thtext);
-	prints(sid, "<TH ALIGN=LEFT WIDTH=100%% NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&orderby=%s'\">", sid->dat->in_ScriptName, folderid, strcasecmp(sortval, "sub_d")==0?"sub_a":"sub_d");
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&orderby=%s\"><FONT COLOR=%s>Subject</FONT></A>&nbsp;</TH>\r\n", folderid, strcasecmp(sortval, "sub_d")==0?"sub_a":"sub_d", config->colour_thtext);
-	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&orderby=%s'\">", sid->dat->in_ScriptName, folderid, strcasecmp(sortval, "date_a")==0?"date_d":"date_a");
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&orderby=%s\"><FONT COLOR=%s>Date</FONT></A>&nbsp;</TH>\r\n", folderid, strcasecmp(sortval, "date_a")==0?"date_d":"date_a", config->colour_thtext);
-	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&orderby=%s'\">", sid->dat->in_ScriptName, folderid, strcasecmp(sortval, "size_a")==0?"size_d":"size_a");
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&orderby=%s\"><FONT COLOR=%s>Size</FONT></A>&nbsp;</TH>\r\n", folderid, strcasecmp(sortval, "size_a")==0?"size_d":"size_a", config->colour_thtext);
+	if (searchstring[0]=='\0') {
+		prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
+	}
+	neworder=(order==3?2:3);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_FROM);
+	neworder=(order==5?4:5);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\" WIDTH=100%%>", sid->dat->in_ScriptName, folderid, neworder, searchstring);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_SUBJECT);
+	neworder=(order==0?1:0);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_DATE);
+	neworder=(order==6?7:6);
+	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\"><FONT COLOR=%s>%s</FONT></A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, config->colour_thtext, MOD_MAIL_SIZE);
 	prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	prints(sid, "</TR>\n");
-	for (i=nummessages-offset-1;(i>-1)&&(i>nummessages-offset-sid->dat->user_maxlist-1);i--) {
-		msize=atoi(sql_getvalue(sqr, i, 3));
-		if (msize>=1048576) {
-			snprintf(msgsize, sizeof(msgsize)-1, "%1.1f M", (float)msize/1048576.0);
-		} else {
-			snprintf(msgsize, sizeof(msgsize)-1, "%1.1f K", (float)msize/1024.0);
+	for (i=offset;(i<nummessages)&&(i<offset+sid->dat->user_maxlist);i++) {
+		dbread_getheader(sid, sqr, i, &header);
+		prints(sid, "<TR BGCOLOR=%s>", strcmp(header.status, "r")!=0?"#D0D0FF":config->colour_fieldval);
+		if (searchstring[0]=='\0') {
+			prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>\r\n", header.localid, header.uidl);
 		}
-		memset(fromtemp, 0, sizeof(fromtemp));
-		snprintf(fromtemp, sizeof(fromtemp)-1, "%s", DecodeRFC2047(sid, sql_getvalue(sqr, i, 5)));
-		if ((ptemp=strchr(fromtemp, '<'))!=NULL) *ptemp='\0';
-		if (strcmp(sql_getvalue(sqr, i, 2), "r")!=0) {
-			prints(sid, "<TR BGCOLOR=#D0D0FF>");
-		} else {
-			prints(sid, "<TR BGCOLOR=%s>", config->colour_fieldval);
-		}
-		prints(sid, "<TD NOWRAP STYLE='padding:0px; border-style:solid'><INPUT TYPE=checkbox NAME=%d VALUE=\"%s\"></TD>\r\n", atoi(sql_getvalue(sqr, i, 0)), sql_getvalue(sqr, i, 4));
-		prints(sid, "<TD NOWRAP TITLE=\"%s\" STYLE='border-style:solid'>", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 5))));
-		prints(sid, "%s&nbsp;</TD>\r\n", str2html(sid, fromtemp));
+		prints(sid, "<TD NOWRAP TITLE=\"%s\" STYLE='border-style:solid'>", str2html(sid, header.From));
+		prints(sid, "<SPAN STYLE='width:120px;overflow:hidden'>%s&nbsp;</SPAN></TD>\r\n", str2html(sid, header.FromName));
+		prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"");
 		if (sid->dat->user_menustyle>0) {
-			prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.parent.wmread.location.href='%s/mail/read?msg=%d'\" ", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "window.parent.wmread.location.href='%s/mail/read?msg=%d&order=%d%s'\" ", sid->dat->in_ScriptName, header.localid, order, searchstring);
 		} else {
-			prints(sid, "<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/read?msg=%d'\" ", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "window.location.href='%s/mail/read?msg=%d&order=%d%s'\" ", sid->dat->in_ScriptName, header.localid, order, searchstring);
 		}
-		prints(sid, "TITLE=\"%s\">", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
-		prints(sid, "<A HREF=%s/mail/read?msg=%d%s TITLE=\"%s\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_menustyle>0?" TARGET=wmread":"", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
-		prints(sid, "%.40s</A>&nbsp;</TD>\r\n", str2html(sid, DecodeRFC2047(sid, sql_getvalue(sqr, i, 9))));
-		unixdate=time_sql2unix(sql_getvalue(sqr, i, 8));
+		prints(sid, "TITLE=\"%s\"><SPAN STYLE='width:315px;overflow:hidden'>", str2html(sid, header.Subject));
+		prints(sid, "<A HREF=%s/mail/read?msg=%d&order=%d%s", sid->dat->in_ScriptName, header.localid, order, searchstring);
+		prints(sid, "%s TITLE=\"%s\">", sid->dat->user_menustyle>0?" TARGET=wmread":"", str2html(sid, header.Subject));
+		prints(sid, "%s</A>&nbsp;</SPAN></TD>\r\n", str2html(sid, header.Subject));
+		unixdate=time_sql2unix(header.Date);
 		unixdate+=time_tzoffset(sid, unixdate);
 		if (unixdate<0) unixdate=0;
 		strftime(curdate, 30, "%b %d, %Y %I:%M%p", gmtime(&unixdate));
 		curdate[18]=tolower(curdate[18]);
 		curdate[19]=tolower(curdate[19]);
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s</TD>\r\n", curdate);
-		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>%s</TD>\r\n", msgsize);
-		if (p_strcasestr(sql_getvalue(sqr, i, 11), "multipart/mixed")!=NULL) {
-			prints(sid, "<TD STYLE='border-style:solid'><IMG BORDER=0 SRC=/groupware/images/paperclip.gif HEIGHT=16 WIDTH=11 ALT='File Attachments'></TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'>");
+		if (header.size>=1048576) {
+			prints(sid, "%1.1f M", (float)header.size/1048576.0);
 		} else {
-			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;</TD>\r\n");
+			prints(sid, "%1.1f K", (float)header.size/1024.0);
 		}
-		prints(sid, "</TR>\r\n");
+		prints(sid, "</TD>\r\n<TD STYLE='border-style:solid'>");
+		if (p_strcasestr(header.contenttype, "multipart/mixed")!=NULL) {
+			prints(sid, "<IMG BORDER=0 SRC=/groupware/images/paperclip.gif HEIGHT=16 WIDTH=11 ALT='File Attachments'>");
+		} else {
+			prints(sid, "&nbsp;&nbsp;&nbsp;");
+		}
+		prints(sid, "</TD></TR>\r\n");
 	}
 	prints(sid, "</TABLE>\r\n</TD></TR>\r\n");
-	prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox2 onclick='CheckAll2();'>");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"Delete\">\n");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"Move to\"><SELECT NAME=dest2>\n");
-	htselect_mailfolder2(sid, 0);
-	prints(sid, "</SELECT></NOBR></TD>");
-	prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD></TR>\n");
-	prints(sid, "</FORM>\n");
+	if (searchstring[0]=='\0') {
+		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox2 onclick='CheckAll(2);'>");
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest2>\n", MOD_MAIL_MOVETO);
+		htselect_mailfolder(sid, 0, 1);
+		prints(sid, "</SELECT></NOBR></TD>");
+		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD></TR>\n");
+		prints(sid, "</FORM>\n");
+	}
 	prints(sid, "</TABLE>\n");
 	if (nummessages>sid->dat->user_maxlist) {
 		if (offset>0) {
-			prints(sid, "[<A HREF=%s/mail/list?offset=%d>Previous Page</A>]", sid->dat->in_ScriptName, offset-sid->dat->user_maxlist);
+			i=offset-sid->dat->user_maxlist;
+			if (i<0) i=0;
+			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, MOD_MAIL_PREVPAGE);
 		} else {
-			prints(sid, "[Previous Page]");
+			prints(sid, "[%s]", MOD_MAIL_PREVPAGE);
 		}
 		if (offset+sid->dat->user_maxlist<nummessages) {
-			prints(sid, "[<A HREF=%s/mail/list?offset=%d>Next Page</A>]", sid->dat->in_ScriptName, offset+sid->dat->user_maxlist);
+			i=offset+sid->dat->user_maxlist;
+			if (i>nummessages-sid->dat->user_maxlist) i=nummessages-sid->dat->user_maxlist;
+			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, MOD_MAIL_NEXTPAGE);
 		} else {
-			prints(sid, "[Next Page]");
+			prints(sid, "[%s]", MOD_MAIL_NEXTPAGE);
 		}
 	}
 	prints(sid, "</CENTER>\n");
@@ -343,43 +356,37 @@ void webmaillist(CONN *sid)
 void webmailread(CONN *sid)
 {
 	wmheader header;
-	char folder[20];
+	FILE *fp;
+	char *ptemp;
+	char curdate[40];
 	char inbuffer[512];
 	char msgfilename[512];
-	char uidl[100];
+	char searchstring[256];
+	short int order=0;
+	int folderid=0;
+	int nummessages;
+	int localid=0;
+	int remoteid=-1;
 	int i;
 	int sqr;
-	short int nummessages;
-	short int localid;
-	short int remoteid=-1;
-	FILE *fp;
-	char curdate[40];
 	time_t unixdate;
 
-	memset(folder, 0, sizeof(folder));
-	memset(uidl, 0, sizeof(uidl));
 	memset((char *)&header, 0, sizeof(header));
-	localid=atoi(getgetenv(sid, "MSG"));
+	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) localid=atoi(ptemp);
+	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
+	if (order<0) order=0;
+	if (order>7) order=7;
 	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, localid))<0) return;
 	if (sql_numtuples(sqr)==1) {
-		snprintf(folder, sizeof(folder)-1, "%s", sql_getvalue(sqr, 0, 1));
+		folderid=atoi(sql_getvalue(sqr, 0, 1));
 	}
 	sql_freeresult(sqr);
-	if ((sqr=sql_queryf(sid, "SELECT mailheaderid, folder, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and folder = '%s' and status != 'd' ORDER BY hdr_date ASC", sid->dat->user_uid, sid->dat->user_mailcurrent, folder))<0) return;
+	snprintf(searchstring, sizeof(searchstring)-1, "%s", search_makestring(sid));
+	if ((sqr=search_doquery(sid, order_by[order], folderid))<0) return;
 	nummessages=sql_numtuples(sqr);
 	for (i=0;i<nummessages;i++) {
 		if (localid==atoi(sql_getvalue(sqr, i, 0))) {
-			snprintf(uidl, sizeof(uidl)-1, "%s", sql_getvalue(sqr, i, 2));
-			snprintf(header.From, sizeof(header.From)-1, "%s", sql_getvalue(sqr, i, 3));
-			snprintf(header.ReplyTo, sizeof(header.ReplyTo)-1, "%s", sql_getvalue(sqr, i, 4));
-			snprintf(header.To, sizeof(header.To)-1, "%s", sql_getvalue(sqr, i, 5));
-			snprintf(header.CC, sizeof(header.CC)-1, "%s", sql_getvalue(sqr, i, 6));
-			snprintf(header.BCC, sizeof(header.BCC)-1, "%s", sql_getvalue(sqr, i, 7));
-			snprintf(header.Subject, sizeof(header.Subject)-1, "%s", sql_getvalue(sqr, i, 8));
-			snprintf(header.Date, sizeof(header.Date)-1, "%s", sql_getvalue(sqr, i, 9));
-			snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(sqr, i, 10));
-			snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(sqr, i, 11));
-			snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(sqr, i, 12));
+			dbread_getheader(sid, sqr, i, &header);
 			remoteid=i+1;
 			break;
 		}
@@ -389,54 +396,68 @@ void webmailread(CONN *sid)
 		sql_freeresult(sqr);
 		return;
 	}
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-	prints(sid, "function ConfirmDelete() {\n");
-	prints(sid, "	return confirm(\"Are you sure you want to delete this message?\");\n");
-	prints(sid, "}\n");
-	prints(sid, "// -->\n</SCRIPT>\n");
-	prints(sid, "<CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
+	prints(sid, "function ConfirmDelete() {\r\n");
+	prints(sid, "	return confirm(\"Are you sure you want to delete this message?\");\r\n");
+	prints(sid, "}\r\n");
+	prints(sid, "function ViewContact(name, email) {\r\n");
+	prints(sid, "	window.open('%s/contacts/mailview?name='+name+'&email='+email,'emaillookup','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=470,height=375');\r\n", sid->dat->in_ScriptName);
+	prints(sid, "}\r\n");
+	prints(sid, "function ReplyTo() {\r\n");
+	prints(sid, "	window.open('%s/mail/write?replyto=%d&accountid=%d','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName, header.localid, header.accountid);
+	prints(sid, "}\r\n");
+	prints(sid, "function ReplyAll() {\r\n");
+	prints(sid, "	window.open('%s/mail/write?replyall=%d&accountid=%d','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName, header.localid, header.accountid);
+	prints(sid, "}\r\n");
+	prints(sid, "function Forward() {\r\n");
+	prints(sid, "	window.open('%s/mail/write?forward=%d&accountid=%d','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName, header.localid, header.accountid);
+	prints(sid, "}\r\n");
+	prints(sid, "// -->\r\n</SCRIPT>\r\n");
+	prints(sid, "<CENTER>\r\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d>Previous</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)));
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, MOD_MAIL_PREV);
 	} else {
-		prints(sid, "[Previous]\n");
+		prints(sid, "[%s]\n", MOD_MAIL_PREV);
 	}
 	if (sid->dat->user_menustyle>0) {
-		prints(sid, "[<A HREF=javascript:ReplyTo(%d)>Reply</A>]\n", localid);
-		prints(sid, "[<A HREF=javascript:ReplyAll(%d)>Reply All</A>]\n", localid);
-		prints(sid, "[<A HREF=javascript:Forward(%d)>Forward</A>]\n", localid);
+		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", MOD_MAIL_REPLY);
+		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", MOD_MAIL_REPLYALL);
+		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", MOD_MAIL_FORWARD);
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d>Reply</A>]\n", sid->dat->in_ScriptName, localid);
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d>Reply All</A>]\n", sid->dat->in_ScriptName, localid);
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d>Forward</A>]\n", sid->dat->in_ScriptName, localid);
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLY);
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLYALL);
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_FORWARD);
 	}
-	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">Delete</A>]\n", sid->dat->in_ScriptName, localid, uidl);
+	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, MOD_MAIL_DELETE);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d>Next</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)));
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, MOD_MAIL_NEXT);
 	} else {
-		prints(sid, "[Next]\n");
+		prints(sid, "[%s]\n", MOD_MAIL_NEXT);
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:1px; border-style:solid'><TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n", config->colour_fieldval);
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;From   &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;<A HREF=javascript:MsgTo(\"%s\");>", config->colour_th, config->colour_thtext, config->colour_fieldval, header.ReplyTo);
-	printht(sid, "%s", DecodeRFC2047(sid, header.From));
-	prints(sid, "</A>&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;To     &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, config->colour_fieldval);
-	printht(sid, "%s", DecodeRFC2047(sid, header.To));
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:1px; border-style:solid'>", config->colour_fieldval);
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_FROM, config->colour_fieldval);
+	prints(sid, "<A HREF=\"javascript:ViewContact('%s','%s');\">%s</A> - ", encodeurl(sid, header.FromName), header.FromAddr, str2html(sid, header.From));
+	prints(sid, "<A HREF=\"javascript:MsgTo('&quot;%s&quot; <%s>');\">Send Mail</A>", encodeurl(sid, header.FromName), header.ReplyTo);
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_TO, config->colour_fieldval);
+	printht(sid, "%s", header.To);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	if (strlen(header.CC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;CC     &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, config->colour_fieldval);
-		printht(sid, "%s", DecodeRFC2047(sid, header.CC));
+		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_CC, config->colour_fieldval);
+		printht(sid, "%s", header.CC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
 	if (strlen(header.BCC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;BCC     &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, config->colour_fieldval);
-		printht(sid, "%s", DecodeRFC2047(sid, header.BCC));
+		prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_BCC, config->colour_fieldval);
+		printht(sid, "%s", header.BCC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;Subject&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, config->colour_fieldval);
-	printht(sid, "%s", DecodeRFC2047(sid, header.Subject));
+	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_SUBJECT, config->colour_fieldval);
+	printht(sid, "%s", header.Subject);
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;Date   &nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, config->colour_fieldval);
+	prints(sid, "<TR><TH ALIGN=LEFT BGCOLOR=%s VALIGN=TOP><FONT COLOR=%s>&nbsp;%s&nbsp;</FONT></TH><TD BGCOLOR=%s WIDTH=100%%>&nbsp;", config->colour_th, config->colour_thtext, MOD_MAIL_DATE, config->colour_fieldval);
 	memset(curdate, 0, sizeof(curdate));
 	unixdate=time_sql2unix(header.Date);
 	unixdate+=time_tzoffset(sid, unixdate);
@@ -445,12 +466,12 @@ void webmailread(CONN *sid)
 	printht(sid, "%s", curdate);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>View Source</A>]</TD></TR>\n", config->colour_fieldval, sid->dat->in_ScriptName, localid);
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", config->colour_fieldval, sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>\n", config->colour_fieldval);
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, localid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, header.accountid, localid);
 	fixslashes(msgfilename);
-	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(sid, uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
+	sql_updatef(sid, "UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(sid, header.uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	fp=fopen(msgfilename, "r");
 	if (fp!=NULL) {
 		while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
@@ -463,24 +484,24 @@ void webmailread(CONN *sid)
 	}
 	prints(sid, "</TD></TR></TABLE>\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d>Previous</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)));
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, MOD_MAIL_PREV);
 	} else {
-		prints(sid, "[Previous]\n");
+		prints(sid, "[%s]\n", MOD_MAIL_PREV);
 	}
 	if (sid->dat->user_menustyle>0) {
-		prints(sid, "[<A HREF=javascript:ReplyTo(%d)>Reply</A>]\n", localid);
-		prints(sid, "[<A HREF=javascript:ReplyAll(%d)>Reply All</A>]\n", localid);
-		prints(sid, "[<A HREF=javascript:Forward(%d)>Forward</A>]\n", localid);
+		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", MOD_MAIL_REPLY);
+		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", MOD_MAIL_REPLYALL);
+		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", MOD_MAIL_FORWARD);
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d>Reply</A>]\n", sid->dat->in_ScriptName, localid);
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d>Reply All</A>]\n", sid->dat->in_ScriptName, localid);
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d>Forward</A>]\n", sid->dat->in_ScriptName, localid);
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLY);
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLYALL);
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_FORWARD);
 	}
-	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">Delete</A>]\n", sid->dat->in_ScriptName, localid, uidl);
+	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, MOD_MAIL_DELETE);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d>Next</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)));
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, MOD_MAIL_NEXT);
 	} else {
-		prints(sid, "[Next]\n");
+		prints(sid, "[%s]\n", MOD_MAIL_NEXT);
 	}
 	prints(sid, "<BR>\n");
 	sql_freeresult(sqr);
@@ -498,6 +519,7 @@ void webmailwrite(CONN *sid)
 	char msgbcc[2048];
 	char subject[512];
 	char *ptemp;
+	short int accountid=sid->dat->user_mailcurrent;
 	short int replyto=0;
 	short int replyall=0;
 	short int forward=0;
@@ -508,12 +530,14 @@ void webmailwrite(CONN *sid)
 	memset(msgcc, 0, sizeof(msgcc));
 	memset(msgbcc, 0, sizeof(msgbcc));
 	memset(subject, 0, sizeof(subject));
+	memset((char *)&header, 0, sizeof(header));
+	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) accountid=atoi(ptemp);
 	if ((ptemp=getgetenv(sid, "REPLYTO"))!=NULL) replyto=atoi(ptemp);
 	if ((ptemp=getgetenv(sid, "REPLYALL"))!=NULL) { replyto=atoi(ptemp); replyall=1; }
 	if ((ptemp=getgetenv(sid, "FORWARD"))!=NULL) forward=atoi(ptemp);
 	if ((ptemp=getgetenv(sid, "TO"))!=NULL) strncpy(msgto, ptemp, sizeof(msgto)-1);
 	if ((ptemp=getgetenv(sid, "CC"))!=NULL) strncpy(msgcc, ptemp, sizeof(msgcc)-1);
-	if ((ptemp=getgetenv(sid, "BCC"))!=NULL) strncpy(msgbcc, getgetenv(sid, "BCC"), sizeof(msgbcc)-1);
+	if ((ptemp=getgetenv(sid, "BCC"))!=NULL) strncpy(msgbcc, ptemp, sizeof(msgbcc)-1);
 	if (replyto>0) {
 		msgnum=replyto;
 	} else if (forward>0) {
@@ -522,26 +546,17 @@ void webmailwrite(CONN *sid)
 		msgnum=0;
 	}
 	if (msgnum) {
-		memset((char *)&header, 0, sizeof(header));
-		if ((sqr=sql_queryf(sid, "SELECT mailheaderid, status, uidl, hdr_from, hdr_replyto, hdr_to, hdr_date, hdr_subject, hdr_cc, hdr_contenttype, hdr_boundary, hdr_encoding FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, msgnum))<0) return;
+		if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->user_uid, accountid, msgnum))<0) return;
 		if (sql_numtuples(sqr)!=1) {
 			sql_freeresult(sqr);
 			return;
 		}
-		snprintf(header.From, sizeof(header.From)-1, "%s", sql_getvalue(sqr, 0, 3));
-		snprintf(header.ReplyTo, sizeof(header.ReplyTo)-1, "%s", sql_getvalue(sqr, 0, 4));
-		snprintf(header.To, sizeof(header.To)-1, "%s", sql_getvalue(sqr, 0, 5));
-		snprintf(header.Date, sizeof(header.Date)-1, "%s", sql_getvalue(sqr, 0, 6));
-		snprintf(header.Subject, sizeof(header.Subject)-1, "%s", sql_getvalue(sqr, 0, 7));
-		snprintf(header.CC, sizeof(header.CC)-1, "%s", sql_getvalue(sqr, 0, 8));
-		snprintf(header.contenttype, sizeof(header.contenttype)-1, "%s", sql_getvalue(sqr, 0, 9));
-		snprintf(header.boundary, sizeof(header.boundary)-1, "%s", sql_getvalue(sqr, 0, 10));
-		snprintf(header.encoding, sizeof(header.encoding)-1, "%s", sql_getvalue(sqr, 0, 11));
+		dbread_getheader(sid, sqr, 0, &header);
 		sql_freeresult(sqr);
 		if (replyto>0) {
-			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(DecodeRFC2047(sid, header.Subject), "RE:", 3)==0)?"":"Re: ", DecodeRFC2047(sid, header.Subject));
+			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(header.Subject, "RE:", 3)==0)?"":"Re: ", header.Subject);
 		} else if (forward>0) {
-			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(DecodeRFC2047(sid, header.Subject), "FWD:", 4)==0)?"":"Fwd: ", DecodeRFC2047(sid, header.Subject));
+			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(header.Subject, "FWD:", 4)==0)?"":"Fwd: ", header.Subject);
 		}
 		if (replyto>0) {
 			snprintf(msgto, sizeof(msgto)-1, "%s", header.ReplyTo);
@@ -568,15 +583,16 @@ void webmailwrite(CONN *sid)
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<FORM METHOD=POST ACTION=%s/mail/save NAME=wmcompose ENCTYPE=multipart/form-data onSubmit=\"copy_submit()\">\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=hidden NAME=inreplyto VALUE=\"%s\">\n", header.MessageID);
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%%>&nbsp;<B>From</B>&nbsp;</TD><TD WIDTH=90%%>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", config->colour_editform, MOD_MAIL_FROM);
 	prints(sid, "<SELECT NAME=accountid style='width:433px'>\n");
-	htselect_mailaccount(sid, sid->dat->user_mailcurrent);
+	htselect_mailaccount(sid, accountid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>TO</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, str2html(sid, msgto));
-	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>CC</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, str2html(sid, msgcc));
-	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>BCC</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, str2html(sid, msgbcc));
-	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%%>&nbsp;<B>Subject</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, str2html(sid, subject));
+	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_TO, str2html(sid, msgto));
+	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_CC, str2html(sid, msgcc));
+	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_BCC, str2html(sid, msgbcc));
+	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", config->colour_editform, MOD_MAIL_SUBJECT, str2html(sid, subject));
 	prints(sid, "<TR BGCOLOR=%s><TD WIDTH=10%% STYLE='padding:0px'><B>&nbsp;Format&nbsp;</B></TD><TD STYLE='padding:0px'>", config->colour_editform);
 	prints(sid, "<select NAME=ctype onChange=\"toggle_mode()\">\r\n<option value=plain>Plain Text</option>\r\n<option value=html>HTML</option>\r\n</select>\r\n");
 	prints(sid, "</TD></TR>\r\n");
@@ -627,10 +643,9 @@ void webmailwrite(CONN *sid)
 			prints(sid, ">\n");
 		}
 		memset(msgfilename, 0, sizeof(msgfilename));
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, msgnum);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, msgnum);
 		fixslashes(msgfilename);
-		fp=fopen(msgfilename, "r");
-		if (fp!=NULL) {
+		if ((fp=fopen(msgfilename, "r"))!=NULL) {
 			while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
 				striprn(inbuffer);
 				if (strlen(inbuffer)==0) break;
@@ -661,7 +676,7 @@ void webmailsave(CONN *sid)
 	char *msgbody=NULL;
 	char *pmsgbody;
 	char *ptemp;
-	char query[4096];
+	char query[8192];
 	char filename[512];
 	char cfilesize[10];
 	char msgctype[16];
@@ -684,33 +699,7 @@ void webmailsave(CONN *sid)
 		if (mimesize<strlen(datebuf)) datebuf[mimesize]='\0';
 		sid->dat->user_mailcurrent=atoi(datebuf);
 	}
-	if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, hosttype, pophost, popport, smtphost, smtpport, address, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
-	if (sql_numtuples(sqr)!=1) {
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return;
-		if (sql_numtuples(sqr)<1) {
-			sql_freeresult(sqr);
-			return;
-		}
-		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
-		if (sql_updatef(sid, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return;
-		sql_freeresult(sqr);
-		if ((sqr=sql_queryf(sid, "SELECT realname, organization, popusername, poppassword, hosttype, pophost, popport, smtphost, smtpport, address, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return;
-	}
-	if (sql_numtuples(sqr)==1) {
-		strncpy(sid->dat->wm->realname, sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
-		strncpy(sid->dat->wm->organization, sql_getvalue(sqr, 0, 1), sizeof(sid->dat->wm->organization)-1);
-		strncpy(sid->dat->wm->username, sql_getvalue(sqr, 0, 2), sizeof(sid->dat->wm->username)-1);
-		strncpy(sid->dat->wm->password, DecodeBase64string(sid, sql_getvalue(sqr, 0, 3)), sizeof(sid->dat->wm->password)-1);
-		strncpy(sid->dat->wm->servertype, sql_getvalue(sqr, 0, 4), sizeof(sid->dat->wm->servertype)-1);
-		strncpy(sid->dat->wm->popserver, sql_getvalue(sqr, 0, 5), sizeof(sid->dat->wm->popserver)-1);
-		sid->dat->wm->popport=atoi(sql_getvalue(sqr, 0, 6));
-		strncpy(sid->dat->wm->smtpserver, sql_getvalue(sqr, 0, 7), sizeof(sid->dat->wm->smtpserver)-1);
-		sid->dat->wm->smtpport=atoi(sql_getvalue(sqr, 0, 8));
-		strncpy(sid->dat->wm->replyto, sql_getvalue(sqr, 0, 9), sizeof(sid->dat->wm->replyto)-1);
-		strncpy(sid->dat->wm->signature, sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->signature)-1);
-	}
-	sql_freeresult(sqr);
+	if (dbread_mailcurrent(sid, sid->dat->user_mailcurrent)<0) return;
 	prints(sid, ".");
 	memset((char *)&header, 0, sizeof(header));
 	memset(msgctype, 0, sizeof(msgctype));
@@ -723,21 +712,25 @@ void webmailsave(CONN *sid)
 	gettimeofday(&ttime, &tzone);
 	snprintf(header.boundary, sizeof(header.boundary)-1, "------------NGW%d", (int)ttime.tv_sec);
 	msgbody=calloc(sid->dat->in_ContentLength+1024, sizeof(char));
-	if (getmimeenv(sid, "MSGTO", &mimesize)!=NULL) {
-		strncpy(header.To, getmimeenv(sid, "MSGTO", &mimesize), sizeof(header.To)-1);
+	if ((ptemp=getmimeenv(sid, "MSGTO", &mimesize))!=NULL) {
+		strncpy(header.To, ptemp, sizeof(header.To)-1);
 		if (mimesize<strlen(header.To)) header.To[mimesize]='\0';
 	}
-	if (getmimeenv(sid, "MSGCC", &mimesize)!=NULL) {
-		strncpy(header.CC, getmimeenv(sid, "MSGCC", &mimesize), sizeof(header.CC)-1);
+	if ((ptemp=getmimeenv(sid, "MSGCC", &mimesize))!=NULL) {
+		strncpy(header.CC, ptemp, sizeof(header.CC)-1);
 		if (mimesize<strlen(header.CC)) header.CC[mimesize]='\0';
 	}
-	if (getmimeenv(sid, "MSGBCC", &mimesize)!=NULL) {
-		strncpy(header.BCC, getmimeenv(sid, "MSGBCC", &mimesize), sizeof(header.BCC)-1);
+	if ((ptemp=getmimeenv(sid, "MSGBCC", &mimesize))!=NULL) {
+		strncpy(header.BCC, ptemp, sizeof(header.BCC)-1);
 		if (mimesize<strlen(header.BCC)) header.BCC[mimesize]='\0';
 	}
-	if (getmimeenv(sid, "MSGSUBJECT", &mimesize)!=NULL) {
-		strncpy(header.Subject, getmimeenv(sid, "MSGSUBJECT", &mimesize), sizeof(header.Subject)-1);
+	if ((ptemp=getmimeenv(sid, "MSGSUBJECT", &mimesize))!=NULL) {
+		strncpy(header.Subject, ptemp, sizeof(header.Subject)-1);
 		if (mimesize<strlen(header.Subject)) header.Subject[mimesize]='\0';
+	}
+	if ((ptemp=getmimeenv(sid, "INREPLYTO", &mimesize))!=NULL) {
+		strncpy(header.InReplyTo, ptemp, sizeof(header.InReplyTo)-1);
+		if (mimesize<strlen(header.InReplyTo)) header.InReplyTo[mimesize]='\0';
 	}
 	if ((ptemp=getmimeenv(sid, "CTYPE", &mimesize))!=NULL) {
 		snprintf(msgctype, sizeof(msgctype)-1, "text/%s", ptemp);
@@ -745,18 +738,20 @@ void webmailsave(CONN *sid)
 	} else {
 		snprintf(msgctype, sizeof(msgctype)-1, "text/plain");
 	}
-	if (getmimeenv(sid, "MSGBODY", &mimesize)!=NULL) {
-		strncpy(msgbody, getmimeenv(sid, "MSGBODY", &mimesize), sid->dat->in_ContentLength+1023);
+	if ((ptemp=getmimeenv(sid, "MSGBODY", &mimesize))!=NULL) {
+		strncpy(msgbody, ptemp, sid->dat->in_ContentLength+1023);
 		if (mimesize<strlen(msgbody)) msgbody[mimesize]='\0';
 	}
-	if (getmimeenv(sid, "FATTACH", &mimesize)!=NULL) {
+	if ((ptemp=getmimeenv(sid, "FATTACH", &mimesize))!=NULL) {
 		filebody=webmailfileul(sid, filename, cfilesize);
 		filesize=atoi(cfilesize);
 		if (strlen(filename)==0) filesize=0;
 	}
 	gettimeofday(&ttime, &tzone);
+	snprintf(header.MessageID, sizeof(header.MessageID)-1, "<%d%03d.%s>", (int)ttime.tv_sec, (int)(ttime.tv_usec/1000), sid->dat->wm->address);
+	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", gmtime((time_t *)&ttime.tv_sec));
 	ttime.tv_sec+=time_tzoffset(sid, ttime.tv_sec);
-	strftime(header.Date, sizeof(header.Date), "%a, %d %b %Y %H:%M:%S", gmtime(&ttime.tv_sec));
+	strftime(header.Date, sizeof(header.Date), "%a, %d %b %Y %H:%M:%S", gmtime((time_t *)&ttime.tv_sec));
 	snprintf(date_tz, sizeof(date_tz)-1, " %+.4d", +time_tzoffset(sid, ttime.tv_sec)/36);
 	strncat(header.Date, date_tz, sizeof(header.Date)-strlen(header.Date)-1);
 	if (filesize>0) {
@@ -768,23 +763,23 @@ void webmailsave(CONN *sid)
 	headerid=atoi(sql_getvalue(sqr, 0, 0))+1;
 	sql_freeresult(sqr);
 	if (headerid<1) headerid=1;
-	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", gmtime(&ttime.tv_sec));
 	memset(query, 0, sizeof(query));
-	strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
+	strcpy(query, "INSERT INTO gw_mailheaders (mailheaderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountid, folder, status, size, uidl, hdr_from, hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_messageid, hdr_inreplyto, hdr_contenttype, hdr_boundary, hdr_encoding) values (");
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", headerid, datebuf, datebuf, sid->dat->user_uid, 0, 0, 0);
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d", sid->dat->user_mailcurrent);
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '2"); /* folder */
 	strncatf(query, sizeof(query)-strlen(query)-1, "', 'r");
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '0"); // MSG SIZE !!!
 	strncatf(query, sizeof(query)-strlen(query)-1, "', 'uidl");
-	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s <%s>", str2sql(sid, sid->dat->wm->realname), str2sql(sid, sid->dat->wm->replyto));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '\"%s\" <%s>", str2sql(sid, sid->dat->wm->realname), str2sql(sid, sid->dat->wm->address));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, sid->dat->wm->replyto));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.To));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.CC));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.BCC));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.Subject));
-	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", gmtime(&ttime.tv_sec));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, datebuf));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.MessageID));
+	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.InReplyTo));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s", str2sql(sid, header.contenttype));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '--%s", str2sql(sid, header.boundary));
 	strncatf(query, sizeof(query)-strlen(query)-1, "', '%s')", str2sql(sid, header.encoding));
@@ -797,9 +792,9 @@ void webmailsave(CONN *sid)
 #ifdef WIN32
 		if (mkdir(msgfilename)!=0) {
 #else
-		if (mkdir(msgfilename, 0755)!=0) {
+		if (mkdir(msgfilename, 0700)!=0) {
 #endif
-			logerror(NULL, __FILE__, __LINE__, "ERROR: Maildir '%s' is not accessible!", msgfilename);
+			logerror(sid, __FILE__, __LINE__, 1, "ERROR: Maildir '%s' is not accessible!", msgfilename);
 			return;
 		}
 	}
@@ -808,11 +803,13 @@ void webmailsave(CONN *sid)
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "wb");
 	if (fp==NULL) {
-		logerror(NULL, __FILE__, __LINE__, "ERROR: Could not open message '%s'!", msgfilename);
+		logerror(sid, __FILE__, __LINE__, 1, "ERROR: Could not open message '%s'!", msgfilename);
 		return;
 	}
-	fprintf(fp, "From: \"%s\" <%s>\r\n", sid->dat->wm->realname, sid->dat->wm->replyto);
-	fprintf(fp, "Reply-To: <%s>\r\n", sid->dat->wm->replyto);
+	fprintf(fp, "From: \"%s\" <%s>\r\n", sid->dat->wm->realname, sid->dat->wm->address);
+	if (strlen(sid->dat->wm->replyto)>0) {
+		fprintf(fp, "Reply-To: <%s>\r\n", sid->dat->wm->replyto);
+	}
 	if (strlen(sid->dat->wm->organization)>0) {
 		fprintf(fp, "Organization: %s\r\n", sid->dat->wm->organization);
 	}
@@ -822,6 +819,10 @@ void webmailsave(CONN *sid)
 	}
 	fprintf(fp, "Subject: %s\r\n", header.Subject);
 	fprintf(fp, "Date: %s\r\n", header.Date);
+	fprintf(fp, "Message-ID: %s\r\n", header.MessageID);
+	if (strlen(header.InReplyTo)) {
+		fprintf(fp, "In-Reply-To: %s\r\n", header.InReplyTo);
+	}
 	if (filesize>0) {
 		fprintf(fp, "MIME-Version: 1.0\r\n");
 		fprintf(fp, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", header.boundary);
@@ -879,7 +880,7 @@ void webmailsave(CONN *sid)
 	fclose(fp);
 	prints(sid, ".");
 	if ((stat(msgfilename, &sb)!=0)||(sb.st_mode&S_IFDIR)) return;
-	sql_updatef(sid, "UPDATE gw_mailheaders SET size = '%d' WHERE mailheaderid = %d AND accountid = %d", sb.st_size, headerid, sid->dat->user_mailcurrent);
+	sql_updatef(sid, "UPDATE gw_mailheaders SET size = '%d' WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, headerid, sid->dat->user_mailcurrent);
 	prints(sid, "OK<BR>\r\n");
 	prints(sid, "[<A HREF=javascript:window.close()>Close Window</A>]<BR>\n", sid->dat->in_ScriptName);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\nwindow.close();\n// -->\n</SCRIPT>\n");
@@ -895,12 +896,26 @@ void webmailmove(CONN *sid)
 	int folderid=0;
 	int oldfolderid=1;
 	int nummessages;
+	short int order=0;
+	int offset=0;
 //	int deleted=0;
 	int i;
 	int sqr;
 	int move=0;
 	int purge=0;
 
+	if ((ptemp1=getgetenv(sid, "OFFSET"))!=NULL) {
+		offset=atoi(ptemp1);
+	} else if ((ptemp1=getpostenv(sid, "OFFSET"))!=NULL) {
+		offset=atoi(ptemp1);
+	}
+	if ((ptemp1=getgetenv(sid, "ORDER"))!=NULL) {
+		order=atoi(ptemp1);
+	} else if ((ptemp1=getpostenv(sid, "ORDER"))!=NULL) {
+		order=atoi(ptemp1);
+	}
+	if (order<0) order=0;
+	if (order>7) order=7;
 	if (((ptemp1=getpostenv(sid, "MOVE"))!=NULL)&&(strcasecmp(ptemp1, "Move to")==0)) {
 		if ((ptemp1=getpostenv(sid, "DEST1"))!=NULL) {
 			folderid=atoi(ptemp1);
@@ -942,16 +957,21 @@ void webmailmove(CONN *sid)
 		flushbuffer(sid);
 	}
 	if (purge) wmserver_purge(sid, 2);
+//	if ((purge)&&(sid->dat->wm->remove>0)) wmserver_purge(sid, 2);
 //	snprintf(msgnum, sizeof(msgnum)-1, "%d", deleted);
 //	if (deleted>=nummessages) deleted=nummessages-1;
 	if (sid->dat->user_menustyle>0) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-		prints(sid, "parent.wmlist.location=\"%s/mail/list?folderid=%d\";\n", sid->dat->in_ScriptName, oldfolderid);
+		prints(sid, "parent.wmlist.location=\"%s/mail/list?folderid=%d&offset=%d&order=%d\";\n", sid->dat->in_ScriptName, oldfolderid, offset, order);
+		prints(sid, "document.location=\"%s/mail/null\";\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n");
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/mail/null\">\n", sid->dat->in_ScriptName);
+		prints(sid, "<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/null\"></NOSCRIPT>\n", sid->dat->in_ScriptName);
 	} else {
 //		if ((getgetenv(sid, msgnum)==NULL)||(nummessages<2)) {
-			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/list\">\n", sid->dat->in_ScriptName);
+			prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+			prints(sid, "document.location=\"%s/mail/list?folderid=%d&offset=%d&order=%d\";\n", sid->dat->in_ScriptName, oldfolderid, offset, order);
+			prints(sid, "// -->\n</SCRIPT>\n");
+			prints(sid, "<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/list?folderid=%d&offset=%d&order=%d\"><NOSCRIPT>\n", sid->dat->in_ScriptName, oldfolderid, offset, order);
 //		} else {
 //			prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/read?msg=%d\">\n", sid->dat->in_ScriptName, deleted);
 //		}
@@ -973,10 +993,10 @@ void webmailpurge(CONN *sid)
 	int sqr;
 
 	if ((ptemp=getgetenv(sid, "ACCOUNTID"))==NULL) return;
-	prints(sid, "<B>Purging...</B>");
-	flushbuffer(sid);
 	accountid=atoi(ptemp);
-	if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd'", sid->dat->user_uid, accountid))<0) return;
+	prints(sid, "<BR><B>Purging and re-indexing account %d ... </B>", accountid);
+	flushbuffer(sid);
+	if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd' ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
 	err=0;
 	memset(msgfilename, 0, sizeof(msgfilename));
 	memset(newfilename, 0, sizeof(newfilename));
@@ -984,7 +1004,7 @@ void webmailpurge(CONN *sid)
 		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, atoi(sql_getvalue(sqr, i, 0)));
 		if (stat(msgfilename, &sb)==0) {
 			if (unlink(msgfilename)!=0) {
-				prints(sid, "<B>'%s' could not be deleted.</B><BR>\n", msgfilename);
+				prints(sid, "<BR><B>'%s' could not be deleted.</B>\n", msgfilename);
 				err++;
 			}
 		}
@@ -993,8 +1013,9 @@ void webmailpurge(CONN *sid)
 	if (err==0) {
 		sql_updatef(sid, "DELETE FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'd'", sid->dat->user_uid, accountid);
 	}
-	if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d", sid->dat->user_uid, accountid))<0) return;
+	if ((sqr=sql_queryf(sid, "SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, accountid))<0) return;
 	for (i=0,j=1;i<sql_numtuples(sqr);i++) {
+		if (j==atoi(sql_getvalue(sqr, i, 0))) { j++; continue; }
 		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, atoi(sql_getvalue(sqr, i, 0)));
 		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, accountid, j);
 		if (rename(msgfilename, newfilename)==0) {
@@ -1025,14 +1046,23 @@ void webmailframeset(CONN *sid)
 	if ((sqr=sql_queryf(sid, "SELECT mailaccountid FROM gw_mailaccounts WHERE obj_uid = %d", sid->dat->user_uid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
-		prints(sid, "location.replace(\"%s/profile/maileditnew\");\n", sid->dat->in_ScriptName);
+		prints(sid, "location.replace(\"%s/mail/accounts/editnew\");\n", sid->dat->in_ScriptName);
 		prints(sid, "// -->\n</SCRIPT>\n<NOSCRIPT>\n");
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/profile/maileditnew\">\n", sid->dat->in_ScriptName);
+		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/mail/accounts/editnew\">\n", sid->dat->in_ScriptName);
 		prints(sid, "</NOSCRIPT>\n");
 		prints(sid, "</HTML>\n");
 	} else {
 		prints(sid, "<FRAMESET ROWS=\"50%%,50%%\" BORDER=0 FRAMEBORDER=1 FRAMESPACING=1>\n");
-		prints(sid, "<FRAME BORDER=0 NAME=\"wmlist\" SRC=%s/mail/list MARGINHEIGHT=1 MARGINWIDTH=1 SCROLLING=YES>\n", sid->dat->in_ScriptName);
+		prints(sid, "<FRAME BORDER=0 NAME=\"wmlist\" SRC=%s/mail/list", sid->dat->in_ScriptName);
+		if ((ptemp=getgetenv(sid, "FOLDERID"))!=NULL) {
+			prints(sid, "?folderid=%d", atoi(ptemp));
+		} else if ((ptemp=getgetenv(sid, "C"))!=NULL) {
+			prints(sid, "?c=%s", ptemp);
+			if ((ptemp=getgetenv(sid, "ADDR"))!=NULL) {
+				prints(sid, "&addr=%s", ptemp);
+			}
+		}
+		prints(sid, " MARGINHEIGHT=1 MARGINWIDTH=1 SCROLLING=YES>\n", sid->dat->in_ScriptName);
 		prints(sid, "<FRAME BORDER=0 NAME=\"wmread\" SRC=%s/mail/null MARGINHEIGHT=1 MARGINWIDTH=1 SCROLLING=YES>\n", sid->dat->in_ScriptName);
 		prints(sid, "</FRAMESET>\n");
 		prints(sid, "To view this page, you need a web browser capable of displaying frames.\n");
@@ -1044,10 +1074,14 @@ void webmailframeset(CONN *sid)
 
 void mod_main(CONN *sid)
 {
+	char *suburi=sid->dat->in_RequestURI;
+
+	if (strncmp(suburi, "/mail/", 6)!=0) return;
+	suburi+=6;
 	if (sid->dat->wm==NULL) {
 		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return;
 	}
-	if (strncmp(sid->dat->in_RequestURI, "/mail/main", 10)==0) {
+	if (strncmp(suburi, "main", 4)==0) {
 		if (sid->dat->user_menustyle>0) {
 			webmailframeset(sid);
 			goto done;
@@ -1056,48 +1090,62 @@ void mod_main(CONN *sid)
 			snprintf(sid->dat->in_RequestURI, sizeof(sid->dat->in_RequestURI)-1, "/mail/list");
 		}
 	}
-	if (strncmp(sid->dat->in_RequestURI, "/mail/file", 10)==0) {
+	if (strncmp(suburi, "file", 4)==0) {
 		webmailfiledl(sid);
 		goto done;
 	}
 	send_header(sid, 0, 200, "OK", "1", "text/html", -1, -1);
-	if (strncmp(sid->dat->in_RequestURI, "/mail/notice", 12)==0) {
+	if (strncmp(suburi, "notice", 6)==0) {
 		htpage_header(sid, "E-Mail Notice");
 		wmnotice(sid);
 		htpage_footer(sid);
 		goto done;
 	}
-	if (strncmp(sid->dat->in_RequestURI, "/mail/quit", 10)==0) {
-		wmlogout(sid);
-	}
 	htpage_topmenu(sid, MENU_WEBMAIL);
 	flushbuffer(sid);
-	if (strncmp(sid->dat->in_RequestURI, "/mail/addresses", 15)==0) {
+	if (strncmp(suburi, "addresses", 9)==0) {
 		wmaddr_list(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/quit", 10)==0) {
-		wmloginform(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/read", 10)==0) {
-		webmailread(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/write", 11)==0) {
-		webmailwrite(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/list", 10)==0) {
+	} else if (strncmp(suburi, "list", 4)==0) {
 		webmaillist(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/move", 10)==0) {
+	} else if (strncmp(suburi, "read", 4)==0) {
+		webmailread(sid);
+	} else if (strncmp(suburi, "write", 5)==0) {
+		webmailwrite(sid);
+	} else if (strncmp(suburi, "move", 4)==0) {
 		webmailmove(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/purge", 11)==0) {
+	} else if (strncmp(suburi, "purge", 5)==0) {
 		webmailpurge(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/save", 10)==0) {
+	} else if (strncmp(suburi, "save", 4)==0) {
 		webmailsave(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)==0) {
+	} else if (strncmp(suburi, "sync", 4)==0) {
 		wmsync(sid, 1);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/raw", 9)==0) {
+	} else if (strncmp(suburi, "raw", 3)==0) {
 		webmailraw(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/folders/edit", 18)==0) {
-		wmfolder_edit(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/folders/save", 18)==0) {
-		wmfolder_save(sid);
-	} else if (strncmp(sid->dat->in_RequestURI, "/mail/folders", 13)==0) {
-		wmfolder_list(sid);
+	} else if (strncmp(suburi, "quit", 4)==0) {
+		wmlogout(sid);
+	} else if (strncmp(suburi, "accounts/", 9)==0) {
+		suburi+=9;
+		if (strncmp(suburi, "edit", 4)==0) {
+			wmaccount_edit(sid);
+		} else if (strncmp(suburi, "list", 4)==0) {
+			wmaccount_list(sid);
+		} else if (strncmp(suburi, "save", 4)==0) {
+			wmaccount_save(sid);
+		}
+	} else if (strncmp(suburi, "filters/", 8)==0) {
+		suburi+=8;
+		if (strncmp(suburi, "edit", 4)==0) {
+			wmfilter_edit(sid);
+		} else if (strncmp(suburi, "save", 4)==0) {
+			wmfilter_save(sid);
+		}
+	} else if (strncmp(suburi, "folders/", 8)==0) {
+		suburi+=8;
+		if (strncmp(suburi, "edit", 4)==0) {
+			wmfolder_edit(sid);
+		} else if (strncmp(suburi, "save", 4)==0) {
+			wmfolder_save(sid);
+		}
 	}
 	htpage_footer(sid);
 done:
@@ -1110,21 +1158,21 @@ done:
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_mail",		// mod_name
+		1,			// mod_submenu
+		"E-MAIL",		// mod_menuname
+		"/mail/main",		// mod_menuuri
+		"webmail",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/mail/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=1;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_mail");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "E-MAIL");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "webmail");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/mail/main");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/mail/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_mail", "mod_mail_sync", wmsync)!=0) return -1;
 	return 0;

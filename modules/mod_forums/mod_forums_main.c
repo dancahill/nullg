@@ -52,6 +52,7 @@ char *htview_forumgroup(CONN *sid, int selected)
 void forumgroupedit(CONN *sid)
 {
 	REC_FORUMGROUP forumgroup;
+	char *ptemp;
 	int forumgroupid;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
@@ -62,8 +63,8 @@ void forumgroupedit(CONN *sid)
 		forumgroupid=0;
 		dbread_forumgroup(sid, 2, 0, &forumgroup);
 	} else {
-		if (getgetenv(sid, "FORUMGROUPID")==NULL) return;
-		forumgroupid=atoi(getgetenv(sid, "FORUMGROUPID"));
+		if ((ptemp=getgetenv(sid, "FORUMGROUPID"))==NULL) return;
+		forumgroupid=atoi(ptemp);
 		if (dbread_forumgroup(sid, 2, forumgroupid, &forumgroup)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", forumgroupid);
 			return;
@@ -122,7 +123,7 @@ void forumgrouplist(CONN *sid)
 		}
 		prints(sid, "</TABLE>\n");
 	} else {
-		prints(sid, "There are no forum groups<BR>\n");
+		prints(sid, "<B>There are no forum groups</B><BR>\n");
 	}
 	sql_freeresult(sqr);
 	prints(sid, "<A HREF=%s/forums/groupeditnew>New Forum Group</A>\n", sid->dat->in_ScriptName);
@@ -358,13 +359,13 @@ void forumpost(CONN *sid)
 
 void fmessagepost(CONN *sid)
 {
+	char *ptemp;
 	char message[12288];
 	char subject[64];
 	char submit[10];
 	int forumid=0;
 	int referenceid=0;
 	int sqr;
-	char *pTemp;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -374,17 +375,17 @@ void fmessagepost(CONN *sid)
 	memset(subject, 0, sizeof(subject));
 	memset(submit, 0, sizeof(submit));
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
-		if ((pTemp=getpostenv(sid, "SUBMIT"))!=NULL) {
-			strncpy(submit, pTemp, sizeof(submit)-1);
+		if ((ptemp=getpostenv(sid, "SUBMIT"))!=NULL) {
+			strncpy(submit, ptemp, sizeof(submit)-1);
 			if (strcmp(submit, "Save")==0) {
 				fmessagesave(sid);
 				return;
 			}
 		}
-		if ((pTemp=getpostenv(sid, "FORUM"))!=NULL)     forumid=atoi(pTemp);
-		if ((pTemp=getpostenv(sid, "REFERENCE"))!=NULL) referenceid=atoi(pTemp);
-		if ((pTemp=getpostenv(sid, "MESSAGE"))!=NULL)   strncpy(message, pTemp, sizeof(message)-1);
-		if ((pTemp=getpostenv(sid, "SUBJECT"))!=NULL)   strncpy(subject, pTemp, sizeof(subject)-1);
+		if ((ptemp=getpostenv(sid, "FORUM"))!=NULL)     forumid=atoi(ptemp);
+		if ((ptemp=getpostenv(sid, "REFERENCE"))!=NULL) referenceid=atoi(ptemp);
+		if ((ptemp=getpostenv(sid, "MESSAGE"))!=NULL)   strncpy(message, ptemp, sizeof(message)-1);
+		if ((ptemp=getpostenv(sid, "SUBJECT"))!=NULL)   strncpy(subject, ptemp, sizeof(subject)-1);
 		if (strcmp(submit, "Preview")==0) {
 			prints(sid, "<CENTER>\n");
 			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=90%% STYLE='border-style:solid'>\r\n");
@@ -398,11 +399,11 @@ void fmessagepost(CONN *sid)
 			prints(sid, "</CENTER>\n");
 		}
 	} else {
-		if ((pTemp=getgetenv(sid, "FORUM"))!=NULL) forumid=atoi(pTemp);
-		if ((pTemp=getgetenv(sid, "MESSAGE"))!=NULL) {
-			referenceid=atoi(pTemp);
-		} else if ((pTemp=getgetenv(sid, "REFERENCE"))!=NULL) {
-			referenceid=atoi(pTemp);
+		if ((ptemp=getgetenv(sid, "FORUM"))!=NULL) forumid=atoi(ptemp);
+		if ((ptemp=getgetenv(sid, "MESSAGE"))!=NULL) {
+			referenceid=atoi(ptemp);
+		} else if ((ptemp=getgetenv(sid, "REFERENCE"))!=NULL) {
+			referenceid=atoi(ptemp);
 		} else {
 			referenceid=0;
 		}
@@ -510,7 +511,7 @@ void forumlist(CONN *sid, int longlist)
 			}
 			prints(sid, "</TABLE>\n");
 		} else {
-			prints(sid, "There are no forums\n");
+			prints(sid, "<B>There are no forums</B>\n");
 		}
 	} else {
 		if ((sqr=sql_queryf(sid, "SELECT forumid, postername, posttime, subject, message FROM gw_forums WHERE forumgroupid = %d ORDER BY forumid DESC", forumgroupid))<0) return;
@@ -533,7 +534,7 @@ void forumlist(CONN *sid, int longlist)
 				prints(sid, "</TD></TR></TABLE><P>\n");
 			}
 		} else {
-			prints(sid, "There are no forums\n");
+			prints(sid, "<B>There are no forums</B>\n");
 		}
 	}
 	prints(sid, "</CENTER>\n");
@@ -547,6 +548,7 @@ void fmessagelist(CONN *sid)
 {
 	_btree *btree;
 	_ptree *ptree;
+	char *ptemp;
 	int base=0;
 	int depth=1;
 	int forumid=0;
@@ -561,8 +563,8 @@ void fmessagelist(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "FORUM")==NULL) return;
-	forumid=atoi(getgetenv(sid, "FORUM"));
+	if ((ptemp=getgetenv(sid, "FORUM"))==NULL) return;
+	forumid=atoi(ptemp);
 	forumview(sid, forumid);
 	if ((sqr=sql_queryf(sid, "SELECT messageid, referenceid, postername, posttime, subject FROM gw_forumposts WHERE forumid = %d ORDER BY messageid ASC", forumid))<0) return;
 	if (sql_numtuples(sqr)<1) {
@@ -785,21 +787,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_forums",		// mod_name
+		1,			// mod_submenu
+		"FORUMS",		// mod_menuname
+		"/forums/list",		// mod_menuuri
+		"forums",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/forums/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=1;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_forums");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "FORUMS");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "forums");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/forums/list");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/forums/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

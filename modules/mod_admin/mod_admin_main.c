@@ -44,21 +44,21 @@ void admin_status(CONN *sid)
 	prints(sid, "<BR>\r\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=7 STYLE='border-style:solid'><FONT COLOR=%s>Loaded Modules</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
-	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>MODULE</FONT></TD>\r\n", config->colour_fieldname, config->colour_fieldvaltext);
-	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU NAME</TD>\r\n", config->colour_fieldvaltext);
-	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU URI</TD>\r\n", config->colour_fieldvaltext);
-	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU PERM</TD>\r\n", config->colour_fieldvaltext);
-	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>FN NAME</TD>\r\n", config->colour_fieldvaltext);
-	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>FN URI</TD>\r\n", config->colour_fieldvaltext);
+	prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'><FONT COLOR=%s>MODULE</FONT></TD>", config->colour_fieldname, config->colour_fieldvaltext);
+	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU NAME</TD>", config->colour_fieldvaltext);
+	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU URI</TD>", config->colour_fieldvaltext);
+	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>MENU PERM</TD>", config->colour_fieldvaltext);
+	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>FN NAME</TD>", config->colour_fieldvaltext);
+	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>FN URI</TD>", config->colour_fieldvaltext);
 	prints(sid, "<TD STYLE='border-style:solid'><FONT COLOR=%s>FN PTR</TD></TR>\r\n", config->colour_fieldvaltext);
 	for (i=0;;i++) {
 		if ((proc->mod_menuitems[i].fn_name==NULL)||(proc->mod_menuitems[i].fn_ptr==NULL)) break;
-		prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>%s&nbsp;</TD>\r\n", config->colour_fieldval, proc->mod_menuitems[i].mod_name);
-		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>\r\n", proc->mod_menuitems[i].mod_menuname);
-		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>\r\n", proc->mod_menuitems[i].mod_menuuri);
-		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>\r\n", proc->mod_menuitems[i].mod_menuperm);
-		prints(sid, "<TD STYLE='border-style:solid'>%s()&nbsp;</TD>\r\n", proc->mod_menuitems[i].fn_name);
-		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>\r\n", proc->mod_menuitems[i].fn_uri);
+		prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>%s&nbsp;</TD>", config->colour_fieldval, proc->mod_menuitems[i].mod_name);
+		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>", proc->mod_menuitems[i].mod_menuname);
+		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>", proc->mod_menuitems[i].mod_menuuri);
+		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>", proc->mod_menuitems[i].mod_menuperm);
+		prints(sid, "<TD STYLE='border-style:solid'>%s()&nbsp;</TD>", proc->mod_menuitems[i].fn_name);
+		prints(sid, "<TD STYLE='border-style:solid'>%s&nbsp;</TD>", proc->mod_menuitems[i].fn_uri);
 		prints(sid, "<TD STYLE='border-style:solid'>0x%08X&nbsp;</TD></TR>\r\n", proc->mod_menuitems[i].fn_ptr);
 	}
 	prints(sid, "</TABLE>\r\n");
@@ -137,21 +137,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_admin",		// mod_name
+		3,			// mod_submenu
+		"ADMINISTRATION",	// mod_menuname
+		"/admin/",		// mod_menuuri
+		"admin",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/admin/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=3;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_admin");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "ADMINISTRATION");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "admin");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/admin/");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/admin/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

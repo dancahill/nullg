@@ -18,7 +18,7 @@
 #ifdef WIN32
 #define DEFAULT_BASE_DIR "C:\\Program Files\\NullLogic Groupware"
 #else
-#define DEFAULT_BASE_DIR "/usr/local/groupware"
+#define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
 
 #include <stdio.h>

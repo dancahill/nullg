@@ -83,12 +83,12 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 		j=atoi(sql_getvalue(sqr, i, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
 	}
-	prints(sid, "</SELECT>\r\n");
+	prints(sid, "</SELECT>");
 	prints(sid, "<SELECT NAME=status>\r\n");
 	prints(sid, "<OPTION VALUE='2'%s>%s\n", status==2?" SELECTED":"", option[2]);
 	prints(sid, "<OPTION VALUE='0'%s>%s\n", status==0?" SELECTED":"", option[0]);
 	prints(sid, "<OPTION VALUE='1'%s>%s\n", status==1?" SELECTED":"", option[1]);
-	prints(sid, "</SELECT>\r\n");
+	prints(sid, "</SELECT>");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='GO'>\r\n");
 	prints(sid, "</NOSCRIPT>\r\n");
 	prints(sid, "</TD></FORM>\r\n");
@@ -145,41 +145,50 @@ void calledit(CONN *sid)
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
+	htscript_showpage(sid, 3);
 	prints(sid, "// -->\n</SCRIPT>\n");
-	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/calls/save NAME=calledit>\n", sid->dat->in_ScriptName);
+	prints(sid, "<CENTER>\n");
+	if (callid>0) {
+		prints(sid, "<B><A HREF=%s/calls/view?callid=%d>Call Number %d</A></B>\n", sid->dat->in_ScriptName, call.callid, call.callid);
+	} else {
+		prints(sid, "<B>New Call</B>\n");
+	}
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\n");
+	prints(sid, "<FORM METHOD=POST ACTION=%s/calls/save NAME=calledit>\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=callid VALUE='%d'>\n", call.callid);
 	prints(sid, "<INPUT TYPE=hidden NAME=callstart VALUE='%d'>\n", call.callstart);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TH COLSPAN=2><FONT COLOR=%s>", config->colour_th, config->colour_thtext);
-	if (callid>0) {
-		prints(sid, "<A HREF=%s/calls/view?callid=%d STYLE='color: %s'>Call Number %d</FONT></TH></TR>\n", sid->dat->in_ScriptName, call.callid, config->colour_thtext, call.callid);
-	} else {
-		prints(sid, "New Call</FONT></TH></TR>\n");
-	}
-	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP>\n", config->colour_editform);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR BGCOLOR=%s>\n", config->colour_fieldname);
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>CALL INFO</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>DETAILS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD VALIGN=TOP STYLE='padding:3px'>", config->colour_editform);
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Call Name&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=callname value=\"%s\" SIZE=25 style='width:182px'%s></TD></TR>\n", str2html(sid, call.callname), (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:182px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
+	prints(sid, "<TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=callname value=\"%s\" SIZE=45 STYLE='width:255px'%s></TD></TR>\n", str2html(sid, call.callname), (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Assign to&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=assignedto style='width:255px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, call.assignedto);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:182px'%s>\n", config->colour_editform, config->colour_fieldnametext, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;<A HREF=javascript:ContactView() STYLE='color: %s'>Contact Name</A>&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=contactid style='width:255px'%s>\n", config->colour_editform, config->colour_fieldnametext, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
 	htselect_contact(sid, call.contactid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Action&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=action style='width:182px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Action&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=action style='width:255px'%s>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED");
 	htselect_callaction(sid, call.action);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD><TD VALIGN=TOP><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Call Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=callstart2%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Call Date&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=callstart2 style='width:128px'%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_month(sid, callstart);
-	prints(sid, "</SELECT><SELECT NAME=callstart1%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "</SELECT><SELECT NAME=callstart1 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_day(sid, callstart);
-	prints(sid, "</SELECT><SELECT NAME=callstart3%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "</SELECT><SELECT NAME=callstart3 style='width:63px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_year(sid, 2000, callstart);
 	prints(sid, "</SELECT></TD></TR>\n");
 	calltime=call.callstart%86400;
 	prints(sid, "<TR BGCOLOR=%s><TD NOWRAP><B>&nbsp;Call Start&nbsp;</B></TD><TD ALIGN=RIGHT>", config->colour_editform);
-	prints(sid, "<SELECT NAME=callstart4 style='width:46px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<SELECT NAME=callstart4 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	temp=calltime/3600;
 	if (temp>12) temp-=12;
 	if (temp==0) temp=12;
@@ -187,19 +196,19 @@ void calledit(CONN *sid)
 		prints(sid, "<OPTION VALUE='%d'%s%s>%s%d:\n", i, i==temp?" SELECTED":"", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED", i<10?"&nbsp;":"", i);
 	}
 	prints(sid, "</SELECT>");
-	prints(sid, "<SELECT NAME=callstart5 style='width:45px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<SELECT NAME=callstart5 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	temp=calltime%3600/60;
 	for (i=0;i<60;i++) {
 		prints(sid, "<OPTION VALUE='%d'%s>%02d:\n", i, i==temp?" SELECTED":"", i);
 	}
 	prints(sid, "</SELECT>");
-	prints(sid, "<SELECT NAME=callstart6 style='width:46px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<SELECT NAME=callstart6 style='width:64px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	temp=calltime%60;
 	for (i=0;i<60;i++) {
 		prints(sid, "<OPTION VALUE='%d'%s>%02d\n", i, i==temp?" SELECTED":"", i);
 	}
 	prints(sid, "</SELECT>");
-	prints(sid, "<SELECT NAME=callstart7 style='width:45px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<SELECT NAME=callstart7 style='width:63px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	prints(sid, "<OPTION VALUE='am'%s>AM\n", calltime/3600<12?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='pm'%s>PM\n", calltime/3600>=12?" SELECTED":"");
 	prints(sid, "</SELECT>\n");
@@ -212,20 +221,26 @@ void calledit(CONN *sid)
 	if (duration<0) duration=0;
 	duration/=60;
 	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Duration&nbsp;</B></TD>", config->colour_editform);
-	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=duration1 style='width:91px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<TD ALIGN=RIGHT><SELECT NAME=duration1 style='width:128px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_qhours(sid, duration/60);
 	prints(sid, "</SELECT>");
-	prints(sid, "<SELECT NAME=duration2 style='width:91px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<SELECT NAME=duration2 style='width:127px'%s>\n", auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_minutes(sid, duration%60);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:182px'%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Status&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=status style='width:255px'%s>\n", config->colour_editform, auth_priv(sid, "calls")&A_ADMIN?"":" DISABLED");
 	htselect_eventstatus(sid, call.status);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
-	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER COLSPAN=2><TEXTAREA WRAP=HARD NAME=details ROWS=4 COLS=60%s>%s</TEXTAREA></TD></TR>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED", str2html(sid, call.details));
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
+	prints(sid, "<TR BGCOLOR=%s><TD><B>&nbsp;Details&nbsp;</B></TD></TR>\n", config->colour_editform);
+	prints(sid, "<TR BGCOLOR=%s><TD ALIGN=CENTER><TEXTAREA WRAP=HARD NAME=details ROWS=5 COLS=50%s>%s</TEXTAREA></TD></TR>\n", config->colour_editform, (auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)?"":" DISABLED", str2html(sid, call.details));
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page3 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((call.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "calls")&A_ADMIN)) editperms=1;
-	prints(sid, "<TR BGCOLOR=%s><TH ALIGN=center COLSPAN=2><FONT COLOR=%s>Permissions</FONT></TH></TR>\n", config->colour_th, config->colour_thtext);
 	prints(sid, "<TR BGCOLOR=%s><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>", config->colour_editform);
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
 	htselect_user(sid, call.obj_uid);
@@ -245,6 +260,10 @@ void calledit(CONN *sid)
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\n", call.obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	if (callid!=0) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 		if (call.status==0) {
@@ -256,13 +275,16 @@ void calledit(CONN *sid)
 	} else {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Create'>\n");
 	}
-	prints(sid, "</FORM>\n</CENTER>\n");
-
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "</FORM>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
 	if ((auth_priv(sid, "calls")&A_ADMIN)||(call.status==0)) {
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.calledit.callname.focus();\n// -->\n</SCRIPT>\n");
+		prints(sid, "document.calledit.callname.focus();\n");
 	}
+	prints(sid, "showpage(1);\n");
 	if ((!(auth_priv(sid, "calls")&A_ADMIN))&&(call.status==0)) {
-		prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\n");
 		prints(sid, "var x=document.calledit.duration2.value-1;\n");
 		prints(sid, "function setDuration() {\n");
 		prints(sid, "	x++;\n");
@@ -276,8 +298,8 @@ void calledit(CONN *sid)
 		prints(sid, "	setTimeout(\"setDuration()\", 60000);\n");
 		prints(sid, "}\n");
 		prints(sid, "setDuration();\n");
-		prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	}
+	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	return;
 }
 
@@ -610,21 +632,21 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_calls",		// mod_name
+		1,			// mod_submenu
+		"CALLS",		// mod_menuname
+		"/calls/list",		// mod_menuuri
+		"calls",		// mod_menuperm
+		"mod_main",		// fn_name
+		"/calls/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	newmod.mod_submenu=1;
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_calls");
-	snprintf(newmod.mod_menuname, sizeof(newmod.mod_menuname)-1, "CALLS");
-	snprintf(newmod.mod_menuperm, sizeof(newmod.mod_menuperm)-1, "calls");
-	snprintf(newmod.mod_menuuri,  sizeof(newmod.mod_menuuri)-1,  "/calls/list");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/calls/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -23,9 +23,9 @@
 #define HAVE_MYSQL
 #define HAVE_PGSQL
 #define HAVE_SQLITE
-#include "mysql.h"
-#include "pgsql.h"
-#include "sqlite.h"
+#include "sql/mysql.h"
+#include "sql/pgsql.h"
+#include "sql/sqlite.h"
 
 #ifdef HAVE_MYSQL
 typedef	void          (STDCALL *LIBMYSQL_CLOSE)(MYSQL *);

@@ -15,6 +15,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#include "i18n/mod_profile.h"
+
 /* mod_profile_db.c */
 int dbread_profile(CONN *sid, short int perm, int index, REC_USER *profile);
-int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);

@@ -21,6 +21,7 @@
 void admingroupedit(CONN *sid)
 {
 	REC_GROUP group;
+	char *ptemp;
 	int groupid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
@@ -31,8 +32,8 @@ void admingroupedit(CONN *sid)
 		groupid=0;
 		dbread_group(sid, 2, 0, &group);
 	} else {
-		if (getgetenv(sid, "GROUPID")==NULL) return;
-		groupid=atoi(getgetenv(sid, "GROUPID"));
+		if ((ptemp=getgetenv(sid, "GROUPID"))==NULL) return;
+		groupid=atoi(ptemp);
 		if (dbread_group(sid, 2, groupid, &group)!=0) {
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", groupid);
 			return;
@@ -182,6 +183,7 @@ void admingroupsave(CONN *sid)
 void admingrouptimeedit(CONN *sid)
 {
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+	char *ptemp;
 	char availability[170];
 	REC_GROUP group;
 	int groupid;
@@ -192,8 +194,8 @@ void admingrouptimeedit(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "GROUPID")==NULL) return;
-	groupid=atoi(getgetenv(sid, "GROUPID"));
+	if ((ptemp=getgetenv(sid, "GROUPID"))==NULL) return;
+	groupid=atoi(ptemp);
 	if (dbread_group(sid, 2, groupid, &group)!=0) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", groupid);
 		return;

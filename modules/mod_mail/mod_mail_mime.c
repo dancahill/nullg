@@ -25,7 +25,7 @@ int webmailheader(CONN *sid, wmheader *header)
 	char *ptemp;
 	int prevheadersize=0;
 
-	header->status='n';
+	header->status[0]='n';
 	for (;;) {
 		if (wmfgets(sid, inbuffer, sizeof(inbuffer)-1, sid->dat->wm->socket)<0) return -1;
 		striprn(inbuffer);
@@ -35,58 +35,72 @@ int webmailheader(CONN *sid, wmheader *header)
 			prevheadersize=sizeof(header->ReplyTo);
 			ptemp=inbuffer+9;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->ReplyTo, ptemp, sizeof(header->ReplyTo)-1);
+			strncpy(header->ReplyTo, DecodeRFC2047(sid, ptemp), sizeof(header->ReplyTo)-1);
 		} else if (strncasecmp(inbuffer, "From:", 5)==0) {
 			prevheader=header->From;
 			prevheadersize=sizeof(header->From);
 			ptemp=inbuffer+5;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->From, ptemp, sizeof(header->From)-1);
+			strncpy(header->From, DecodeRFC2047(sid, ptemp), sizeof(header->From)-1);
 		} else if (strncasecmp(inbuffer, "To:", 3)==0) {
 			prevheader=header->To;
 			prevheadersize=sizeof(header->To);
 			ptemp=inbuffer+3;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->To, ptemp, sizeof(header->To)-1);
+			strncpy(header->To, DecodeRFC2047(sid, ptemp), sizeof(header->To)-1);
 		} else if (strncasecmp(inbuffer, "CC:", 3)==0) {
 			prevheader=header->CC;
 			prevheadersize=sizeof(header->CC);
 			ptemp=inbuffer+3;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->CC, ptemp, sizeof(header->CC)-1);
+			strncpy(header->CC, DecodeRFC2047(sid, ptemp), sizeof(header->CC)-1);
 		} else if (strncasecmp(inbuffer, "Subject:", 8)==0) {
 			prevheader=header->Subject;
 			prevheadersize=sizeof(header->Subject);
 			ptemp=inbuffer+8;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->Subject, ptemp, sizeof(header->Subject)-1);
+			strncpy(header->Subject, DecodeRFC2047(sid, ptemp), sizeof(header->Subject)-1);
 		} else if (strncasecmp(inbuffer, "Date:", 5)==0) {
 			prevheader=header->Date;
 			prevheadersize=sizeof(header->Date);
 			ptemp=inbuffer+5;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->Date, ptemp, sizeof(header->Date)-1);
+			strncpy(header->Date, DecodeRFC2047(sid, ptemp), sizeof(header->Date)-1);
 		} else if (strncasecmp(inbuffer, "Content-Type:", 13)==0) {
 			prevheader=header->contenttype;
 			prevheadersize=sizeof(header->contenttype);
 			ptemp=inbuffer+13;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->contenttype, ptemp, sizeof(header->contenttype)-1);
+			strncpy(header->contenttype, DecodeRFC2047(sid, ptemp), sizeof(header->contenttype)-1);
 		} else if (strncasecmp(inbuffer, "Content-Transfer-Encoding: ", 26)==0) {
 			prevheader=header->encoding;
 			prevheadersize=sizeof(header->encoding);
 			ptemp=inbuffer+26;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			strncpy(header->encoding, ptemp, sizeof(header->encoding)-1);
+			strncpy(header->encoding, DecodeRFC2047(sid, ptemp), sizeof(header->encoding)-1);
+		} else if (strncasecmp(inbuffer, "In-Reply-To: ", 13)==0) {
+			prevheader=header->InReplyTo;
+			prevheadersize=sizeof(header->InReplyTo);
+			ptemp=inbuffer+13;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			strncpy(header->InReplyTo, DecodeRFC2047(sid, ptemp), sizeof(header->InReplyTo)-1);
+		} else if (strncasecmp(inbuffer, "Message-ID: ", 12)==0) {
+			prevheader=header->MessageID;
+			prevheadersize=sizeof(header->MessageID);
+			ptemp=inbuffer+12;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			strncpy(header->MessageID, DecodeRFC2047(sid, ptemp), sizeof(header->MessageID)-1);
 		} else if (strncasecmp(inbuffer, "Status:", 7)==0) {
 			prevheader=NULL;
 			prevheadersize=sizeof(header->status);
 			ptemp=inbuffer+7;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
-			if (strchr(ptemp, 'R')!=NULL) header->status='r';
+			if (strchr(ptemp, 'R')!=NULL) header->status[0]='r';
 		} else if ((inbuffer[0]==' ')||(inbuffer[0]=='\t')) {
 			if (prevheader==NULL) continue;
-			strncat(prevheader, inbuffer, prevheadersize-strlen(prevheader)-1);
+			ptemp=inbuffer;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			strncat(prevheader, DecodeRFC2047(sid, ptemp), prevheadersize-strlen(prevheader)-1);
 		} else {
 			prevheader=NULL;
 			prevheadersize=0;
@@ -124,15 +138,16 @@ int webmailheader(CONN *sid, wmheader *header)
 			if (*ptemp=='>') *ptemp='\0';
 		}
 	}
-	if (strlen(header->From)==0) strcpy(header->From, "(No Sender Name)");
-	if (strlen(header->Subject)==0) strcpy(header->Subject, "(No Subject)");
-	if (strlen(header->Date)==0) strcpy(header->Date, "(No Date)");
+//	if (strlen(header->From)==0) strcpy(header->From, "(No Sender Name)");
+//	if (strlen(header->Subject)==0) strcpy(header->Subject, "(No Subject)");
+//	if (strlen(header->Date)==0) strcpy(header->Date, "(No Date)");
 	return 0;
 }
 
 static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, char *filename, short int depth)
 {
 	char inbuffer[1024];
+	char b64buffer[1024];
 	char fnamebuf[512];
 	char cdisp[128];
 	char cencode[100];
@@ -142,6 +157,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 	char tbound[100];
 	char *ptemp;
 	int head=0;
+	short int b64len;
 	char *prevheader=NULL;
 	int prevheadersize=0;
 
@@ -176,18 +192,17 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) return 0;
-				if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return 0;
-				if (strcmp(inbuffer, "")==0) {
-					head=0;
-					break;
-				}
-				if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) {
-					memset(cfile, 0, sizeof(cfile));
-					memset(cdisp, 0, sizeof(cdisp));
-					memset(ctype, 0, sizeof(ctype));
-					memset(cencode, 0, sizeof(cencode));
-					prevheader=NULL;
-					continue;
+				if (inbuffer[0]=='\0') { head=0; break; }
+				if (inbuffer[0]=='-') {
+					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return 0;
+					if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) {
+						memset(cfile, 0, sizeof(cfile));
+						memset(cdisp, 0, sizeof(cdisp));
+						memset(ctype, 0, sizeof(ctype));
+						memset(cencode, 0, sizeof(cencode));
+						prevheader=NULL;
+						continue;
+					}
 				}
 				if (strncasecmp(inbuffer, "Content-Transfer-Encoding:", 26)==0) {
 					ptemp=inbuffer+26;
@@ -199,8 +214,7 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 						memset(cfile, 0, sizeof(cfile));
 						continue;
 					}
-				}
-				if (strncasecmp(inbuffer, "Content-Type:", 13)==0) {
+				} else if (strncasecmp(inbuffer, "Content-Type:", 13)==0) {
 					prevheader=ctype;
 					prevheadersize=sizeof(ctype);
 					ptemp=inbuffer+13;
@@ -277,12 +291,22 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			}
 			send_header(sid, 1, 200, "OK", "1", ptemp, -1, -1);
 			flushbuffer(sid);
+			memset(b64buffer, 0, sizeof(b64buffer));
+			b64len=0;
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) return 1;
 				if (strncasecmp(inbuffer, boundary, strlen(boundary))==0) break;
 				if (strncasecmp(cencode, "base64", 6)==0) {
-					DecodeBase64(sid, inbuffer, "");
+					if (strlen(inbuffer)+b64len>=sizeof(b64buffer)-1) {
+						if (DecodeBase64(sid, b64buffer, "")<0) {
+							if (*fp!=NULL) { fclose(*fp); *fp=NULL; }
+						}
+						memset(b64buffer, 0, sizeof(b64buffer));
+						b64len=0;
+					}
+					strcat(b64buffer, inbuffer);
+					b64len+=strlen(inbuffer);
 				} else if (strncasecmp(cencode, "quoted-printable", 16)==0) {
 					DecodeQP(sid, 0, inbuffer, "");
 				} else if (strncasecmp(cencode, "7bit", 4)==0) {
@@ -290,6 +314,9 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 				} else if (strncasecmp(cencode, "8bit", 4)==0) {
 					DecodeText(sid, 0, inbuffer);
 				}
+			}
+			if ((strncasecmp(cencode, "base64", 6)==0)&&(strlen(b64buffer))) {
+				DecodeBase64(sid, b64buffer, "");
 			}
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
@@ -299,9 +326,8 @@ static int webmailfiledl_r(CONN *sid, FILE **fp, char *contenttype, char *encodi
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
-				if (strcmp(inbuffer, "")==0) {
-					break;
-				}
+				if (inbuffer[0]=='\0') break;
+				if (inbuffer[0]!='-') continue;
 				if (p_strcasestr(inbuffer, boundary)!=NULL) {
 					head=1;
 					break;
@@ -457,7 +483,7 @@ char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize)
 	return filebody;
 }
 
-int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth)
+int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth)
 {
 	char inbuffer[1024];
 	char cencode[100];
@@ -586,12 +612,10 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 			for (;;) {
 				wmffgets(sid, inbuffer, sizeof(inbuffer)-1, fp);
 				if (*fp==NULL) break;
+				if (inbuffer[0]=='\0') { file=0; break; }
+				if (inbuffer[0]!='-') continue;
 				if ((p_strcasestr(contenttype, "multipart")!=NULL)||(p_strcasestr(contenttype, "message")!=NULL)) {
 					if ((depth>1)&&(p_strcasestr(inbuffer, tbound)!=NULL)) return msgdone;
-				}
-				if (strcmp(inbuffer, "")==0) {
-					file=0;
-					break;
 				}
 				if (p_strcasestr(inbuffer, boundary)!=NULL) {
 					file=0;

@@ -16,13 +16,13 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SERVER_NAME	"NullLogic Groupware"
-#define SERVER_VERSION	"1.2.3"
+#define SERVER_VERSION	"1.2.4"
 #define SERVER_BASENAME	"groupware"
 
 #ifdef WIN32
 #define DEFAULT_BASE_DIR "C:\\Program Files\\NullLogic Groupware"
 #else
-#define DEFAULT_BASE_DIR "/usr/local/groupware"
+#define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
 #define DEFAULT_COLOUR_TOPMENU		"#C0C0C0" // "#C0C0C0"
 #define DEFAULT_COLOUR_EDITFORM		"#F0F0F0" // "#F0F0F0"
@@ -35,9 +35,9 @@
 #define DEFAULT_COLOUR_THTEXT		"#FFFFFF" // "#000000"
 #define DEFAULT_COLOUR_THLINK		"#E0E0FF" // "#0000FF"
 #define DEFAULT_COLOUR_LINKS		"#0000FF" // "#0000FF"
+#define DEFAULT_SERVER_USERNAME		"nullgw"
 
-#define MAX_POSTSIZE	33554432 /* arbitrary 32 MB limit for POST request sizes */
-#define MAX_REPLYSIZE	16384 /* arbitrary 16 KB limit for reply buffering */
+#define MAX_REPLYSIZE		16384 /* arbitrary 16 KB limit for reply buffering */
 
 #define MAX_MOD_MENUITEMS	25
 #define MAX_MOD_FUNCTIONS	50
@@ -46,36 +46,36 @@
 #define MAX_PREF_FIELDS		16
 
 /* SQL limits */
-#define MAX_TUPLE_SIZE	16384
-#define MAX_FIELD_SIZE	12288
+#define MAX_TUPLE_SIZE		16384
+#define MAX_FIELD_SIZE		12288
 
-#define IMAP_PORT	143
-#define POP3_PORT	110
-#define SMTP_PORT	25
+#define IMAP_PORT		143
+#define POP3_PORT		110
+#define SMTP_PORT		25
 
-#define A_READ		1
-#define A_MODIFY	2
-#define A_INSERT	4
-#define A_DELETE	8
-#define A_ADMIN		16
+#define A_READ			1
+#define A_MODIFY		2
+#define A_INSERT		4
+#define A_DELETE		8
+#define A_ADMIN			16
 
-#define MENU_ADMIN	1
-#define MENU_ACCOUNTING	2
-#define MENU_BOOKMARKS	3
-#define MENU_CALENDAR	4
-#define MENU_CALLS	5
-#define MENU_CONTACTS	6
-#define MENU_FILES	7
-#define MENU_FORUMS	8
-#define MENU_MAIN	9
-#define MENU_MESSAGES	10
-#define MENU_NOTES	11
-#define MENU_ORDERS	12
-#define MENU_PROFILE	13
-#define MENU_SEARCHES	14
-#define MENU_TASKS	15
-#define MENU_WEBMAIL	16
-#define MENU_XMLRPC	17
+#define MENU_ADMIN		1
+#define MENU_ACCOUNTING		2
+#define MENU_BOOKMARKS		3
+#define MENU_CALENDAR		4
+#define MENU_CALLS		5
+#define MENU_CONTACTS		6
+#define MENU_FILES		7
+#define MENU_FORUMS		8
+#define MENU_MAIN		9
+#define MENU_MESSAGES		10
+#define MENU_NOTES		11
+#define MENU_ORDERS		12
+#define MENU_PROFILE		13
+#define MENU_SEARCHES		14
+#define MENU_TASKS		15
+#define MENU_WEBMAIL		16
+#define MENU_XMLRPC		17
 
 #define ACTIVITYFIELDS		14
 #define BOOKMARKFOLDERFIELDS	10
@@ -91,12 +91,13 @@
 #define FORUMGROUPFIELDS	10
 #define FORUMPOSTFIELDS		14
 #define GROUPFIELDS		12
-#define MAILACCTFIELDS		24
-#define MAILHEADFIELDS		23
+#define MAILACCTFIELDS		26
+#define MAILFILTERFIELDS	15
 #define MAILFOLDERFIELDS	11
+#define MAILHEADFIELDS		25
 #define MESSAGEFIELDS		12
 #define NOTEFIELDS		12
-#define ORDERFIELDS		16
+#define ORDERFIELDS		17
 #define ORDERITEMFIELDS		16
 #define PRODUCTFIELDS		16
 #define QUERYFIELDS		10
@@ -147,6 +148,7 @@
 #define DllExport __declspec(dllexport)
 #else
 #define DllExport
+#define O_BINARY 0
 #endif
 
 /* MD5 */

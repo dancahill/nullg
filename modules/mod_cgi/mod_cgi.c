@@ -121,9 +121,9 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", sid->dat->in_CGIScriptName);
 	if ((ptemp=strchr(env[n-1], '?'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_NAME=%s", proc->config.server_hostname);
+	snprintf(env[n++], 1023, "SERVER_NAME=%s", proc->config.http_hostname);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_PORT=%d", proc->config.server_port);
+	snprintf(env[n++], 1023, "SERVER_PORT=%d", proc->config.http_port);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_PROTOCOL=HTTP/1.1");
 	env[n]=calloc(1024, sizeof(char));
@@ -253,7 +253,7 @@ void mod_main(CONN *sid)
 		CloseHandle((HANDLE)local.out);
 		CloseHandle((HANDLE)remote.in);
 		CloseHandle((HANDLE)remote.out);
-		logerror(sid, __FILE__, __LINE__, "CGI failed. [%s]", Command);
+		logerror(sid, __FILE__, __LINE__, 1, "CGI failed. [%s]", Command);
 		send_error(sid, 500, "Internal Server Error", "There was a problem running the requested CGI.");
 		return;
 	}
@@ -266,16 +266,16 @@ void mod_main(CONN *sid)
 		for (i=0;i<50;i++) free(env[i]);
 		close(pset1[0]);
 		close(pset1[1]);
-		logerror(sid, __FILE__, __LINE__, "pipe() error");
+		logerror(sid, __FILE__, __LINE__, 1, "pipe() error");
 		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
 		return;
 	}
 	local.in=pset1[0]; remote.out=pset1[1];
 	remote.in=pset2[0]; local.out=pset2[1];
-	logaccess(sid, 2, "Executing CGI [%s %s]", args[0], args[1]);
+	logerror(sid, __FILE__, __LINE__, 2, "Executing CGI [%s %s]", args[0], args[1]);
 	pid=fork();
 	if (pid<0) {
-		logerror(sid, __FILE__, __LINE__, "fork() error");
+		logerror(sid, __FILE__, __LINE__, 1, "fork() error");
 		return;
 	} else if (pid==0) {
 		close(local.in);
@@ -283,11 +283,11 @@ void mod_main(CONN *sid)
 		dup2(remote.in, fileno(stdin));
 		dup2(remote.out, fileno(stdout));
 //		if ((dup2(remote.in, fileno(stdin))!=0)||(dup2(remote.out, fileno(stdout))!=0)) {
-//			logerror(sid, __FILE__, __LINE__, "dup2() error");
+//			logerror(sid, __FILE__, __LINE__, 1, "dup2() error");
 //			exit(0);
 //		}
 		execve(args[0], &args[0], &env[0]);
-		logerror(sid, __FILE__, __LINE__, "execve() error [%s][%s]", args[0], args[1]);
+		logerror(sid, __FILE__, __LINE__, 1, "execve() error [%s][%s]", args[0], args[1]);
 		exit(0);
 	} else {
 		close(remote.in);
@@ -297,7 +297,7 @@ void mod_main(CONN *sid)
 	if (sid->dat->in_ContentLength>0) {
 		bytesleft=sid->dat->in_ContentLength;
 		ptemp=sid->PostData;
-//		logerror(sid, __FILE__, __LINE__, "--[%d][%s]", bytesleft, ptemp);
+//		logerror(sid, __FILE__, __LINE__, 1, "--[%d][%s]", bytesleft, ptemp);
 		while (bytesleft>0) {
 #ifdef WIN32
 			i=WriteFile((HANDLE)local.out, ptemp, bytesleft, &nOutRead, NULL);
@@ -307,6 +307,8 @@ void mod_main(CONN *sid)
 			if (i>0) {
 				ptemp+=i;
 				bytesleft-=i;
+			} else if (i<1) {
+				break;
 			}
 		}
 	}
@@ -334,8 +336,10 @@ void mod_main(CONN *sid)
 			if (proc->RunAsCGI) {
 				fwrite(szBuffer, sizeof(char), nOutRead, stdout);
 			} else {
-				tcp_send(sid->socket, szBuffer, nOutRead, 0);
+				tcp_send(sid, sid->socket, szBuffer, nOutRead, 0);
 			}
+			sid->atime=time(NULL);
+			sid->dat->out_bytecount+=nOutRead;
 		};
 	} while (nOutRead>0);
 	flushbuffer(sid);
@@ -361,17 +365,22 @@ void mod_main(CONN *sid)
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_cgi",		// mod_name
+		0,			// mod_submenu
+		"",			// mod_menuname
+		"",			// mod_menuuri
+		"",			// mod_menuperm
+		"mod_main",		// fn_name
+		"/cgi-bin/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_cgi");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/cgi-bin/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }
+

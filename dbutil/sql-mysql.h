@@ -312,6 +312,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	realname	varchar(50)	NOT NULL DEFAULT '',\n\
 	organization	varchar(50)	NOT NULL DEFAULT '',\n\
 	address		varchar(50)	NOT NULL DEFAULT '',\n\
+	replyto		varchar(50)	NOT NULL DEFAULT '',\n\
 	hosttype	varchar(12)	NOT NULL DEFAULT '',\n\
 	pophost		varchar(50)	NOT NULL DEFAULT '',\n\
 	popport		int4		NOT NULL DEFAULT 110,\n\
@@ -319,6 +320,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	smtpport	int4		NOT NULL DEFAULT 25,\n\
 	popusername	varchar(50)	NOT NULL DEFAULT '',\n\
 	poppassword	varchar(50)	NOT NULL DEFAULT '',\n\
+	smtpauth	varchar(10)	NOT NULL DEFAULT 'n',\n\
 	lastcount	int4		NOT NULL DEFAULT 0,\n\
 	notify		int4		NOT NULL DEFAULT 0,\n\
 	remove		int4		NOT NULL DEFAULT 0,\n\
@@ -327,9 +329,9 @@ CREATE TABLE gw_mailaccounts (\n\
 	PRIMARY KEY (mailaccountid)\n\
 );"
 
-#define MYSQLDB_MAILHEADERS "\
-CREATE TABLE gw_mailheaders (\n\
-	mailheaderid	int4		NOT NULL auto_increment,\n\
+#define MYSQLDB_MAILFILTERS "\
+CREATE TABLE gw_mailfilters (\n\
+	mailfilterid	int4		NOT NULL auto_increment,\n\
 	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
 	obj_uid		int4		NOT NULL DEFAULT 0,\n\
@@ -338,21 +340,13 @@ CREATE TABLE gw_mailheaders (\n\
 	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
 	obj_operm	int4		NOT NULL DEFAULT 0,\n\
 	accountid	int4		NOT NULL DEFAULT 0,\n\
-	folder		int4		NOT NULL DEFAULT 1,\n\
-	status		varchar(10)	NOT NULL DEFAULT 'n',\n\
-	size		int4		NOT NULL DEFAULT -1,\n\
-	uidl		varchar(80)	NOT NULL DEFAULT '',\n\
-	hdr_from	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_replyto	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_to		text		NOT NULL DEFAULT '',\n\
-	hdr_cc		text		NOT NULL DEFAULT '',\n\
-	hdr_bcc		text		NOT NULL DEFAULT '',\n\
-	hdr_subject	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
-	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
-	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
-	PRIMARY KEY (mailheaderid, accountid)\n\
+	filtername	varchar(50)	NOT NULL DEFAULT '',\n\
+	header		varchar(50)	NOT NULL DEFAULT '',\n\
+	string		varchar(50)	NOT NULL DEFAULT '',\n\
+	rule		varchar(10)	NOT NULL DEFAULT '',\n\
+	action		varchar(10)	NOT NULL DEFAULT '',\n\
+	dstfolderid	int4		NOT NULL DEFAULT 1,\n\
+	PRIMARY KEY (mailfilterid, accountid)\n\
 );"
 
 #define MYSQLDB_MAILFOLDERS "\
@@ -369,6 +363,36 @@ CREATE TABLE gw_mailfolders (\n\
 	parentfolderid	int4		NOT NULL DEFAULT 0,\n\
 	foldername	varchar(50)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailfolderid, accountid)\n\
+);"
+
+#define MYSQLDB_MAILHEADERS "\
+CREATE TABLE gw_mailheaders (\n\
+	mailheaderid	int4		NOT NULL auto_increment,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	accountid	int4		NOT NULL DEFAULT 0,\n\
+	folder		int4		NOT NULL DEFAULT 1,\n\
+	status		varchar(10)	NOT NULL DEFAULT 'n',\n\
+	size		int4		NOT NULL DEFAULT -1,\n\
+	uidl		varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_from	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_replyto	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_to		text		NOT NULL DEFAULT '',\n\
+	hdr_cc		text		NOT NULL DEFAULT '',\n\
+	hdr_bcc		text		NOT NULL DEFAULT '',\n\
+	hdr_subject	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_date	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	hdr_messageid	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_inreplyto	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_contenttype	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_boundary	varchar(100)	NOT NULL DEFAULT '',\n\
+	hdr_encoding	varchar(100)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (mailheaderid, accountid)\n\
 );"
 
 #define MYSQLDB_MESSAGES "\
@@ -422,6 +446,7 @@ CREATE TABLE gw_orders (\n\
 	paymentmethod	varchar(50)	NOT NULL DEFAULT '',\n\
 	paymentdue	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
 	paymentreceived	numeric(9,2)	NOT NULL DEFAULT '0.00',\n\
+	status		int4		NOT NULL DEFAULT 0,\n\
 	details		text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (orderid)\n\
 );"

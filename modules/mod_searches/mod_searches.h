@@ -15,6 +15,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#include "i18n/mod_searches.h"
+
+/* mod_searches_contacts.c */
+void searchcontacts(CONN *sid);
 /* mod_searches_db.c */
 int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query);
 int dbwrite_query(CONN *sid, int index, REC_QUERY *query);
+/* mod_searches_sql.c */
+void searchsqladd(CONN *sid);
+void searchsqlrun(CONN *sid);
+void searchsqlsave(CONN *sid);

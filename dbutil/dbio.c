@@ -17,8 +17,8 @@
 */
 #include "main.h"
 #include "sql-data.h"
-#include "sql-mdac.h"
 #include "sql-mysql.h"
+#include "sql-odbc.h"
 #include "sql-pgsql.h"
 #include "sql-sqlite.h"
 
@@ -68,6 +68,7 @@ int dump_db(char *filename)
 	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '5' WHERE folder = 'Drafts')");
 	sqlUpdatef(0, "UPDATE gw_mailheaders SET folder = '6' WHERE folder = 'Saved Items')");
 	if (dump_table(fp, "gw_dbinfo", "dbversion")<0)			printf("\r\nError dumping gw_dbinfo\r\n");
+	if (dump_table(fp, "gw_users", "userid")<0) 			printf("\r\nError dumping gw_users\r\n");
 	if (dump_table(fp, "gw_activity", "activityid")<0)		printf("\r\nError dumping gw_activity\r\n");
 	if (dump_table(fp, "gw_bookmarkfolders", "folderid")<0)		printf("\r\nError dumping gw_bookmarkfolders\r\n");
 	if (dump_table(fp, "gw_bookmarks", "bookmarkid")<0)		printf("\r\nError dumping gw_bookmarks\r\n");
@@ -83,8 +84,9 @@ int dump_db(char *filename)
 	if (dump_table(fp, "gw_forumposts", "messageid")<0) 		printf("\r\nError dumping gw_forumposts\r\n");
 	if (dump_table(fp, "gw_groups", "groupid")<0) 			printf("\r\nError dumping gw_groups\r\n");
 	if (dump_table(fp, "gw_mailaccounts", "mailaccountid")<0) 	printf("\r\nError dumping gw_mailaccounts\r\n");
-	if (dump_table(fp, "gw_mailheaders", "mailheaderid")<0) 	printf("\r\nError dumping gw_mailheaders\r\n");
+	if (dump_table(fp, "gw_mailfilters", "mailfilterid")<0) 	printf("\r\nError dumping gw_mailfilters\r\n");
 	if (dump_table(fp, "gw_mailfolders", "mailfolderid")<0) 	printf("\r\nError dumping gw_mailfolders\r\n");
+	if (dump_table(fp, "gw_mailheaders", "mailheaderid")<0) 	printf("\r\nError dumping gw_mailheaders\r\n");
 	if (dump_table(fp, "gw_messages", "messageid")<0) 		printf("\r\nError dumping gw_messages\r\n");
 	if (dump_table(fp, "gw_notes", "noteid")<0) 			printf("\r\nError dumping gw_notes\r\n");
 	if (dump_table(fp, "gw_orders", "orderid")<0) 			printf("\r\nError dumping gw_orders\r\n");
@@ -92,7 +94,6 @@ int dump_db(char *filename)
 	if (dump_table(fp, "gw_products", "productid")<0) 		printf("\r\nError dumping gw_products\r\n");
 	if (dump_table(fp, "gw_queries", "queryid")<0) 			printf("\r\nError dumping gw_queries\r\n");
 	if (dump_table(fp, "gw_tasks", "taskid")<0) 			printf("\r\nError dumping gw_tasks\r\n");
-	if (dump_table(fp, "gw_users", "userid")<0) 			printf("\r\nError dumping gw_users\r\n");
 	if (dump_table(fp, "gw_zones", "zoneid")<0) 			printf("\r\nError dumping gw_zones\r\n");
 	fclose(fp);
 	printf("done.\r\n");
@@ -119,8 +120,9 @@ int init_mdb(void)
 	if (sqlUpdate(1, MDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
 	if (sqlUpdate(1, MDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
 	if (sqlUpdate(1, MDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, MDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
 	if (sqlUpdate(1, MDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, MDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
 	if (sqlUpdate(1, MDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
 	if (sqlUpdate(1, MDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
 	if (sqlUpdate(1, MDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
@@ -152,8 +154,9 @@ int init_mysql(void)
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_forumposts;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_groups;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_mailaccounts;");
-	sqlUpdate(0, "DROP TABLE IF EXISTS gw_mailheaders;");
+	sqlUpdate(0, "DROP TABLE IF EXISTS gw_mailfilters;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_mailfolders;");
+	sqlUpdate(0, "DROP TABLE IF EXISTS gw_mailheaders;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_messages;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_notes;");
 	sqlUpdate(0, "DROP TABLE IF EXISTS gw_orders;");
@@ -179,8 +182,9 @@ int init_mysql(void)
 	if (sqlUpdate(1, MYSQLDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
 	if (sqlUpdate(1, MYSQLDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
 	if (sqlUpdate(1, MYSQLDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, MYSQLDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
 	if (sqlUpdate(1, MYSQLDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, MYSQLDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
 	if (sqlUpdate(1, MYSQLDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
 	if (sqlUpdate(1, MYSQLDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
 	if (sqlUpdate(1, MYSQLDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
@@ -209,8 +213,9 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP SEQUENCE forgid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE grouid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE mailid_seq;");
-	sqlUpdate(0, "DROP SEQUENCE mhdrid_seq;");
+	sqlUpdate(0, "DROP SEQUENCE mfilid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE mfdrid_seq;");
+	sqlUpdate(0, "DROP SEQUENCE mhdrid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE messid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE noteid_seq;");
 	sqlUpdate(0, "DROP SEQUENCE ordeid_seq;");
@@ -236,8 +241,9 @@ int init_pgsql(void)
 	sqlUpdate(0, "DROP TABLE gw_forumposts;");
 	sqlUpdate(0, "DROP TABLE gw_groups;");
 	sqlUpdate(0, "DROP TABLE gw_mailaccounts;");
-	sqlUpdate(0, "DROP TABLE gw_mailheaders;");
+	sqlUpdate(0, "DROP TABLE gw_mailfilters;");
 	sqlUpdate(0, "DROP TABLE gw_mailfolders;");
+	sqlUpdate(0, "DROP TABLE gw_mailheaders;");
 	sqlUpdate(0, "DROP TABLE gw_messages;");
 	sqlUpdate(0, "DROP TABLE gw_notes;");
 	sqlUpdate(0, "DROP TABLE gw_orders;");
@@ -265,8 +271,9 @@ int init_pgsql(void)
 	if (sqlUpdate(1, PGSQLDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
 	if (sqlUpdate(1, PGSQLDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
 	if (sqlUpdate(1, PGSQLDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, PGSQLDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, PGSQLDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
 	if (sqlUpdate(1, PGSQLDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, PGSQLDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
 	if (sqlUpdate(1, PGSQLDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
 	if (sqlUpdate(1, PGSQLDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
 	if (sqlUpdate(1, PGSQLDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }
@@ -325,8 +332,9 @@ int init_pgsqlseq(void)
 	pgsql_seqsync("gw_forumgroups",     "forumgroupid",   "forgid_seq");
 	pgsql_seqsync("gw_groups",          "groupid",        "grouid_seq");
 	pgsql_seqsync("gw_mailaccounts",    "mailaccountid",  "mailid_seq");
-	pgsql_seqsync("gw_mailheaders",     "mailheaderid",   "mhdrid_seq");
+	pgsql_seqsync("gw_mailfilters",     "mailfilterid",   "mfilid_seq");
 	pgsql_seqsync("gw_mailfolders",     "mailfolderid",   "mfdrid_seq");
+	pgsql_seqsync("gw_mailheaders",     "mailheaderid",   "mhdrid_seq");
 	pgsql_seqsync("gw_messages",        "messageid",      "messid_seq");
 	pgsql_seqsync("gw_notes",           "noteid",         "noteid_seq");
 	pgsql_seqsync("gw_orders",          "orderid",        "ordeid_seq");
@@ -357,8 +365,9 @@ int init_sqlite(void)
 	sqlUpdate(0, "DROP TABLE gw_forumposts;");
 	sqlUpdate(0, "DROP TABLE gw_groups;");
 	sqlUpdate(0, "DROP TABLE gw_mailaccounts;");
-	sqlUpdate(0, "DROP TABLE gw_mailheaders;");
+	sqlUpdate(0, "DROP TABLE gw_mailfilters;");
 	sqlUpdate(0, "DROP TABLE gw_mailfolders;");
+	sqlUpdate(0, "DROP TABLE gw_mailheaders;");
 	sqlUpdate(0, "DROP TABLE gw_messages;");
 	sqlUpdate(0, "DROP TABLE gw_notes;");
 	sqlUpdate(0, "DROP TABLE gw_orders;");
@@ -384,8 +393,9 @@ int init_sqlite(void)
 	if (sqlUpdate(1, SQLITEDB_FORUMPOSTS)<0)      { printf("\r\nError inserting gw_forumposts\r\n");      return -1; }
 	if (sqlUpdate(1, SQLITEDB_GROUPS)<0)          { printf("\r\nError inserting gw_groups\r\n");          return -1; }
 	if (sqlUpdate(1, SQLITEDB_MAILACCOUNTS)<0)    { printf("\r\nError inserting gw_mailaccounts\r\n");    return -1; }
-	if (sqlUpdate(1, SQLITEDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
+	if (sqlUpdate(1, SQLITEDB_MAILFILTERS)<0)     { printf("\r\nError inserting gw_mailfilters\r\n");     return -1; }
 	if (sqlUpdate(1, SQLITEDB_MAILFOLDERS)<0)     { printf("\r\nError inserting gw_mailfolders\r\n");     return -1; }
+	if (sqlUpdate(1, SQLITEDB_MAILHEADERS)<0)     { printf("\r\nError inserting gw_mailheaders\r\n");     return -1; }
 	if (sqlUpdate(1, SQLITEDB_MESSAGES)<0)        { printf("\r\nError inserting gw_messages\r\n");        return -1; }
 	if (sqlUpdate(1, SQLITEDB_NOTES)<0)           { printf("\r\nError inserting gw_notes\r\n");           return -1; }
 	if (sqlUpdate(1, SQLITEDB_ORDERS)<0)          { printf("\r\nError inserting gw_orders\r\n");          return -1; }

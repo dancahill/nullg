@@ -31,12 +31,16 @@ ALL : "..\..\distrib\lib\mod_mail.dll"
 
 
 CLEAN :
-	-@erase "$(INTDIR)\mod_mail_addr.obj"
+	-@erase "$(INTDIR)\mod_mail_accounts.obj"
+	-@erase "$(INTDIR)\mod_mail_address.obj"
 	-@erase "$(INTDIR)\mod_mail_codec.obj"
+	-@erase "$(INTDIR)\mod_mail_db.obj"
+	-@erase "$(INTDIR)\mod_mail_filters.obj"
 	-@erase "$(INTDIR)\mod_mail_folders.obj"
 	-@erase "$(INTDIR)\mod_mail_html.obj"
 	-@erase "$(INTDIR)\mod_mail_main.obj"
 	-@erase "$(INTDIR)\mod_mail_mime.obj"
+	-@erase "$(INTDIR)\mod_mail_search.obj"
 	-@erase "$(INTDIR)\mod_mail_server.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_mail.exp"
@@ -91,12 +95,16 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_mail.def"
 LINK32_OBJS= \
-	"$(INTDIR)\mod_mail_addr.obj" \
+	"$(INTDIR)\mod_mail_accounts.obj" \
+	"$(INTDIR)\mod_mail_address.obj" \
 	"$(INTDIR)\mod_mail_codec.obj" \
+	"$(INTDIR)\mod_mail_db.obj" \
+	"$(INTDIR)\mod_mail_filters.obj" \
 	"$(INTDIR)\mod_mail_folders.obj" \
 	"$(INTDIR)\mod_mail_html.obj" \
 	"$(INTDIR)\mod_mail_main.obj" \
 	"$(INTDIR)\mod_mail_mime.obj" \
+	"$(INTDIR)\mod_mail_search.obj" \
 	"$(INTDIR)\mod_mail_server.obj"
 
 "..\..\distrib\lib\mod_mail.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -106,14 +114,29 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_mail - Win32 Release"
-SOURCE=.\mod_mail_addr.c
+SOURCE=.\mod_mail_accounts.c
 
-"$(INTDIR)\mod_mail_addr.obj" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\mod_mail_accounts.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_address.c
+
+"$(INTDIR)\mod_mail_address.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_mail_codec.c
 
 "$(INTDIR)\mod_mail_codec.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_db.c
+
+"$(INTDIR)\mod_mail_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_filters.c
+
+"$(INTDIR)\mod_mail_filters.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_mail_folders.c
@@ -134,6 +157,11 @@ SOURCE=.\mod_mail_main.c
 SOURCE=.\mod_mail_mime.c
 
 "$(INTDIR)\mod_mail_mime.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_mail_search.c
+
+"$(INTDIR)\mod_mail_search.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_mail_server.c

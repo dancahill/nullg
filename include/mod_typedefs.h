@@ -27,6 +27,8 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <direct.h>
+#include <fcntl.h>
+#include <io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #define snprintf _snprintf
@@ -35,11 +37,12 @@
 #define strncasecmp strnicmp
 #else
 #include <netdb.h>
+#include <pthread.h>
+#include <netinet/in.h>
 #include <sys/time.h>
 #endif
-#include "language-en.h"
 #include "defines.h"
-#include "typedefs.h"
+#include "http_typedefs.h"
 
 /* typedefs */
 typedef struct {
@@ -207,6 +210,7 @@ typedef struct {
 	char realname[51];
 	char organization[51];
 	char address[51];
+	char replyto[51];
 	char hosttype[12];
 	char pophost[51];
 	int popport;
@@ -214,6 +218,7 @@ typedef struct {
 	int smtpport;
 	char popusername[51];
 	char poppassword[51];
+	char smtpauth[10];
 	int lastcount;
 	int notify;
 	int remove;
@@ -250,6 +255,7 @@ typedef struct {
 	char paymentmethod[51];
 	float paymentdue;
 	float paymentreceived;
+	int status;
 	char details[1025];
 } REC_ORDER;
 typedef struct {
@@ -394,8 +400,8 @@ typedef	char *(*MAIN_AUTH_SETPASS)(CONN *, char *);
 typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
 typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
 typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, int, char *, int, char *, const char *, ...);
-typedef	void  (*MAIN_LOGACCESS)(CONN *, int, const char *, ...);
-typedef	void  (*MAIN_LOGERROR)(CONN *, char *, int, const char *, ...);
+typedef	void  (*MAIN_LOGACCESS)(CONN *, const char *, ...);
+typedef	void  (*MAIN_LOGERROR)(CONN *, char *, int, int, const char *, ...);
 typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
 typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
 typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, int);
@@ -459,6 +465,7 @@ typedef	char *(*MAIN_GETXMLENV)(CONN *, char *);
 typedef	char *(*MAIN_GETXMLPARAM)(CONN *, int, char *);
 typedef	char *(*MAIN_GETXMLSTRUCT)(CONN *, char *, char *);
 typedef	int   (*MAIN_PRINTS)(CONN *, const char *, ...);
+typedef	int   (*MAIN_RAW_PRINTS)(CONN *, const char *, ...);
 typedef	int   (*MAIN_PRINTHEX)(CONN *, const char *, ...);
 typedef	int   (*MAIN_PRINTHT)(CONN *, const char *, ...);
 typedef	void  (*MAIN_PRINTLINE)(CONN *, short int, char *);
@@ -468,6 +475,7 @@ typedef	char *(*MAIN_STRNCATF)(char *, int, const char *, ...);
 typedef	void  (*MAIN_SEND_ERROR)(CONN *, int, char *, char *);
 typedef	void  (*MAIN_SEND_HEADER)(CONN *, int, int, char *, char *, char *, int, time_t);
 typedef	void  (*MAIN_DECODEURL)(unsigned char *);
+typedef	char *(*MAIN_ENCODEURL)(CONN *, unsigned char *);
 typedef	char *(*MAIN_DECODE_B64S)(CONN *, char *);
 typedef	void  (*MAIN_FIXSLASHES)(char *);
 typedef	void  (*MAIN_STRIPRN)(char *);
@@ -476,7 +484,7 @@ typedef	char *(*MAIN_STR2SQL)(CONN *, char *);
 typedef	char *(*MAIN_STR2SQLBUF)(CONN *, char *, char *, int);
 typedef	char *(*MAIN_GET_MIME_TYPE)(char *);
 typedef	int   (*MAIN_FILESEND)(CONN *, char *);
-typedef	int   (*MAIN_TCP_SEND)(int, const char *, int, int);
+typedef	int   (*MAIN_TCP_SEND)(CONN *, int, const char *, int, int);
 typedef	int   (*MAIN_CLOSECONNECT)(CONN *, int);
 typedef	int   (*MAIN_HEX2INT)(char *);
 typedef	char *(*MAIN_P_STRCASESTR)(char *, char *);

@@ -260,6 +260,7 @@ void adminactivitylist(CONN *sid)
 
 void adminactivityview(CONN *sid)
 {
+	char *ptemp;
 	int logid;
 	int sqr1;
 	int sqr2;
@@ -270,8 +271,8 @@ void adminactivityview(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (getgetenv(sid, "LOGID")==NULL) return;
-	logid=atoi(getgetenv(sid, "LOGID"));
+	if ((ptemp=getgetenv(sid, "LOGID"))==NULL) return;
+	logid=atoi(ptemp);
 	if ((sqr1=sql_queryf(sid, "SELECT activityid, obj_ctime, userid, clientip, category, indexid, action, details FROM gw_activity WHERE activityid  = %d", logid))<0) return;
 	if (sql_numtuples(sqr1)!=1) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", logid);

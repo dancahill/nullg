@@ -32,7 +32,9 @@ ALL : "..\..\distrib\lib\mod_orders.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_orders_db.obj"
+	-@erase "$(INTDIR)\mod_orders_items.obj"
 	-@erase "$(INTDIR)\mod_orders_main.obj"
+	-@erase "$(INTDIR)\mod_orders_products.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_orders.exp"
 	-@erase "$(OUTDIR)\mod_orders.lib"
@@ -87,7 +89,9 @@ DEF_FILE= \
 	".\mod_orders.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_orders_db.obj" \
-	"$(INTDIR)\mod_orders_main.obj"
+	"$(INTDIR)\mod_orders_items.obj" \
+	"$(INTDIR)\mod_orders_main.obj" \
+	"$(INTDIR)\mod_orders_products.obj"
 
 "..\..\distrib\lib\mod_orders.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -101,9 +105,19 @@ SOURCE=.\mod_orders_db.c
 "$(INTDIR)\mod_orders_db.obj" : $(SOURCE) "$(INTDIR)"
 
 
+SOURCE=.\mod_orders_items.c
+
+"$(INTDIR)\mod_orders_items.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\mod_orders_main.c
 
 "$(INTDIR)\mod_orders_main.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_orders_products.c
+
+"$(INTDIR)\mod_orders_products.obj" : $(SOURCE) "$(INTDIR)"
 
 
 

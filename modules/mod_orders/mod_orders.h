@@ -15,6 +15,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
+#include "i18n/mod_orders.h"
+
 typedef struct {
 	int recordid;
 	time_t obj_ctime;
@@ -52,3 +55,12 @@ typedef struct {
 
 /* mod_orders_db.c */
 int db_read(CONN *sid, short int perm, short int table, int index, void *record);
+/* mod_orders_items.c */
+void orderitemedit(CONN *sid);
+void orderitemlist(CONN *sid, int orderid);
+void orderitemsave(CONN *sid);
+/* mod_orders_products.c */
+void productedit(CONN *sid);
+void productview(CONN *sid);
+void productlist(CONN *sid);
+void productsave(CONN *sid);

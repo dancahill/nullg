@@ -68,7 +68,27 @@ SOURCE=.\mod_calendar_assign.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_calendar_availmap.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_calendar_db.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calendar_listd.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calendar_listw.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calendar_listm.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\mod_calendar_listy.c
 # End Source File
 # Begin Source File
 

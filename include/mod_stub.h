@@ -24,8 +24,9 @@ MAIN_AUTH_SETPASS			auth_setpass;
 /* config.c functions */
 MAIN_CONFIG_READ			config_read;
 MAIN_CONFIG_WRITE			config_write;
-/* connio.c functions */
+/* io.c functions */
 MAIN_PRINTS				prints;
+MAIN_RAW_PRINTS				raw_prints;
 MAIN_PRINTHEX				printhex;
 MAIN_PRINTHT				printht;
 MAIN_PRINTLINE				printline;
@@ -103,6 +104,7 @@ MAIN_SQL_UPDATE				sql_update;
 MAIN_SQL_UPDATEF			sql_updatef;
 
 MAIN_DECODEURL				decodeurl;
+MAIN_ENCODEURL				encodeurl;
 MAIN_DECODE_B64S			decode_b64s;
 MAIN_GETBUFFER				getbuffer;
 MAIN_STR2HTML				str2html;
@@ -143,12 +145,16 @@ void *_get_func(char *fn_name)
 			return functions[i].fn_ptr;
 		}
 	}
-	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to find function %s", fn_name);
+	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, 0, "ERROR: Failed to find function %s", fn_name);
 	return NULL;
 }
 
 int mod_import()
 {
+#ifdef WIN32
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+#endif
 	logerror=NULL;
 	if ((logerror                   = _get_func("logerror"))==NULL) return -1;
 	if ((logaccess                  = _get_func("logaccess"))==NULL) return -1;
@@ -214,6 +220,7 @@ int mod_import()
 	if ((time_unix2datetext         = _get_func("time_unix2datetext"))==NULL) return -1;
 	if ((time_wmgetdate             = _get_func("time_wmgetdate"))==NULL) return -1;
 	if ((decodeurl                  = _get_func("decodeurl"))==NULL) return -1;
+	if ((encodeurl                  = _get_func("encodeurl"))==NULL) return -1;
 	if ((decode_b64s                = _get_func("decode_b64s"))==NULL) return -1;
 	if ((get_mime_type              = _get_func("get_mime_type"))==NULL) return -1;
 	if ((getgetenv                  = _get_func("getgetenv"))==NULL) return -1;
@@ -223,6 +230,7 @@ int mod_import()
 	if ((getxmlparam                = _get_func("getxmlparam"))==NULL) return -1;
 	if ((getxmlstruct               = _get_func("getxmlstruct"))==NULL) return -1;
 	if ((prints                     = _get_func("prints"))==NULL) return -1;
+	if ((raw_prints                 = _get_func("raw_prints"))==NULL) return -1;
 	if ((printhex                   = _get_func("printhex"))==NULL) return -1;
 	if ((printht                    = _get_func("printht"))==NULL) return -1;
 	if ((printline                  = _get_func("printline"))==NULL) return -1;
@@ -272,7 +280,7 @@ int mod_export_main(MODULE_MENU *newmod)
 		proc->mod_menuitems[i].fn_ptr=newmod->fn_ptr;
 		return 0;
 	}
-	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to find function %s", newmod->fn_name);
+	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, 0, "ERROR: Failed to find function %s", newmod->fn_name);
 	return -1;
 }
 
@@ -289,7 +297,7 @@ int mod_export_function(char *mod_name, char *fn_name, void *fn_ptr)
 		proc->mod_functions[i].fn_ptr=fn_ptr;
 		return 0;
 	}
-	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, "ERROR: Failed to find function %s", fn_name);
+	if (logerror!=NULL) logerror(NULL, __FILE__, __LINE__, 0, "ERROR: Failed to find function %s", fn_name);
 	return -1;
 }
 

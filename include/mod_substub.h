@@ -25,6 +25,7 @@ extern MAIN_AUTH_SETPASS			auth_setpass;
 extern MAIN_CONFIG_READ				config_read;
 extern MAIN_CONFIG_WRITE			config_write;
 /* connio.c functions */
+extern MAIN_RAW_PRINTS				raw_prints;
 extern MAIN_PRINTS				prints;
 extern MAIN_PRINTHEX				printhex;
 extern MAIN_PRINTHT				printht;
@@ -103,6 +104,7 @@ extern MAIN_SQL_UPDATE				sql_update;
 extern MAIN_SQL_UPDATEF				sql_updatef;
 
 extern MAIN_DECODEURL				decodeurl;
+extern MAIN_ENCODEURL				encodeurl;
 extern MAIN_DECODE_B64S				decode_b64s;
 extern MAIN_GETBUFFER				getbuffer;
 extern MAIN_STR2HTML				str2html;
@@ -127,6 +129,12 @@ extern MAIN_GETTIMEOFDAY			gettimeofday;
 extern MAIN_OPENDIR				opendir;
 extern MAIN_READDIR				readdir;
 extern MAIN_CLOSEDIR				closedir;
+#endif
+
+#ifdef WIN32
+#define msleep(x) Sleep(x)
+#else
+#define msleep(x) usleep(x*1000)
 #endif
 
 extern CONFIG   *config;

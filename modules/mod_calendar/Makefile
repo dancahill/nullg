@@ -1,15 +1,15 @@
 # Makefile for NullLogic Groupware module
 
-TOPDIR=../
-include $(TOPDIR)Rules.mak
+include ../../Rules.mak
 
-OBJECTS = mod_calendar_assign.o mod_calendar_db.o mod_calendar_main.o mod_calendar_mini.o
-TARGET  = $(TARGETDIR)/mod_calendar.so
+CFLAGS  = $(MOD_CFLAGS)
+OBJECTS = mod_calendar_assign.o mod_calendar_availmap.o mod_calendar_db.o mod_calendar_listd.o mod_calendar_listw.o mod_calendar_listm.o mod_calendar_listy.o mod_calendar_main.o mod_calendar_mini.o
+TARGET  = $(MOD_TARGETDIR)/mod_calendar.so
 
 all: mod_calendar
 
 mod_calendar: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(MOD_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

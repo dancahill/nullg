@@ -29,21 +29,34 @@
 #include <sys/types.h>
 #define closesocket close
 #endif
+#include "i18n/mod_mail.h"
 
 typedef struct {
+	int localid;
+	int accountid;
 	char From[128];
+	char FromName[128];
+	char FromAddr[128];
 	char ReplyTo[128];
 	char To[2048];
 	char CC[2048];
 	char BCC[2048];
 	char Subject[128];
 	char Date[128];
+	char MessageID[128];
+	char InReplyTo[128];
 	char contenttype[128];
 	char boundary[128];
 	char encoding[128];
-	char status;
+	char uidl[100];
+	char status[10];
+	int size;
 } wmheader;
 
+/* mod_mail_accounts.c */
+void wmaccount_edit(CONN *sid);
+void wmaccount_list(CONN *sid);
+void wmaccount_save(CONN *sid);
 /* mod_mail_addr.c */
 void wmaddr_list(CONN *sid);
 /* mod_mail_codec.c */
@@ -56,16 +69,24 @@ int  EncodeBase64file(FILE *fp, char *src, int srclen);
 int  DecodeBase64(CONN *sid, char *src, char *ctype);
 char *EncodeBase64string(CONN *sid, char *src);
 char *DecodeBase64string(CONN *sid, char *src);
+/* mod_mail_db.c */
+int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);
+int dbread_mailcurrent(CONN *sid, int mailcurrent);
+int dbread_getheader(CONN *sid, int sqr, int tuple, wmheader *header);
+/* mod_mail_filters.c */
+int wmfilter_apply(CONN *sid, wmheader *header, int accountid);
+void wmfilter_edit(CONN *sid);
+void wmfilter_list(CONN *sid, int accountid);
+void wmfilter_save(CONN *sid);
 /* mod_mail_folders.c */
-void wmfolder_list(CONN *sid);
+void wmfolder_list(CONN *sid, int accountid);
 void wmfolder_edit(CONN *sid);
 void wmfolder_save(CONN *sid);
 /* mod_mail_html.c */
 void htselect_mailaccount(CONN *sid, int selected);
+void htselect_mailfolder(CONN *sid, int selected, short int allow_zero);
+void htselect_mailfolderjump(CONN *sid, int selected);
 void htselect_mailjump(CONN *sid, int selected);
-void htselect_mailmbox(CONN *sid, char *selected);
-void htselect_mailfolder(CONN *sid, int selected);
-void htselect_mailfolder2(CONN *sid, int selected);
 /* mod_mail_main.c */
 void wmloginform(CONN *sid);
 int  webmailheader(CONN *sid, wmheader *header);
@@ -73,7 +94,10 @@ int  webmailheader(CONN *sid, wmheader *header);
 int webmailheader(CONN *sid, wmheader *header);
 void webmailfiledl(CONN *sid);
 char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
-int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, short int nummessage, short int reply, short int depth);
+int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth);
+/* mod_mail_search.c */
+char *search_makestring(CONN *sid);
+int search_doquery(CONN *sid, const char *order_by, int folderid);
 /* mod_mail_server.c */
 int  wmprints(CONN *sid, const char *format, ...);
 int  wmfgets(CONN *sid, char *buffer, int max, int fd);

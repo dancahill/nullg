@@ -1,15 +1,15 @@
 # Makefile for NullLogic Groupware module
 
-TOPDIR=../
-include $(TOPDIR)Rules.mak
+include ../../Rules.mak
 
-OBJECTS  = mod_bookmarks_db.o mod_bookmarks_main.o
-TARGET   = $(TARGETDIR)/mod_bookmarks.so
+CFLAGS  = $(MOD_CFLAGS)
+OBJECTS = mod_bookmarks_db.o mod_bookmarks_main.o
+TARGET  = $(MOD_TARGETDIR)/mod_bookmarks.so
 
 all: mod_bookmarks
 
 mod_bookmarks: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(MOD_LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

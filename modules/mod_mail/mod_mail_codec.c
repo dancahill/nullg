@@ -29,7 +29,7 @@ char *DecodeRFC2047(CONN *sid, char *src)
 	int szdest;
 	int ch=0;
 
-	szdest=2047;
+	szdest=sizeof(sid->dat->smallbuf[0])-1;
 	destidx=0;
 	while (*src) {
 		if (strncmp(src, "=?", 2)!=0) {
@@ -37,15 +37,15 @@ char *DecodeRFC2047(CONN *sid, char *src)
 			continue;
 		}
 		while ((*src)&&(*src!='?')) src++;
-		if (*src=='\0') return dest;
+		if (*src=='\0') goto done;
 		src++;
 		// we don't try to make sense of the charset
 		while ((*src)&&(*src!='?')) src++;
-		if (*src=='\0') return dest;
+		if (*src=='\0') goto done;
 		src++;
 		if (tolower(*src)=='q') {
 			while ((*src)&&(*src!='?')) src++;
-			if (*src=='\0') return dest;
+			if (*src=='\0') goto done;
 			src++;
 			while ((ch=*src++)!='\0') {
 				if (ch=='?') break;
@@ -57,11 +57,11 @@ char *DecodeRFC2047(CONN *sid, char *src)
 				} else {
 					dest[destidx++]=ch;
 				}
-				if (destidx>=szdest) return dest;
+				if (destidx>=szdest) goto done;
 			}
 		} else if (tolower(*src)=='b') {
 			while ((*src)&&(*src!='?')) src++;
-			if (*src=='\0') return dest;
+			if (*src=='\0') goto done;
 			src++;
 			state=0;
 			while ((ch=*src++)!='\0') {
@@ -72,14 +72,14 @@ char *DecodeRFC2047(CONN *sid, char *src)
 				switch (state) {
 				case 0:
 					if (dest) {
-						if (destidx>=szdest) return dest;
+						if (destidx>=szdest) goto done;
 						dest[destidx]=(pos-Base64)<<2;
 					}
 					state=1;
 					break;
 				case 1:
 					if (dest) {
-						if (destidx+1>=szdest) return dest;
+						if (destidx+1>=szdest) goto done;
 						dest[destidx]|=(pos-Base64)>>4;
 						dest[destidx+1]=((pos-Base64)&0x0f)<<4;
 					}
@@ -88,7 +88,7 @@ char *DecodeRFC2047(CONN *sid, char *src)
 					break;
 				case 2:
 					if (dest) {
-						if (destidx+1>=szdest) return dest;
+						if (destidx+1>=szdest) goto done;
 						dest[destidx]|=(pos-Base64)>>2;
 						dest[destidx+1]=((pos-Base64)&0x03)<<6;
 					}
@@ -97,7 +97,7 @@ char *DecodeRFC2047(CONN *sid, char *src)
 					break;
 				case 3:
 					if (dest) {
-						if (destidx>=szdest) return dest;
+						if (destidx>=szdest) goto done;
 						dest[destidx]|=(pos-Base64);
 					}
 					destidx++;
@@ -109,11 +109,14 @@ char *DecodeRFC2047(CONN *sid, char *src)
 		if (ch=='=') {
 			while ((*src)&&(*src!='?')) src++;
 		}
-		if (*src=='\0') return dest;
+		if (*src=='\0') goto done;
 		src++;
 		if (*src=='=') src++;
 		ch=0;
 	}
+done:
+	dest[destidx]='\0';
+	dest[sizeof(sid->dat->smallbuf[0])-1]='\0';
 	return dest;
 }
 
@@ -280,6 +283,128 @@ int DecodeText(CONN *sid, short int reply, char *src)
 }
 
 /* IS THIS B64 CODE LICENCED?  SOURCE = http://www.jti.net/brad/base64.htm */
+int DecodeBase64(CONN *sid, char *src, char *ctype)
+{
+	char dest[1024];
+	int destidx, state, ch;
+	int szdest;
+	char *pos;
+
+	memset(dest, 0, sizeof(dest));
+	szdest=sizeof(dest)-1;
+	state=0;
+	destidx=0;
+	while ((ch=*src++)!='\0') {
+		if (isspace(ch)) continue;
+		if (ch=='=') break;
+		pos=strchr(Base64, ch);
+		if (pos==0) return (-1);
+		switch (state) {
+			case 0:
+				if (dest) {
+					if (destidx>=szdest) return (-1);
+					dest[destidx]=(pos-Base64)<<2;
+				}
+				state=1;
+				break;
+			case 1:
+				if (dest) {
+					if (destidx+1>=szdest) return (-1);
+					dest[destidx]|=(pos-Base64)>>4;
+					dest[destidx+1]=((pos-Base64)&0x0f)<<4;
+				}
+				destidx++;
+				state=2;
+				break;
+			case 2:
+				if (dest) {
+					if (destidx+1>=szdest) return (-1);
+					dest[destidx]|=(pos-Base64)>>2;
+					dest[destidx+1]=((pos-Base64)&0x03)<<6;
+				}
+				destidx++;
+				state=3;
+				break;
+			case 3:
+				if (dest) {
+					if (destidx>=szdest) return (-1);
+					dest[destidx]|=(pos-Base64);
+				}
+				destidx++;
+				state=0;
+				break;
+		}
+	}
+	if (strncasecmp(ctype, "text/html", 9)==0) {
+		DecodeHTML(sid, 0, dest, ctype, 0);
+	} else if (strncasecmp(ctype, "text/plain", 10)==0) {
+		prints(sid, "%s", dest);
+	} else {
+		if (proc->RunAsCGI) {
+			fwrite(dest, sizeof(char), destidx, stdout);
+		} else {
+			if (send(sid->socket, dest, destidx, 0)<0) return -1;
+		}
+		sid->dat->out_bytecount+=destidx;
+	}
+	return (destidx);
+}
+
+char *DecodeBase64string(CONN *sid, char *src)
+{
+	static char dest[1024];
+	int destidx, state, ch;
+	int szdest;
+	char *pos;
+
+	memset(dest, 0, sizeof(dest));
+	szdest=sizeof(dest)-1;
+	state=0;
+	destidx=0;
+	while ((ch=*src++)!='\0') {
+		if (isspace(ch)) continue;
+		if (ch=='=') break;
+		pos=strchr(Base64, ch);
+		if (pos==0) return "";
+		switch (state) {
+			case 0:
+				if (dest) {
+					if (destidx>=szdest) return dest;
+					dest[destidx]=(pos-Base64)<<2;
+				}
+				state=1;
+				break;
+			case 1:
+				if (dest) {
+					if (destidx+1>=szdest) return dest;
+					dest[destidx]|=(pos-Base64)>>4;
+					dest[destidx+1]=((pos-Base64)&0x0f)<<4;
+				}
+				destidx++;
+				state=2;
+				break;
+			case 2:
+				if (dest) {
+					if (destidx+1>=szdest) return dest;
+					dest[destidx]|=(pos-Base64)>>2;
+					dest[destidx+1]=((pos-Base64)&0x03)<<6;
+				}
+				destidx++;
+				state=3;
+				break;
+			case 3:
+				if (dest) {
+					if (destidx>=szdest) return dest;
+					dest[destidx]|=(pos-Base64);
+				}
+				destidx++;
+				state=0;
+				break;
+		}
+	}
+	return dest;
+}
+
 int EncodeBase64(CONN *sid, char *src, int srclen)
 {
 	unsigned char a, b, c, d, *cp;
@@ -368,72 +493,6 @@ int EncodeBase64file(FILE *fp, char *src, int srclen)
 	return dst;
 }
 
-int DecodeBase64(CONN *sid, char *src, char *ctype)
-{
-	char dest[1024];
-	int destidx, state, ch;
-	int szdest;
-	char *pos;
-
-	memset(dest, 0, sizeof(dest));
-	szdest=sizeof(dest)-1;
-	state=0;
-	destidx=0;
-	while ((ch=*src++)!='\0') {
-		if (isspace(ch)) continue;
-		if (ch=='=') break;
-		pos=strchr(Base64, ch);
-		if (pos==0) return (-1);
-		switch (state) {
-			case 0:
-				if (dest) {
-					if (destidx>=szdest) return (-1);
-					dest[destidx]=(pos-Base64)<<2;
-				}
-				state=1;
-				break;
-			case 1:
-				if (dest) {
-					if (destidx+1>=szdest) return (-1);
-					dest[destidx]|=(pos-Base64)>>4;
-					dest[destidx+1]=((pos-Base64)&0x0f)<<4;
-				}
-				destidx++;
-				state=2;
-				break;
-			case 2:
-				if (dest) {
-					if (destidx+1>=szdest) return (-1);
-					dest[destidx]|=(pos-Base64)>>2;
-					dest[destidx+1]=((pos-Base64)&0x03)<<6;
-				}
-				destidx++;
-				state=3;
-				break;
-			case 3:
-				if (dest) {
-					if (destidx>=szdest) return (-1);
-					dest[destidx]|=(pos-Base64);
-				}
-				destidx++;
-				state=0;
-				break;
-		}
-	}
-	if (strncasecmp(ctype, "text/html", 9)==0) {
-		DecodeHTML(sid, 0, dest, ctype, 0);
-	} else if (strncasecmp(ctype, "text/plain", 10)==0) {
-		prints(sid, "%s", dest);
-	} else {
-		if (proc->RunAsCGI) {
-			fwrite(dest, sizeof(char), destidx, stdout);
-		} else {
-			send(sid->socket, dest, destidx, 0);
-		}
-	}
-	return (destidx);
-}
-
 char *EncodeBase64string(CONN *sid, char *src)
 {
 	unsigned char a, b, c, d, *cp;
@@ -458,7 +517,7 @@ char *EncodeBase64string(CONN *sid, char *src)
 		dest[dst+2]=Base64[c];
 		dest[dst+3]=Base64[d];
 		dst+=4;
-		if (dst>=1020) return dest;
+		if (dst>=1020) goto done;
 	}
 	if (remlen==1) {
 		a=(cp[0]>>2);
@@ -477,60 +536,8 @@ char *EncodeBase64string(CONN *sid, char *src)
 		dest[dst+2]=Base64[c];
 		dest[dst+3]='=';
 	}
-	return dest;
-}
-
-char *DecodeBase64string(CONN *sid, char *src)
-{
-	static char dest[1024];
-	int destidx, state, ch;
-	int szdest;
-	char *pos;
-
-	memset(dest, 0, sizeof(dest));
-	szdest=sizeof(dest)-1;
-	state=0;
-	destidx=0;
-	while ((ch=*src++)!='\0') {
-		if (isspace(ch)) continue;
-		if (ch=='=') break;
-		pos=strchr(Base64, ch);
-		if (pos==0) return "";
-		switch (state) {
-			case 0:
-				if (dest) {
-					if (destidx>=szdest) return dest;
-					dest[destidx]=(pos-Base64)<<2;
-				}
-				state=1;
-				break;
-			case 1:
-				if (dest) {
-					if (destidx+1>=szdest) return dest;
-					dest[destidx]|=(pos-Base64)>>4;
-					dest[destidx+1]=((pos-Base64)&0x0f)<<4;
-				}
-				destidx++;
-				state=2;
-				break;
-			case 2:
-				if (dest) {
-					if (destidx+1>=szdest) return dest;
-					dest[destidx]|=(pos-Base64)>>2;
-					dest[destidx+1]=((pos-Base64)&0x03)<<6;
-				}
-				destidx++;
-				state=3;
-				break;
-			case 3:
-				if (dest) {
-					if (destidx>=szdest) return dest;
-					dest[destidx]|=(pos-Base64);
-				}
-				destidx++;
-				state=0;
-				break;
-		}
-	}
+done:
+	dest[dst]='\0';
+	dest[sizeof(sid->dat->smallbuf[0])-1]='\0';
 	return dest;
 }

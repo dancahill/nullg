@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "mod_stub.h"
+#include "mod_html.h"
 
 void mod_html_header(CONN *sid, char *title)
 {
@@ -92,7 +93,7 @@ void mod_html_topmenu(CONN *sid, int menu)
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
 	prints(sid, "function ShowHelp()\r\n");
 	prints(sid, "{\r\n");
-	prints(sid, "	window.open('/groupware/help/");
+	prints(sid, "	window.open('/groupware/help/" LANGUAGE_CODE "/");
 	switch (menu) {
 		case MENU_ADMIN:     prints(sid, "ch02-00.html"); break;
 		case MENU_BOOKMARKS: prints(sid, "ch03-00.html"); break;
@@ -128,15 +129,6 @@ void mod_html_topmenu(CONN *sid, int menu)
 		prints(sid, "function MsgTo(msg) {\r\n");
 		prints(sid, "	window.open('%s/mail/write?to='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName);
 		prints(sid, "}\r\n");
-		prints(sid, "function ReplyTo(msg) {\r\n");
-		prints(sid, "	window.open('%s/mail/write?replyto='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName);
-		prints(sid, "}\r\n");
-		prints(sid, "function ReplyAll(msg) {\r\n");
-		prints(sid, "	window.open('%s/mail/write?replyall='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName);
-		prints(sid, "}\r\n");
-		prints(sid, "function Forward(msg) {\r\n");
-		prints(sid, "	window.open('%s/mail/write?forward='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n", sid->dat->in_ScriptName);
-		prints(sid, "}\r\n");
 	}
 	if (sid->dat->user_menustyle==0) {
 		prints(sid, "function ListUsers() {\n");
@@ -145,13 +137,13 @@ void mod_html_topmenu(CONN *sid, int menu)
 	}
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	if ((menu==MENU_WEBMAIL)&&(sid->dat->user_menustyle>0)) {
-		if (strncmp(sid->dat->in_RequestURI, "/mail/list", 10)==0) goto domenu;
-		if (strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/accounts", 14)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/filters", 13)==0) goto domenu;
 		if (strncmp(sid->dat->in_RequestURI, "/mail/folders", 13)==0) goto domenu;
-		if (strncmp(sid->dat->in_RequestURI, "/mail/purge", 11)==0) {
-			menu=MENU_PROFILE;
-			goto domenu;
-		}
+		if (strncmp(sid->dat->in_RequestURI, "/mail/list", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/purge", 11)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/quit", 10)==0) goto domenu;
+		if (strncmp(sid->dat->in_RequestURI, "/mail/sync", 10)==0) goto domenu;
 		return;
 	}
 domenu:
@@ -214,7 +206,7 @@ domenu:
 			if (userid>0) prints(sid, "&userid=%d", userid);
 			if (groupid>0) prints(sid, "&groupid=%d", groupid);
 			prints(sid, ">TODAY</A>&nbsp;&middot;&nbsp;");
-			prints(sid, "<A CLASS='TBAR' HREF=%s/calendar/listweek?status=%d", sid->dat->in_ScriptName, status);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/calendar/wlist?status=%d", sid->dat->in_ScriptName, status);
 			if (userid>0) prints(sid, "&userid=%d", userid);
 			if (groupid>0) prints(sid, "&groupid=%d", groupid);
 			prints(sid, ">WEEK</A>&nbsp;&middot;&nbsp;");
@@ -226,6 +218,10 @@ domenu:
 			if (userid>0) prints(sid, "&userid=%d", userid);
 			if (groupid>0) prints(sid, "&groupid=%d", groupid);
 			prints(sid, ">YEAR</A>&nbsp;&middot;&nbsp;");
+			prints(sid, "<A CLASS='TBAR' HREF=%s/calendar/availmap?status=%d", sid->dat->in_ScriptName, status);
+			if (userid>0) prints(sid, "&userid=%d", userid);
+			if (groupid>0) prints(sid, "&groupid=%d", groupid);
+			prints(sid, ">AVAILMAP</A>&nbsp;&middot;&nbsp;");
 			prints(sid, "<A CLASS='TBAR' HREF=%s/calendar/editnew>NEW EVENT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/tasks/editnew>NEW TASK</a>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			break;
@@ -282,14 +278,17 @@ domenu:
 			}
 			break;
 		case MENU_WEBMAIL:
-			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/list%s>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=wmlist":"");
 			if (sid->dat->user_menustyle>0) {
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/main TARGET=gwmain>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				prints(sid, "<A CLASS='TBAR' HREF=javascript:ComposeMail()>COMPOSE</A>&nbsp;&middot;&nbsp;");
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync TARGET=gwmain>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list TARGET=gwmain>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			} else {
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/list>INBOX</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/write>COMPOSE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/mail/accounts/list>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}
-			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/sync>SEND/RECV</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/folders>FOLDERS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/quit%s>QUIT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=gwmain":"");
 			break;
 	}
@@ -430,7 +429,7 @@ void mod_html_motd(CONN *sid)
 	if ((sqr=sql_queryf(sid, "SELECT motd FROM gw_groups where groupid = %d", sid->dat->user_gid))<0) return;
 	if (sql_numtuples(sqr)==1) {
 		if (strlen(sql_getvalue(sqr, 0, 0))>0) {
-			prints(sid, "<TR BGCOLOR=%s><TD COLSPAN=2 STYLE='border-style:solid'>\r\n", proc->config.colour_fieldval);
+			prints(sid, "<TR BGCOLOR=%s><TD STYLE='border-style:solid'>\r\n", proc->config.colour_fieldval);
 			prints(sid, "%s", sql_getvalue(sqr, 0, 0));
 			prints(sid, "<BR></TD></TR>\r\n");
 		}
@@ -487,25 +486,27 @@ void mod_html_motd(CONN *sid)
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</TD><TD VALIGN=TOP>\n");
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2 COLOR=%s>&nbsp;E-Mail</FONT></TH></TR>\n", proc->config.colour_th, proc->config.colour_thtext);
 		if ((sqr=sql_queryf(sid, "SELECT mailaccountid, accountname FROM gw_mailaccounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->user_uid))<0) return;
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			if ((sqr2=sql_queryf(sid, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
-			newmessages=atoi(sql_getvalue(sqr2, 0, 0));
-			sql_freeresult(sqr2);
-			prints(sid, "<TR BGCOLOR=%s><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", proc->config.colour_fieldval);
-			prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT NOWRAP>", proc->config.colour_fieldval);
-			if (sid->dat->user_menustyle>0) {
-				prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
-			} else {
-				prints(sid, "<A HREF=%s/mail/list?accountid=%d>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR BGCOLOR=%s><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>", proc->config.colour_th);
+			prints(sid, "<FONT SIZE=2 COLOR=%s>&nbsp;E-Mail</FONT></TH></TR>\n", proc->config.colour_thtext);
+			for (i=0;i<sql_numtuples(sqr);i++) {
+				if ((sqr2=sql_queryf(sid, "SELECT count(mailheaderid) FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->user_uid, atoi(sql_getvalue(sqr, i, 0))))<0) continue;
+				newmessages=atoi(sql_getvalue(sqr2, 0, 0));
+				sql_freeresult(sqr2);
+				prints(sid, "<TR BGCOLOR=%s><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n", proc->config.colour_fieldval);
+				prints(sid, "<TR BGCOLOR=%s><TD ALIGN=LEFT NOWRAP>", proc->config.colour_fieldval);
+				if (sid->dat->user_menustyle>0) {
+					prints(sid, "<A HREF=%s/mail/main?accountid=%d TARGET=gwmain>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+				} else {
+					prints(sid, "<A HREF=%s/mail/list?accountid=%d>%-.25s</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), str2html(sid, sql_getvalue(sqr, i, 1)));
+				}
+				prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s%d New%s</TD></TR>\n</TABLE></TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"");
 			}
-			prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s%d New%s</TD></TR>\n</TABLE></TD></TR>\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"");
+			prints(sid, "</TABLE>\n<BR>\n");
 		}
 		sql_freeresult(sqr);
-		prints(sid, "</TABLE>\n");
-		prints(sid, "<BR>\n");
 	}
 	if ((mod_tasks_list=module_call(sid, "mod_tasks_list"))!=NULL) {
 		mod_tasks_list(sid, sid->dat->user_uid, -1);
@@ -766,23 +767,29 @@ void mod_main(CONN *sid)
 		mod_html_motd(sid);
 	} else if (strncmp(sid->dat->in_RequestURI, "/frames/temp", 12)==0) {
 		mod_html_reloadframe(sid);
+	} else {
+		mod_html_motd(sid);
 	}
 	return;
 }
 
 DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 {
-	MODULE_MENU newmod;
+	MODULE_MENU newmod = {
+		"mod_html",		// mod_name
+		0,			// mod_submenu
+		"",			// mod_menuname
+		"",			// mod_menuuri
+		"",			// mod_menuperm
+		"mod_main",		// fn_name
+		"/frames/",		// fn_uri
+		mod_main		// fn_ptr
+	};
 
 	proc=_proc;
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	memset((char *)&newmod, 0, sizeof(newmod));
-	snprintf(newmod.mod_name,     sizeof(newmod.mod_name)-1,     "mod_html");
-	snprintf(newmod.fn_name,      sizeof(newmod.fn_name)-1,      "mod_main");
-	snprintf(newmod.fn_uri,       sizeof(newmod.fn_uri)-1,       "/frames/");
-	newmod.fn_ptr=mod_main;
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_html", "mod_html_header",      mod_html_header)!=0) return -1;
 	if (mod_export_function("mod_html", "mod_html_footer",      mod_html_footer)!=0) return -1;

@@ -1,0 +1,12 @@
+# Rules.mak for NullLogic Groupware executables
+CC            = gcc
+MAKE          = make
+
+BIN_CFLAGS    = -Wall -O2 -DFREEBSD -I../include
+BIN_LDFLAGS   = -s
+BIN_LDFLAGS_T = -s -pthread
+BIN_TARGETDIR = ../distrib/bin
+
+MOD_CFLAGS    = -Wall -O2 -DFREEBSD -fPIC -I../../include
+MOD_LDFLAGS   = -s -shared
+MOD_TARGETDIR = ../../distrib/lib

@@ -144,7 +144,8 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 		strncpy(rec.order->paymentmethod,	sql_getvalue(sqr, 0, 12), sizeof(rec.order->paymentmethod)-1);
 		rec.order->paymentdue=(float)atof(sql_getvalue(sqr, 0, 13));
 		rec.order->paymentreceived=(float)atof(sql_getvalue(sqr, 0, 14));
-		strncpy(rec.order->details,		sql_getvalue(sqr, 0, 15), sizeof(rec.order->details)-1);
+		rec.order->status=atoi(sql_getvalue(sqr, 0, 15));
+		strncpy(rec.order->details,		sql_getvalue(sqr, 0, 16), sizeof(rec.order->details)-1);
 		break;
 	case DB_ORDERITEMS:
 		rec.orderitem->orderid=atoi(sql_getvalue(sqr, 0, 8));
