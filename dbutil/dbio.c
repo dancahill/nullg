@@ -54,7 +54,6 @@ int dump_db(char *filename)
 {
 	FILE *fp;
 
-	configread();
 	printf("Dumping %s database to %s...", config.sql_type, filename);
 	fp=fopen(filename, "wa");
 	if (fp==NULL) {

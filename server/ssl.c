@@ -32,18 +32,18 @@ int ssl_init()
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	if (SSL_CTX_use_certificate_file(proc.ssl_ctx, "../etc/cert.pem", SSL_FILETYPE_PEM)<=0) {
-		log_error("core",  __FILE__, __LINE__, 0, "SSL Error loading cert.pem");
+	if (SSL_CTX_use_certificate_file(proc.ssl_ctx, proc.config.ssl_cert, SSL_FILETYPE_PEM)<=0) {
+		log_error("core",  __FILE__, __LINE__, 0, "SSL Error loading certificate '%s'", proc.config.ssl_cert);
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	if (SSL_CTX_use_PrivateKey_file(proc.ssl_ctx, "../etc/priv.pem", SSL_FILETYPE_PEM)<=0) {
-		log_error("core", __FILE__, __LINE__, 0, "SSL Error loading priv.pem");
+	if (SSL_CTX_use_PrivateKey_file(proc.ssl_ctx, proc.config.ssl_key, SSL_FILETYPE_PEM)<=0) {
+		log_error("core", __FILE__, __LINE__, 0, "SSL Error loading private key '%s'", proc.config.ssl_key);
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 	if (!SSL_CTX_check_private_key(proc.ssl_ctx)) {
-		log_error("core", __FILE__, __LINE__, 0, "Private key does not match the certificate public key");
+		log_error("core", __FILE__, __LINE__, 0, "Private key does not match the public certificate");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}

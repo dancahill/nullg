@@ -1,0 +1,84 @@
+# This file contains system settings for NullLogic Groupware.
+
+[global]
+   uid               = nullgw
+   gid               = nullgw
+   log level         = 1
+;  host name         = fqdn.hostname.com
+   base path         = /usr/local/nullgroupware
+   bin path          = /usr/local/nullgroupware/bin
+   etc path          = /usr/local/nullgroupware/etc
+   lib path          = /usr/local/nullgroupware/lib
+   var path          = /usr/local/nullgroupware/var
+   var_backup path   = /usr/local/nullgroupware/var/backup
+   var_cgi path      = /usr/local/nullgroupware/var/cgi-bin
+   var_db path       = /usr/local/nullgroupware/var/db
+   var_domains path  = /usr/local/nullgroupware/var/domains
+   var_htdocs path   = /usr/local/nullgroupware/var/htdocs
+   var_log path      = /usr/local/nullgroupware/var/log
+   var_spool path    = /usr/local/nullgroupware/var/spool
+   var_tmp path      = /usr/local/nullgroupware/var/tmp
+   sql server type   = SQLITE
+;  sql host name     = localhost
+;  sql port          = 3306
+;  sql database name = nullgroupware
+;  sql user name     = nobody
+;  sql password      = password
+;  ssl cert file     = /usr/local/nullgroupware/etc/ssl-cert.pem
+;  ssl key file      = /usr/local/nullgroupware/etc/ssl-priv.pem
+
+   load module       = srv_httpd
+   load module       = srv_pop3d
+   load module       = srv_smtpd
+   load module       = srv_smtpq
+
+[srv_httpd]
+   interface         = INADDR_ANY
+   port              = 4110
+;  ssl port          = 4112
+   max connections   = 50
+   max keepalive     = 15
+   max idle          = 120
+   max post size     = 33554432
+
+   load module       = mod_html
+   load module       = mod_admin
+   load module       = mod_bookmarks
+   load module       = mod_calendar
+   load module       = mod_calls
+   load module       = mod_cgi
+   load module       = mod_contacts
+   load module       = mod_mail
+   load module       = mod_files
+   load module       = mod_forums
+   load module       = mod_messages
+   load module       = mod_notes
+   load module       = mod_orders
+   load module       = mod_profile
+   load module       = mod_searches
+   load module       = mod_tasks
+   load module       = mod_xmlrpc
+
+[srv_pop3d]
+   interface         = INADDR_ANY
+   port              = 110
+;  ssl port          = 995
+   max connections   = 50
+   max idle          = 120
+
+[srv_smtpd]
+   interface         = INADDR_ANY
+;  relay host        = ""
+   port              = 25
+;  ssl port          = 465
+   max connections   = 50
+   max idle          = 120
+   retry delay       = 300
+;  filter program    = /usr/local/nullgroupware/bin/scan_smtp.sh
+
+[mod_files]
+;  filter program    = /usr/local/nullgroupware/bin/scan_file.sh
+
+[mod_mail]
+;  filter program    = /usr/local/nullgroupware/bin/scan_mail.sh
+   max idle          = 120

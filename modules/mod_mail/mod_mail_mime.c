@@ -389,7 +389,7 @@ void webmailfiledl(CONN *sid)
 		return;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {

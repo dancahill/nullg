@@ -130,8 +130,8 @@ void setsigs()
 
 void init()
 {
-	memset((char *)&proc.config, 0, sizeof(CONFIG));
-	if (config_read(&proc.config)!=0) {
+	memset((char *)&proc.config, 0, sizeof(GLOBAL_CONFIG));
+	if (conf_read()!=0) {
 		printf("\r\nError reading configuration file\r\n");
 		exit(-2);
 	}

@@ -118,7 +118,7 @@ static int get_conn()
 
 	pthread_mutex_lock(&ListenerMutex);
 	for (i=0;;i++) {
-		if (i>=config->http_maxconn) {
+		if (i>=mod_config.smtp_maxconn) {
 			msleep(10);
 			i=0;
 			continue;
@@ -246,20 +246,21 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	conf_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	if (config->smtp_port) {
-		if ((ListenSocket=tcp_bind(config->smtp_hostname, config->smtp_port))<0) return -1;
+	if (mod_config.smtp_port) {
+		if ((ListenSocket=tcp_bind(mod_config.smtp_interface, mod_config.smtp_port))<0) return -1;
 	}
 #ifdef HAVE_LIBSSL
-	if ((proc->ssl_is_loaded)&&(config->smtp_port_ssl)) {
-		if ((ListenSocketSSL=tcp_bind(config->http_hostname, config->smtp_port_ssl))<0) return -1;
+	if ((proc->ssl_is_loaded)&&(mod_config.smtp_sslport)) {
+		if ((ListenSocketSSL=tcp_bind(mod_config.smtp_interface, mod_config.smtp_sslport))<0) return -1;
 	}
 #endif
-	if ((conn=calloc(config->smtp_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", config->smtp_maxconn, sizeof(CONN));
+	if ((conn=calloc(mod_config.smtp_maxconn, sizeof(CONN)))==NULL) {
+		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.smtp_maxconn, sizeof(CONN));
 		return -1;
 	}
-	for (i=0;i<config->smtp_maxconn;i++) conn[i].socket.socket=-1;
+	for (i=0;i<mod_config.smtp_maxconn;i++) conn[i].socket.socket=-1;
 	return 0;
 }
 
@@ -267,7 +268,7 @@ DllExport int mod_exec()
 {
 	pthread_attr_t thr_attr;
 
-	if (config->smtp_port) {
+	if (mod_config.smtp_port) {
 		if (pthread_attr_init(&thr_attr)) return -2;
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 		if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
@@ -278,7 +279,7 @@ DllExport int mod_exec()
 		}
 	}
 #ifdef HAVE_LIBSSL
-	if ((proc->ssl_is_loaded)&&(config->smtp_port_ssl)) {
+	if ((proc->ssl_is_loaded)&&(mod_config.smtp_sslport)) {
 		if (pthread_attr_init(&thr_attr)) return -2;
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 		if (pthread_attr_setstacksize(&thr_attr, 65536L)) return -2;
@@ -298,13 +299,13 @@ DllExport int mod_cron()
 	short int connections=0;
 	short int i;
 
-	for (i=0;i<config->smtp_maxconn;i++) {
+	for (i=0;i<mod_config.smtp_maxconn;i++) {
 		if ((conn[i].id==0)||(conn[i].socket.atime==0)) continue;
 		connections++;
 		if (conn[i].state==0) {
 			if (ctime-conn[i].socket.atime<15) continue;
 		} else {
-			if (ctime-conn[i].socket.atime<config->smtp_maxidle) continue;
+			if (ctime-conn[i].socket.atime<mod_config.smtp_maxidle) continue;
 		}
 		log_error("smtpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
 //		closeconnect(&conn[i], 0);

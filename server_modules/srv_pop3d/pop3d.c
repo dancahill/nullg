@@ -271,7 +271,7 @@ static void pop3_local(CONN *sid)
 	mdir.mboxtotal=0;
 	mboxalloc=50;
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/mail/%04d/%s", config->server_dir_var_spool, sid->dat->user_did, sid->dat->user_username);
+	snprintf(dirname, sizeof(dirname)-1, "%s/mail/%04d/%s", config->dir_var_spool, sid->dat->user_did, sid->dat->user_username);
 	if (stat(dirname, &sb)!=0) {
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
@@ -372,7 +372,7 @@ static void pop3_remote(CONN *sid)
 		mdir.msg[i]->deleted=0;
 		mdir.msg[i]->filesize=atoi(sql_getvalue(sqr, i, 1));
 		memset(mdir.msg[i]->filename, 0, sizeof(mdir.msg[i]->filename));
-		snprintf(mdir.msg[i]->filename, sizeof(mdir.msg[i]->filename)-1, "%s/%04d/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, mdir.msg[i]->localid);
+		snprintf(mdir.msg[i]->filename, sizeof(mdir.msg[i]->filename)-1, "%s/%04d/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, mdir.msg[i]->localid);
 		fixslashes(mdir.msg[i]->filename);
 		memset(mdir.msg[i]->uidl, 0, sizeof(mdir.msg[i]->uidl));
 		decode_base64(mdir.msg[i]->uidl, sizeof(mdir.msg[i]->uidl)-1, sql_getvalue(sqr, i, 2));

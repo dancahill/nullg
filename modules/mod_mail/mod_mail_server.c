@@ -76,7 +76,7 @@ retry:
 		sid->dat->wm->socket.recvbufsize+=rc;
 		sid->dat->wm->imapmread+=rc;
 	}
-	if (time(NULL)-sid->socket.atime>config->http_maxidle) return -1;
+	if (time(NULL)-sid->socket.atime>mod_config.sock_maxidle) return -1;
 	obuffer=sid->dat->wm->socket.recvbuf+sid->dat->wm->socket.recvbufoffset;
 	if ((pf==0)&&(buffer[0]=='.')&&(buffer[1]=='.')) {
 		pf=1;
@@ -687,7 +687,7 @@ int wmserver_msgsync(CONN *sid, int remoteid, int localid, int verbose)
 		return -1;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, localid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, localid);
 	fixslashes(msgfilename);
 	if (stat(msgfilename, &sb)==0) {
 		if (atoi(sql_getvalue(sqr, 0, 1))==sb.st_size) {
@@ -799,7 +799,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		return -1;
 	}
 	memset(lockfile, 0, sizeof(lockfile));
-	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d/mail/%04d/mbox.lock", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent);
+	snprintf(lockfile, sizeof(lockfile)-1, "%s/%04d/mail/%04d/mbox.lock", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent);
 	fixslashes(lockfile);
 #ifdef WIN32
 	if ((fp=_fsopen(lockfile, "wb", _SH_DENYWR))==NULL) return -2;
@@ -1119,7 +1119,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 		}
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, mailid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, mailid);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {

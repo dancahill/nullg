@@ -71,6 +71,8 @@ char *DecodeBase64string(CONN *sid, char *src);
 int   EncodeBase64(CONN *sid, char *src, int srclen);
 int   EncodeBase64file(FILE *fp, char *src, int srclen);
 char *EncodeBase64string(CONN *sid, char *src);
+/* mod_mail_conf.c */
+int conf_read(void);
 /* mod_mail_db.c */
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct);
 int dbread_mailcurrent(CONN *sid, int mailcurrent);
@@ -129,3 +131,14 @@ int  wmserver_mlistsync(CONN *sid, char ***uidl_list);
 void wmserver_purge(CONN *sid, int remove);
 int  wmserver_send(CONN *sid, int mailid, int verbose);
 int  wmsync(CONN *sid, int verbose);
+
+typedef struct {
+	char filter_program[256];
+	int sock_maxidle;
+} MOD_CONFIG;
+
+#ifdef SRVMOD_MAIN
+	MOD_CONFIG mod_config;
+#else
+	extern MOD_CONFIG mod_config;
+#endif

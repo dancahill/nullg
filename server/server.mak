@@ -46,6 +46,7 @@ CLEAN :
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\sql.obj"
 	-@erase "$(INTDIR)\ssl.obj"
+	-@erase "$(INTDIR)\sys.obj"
 	-@erase "$(INTDIR)\tcp.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\win32.obj"
@@ -110,6 +111,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\sql.obj" \
 	"$(INTDIR)\ssl.obj" \
+	"$(INTDIR)\sys.obj" \
 	"$(INTDIR)\tcp.obj" \
 	"$(INTDIR)\win32.obj"
 
@@ -178,6 +180,11 @@ SOURCE=.\sql.c
 SOURCE=.\ssl.c
 
 "$(INTDIR)\ssl.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\sys.c
+
+"$(INTDIR)\sys.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\tcp.c

@@ -1,6 +1,6 @@
 Summary: NullLogic Groupware
 Name: nullgroupware
-Version: 1.3.13
+Version: 1.3.14
 Release: 1
 License: GPL
 Packager: Dan Cahill <nulllogic@users.sourceforge.net>
@@ -45,6 +45,8 @@ chmod go-rwx /usr/local/nullgroupware/etc /usr/local/nullgroupware/var 1>/dev/nu
 /usr/local/nullgroupware/*
 
 %changelog
+* Mon May 17 2004 Dan Cahill <nulllogic@users.sourceforge.net>
+- Release Version 1.3.14
 * Fri May 14 2004 Dan Cahill <nulllogic@users.sourceforge.net>
 - Release Version 1.3.13
 * Fri May 07 2004 Dan Cahill <nulllogic@users.sourceforge.net>

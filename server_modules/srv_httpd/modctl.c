@@ -96,6 +96,7 @@ int module_load(char *modname)
 		{ "sql_getvaluebyname",		sql_getvaluebyname		},
 		{ "sql_numfields",		sql_numfields			},
 		{ "sql_numtuples",		sql_numtuples			},
+		{ "sys_system",			sys_system			},
 //		{ "tcp_bind",			tcp_bind			},
 //		{ "tcp_accept",			tcp_accept			},
 		{ "tcp_fgets",			tcp_fgets			},
@@ -198,7 +199,7 @@ int module_load(char *modname)
 	char libname[255];
 
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/%s.%s", config->server_dir_lib, modname, ext);
+	snprintf(libname, sizeof(libname)-1, "%s/%s.%s", config->dir_lib, modname, ext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))==NULL) goto fail;
 	if ((htmod_init=(HTMOD_INIT)dlsym(hinstLib, "mod_init"))==NULL) goto fail;
@@ -213,59 +214,8 @@ fail:
 
 int modules_init()
 {
-	FILE *fp=NULL;
-	char line[512];
-	char file[256];
-	int i;
-
 	memset((char *)&http_proc.mod_menuitems, 0, sizeof(MODULE_MENU));
 	memset((char *)&http_proc.mod_functions, 0, sizeof(MODULE_FUNC));
-	snprintf(file, sizeof(file)-1, "%s/modules.cfg", config->server_dir_etc);
-	fixslashes(file);
-	fp=fopen(file, "r");
-	if (fp==NULL) {
-		fp=fopen(file, "w");
-		if (fp==NULL) {
-			log_error("http", __FILE__, __LINE__, 0, "ERROR: Failed to create modules.cfg");
-			return -1;
-		}
-		fprintf(fp, "# This file specifies which modules NullLogic Groupware should load.\n\n");
-		fprintf(fp, "mod_html\n");
-		fprintf(fp, "mod_admin\n");
-		fprintf(fp, "mod_bookmarks\n");
-		fprintf(fp, "mod_calendar\n");
-		fprintf(fp, "mod_calls\n");
-		fprintf(fp, "#mod_cgi\n");
-		fprintf(fp, "mod_contacts\n");
-		fprintf(fp, "mod_mail\n");
-		fprintf(fp, "mod_files\n");
-		fprintf(fp, "mod_forums\n");
-		fprintf(fp, "mod_messages\n");
-		fprintf(fp, "mod_notes\n");
-		fprintf(fp, "#mod_orders\n");
-		fprintf(fp, "mod_profile\n");
-		fprintf(fp, "mod_searches\n");
-		fprintf(fp, "mod_tasks\n");
-		fprintf(fp, "mod_xmlrpc\n");
-		fclose(fp);
-		fp=fopen(file, "r");
-	}
-	if (fp==NULL) {
-		log_error("http", __FILE__, __LINE__, 0, "ERROR: Failed to read modules.cfg");
-		return -1;
-	}
-	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
-		while (1) {
-			i=strlen(line);
-			if (i<1) break;
-			if (line[i-1]=='\r') { line[i-1]='\0'; continue; }
-			if (line[i-1]=='\n') { line[i-1]='\0'; continue; }
-			break;
-		};
-		if (isalpha(line[0])) {
-			module_load(line);
-		}
-	}
-	fclose(fp);
+	conf_read_modules();
 	return 0;
 }

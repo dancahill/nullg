@@ -32,6 +32,7 @@ ALL : "..\..\distrib\lib\srv_httpd.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\auth.obj"
+	-@erase "$(INTDIR)\conf.obj"
 	-@erase "$(INTDIR)\format.obj"
 	-@erase "$(INTDIR)\html.obj"
 	-@erase "$(INTDIR)\http.obj"
@@ -90,6 +91,7 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\srv_httpd.pdb" /machine:I386 /out:"..\..\distrib\lib\srv_httpd.dll" /implib:"$(OUTDIR)\srv_httpd.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\auth.obj" \
+	"$(INTDIR)\conf.obj" \
 	"$(INTDIR)\format.obj" \
 	"$(INTDIR)\html.obj" \
 	"$(INTDIR)\http.obj" \
@@ -108,6 +110,11 @@ LINK32_OBJS= \
 SOURCE=.\auth.c
 
 "$(INTDIR)\auth.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\conf.c
+
+"$(INTDIR)\conf.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\format.c

@@ -36,7 +36,7 @@ void *smtp_spool(void *x)
 	short int status;
 
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/mqueue", config->server_dir_var_spool);
+	snprintf(dirname, sizeof(dirname)-1, "%s/mqueue", config->dir_var_spool);
 	fixslashes(dirname);
 	while (1) {
 		handle=opendir(dirname);
@@ -57,7 +57,7 @@ void *smtp_spool(void *x)
 			}
 		}
 		closedir(handle);
-		sleep(300);
+		sleep(mod_config.smtp_retrydelay);
 	}
 	return 0;
 }

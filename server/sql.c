@@ -127,10 +127,10 @@ int mysqlDLLInit()
 
 	if (hinstLib!=NULL) return 0;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/libmysql.%s", proc.config.server_dir_lib, libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libmysql.%s", proc.config.dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "%s/libmysqlclient.%s", proc.config.server_dir_lib, libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libmysqlclient.%s", proc.config.dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libmysqlclient.%s.12", libext);
@@ -191,7 +191,7 @@ int pgsqlDLLInit()
 
 	if (hinstLib!=NULL) return 0;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/libpq.%s", proc.config.server_dir_lib, libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libpq.%s", proc.config.dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libpq.%s", libext);
@@ -231,10 +231,10 @@ int SQLiteDLLInit()
 #ifdef HAVE_SQLITE
 	if (hinstLib!=NULL) return 0;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/libsqlite.%s", proc.config.server_dir_lib, libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libsqlite.%s", proc.config.dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
-	snprintf(libname, sizeof(libname)-1, "%s/sqlite.%s", proc.config.server_dir_lib, libext);
+	snprintf(libname, sizeof(libname)-1, "%s/sqlite.%s", proc.config.dir_lib, libext);
 	fixslashes(libname);
 	if ((hinstLib=dlopen(libname, RTLD_NOW))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libsqlite.%s", libext);
@@ -409,7 +409,7 @@ int sqliteConnect()
 
 	if (SQLiteDLLInit()!=0) return -1;
 	if (sql_is_connected) return 0;
-	snprintf(dbname, sizeof(dbname)-1, "%s/%s.db", proc.config.server_dir_var_db, SERVER_BASENAME);
+	snprintf(dbname, sizeof(dbname)-1, "%s/%s.db", proc.config.dir_var_db, SERVER_BASENAME);
 	fixslashes(dbname);
 	db=libsqlite.open(dbname, 0, &zErrMsg);
 	if (db==0) {

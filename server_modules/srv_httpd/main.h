@@ -29,6 +29,9 @@ int auth_getcookie(CONN *sid);
 int auth_setcookie(CONN *sid);
 void auth_logout(CONN *sid);
 int auth_priv(CONN *sid, char *service);
+/* conf.c functions */
+int conf_read(void);
+int conf_read_modules(void);
 /* format.c functions */
 char *getbuffer(CONN *sid);
 int hex2int(char *pChars);
@@ -117,14 +120,27 @@ int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *
 int module_exists(CONN *sid, char *mod_name);
 void *module_call(CONN *sid, char *fn_name);
 int module_menucall(CONN *sid);
+int module_load(char *modname);
 int modules_init();
+
+typedef struct {
+	char      http_interface[128];
+	short int http_port;
+	short int http_sslport;
+	short int http_maxkeepalive;
+	short int http_maxconn;
+	short int http_maxidle;
+	int       http_maxpostsize;
+} MOD_CONFIG;
 
 #ifdef SRVMOD_MAIN
 	CONN *conn;
 	HTTP_PROC http_proc;
 	pthread_mutex_t ListenerMutex;
+	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
 	extern HTTP_PROC http_proc;
 	extern pthread_mutex_t ListenerMutex;
+	extern MOD_CONFIG mod_config;
 #endif

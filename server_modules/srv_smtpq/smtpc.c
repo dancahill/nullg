@@ -118,9 +118,9 @@ int smtp_client(FILE *fp)
 //	if (strlen(from)==0) return -1;
 	if (strlen(rcpt)==0) return -1;
 	memset(inbuffer, 0, sizeof(inbuffer));
-	if (strlen(config->smtp_relayhost)>0) {
-		if ((smtp_sock=smtp_connect(config->smtp_relayhost))<0) {
-			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to relay host '%s'", config->smtp_relayhost);
+	if (strlen(mod_config.smtp_relayhost)>0) {
+		if ((smtp_sock=smtp_connect(mod_config.smtp_relayhost))<0) {
+			log_error("smtpc", __FILE__, __LINE__, 1, "cannot connect to relay host '%s'", mod_config.smtp_relayhost);
 			return -1;
 		}
 	} else {

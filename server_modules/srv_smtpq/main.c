@@ -95,12 +95,13 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	conf_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpq %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	if ((conn=calloc(config->smtp_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", config->smtp_maxconn, sizeof(CONN));
+	if ((conn=calloc(mod_config.smtp_maxconn, sizeof(CONN)))==NULL) {
+		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.smtp_maxconn, sizeof(CONN));
 		return -1;
 	}
-	for (i=0;i<config->smtp_maxconn;i++) conn[i].socket.socket=-1;
+	for (i=0;i<mod_config.smtp_maxconn;i++) conn[i].socket.socket=-1;
 	return 0;
 }
 
@@ -126,13 +127,13 @@ DllExport int mod_cron()
 	short int i;
 
 	return 0;
-	for (i=0;i<config->smtp_maxconn;i++) {
+	for (i=0;i<mod_config.smtp_maxconn;i++) {
 		if ((conn[i].id==0)||(conn[i].socket.atime==0)) continue;
 		connections++;
 		if (conn[i].state==0) {
 			if (ctime-conn[i].socket.atime<15) continue;
 		} else {
-			if (ctime-conn[i].socket.atime<config->smtp_maxidle) continue;
+			if (ctime-conn[i].socket.atime<mod_config.smtp_maxidle) continue;
 		}
 		log_error("smtpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
 //		closeconnect(&conn[i], 0);

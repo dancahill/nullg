@@ -27,41 +27,6 @@ static SERVICE_STATUS        gStatus;
 static HANDLE                ghevDoForever=NULL;
 static DWORD                 g_dwOSVersion;
 
-int winsystem(const char *format, ...)
-{
-	DWORD exitcode=0;
-	HANDLE hMyProcess=GetCurrentProcess();
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	char Command[512];
-	va_list ap;
-	int pid;
-
-	ZeroMemory(&pi, sizeof(pi));
-	ZeroMemory(&si, sizeof(si));
-	memset(Command, 0, sizeof(Command));
-	va_start(ap, format);
-	vsnprintf(Command, sizeof(Command)-1, format, ap);
-	va_end(ap);
-	si.cb=sizeof(si);
-	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
-	si.wShowWindow=SW_SHOW;
-	si.hStdInput=NULL;
-	si.hStdOutput=NULL;
-	si.hStdError=NULL;
-	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-		return -1;
-	}
-	pid=pi.dwProcessId;
-	CloseHandle(si.hStdInput);
-	CloseHandle(si.hStdOutput);
-//	GetExitCodeProcess(pi.hProcess, &exitcode);
-//	if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-	return 0;
-}
-
 BOOL os_version(LPDWORD dwVersion)
 {
 	OSVERSIONINFO osvi;

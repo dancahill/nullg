@@ -266,7 +266,7 @@ void wmaccount_save(CONN *sid)
 			return;
 		}
 		memset(dirname, 0, sizeof(dirname));
-		snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->server_dir_var_domains, sid->dat->user_did, mailacct.mailaccountid);
+		snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->dir_var_domains, sid->dat->user_did, mailacct.mailaccountid);
 		if (stat(dirname, &sb)!=0) return;
 		/* Purge the maildir with extreme prejudice - This should be recursive */
 		handle=opendir(dirname);

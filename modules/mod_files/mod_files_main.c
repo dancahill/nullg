@@ -25,45 +25,6 @@
 #include <sys/types.h>
 #endif
 
-#ifdef WIN32
-int winsystem(const char *format, ...)
-{
-	DWORD exitcode=0;
-	HANDLE hMyProcess=GetCurrentProcess();
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	char Command[512];
-	va_list ap;
-	int pid;
-
-	ZeroMemory(&pi, sizeof(pi));
-	ZeroMemory(&si, sizeof(si));
-	memset(Command, 0, sizeof(Command));
-	va_start(ap, format);
-	vsnprintf(Command, sizeof(Command)-1, format, ap);
-	va_end(ap);
-	si.cb=sizeof(si);
-	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
-	si.wShowWindow=SW_HIDE;
-	si.hStdInput=NULL;
-	si.hStdOutput=NULL;
-	si.hStdError=NULL;
-	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-		return -1;
-	}
-	pid=pi.dwProcessId;
-	CloseHandle(si.hStdInput);
-	CloseHandle(si.hStdOutput);
-stuff:
-	GetExitCodeProcess(pi.hProcess, &exitcode);
-	if (exitcode==STILL_ACTIVE) goto stuff;
-//	if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-	return exitcode;
-}
-#endif
-
 int fileperm(CONN *sid, int perm, char *dir, char *file)
 {
 	struct stat sb;
@@ -81,7 +42,7 @@ int fileperm(CONN *sid, int perm, char *dir, char *file)
 	memset(filename, 0, sizeof(filename));
 	ptemp=dir;
 	if (strlen(ptemp)>=7) ptemp+=7;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, ptemp, file);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, ptemp, file);
 	fixslashes(filename);
 //	logerror(sid, __FILE__, __LINE__, 1, "[%s]", filename);
 	x=stat(filename, &sb);
@@ -168,12 +129,12 @@ int dirlist(CONN *sid)
 		return -1;
 	}
 	directory=uri+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->dir_var_domains, sid->dat->user_did, directory);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
 	if (strstr(filename, "..")!=NULL) return -1;
-	snprintf(index, sizeof(index)-1, "%s/%s/index.html", config->server_dir_var_htdocs, directory);
+	snprintf(index, sizeof(index)-1, "%s/%s/index.html", config->dir_var_htdocs, directory);
 	decodeurl(index);
 	fixslashes(index);
 	if (stat(index, &sb)==0) {
@@ -248,7 +209,7 @@ int dirlist(CONN *sid)
 //	if (!RunAsCGI) pthread_mutex_lock(&Lock.FileList);
 	handle=opendir(filename);
 	while ((dentry=readdir(handle))!=NULL) {
-		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, dentry->d_name);
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, dentry->d_name);
 		fixslashes(filename);
 		stat(filename, &sb);
 		if (strcmp(".", dentry->d_name)==0) continue;
@@ -290,7 +251,7 @@ int dirlist(CONN *sid)
 	prints(sid, "<BR>\r\n<CENTER>\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
 	i=4;
 	if (auth_priv(sid, "files")&A_MODIFY) i++;
-	if (strlen(config->util_scanfile)) i++;
+	if (strlen(mod_config.filter_program)) i++;
 	prints(sid, "<TR><TH COLSPAN=%d STYLE='border-style:solid'>", i);
 	prints(sid, "&nbsp;Index of ");
 	memset(uri2, 0, sizeof(uri2));
@@ -314,7 +275,7 @@ int dirlist(CONN *sid)
 	if (auth_priv(sid, "files")&A_MODIFY) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
-	if (strlen(config->util_scanfile)) {
+	if (strlen(mod_config.filter_program)) {
 		prints(sid, "<TD STYLE='border-style:solid'>&nbsp;</TD>");
 	}
 	prints(sid, "<TD width=20%% STYLE='border-style:solid'><B>&nbsp;Filename&nbsp;</B></TD><TD width=10%% STYLE='border-style:solid'><B>&nbsp;Date&nbsp;</B></TD>");
@@ -324,7 +285,7 @@ int dirlist(CONN *sid)
 		if (auth_priv(sid, "files")&A_MODIFY) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
-		if (strlen(config->util_scanfile)) {
+		if (strlen(mod_config.filter_program)) {
 			prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>");
 		}
 		prints(sid, "<TD COLSPAN=4 STYLE='border-style:solid'><A HREF=%s", sid->dat->in_ScriptName);
@@ -333,7 +294,7 @@ int dirlist(CONN *sid)
 	}
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 1))!=sid->dat->user_did) continue;
-		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, sql_getvalue(sqr, i, 2));
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, sql_getvalue(sqr, i, 2));
 		fixslashes(filename);
 		isvalid=1;
 		if (stat(filename, &sb)!=0) isvalid=0;
@@ -349,7 +310,7 @@ int dirlist(CONN *sid)
 			printhex(sid, "%s", sid->dat->in_RequestURI);
 			prints(sid, ">edit</A></TD>");
 		}
-		if (strlen(config->util_scanfile)) {
+		if (strlen(mod_config.filter_program)) {
 			prints(sid, "<TD ALIGN=left VALIGN=top NOWRAP STYLE='border-style:solid'>");
 			if (!(sb.st_mode & S_IFDIR)) {
 				prints(sid, "<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
@@ -409,7 +370,7 @@ int fileul(CONN *sid)
 		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
 		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory+7);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->dir_var_domains, sid->dat->user_did, directory+7);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
@@ -505,7 +466,7 @@ int filemkdir(CONN *sid)
 		snprintf(directory, sizeof(directory)-1, "%s", ptemp);
 		snprintf(location, sizeof(location)-1, "%s", ptemp);
 	}
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->server_dir_var_domains, sid->dat->user_did, directory+7);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s", config->dir_var_domains, sid->dat->user_did, directory+7);
 	decodeurl(filename);
 	fixslashes(filename);
 	while ((filename[strlen(filename)-1]=='\\')||(filename[strlen(filename)-1]=='/')) { filename[strlen(filename)-1]='\0'; };
@@ -614,7 +575,7 @@ void fileinfoedit(CONN *sid)
 			printhex(sid, "%s", file.filepath);
 			prints(sid, ">Edit File</A>]\n");
 		}
-		if (strlen(config->util_scanfile)) {
+		if (strlen(mod_config.filter_program)) {
 			prints(sid, "[<A HREF=%s/filescan?fileid=%d&location=", sid->dat->in_ScriptName, file.fileid);
 			printhex(sid, "%s", file.filepath);
 			prints(sid, ">Scan File</A>]\n");
@@ -758,7 +719,7 @@ int filerecv(CONN *sid)
 				return -1;
 			}
 			ptemp=line+14;
-			snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, filename);
+			snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->dir_var_domains, sid->dat->user_did, directory, filename);
 			fixslashes(file);
 			fp=fopen(file, "wb");
 			if (fp==NULL) {
@@ -857,7 +818,7 @@ int filedirsave(CONN *sid)
 	t=time(NULL);
 	strftime(datebuf, sizeof(datebuf)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	memset(file, 0, sizeof(file));
-	snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, filerec.filepath+6, filerec.filename);
+	snprintf(file, sizeof(file)-1, "%s/%04d/files%s%s", config->dir_var_domains, sid->dat->user_did, filerec.filepath+6, filerec.filename);
 	if (strstr(file, "..")!=NULL) return -1;
 	fixslashes(file);
 #ifdef WIN32
@@ -947,7 +908,7 @@ void fileinfosave(CONN *sid)
 			return;
 		}
 		memset(filename, 0, sizeof(filename));
-		snprintf(filename, sizeof(filename)-1, "%s/%04d/files%s%s", config->server_dir_var_domains, sid->dat->user_did, file.filepath+6, file.filename);
+		snprintf(filename, sizeof(filename)-1, "%s/%04d/files%s%s", config->dir_var_domains, sid->dat->user_did, file.filepath+6, file.filename);
 		fixslashes(filename);
 		if (stat(filename, &sb)==0) {
 			if (sb.st_mode & S_IFDIR) {
@@ -1038,7 +999,7 @@ void fileedit(CONN *sid)
 	prints(sid, "</TH></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER><TEXTAREA WRAP=OFF NAME=filebody ROWS=23 COLS=79>");
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
 	fp=fopen(filename, "rb");
 	if (fp!=NULL) {
@@ -1095,7 +1056,7 @@ void filesave(CONN *sid)
 		return;
 	}
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
 	fp=fopen(filename, "wb");
 	if (fp==NULL) {
@@ -1133,7 +1094,7 @@ void filescan(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if (strlen(config->util_scanfile)==0) return;
+	if (strlen(mod_config.filter_program)==0) return;
 	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
 	if (dbread_file(sid, 1, fileid, &file)!=0) {
@@ -1141,9 +1102,9 @@ void filescan(CONN *sid)
 		return;
 	}
 	directory=file.filepath+7;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->server_dir_var_domains, sid->dat->user_did, directory, file.filename);
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/files/%s%s", config->dir_var_domains, sid->dat->user_did, directory, file.filename);
 	fixslashes(filename);
-	snprintf(tempname, sizeof(tempname)-1, "%s/scan-%d.tmp", config->server_dir_var_tmp, (int)(time(NULL)%999));
+	snprintf(tempname, sizeof(tempname)-1, "%s/scan-%d.tmp", config->dir_var_tmp, (int)(time(NULL)%999));
 	fixslashes(tempname);
 	if (stat(filename, &sb)!=0) {
 		prints(sid, "File not found");
@@ -1153,17 +1114,13 @@ void filescan(CONN *sid)
 		prints(sid, "Not a file");
 		return;
 	}
-	snprintf(line, sizeof(line)-1, "%s %s > %s", config->util_scanfile, filename, tempname);
+	snprintf(line, sizeof(line)-1, "%s %s > %s", mod_config.filter_program, filename, tempname);
 #ifndef WIN32
 	strncatf(line, sizeof(line)-strlen(line)-1, " 2>&1");
 #endif
 	prints(sid, "Scanning '%s'<BR>\n", filename);
 	flushbuffer(sid);
-#ifdef WIN32
-	err=winsystem(line);
-#else
-	err=system(line);
-#endif
+	err=sys_system(line);
 	if (err>255) err=err>>8;
 	if ((err>0)&&(err<4)) {
 		prints(sid, "<FONT COLOR=red><B>INFECTED AND/OR POTENTIALLY DANGEROUS</B></FONT><BR>\n");
@@ -1236,6 +1193,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	conf_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -60,6 +60,14 @@ SOURCE=.\auth.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\conf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\filter.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\main.c
 # End Source File
 # Begin Source File

@@ -64,6 +64,10 @@ SOURCE=.\mod_files.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_files_conf.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_files_db.c
 # End Source File
 # Begin Source File

@@ -42,7 +42,7 @@ void cgi_makeargs(CONN *sid, char *args[])
 //		snprintf(args[2], 254, "%s", ptemp);
 //		*ptemp='\0';
 //	}
-	snprintf(args[0], 254, "%s/%s", proc->config.server_dir_var_cgi, progname);
+	snprintf(args[0], 254, "%s/%s", proc->config.dir_var_cgi, progname);
 	fixslashes(args[0]);
 //	fixslashes(args[0]);
 	if (strlen(sid->dat->in_QueryString)) {
@@ -79,7 +79,7 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 		}
 	}
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s", proc->config.server_dir_var_htdocs);
+	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s", proc->config.dir_var_htdocs);
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "GATEWAY_INTERFACE=CGI/1.1");
 	env[n]=calloc(1024, sizeof(char));

@@ -18,5 +18,17 @@
 
 #include "i18n/mod_files.h"
 
+/* mod_files_conf.c */
+int conf_read(void);
 /* mod_files_db.c */
 int dbread_file(CONN *sid, short int perm, int index, REC_FILE *file);
+
+typedef struct {
+	char filter_program[256];
+} MOD_CONFIG;
+
+#ifdef SRVMOD_MAIN
+	MOD_CONFIG mod_config;
+#else
+	extern MOD_CONFIG mod_config;
+#endif

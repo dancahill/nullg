@@ -350,7 +350,7 @@ void mod_html_login(CONN *sid)
 	prints(sid, "if (self!=parent) open('%s/','_top');\r\n", sid->dat->in_ScriptName);
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<BR>\r\n");
-	snprintf(file, sizeof(file)-1, "%s/issue.txt", proc->config.server_dir_etc);
+	snprintf(file, sizeof(file)-1, "%s/issue.txt", proc->config.dir_etc);
 	fixslashes(file);
 	fp=fopen(file, "r");
 	if (fp!=NULL) {

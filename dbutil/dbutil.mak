@@ -36,6 +36,7 @@ ALL : "$(OUTDIR)\nullgw-dbutil.exe"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\config.obj"
 	-@erase "$(INTDIR)\dbio.obj"
 	-@erase "$(INTDIR)\dbutil.res"
 	-@erase "$(INTDIR)\main.obj"
@@ -57,6 +58,7 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /out:"$(OUTDIR)\nullgw-dbutil.exe" 
 LINK32_OBJS= \
+	"$(INTDIR)\config.obj" \
 	"$(INTDIR)\dbio.obj" \
 	"$(INTDIR)\main.obj" \
 	"$(INTDIR)\md5.obj" \
@@ -104,6 +106,11 @@ RSC_PROJ=/l 0x409 /fo"$(INTDIR)\dbutil.res" /d "NDEBUG"
 
 
 !IF "$(CFG)" == "dbutil - Win32 Release"
+SOURCE=.\config.c
+
+"$(INTDIR)\config.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\dbio.c
 
 "$(INTDIR)\dbio.obj" : $(SOURCE) "$(INTDIR)"

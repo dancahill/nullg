@@ -18,45 +18,6 @@
 #include "http_mod.h"
 #include "mod_mail.h"
 
-#ifdef WIN32
-int winsystem(const char *format, ...)
-{
-	DWORD exitcode=0;
-	HANDLE hMyProcess=GetCurrentProcess();
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	char Command[512];
-	va_list ap;
-	int pid;
-
-	ZeroMemory(&pi, sizeof(pi));
-	ZeroMemory(&si, sizeof(si));
-	memset(Command, 0, sizeof(Command));
-	va_start(ap, format);
-	vsnprintf(Command, sizeof(Command)-1, format, ap);
-	va_end(ap);
-	si.cb=sizeof(si);
-	si.dwFlags=STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
-	si.wShowWindow=SW_HIDE;
-	si.hStdInput=NULL;
-	si.hStdOutput=NULL;
-	si.hStdError=NULL;
-	if (!CreateProcess(NULL, Command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-		return -1;
-	}
-	pid=pi.dwProcessId;
-	CloseHandle(si.hStdInput);
-	CloseHandle(si.hStdOutput);
-stuff:
-	GetExitCodeProcess(pi.hProcess, &exitcode);
-	if (exitcode==STILL_ACTIVE) goto stuff;
-//      if (exitcode==STILL_ACTIVE) TerminateProcess(pi.hProcess, 1);
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-	return exitcode;
-}
-#endif
-
 int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid, int messageid)
 {
 	FILE *fp;
@@ -64,14 +25,9 @@ int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid,
 	char cmdline[512];
 	short int err=0;
 
-	if (strlen(config->util_scanmail)<1) return 0;
+	if (strlen(mod_config.filter_program)<1) return 0;
 	memset(cmdline, 0, sizeof(cmdline));
-	snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
-#ifdef WIN32
-	err=winsystem(cmdline);
-#else
-	err=system(cmdline);
-#endif
+	err=sys_system("%s %s", mod_config.filter_program, msgfilename);
 	if (err>255) err=err>>8;
 	if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
 		sql_updatef("UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
@@ -109,7 +65,7 @@ int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 	int rc;
 
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, messageid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 1, messageid);
 	fixslashes(msgfilename);
 	rc=wmfilter_scan(sid, header, msgfilename, accountid, messageid);
 	if (rc>0) return rc;

@@ -101,7 +101,7 @@ void adminaccess(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	htselect_logfilter(sid, 0, "/admin/activitylist");
 	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n</TR></TABLE>\r\n");
-	snprintf(file, sizeof(file)-1, "%s/access.log", config->server_dir_var_log);
+	snprintf(file, sizeof(file)-1, "%s/access.log", config->dir_var_log);
 	fixslashes(file);
 	prints(sid, "<HR><PRE>");
 	fp=fopen(file, "r");
@@ -128,7 +128,7 @@ void adminerror(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR>\r\n");
 	htselect_logfilter(sid, 0, "/admin/activitylist");
 	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n</TR></TABLE>\r\n");
-	snprintf(file, sizeof(file)-1, "%s/error.log", config->server_dir_var_log);
+	snprintf(file, sizeof(file)-1, "%s/error.log", config->dir_var_log);
 	fixslashes(file);
 	prints(sid, "<HR><PRE>");
 	fp=fopen(file, "r");

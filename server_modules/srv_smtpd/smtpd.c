@@ -66,7 +66,7 @@ static int allow_relay(CONN *sid)
 	return allowed;
 }
 
-static void smtp_accept(CONN *sid, MAILCONN *mconn)
+static int smtp_accept(CONN *sid, MAILCONN *mconn)
 {
 	FILE *fp;
 	struct stat sb;
@@ -75,10 +75,11 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 	char *host;
 	char *buf_ptr;
 	int i;
-make 	int localdomainid;
+	int localdomainid;
 	int userid;
 	int sqr;
 	int is_remote;
+	int err;
 	struct timeval ttime;
 	struct timezone tzone;
 	int blocksize;
@@ -95,15 +96,15 @@ make 	int localdomainid;
 		localdomainid=domain_getid(host);
 		if (localdomainid>0) {
 			userid=0;
-			if ((sqr=sql_queryf("SELECT userid FROM gw_users WHERE username = '%s' AND domainid = %d", tmpaddr, localdomainid))<0) return;
+			if ((sqr=sql_queryf("SELECT userid FROM gw_users WHERE username = '%s' AND domainid = %d", tmpaddr, localdomainid))<0) return -1;
 			if (sql_numtuples(sqr)==1) userid=atoi(sql_getvalue(sqr, 0, 0));
 			sql_freeresult(sqr);
 			if (userid<1) {
-				log_error("smtpd", __FILE__, __LINE__, 1, "no such mailbox: '%s', sent from '%s'", mconn->rcpt[i], mconn->from);
+				log_error("smtpd", __FILE__, __LINE__, 1, "[%s] no such mailbox: '%s', sent from '%s'", sid->dat->user_RemoteAddr, mconn->rcpt[i], mconn->from);
 				continue;
 			}
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s", config->server_dir_var_spool, localdomainid, tmpaddr);
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s", config->dir_var_spool, localdomainid, tmpaddr);
 			if (stat(tmpname, &sb)!=0) {
 #ifdef WIN32
 				if (mkdir(tmpname)!=0) {
@@ -117,31 +118,21 @@ make 	int localdomainid;
 retry1:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s/%d%03d.msg", config->server_dir_var_spool, localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mail/%04d/%s/%d%03d.msg", config->dir_var_spool, localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry1;
-			log_access("smtpd", "local delivery from: '%s', to: '%s'", mconn->from, mconn->rcpt[i]);
+			log_access("smtpd", "[%s] local delivery from: '%s', to: '%s'", sid->dat->user_RemoteAddr, mconn->from, mconn->rcpt[i]);
 		} else if (mconn->sender_is_local) {
 			is_remote=1;
 retry2:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/mqueue/%d%03d.msg", config->server_dir_var_spool, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname, sizeof(tmpname)-1, "%s/mqueue/%d%03d.msg", config->dir_var_spool, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname);
 			if (stat(tmpname, &sb)==0) goto retry2;
+			log_access("smtpd", "[%s] remote delivery from: '%s', to: '%s'", sid->dat->user_RemoteAddr, mconn->from, mconn->rcpt[i]);
 		} else {
-
-			is_remote=1;
-/*
-retry3:
-			gettimeofday(&ttime, &tzone);
-			memset(tmpname, 0, sizeof(tmpname));
-			snprintf(tmpname, sizeof(tmpname)-1, "%s/unknown/%d%03d.msg", config->server_dir_var_mail, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
-			fixslashes(tmpname);
-			if (stat(tmpname, &sb)==0) goto retry3;
-*/
-			log_error("smtpd", __FILE__, __LINE__, 1, "disallowed delivery from:'%s', to:'%s'", mconn->from, mconn->rcpt[i]);
-//			log_error("smtpd", __FILE__, __LINE__, 1, "relaying denied.");
+			log_error("smtpd", __FILE__, __LINE__, 1, "[%s] relaying denied from:'%s', to:'%s'", sid->dat->user_RemoteAddr, mconn->from, mconn->rcpt[i]);
 			continue;
 		}
 		if ((fp=fopen(tmpname, "wb"))!=NULL) {
@@ -152,16 +143,22 @@ retry3:
 			buf_ptr=mconn->msgbody;
 			blocksize=mconn->msgbodysize;
 			do {
-				if ((bytes=fwrite(buf_ptr, sizeof(char), blocksize, fp))<0) return;
+				if ((bytes=fwrite(buf_ptr, sizeof(char), blocksize, fp))<0) return -1;
 				blocksize-=bytes;
 				buf_ptr+=bytes;
 			} while (blocksize>0);
 			fclose(fp);
+			err=filter_scan(sid, tmpname);
+			if (err>0) {
+				unlink(tmpname);
+				return err;
+			}
 		} else {
 			log_error("smtpd", __FILE__, __LINE__, 0, "ERROR: Cannot write to file [%s].", tmpname);
+			return -1;
 		}
 	}
-	return;
+	return 0;
 }
 
 static void smtp_data(CONN *sid, MAILCONN *mconn)
@@ -169,6 +166,7 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	char line[1024];
 	char *buf_ptr;
 	unsigned int buf_alloc;
+	int rc;
 
 	if ((strlen(mconn->from)==0)&&(mconn->sender_is_blank==0)) {
 		tcp_fprintf(&sid->socket, "500 Sender Invalid\r\n");
@@ -193,9 +191,17 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 		strcat(buf_ptr, line);
 		mconn->msgbodysize+=strlen(line);
 	} while (1);
-	smtp_accept(sid, mconn);
+	rc=smtp_accept(sid, mconn);
 	if (mconn->msgbody) { free(mconn->msgbody); mconn->msgbody=NULL; }
-	tcp_fprintf(&sid->socket, "250 Message accepted for delivery\r\n");
+	if (rc==0) {
+		tcp_fprintf(&sid->socket, "250 Message accepted for delivery\r\n");
+	} else if (rc==1) {
+		tcp_fprintf(&sid->socket, "500 Your message appears to be spam\r\n");
+	} else if ((rc==2)||(rc==3)) {
+		tcp_fprintf(&sid->socket, "500 Your message appears to have a virus\r\n");
+	} else {
+		tcp_fprintf(&sid->socket, "500 Temporary failure - try again later\r\n");
+	}
 	return;
 }
 
@@ -316,7 +322,7 @@ void smtp_dorequest(CONN *sid)
 			tcp_fprintf(&sid->socket, "500 Some people still say hello\r\n");
 		}
 	} while (1);
-	log_access("smtpd", "HELO '%s' (%s)", mconn.helo, inet_ntoa(sid->socket.ClientAddr.sin_addr));
+	log_access("smtpd", "HELO '%s' (%s)", mconn.helo, sid->dat->user_RemoteAddr);
 	mconn.rcptalloc=50;
 	if ((mconn.rcpt=(char **)calloc(mconn.rcptalloc, sizeof(char *)))==NULL) return;
 	do {

@@ -44,7 +44,7 @@ _sqlite:
 	@cd sqlite;./make_sqlite build
 
 sslcert:
-	openssl req -new -x509 -nodes -out distrib/etc/cert.pem -keyout distrib/etc/priv.pem -days 365
+	openssl req -new -x509 -nodes -out distrib/etc/ssl-cert.pem -keyout distrib/etc/ssl-priv.pem -days 365
 
 autoconf:
 	@echo ifnames *.[ch]
@@ -62,7 +62,7 @@ clean:
 	@cd modules;$(MAKE) clean
 	@./scripts/lxtool clean
 	@rm -f distrib/bin/* distrib/lib/* *~
-	@rm -f distrib/etc/cert.pem distrib/etc/priv.pem
+	@rm -f distrib/etc/ssl-cert.pem distrib/etc/ssl-priv.pem
 	@echo "done."
 
 distclean: clean
@@ -76,11 +76,11 @@ distclean: clean
 	@rm -f config.log config.status include/config.h Makefile Rules.mak
 
 install: _all
-	@chown -R 0:0 *
+	@chown -R 0:0 distrib/*
 	@cd distrib;./setup
 
 upgrade: _all
-	@chown -R 0:0 *
+	@chown -R 0:0 distrib/*
 	/etc/init.d/nullgroupware stop
 	@cd distrib;./setup upgrade
 	/etc/init.d/nullgroupware start

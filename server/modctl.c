@@ -40,6 +40,7 @@ static FUNCTION functions[]={
 	{ "sql_getvaluebyname",		sql_getvaluebyname		},
 	{ "sql_numfields",		sql_numfields			},
 	{ "sql_numtuples",		sql_numtuples			},
+	{ "sys_system",			sys_system			},
 	{ "tcp_bind",			tcp_bind			},
 	{ "tcp_accept",			tcp_accept			},
 	{ "tcp_fgets",			tcp_fgets			},
@@ -144,9 +145,9 @@ int module_load(char *modname)
 	if (i==MAX_MOD_FUNCTIONS) return -1;
 	memset(libname, 0, sizeof(libname));
 	if (strncmp(modname, "srv_", 4)==0) {
-		snprintf(libname, sizeof(libname)-1, "%s/%s.%s", proc.config.server_dir_lib, modname, ext);
+		snprintf(libname, sizeof(libname)-1, "%s/%s.%s", proc.config.dir_lib, modname, ext);
 	} else {
-		snprintf(libname, sizeof(libname)-1, "%s/srv_%s.%s", proc.config.server_dir_lib, modname, ext);
+		snprintf(libname, sizeof(libname)-1, "%s/srv_%s.%s", proc.config.dir_lib, modname, ext);
 	}
 	fixslashes(libname);
 	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name)-1, "%s", modname);
@@ -177,7 +178,7 @@ int modules_init()
 	char file[256];
 	int i;
 
-	snprintf(file, sizeof(file)-1, "%s/servers.cfg", proc.config.server_dir_etc);
+	snprintf(file, sizeof(file)-1, "%s/servers.cfg", proc.config.dir_etc);
 	fixslashes(file);
 	fp=fopen(file, "r");
 	if (fp==NULL) {

@@ -27,8 +27,8 @@ int wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, i
 	wmfolder_testcreate(sid, accountid, dstfolderid);
 	memset(srcfilename, 0, sizeof(srcfilename));
 	memset(dstfilename, 0, sizeof(dstfilename));
-	snprintf(srcfilename, sizeof(srcfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, srcfolderid, messageid);
-	snprintf(dstfilename, sizeof(dstfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, dstfolderid, messageid);
+	snprintf(srcfilename, sizeof(srcfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, srcfolderid, messageid);
+	snprintf(dstfilename, sizeof(dstfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, dstfolderid, messageid);
 	fixslashes(srcfilename);
 	fixslashes(dstfilename);
 	if (stat(srcfilename, &sb)==0) {
@@ -70,7 +70,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 	if (accountid<1) return -1;
 	if (folderid<1) folderid=1;
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->server_dir_var_domains, sid->dat->user_did);
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d", config->dir_var_domains, sid->dat->user_did);
 	fixslashes(dirname);
 	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
 #ifdef WIN32
@@ -82,7 +82,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 			return -1;
 		}
 	}
-	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail", config->server_dir_var_domains, sid->dat->user_did);
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail", config->dir_var_domains, sid->dat->user_did);
 	fixslashes(dirname);
 	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
 #ifdef WIN32
@@ -94,7 +94,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 			return -1;
 		}
 	}
-	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->server_dir_var_domains, sid->dat->user_did, accountid);
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d", config->dir_var_domains, sid->dat->user_did, accountid);
 	fixslashes(dirname);
 	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
 #ifdef WIN32
@@ -106,7 +106,7 @@ int wmfolder_testcreate(CONN *sid, int accountid, int folderid)
 			return -1;
 		}
 	}
-	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d/%04d", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid);
+	snprintf(dirname, sizeof(dirname)-1, "%s/%04d/mail/%04d/%04d", config->dir_var_domains, sid->dat->user_did, accountid, folderid);
 	fixslashes(dirname);
 	if ((stat(dirname, &sb)!=0)||(!(sb.st_mode&S_IFDIR))) {
 #ifdef WIN32
@@ -261,7 +261,7 @@ void webmailsave(CONN *sid)
 		return;
 	}
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, headerid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, 2, headerid);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "wb");
 	if (fp==NULL) {
@@ -353,7 +353,7 @@ void webmailsave(CONN *sid)
 		dbread_getheader(sid, sqr, 0, &header);
 		sql_freeresult(sqr);
 		memset(msgfilename, 0, sizeof(msgfilename));
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, fwdacct, folderid, forward);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, fwdacct, folderid, forward);
 		fixslashes(msgfilename);
 		if ((fp2=fopen(msgfilename, "r"))!=NULL) {
 			fprintf(fp, "\r\n--%s\r\n", boundary);
@@ -500,7 +500,7 @@ void webmailpurge(CONN *sid)
 	memset(msgfilename, 0, sizeof(msgfilename));
 	memset(newfilename, 0, sizeof(newfilename));
 	for (i=0;i<sql_numtuples(sqr);i++) {
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
 		if (stat(msgfilename, &sb)==0) {
 			if (unlink(msgfilename)!=0) {
 				prints(sid, "<BR><B>'%s' could not be deleted.</B>\n", msgfilename);
@@ -515,8 +515,8 @@ void webmailpurge(CONN *sid)
 	if ((sqr=sql_queryf("SELECT mailheaderid, folder FROM gw_mailheaders WHERE obj_uid = %d AND obj_did = %d AND accountid = %d ORDER BY mailheaderid ASC", sid->dat->user_uid, sid->dat->user_did, accountid))<0) return;
 	for (i=0,j=1;i<sql_numtuples(sqr);i++) {
 		if (j==atoi(sql_getvalue(sqr, i, 0))) { j++; continue; }
-		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
-		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), j);
+		snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), atoi(sql_getvalue(sqr, i, 0)));
+		snprintf(newfilename, sizeof(newfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 1)), j);
 		if (rename(msgfilename, newfilename)==0) {
 			if (sql_updatef("UPDATE gw_mailheaders SET mailheaderid = '%d' WHERE obj_uid = %d AND obj_did = %d AND accountid = %d AND mailheaderid = %d", j, sid->dat->user_uid, sid->dat->user_did, accountid, atoi(sql_getvalue(sqr, i, 0)))<0) {
 				prints(sid, "<BR><B>'%s' could not be moved to '%s'</B>\n", msgfilename, newfilename);

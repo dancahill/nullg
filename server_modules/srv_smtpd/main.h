@@ -47,6 +47,10 @@ typedef struct {
 
 /* auth.c functions */
 int auth_login(CONN *sid, char *username, char *password, int mbox);
+/* conf.c functions */
+int conf_read(void);
+/* filter.c functions */
+int filter_scan(CONN *sid, char *msgfilename);
 /* smtp.c functions */
 void smtp_dorequest(CONN *sid);
 
@@ -56,6 +60,17 @@ unsigned _stdcall smtp_spool(void *x);
 void *smtp_spool(void *x);
 #endif
 
+typedef struct {
+	char      smtp_interface[128];
+	char      smtp_relayhost[128];
+	short int smtp_port;
+	short int smtp_sslport;
+	short int smtp_maxconn;
+	short int smtp_maxidle;
+	int       smtp_retrydelay;
+	char      filter_program[256];
+} MOD_CONFIG;
+
 #ifdef SRVMOD_MAIN
 	CONN *conn;
 	int ListenSocket;
@@ -64,6 +79,7 @@ void *smtp_spool(void *x);
 	pthread_t ListenThreadSSL;
 	pthread_t SpoolThread;
 	pthread_mutex_t ListenerMutex;
+	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
 	extern int ListenSocket;
@@ -72,4 +88,5 @@ void *smtp_spool(void *x);
 	extern pthread_t ListenThreadSSL;
 	extern pthread_t SpoolThread;
 	extern pthread_mutex_t ListenerMutex;
+	extern MOD_CONFIG mod_config;
 #endif

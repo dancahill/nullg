@@ -17,97 +17,53 @@
 */
 #include "main.h"
 
-int config_read(CONFIG *config)
+typedef	void  (*CONF_CALLBACK)(char *, char *);
+
+int config_read(char *section, void *callback)
 {
+	CONF_CALLBACK conf_callback=callback;
 	FILE *fp=NULL;
 	char line[512];
 	struct stat sb;
 	char *pVar;
 	char *pVal;
-	short int founddir=0;
 	int i;
-#ifdef WIN32
-	char slash='\\';
-#else
-	char slash='/';
-#endif
+	short int match;
 
-	/* define default values */
-	snprintf(config->server_username,      sizeof(config->server_username)-1,      "%s", DEFAULT_SERVER_USERNAME);
-	pVal=proc.program_name;
-	if (*pVal=='\"') pVal++;
-#ifdef WIN32
-	snprintf(config->server_dir_base, sizeof(config->server_dir_base)-1, "%s", pVal);
-#else
-	if (getcwd(config->server_dir_base, sizeof(config->server_dir_base)-1)==NULL) return -1;
-	strcat(config->server_dir_base, "/");
-#endif
-	if (strrchr(config->server_dir_base, slash)!=NULL) {
-		pVal=strrchr(config->server_dir_base, slash);
-		*pVal='\0';
-		chdir(config->server_dir_base);
-		if (strrchr(config->server_dir_base, slash)!=NULL) {
-			pVal=strrchr(config->server_dir_base, slash);
-			*pVal='\0';
-			founddir=1;
+	if (strlen(proc.config_filename)>0) {
+		fp=fopen(proc.config_filename, "r");
+	} else {
+		/* try to open the config file */
+		/* try the current directory first, then ../etc/, then the default etc/ */
+		if (fp==NULL) {
+			snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "%s.conf", SERVER_BASENAME);
+			fp=fopen(proc.config_filename, "r");
 		}
-	}
-	if (!founddir) {
-		snprintf(config->server_dir_base, sizeof(config->server_dir_base)-1, "%s", DEFAULT_BASE_DIR);
-	}
-	snprintf(config->server_dir_bin, sizeof(config->server_dir_bin)-1, "%s/bin", config->server_dir_base);
-	snprintf(config->server_dir_etc, sizeof(config->server_dir_etc)-1, "%s/etc", config->server_dir_base);
-	snprintf(config->server_dir_lib, sizeof(config->server_dir_lib)-1, "%s/lib", config->server_dir_base);
-	snprintf(config->server_dir_var, sizeof(config->server_dir_var)-1, "%s/var", config->server_dir_base);
-#ifdef HAVE_SQLITE
-	strncpy(config->sql_type, "SQLITE", sizeof(config->sql_type)-1);
-#endif
-	config->server_loglevel=1;
-	config->http_port=HTTP_PORT;
-	config->http_maxconn=50;
-	config->http_maxidle=120;
-	config->http_maxpostsize=33554432; /* 32 MB limit for POST request sizes */
-	config->pop3_port=POP3_PORT;
-	config->pop3_maxconn=50;
-	config->pop3_maxidle=120;
-	config->smtp_port=SMTP_PORT;
-	config->smtp_maxconn=50;
-	config->smtp_maxidle=120;
-#ifdef HAVE_LIBSSL
-	config->http_port_ssl=HTTPS_PORT;
-	config->pop3_port_ssl=POP3S_PORT;
-	config->smtp_port_ssl=SMTPS_PORT;
-#endif
-	config->sql_maxconn=config->http_maxconn*2;
-	/* try to open the config file */
-	/* try the current directory first, then ../etc/, then the default etc/ */
-	if (fp==NULL) {
-		snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "%s.cfg", SERVER_BASENAME);
-		fp=fopen(proc.config_filename, "r");
-	}
-	if (fp==NULL) {
-		snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "../etc/%s.cfg", SERVER_BASENAME);
-		fixslashes(proc.config_filename);
-		fp=fopen(proc.config_filename, "r");
-	}
-	if (fp==NULL) {
-		snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "%s/%s.cfg", config->server_dir_etc, SERVER_BASENAME);
-		fixslashes(proc.config_filename);
-		fp=fopen(proc.config_filename, "r");
+		if (fp==NULL) {
+			snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "../etc/%s.conf", SERVER_BASENAME);
+			fixslashes(proc.config_filename);
+			fp=fopen(proc.config_filename, "r");
+		}
+		if (fp==NULL) {
+			snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "%s/%s.conf", proc.config.dir_etc, SERVER_BASENAME);
+			fixslashes(proc.config_filename);
+			fp=fopen(proc.config_filename, "r");
+		}
 	}
 	/* if config file couldn't be opened, try to write one */
 	if (fp==NULL) {
-		if (stat(config->server_dir_etc, &sb)!=0) {
-			log_error(NULL, __FILE__, __LINE__, 0, CONFIG_NODIR, config->server_dir_etc);
+		memset(proc.config_filename, 0, sizeof(proc.config_filename));
+		if (stat(proc.config.dir_etc, &sb)!=0) {
+			log_error("core", __FILE__, __LINE__, 0, CONFIG_NODIR, proc.config.dir_etc);
 			return -1;
 		};
-		printf("\r\n%s", CONFIG_MAKE);
-//		log_error(NULL, __FILE__, __LINE__, 1, "%s", CONFIG_MAKE);
-		config_write(config);
-		printf("done.\n");
-		goto sanity_check;
+//		config_write(config);
+//		goto sanity_check;
+		return 0;
 	}
 	/* else if config file does exist, read it */
+	match=0;
+	memset(line, 0, sizeof(line));
 	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
 		while (1) {
 			i=strlen(line);
@@ -116,171 +72,43 @@ int config_read(CONFIG *config)
 			if (line[i-1]=='\n') { line[i-1]='\0'; continue; }
 			break;
 		};
-		if (isalpha(line[0])) {
+		if ((pVar=strchr(line, '#'))!=NULL) *pVar='\0';
+		if ((pVar=strchr(line, ';'))!=NULL) *pVar='\0';
+		pVar=line;
+		pVal=strchr(line, ']');
+		if ((pVar[0]=='[')&&(pVal!=NULL)) {
+			match=0;
+			pVar++;
+			*pVal='\0';
+			if (strcasecmp(pVar, section)==0) match=1;
+			continue;
+		}
+		if (match) {
 			pVar=line;
 			pVal=line;
-			while ((*pVal!='=')&&((char *)&pVal+1!='\0')) pVal++;
+			while ((pVal[0]!='=')&&(pVal[1]!='\0')) pVal++;
 			*pVal='\0';
 			pVal++;
 			while (*pVar==' ') pVar++;
 			while (pVar[strlen(pVar)-1]==' ') pVar[strlen(pVar)-1]='\0';
 			while (*pVal==' ') pVal++;
 			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
-			while (*pVal=='"') pVal++;
-			if (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
-			if (strcmp(pVar, "SERVER.DIR.BASE")==0) {
-				strncpy(config->server_dir_base, pVal, sizeof(config->server_dir_base)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.BIN")==0) {
-				strncpy(config->server_dir_bin, pVal, sizeof(config->server_dir_bin)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.ETC")==0) {
-				strncpy(config->server_dir_etc, pVal, sizeof(config->server_dir_etc)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.LIB")==0) {
-				strncpy(config->server_dir_lib, pVal, sizeof(config->server_dir_lib)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR")==0) {
-				strncpy(config->server_dir_var, pVal, sizeof(config->server_dir_var)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.BACKUP")==0) {
-				strncpy(config->server_dir_var_backup, pVal, sizeof(config->server_dir_var_backup)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.CGI")==0) {
-				strncpy(config->server_dir_var_cgi, pVal, sizeof(config->server_dir_var_cgi)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.DB")==0) {
-				strncpy(config->server_dir_var_db, pVal, sizeof(config->server_dir_var_db)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.DOMAINS")==0) {
-				strncpy(config->server_dir_var_domains, pVal, sizeof(config->server_dir_var_domains)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.HTDOCS")==0) {
-				strncpy(config->server_dir_var_htdocs, pVal, sizeof(config->server_dir_var_htdocs)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.LOG")==0) {
-				strncpy(config->server_dir_var_log, pVal, sizeof(config->server_dir_var_log)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.SPOOL")==0) {
-				strncpy(config->server_dir_var_spool, pVal, sizeof(config->server_dir_var_spool)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.TMP")==0) {
-				strncpy(config->server_dir_var_tmp, pVal, sizeof(config->server_dir_var_tmp)-1);
-			} else if (strcmp(pVar, "SERVER.LOGLEVEL")==0) {
-				config->server_loglevel=atoi(pVal);
-			} else if (strcmp(pVar, "SERVER.USERNAME")==0) {
-				strncpy(config->server_username, pVal, sizeof(config->server_username)-1);
-			} else if (strcmp(pVar, "HTTP.HOSTNAME")==0) {
-				strncpy(config->http_hostname, pVal, sizeof(config->http_hostname)-1);
-			} else if (strcmp(pVar, "HTTP.PORT")==0) {
-				config->http_port=atoi(pVal);
-#ifdef HAVE_LIBSSL
-			} else if (strcmp(pVar, "HTTP.SSLPORT")==0) {
-				config->http_port_ssl=atoi(pVal);
-			} else if (strcmp(pVar, "POP3.SSLPORT")==0) {
-				config->pop3_port_ssl=atoi(pVal);
-			} else if (strcmp(pVar, "SMTP.SSLPORT")==0) {
-				config->smtp_port_ssl=atoi(pVal);
-#endif
-			} else if (strcmp(pVar, "HTTP.MAXCONN")==0) {
-				config->http_maxconn=atoi(pVal);
-			} else if (strcmp(pVar, "HTTP.MAXIDLE")==0) {
-				config->http_maxidle=atoi(pVal);
-			} else if (strcmp(pVar, "HTTP.MAXPOSTSIZE")==0) {
-				config->http_maxpostsize=atoi(pVal);
-			} else if (strcmp(pVar, "POP3.HOSTNAME")==0) {
-				strncpy(config->pop3_hostname, pVal, sizeof(config->pop3_hostname)-1);
-			} else if (strcmp(pVar, "POP3.PORT")==0) {
-				config->pop3_port=atoi(pVal);
-			} else if (strcmp(pVar, "POP3.MAXCONN")==0) {
-				config->pop3_maxconn=atoi(pVal);
-			} else if (strcmp(pVar, "POP3.MAXIDLE")==0) {
-				config->pop3_maxidle=atoi(pVal);
-			} else if (strcmp(pVar, "SMTP.HOSTNAME")==0) {
-				strncpy(config->smtp_hostname, pVal, sizeof(config->smtp_hostname)-1);
-			} else if (strcmp(pVar, "SMTP.RELAYHOST")==0) {
-				strncpy(config->smtp_relayhost, pVal, sizeof(config->smtp_relayhost)-1);
-			} else if (strcmp(pVar, "SMTP.PORT")==0) {
-				config->smtp_port=atoi(pVal);
-			} else if (strcmp(pVar, "SMTP.MAXCONN")==0) {
-				config->smtp_maxconn=atoi(pVal);
-			} else if (strcmp(pVar, "SMTP.MAXIDLE")==0) {
-				config->smtp_maxidle=atoi(pVal);
-			} else if (strcmp(pVar, "SQL.TYPE")==0) {
-				strncpy(config->sql_type, pVal, sizeof(config->sql_type)-1);
-			} else if (strcmp(pVar, "SQL.HOSTNAME")==0) {
-				strncpy(config->sql_hostname, pVal, sizeof(config->sql_hostname)-1);
-			} else if (strcmp(pVar, "SQL.PORT")==0) {
-				config->sql_port=atoi(pVal);
-			} else if (strcmp(pVar, "SQL.DBNAME")==0) {
-				strncpy(config->sql_dbname, pVal, sizeof(config->sql_dbname)-1);
-			} else if (strcmp(pVar, "SQL.USERNAME")==0) {
-				strncpy(config->sql_username, pVal, sizeof(config->sql_username)-1);
-			} else if (strcmp(pVar, "SQL.PASSWORD")==0) {
-				strncpy(config->sql_password, pVal, sizeof(config->sql_password)-1);
-			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
-				strncpy(config->sql_odbc_dsn, pVal, sizeof(config->sql_odbc_dsn)-1);
-			} else if (strcmp(pVar, "UTIL.SCANFILE")==0) {
-				strncpy(config->util_scanfile, pVal, sizeof(config->util_scanfile)-1);
-			} else if (strcmp(pVar, "UTIL.SCANMAIL")==0) {
-				strncpy(config->util_scanmail, pVal, sizeof(config->util_scanmail)-1);
+			if ((pVal[0]=='"')&&(pVal[strlen(pVal)-1]=='"')) {
+				pVal++;
+				pVal[strlen(pVal)-1]='\0';
 			}
-			*pVal='\0';
-			*pVar='\0';
+			if (pVar[0]!='\0') {
+				conf_callback(pVar, pVal);
+			}
 		}
 	}
 	fclose(fp);
-sanity_check:
-	if (!strlen(config->server_dir_var_backup)) {
-		snprintf(config->server_dir_var_backup,  sizeof(config->server_dir_var_backup)-1,  "%s/backup", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_cgi)) {
-		snprintf(config->server_dir_var_cgi,     sizeof(config->server_dir_var_cgi)-1,     "%s/cgi-bin", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_db)) {
-		snprintf(config->server_dir_var_db,      sizeof(config->server_dir_var_db)-1,      "%s/db", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_domains)) {
-		snprintf(config->server_dir_var_domains, sizeof(config->server_dir_var_domains)-1, "%s/domains", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_htdocs)) {
-		snprintf(config->server_dir_var_htdocs,  sizeof(config->server_dir_var_htdocs)-1,  "%s/htdocs", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_log)) {
-		snprintf(config->server_dir_var_log,     sizeof(config->server_dir_var_log)-1,     "%s/log", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_spool)) {
-		snprintf(config->server_dir_var_spool,   sizeof(config->server_dir_var_spool)-1,   "%s/spool", config->server_dir_var);
-	}
-	if (!strlen(config->server_dir_var_tmp)) {
-		snprintf(config->server_dir_var_tmp,     sizeof(config->server_dir_var_tmp)-1,     "%s/tmp", config->server_dir_var);
-	}
-	fixslashes(config->server_dir_base);
-	fixslashes(config->server_dir_bin);
-	fixslashes(config->server_dir_etc);
-	fixslashes(config->server_dir_lib);
-	fixslashes(config->server_dir_var);
-	fixslashes(config->server_dir_var_backup);
-	fixslashes(config->server_dir_var_cgi);
-	fixslashes(config->server_dir_var_db);
-	fixslashes(config->server_dir_var_domains);
-	fixslashes(config->server_dir_var_htdocs);
-	fixslashes(config->server_dir_var_log);
-	fixslashes(config->server_dir_var_spool);
-	fixslashes(config->server_dir_var_tmp);
-	if (config->http_maxconn==0) config->http_maxconn=50;
-	if (config->http_maxidle==0) config->http_maxidle=120;
-	if (config->http_maxconn<5) config->http_maxconn=5;
-	if (config->http_maxconn>1000) config->http_maxconn=1000;
-	if (config->http_maxidle<15) config->http_maxidle=15;
-	if (config->http_maxpostsize<1048576) config->http_maxpostsize=1048576;
-	if (strlen(config->http_hostname)==0) strncpy(config->http_hostname, "INADDR_ANY", sizeof(config->http_hostname)-1);
-	if (config->pop3_maxconn==0) config->pop3_maxconn=50;
-	if (config->pop3_maxidle==0) config->pop3_maxidle=120;
-	if (config->pop3_maxconn<5) config->pop3_maxconn=5;
-	if (config->pop3_maxconn>1000) config->pop3_maxconn=1000;
-	if (config->pop3_maxidle<15) config->pop3_maxidle=15;
-	if (strlen(config->pop3_hostname)==0) strncpy(config->pop3_hostname, "INADDR_ANY", sizeof(config->pop3_hostname)-1);
-	if (config->smtp_maxconn==0) config->smtp_maxconn=50;
-	if (config->smtp_maxidle==0) config->smtp_maxidle=120;
-	if (config->smtp_maxconn<5) config->smtp_maxconn=5;
-	if (config->smtp_maxconn>1000) config->smtp_maxconn=1000;
-	if (config->smtp_maxidle<15) config->smtp_maxidle=15;
-	if (strlen(config->smtp_hostname)==0) strncpy(config->smtp_hostname, "INADDR_ANY", sizeof(config->smtp_hostname)-1);
-	config->sql_maxconn=config->http_maxconn*2;
 	return 0;
 }
 
-int config_write(CONFIG *config)
+int config_write(GLOBAL_CONFIG *config)
 {
+/*
 	FILE *fp=NULL;
 
 	if (config->http_maxconn<1) config->http_maxconn=50;
@@ -288,7 +116,7 @@ int config_write(CONFIG *config)
 	if (config->http_maxconn<5) config->http_maxconn=5;
 	if (config->http_maxidle<15) config->http_maxidle=15;
 	if (config->http_maxconn>1000) config->http_maxconn=1000;
-	config->http_maxpostsize=33554432; /* 32 MB limit for POST request sizes */
+	config->http_maxpostsize=33554432; // 32 MB limit for POST request sizes
 	if (strlen(config->http_hostname)==0) strncpy(config->http_hostname, "INADDR_ANY", sizeof(config->http_hostname)-1);
 	if (config->pop3_maxconn<1) config->pop3_maxconn=50;
 	if (config->pop3_maxidle<1) config->pop3_maxidle=120;
@@ -352,5 +180,155 @@ int config_write(CONFIG *config)
 	fprintf(fp, "UTIL.SCANFILE          = \"%s\"\n", config->util_scanfile);
 	fprintf(fp, "UTIL.SCANMAIL          = \"%s\"\n", config->util_scanmail);
 	fclose(fp);
+*/
+	return 0;
+}
+
+static void conf_callback(char *var, char *val)
+{
+	if (strcmp(var, "uid")==0) {
+		strncpy(proc.config.uid, val, sizeof(proc.config.uid)-1);
+	} else if (strcmp(var, "gid")==0) {
+		strncpy(proc.config.gid, val, sizeof(proc.config.gid)-1);
+	} else if (strcmp(var, "log level")==0) {
+		proc.config.loglevel=atoi(val);
+	} else if (strcmp(var, "host name")==0) {
+		strncpy(proc.config.hostname, val, sizeof(proc.config.hostname)-1);
+	} else if (strcmp(var, "base path")==0) {
+		strncpy(proc.config.dir_base, val, sizeof(proc.config.dir_base)-1);
+	} else if (strcmp(var, "bin path")==0) {
+		strncpy(proc.config.dir_bin, val, sizeof(proc.config.dir_bin)-1);
+	} else if (strcmp(var, "etc path")==0) {
+		strncpy(proc.config.dir_etc, val, sizeof(proc.config.dir_etc)-1);
+	} else if (strcmp(var, "lib path")==0) {
+		strncpy(proc.config.dir_lib, val, sizeof(proc.config.dir_lib)-1);
+	} else if (strcmp(var, "var path")==0) {
+		strncpy(proc.config.dir_var, val, sizeof(proc.config.dir_var)-1);
+	} else if (strcmp(var, "var_backup path")==0) {
+		strncpy(proc.config.dir_var_backup, val, sizeof(proc.config.dir_var_backup)-1);
+	} else if (strcmp(var, "var_cgi path")==0) {
+		strncpy(proc.config.dir_var_cgi, val, sizeof(proc.config.dir_var_cgi)-1);
+	} else if (strcmp(var, "var_db path")==0) {
+		strncpy(proc.config.dir_var_db, val, sizeof(proc.config.dir_var_db)-1);
+	} else if (strcmp(var, "var_domains path")==0) {
+		strncpy(proc.config.dir_var_domains, val, sizeof(proc.config.dir_var_domains)-1);
+	} else if (strcmp(var, "var_htdocs path")==0) {
+		strncpy(proc.config.dir_var_htdocs, val, sizeof(proc.config.dir_var_htdocs)-1);
+	} else if (strcmp(var, "var_log path")==0) {
+		strncpy(proc.config.dir_var_log, val, sizeof(proc.config.dir_var_log)-1);
+	} else if (strcmp(var, "var_spool path")==0) {
+		strncpy(proc.config.dir_var_spool, val, sizeof(proc.config.dir_var_spool)-1);
+	} else if (strcmp(var, "var_tmp path")==0) {
+		strncpy(proc.config.dir_var_tmp, val, sizeof(proc.config.dir_var_tmp)-1);
+	} else if (strcmp(var, "sql server type")==0) {
+		strncpy(proc.config.sql_type, val, sizeof(proc.config.sql_type)-1);
+	} else if (strcmp(var, "sql host name")==0) {
+		strncpy(proc.config.sql_hostname, val, sizeof(proc.config.sql_hostname)-1);
+	} else if (strcmp(var, "sql port")==0) {
+		proc.config.sql_port=atoi(val);
+	} else if (strcmp(var, "sql database name")==0) {
+		strncpy(proc.config.sql_dbname, val, sizeof(proc.config.sql_dbname)-1);
+	} else if (strcmp(var, "sql user name")==0) {
+		strncpy(proc.config.sql_username, val, sizeof(proc.config.sql_username)-1);
+	} else if (strcmp(var, "sql password")==0) {
+		strncpy(proc.config.sql_password, val, sizeof(proc.config.sql_password)-1);
+	} else if (strcmp(var, "sql odbc dsn")==0) {
+		strncpy(proc.config.sql_odbc_dsn, val, sizeof(proc.config.sql_odbc_dsn)-1);
+	} else if (strcmp(var, "ssl cert file")==0) {
+		strncpy(proc.config.ssl_cert, val, sizeof(proc.config.ssl_cert)-1);
+	} else if (strcmp(var, "ssl key file")==0) {
+		strncpy(proc.config.ssl_key, val, sizeof(proc.config.ssl_key)-1);
+	} else if (strcmp(var, "load module")==0) {
+	} else {
+		log_error("http", __FILE__, __LINE__, 1, "unknown configuration directive '%s'", var);
+	}
+	return;
+}
+
+int conf_read()
+{
+#ifdef WIN32
+	char slash='\\';
+#else
+	char slash='/';
+#endif
+	char *ptemp;
+	short int founddir=0;
+
+	/* define default values */
+	gethostname(proc.config.hostname, sizeof(proc.config.hostname)-1);
+	snprintf(proc.config.uid, sizeof(proc.config.uid)-1, "%s", DEFAULT_SERVER_USERNAME);
+	ptemp=proc.program_name;
+	if (*ptemp=='\"') ptemp++;
+#ifdef WIN32
+	snprintf(proc.config.dir_base, sizeof(proc.config.dir_base)-1, "%s", ptemp);
+#else
+	if (getcwd(proc.config.dir_base, sizeof(proc.config.dir_base)-1)==NULL) return -1;
+	strcat(proc.config.dir_base, "/");
+#endif
+	if (strrchr(proc.config.dir_base, slash)!=NULL) {
+		ptemp=strrchr(proc.config.dir_base, slash);
+		*ptemp='\0';
+		chdir(proc.config.dir_base);
+		if (strrchr(proc.config.dir_base, slash)!=NULL) {
+			ptemp=strrchr(proc.config.dir_base, slash);
+			*ptemp='\0';
+			founddir=1;
+		}
+	}
+	if (!founddir) {
+		snprintf(proc.config.dir_base, sizeof(proc.config.dir_base)-1, "%s", DEFAULT_BASE_DIR);
+	}
+	snprintf(proc.config.dir_bin, sizeof(proc.config.dir_bin)-1, "%s/bin", proc.config.dir_base);
+	snprintf(proc.config.dir_etc, sizeof(proc.config.dir_etc)-1, "%s/etc", proc.config.dir_base);
+	snprintf(proc.config.dir_lib, sizeof(proc.config.dir_lib)-1, "%s/lib", proc.config.dir_base);
+	snprintf(proc.config.dir_var, sizeof(proc.config.dir_var)-1, "%s/var", proc.config.dir_base);
+#ifdef HAVE_SQLITE
+	strncpy(proc.config.sql_type, "SQLITE", sizeof(proc.config.sql_type)-1);
+#endif
+	proc.config.loglevel=1;
+	proc.config.sql_maxconn=50;
+
+	config_read("global", conf_callback);
+
+
+	if (!strlen(proc.config.dir_var_backup)) {
+		snprintf(proc.config.dir_var_backup,  sizeof(proc.config.dir_var_backup)-1,  "%s/backup", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_cgi)) {
+		snprintf(proc.config.dir_var_cgi,     sizeof(proc.config.dir_var_cgi)-1,     "%s/cgi-bin", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_db)) {
+		snprintf(proc.config.dir_var_db,      sizeof(proc.config.dir_var_db)-1,      "%s/db", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_domains)) {
+		snprintf(proc.config.dir_var_domains, sizeof(proc.config.dir_var_domains)-1, "%s/domains", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_htdocs)) {
+		snprintf(proc.config.dir_var_htdocs,  sizeof(proc.config.dir_var_htdocs)-1,  "%s/htdocs", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_log)) {
+		snprintf(proc.config.dir_var_log,     sizeof(proc.config.dir_var_log)-1,     "%s/log", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_spool)) {
+		snprintf(proc.config.dir_var_spool,   sizeof(proc.config.dir_var_spool)-1,   "%s/spool", proc.config.dir_var);
+	}
+	if (!strlen(proc.config.dir_var_tmp)) {
+		snprintf(proc.config.dir_var_tmp,     sizeof(proc.config.dir_var_tmp)-1,     "%s/tmp", proc.config.dir_var);
+	}
+	fixslashes(proc.config.dir_base);
+	fixslashes(proc.config.dir_bin);
+	fixslashes(proc.config.dir_etc);
+	fixslashes(proc.config.dir_lib);
+	fixslashes(proc.config.dir_var);
+	fixslashes(proc.config.dir_var_backup);
+	fixslashes(proc.config.dir_var_cgi);
+	fixslashes(proc.config.dir_var_db);
+	fixslashes(proc.config.dir_var_domains);
+	fixslashes(proc.config.dir_var_htdocs);
+	fixslashes(proc.config.dir_var_log);
+	fixslashes(proc.config.dir_var_spool);
+	fixslashes(proc.config.dir_var_tmp);
+
 	return 0;
 }

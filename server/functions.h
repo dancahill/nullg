@@ -17,7 +17,6 @@
 */
 /* win32.c functions */
 #ifdef WIN32
-int	winsystem(const char *format, ...);
 unsigned sleep(unsigned seconds);
 DIR	*opendir(const char *);
 void	closedir(DIR *);
@@ -56,8 +55,10 @@ int pthread_kill(pthread_t handle, int sig);
 #endif
 
 /* config.c functions */
-int     config_read(CONFIG *config);
-int     config_write(CONFIG *config);
+int     config_read(char *section, void *callback);
+//int     config_read(GLOBAL_CONFIG *config);
+int     config_write(GLOBAL_CONFIG *config);
+int     conf_read(void);
 /* dns.c functions */
 char   *dns_getmxbyname(char *dest, int destlen, char *domain);
 /* domains.c functions */
@@ -147,3 +148,5 @@ int     ssl_accept(TCP_SOCKET *sock);
 int     ssl_close(TCP_SOCKET *sock);
 int     ssl_shutdown();
 #endif
+/* sys.c functions */
+int sys_system(const char *format, ...);

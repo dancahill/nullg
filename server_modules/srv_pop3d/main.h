@@ -47,8 +47,18 @@ typedef struct {
 
 /* auth.c functions */
 int auth_login(CONN *sid, char *username, char *domain, char *password, int mbox);
+/* conf.c functions */
+int conf_read(void);
 /* pop3.c functions */
 void pop3_dorequest(CONN *sid);
+
+typedef struct {
+	char      pop3_interface[128];
+	short int pop3_port;
+	short int pop3_sslport;
+	short int pop3_maxconn;
+	short int pop3_maxidle;
+} MOD_CONFIG;
 
 #ifdef SRVMOD_MAIN
 	CONN *conn;
@@ -57,6 +67,7 @@ void pop3_dorequest(CONN *sid);
 	pthread_t ListenThread;
 	pthread_t ListenThreadSSL;
 	pthread_mutex_t ListenerMutex;
+	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
 	extern int ListenSocket;
@@ -64,4 +75,5 @@ void pop3_dorequest(CONN *sid);
 	extern pthread_t ListenThread;
 	extern pthread_t ListenThreadSSL;
 	extern pthread_mutex_t ListenerMutex;
+	extern MOD_CONFIG mod_config;
 #endif

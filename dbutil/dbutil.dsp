@@ -74,6 +74,10 @@ SOURCE=..\include\schema\sqlite.h
 # End Group
 # Begin Source File
 
+SOURCE=.\config.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\dbio.c
 # End Source File
 # Begin Source File

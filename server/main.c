@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	if (getuid()==0) {
-		if (!(pw=getpwnam(proc.config.server_username))) {
-			printf("\r\nCannot find user '%s'.  Exiting.\r\n", proc.config.server_username);
+		if (!(pw=getpwnam(proc.config.uid))) {
+			printf("\r\nCannot find user '%s'.  Exiting.\r\n", proc.config.uid);
 			exit(-2);
 		}
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));

@@ -17,79 +17,6 @@
 */
 #include "main.h"
 
-int configread()
-{
-	FILE *fp=NULL;
-	char configfile[200];
-	char line[512];
-	char *pVar;
-	char *pVal;
-
-	/* define default values */
-	memset((char *)&config, 0, sizeof(config));
-	/* try to open the config file */
-	/* try the current directory first, then ../etc/ */
-	if (fp==NULL) {
-		snprintf(configfile, sizeof(configfile)-1, "groupware.cfg");
-		fp=fopen(configfile, "r");
-	}
-	if (fp==NULL) {
-#ifdef WIN32
-		snprintf(configfile, sizeof(configfile)-1, "..\\etc\\groupware.cfg");
-#else
-		snprintf(configfile, sizeof(configfile)-1, "../etc/groupware.cfg");
-#endif
-		fp=fopen(configfile, "r");
-	}
-	if (fp==NULL) {
-		printf("missing config file\r\n");
-		exit(0);
-	}
-	/* if config file does exist, read it */
-	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
-		while ((line[strlen(line)-1]=='\n')||(line[strlen(line)-1]=='\r')) {
-			line[strlen(line)-1]='\0';
-		}
-		if (isalpha(line[0])) {
-			pVar=line;
-			pVal=line;
-			while ((*pVal!='=')&&((char *)&pVal+1!='\0')) pVal++;
-			*pVal='\0';
-			pVal++;
-			while (*pVar==' ') pVar++;
-			while (pVar[strlen(pVar)-1]==' ') pVar[strlen(pVar)-1]='\0';
-			while (*pVal==' ') pVal++;
-			while (pVal[strlen(pVal)-1]==' ') pVal[strlen(pVal)-1]='\0';
-			while (*pVal=='"') pVal++;
-			while (pVal[strlen(pVal)-1]=='"') pVal[strlen(pVal)-1]='\0';
-			if (strcmp(pVar, "SERVER.DIR.VAR")==0) {
-				strncpy(config.server_dir_var, pVal, sizeof(config.server_dir_var)-1);
-			} else if (strcmp(pVar, "SERVER.DIR.VAR.DB")==0) {
-				strncpy(config.server_dir_var_db, pVal, sizeof(config.server_dir_var_db)-1);
-			} else if (strcmp(pVar, "SQL.TYPE")==0) {
-				strncpy(config.sql_type, pVal, sizeof(config.sql_type)-1);
-			} else if (strcmp(pVar, "SQL.HOSTNAME")==0) {
-				strncpy(config.sql_hostname, pVal, sizeof(config.sql_hostname)-1);
-			} else if (strcmp(pVar, "SQL.PORT")==0) {
-				config.sql_port=atoi(pVal);
-			} else if (strcmp(pVar, "SQL.DBNAME")==0) {
-				strncpy(config.sql_dbname, pVal, sizeof(config.sql_dbname)-1);
-			} else if (strcmp(pVar, "SQL.USERNAME")==0) {
-				strncpy(config.sql_username, pVal, sizeof(config.sql_username)-1);
-			} else if (strcmp(pVar, "SQL.PASSWORD")==0) {
-				strncpy(config.sql_password, pVal, sizeof(config.sql_password)-1);
-			} else if (strcmp(pVar, "SQL.ODBC_DSN")==0) {
-				strncpy(config.sql_odbc_dsn, pVal, sizeof(config.sql_odbc_dsn)-1);
-			}
-			*pVal='\0';
-			*pVar='\0';
-		}
-	}
-	fclose(fp);
-	if (strlen(config.server_dir_var_db)==0) snprintf(config.server_dir_var_db, sizeof(config.server_dir_var_db)-1, "%s/db", config.server_dir_var);
-	return 0;
-}
-
 void usage(char *arg0)
 {
 	char *progname;
@@ -157,7 +84,7 @@ int main(int argc, char *argv[])
 	if (argc>2) {
 		strncpy(parameter, argv[2], sizeof(parameter)-1);
 	}
-	configread();
+	conf_read();
 	if (strcmp(function, "init")==0) {
 		if (argc==3) {
 			srand(time(NULL));

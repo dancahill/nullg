@@ -7,7 +7,7 @@ all:
 	@echo " mod_bookmarks" ; cd mod_bookmarks ; $(MAKE)
 	@echo " mod_calendar"  ; cd mod_calendar  ; $(MAKE)
 	@echo " mod_calls"     ; cd mod_calls     ; $(MAKE)
-	@echo " mod_cgi"       ; cd mod_cgi       ; $(MAKE) 
+#	@echo " mod_cgi"       ; cd mod_cgi       ; $(MAKE) 
 	@echo " mod_contacts"  ; cd mod_contacts  ; $(MAKE)
 	@echo " mod_files"     ; cd mod_files     ; $(MAKE)
 	@echo " mod_forums"    ; cd mod_forums    ; $(MAKE)

@@ -27,7 +27,7 @@ void log_access(char *logsrc, const char *format, ...)
 	struct timeval ttime;
 	struct timezone tzone;
 
-	snprintf(file, sizeof(file)-1, "%s/%s-access.log", proc.config.server_dir_var_log, logsrc);
+	snprintf(file, sizeof(file)-1, "%s/%s-access.log", proc.config.dir_var_log, logsrc);
 	fixslashes(file);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
@@ -52,8 +52,8 @@ void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *
 	struct timezone tzone;
 	char *ptemp;
 
-	if ((loglevel>proc.config.server_loglevel)||(proc.config.server_loglevel<1)) return;
-	snprintf(file, sizeof(file)-1, "%s/%s-error.log", proc.config.server_dir_var_log, logsrc);
+	if ((loglevel>proc.config.loglevel)||(proc.config.loglevel<1)) return;
+	snprintf(file, sizeof(file)-1, "%s/%s-error.log", proc.config.dir_var_log, logsrc);
 	fixslashes(file);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
@@ -65,7 +65,7 @@ void log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *
 		strftime(timebuffer, sizeof(timebuffer), "%b %d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
 		if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;
 		if ((ptemp=strrchr(srcfile, '\\'))!=NULL) srcfile=ptemp+1;
-		if (proc.config.server_loglevel>1) {
+		if (proc.config.loglevel>1) {
 			fprintf(fp, "%s - [%d] %s %d %s\n", timebuffer, loglevel, srcfile, line, logbuffer);
 		} else {
 			fprintf(fp, "%s - [%d] %s\n", timebuffer, loglevel, logbuffer);

@@ -120,7 +120,7 @@ void webmailraw(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, sid->dat->user_mailcurrent, folderid, msgnum);
 	fixslashes(msgfilename);
 	fp=fopen(msgfilename, "r");
 	if (fp==NULL) {
@@ -479,11 +479,11 @@ void webmailread(CONN *sid)
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");
 	sql_updatef("UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	memset(msgfilename, 0, sizeof(msgfilename));
-	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, header.folderid, localid);
+	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, header.accountid, header.folderid, localid);
 	fixslashes(msgfilename);
 	if (stat(msgfilename, &sb)!=0) {
 		memset(oldfilename, 0, sizeof(oldfilename));
-		snprintf(oldfilename, sizeof(oldfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, header.accountid, localid);
+		snprintf(oldfilename, sizeof(oldfilename)-1, "%s/%04d/mail/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, header.accountid, localid);
 		fixslashes(oldfilename);
 		if (stat(oldfilename, &sb)==0) {
 			if (rename(oldfilename, msgfilename)==0) {
@@ -666,7 +666,7 @@ void webmailwrite(CONN *sid)
 		} else {
 			prints(sid, "--- %s wrote:\n", header.From);
 			memset(msgfilename, 0, sizeof(msgfilename));
-			snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->server_dir_var_domains, sid->dat->user_did, accountid, folderid, msgnum);
+			snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/mail/%04d/%04d/%06d.msg", config->dir_var_domains, sid->dat->user_did, accountid, folderid, msgnum);
 			fixslashes(msgfilename);
 			if ((fp=fopen(msgfilename, "r"))!=NULL) {
 				while (fgets(inbuffer, sizeof(inbuffer)-1, fp)!=NULL) {
@@ -837,6 +837,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	conf_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_mail", "mod_mail_sync", wmsync)!=0) return -1;
 	return 0;

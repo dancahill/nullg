@@ -31,6 +31,7 @@ ALL : "..\..\distrib\lib\mod_files.dll"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\mod_files_conf.obj"
 	-@erase "$(INTDIR)\mod_files_db.obj"
 	-@erase "$(INTDIR)\mod_files_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -86,6 +87,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_files.def"
 LINK32_OBJS= \
+	"$(INTDIR)\mod_files_conf.obj" \
 	"$(INTDIR)\mod_files_db.obj" \
 	"$(INTDIR)\mod_files_main.obj"
 
@@ -96,6 +98,11 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_files - Win32 Release"
+SOURCE=.\mod_files_conf.c
+
+"$(INTDIR)\mod_files_conf.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\mod_files_db.c
 
 "$(INTDIR)\mod_files_db.obj" : $(SOURCE) "$(INTDIR)"

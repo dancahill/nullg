@@ -95,7 +95,7 @@ void ReadPOSTData(CONN *sid)
 		sid->dat->in_ContentLength=0;
 		closeconnect(sid, 1);
 		return;
-	} else if (bytesleft>config->http_maxpostsize) {
+	} else if (bytesleft>mod_config.http_maxpostsize) {
 		log_error("http", __FILE__, __LINE__, 1, "ERROR: Content-Length of %d is too large.", sid->dat->in_ContentLength);
 		sid->dat->in_ContentLength=0;
 		closeconnect(sid, 1);
@@ -484,10 +484,10 @@ void read_cgienv(CONN *sid)
 //	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_cgi, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_cgi, progname);
 	} else if (strncmp(sid->dat->in_CGIScriptName, "/", 1)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+1);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_htdocs, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_htdocs, progname);
 	}
 	ptemp=scriptname;
  	while (*ptemp) { if (*ptemp=='\\') *ptemp='/'; ptemp++; }
@@ -508,7 +508,7 @@ void read_cgienv(CONN *sid)
 	}
 //////////////////
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
-		if (sid->dat->in_ContentLength<config->http_maxpostsize) {
+		if (sid->dat->in_ContentLength<mod_config.http_maxpostsize) {
 			ReadPOSTData(sid);
 		} else {
 			// try to print an error : note the inbuffer being full may block us
@@ -542,8 +542,8 @@ int read_header(CONN *sid)
 			return -1;
 		}
 		striprn(line);
-	} while ((strlen(line)==0)&&((time(NULL)-x)<15));
-	if ((strlen(line)==0)&&((time(NULL)-x)>=15)) {
+	} while ((strlen(line)==0)&&((time(NULL)-x)<mod_config.http_maxkeepalive));
+	if ((strlen(line)==0)&&((time(NULL)-x)>=mod_config.http_maxkeepalive)) {
 		DEBUG_OUT(sid, "read_header()");
 		closeconnect(sid, 2);
 		return -1;
@@ -622,12 +622,12 @@ int read_header(CONN *sid)
 		return -1;
 	}
 	if (strcmp(sid->dat->in_RequestMethod, "POST")==0) {
-		if (sid->dat->in_ContentLength<config->http_maxpostsize) {
+		if (sid->dat->in_ContentLength<mod_config.http_maxpostsize) {
 			ReadPOSTData(sid);
 		} else {
 			// try to print an error : note the inbuffer being full may block us
 			send_error(sid, 413, "Bad Request", "Request entity too large.");
-			log_error("http", __FILE__, __LINE__, 1, "%s - Large POST (>%d bytes) disallowed", sid->dat->in_RemoteAddr, config->http_maxpostsize);
+			log_error("http", __FILE__, __LINE__, 1, "%s - Large POST (>%d bytes) disallowed", sid->dat->in_RemoteAddr, mod_config.http_maxpostsize);
 			DEBUG_OUT(sid, "read_header()");
 			closeconnect(sid, 1);
 			return -1;
@@ -646,10 +646,10 @@ int read_header(CONN *sid)
 //	if (sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]=='/') sid->dat->in_CGIScriptName[strlen(sid->dat->in_CGIScriptName)-1]='\0';
 	if (strncmp(sid->dat->in_CGIScriptName, "/cgi-bin/", 9)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_cgi, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_cgi, progname);
 	} else if (strncmp(sid->dat->in_CGIScriptName, "/", 1)==0) {
 		snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+1);
-		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->server_dir_var_htdocs, progname);
+		snprintf(scriptname, sizeof(scriptname)-1, "%s/%s", config->dir_var_htdocs, progname);
 	}
 	ptemp=scriptname;
  	while (*ptemp) { if (*ptemp=='\\') *ptemp='/'; ptemp++; }
@@ -761,7 +761,7 @@ void http_dorequest(CONN *sid)
 	}
 	proc->stats.http_pages++;
 	log_error("http", __FILE__, __LINE__, 2, "%s - HTTP Request: %s %s", sid->dat->in_RemoteAddr, sid->dat->in_RequestMethod, sid->dat->in_RequestURI);
-	snprintf(file, sizeof(file)-1, "%s%s", config->server_dir_var_htdocs, sid->dat->in_RequestURI);
+	snprintf(file, sizeof(file)-1, "%s%s", config->dir_var_htdocs, sid->dat->in_RequestURI);
 	memset(htdir, 0, sizeof(htdir));
 	snprintf(htdir, sizeof(htdir)-1, "/%s/", SERVER_BASENAME);
 	if (strncmp(sid->dat->in_RequestURI, htdir, strlen(htdir))==0) {

@@ -69,8 +69,8 @@
 #include "defines.h"
 #include "typedefs.h"
 
-typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
-typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
+typedef int   (*MAIN_CONFIG_READ)(char *, void *);
+typedef int   (*MAIN_CONFIG_WRITE)(GLOBAL_CONFIG *);
 typedef	char *(*MAIN_DECODE_BASE64)(char *, int, char *);
 typedef	char *(*MAIN_DNS_GETMXBYNAME)(char *, int, char *);
 typedef	char *(*MAIN_DOMAIN_GETNAME)(char *, int, int);
@@ -91,6 +91,7 @@ typedef	char *(*MAIN_SQL_GETVALUE)(int, int, int);
 typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(int, int, char *);
 typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
 typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
+typedef	int   (*MAIN_SYS_SYSTEM)(const char *, ...);
 typedef	int   (*MAIN_TCP_BIND)(char *, unsigned short);
 typedef	int   (*MAIN_TCP_ACCEPT)(int, struct sockaddr *);
 typedef	int   (*MAIN_TCP_FGETS)(char *, int, TCP_SOCKET *);
@@ -151,6 +152,7 @@ EXTERN MAIN_SQL_GETVALUE		sql_getvalue;
 EXTERN MAIN_SQL_GETVALUEBYNAME		sql_getvaluebyname;
 EXTERN MAIN_SQL_NUMFIELDS		sql_numfields;
 EXTERN MAIN_SQL_NUMTUPLES		sql_numtuples;
+EXTERN MAIN_SYS_SYSTEM			sys_system;
 EXTERN MAIN_TCP_BIND			tcp_bind;
 EXTERN MAIN_TCP_ACCEPT			tcp_accept;
 EXTERN MAIN_TCP_FGETS			tcp_fgets;
@@ -176,9 +178,9 @@ EXTERN MAIN_READDIR			readdir;
 EXTERN MAIN_CLOSEDIR			closedir;
 #endif
 
-EXTERN CONFIG   *config;
+EXTERN GLOBAL_CONFIG *config;
 EXTERN FUNCTION *functions;
-EXTERN _PROC    *proc;
+EXTERN _PROC *proc;
 
 #ifdef SRVMOD_MAIN
 void __log_error(char *logsrc, char *srcfile, int line, int loglevel, const char *format, ...)
@@ -190,7 +192,7 @@ void __log_error(char *logsrc, char *srcfile, int line, int loglevel, const char
 	FILE *fp;
 	time_t t=time(NULL);
 
-	snprintf(file, sizeof(file)-1, "%s/%s-error.log", config->server_dir_var_log, logsrc);
+	snprintf(file, sizeof(file)-1, "%s/%s-error.log", config->dir_var_log, logsrc);
 	fp=fopen(file, "a");
 	if (fp!=NULL) {
 		va_start(ap, format);
@@ -242,6 +244,7 @@ int mod_import()
 	if (_get_func((void *)&sql_getvaluebyname,	"sql_getvaluebyname"	)!=0) return -1;
 	if (_get_func((void *)&sql_numfields,		"sql_numfields"		)!=0) return -1;
 	if (_get_func((void *)&sql_numtuples,		"sql_numtuples"		)!=0) return -1;
+	if (_get_func((void *)&sys_system,		"sys_system"		)!=0) return -1;
 	if (_get_func((void *)&tcp_bind,		"tcp_bind"		)!=0) return -1;
 	if (_get_func((void *)&tcp_accept,		"tcp_accept"		)!=0) return -1;
 	if (_get_func((void *)&tcp_fgets,		"tcp_fgets"		)!=0) return -1;

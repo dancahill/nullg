@@ -76,6 +76,10 @@ SOURCE=.\mod_mail_codec.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_mail_conf.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_mail_db.c
 # End Source File
 # Begin Source File

@@ -342,7 +342,7 @@ int sqliteConnect()
 
 	if (SQLiteDLLInit()!=0) return -1;
 	if (Connected) return 0;
-	snprintf(dbname, sizeof(dbname)-1, "%s/groupware.db", config.server_dir_var_db);
+	snprintf(dbname, sizeof(dbname)-1, "%s/groupware.db", config.dir_var_db);
 //	fixslashes(dbname);
 	db=libsqlite.open(dbname, 0, &zErrMsg);
 	if (db==0) {
