@@ -16,8 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_forums.h"
+#include "mod_forums_lang.h"
 
 /* mod_forums_db.c */
 int dbread_forumgroup(CONN *sid, short int perm, int index, REC_FORUMGROUP *forumgroup);
 int dbwrite_forumgroup(CONN *sid, int index, REC_FORUMGROUP *forumgroup);
+/* mod_forums_lang.c */
+int lang_read(void);

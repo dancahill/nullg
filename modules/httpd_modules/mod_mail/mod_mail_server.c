@@ -62,7 +62,7 @@ retry:
 		obuffer=sid->dat->wm->socket.recvbuf+sid->dat->wm->socket.recvbufoffset+sid->dat->wm->socket.recvbufsize;
 		if ((rc=tcp_recv(sock, obuffer, x, 0))<0) {
 			msleep(1);
-			prints(sid, "<BR>" MOD_MAIL_ERR_CONNRESET);
+			prints(sid, "<BR>%s", lang.mail_err_connreset);
 			shutdown(sid->dat->wm->socket.socket, 2);
 			closesocket(sid->dat->wm->socket.socket);
 			sid->dat->wm->socket.socket=-1;
@@ -161,7 +161,7 @@ int wmserver_smtpconnect(CONN *sid)
 	char inbuffer[1024];
 
 	if ((hp=gethostbyname(sid->dat->wm->smtpserver))==NULL) {
-		prints(sid, "<BR>" MOD_MAIL_ERR_DNS_SMTP " '%s'\n", sid->dat->wm->smtpserver);
+		prints(sid, "<BR>%s '%s'\n", lang.mail_err_dns_smtp, sid->dat->wm->smtpserver);
 		return -1;
 	}
 	memset((char *)&server, 0, sizeof(server));
@@ -171,7 +171,7 @@ int wmserver_smtpconnect(CONN *sid)
 	if ((sid->dat->wm->socket.socket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
 //	setsockopt(wmsocket, SOL_SOCKET, SO_KEEPALIVE, 0, 0);
 	if (connect(sid->dat->wm->socket.socket, (struct sockaddr *)&server, sizeof(server))<0) {
-		prints(sid, "<BR>" MOD_MAIL_ERR_CON_SMTP " '%s'\n", sid->dat->wm->smtpserver);
+		prints(sid, "<BR>%s '%s'\n", lang.mail_err_con_smtp, sid->dat->wm->smtpserver);
 		return -1;
 	}
 	do {
@@ -221,7 +221,7 @@ int wmserver_connect(CONN *sid, int verbose)
 
 	if (sid->dat->wm->connected) return 0;
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
 	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
@@ -274,7 +274,7 @@ int wmserver_connect(CONN *sid, int verbose)
 	}
 	if ((hp=gethostbyname(sid->dat->wm->popserver))==NULL) {
 		if (verbose) {
-			prints(sid, "<BR>" MOD_MAIL_ERR_DNS_POP3 " '%s'\n", sid->dat->wm->popserver);
+			prints(sid, "<BR>%s '%s'\n", lang.mail_err_dns_pop3, sid->dat->wm->popserver);
 		}
 		return -1;
 	}
@@ -286,7 +286,7 @@ int wmserver_connect(CONN *sid, int verbose)
 //	setsockopt(sid->dat->wm->socket.socket, SOL_SOCKET, SO_KEEPALIVE, 0, 0);
 	if (connect(sid->dat->wm->socket.socket, (struct sockaddr *)&server, sizeof(server))<0) {
 		if (verbose) {
-			prints(sid, "<BR>" MOD_MAIL_ERR_CON_POP3 " '%s'\n", sid->dat->wm->popserver);
+			prints(sid, "<BR>%s '%s'\n", lang.mail_err_con_pop3, sid->dat->wm->popserver);
 		}
 		return -1;
 	}
@@ -998,7 +998,7 @@ void wmserver_purge(CONN *sid)
 		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return;
 	}
 	numremote=wmserver_mlistsync(sid, &uidls);
-	if (numremote==-2) prints(sid, "<BR><B>" MOD_MAIL_ERR_BOX_LOCK "</B>\n");
+	if (numremote==-2) prints(sid, "<BR><B>%s</B>\n", lang.mail_err_box_lock);
 	if (numremote<0) {
 		wmserver_disconnect(sid);
 		if (sid->dat->wm!=NULL) {
@@ -1053,7 +1053,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	memset(outbuffer, 0, sizeof(outbuffer));
 	if ((sqr=sql_queryf("SELECT * FROM gw_mailheaders WHERE obj_uid = %d and accountid = %d and status != 'd' and folder = '2' and mailheaderid = %d", sid->dat->user_uid, sid->dat->user_mailcurrent, mailid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
-		if (verbose) prints(sid, "<BR>" MOD_MAIL_ERR_NOMSG);
+		if (verbose) prints(sid, "<BR>%s", lang.mail_err_nomsg);
 		return -1;
 	}
 	dbread_getheader(sid, sqr, 0, &header);
@@ -1164,7 +1164,7 @@ int wmserver_send(CONN *sid, int mailid, int verbose)
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
 	if (strncasecmp(inbuffer, "250", 3)==0) {
 		memset(inbuffer, 0, sizeof(inbuffer));
-		if (verbose) prints(sid, "<BR><B>" MOD_MAIL_SENT "</B>\n", mailid);
+		if (verbose) prints(sid, "<BR><B>%s</B>\n", lang.mail_sent);
 		flushbuffer(sid);
 		wmserver_smtpdisconnect(sid);
 		sql_updatef("UPDATE gw_mailheaders SET folder = '3' WHERE mailheaderid = %d AND accountid = %d", mailid, sid->dat->user_mailcurrent);
@@ -1192,11 +1192,11 @@ int wmsync(CONN *sid, int verbose)
 		if ((sid->dat->wm=calloc(1, sizeof(WEBMAIL)))==NULL) return -1;
 	}
 	if (verbose) {
-		prints(sid, "<BR><B><NOBR>" MOD_MAIL_CHECKING "</NOBR> ");
+		prints(sid, "<BR><B><NOBR>%s</NOBR> ", lang.mail_checking);
 		flushbuffer(sid);
 	}
 	numremote=wmserver_mlistsync(sid, &uidls);
-	if ((verbose)&&(numremote==-2)) prints(sid, "<BR><B>" MOD_MAIL_ERR_BOX_LOCK "</B>\n");
+	if ((verbose)&&(numremote==-2)) prints(sid, "<BR><B>%s</B>\n", lang.mail_err_box_lock);
 	if (numremote<0) {
 		wmserver_disconnect(sid);
 		if (sid->dat->wm!=NULL) {
@@ -1220,7 +1220,7 @@ int wmsync(CONN *sid, int verbose)
 	sql_freeresult(sqr);
 cleanup:
 	if (verbose) {
-		prints(sid, " " MOD_MAIL_OK ".</B>\r\n");
+		prints(sid, " %s.</B>\r\n", lang.mail_ok);
 		flushbuffer(sid);
 	}
 	wmserver_disconnect(sid);

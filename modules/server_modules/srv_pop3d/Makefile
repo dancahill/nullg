@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(LIB_CFLAGS)
-OBJECTS = pop3d_auth.o pop3d_conf.o pop3d_main.o pop3d_server.o
+OBJECTS = pop3d_auth.o pop3d_conf.o pop3d_lang.o pop3d_main.o pop3d_server.o
 TARGET  = $(LIB_TARGETDIR)/srv_pop3d.so
 
 all: srv_pop3d

@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_orders_db.o mod_orders_items.o mod_orders_main.o mod_orders_products.o
+OBJECTS = mod_orders_db.o mod_orders_items.o mod_orders_lang.o mod_orders_main.o mod_orders_products.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_orders.so
 
 all: mod_orders

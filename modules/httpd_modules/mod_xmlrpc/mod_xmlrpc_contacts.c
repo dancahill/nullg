@@ -117,7 +117,7 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 
 	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if (contactid==0) {
@@ -132,7 +132,7 @@ void xmlrpc_contactread(CONN *sid, int contactid)
 		sqr=sql_queryf("SELECT * from gw_contacts WHERE contactid = %d  AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", contactid, sid->dat->user_uid, sid->dat->user_gid);
 	}
 	if (sqr<0) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if (sql_numtuples(sqr)!=1) {
@@ -155,7 +155,7 @@ void xmlrpc_contactlist(CONN *sid)
 
 	send_header(sid, 0, 200, "1", "text/xml", -1, -1);
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
@@ -164,7 +164,7 @@ void xmlrpc_contactlist(CONN *sid)
 		sqr=sql_queryf("SELECT * from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY contactid ASC", sid->dat->user_uid, sid->dat->user_gid);
 	}
 	if (sqr<0) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<?xml version=\"1.0\"?>\r\n");
@@ -189,7 +189,7 @@ void xmlrpc_contactwrite(CONN *sid)
 	int contactid;
 
 	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) {
@@ -197,11 +197,11 @@ void xmlrpc_contactwrite(CONN *sid)
 		return;
 	}
 	if ((mod_contacts_read=module_call("mod_contacts_read"))==NULL) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if ((mod_contacts_write=module_call("mod_contacts_write"))==NULL) {
-		xmlrpc_fault(sid, -1, ERR_NOACCESS);
+		xmlrpc_fault(sid, -1, lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getxmlstruct(sid, "CONTACTID", "INT"))==NULL) {
@@ -258,25 +258,25 @@ void xmlrpc_contactwrite(CONN *sid)
 	if ((ptemp=getxmlstruct(sid, "WORKPOSTALCODE", "STRING"))!=NULL) snprintf(contact.workpostalcode, sizeof(contact.workpostalcode)-1, "%s", ptemp);
 	if (contact.contactid==0) {
 		if (!(auth_priv(sid, "contacts")&A_INSERT)) {
-			xmlrpc_fault(sid, -1, ERR_NOACCESS);
+			xmlrpc_fault(sid, -1, lang.err_noaccess);
 			return;
 		}
 		snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		if ((contact.contactid=mod_contacts_write(sid, 0, &contact))<1) {
-			xmlrpc_fault(sid, -1, ERR_NOACCESS);
+			xmlrpc_fault(sid, -1, lang.err_noaccess);
 			return;
 		}
 		db_log_activity(sid, "contacts", contact.contactid, "insert", "%s - %s added contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);
 	} else {
 		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
-			xmlrpc_fault(sid, -1, ERR_NOACCESS);
+			xmlrpc_fault(sid, -1, lang.err_noaccess);
 			return;
 		}
 		if (strcmp(opassword, contact.password)!=0) {
 			snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		}
 		if (mod_contacts_write(sid, contactid, &contact)<1) {
-			xmlrpc_fault(sid, -1, ERR_NOACCESS);
+			xmlrpc_fault(sid, -1, lang.err_noaccess);
 			return;
 		}
 		db_log_activity(sid, "contacts", contact.contactid, "modify", "%s - %s modified contact %d (xml-rpc)", sid->dat->in_RemoteAddr, sid->dat->user_username, contact.contactid);

@@ -37,6 +37,7 @@ CLEAN :
 	-@erase "$(INTDIR)\httpd_html.obj"
 	-@erase "$(INTDIR)\httpd_http.obj"
 	-@erase "$(INTDIR)\httpd_io.obj"
+	-@erase "$(INTDIR)\httpd_lang.obj"
 	-@erase "$(INTDIR)\httpd_log.obj"
 	-@erase "$(INTDIR)\httpd_main.obj"
 	-@erase "$(INTDIR)\httpd_modctl.obj"
@@ -96,6 +97,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\httpd_html.obj" \
 	"$(INTDIR)\httpd_http.obj" \
 	"$(INTDIR)\httpd_io.obj" \
+	"$(INTDIR)\httpd_lang.obj" \
 	"$(INTDIR)\httpd_log.obj" \
 	"$(INTDIR)\httpd_main.obj" \
 	"$(INTDIR)\httpd_modctl.obj"
@@ -135,6 +137,11 @@ SOURCE=.\httpd_http.c
 SOURCE=.\httpd_io.c
 
 "$(INTDIR)\httpd_io.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\httpd_lang.c
+
+"$(INTDIR)\httpd_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\httpd_log.c

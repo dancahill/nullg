@@ -72,6 +72,10 @@ SOURCE=.\mod_searches_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_searches_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_searches_main.c
 # End Source File
 # Begin Source File

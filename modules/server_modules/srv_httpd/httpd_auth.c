@@ -79,7 +79,7 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	int domainid=0;
 
 	DEBUG_IN(sid, "auth_renewcookie()");
-	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, config->langcode);
 	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
 	if ((settoken)&&(strlen(sid->dat->user_token)!=32)) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
@@ -148,7 +148,7 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	if (sid->dat->user_maxlist<5)    sid->dat->user_maxlist=5;
 	if (sid->dat->user_menustyle<0)  sid->dat->user_menustyle=0;
 	if (strlen(sid->dat->user_language)==0) {
-		snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+		snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, config->langcode);
 	}
 	if (strlen(sid->dat->user_theme)==0) {
 		snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
@@ -184,7 +184,7 @@ int auth_getcookie(CONN *sid)
 	char *ptemp;
 
 	DEBUG_IN(sid, "auth_getcookie()");
-	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
+	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, config->langcode);
 	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
 	ptemp=strstr(sid->dat->in_Cookie, "gwtoken=");
 	if (ptemp==NULL) {
@@ -247,7 +247,10 @@ int auth_setcookie(CONN *sid)
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 0);
 		}
-	} else if ((getpostenv(sid, "USERNAME")!=NULL)&&(getpostenv(sid, "PASSWORD")!=NULL)&&(getpostenv(sid, "DOMAIN")!=NULL)) {
+		DEBUG_OUT(sid, "auth_setcookie()");
+		return -1;
+	}
+	if ((getpostenv(sid, "USERNAME")!=NULL)&&(getpostenv(sid, "PASSWORD")!=NULL)&&(getpostenv(sid, "DOMAIN")!=NULL)) {
 		strncpy(sid->dat->user_username, getpostenv(sid, "USERNAME"), sizeof(sid->dat->user_username)-1);
 		strncpy(password, getpostenv(sid, "PASSWORD"), sizeof(password)-1);
 		ptemp=getpostenv(sid, "DOMAIN");

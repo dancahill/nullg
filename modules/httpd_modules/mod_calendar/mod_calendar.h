@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_calendar.h"
+#include "mod_calendar_lang.h"
 
 /* mod_calendar_assign.c */
 int db_availcheck(int userid, int record, int busy, time_t eventstart, time_t eventfinish);
@@ -28,19 +28,18 @@ void calendar_availmap(CONN *sid);
 int dblist_events(CONN *sid, char *startdate, char *enddate);
 int dbread_event(CONN *sid, short int perm, int index, REC_EVENT *event);
 int dbwrite_event(CONN *sid, int index, REC_EVENT *event);
-
+/* mod_calendar_lang.c */
+int lang_read(void);
 /* mod_calendar_list?.c */
 void calendarlistday(CONN *sid);
 void calendarlistweek(CONN *sid);
 void calendarlistmonth(CONN *sid);
 void calendarlistyear(CONN *sid);
-
 /* mod_calendar_main.c */
 void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri);
 /* mod_calendar_mini.c */
 void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid);
 void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid);
-
 /* mod_calendar_vcal.c */
 void event_vcalexport(CONN *sid);
 void event_vcalimport(CONN *sid);

@@ -177,13 +177,13 @@ void calendarreminders(CONN *sid)
 	time_t t;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
-	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", CAL_EVENT_TITLE);
+	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", lang.event_title);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
 		b=a-atoi(sql_getvalue(sqr, i, 3))*60;
@@ -192,10 +192,10 @@ void calendarreminders(CONN *sid)
 			if (reminders==1) {
 				prints(sid, "<EMBED SRC=/groupware/sounds/reminder.wav AUTOSTART=TRUE HIDDEN=true VOLUME=100>\n");
 				prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=95%% STYLE='border-style:solid'>\r\n");
-				prints(sid, "<TR><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", CAL_EVENT_NAME);
+				prints(sid, "<TR><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH><TH ALIGN=LEFT WIDTH=100%% STYLE='border-style:solid'>&nbsp;%s&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Date&nbsp;</TH><TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;Time&nbsp;</TH></TR>\n", lang.event_name);
 			}
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
-			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), CAL_EVENT_RESET);
+			prints(sid, "<TD NOWRAP VALIGN=top STYLE='border-style:solid'><A HREF=%s/calendar/reminderreset?eventid=%s>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), lang.event_reset);
 			prints(sid, "<TD STYLE='border-style:solid'><A HREF=%s/calendar/view?eventid=%s TARGET=gwmain>%s</A></TD>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0), str2html(sid, sql_getvalue(sqr, i, 1)));
 			eventdate=time_sql2unix(sql_getvalue(sqr, i, 2));
 			eventdate+=time_tzoffset(sid, eventdate);
@@ -206,7 +206,7 @@ void calendarreminders(CONN *sid)
 	}
 	sql_freeresult(sqr);
 	if (reminders==0) {
-		prints(sid, "<BR>" CAL_EVENT_NONE "</CENTER>\n");
+		prints(sid, "<BR>%s</CENTER>\n", lang.event_none);
 //		prints(sid, "<SCRIPT LANGUAGE=JavaScript>window.close('_top');</SCRIPT>\n");
 	} else {
 		prints(sid, "</TABLE></CENTER>\n");
@@ -316,7 +316,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 	int duration;
 
 	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (event==NULL) {
@@ -324,7 +324,7 @@ void calendaredit(CONN *sid, REC_EVENT *event)
 		if (strncmp(sid->dat->in_RequestURI, "/calendar/editnew", 17)==0) {
 			eventid=0;
 			if (dbread_event(sid, 2, 0, &eventrec)!=0) {
-				prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+				prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 				return;
 			}
 			if ((ptemp=getgetenv(sid, "CONTACTID"))!=NULL) eventrec.contactid=atoi(ptemp);
@@ -575,7 +575,7 @@ void calendarview(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
@@ -674,14 +674,14 @@ void calendarsave(CONN *sid)
 
 	prints(sid, "<BR>");
 	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "EVENTID"))==NULL) return;
 	eventid=atoi(ptemp);
 	if (dbread_event(sid, 2, eventid, &event)!=0) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
@@ -763,7 +763,7 @@ void calendarsave(CONN *sid)
 		return;
 	} else if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "calendar")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_events WHERE eventid = %d", event.eventid)<0) return;
@@ -772,7 +772,7 @@ void calendarsave(CONN *sid)
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/list\">\n", sid->dat->in_ScriptName);
 	} else if (event.eventid==0) {
 		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (event.assignedto<1) {
@@ -790,7 +790,7 @@ void calendarsave(CONN *sid)
 			return;
 		}
 		if ((event.eventid=dbwrite_event(sid, 0, &event))<1) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Calendar event %d added successfully</CENTER><BR>\n", event.eventid);
@@ -798,7 +798,7 @@ void calendarsave(CONN *sid)
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/calendar/view?eventid=%d\">\n", sid->dat->in_ScriptName, event.eventid);
 	} else {
 		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (event.assignedto<1) {
@@ -816,7 +816,7 @@ void calendarsave(CONN *sid)
 			return;
 		}
 		if (dbwrite_event(sid, eventid, &event)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Event %d modified successfully</CENTER><BR>\n", event.eventid);
@@ -905,6 +905,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -25,7 +25,7 @@ void admindomainedit(CONN *sid)
 	int domainid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/admin/domaineditnew")==0) {
@@ -74,7 +74,7 @@ void admindomainlist(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) return;
@@ -108,14 +108,14 @@ void admindomainsave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "DOMAINID"))==NULL) return;
 	domainid=atoi(ptemp);
 	if (dbread_domain(sid, 2, domainid, &domain)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "DOMAINNAME"))!=NULL) snprintf(domain.domainname, sizeof(domain.domainname)-1, "%s", ptemp);
@@ -123,7 +123,7 @@ void admindomainsave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_domains WHERE domainid = %d", domain.domainid)<0) return;
@@ -153,7 +153,7 @@ void admindomainsave(CONN *sid)
 		db_log_activity(sid, "domains", domain.domainid, "insert", "%s - %s added domain %d", sid->dat->in_RemoteAddr, sid->dat->user_username, domain.domainid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_queryf("SELECT domainname FROM gw_domains where domainname = '%s' AND domainid <> %d", domain.domainname, domain.domainid))<0) return;

@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_notes.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_notes_db.obj"
+	-@erase "$(INTDIR)\mod_notes_lang.obj"
 	-@erase "$(INTDIR)\mod_notes_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_notes.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_notes.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_notes_db.obj" \
+	"$(INTDIR)\mod_notes_lang.obj" \
 	"$(INTDIR)\mod_notes_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_notes.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_notes_db.c
 
 "$(INTDIR)\mod_notes_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_notes_lang.c
+
+"$(INTDIR)\mod_notes_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_notes_main.c

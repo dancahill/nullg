@@ -111,13 +111,13 @@ void calledit(CONN *sid)
 	int i;
 
 	if (!(auth_priv(sid, "calls")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/calls/editnew", 14)==0) {
 		callid=0;
 		if (dbread_call(sid, 2, 0, &call)!=0) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "CONTACTID"))!=NULL) call.contactid=atoi(ptemp);
@@ -323,7 +323,7 @@ void callview(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "calls")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CALLID"))==NULL) return;
@@ -401,7 +401,7 @@ void calllist(CONN *sid)
 	time_t callstart;
 
 	if (!(auth_priv(sid, "calls")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (getgetenv(sid, "OFFSET")!=NULL) {
@@ -520,14 +520,14 @@ void callsave(CONN *sid)
 	int calltime=0;
 
 	if (!(auth_priv(sid, "calls")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "CALLID"))==NULL) return;
 	callid=atoi(ptemp);
 	if (dbread_call(sid, 2, callid, &call)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "calls")&A_ADMIN) {
@@ -575,7 +575,7 @@ void callsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "DETAILS"))!=NULL) snprintf(call.details, sizeof(call.details)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "calls")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_calls WHERE callid = %d", call.callid)<0) return;
@@ -588,11 +588,11 @@ void callsave(CONN *sid)
 		prints(sid, "</NOSCRIPT>\n");
 	} else if (call.callid==0) {
 		if (!(auth_priv(sid, "calls")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((call.callid=dbwrite_call(sid, 0, &call))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<BR><CENTER>Call %d added successfully</CENTER><BR>\n", call.callid);
@@ -604,7 +604,7 @@ void callsave(CONN *sid)
 		prints(sid, "</NOSCRIPT>\n");
 	} else {
 		if (!(auth_priv(sid, "calls")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Save & Close")==0)) {
@@ -612,7 +612,7 @@ void callsave(CONN *sid)
 			call.status=1;
 		}
 		if (dbwrite_call(sid, callid, &call)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<BR><CENTER>Call %d modified successfully</CENTER><BR>\n", call.callid);
@@ -668,6 +668,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

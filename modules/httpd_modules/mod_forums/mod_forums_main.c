@@ -102,7 +102,7 @@ void forumgroupedit(CONN *sid)
 	int forumgroupid;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/forums/groupeditnew")==0) {
@@ -153,7 +153,7 @@ void forumgrouplist(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_queryf("SELECT forumgroupid, title FROM gw_forumgroups WHERE  obj_did = %d ORDER BY title ASC", sid->dat->user_did))<0) return;
@@ -183,14 +183,14 @@ void forumgroupsave(CONN *sid)
 	int forumgroupid;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FORUMGROUPID"))==NULL) return;
 	forumgroupid=atoi(ptemp);
 	if (dbread_forumgroup(sid, 2, forumgroupid, &forumgroup)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "TITLE"))!=NULL) snprintf(forumgroup.title, sizeof(forumgroup.title)-1, "%s", ptemp);
@@ -201,14 +201,14 @@ void forumgroupsave(CONN *sid)
 		db_log_activity(sid, "forumgroups", forumgroup.forumgroupid, "delete", "%s - %s deleted forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else if (forumgroup.forumgroupid==0) {
 		if ((forumgroup.forumgroupid=dbwrite_forumgroup(sid, 0, &forumgroup))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Forum Group %d added successfully</CENTER><BR>\n", forumgroup.forumgroupid);
 		db_log_activity(sid, "forumgroups", forumgroup.forumgroupid, "insert", "%s - %s added forum group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, forumgroup.forumgroupid);
 	} else {
 		if (dbwrite_forumgroup(sid, forumgroupid, &forumgroup)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Forum Group %d modified successfully</CENTER><BR>\n", forumgroup.forumgroupid);
@@ -224,7 +224,7 @@ void forumview(CONN *sid, int forumid)
 	int sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_queryf("SELECT forumid, forumgroupid, postername, subject, message FROM gw_forums WHERE forumid = %d AND obj_did = %d", forumid, sid->dat->user_did))<0) return;
@@ -259,7 +259,7 @@ void fmessageview(CONN *sid, int forumid, int messageid)
 	int sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_queryf("SELECT messageid, referenceid FROM gw_forumposts WHERE forumid = %d AND obj_did = %d ORDER BY messageid ASC", forumid, sid->dat->user_did))<0) return;
@@ -352,7 +352,7 @@ void forumpost(CONN *sid)
 	int forumgroupid=0;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(message, 0, sizeof(message));
@@ -413,7 +413,7 @@ void fmessagepost(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(message, 0, sizeof(message));
@@ -497,7 +497,7 @@ void forumlist(CONN *sid, int longlist)
 	int sqr2;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FORUMGROUPID"))!=NULL) { selected=1; forumgroupid=atoi(ptemp); }
@@ -602,7 +602,7 @@ void fmessagelist(CONN *sid)
 	int tzoffset;
 
 	if (!(auth_priv(sid, "forums")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FORUM"))==NULL) return;
@@ -695,7 +695,7 @@ void forumsave(CONN *sid)
 	char *pTemp;
 
 	if (!(auth_priv(sid, "forums")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(message, 0, sizeof(message));
@@ -739,7 +739,7 @@ void fmessagesave(CONN *sid)
 	char *pTemp;
 
 	if (!(auth_priv(sid, "forums")&A_INSERT)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(message, 0, sizeof(message));
@@ -827,6 +827,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

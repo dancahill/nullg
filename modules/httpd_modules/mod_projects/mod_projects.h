@@ -16,8 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_projects.h"
+#include "mod_projects_lang.h"
 
 /* mod_projects_db.c */
 int dbread_project(CONN *sid, short int perm, int index, REC_PROJECT *project);
 int dbwrite_project(CONN *sid, int index, REC_PROJECT *project);
+/* mod_projects_lang.c */
+int lang_read(void);

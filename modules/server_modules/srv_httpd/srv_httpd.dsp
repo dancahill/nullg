@@ -80,6 +80,10 @@ SOURCE=.\httpd_io.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\httpd_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\httpd_log.c
 # End Source File
 # Begin Source File

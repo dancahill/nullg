@@ -48,7 +48,7 @@ void admin_status(CONN *sid)
 	int i;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	admin_stats(sid);
@@ -92,7 +92,7 @@ DllExport int mod_main(CONN *sid)
 		prints(sid, "<BR>\r\n");
 	}
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return 0;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/admin/access", 13)==0)
@@ -184,6 +184,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

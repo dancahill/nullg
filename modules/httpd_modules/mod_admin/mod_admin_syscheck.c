@@ -31,7 +31,7 @@ void admin_syscheck(CONN *sid)
 	int sqr5=-1;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr1=sql_query("SELECT * FROM gw_users"))<0) {

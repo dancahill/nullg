@@ -68,6 +68,10 @@ SOURCE=.\mod_forums_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_forums_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_forums_main.c
 # End Source File
 # End Target

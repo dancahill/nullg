@@ -24,7 +24,8 @@
 #else
 #define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
-#define DEFAULT_SERVER_USERNAME		"nullgw"
+#define DEFAULT_SERVER_USERNAME	"nullgw"
+#define DEFAULT_SERVER_LANGUAGE	"en"
 
 #define MAX_REPLYSIZE		16384 /* arbitrary 16 KB limit for reply buffering */
 

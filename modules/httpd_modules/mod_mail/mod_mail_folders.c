@@ -28,7 +28,7 @@ void wmfolder_edit(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(foldername, 0, sizeof(foldername));
@@ -100,7 +100,7 @@ void wmfolder_list(CONN *sid, int accountid)
 	int sqr1, sqr2;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr1=sql_queryf("SELECT mailfolderid, parentfolderid, foldername FROM gw_mailfolders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, accountid))<0) return;
@@ -237,7 +237,7 @@ void wmfolder_save(CONN *sid)
 
 	prints(sid, "<BR>\n");
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(foldername, 0, sizeof(foldername));

@@ -25,6 +25,7 @@ static FUNCTION functions[]={
 	{ "dns_getmxbyname",		dns_getmxbyname			},
 	{ "domain_getname",		domain_getname			},
 	{ "domain_getid",		domain_getid			},
+	{ "language_read",		language_read			},
 	{ "log_error",			log_error			},
 	{ "md5_init",			md5_init			},
 	{ "md5_update",			md5_update			},

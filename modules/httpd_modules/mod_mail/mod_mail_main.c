@@ -32,7 +32,7 @@ void wmnotice(CONN *sid)
 	int sqr1, sqr2;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>Groupware E-Mail Notice</FONT></B>\n");
@@ -242,8 +242,8 @@ void webmaillist(CONN *sid)
 	}
 	if (searchstring[0]=='\0') {
 		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox1 onclick='CheckAll(1);'>");
-		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
-		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest1>\n", MOD_MAIL_MOVETO);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", lang.form_delete);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest1>\n", lang.mail_moveto);
 		htselect_mailfolder(sid, 0, 1, 0);
 		prints(sid, "</SELECT></NOBR></TD>");
 	} else {
@@ -278,16 +278,16 @@ void webmaillist(CONN *sid)
 	}
 	neworder=(order==3?2:3);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=120 style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_FROM);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, lang.mail_from);
 	neworder=(order==5?4:5);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\" WIDTH=100%%>", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_SUBJECT);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, lang.mail_subject);
 	neworder=(order==0?1:0);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_DATE);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, lang.mail_date);
 	neworder=(order==6?7:6);
 	prints(sid, "<TH ALIGN=LEFT NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/mail/list?folderid=%d&order=%d%s'\">", sid->dat->in_ScriptName, folderid, neworder, searchstring);
-	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, MOD_MAIL_SIZE);
+	prints(sid, "&nbsp;<A HREF=\"list?folderid=%d&order=%d%s\">%s</A>&nbsp;</TH>\r\n", folderid, neworder, searchstring, lang.mail_size);
 	prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 	prints(sid, "</TR>\n");
 	for (i=offset;(i<nummessages)&&(i<offset+sid->dat->user_maxlist);i++) {
@@ -332,8 +332,8 @@ void webmaillist(CONN *sid)
 	prints(sid, "</TABLE>\r\n</TD></TR>\r\n");
 	if (searchstring[0]=='\0') {
 		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox2 onclick='CheckAll(2);'>");
-		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", FORM_DELETE);
-		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest2>\n", MOD_MAIL_MOVETO);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\n", lang.form_delete);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest2>\n", lang.mail_moveto);
 		htselect_mailfolder(sid, 0, 1, 0);
 		prints(sid, "</SELECT></NOBR></TD>");
 		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD></TR>\n");
@@ -344,16 +344,16 @@ void webmaillist(CONN *sid)
 		if (offset>0) {
 			i=offset-sid->dat->user_maxlist;
 			if (i<0) i=0;
-			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, MOD_MAIL_PREVPAGE);
+			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, lang.mail_prevpage);
 		} else {
-			prints(sid, "[%s]", MOD_MAIL_PREVPAGE);
+			prints(sid, "[%s]", lang.mail_prevpage);
 		}
 		if (offset+sid->dat->user_maxlist<nummessages) {
 			i=offset+sid->dat->user_maxlist;
 			if (i>nummessages-sid->dat->user_maxlist) i=nummessages-sid->dat->user_maxlist;
-			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, MOD_MAIL_NEXTPAGE);
+			prints(sid, "[<A HREF=%s/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, lang.mail_nextpage);
 		} else {
-			prints(sid, "[%s]", MOD_MAIL_NEXTPAGE);
+			prints(sid, "[%s]", lang.mail_nextpage);
 		}
 	}
 	prints(sid, "</CENTER>\n");
@@ -425,49 +425,49 @@ void webmailread(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\r\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, MOD_MAIL_PREV);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
 	} else {
-		prints(sid, "[%s]\n", MOD_MAIL_PREV);
+		prints(sid, "[%s]\n", lang.mail_prev);
 	}
 	if (sid->dat->user_menustyle>0) {
-		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", MOD_MAIL_REPLY);
-		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", MOD_MAIL_REPLYALL);
-		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", MOD_MAIL_FORWARD);
+		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", lang.mail_reply);
+		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", lang.mail_replyall);
+		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", lang.mail_forward);
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLY);
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLYALL);
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_FORWARD);
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_reply);
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_replyall);
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_forward);
 	}
-	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, MOD_MAIL_DELETE);
+	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, MOD_MAIL_NEXT);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, lang.mail_next);
 	} else {
-		prints(sid, "[%s]\n", MOD_MAIL_NEXT);
+		prints(sid, "[%s]\n", lang.mail_next);
 	}
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='padding:1px; border-style:solid'>");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_FROM);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_from);
 	prints(sid, "<A HREF=\"javascript:ViewContact('%s','%s');\">%s</A> - ", encodeurl(sid, header.FromName), header.FromAddr, str2html(sid, header.From));
 	prints(sid, "<A HREF=\"javascript:MsgTo('&quot;%s&quot; <%s>');\">Send Mail</A>", encodeurl(sid, header.FromName), header.ReplyTo);
 	prints(sid, "</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_TO);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_to);
 	printht(sid, "%s", header.To);
 	prints(sid, "&nbsp;</TD></TR>\n");
 	if (strlen(header.CC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_CC);
+		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_cc);
 		printht(sid, "%s", header.CC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
 	if (strlen(header.BCC)) {
-		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_BCC);
+		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_bcc);
 		printht(sid, "%s", header.BCC);
 		prints(sid, "&nbsp;</TD></TR>\n");
 	}
-	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_SUBJECT);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_subject);
 	printht(sid, "%s", header.Subject);
 	prints(sid, "&nbsp;</TD></TR>\n");
-	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", MOD_MAIL_DATE);
+	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang.mail_date);
 	memset(curdate, 0, sizeof(curdate));
 	unixdate=time_sql2unix(header.Date);
 	unixdate+=time_tzoffset(sid, unixdate);
@@ -479,7 +479,7 @@ void webmailread(CONN *sid)
 		prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP NOWRAP>&nbsp;Scan Result&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;%s&nbsp;</TD></TR>\n", header.scanresult);
 	}
 	prints(sid, "</TABLE></TD></TR>\n");
-	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", sid->dat->in_ScriptName, localid, MOD_MAIL_VIEWSOURCE);
+	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>[<A HREF=%s/mail/raw?msg=%d TARGET=_blank>%s</A>]</TD></TR>\n", sid->dat->in_ScriptName, localid, lang.mail_viewsource);
 	prints(sid, "<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>\n");
 	sql_updatef("UPDATE gw_mailheaders SET status = 'r' WHERE uidl = '%s' AND obj_uid = %d AND accountid = %d", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, header.uidl), sid->dat->user_uid, sid->dat->user_mailcurrent);
 	memset(msgfilename, 0, sizeof(msgfilename));
@@ -507,24 +507,24 @@ void webmailread(CONN *sid)
 	}
 	prints(sid, "</TD></TR></TABLE>\n");
 	if (remoteid>1) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, MOD_MAIL_PREV);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid-2, 0)), order, searchstring, lang.mail_prev);
 	} else {
-		prints(sid, "[%s]\n", MOD_MAIL_PREV);
+		prints(sid, "[%s]\n", lang.mail_prev);
 	}
 	if (sid->dat->user_menustyle>0) {
-		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", MOD_MAIL_REPLY);
-		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", MOD_MAIL_REPLYALL);
-		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", MOD_MAIL_FORWARD);
+		prints(sid, "[<A HREF=javascript:ReplyTo();>%s</A>]\n", lang.mail_reply);
+		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\n", lang.mail_replyall);
+		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\n", lang.mail_forward);
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLY);
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_REPLYALL);
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, MOD_MAIL_FORWARD);
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_reply);
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_replyall);
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\n", sid->dat->in_ScriptName, localid, header.accountid, lang.mail_forward);
 	}
-	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, MOD_MAIL_DELETE);
+	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\n", sid->dat->in_ScriptName, localid, header.uidl, lang.mail_delete);
 	if ((remoteid<nummessages)&&(remoteid>-1)) {
-		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, MOD_MAIL_NEXT);
+		prints(sid, "[<A HREF=%s/mail/read?msg=%d&order=%d%s>%s</A>]\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, remoteid, 0)), order, searchstring, lang.mail_next);
 	} else {
-		prints(sid, "[%s]\n", MOD_MAIL_NEXT);
+		prints(sid, "[%s]\n", lang.mail_next);
 	}
 	prints(sid, "<BR>\n");
 	sql_freeresult(sqr);
@@ -615,14 +615,14 @@ void webmailwrite(CONN *sid)
 		prints(sid, "<INPUT TYPE=hidden NAME=fwdacct VALUE=\"%d\">\n", accountid);
 	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", MOD_MAIL_FROM);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%>\n", lang.mail_from);
 	prints(sid, "<SELECT NAME=accountid style='width:433px'>\n");
 	htselect_mailaccount(sid, accountid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_TO, str2html(sid, msgto));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_CC, str2html(sid, msgcc));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_BCC, str2html(sid, msgbcc));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", MOD_MAIL_SUBJECT, str2html(sid, subject));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('to');>&nbsp;<B><A HREF=javascript:AddressBook('to') TITLE='To'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgto SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", lang.mail_to, str2html(sid, msgto));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('cc');>&nbsp;<B><A HREF=javascript:AddressBook('cc') TITLE='Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", lang.mail_cc, str2html(sid, msgcc));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE=\"cursor:hand\" onClick=AddressBook('bcc');>&nbsp;<B><A HREF=javascript:AddressBook('bcc') TITLE='Blind Carbon Copy'>%s</A></B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgbcc SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", lang.mail_bcc, str2html(sid, msgbcc));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>%s</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=TEXT NAME=msgsubject SIZE=80 STYLE='width:433px' VALUE=\"%s\"></TD></TR>\n", lang.mail_subject, str2html(sid, subject));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%% STYLE='padding:0px'><B>&nbsp;Format&nbsp;</B></TD><TD STYLE='padding:0px'>");
 	prints(sid, "<select NAME=ctype onChange=\"toggle_mode()\">\r\n<option value=plain>Plain Text</option>\r\n<option value=html>HTML</option>\r\n</select>\r\n");
 	prints(sid, "</TD></TR>\r\n");
@@ -857,6 +857,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	functions=_functions;
 	if (mod_import()!=0) return -1;
 	conf_read();
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_mail", "mod_mail_sync", wmsync)!=0) return -1;
 	return 0;

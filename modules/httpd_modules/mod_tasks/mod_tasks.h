@@ -16,8 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_tasks.h"
+#include "mod_tasks_lang.h"
 
 /* mod_tasks_db.c */
 int dbread_task(CONN *sid, short int perm, int index, REC_TASK *task);
 int dbwrite_task(CONN *sid, int index, REC_TASK *task);
+/* mod_tasks_lang.c */
+int lang_read(void);

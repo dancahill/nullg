@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_profile.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_profile_db.obj"
+	-@erase "$(INTDIR)\mod_profile_lang.obj"
 	-@erase "$(INTDIR)\mod_profile_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_profile.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_profile.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_profile_db.obj" \
+	"$(INTDIR)\mod_profile_lang.obj" \
 	"$(INTDIR)\mod_profile_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_profile.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_profile_db.c
 
 "$(INTDIR)\mod_profile_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_profile_lang.c
+
+"$(INTDIR)\mod_profile_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_profile_main.c

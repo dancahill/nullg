@@ -33,6 +33,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_files.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_files_conf.obj"
 	-@erase "$(INTDIR)\mod_files_db.obj"
+	-@erase "$(INTDIR)\mod_files_lang.obj"
 	-@erase "$(INTDIR)\mod_files_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_files.exp"
@@ -89,6 +90,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_files_conf.obj" \
 	"$(INTDIR)\mod_files_db.obj" \
+	"$(INTDIR)\mod_files_lang.obj" \
 	"$(INTDIR)\mod_files_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_files.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -106,6 +108,11 @@ SOURCE=.\mod_files_conf.c
 SOURCE=.\mod_files_db.c
 
 "$(INTDIR)\mod_files_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_files_lang.c
+
+"$(INTDIR)\mod_files_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_files_main.c

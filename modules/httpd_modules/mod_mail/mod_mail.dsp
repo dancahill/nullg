@@ -100,6 +100,10 @@ SOURCE=.\mod_mail_html.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_mail_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_mail_main.c
 # End Source File
 # Begin Source File

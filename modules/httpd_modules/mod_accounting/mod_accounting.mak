@@ -34,6 +34,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_accounting_accounts.obj"
 	-@erase "$(INTDIR)\mod_accounting_db.obj"
 	-@erase "$(INTDIR)\mod_accounting_journal.obj"
+	-@erase "$(INTDIR)\mod_accounting_lang.obj"
 	-@erase "$(INTDIR)\mod_accounting_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_accounting.exp"
@@ -91,6 +92,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_accounting_accounts.obj" \
 	"$(INTDIR)\mod_accounting_db.obj" \
 	"$(INTDIR)\mod_accounting_journal.obj" \
+	"$(INTDIR)\mod_accounting_lang.obj" \
 	"$(INTDIR)\mod_accounting_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_accounting.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -113,6 +115,11 @@ SOURCE=.\mod_accounting_db.c
 SOURCE=.\mod_accounting_journal.c
 
 "$(INTDIR)\mod_accounting_journal.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_accounting_lang.c
+
+"$(INTDIR)\mod_accounting_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_accounting_main.c

@@ -68,6 +68,10 @@ SOURCE=.\mod_notes_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_notes_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_notes_main.c
 # End Source File
 # End Target

@@ -76,6 +76,10 @@ SOURCE=.\mod_accounting_journal.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_accounting_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_accounting_main.c
 # End Source File
 # End Target

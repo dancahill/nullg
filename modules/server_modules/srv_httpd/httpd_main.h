@@ -17,7 +17,7 @@
 */
 #include "srv_mod.h"
 #include "http_typedefs.h"
-#include "i18n/srv_httpd.h"
+#include "httpd_lang.h"
 
 #ifdef WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -113,6 +113,8 @@ int prints(CONN *sid, const char *format, ...);
 int raw_prints(CONN *sid, const char *format, ...);
 int filesend(CONN *sid, char *file);
 int closeconnect(CONN *sid, int exitflag);
+/* lang.c functions */
+int lang_read();
 /* log.c functions */
 int db_log_activity(CONN *sid, char *category, int indexid, char *action, const char *format, ...);
 void log_htaccess(CONN *sid);

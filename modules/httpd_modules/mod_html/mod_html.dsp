@@ -56,6 +56,10 @@ LINK32=link.exe
 # Name "mod_html - Win32 Release"
 # Begin Source File
 
+SOURCE=.\mod_html_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_html_main.c
 # End Source File
 # Begin Source File

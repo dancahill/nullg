@@ -28,13 +28,13 @@ void event_vcalexport(CONN *sid)
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CALENDAR);
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CALENDAR);
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	eventid=atoi(ptemp);

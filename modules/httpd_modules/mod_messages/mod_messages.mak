@@ -31,6 +31,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_messages.dll"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\mod_messages_lang.obj"
 	-@erase "$(INTDIR)\mod_messages_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_messages.exp"
@@ -85,6 +86,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 DEF_FILE= \
 	".\mod_messages.def"
 LINK32_OBJS= \
+	"$(INTDIR)\mod_messages_lang.obj" \
 	"$(INTDIR)\mod_messages_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_messages.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -94,6 +96,11 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_messages - Win32 Release"
+SOURCE=.\mod_messages_lang.c
+
+"$(INTDIR)\mod_messages_lang.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\mod_messages_main.c
 
 "$(INTDIR)\mod_messages_main.obj" : $(SOURCE) "$(INTDIR)"

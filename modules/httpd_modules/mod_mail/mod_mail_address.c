@@ -29,7 +29,7 @@ void wmaddr_list(CONN *sid)
 	int sqr2;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(field, 0, sizeof(field));

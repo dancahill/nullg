@@ -35,6 +35,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_admin_db.obj"
 	-@erase "$(INTDIR)\mod_admin_domains.obj"
 	-@erase "$(INTDIR)\mod_admin_groups.obj"
+	-@erase "$(INTDIR)\mod_admin_lang.obj"
 	-@erase "$(INTDIR)\mod_admin_logs.obj"
 	-@erase "$(INTDIR)\mod_admin_main.obj"
 	-@erase "$(INTDIR)\mod_admin_syscheck.obj"
@@ -96,6 +97,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_admin_db.obj" \
 	"$(INTDIR)\mod_admin_domains.obj" \
 	"$(INTDIR)\mod_admin_groups.obj" \
+	"$(INTDIR)\mod_admin_lang.obj" \
 	"$(INTDIR)\mod_admin_logs.obj" \
 	"$(INTDIR)\mod_admin_main.obj" \
 	"$(INTDIR)\mod_admin_syscheck.obj" \
@@ -127,6 +129,11 @@ SOURCE=.\mod_admin_domains.c
 SOURCE=.\mod_admin_groups.c
 
 "$(INTDIR)\mod_admin_groups.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_admin_lang.c
+
+"$(INTDIR)\mod_admin_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_admin_logs.c

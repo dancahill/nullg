@@ -24,7 +24,7 @@ void adminconfigedit(CONN *sid)
 	CONFIG cfg;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset((char *)&cfg, 0, sizeof(cfg));
@@ -183,7 +183,7 @@ void adminconfigsave(CONN *sid)
 	char *ptemp;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod, "POST")!=0) return;

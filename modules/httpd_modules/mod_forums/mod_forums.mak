@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_forums.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_forums_db.obj"
+	-@erase "$(INTDIR)\mod_forums_lang.obj"
 	-@erase "$(INTDIR)\mod_forums_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_forums.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_forums.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_forums_db.obj" \
+	"$(INTDIR)\mod_forums_lang.obj" \
 	"$(INTDIR)\mod_forums_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_forums.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_forums_db.c
 
 "$(INTDIR)\mod_forums_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_forums_lang.c
+
+"$(INTDIR)\mod_forums_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_forums_main.c

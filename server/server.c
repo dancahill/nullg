@@ -141,6 +141,10 @@ void init()
 		printf("\r\nError reading configuration file\r\n");
 		exit(-2);
 	}
+	if (lang_read()!=0) {
+		printf("\r\nError reading language file\r\n");
+		exit(-2);
+	}
 	umask(proc.config.umask);
 #ifdef WIN32
 	if (WSAStartup(0x202, &proc.wsaData)) {

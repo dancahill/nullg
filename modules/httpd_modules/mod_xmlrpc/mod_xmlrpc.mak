@@ -33,6 +33,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_xmlrpc.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_xmlrpc_auth.obj"
 	-@erase "$(INTDIR)\mod_xmlrpc_contacts.obj"
+	-@erase "$(INTDIR)\mod_xmlrpc_lang.obj"
 	-@erase "$(INTDIR)\mod_xmlrpc_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_xmlrpc.exp"
@@ -89,6 +90,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_xmlrpc_auth.obj" \
 	"$(INTDIR)\mod_xmlrpc_contacts.obj" \
+	"$(INTDIR)\mod_xmlrpc_lang.obj" \
 	"$(INTDIR)\mod_xmlrpc_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_xmlrpc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -106,6 +108,11 @@ SOURCE=.\mod_xmlrpc_auth.c
 SOURCE=.\mod_xmlrpc_contacts.c
 
 "$(INTDIR)\mod_xmlrpc_contacts.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_xmlrpc_lang.c
+
+"$(INTDIR)\mod_xmlrpc_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_xmlrpc_main.c

@@ -33,6 +33,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_orders.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_orders_db.obj"
 	-@erase "$(INTDIR)\mod_orders_items.obj"
+	-@erase "$(INTDIR)\mod_orders_lang.obj"
 	-@erase "$(INTDIR)\mod_orders_main.obj"
 	-@erase "$(INTDIR)\mod_orders_products.obj"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -90,6 +91,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_orders_db.obj" \
 	"$(INTDIR)\mod_orders_items.obj" \
+	"$(INTDIR)\mod_orders_lang.obj" \
 	"$(INTDIR)\mod_orders_main.obj" \
 	"$(INTDIR)\mod_orders_products.obj"
 
@@ -108,6 +110,11 @@ SOURCE=.\mod_orders_db.c
 SOURCE=.\mod_orders_items.c
 
 "$(INTDIR)\mod_orders_items.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_orders_lang.c
+
+"$(INTDIR)\mod_orders_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_orders_main.c

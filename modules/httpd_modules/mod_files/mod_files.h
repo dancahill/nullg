@@ -16,12 +16,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_files.h"
+#include "mod_files_lang.h"
 
 /* mod_files_conf.c */
 int conf_read(void);
 /* mod_files_db.c */
 int dbread_file(CONN *sid, short int perm, int index, REC_FILE *file);
+/* mod_files_lang.c */
+int lang_read(void);
 
 typedef struct {
 	char filter_program[256];

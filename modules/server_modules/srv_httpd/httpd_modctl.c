@@ -79,6 +79,7 @@ int module_load(char *modname)
 		{ "decode_base64",		decode_base64			},
 		{ "domain_getname",		domain_getname			},
 		{ "domain_getid",		domain_getid			},
+		{ "language_read",		language_read			},
 		{ "log_access",			log_access			},
 		{ "log_error",			log_error			},
 		{ "md5_init",			md5_init			},
@@ -209,7 +210,7 @@ int module_load(char *modname)
 	if (htmod_init(proc, &http_proc, export_list)!=0) return -1;
 	return 0;
 fail:
-	log_error("http", __FILE__, __LINE__, 0, "ERROR: Failed to load %s.%s", modname, ext);
+	log_error("httpd", __FILE__, __LINE__, 0, "ERROR: Failed to load %s.%s", modname, ext);
 	if (hinstLib!=NULL) dlclose(hinstLib);
 	hinstLib=NULL;
 	return -1;

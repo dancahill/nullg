@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_calls.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_calls_db.obj"
+	-@erase "$(INTDIR)\mod_calls_lang.obj"
 	-@erase "$(INTDIR)\mod_calls_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_calls.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_calls.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_calls_db.obj" \
+	"$(INTDIR)\mod_calls_lang.obj" \
 	"$(INTDIR)\mod_calls_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_calls.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_calls_db.c
 
 "$(INTDIR)\mod_calls_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_calls_lang.c
+
+"$(INTDIR)\mod_calls_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_calls_main.c

@@ -166,7 +166,7 @@ int dirlist(CONN *sid)
 			} else if (rc==-3) {
 				prints(sid, "<BR><CENTER>File already exists</CENTER><BR>\n");
 			} else {
-				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			}
 			return 0;
 		}
@@ -444,11 +444,11 @@ int filemkdir(CONN *sid)
 	char location[255];
 
 	if (!(auth_priv(sid, "files")&A_INSERT)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
 	if (dbread_file(sid, 2, 0, &file)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
 	snprintf(file.filename, sizeof(file.filename)-1, "New Folder");
@@ -509,7 +509,7 @@ void fileinfoedit(CONN *sid)
 	int fileid;
 
 	if (!(auth_priv(sid, "files")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
@@ -704,7 +704,7 @@ int filerecv(CONN *sid)
 				} else if (rc==-3) {
 					prints(sid, "<CENTER>File already exists</CENTER>\n");
 				} else {
-					prints(sid, "<CENTER>%s</CENTER>\n", ERR_NOACCESS);
+					prints(sid, "<CENTER>%s</CENTER>\n", lang.err_noaccess);
 				}
 				DEBUG_OUT(sid, "filerecv()");
 				return -1;
@@ -771,11 +771,11 @@ int filedirsave(CONN *sid)
 	time_t t;
 
 	if (!(auth_priv(sid, "files")&A_INSERT)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
 	if (dbread_file(sid, 2, 0, &filerec)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return -1;
 	}
 	if (auth_priv(sid, "files")&A_ADMIN) {
@@ -798,7 +798,7 @@ int filedirsave(CONN *sid)
 		} else if (rc==-3) {
 			prints(sid, "<CENTER>Directory already exists</CENTER><BR>\n");
 		} else {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		}
 		return -1;
 	}
@@ -857,14 +857,14 @@ void fileinfosave(CONN *sid)
 	int rc;
 
 	if (!(auth_priv(sid, "files")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
 	if (dbread_file(sid, 2, fileid, &file)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "files")&A_ADMIN) {
@@ -885,7 +885,7 @@ void fileinfosave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "files")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((rc=fileperm(sid, A_DELETE, file.filepath, file.filename))<0) {
@@ -894,7 +894,7 @@ void fileinfosave(CONN *sid)
 			} else if (rc==-3) {
 				prints(sid, "<BR><CENTER>File already exists</CENTER><BR>\n");
 			} else {
-				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			}
 			return;
 		}
@@ -919,7 +919,7 @@ void fileinfosave(CONN *sid)
 		db_log_activity(sid, "files", file.fileid, "delete", "%s - %s deleted file %d %s", sid->dat->in_RemoteAddr, sid->dat->user_username, file.fileid, file.filename);
 	} else {
 		if (!(auth_priv(sid, "files")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((rc=fileperm(sid, A_MODIFY, file.filepath, file.filename))<0) {
@@ -928,7 +928,7 @@ void fileinfosave(CONN *sid)
 			} else if (rc==-3) {
 				prints(sid, "<BR><CENTER>File already exists</CENTER><BR>\n");
 			} else {
-				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+				prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			}
 			return;
 		}
@@ -962,13 +962,13 @@ void fileedit(CONN *sid)
 	int ich;
 
 	if (!(auth_priv(sid, "files")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FILEID"))==NULL) return;
 	fileid=atoi(ptemp);
 	if (dbread_file(sid, 2, fileid, &file)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((rc=fileperm(sid, A_MODIFY, file.filepath, file.filename))<0) {
@@ -977,7 +977,7 @@ void fileedit(CONN *sid)
 		} else if (rc==-3) {
 			prints(sid, "<BR><CENTER>File already exists</CENTER><BR>\n");
 		} else {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		}
 		return;
 	}
@@ -1026,14 +1026,14 @@ void filesave(CONN *sid)
 	FILE *fp;
 
 	if (!(auth_priv(sid, "files")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getmimeenv(sid, "FILEID", &mimesize))==NULL) return;
 	fileid=atoi(ptemp);
 	if ((filebody=getmimeenv(sid, "FILEBODY", &filesize))==NULL) return;
 	if (dbread_file(sid, 2, fileid, &file)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((rc=fileperm(sid, A_MODIFY, file.filepath, file.filename))<0) {
@@ -1042,7 +1042,7 @@ void filesave(CONN *sid)
 		} else if (rc==-3) {
 			prints(sid, "<BR><CENTER>File already exists</CENTER><BR>\n");
 		} else {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		}
 		return;
 	}
@@ -1082,7 +1082,7 @@ void filescan(CONN *sid)
 	short int err;
 
 	if (!(auth_priv(sid, "files")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strlen(mod_config.filter_program)==0) return;
@@ -1097,6 +1097,7 @@ void filescan(CONN *sid)
 	fixslashes(filename);
 	snprintf(tempname, sizeof(tempname)-1, "%s/scan-%d.tmp", config->dir_var_tmp, (int)(time(NULL)%999));
 	fixslashes(tempname);
+	prints(sid, "Scanning '%s'<BR>\n", filename);
 	if (stat(filename, &sb)!=0) {
 		prints(sid, "File not found");
 		return;
@@ -1109,7 +1110,6 @@ void filescan(CONN *sid)
 #ifndef WIN32
 	strncatf(line, sizeof(line)-strlen(line)-1, " 2>&1");
 #endif
-	prints(sid, "Scanning '%s'<BR>\n", filename);
 	flushbuffer(sid);
 	err=sys_system(line);
 	if (err>255) err=err>>8;
@@ -1192,6 +1192,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	functions=_functions;
 	if (mod_import()!=0) return -1;
 	conf_read();
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

@@ -34,13 +34,13 @@ void orderedit(CONN *sid)
 	int orderid;
 
 	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/orders/editnew", 15)==0) {
 		orderid=0;
 		if (db_read(sid, 2, DB_ORDERS, 0, &order)!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "CONTACTID"))!=NULL) order.contactid=atoi(ptemp);
@@ -124,7 +124,7 @@ void orderview(CONN *sid)
 	int orderid;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "ORDERID"))==NULL) return;
@@ -192,7 +192,7 @@ void orderlist(CONN *sid)
 	int sqr2;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(query, 0, sizeof(query));
@@ -345,14 +345,14 @@ void ordersave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "orders")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "ORDERID"))==NULL) return;
 	orderid=atoi(ptemp);
 	if (db_read(sid, 2, DB_ORDERS, orderid, &order)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "CONTACTID"))!=NULL) order.contactid=atoi(ptemp);
@@ -369,7 +369,7 @@ void ordersave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "orders")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_orders WHERE orderid = %d", order.orderid)<0) return;
@@ -377,7 +377,7 @@ void ordersave(CONN *sid)
 		db_log_activity(sid, "orders", order.orderid, "delete", "%s - %s deleted order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else if (order.orderid==0) {
 		if (!(auth_priv(sid, "orders")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_query("SELECT max(orderid) FROM gw_orders"))<0) return;
@@ -400,7 +400,7 @@ void ordersave(CONN *sid)
 		db_log_activity(sid, "orders", order.orderid, "insert", "%s - %s added order %d", sid->dat->in_RemoteAddr, sid->dat->user_username, order.orderid);
 	} else {
 		if (!(auth_priv(sid, "orders")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_orders SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, order.obj_uid);
@@ -493,6 +493,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

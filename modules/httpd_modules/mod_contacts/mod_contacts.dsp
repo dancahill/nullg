@@ -68,6 +68,10 @@ SOURCE=.\mod_contacts_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_contacts_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_contacts_main.c
 # End Source File
 # Begin Source File

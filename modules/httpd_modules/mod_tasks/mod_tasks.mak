@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_tasks.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_tasks_db.obj"
+	-@erase "$(INTDIR)\mod_tasks_lang.obj"
 	-@erase "$(INTDIR)\mod_tasks_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_tasks.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_tasks.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_tasks_db.obj" \
+	"$(INTDIR)\mod_tasks_lang.obj" \
 	"$(INTDIR)\mod_tasks_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_tasks.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_tasks_db.c
 
 "$(INTDIR)\mod_tasks_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_tasks_lang.c
+
+"$(INTDIR)\mod_tasks_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_tasks_main.c

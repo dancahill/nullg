@@ -76,6 +76,10 @@ SOURCE=.\mod_calendar_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_calendar_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_calendar_listd.c
 # End Source File
 # Begin Source File

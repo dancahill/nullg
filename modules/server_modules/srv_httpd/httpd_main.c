@@ -251,6 +251,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	functions=_functions;
 	if (mod_import()!=0) return -1;
 	conf_read();
+	lang_read();
 	log_error("core", __FILE__, __LINE__, 1, "Starting %s httpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if (http_proc.config.http_port) {
 		if ((http_proc.ListenSocketSTD=tcp_bind(http_proc.config.http_interface, http_proc.config.http_port))!=-1) loaded=1;

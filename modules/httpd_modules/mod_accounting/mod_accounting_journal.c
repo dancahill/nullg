@@ -28,7 +28,7 @@ void journal_listraw(CONN *sid)
 	float tbalance, tcredit, tdebit;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
@@ -118,7 +118,7 @@ void journal_list(CONN *sid)
 	unsigned short int e1, e2, e3;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "S1"))!=NULL) s1=atoi(ptemp); else s1=0;

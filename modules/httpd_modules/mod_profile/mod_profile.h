@@ -16,7 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_profile.h"
+#include "mod_profile_lang.h"
 
 /* mod_profile_db.c */
 int dbread_profile(CONN *sid, short int perm, int index, REC_USER *profile);
+/* mod_profile_lang.c */
+int lang_read(void);

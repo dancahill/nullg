@@ -16,8 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_notes.h"
+#include "mod_notes_lang.h"
 
 /* mod_notes_db.c */
 int dbread_note(CONN *sid, short int perm, int index, REC_NOTE *note);
 int dbwrite_note(CONN *sid, int index, REC_NOTE *note);
+/* mod_notes_lang.c */
+int lang_read(void);

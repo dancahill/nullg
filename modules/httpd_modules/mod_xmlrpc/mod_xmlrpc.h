@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_xmlrpc.h"
+#include "mod_xmlrpc_lang.h"
 
 /* mod_xmlrpc_auth.c */
 int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password);
@@ -26,6 +26,8 @@ void xmlrpc_auth_logout(CONN *sid);
 void xmlrpc_contactread(CONN *sid, int contactid);
 void xmlrpc_contactlist(CONN *sid);
 void xmlrpc_contactwrite(CONN *sid);
+/* mod_xmlrpc_lang.c */
+int lang_read(void);
 /* mod_xmlrpc_main.c */
 void xmlrpc_addmember(CONN *sid, char *name, char *type, const char *format, ...);
 void xmlrpc_fault(CONN *sid, int faultid, char *fault);

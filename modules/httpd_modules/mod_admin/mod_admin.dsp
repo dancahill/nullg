@@ -80,6 +80,10 @@ SOURCE=.\mod_admin_groups.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_admin_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_admin_logs.c
 # End Source File
 # Begin Source File

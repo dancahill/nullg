@@ -28,17 +28,17 @@ void contacts_vcardexport(CONN *sid)
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	contactid=atoi(ptemp);
-	if (dbread_contact(sid, 1, contactid, &contact)!=0) {
+	if (dbread_contact(sid, 1, contactid, &contact)<0) {
 		send_header(sid, 0, 200, "1", "text/html", -1, -1);
 		htpage_topmenu(sid, MENU_CONTACTS);
 		prints(sid, "<BR><CENTER>No matching record found for %d</CENTER>\n", contactid);

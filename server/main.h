@@ -82,7 +82,6 @@
 #endif
 #include "ssl.h"
 
-#include "i18n/srv_httpd.h"
 #include "defines.h"
 #include "typedefs.h"
 #include "functions.h"

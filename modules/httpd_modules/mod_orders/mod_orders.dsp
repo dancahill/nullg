@@ -72,6 +72,10 @@ SOURCE=.\mod_orders_items.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_orders_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_orders_main.c
 # End Source File
 # Begin Source File

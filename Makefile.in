@@ -29,7 +29,13 @@ all: _all
 	@echo "Thank you for using NullLogic Groupware."
 	@echo ""
 
-_all: _sqlite _dbutil _server _server_modules _httpd_modules
+_all: _sqlite _misc _dbutil _server _server_modules _httpd_modules
+
+_sqlite:
+	@echo "sqlite"
+	@cd sqlite;./libsqlite_make build
+
+_misc:
 	@cp -p Documentation/COPYING distrib/COPYING
 	@cp -p Documentation/COPYRIGHT distrib/COPYRIGHT
 	@cp -p Documentation/README distrib/README
@@ -38,10 +44,6 @@ _all: _sqlite _dbutil _server _server_modules _httpd_modules
 	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
 	@cp -p scripts/rc.groupware distrib/bin/rc.groupware
 	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/rc.groupware
-
-_sqlite:
-	@echo "sqlite"
-	@cd sqlite;./libsqlite_make build
 
 _dbutil:
 	@echo "dbutil"

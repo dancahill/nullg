@@ -72,6 +72,10 @@ SOURCE=.\mod_files_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_files_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_files_main.c
 # End Source File
 # End Target

@@ -25,13 +25,13 @@ void admingroupmemberedit(CONN *sid)
 	int groupmemberid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/admin/groupmembereditnew", 25)==0) {
 		groupmemberid=0;
 		if (dbread_groupmember(sid, 2, 0, &groupmember)!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "GROUPID"))==NULL) return;
@@ -82,12 +82,12 @@ void admingroupmemberlist(CONN *sid, int domainid, int groupid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (!auth_priv(sid, "domainadmin")&A_ADMIN) {
 		if (domainid!=sid->dat->user_did) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	}
@@ -122,14 +122,14 @@ void admingroupmembersave(CONN *sid)
 	int groupmemberid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "GROUPMEMBERID"))==NULL) return;
 	groupmemberid=atoi(ptemp);
 	if (dbread_groupmember(sid, 2, groupmemberid, &groupmember)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) groupmember.groupid=atoi(ptemp);
@@ -144,7 +144,7 @@ void admingroupmembersave(CONN *sid)
 		snprintf(query, sizeof(query)-1, "INSERT INTO gw_groupmembers (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupid, userid) values ("
 			"'%s', '%s', '0', '0', '%d', '0', '0', '%d', '%d')", curdate, curdate, groupmember.obj_did, groupmember.groupid, groupmember.userid);
 		if (sql_update(query)<0) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Group Member %d added successfully</CENTER><BR>\n", groupmember.groupmemberid);
@@ -153,7 +153,7 @@ void admingroupmembersave(CONN *sid)
 		snprintf(query, sizeof(query)-1, "UPDATE gw_groupmembers SET obj_mtime = '%s', groupid = '%d', userid = '%d' WHERE groupmemberid = %d",
 			curdate, groupmember.groupid, groupmember.userid, groupmember.groupmemberid);
 		if (sql_update(query)<0) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Group Member %d modified successfully</CENTER><BR>\n", groupmember.groupmemberid);
@@ -175,7 +175,7 @@ void admingroupedit(CONN *sid)
 	int groupid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/admin/groupeditnew")==0) {
@@ -238,7 +238,7 @@ void admingrouplist(CONN *sid)
 	int sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
@@ -308,14 +308,14 @@ void admingroupsave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "GROUPID"))==NULL) return;
 	groupid=atoi(ptemp);
 	if (dbread_group(sid, 2, groupid, &group)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "GROUPNAME"))!=NULL) snprintf(group.groupname, sizeof(group.groupname)-1, "%s", ptemp);
@@ -325,7 +325,7 @@ void admingroupsave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_groups WHERE groupid = %d", group.groupid)<0) return;
@@ -358,7 +358,7 @@ void admingroupsave(CONN *sid)
 		db_log_activity(sid, "groups", group.groupid, "insert", "%s - %s added group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND groupid <> %d AND obj_did = %d", group.groupname, group.groupid, group.obj_did))<0) return;
@@ -396,7 +396,7 @@ void admingrouptimeedit(CONN *sid)
 	int j;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "GROUPID"))==NULL) return;
@@ -498,7 +498,7 @@ void admingrouptimesave(CONN *sid)
 	int j;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;

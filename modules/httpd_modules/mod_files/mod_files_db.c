@@ -53,8 +53,8 @@ int dbread_file(CONN *sid, short int perm, int index, REC_FILE *file)
 	file->obj_did    = atoi(sql_getvalue(sqr, 0, 5));
 	file->obj_gperm  = atoi(sql_getvalue(sqr, 0, 6));
 	file->obj_operm  = atoi(sql_getvalue(sqr, 0, 7));
-	strncpy(file->filename,		sql_getvalue(sqr, 0, 8), sizeof(file->filename)-1);
-	strncpy(file->filepath,		sql_getvalue(sqr, 0, 9), sizeof(file->filepath)-1);
+	strncpy(file->filepath,		sql_getvalue(sqr, 0, 8), sizeof(file->filepath)-1);
+	strncpy(file->filename,		sql_getvalue(sqr, 0, 9), sizeof(file->filename)-1);
 	strncpy(file->filetype,		sql_getvalue(sqr, 0, 10), sizeof(file->filetype)-1);
 	file->uldate=time_sql2unix(sql_getvalue(sqr, 0, 11));
 	file->lastdldate=time_sql2unix(sql_getvalue(sqr, 0, 12));

@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_profile_db.o mod_profile_main.o
+OBJECTS = mod_profile_db.o mod_profile_lang.o mod_profile_main.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_profile.so
 
 all: mod_profile

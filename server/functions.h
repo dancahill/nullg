@@ -86,6 +86,9 @@ int     tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags);
 int     tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags);
 /* int tcp_close(TCP_SOCKET *socket); */
 int     tcp_close(TCP_SOCKET *socket, short int owner_killed);
+/* language.c functions */
+int language_read(char *langcode, char *section, void *callback);
+int lang_read(void);
 /* modctl.c functions */
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x);

@@ -68,6 +68,10 @@ SOURCE=.\mod_projects_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_projects_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_projects_main.c
 # End Source File
 # End Target

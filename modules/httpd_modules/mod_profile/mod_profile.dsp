@@ -68,6 +68,10 @@ SOURCE=.\mod_profile_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_profile_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_profile_main.c
 # End Source File
 # End Target

@@ -25,7 +25,7 @@ void adminzoneedit(CONN *sid)
 	int zoneid;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/admin/zoneeditnew")==0) {
@@ -77,7 +77,7 @@ void adminzonelist(CONN *sid)
 	int sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
@@ -147,14 +147,14 @@ void adminzonesave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "ZONEID"))==NULL) return;
 	zoneid=atoi(ptemp);
 	if (dbread_zone(sid, 2, zoneid, &zone)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "ZONENAME"))!=NULL) snprintf(zone.zonename, sizeof(zone.zonename)-1, "%s", ptemp);
@@ -162,7 +162,7 @@ void adminzonesave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_zones WHERE zoneid = %d", zone.zoneid)<0) return;
@@ -192,7 +192,7 @@ void adminzonesave(CONN *sid)
 		db_log_activity(sid, "zones", zone.zoneid, "insert", "%s - %s added zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND zoneid <> %d AND obj_did = %d", zone.zonename, zone.zoneid, zone.obj_did))<0) return;

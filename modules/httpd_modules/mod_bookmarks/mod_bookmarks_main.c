@@ -64,7 +64,7 @@ void bookmarkfolderedit(CONN *sid)
 	int folderid;
 
 	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/foldereditnew", 24)==0) {
@@ -163,14 +163,14 @@ void bookmarkfoldersave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "FOLDERID"))==NULL) return;
 	folderid=atoi(ptemp);
 	if (dbread_bookmarkfolder(sid, 2, folderid, &bookmarkfolder)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "bookmarks")&A_ADMIN) {
@@ -188,7 +188,7 @@ void bookmarkfoldersave(CONN *sid)
 	if (bookmarkfolder.parentid==bookmarkfolder.folderid) bookmarkfolder.parentid=0;
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_queryf("SELECT folderid FROM gw_bookmarkfolders where parentid = %d", bookmarkfolder.folderid))<0) return;
@@ -228,7 +228,7 @@ void bookmarkfoldersave(CONN *sid)
 		folderid=bookmarkfolder.folderid;
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_bookmarkfolders SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, bookmarkfolder.obj_uid, bookmarkfolder.obj_gid, bookmarkfolder.obj_gperm, bookmarkfolder.obj_operm);
@@ -257,7 +257,7 @@ void bookmarksedit(CONN *sid)
 	int err;
 
 	if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/bookmarks/editnew", 18)==0) {
@@ -266,7 +266,7 @@ void bookmarksedit(CONN *sid)
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", bookmarkid);
 			return;
 		} else if (err!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "FOLDER"))!=NULL) bookmark.folderid=atoi(ptemp);
@@ -277,7 +277,7 @@ void bookmarksedit(CONN *sid)
 			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", bookmarkid);
 			return;
 		} else if (err!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	}
@@ -363,9 +363,10 @@ void bookmarkslist(CONN *sid)
 	int i;
 	int numfolders=0;
 	int sqr;
+	int modify=0;
 	
 	if (!(auth_priv(sid, "bookmarks")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "FOLDER"))!=NULL) folderid=atoi(ptemp);
@@ -375,15 +376,14 @@ void bookmarkslist(CONN *sid)
 	} else {
 		if ((sqr=sql_queryf("SELECT folderid, foldername, parentid FROM gw_bookmarkfolders WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY foldername ASC", folderid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 	}
+	modify=auth_priv(sid, "bookmarks")&A_MODIFY;
 	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR><TH");
-		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-		prints(sid, " STYLE='border-style:solid'>%s</TH></TR>\n", str2html(sid, sql_getvalue(sqr, 0, 1)));
-		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD");
-		if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-		prints(sid, " WIDTH=300 STYLE='border-style:solid'><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
-		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16>&nbsp;");
-		prints(sid, "Parent Directory</A></TD></TR>\n");
+		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+		prints(sid, "<TR><TH%s STYLE='border-style:solid'>%s</TH></TR>\n", modify?" COLSPAN=2":"", str2html(sid, sql_getvalue(sqr, 0, 1)));
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD%s WIDTH=300 STYLE='border-style:solid'>", modify?" COLSPAN=2":"");
+		prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 2)));
+		prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-foldero.png HEIGHT=16 WIDTH=16>");
+		prints(sid, "&nbsp;Parent Directory</A></TD></TR>\n");
 		numfolders++;
 	}
 	sql_freeresult(sqr);
@@ -394,16 +394,16 @@ void bookmarkslist(CONN *sid)
 	}
 	if (sql_numtuples(sqr)>0) {
 		if (numfolders==0) {
-			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR><TH");
-			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) prints(sid, " COLSPAN=2");
-			prints(sid, " STYLE='border-style:solid'>Bookmarks</TH></TR>\n");
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR><TH%s STYLE='border-style:solid'>Bookmarks</TH></TR>\n", modify?" COLSPAN=2":"");
 		}
 		for (i=0;i<sql_numtuples(sqr);i++) {
 			prints(sid, "<TR CLASS=\"FIELDVAL\">");
 			if ((auth_priv(sid, "bookmarks")&A_MODIFY)) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/bookmarks/folderedit?folderid=%d>edit</A>&nbsp;</TD>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			}
-			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR><A HREF=%s/bookmarks/list?folder=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
+			prints(sid, "<TD NOWRAP WIDTH=300 STYLE='border-style:solid'><NOBR>");
+			prints(sid, "<A HREF=%s/bookmarks/list?folder=%d onClick=\"location.replace('%s/bookmarks/list?folder=%d');return false;\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)), sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 			prints(sid, "<IMG ALIGN=TOP BORDER=0 SRC=/groupware/images/file-folder.png HEIGHT=16 WIDTH=16>&nbsp;");
 			prints(sid, "%s</A>&nbsp;</NOBR></TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
 		}
@@ -436,7 +436,7 @@ void bookmarkslist(CONN *sid)
 		prints(sid, "There are no saved bookmarks<BR>\n");
 	}
 	sql_freeresult(sqr);
-	prints(sid, "</CENTER>\n");
+	prints(sid, "</CENTER><BR>\n");
 	return;
 }
 
@@ -447,14 +447,14 @@ void bookmarkssave(CONN *sid)
 	int bookmarkid;
 
 	if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "BOOKMARKID"))==NULL) return;
 	bookmarkid=atoi(ptemp);
 	if (dbread_bookmark(sid, 2, bookmarkid, &bookmark)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "bookmarks")&A_ADMIN) {
@@ -470,7 +470,7 @@ void bookmarkssave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "BOOKMARKURL"))!=NULL) snprintf(bookmark.bookmarkurl, sizeof(bookmark.bookmarkurl)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "bookmarks")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_bookmarks WHERE bookmarkid = %d", bookmark.bookmarkid)<0) return;
@@ -478,22 +478,22 @@ void bookmarkssave(CONN *sid)
 		db_log_activity(sid, "bookmarks", bookmark.bookmarkid, "delete", "%s - %s deleted bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else if (bookmark.bookmarkid==0) {
 		if (!(auth_priv(sid, "bookmarks")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((bookmark.bookmarkid=dbwrite_bookmark(sid, 0, &bookmark))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Bookmark %d added successfully</CENTER><BR>\n", bookmark.bookmarkid);
 		db_log_activity(sid, "bookmarks", bookmark.bookmarkid, "insert", "%s - %s added bookmark %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmark.bookmarkid);
 	} else {
 		if (!(auth_priv(sid, "bookmarks")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (dbwrite_bookmark(sid, bookmarkid, &bookmark)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Bookmark %d modified successfully</CENTER><BR>\n", bookmark.bookmarkid);
@@ -558,6 +558,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

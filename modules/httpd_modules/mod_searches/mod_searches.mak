@@ -33,6 +33,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_searches.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_searches_contacts.obj"
 	-@erase "$(INTDIR)\mod_searches_db.obj"
+	-@erase "$(INTDIR)\mod_searches_lang.obj"
 	-@erase "$(INTDIR)\mod_searches_main.obj"
 	-@erase "$(INTDIR)\mod_searches_sql.obj"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -90,6 +91,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_searches_contacts.obj" \
 	"$(INTDIR)\mod_searches_db.obj" \
+	"$(INTDIR)\mod_searches_lang.obj" \
 	"$(INTDIR)\mod_searches_main.obj" \
 	"$(INTDIR)\mod_searches_sql.obj"
 
@@ -108,6 +110,11 @@ SOURCE=.\mod_searches_contacts.c
 SOURCE=.\mod_searches_db.c
 
 "$(INTDIR)\mod_searches_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_searches_lang.c
+
+"$(INTDIR)\mod_searches_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_searches_main.c

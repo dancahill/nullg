@@ -68,6 +68,10 @@ SOURCE=.\mod_calls_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_calls_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_calls_main.c
 # End Source File
 # End Target

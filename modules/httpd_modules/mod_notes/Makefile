@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_notes_db.o mod_notes_main.o
+OBJECTS = mod_notes_db.o mod_notes_lang.o mod_notes_main.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_notes.so
 
 all: mod_notes

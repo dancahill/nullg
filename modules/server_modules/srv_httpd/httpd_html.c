@@ -256,7 +256,7 @@ domenu:
 		if (module_exists("mod_profile")) {
 			prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 		}
-		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, MENU_LOGOUT);
+		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, lang.menu_top_logout);
 		prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 		prints(sid, "</TR></TABLE>\r\n</TD></TR>\r\n");
 	}
@@ -264,13 +264,13 @@ domenu:
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CONFIG);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/activitylist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_LOGS);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_config);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/activitylist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_logs);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/domainlist>DOMAINS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/syscheck>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CHECK);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/userlist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_USERS);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/grouplist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_GROUPS);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/zonelist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_ZONES);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/syscheck>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_check);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/userlist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_users);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/grouplist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_groups);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/zonelist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, lang.menu_adm_zones);
 			break;
 		case MENU_ACCOUNTING:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/accounting/accounts>ACCOUNTS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
@@ -377,7 +377,7 @@ domenu:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/mail/quit%s>QUIT</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, sid->dat->user_menustyle>0?" TARGET=gwmain":"");
 			break;
 	}
-	prints(sid, "<A CLASS='TBAR' HREF=javascript:window.print()>%s</A>", MENU_PRINT);
+	prints(sid, "<A CLASS='TBAR' HREF=javascript:window.print()>%s</A>", lang.menu_top_print);
 	prints(sid, "&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
 	if (sid->dat->user_menustyle>0) {
 		if (module_exists("mod_profile")) {
@@ -387,7 +387,7 @@ domenu:
 				prints(sid, "<A CLASS='TBAR' HREF=%s/profile/edit>PROFILE</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			}
 		}
-		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, MENU_LOGOUT);
+		prints(sid, "<A CLASS='TBAR' HREF=%s/logout TARGET=_top>%s</A>", sid->dat->in_ScriptName, lang.menu_top_logout);
 	}
 	prints(sid, "&nbsp;&nbsp;</TD>\r\n");
 	prints(sid, "</TR></TABLE>\r\n</TD></TR></TABLE>\r\n");

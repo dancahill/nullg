@@ -140,7 +140,7 @@ void wmfilter_edit(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(filtername, 0, sizeof(filtername));
@@ -241,7 +241,7 @@ void wmfilter_list(CONN *sid, int accountid)
 	int sqr1;
 
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr1=sql_queryf("SELECT mailfilterid, filtername FROM gw_mailfilters WHERE obj_uid = %d and accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return;
@@ -279,7 +279,7 @@ void wmfilter_save(CONN *sid)
 
 	prints(sid, "<BR>\n");
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(filtername, 0, sizeof(filtername));

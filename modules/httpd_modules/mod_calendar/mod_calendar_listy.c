@@ -33,7 +33,7 @@ void calendarlistyear(CONN *sid)
 	time_t t;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(posttime1, 0, sizeof(posttime1));

@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_admin.h"
+#include "mod_admin_lang.h"
 
 /* mod_admin_config.c */
 void adminconfigedit(CONN *sid);
@@ -39,6 +39,8 @@ void admingrouplist(CONN *sid);
 void admingroupsave(CONN *sid);
 void admingrouptimeedit(CONN *sid);
 void admingrouptimesave(CONN *sid);
+/* mod_admin_lang.c */
+int lang_read(void);
 /* mod_admin_logs.c */
 void adminaccess(CONN *sid);
 void adminerror(CONN *sid);

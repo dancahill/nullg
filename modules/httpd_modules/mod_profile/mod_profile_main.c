@@ -25,6 +25,29 @@
 #include <sys/types.h>
 #endif
 
+void htselect_lang(CONN *sid, char *selected)
+{
+#ifdef WIN32
+	struct	direct *dentry;
+#else
+	struct	dirent *dentry;
+#endif
+	DIR  *handle;
+	char dirname[512];
+
+	memset(dirname, 0, sizeof(dirname));
+	snprintf(dirname, sizeof(dirname)-1, "%s/lang", config->dir_var);
+	fixslashes(dirname);
+	handle=opendir(dirname);
+	while ((dentry=readdir(handle))!=NULL) {
+//		stat(dentry->d_name, &sb);
+		if (strcmp(".", dentry->d_name)==0) continue;
+		if (strcmp("..", dentry->d_name)==0) continue;
+		prints(sid, "<OPTION VALUE='%s'%s>%s\n", dentry->d_name, (strcmp(dentry->d_name, selected)==0)?" SELECTED":"", dentry->d_name);
+	}
+	closedir(handle);
+	return;
+}
 
 void htselect_layout(CONN *sid, int selected)
 {
@@ -82,7 +105,7 @@ void profileedit(CONN *sid)
 	REC_USER user;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (dbread_profile(sid, 2, sid->dat->user_uid, &user)!=0) {
@@ -134,12 +157,14 @@ void profileedit(CONN *sid)
 	prints(sid, "<SELECT NAME=preftimezone style='width:255px'>\n");
 	htselect_timezone(sid, user.preftimezone);
 	prints(sid, "</SELECT></TD></TR>\n");
-
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT>\n");
+	prints(sid, "<SELECT NAME=preflanguage style='width:255px'>\n");
+	htselect_lang(sid, user.preflanguage);
+	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT>\n");
 	prints(sid, "<SELECT NAME=preftheme style='width:255px'>\n");
 	htselect_theme(sid, user.preftheme);
 	prints(sid, "</SELECT></TD></TR>\n");
-
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\n");
@@ -169,12 +194,12 @@ void profilesave(CONN *sid)
 	char *ptemp;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if (dbread_profile(sid, 2, sid->dat->user_uid, &user)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	snprintf(opassword, sizeof(opassword)-1, "%s", user.password);
@@ -187,6 +212,7 @@ void profilesave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "PREFMENUSTYLE"))!=NULL) user.prefmenustyle=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFTIMEZONE"))!=NULL) user.preftimezone=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "PREFGEOZONE"))!=NULL) user.prefgeozone=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "PREFLANGUAGE"))!=NULL) snprintf(user.preflanguage, sizeof(user.preflanguage)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "PREFTHEME"))!=NULL) snprintf(user.preftheme, sizeof(user.preftheme)-1, "%s", ptemp);
 	memset(curdate, 0, sizeof(curdate));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
@@ -203,6 +229,7 @@ void profilesave(CONN *sid)
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefmenustyle = '%d', ", user.prefmenustyle);
 	strncatf(query, sizeof(query)-strlen(query)-1, "preftimezone = '%d', ", user.preftimezone);
 	strncatf(query, sizeof(query)-strlen(query)-1, "prefgeozone = '%d', ", user.prefgeozone);
+	strncatf(query, sizeof(query)-strlen(query)-1, "preflanguage = '%s'", user.preflanguage);
 	strncatf(query, sizeof(query)-strlen(query)-1, "preftheme = '%s'", user.preftheme);
 	strncatf(query, sizeof(query)-strlen(query)-1, " WHERE userid = %d", sid->dat->user_uid);
 	if (sql_update(query)<0) return;
@@ -222,7 +249,7 @@ void profiletimeedit(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_queryf("SELECT availability FROM gw_users WHERE userid = %d", sid->dat->user_uid))<0) return;
@@ -345,7 +372,7 @@ void profiletimesave(CONN *sid)
 	int j;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
@@ -422,6 +449,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

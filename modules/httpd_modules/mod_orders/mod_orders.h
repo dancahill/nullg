@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_orders.h"
+#include "mod_orders_lang.h"
 
 typedef struct {
 	int recordid;
@@ -59,6 +59,8 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 void orderitemedit(CONN *sid);
 void orderitemlist(CONN *sid, int orderid);
 void orderitemsave(CONN *sid);
+/* mod_orders_lang.c */
+int lang_read(void);
 /* mod_orders_products.c */
 void productedit(CONN *sid);
 void productview(CONN *sid);

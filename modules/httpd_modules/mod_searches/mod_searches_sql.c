@@ -33,7 +33,7 @@ void searchsqladd(CONN *sid)
 	int queryid;
 
 	if (!(auth_priv(sid, "query")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/search/sqladd")==0) {
@@ -115,7 +115,7 @@ void searchsqlrun(CONN *sid)
 	int min, max;
 
 	if (!(auth_priv(sid, "query")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "QUERYSTRING"))!=NULL) {
@@ -124,7 +124,7 @@ void searchsqlrun(CONN *sid)
 			snprintf(query.query, sizeof(query.query)-1, "%s", ptemp);
 			queryid=-1;
 		} else {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	} else if ((ptemp=getgetenv(sid, "QUERYID"))!=NULL) {
@@ -340,14 +340,14 @@ void searchsqlsave(CONN *sid)
 	int queryid;
 
 	if (!(auth_priv(sid, "query")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "QUERYID"))==NULL) return;
 	queryid=atoi(ptemp);
 	if (dbread_query(sid, 2, queryid, &query)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "query")&A_ADMIN) {
@@ -363,7 +363,7 @@ void searchsqlsave(CONN *sid)
 	if (strlen(query.queryname)==0) strncpy(query.queryname, "Unnamed Query", sizeof(query.queryname)-1);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "query")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_queries WHERE queryid = %d", queryid)<0) return;
@@ -371,22 +371,22 @@ void searchsqlsave(CONN *sid)
 		db_log_activity(sid, "queries", query.queryid, "delete", "%s - %s deleted query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else if (query.queryid==0) {
 		if (!(auth_priv(sid, "query")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((query.queryid=dbwrite_query(sid, 0, &query))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Query %d added successfully</CENTER><BR>\n", query.queryid);
 		db_log_activity(sid, "queries", query.queryid, "insert", "%s - %s added query %d", sid->dat->in_RemoteAddr, sid->dat->user_username, query.queryid);
 	} else {
 		if (!(auth_priv(sid, "query")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (dbwrite_query(sid, queryid, &query)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Query %d modified successfully</CENTER><BR>\n", query.queryid);

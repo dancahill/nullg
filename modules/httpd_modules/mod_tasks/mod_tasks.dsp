@@ -68,6 +68,10 @@ SOURCE=.\mod_tasks_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_tasks_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_tasks_main.c
 # End Source File
 # End Target

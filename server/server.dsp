@@ -93,6 +93,10 @@ SOURCE=.\format.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\language.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\log.c
 # End Source File
 # Begin Source File

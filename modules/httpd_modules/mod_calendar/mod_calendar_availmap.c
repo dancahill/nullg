@@ -42,7 +42,7 @@ void calendar_availmap(CONN *sid)
 	int usergroupid;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {

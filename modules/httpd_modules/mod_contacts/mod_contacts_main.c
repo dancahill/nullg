@@ -27,7 +27,7 @@ void contactsearch1(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
@@ -80,7 +80,7 @@ void contactsearch2(CONN *sid)
 	int sqr1;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	contactsearch1(sid);
@@ -188,7 +188,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	time_t t;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (contact==NULL) {
@@ -196,7 +196,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		if (strncmp(sid->dat->in_RequestURI, "/contacts/viewnew", 17)==0) {
 			contactid=0;
 			if ((perm=dbread_contact(sid, 2, 0, &contactrec))<0) {
-				prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+				prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 				return;
 			}
 		} else {
@@ -204,7 +204,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			contactid=atoi(ptemp);
 			if ((perm=dbread_contact(sid, 1, contactid, &contactrec))<0) {
 				prints(sid, "<CENTER>");
-				prints(sid, ERR_NORECORD, contactid);
+				prints(sid, lang.err_norecord, contactid);
 				prints(sid, "</CENTER>\n");
 				return;
 			}
@@ -556,7 +556,7 @@ void contact_mailview(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(email, 0, sizeof(email));
@@ -588,7 +588,7 @@ void contact_mailview(CONN *sid)
 		contactid=0;
 		sql_freeresult(sqr);
 		if (dbread_contact(sid, 2, 0, &contactrec)<0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		snprintf(contactrec.surname, sizeof(contactrec.surname)-1, "%s", surname);
@@ -608,7 +608,7 @@ void contactlist(CONN *sid)
 	int sqr1;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<SCRIPT TYPE=\"text/javascript\" LANGUAGE=\"JavaScript\"><!--\r\n");
@@ -787,11 +787,11 @@ void contactcallslist(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!module_exists("mod_calls")) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (!(auth_priv(sid, "calls")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) return;
@@ -856,11 +856,11 @@ void contacteventlist(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!module_exists("mod_calendar")) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) return;
@@ -918,11 +918,11 @@ void contactorderlist(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!module_exists("mod_orders")) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "CONTACTID"))==NULL) return;
@@ -971,14 +971,14 @@ void contactsave(CONN *sid)
 
 	prints(sid, "<BR>\r\n");
 	if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "CONTACTID"))==NULL) return;
 	contactid=atoi(ptemp);
 	if (dbread_contact(sid, 2, contactid, &contact)<0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	snprintf(opassword, sizeof(opassword)-1, "%s", contact.password);
@@ -1023,7 +1023,7 @@ void contactsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "WORKPOSTALCODE"))!=NULL) snprintf(contact.workpostalcode, sizeof(contact.workpostalcode)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "contacts")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_contacts WHERE contactid = %d", contact.contactid)<0) return;
@@ -1036,7 +1036,7 @@ void contactsave(CONN *sid)
 		prints(sid, "</NOSCRIPT>\n");
 	} else if (contact.contactid==0) {
 		if (!(auth_priv(sid, "contacts")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Force Save")==0)) goto skipcheck1;
@@ -1060,7 +1060,7 @@ void contactsave(CONN *sid)
 skipcheck1:
 		snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		if ((contact.contactid=dbwrite_contact(sid, 0, &contact))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Contact %d added successfully</CENTER><BR>\n", contact.contactid);
@@ -1108,7 +1108,7 @@ skipcheck1:
 		}
 	} else {
 		if (!(auth_priv(sid, "contacts")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Force Save")==0)) goto skipcheck2;
@@ -1122,7 +1122,7 @@ skipcheck2:
 			snprintf(contact.password, sizeof(contact.password)-1, "%s", auth_setpass(sid, contact.password));
 		}
 		if (dbwrite_contact(sid, contactid, &contact)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Contact %d modified successfully</CENTER><BR>\n", contact.contactid);
@@ -1196,6 +1196,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_contacts", "mod_contacts_read", dbread_contact)!=0) return -1;
 	if (mod_export_function("mod_contacts", "mod_contacts_write", dbwrite_contact)!=0) return -1;

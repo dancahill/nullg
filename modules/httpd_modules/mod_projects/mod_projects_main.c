@@ -91,13 +91,13 @@ void projectedit(CONN *sid)
 	int editperms=0;
 
 	if (!(auth_priv(sid, "projects")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/projects/editnew", 17)==0) {
 		projectid=0;
 		if (dbread_project(sid, 2, 0, &project)!=0) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	} else {
@@ -234,7 +234,7 @@ void projectview(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "projects")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "PROJECTID"))==NULL) return;
@@ -322,7 +322,7 @@ void projectlist(CONN *sid)
 	time_t projectstart;
 
 	if (!(auth_priv(sid, "projects")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (getgetenv(sid, "OFFSET")!=NULL) {
@@ -417,14 +417,14 @@ void projectsave(CONN *sid)
 	int projectid;
 
 	if (!(auth_priv(sid, "projects")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "PROJECTID"))==NULL) return;
 	projectid=atoi(ptemp);
 	if (dbread_project(sid, 2, projectid, &project)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "projects")&A_ADMIN) {
@@ -467,7 +467,7 @@ void projectsave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "DETAILS"))!=NULL) snprintf(project.details, sizeof(project.details)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "projects")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_projects WHERE projectid = %d", project.projectid)<0) return;
@@ -480,11 +480,11 @@ void projectsave(CONN *sid)
 		prints(sid, "</NOSCRIPT>\n");
 	} else if (project.projectid==0) {
 		if (!(auth_priv(sid, "projects")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((project.projectid=dbwrite_project(sid, 0, &project))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<BR><CENTER>Project %d added successfully</CENTER><BR>\n", project.projectid);
@@ -496,7 +496,7 @@ void projectsave(CONN *sid)
 		prints(sid, "</NOSCRIPT>\n");
 	} else {
 		if (!(auth_priv(sid, "projects")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Save & Close")==0)) {
@@ -504,7 +504,7 @@ void projectsave(CONN *sid)
 			project.status=1;
 		}
 		if (dbwrite_project(sid, projectid, &project)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<BR><CENTER>Project %d modified successfully</CENTER><BR>\n", project.projectid);
@@ -560,6 +560,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

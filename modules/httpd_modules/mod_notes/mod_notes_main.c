@@ -119,7 +119,7 @@ void notesedit(CONN *sid)
 	if (strncmp(sid->dat->in_RequestURI, "/notes/editnew", 14)==0) {
 		noteid=0;
 		if (dbread_note(sid, 2, 0, &note)!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "TABLE"))!=NULL) {
@@ -409,7 +409,7 @@ void notessave(CONN *sid)
 	noteid=atoi(ptemp);
 	prints(sid, "<BR>\r\n");
 	if (dbread_note(sid, 2, noteid, &note)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "admin")&A_ADMIN) {
@@ -452,7 +452,7 @@ void notessave(CONN *sid)
 		}
 	} else if (note.noteid==0) {
 		if ((note.noteid=dbwrite_note(sid, 0, &note))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Note %d added successfully</CENTER><BR>\n", note.noteid);
@@ -460,7 +460,7 @@ void notessave(CONN *sid)
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/notes/view?noteid=%d\">\n", sid->dat->in_ScriptName, note.noteid);
 	} else {
 		if (dbwrite_note(sid, noteid, &note)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Note %d modified successfully</CENTER><BR>\n", note.noteid);
@@ -512,6 +512,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_notes", "mod_notes_sublist", notes_sublist)!=0) return -1;
 	return 0;

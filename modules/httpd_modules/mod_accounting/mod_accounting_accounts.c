@@ -24,7 +24,7 @@ void account_list(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<CENTER>\n");

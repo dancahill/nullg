@@ -64,7 +64,7 @@ void messagestatus(CONN *sid, int messageid, char status)
 	int sqr;
 
 	if (!(auth_priv(sid, "messages")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((messageid==0)&&((ptemp=getgetenv(sid, "MESSAGEID"))!=NULL)) {
@@ -95,7 +95,7 @@ void messages_userlist(CONN *sid)
 
 	htpage_header(sid, "Null Messenger");
 	if (!(auth_priv(sid, "messages")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "GROUPID"))!=NULL) {
@@ -135,7 +135,7 @@ void messages_frameset(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "messages")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(username, 0, sizeof(username));
@@ -167,7 +167,7 @@ void messages_white(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "messages")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(username, 0, sizeof(username));
@@ -200,7 +200,7 @@ void messages_send(CONN *sid)
 	int userid=0;
 
 	if (!(auth_priv(sid, "messages")&A_INSERT)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
@@ -289,7 +289,7 @@ void messages_history(CONN *sid)
 
 	htpage_header(sid, "Null Messenger");
 	if (!(auth_priv(sid, "messages")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(username, 0, sizeof(username));
@@ -387,6 +387,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	return 0;
 }

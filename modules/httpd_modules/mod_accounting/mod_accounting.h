@@ -16,10 +16,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_accounting.h"
+#include "mod_accounting_lang.h"
 
 /* mod_accounting_accounts.c */
 void account_list(CONN *sid);
 /* mod_accounting_journal.c */
 void journal_list(CONN *sid);
 void journal_main(CONN *sid);
+/* mod_accounting_lang.c */
+int lang_read(void);

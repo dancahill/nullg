@@ -25,13 +25,13 @@ void productedit(CONN *sid)
 	int productid;
 
 	if (!(auth_priv(sid, "orders")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestURI, "/orders/producteditnew")==0) {
 		productid=0;
 		if (db_read(sid, 2, DB_PRODUCTS, 0, &product)!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	} else {
@@ -81,7 +81,7 @@ void productview(CONN *sid)
 	int productid;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "PRODUCTID"))==NULL) return;
@@ -114,7 +114,7 @@ void productlist(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "orders")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((sqr=sql_queryf("SELECT productid, productname, category, unitprice, internalcost FROM gw_products WHERE obj_did = %d ORDER BY productname ASC", sid->dat->user_did))<0) return;
@@ -152,14 +152,14 @@ void productsave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "orders")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "PRODUCTID"))==NULL) return;
 	productid=atoi(ptemp);
 	if (db_read(sid, 2, DB_PRODUCTS, productid, &product)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "PRODUCTNAME"))!=NULL) snprintf(product.productname, sizeof(product.productname)-1, "%s", ptemp);
@@ -174,7 +174,7 @@ void productsave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_products WHERE productid = %d AND obj_did = %d", product.productid, sid->dat->user_did)<0) return;
@@ -182,7 +182,7 @@ void productsave(CONN *sid)
 		db_log_activity(sid, "products", product.productid, "delete", "%s - %s deleted product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else if (product.productid==0) {
 		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_query("SELECT max(productid) FROM gw_products"))<0) return;
@@ -204,7 +204,7 @@ void productsave(CONN *sid)
 		db_log_activity(sid, "products", product.productid, "insert", "%s - %s added product %d", sid->dat->in_RemoteAddr, sid->dat->user_username, product.productid);
 	} else {
 		if (!(auth_priv(sid, "orders")&A_ADMIN)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_products SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, product.obj_uid);

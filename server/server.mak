@@ -38,6 +38,7 @@ CLEAN :
 	-@erase "$(INTDIR)\dns.obj"
 	-@erase "$(INTDIR)\domains.obj"
 	-@erase "$(INTDIR)\format.obj"
+	-@erase "$(INTDIR)\language.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
 	-@erase "$(INTDIR)\md5.obj"
@@ -103,6 +104,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\dns.obj" \
 	"$(INTDIR)\domains.obj" \
 	"$(INTDIR)\format.obj" \
+	"$(INTDIR)\language.obj" \
 	"$(INTDIR)\log.obj" \
 	"$(INTDIR)\main.obj" \
 	"$(INTDIR)\md5.obj" \
@@ -140,6 +142,11 @@ SOURCE=.\domains.c
 SOURCE=.\format.c
 
 "$(INTDIR)\format.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\language.c
+
+"$(INTDIR)\language.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\log.c

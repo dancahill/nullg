@@ -26,27 +26,27 @@ void wmaccount_edit(CONN *sid)
 	int i;
 
 	if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/mail/accounts/editnew", 22)==0) {
 		accountid=0;
 		if (dbread_mailaccount(sid, 2, 0, &mailacct)!=0) {
-			prints(sid, "<CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 	} else {
 		if ((ptemp=getgetenv(sid, "ACCOUNT"))==NULL) return;
 		accountid=atoi(ptemp);
 		if (dbread_mailaccount(sid, 2, accountid, &mailacct)!=0) {
-			prints(sid, "<CENTER>" ERR_NORECORD "</CENTER>\n", accountid);
+			prints(sid, "<CENTER>%s</CENTER>\n", lang.err_norecord);
 			return;
 		}
 	}
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n");
 	prints(sid, "<!--\n");
 	prints(sid, "function ConfirmDelete() {\n");
-	prints(sid, "	return confirm(\"" WARN_DELCONFIRM "\");\n");
+	prints(sid, "	return confirm(\"%s\");\n", lang.warn_delconfirm);
 	prints(sid, "}\n");
 	prints(sid, "function PortUpdate() {\n");
 	prints(sid, "	if (document.profilemailedit.hosttype.value=='POP3') {\n");
@@ -77,13 +77,13 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=mailaccountid VALUE='%d'>\n", mailacct.mailaccountid);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
-	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>" MOD_MAIL_TAB_GEN "</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>" MOD_MAIL_TAB_SER "</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>" MOD_MAIL_TAB_ADV "</A>&nbsp;</TD>\n");
-	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>" MOD_MAIL_TAB_SIG "</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>%s</A>&nbsp;</TD>\n", lang.tab_gen);
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>%s</A>&nbsp;</TD>\n", lang.tab_ser);
+	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>%s</A>&nbsp;</TD>\n", lang.tab_adv);
+	prints(sid, "<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>%s</A>&nbsp;</TD>\n", lang.tab_sig);
 	if (mailacct.mailaccountid!=0) {
-		prints(sid, "<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=javascript:showpage(5)>" MOD_MAIL_TAB_FLD "</A>&nbsp;</TD>\n");
-		prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=javascript:showpage(6)>" MOD_MAIL_TAB_FIL "</A>&nbsp;</TD>\n");
+		prints(sid, "<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=javascript:showpage(5)>%s</A>&nbsp;</TD>\n", lang.tab_fld);
+		prints(sid, "<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=javascript:showpage(6)>%s</A>&nbsp;</TD>\n", lang.tab_fil);
 	}
 	prints(sid, "</TR></TABLE>");
 	prints(sid, "</TD></TR>\n");
@@ -163,11 +163,11 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "<HR>\r\n");
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "<TR><TD ALIGN=CENTER>\n");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='%s'>\n", FORM_SAVE);
+	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='%s'>\n", lang.form_save);
 	if (accountid>0) {
-		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='%s' onClick=\"return ConfirmDelete();\">\n", FORM_DELETE);
+		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='%s' onClick=\"return ConfirmDelete();\">\n", lang.form_delete);
 	}
-	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='%s'>\n", FORM_RESET);
+	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='%s'>\n", lang.form_reset);
 	prints(sid, "</TD></TR>\n");
 	prints(sid, "</FORM>\n");
 	prints(sid, "</TABLE>\n");
@@ -185,7 +185,7 @@ void wmaccount_list(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<BR><CENTER>\n");
@@ -231,14 +231,14 @@ void wmaccount_save(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "MAILACCOUNTID"))==NULL) return;
 	accountid=atoi(ptemp);
 	if (dbread_mailaccount(sid, 2, accountid, &mailacct)!=0) {
-		prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getpostenv(sid, "ACCOUNTNAME"))!=NULL) snprintf(mailacct.accountname, sizeof(mailacct.accountname)-1, "%s", ptemp);
@@ -262,7 +262,7 @@ void wmaccount_save(CONN *sid)
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		memset(dirname, 0, sizeof(dirname));
@@ -318,7 +318,7 @@ void wmaccount_save(CONN *sid)
 		db_log_activity(sid, "mailaccounts", mailacct.mailaccountid, "insert", "%s - %s added mail account %d", sid->dat->in_RemoteAddr, sid->dat->user_username, mailacct.mailaccountid);
 	} else {
 		if (!(auth_priv(sid, "webmail")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>" ERR_NOACCESS "</CENTER><BR>\n");
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_mailaccounts SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '0', obj_gperm = '0', obj_operm = '0', ", curdate, mailacct.obj_uid);

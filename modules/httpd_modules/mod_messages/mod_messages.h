@@ -16,7 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_messages.h"
+#include "mod_messages_lang.h"
 #ifndef WIN32
 #include <unistd.h>
 #endif
+/* mod_messages_lang.c */
+int lang_read(void);

@@ -34,6 +34,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mod_calendar_assign.obj"
 	-@erase "$(INTDIR)\mod_calendar_availmap.obj"
 	-@erase "$(INTDIR)\mod_calendar_db.obj"
+	-@erase "$(INTDIR)\mod_calendar_lang.obj"
 	-@erase "$(INTDIR)\mod_calendar_listd.obj"
 	-@erase "$(INTDIR)\mod_calendar_listm.obj"
 	-@erase "$(INTDIR)\mod_calendar_listw.obj"
@@ -97,6 +98,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\mod_calendar_assign.obj" \
 	"$(INTDIR)\mod_calendar_availmap.obj" \
 	"$(INTDIR)\mod_calendar_db.obj" \
+	"$(INTDIR)\mod_calendar_lang.obj" \
 	"$(INTDIR)\mod_calendar_listd.obj" \
 	"$(INTDIR)\mod_calendar_listw.obj" \
 	"$(INTDIR)\mod_calendar_listm.obj" \
@@ -125,6 +127,11 @@ SOURCE=.\mod_calendar_availmap.c
 SOURCE=.\mod_calendar_db.c
 
 "$(INTDIR)\mod_calendar_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_calendar_lang.c
+
+"$(INTDIR)\mod_calendar_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_calendar_listd.c

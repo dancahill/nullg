@@ -293,7 +293,7 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	if (user->prefdaylength+user->prefdaystart>24) user->prefdaylength=24-user->prefdaystart;
 	sql_freeresult(sqr);
 	if (strlen(user->preflanguage)==0) {
-		snprintf(user->preflanguage, sizeof(user->preflanguage)-1, "en");
+		snprintf(user->preflanguage, sizeof(user->preflanguage)-1, "%s", config->langcode);
 	}
 	if (strlen(user->preftheme)==0) {
 		snprintf(user->preftheme, sizeof(user->preftheme)-1, "default");

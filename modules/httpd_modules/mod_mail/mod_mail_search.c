@@ -84,7 +84,7 @@ int wmsearch_doquery(CONN *sid, const char *order_by, int folderid)
 void wmsearch_form(CONN *sid)
 {
 	if (!(auth_priv(sid, "webmail")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	prints(sid, "<BR><CENTER>\n");

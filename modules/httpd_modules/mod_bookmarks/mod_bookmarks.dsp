@@ -72,6 +72,10 @@ SOURCE=.\mod_bookmarks_export.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_bookmarks_lang.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_bookmarks_main.c
 # End Source File
 # End Target

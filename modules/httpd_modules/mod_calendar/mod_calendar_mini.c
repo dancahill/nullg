@@ -35,7 +35,7 @@ void calendarmini(CONN *sid, time_t unixdate, int userid, int groupid)
 	int status;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&unixdate));
@@ -153,7 +153,7 @@ void calendarmini2(CONN *sid, time_t unixdate, int userid, int groupid)
 	int status;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	strftime(posttime1, sizeof(posttime1), "%w %d %m %Y", gmtime(&unixdate));

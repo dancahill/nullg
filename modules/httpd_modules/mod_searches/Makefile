@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_searches_contacts.o mod_searches_db.o mod_searches_main.o mod_searches_sql.o
+OBJECTS = mod_searches_contacts.o mod_searches_db.o mod_searches_lang.o mod_searches_main.o mod_searches_sql.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_searches.so
 
 all: mod_searches

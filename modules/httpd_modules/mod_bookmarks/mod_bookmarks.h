@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_bookmarks.h"
+#include "mod_bookmarks_lang.h"
 
 /* mod_bookmarks_db.c */
 int dbread_bookmark(CONN *sid, short int perm, int index, REC_BOOKMARK *bookmark);
@@ -24,3 +24,5 @@ int dbread_bookmarkfolder(CONN *sid, short int perm, int index, REC_BOOKMARKFOLD
 int dbwrite_bookmark(CONN *sid, int index, REC_BOOKMARK *bookmark);
 /* mod_bookmarks_export.c */
 void bookmarks_export(CONN *sid);
+/* mod_bookmarks_lang.c */
+int lang_read(void);

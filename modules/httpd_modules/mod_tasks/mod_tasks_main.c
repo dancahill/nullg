@@ -30,7 +30,7 @@ void taskreminders(CONN *sid)
 	time_t t;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	t=time(NULL)+604800;
@@ -138,13 +138,13 @@ void taskedit(CONN *sid)
 	int taskid;
 
 	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strncmp(sid->dat->in_RequestURI, "/tasks/editnew", 14)==0) {
 		taskid=0;
 		if (dbread_task(sid, 2, 0, &task)!=0) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((ptemp=getgetenv(sid, "PROJECTID"))!=NULL) task.projectid=atoi(ptemp);
@@ -303,7 +303,7 @@ void taskview(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "TASKID"))==NULL) return;
@@ -390,7 +390,7 @@ void tasks_list(CONN *sid, int userid, int groupid)
 	int tcount=0;
 	
 	if (!(auth_priv(sid, "calendar")&A_READ)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "STATUS"))!=NULL) {
@@ -451,14 +451,14 @@ void tasksave(CONN *sid)
 	int taskid;
 
 	if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "TASKID"))==NULL) return;
 	taskid=atoi(ptemp);
 	if (dbread_task(sid, 2, taskid, &task)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
@@ -486,7 +486,7 @@ void tasksave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "DETAILS"))!=NULL) snprintf(task.details, sizeof(task.details)-1, "%s", ptemp);
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete Task")==0)) {
 		if (!(auth_priv(sid, "calendar")&A_DELETE)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_tasks WHERE taskid = %d", task.taskid)<0) return;
@@ -494,22 +494,22 @@ void tasksave(CONN *sid)
 		db_log_activity(sid, "tasks", task.taskid, "delete", "%s - %s deleted task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else if (task.taskid==0) {
 		if (!(auth_priv(sid, "calendar")&A_INSERT)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((task.taskid=dbwrite_task(sid, 0, &task))<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Task %d added successfully</CENTER><BR>\n", task.taskid);
 		db_log_activity(sid, "tasks", task.taskid, "insert", "%s - %s added task %d", sid->dat->in_RemoteAddr, sid->dat->user_username, task.taskid);
 	} else {
 		if (!(auth_priv(sid, "calendar")&A_MODIFY)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (dbwrite_task(sid, taskid, &task)<1) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		prints(sid, "<CENTER>Task %d modified successfully</CENTER><BR>\n", task.taskid);
@@ -572,6 +572,7 @@ DllExport int mod_init(_PROC *_proc, HTTP_PROC *_http_proc, FUNCTION *_functions
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
+	lang_read();
 	if (mod_export_main(&newmod)!=0) return -1;
 	if (mod_export_function("mod_tasks", "mod_tasks_list", tasks_list)!=0) return -1;
 	return 0;

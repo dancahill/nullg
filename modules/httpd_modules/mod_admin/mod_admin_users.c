@@ -17,6 +17,60 @@
 */
 #include "http_mod.h"
 #include "mod_admin.h"
+#ifndef WIN32
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
+void htselect_lang(CONN *sid, char *selected)
+{
+#ifdef WIN32
+	struct	direct *dentry;
+#else
+	struct	dirent *dentry;
+#endif
+	DIR  *handle;
+	char dirname[512];
+
+	memset(dirname, 0, sizeof(dirname));
+	snprintf(dirname, sizeof(dirname)-1, "%s/lang", config->dir_var);
+	fixslashes(dirname);
+	handle=opendir(dirname);
+	while ((dentry=readdir(handle))!=NULL) {
+//		stat(dentry->d_name, &sb);
+		if (strcmp(".", dentry->d_name)==0) continue;
+		if (strcmp("..", dentry->d_name)==0) continue;
+		prints(sid, "<OPTION VALUE='%s'%s>%s\n", dentry->d_name, (strcmp(dentry->d_name, selected)==0)?" SELECTED":"", dentry->d_name);
+	}
+	closedir(handle);
+	return;
+}
+
+void htselect_theme(CONN *sid, char *selected)
+{
+#ifdef WIN32
+	struct	direct *dentry;
+#else
+	struct	dirent *dentry;
+#endif
+	DIR  *handle;
+	char dirname[512];
+
+	memset(dirname, 0, sizeof(dirname));
+	snprintf(dirname, sizeof(dirname)-1, "%s/htdocs/groupware/themes", config->dir_var);
+	fixslashes(dirname);
+	handle=opendir(dirname);
+	while ((dentry=readdir(handle))!=NULL) {
+//		stat(dentry->d_name, &sb);
+		if (strcmp(".", dentry->d_name)==0) continue;
+		if (strcmp("..", dentry->d_name)==0) continue;
+		prints(sid, "<OPTION VALUE='%s'%s>%s\n", dentry->d_name, (strcmp(dentry->d_name, selected)==0)?" SELECTED":"", dentry->d_name);
+	}
+	closedir(handle);
+	return;
+}
 
 void adminuseredit(CONN *sid, REC_USER *user)
 {
@@ -30,7 +84,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	time_t t;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (user==NULL) {
@@ -199,8 +253,14 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n");
 	htselect_zone(sid, user->prefgeozone, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preflanguage    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preflanguage));
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preftheme   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preftheme));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preflanguage style='width:255px'>\n");
+	htselect_lang(sid, user->preflanguage);
+	prints(sid, "</SELECT></TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=preftheme style='width:255px'>\n");
+	htselect_theme(sid, user->preftheme);
+	prints(sid, "</SELECT></TD></TR>\n");
+//	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preflanguage    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preflanguage));
+//	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preftheme   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preftheme));
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
@@ -407,7 +467,7 @@ void adminuserlist(CONN *sid)
 	int sqr4;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
@@ -520,14 +580,14 @@ void adminusersave(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;
 	if ((ptemp=getpostenv(sid, "USERID"))==NULL) return;
 	userid=atoi(ptemp);
 	if (dbread_user(sid, 2, userid, &user)!=0) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	snprintf(opassword, sizeof(opassword)-1, "%s", user.password);
@@ -696,7 +756,7 @@ void adminusersave(CONN *sid)
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (((ptemp=getpostenv(sid, "SUBMIT"))!=NULL)&&(strcmp(ptemp, "Delete")==0)) {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)||(userid<2)) {
-			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if (sql_updatef("DELETE FROM gw_users WHERE userid = %d", user.userid)<0) return;
@@ -808,7 +868,7 @@ void adminusersave(CONN *sid)
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 			return;
 		}
 		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", user.username, user.userid, user.domainid))<0) return;
@@ -900,7 +960,7 @@ void adminusertimeedit(CONN *sid)
 	int sqr;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if ((ptemp=getgetenv(sid, "USERID"))==NULL) return;
@@ -1033,7 +1093,7 @@ void adminusertimesave(CONN *sid)
 	int j;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
-		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	if (strcmp(sid->dat->in_RequestMethod,"POST")!=0) return;

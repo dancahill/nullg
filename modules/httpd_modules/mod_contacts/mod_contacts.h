@@ -16,12 +16,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_contacts.h"
+#include "mod_contacts_lang.h"
 
 /* mod_contacts_db.c */
 int dblist_contacts(CONN *sid, char *searchfield, char *searchstring);
 int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact);
 int dbwrite_contact(CONN *sid, int index, REC_CONTACT *contact);
+/* mod_contacts_lang.c */
+int lang_read(void);
 /* mod_contacts_vcard.c */
 void contacts_vcardexport(CONN *sid);
 void contacts_vcardimport(CONN *sid);

@@ -16,4 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "i18n/mod_html.h"
+#include "mod_html_lang.h"
+
+/* mod_html_lang.c */
+int lang_read();

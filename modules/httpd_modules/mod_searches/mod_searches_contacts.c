@@ -30,7 +30,7 @@ void searchcontacts(CONN *sid)
 	int sqr1;
 
 	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", lang.err_noaccess);
 		return;
 	}
 	memset(column, 0, sizeof(column));

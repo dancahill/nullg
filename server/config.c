@@ -54,7 +54,7 @@ int config_read(char *section, void *callback)
 	if (fp==NULL) {
 		memset(proc.config_filename, 0, sizeof(proc.config_filename));
 		if (stat(proc.config.dir_etc, &sb)!=0) {
-			log_error("core", __FILE__, __LINE__, 0, CONFIG_NODIR, proc.config.dir_etc);
+			log_error("core", __FILE__, __LINE__, 0, "ERROR: Directory '%s' does not exist.  Failed to create configuration file.", proc.config.dir_etc);
 			/* return -1; */
 		};
 		snprintf(proc.config_filename, sizeof(proc.config_filename)-1, "../etc/%s.conf", SERVER_BASENAME);
@@ -113,10 +113,13 @@ int config_write(GLOBAL_CONFIG *config)
 
 	fixslashes(proc.config_filename);
 	if ((fp=fopen(proc.config_filename, "w"))==NULL) return -1;
-	fprintf(fp, "# %s\n\n", CONFIG_HEAD);
+	fprintf(fp, "# This file contains system settings for NullLogic Groupware.\n\n");
 	fprintf(fp, "[global]\n");
-	fprintf(fp, "   log level         = %d\n", config->loglevel);
-	fprintf(fp, "   umask             = %.3o\n", config->umask);
+	fprintf(fp, "   log level         = %d\n",     config->loglevel);
+#ifndef WIN32
+	fprintf(fp, "   umask             = %.3o\n",   config->umask);
+#endif
+	fprintf(fp, "   default language  = %s\n",     config->langcode);
 	fprintf(fp, "   host name         = \"%s\"\n", config->hostname);
 	fprintf(fp, "   base path         = \"%s\"\n", config->dir_base);
 	fprintf(fp, "   bin path          = \"%s\"\n", config->dir_bin);
@@ -164,6 +167,8 @@ static void conf_callback(char *var, char *val)
 		proc.config.umask=proc.config.umask&0777;
 	} else if (strcmp(var, "log level")==0) {
 		proc.config.loglevel=atoi(val);
+	} else if (strcmp(var, "default language")==0) {
+		strncpy(proc.config.langcode, val, sizeof(proc.config.langcode)-1);
 	} else if (strcmp(var, "host name")==0) {
 		strncpy(proc.config.hostname, val, sizeof(proc.config.hostname)-1);
 	} else if (strcmp(var, "base path")==0) {
@@ -238,6 +243,7 @@ int conf_read()
 	/* define default values */
 	gethostname(proc.config.hostname, sizeof(proc.config.hostname)-1);
 	snprintf(proc.config.uid, sizeof(proc.config.uid)-1, "%s", DEFAULT_SERVER_USERNAME);
+	snprintf(proc.config.langcode, sizeof(proc.config.langcode)-1, "%s", DEFAULT_SERVER_LANGUAGE);
 	ptemp=proc.program_name;
 	if (*ptemp=='\"') ptemp++;
 #ifdef WIN32

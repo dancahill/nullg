@@ -3,7 +3,7 @@
 include ../../../Rules.mak
 
 CFLAGS  = $(MOD_CFLAGS)
-OBJECTS = mod_messages_main.o
+OBJECTS = mod_messages_lang.o mod_messages_main.o
 TARGET  = $(MOD_TARGETDIR)/httpd/mod_messages.so
 
 all: mod_messages

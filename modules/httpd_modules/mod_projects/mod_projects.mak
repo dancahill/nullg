@@ -32,6 +32,7 @@ ALL : "..\..\..\distrib\lib\httpd\mod_projects.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\mod_projects_db.obj"
+	-@erase "$(INTDIR)\mod_projects_lang.obj"
 	-@erase "$(INTDIR)\mod_projects_main.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\mod_projects.exp"
@@ -87,6 +88,7 @@ DEF_FILE= \
 	".\mod_projects.def"
 LINK32_OBJS= \
 	"$(INTDIR)\mod_projects_db.obj" \
+	"$(INTDIR)\mod_projects_lang.obj" \
 	"$(INTDIR)\mod_projects_main.obj"
 
 "..\..\..\distrib\lib\httpd\mod_projects.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -99,6 +101,11 @@ LINK32_OBJS= \
 SOURCE=.\mod_projects_db.c
 
 "$(INTDIR)\mod_projects_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_projects_lang.c
+
+"$(INTDIR)\mod_projects_lang.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_projects_main.c
