@@ -713,7 +713,10 @@ void mod_html_reloadframe(CONN *sid)
 	time_t t;
 	int notice=0;
 
+	t=time(NULL);
+	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
+	sql_updatef("UPDATE gw_usersessions SET obj_mtime = '%s' WHERE token = '%s' AND userid = %d AND domainid = %d", posttime, sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 	prints(sid, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic Groupware</TITLE>\r\n");
 	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"60; URL=%s/frames/temp\">\r\n</HEAD>\r\n", sid->dat->in_ScriptName);

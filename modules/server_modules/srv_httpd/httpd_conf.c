@@ -33,6 +33,8 @@ static void conf_callback(char *var, char *val)
 		http_proc.config.http_maxidle=atoi(val);
 	} else if (strcmp(var, "max post size")==0) {
 		http_proc.config.http_maxpostsize=atoi(val);
+	} else if (strcmp(var, "session limit")==0) {
+		http_proc.config.http_sesslimit=atoi(val);
 	} else if (strcmp(var, "load module")==0) {
 	} else {
 		log_error("httpd", __FILE__, __LINE__, 1, "unknown configuration directive '%s'", var);
@@ -58,6 +60,7 @@ int conf_read()
 	http_proc.config.http_maxkeepalive = 15;
 	http_proc.config.http_maxidle      = 120;
 	http_proc.config.http_maxpostsize  = 32*1024*1024;
+	http_proc.config.http_sesslimit    = 1;
 	config_read("srv_httpd", conf_callback);
 	return 0;
 }

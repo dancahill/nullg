@@ -69,9 +69,6 @@ typedef struct {
 	int obj_gperm;
 	int obj_operm;
 	int folderid;
-	char loginip[21];
-	time_t logintime;
-	char logintoken[51];
 	char username[51];
 	char password[51];
 	int enabled;
@@ -348,9 +345,6 @@ typedef struct {
 	int obj_did;
 	int obj_gperm;
 	int obj_operm;
-	char loginip[21];
-	time_t logintime;
-	char logintoken[51];
 	char username[51];
 	char password[51];
 	int groupid;

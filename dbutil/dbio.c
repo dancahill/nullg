@@ -25,6 +25,7 @@
 int dump_table(FILE *fp, char *table, char *index)
 {
 	char query[100];
+	char *ptemp;
 	int i;
 	int j;
 	int sqr;
@@ -37,11 +38,23 @@ int dump_table(FILE *fp, char *table, char *index)
 	for (i=0;i<sqlNumtuples(sqr);i++) {
 		fprintf(fp, "INSERT INTO %s (", table);
 		for (j=0;j<sqlNumfields(sqr);j++) {
+			ptemp=sqlGetfieldname(sqr, j);
+			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
+				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
+					continue;
+				}
+			}
 			fprintf(fp, "%s", sqlGetfieldname(sqr, j));
 			if (j<sqlNumfields(sqr)-1) fprintf(fp, ", ");
 		}
 		fprintf(fp, ") VALUES (");
 		for (j=0;j<sqlNumfields(sqr);j++) {
+			ptemp=sqlGetfieldname(sqr, j);
+			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
+				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
+					continue;
+				}
+			}
 			fprintf(fp, "'");
 			sqlfprintf(fp, "%s", sqlGetvalue(sqr, i, j));
 			fprintf(fp, "'");
@@ -51,57 +64,6 @@ int dump_table(FILE *fp, char *table, char *index)
 	}
 	sqlFreeconnect(sqr);
 	return 0;
-}
-
-int dump_db(char *filename)
-{
-	FILE *fp;
-
-	printf("Dumping %s database to %s...", config.sql_type, filename);
-	fp=fopen(filename, "wa");
-	if (fp==NULL) {
-		printf("\r\nCould not create output file.\r\n");
-		return -1;
-	}
-	dump_table(fp, "gw_dbinfo",              "dbversion");
-	dump_table(fp, "gw_users",               "userid");
-	dump_table(fp, "gw_accounting_accounts", "accountid");
-	dump_table(fp, "gw_accounting_journal",  "journalentryid");
-	dump_table(fp, "gw_activity",            "activityid");
-	dump_table(fp, "gw_bookmarkfolders",     "folderid");
-	dump_table(fp, "gw_bookmarks",           "bookmarkid");
-	dump_table(fp, "gw_calls",               "callid");
-	dump_table(fp, "gw_callactions",         "callactionid");
-	dump_table(fp, "gw_contacts",            "contactid");
-	dump_table(fp, "gw_domains",             "domainid");
-	dump_table(fp, "gw_domainaliases",       "domainaliasid");
-	dump_table(fp, "gw_events",              "eventid");
-	dump_table(fp, "gw_eventclosings",       "eventclosingid");
-	dump_table(fp, "gw_eventtypes",          "eventtypeid");
-	dump_table(fp, "gw_files",               "fileid");
-	dump_table(fp, "gw_forums",              "forumid");
-	dump_table(fp, "gw_forumgroups",         "forumgroupid");
-	dump_table(fp, "gw_forumposts",          "messageid");
-	dump_table(fp, "gw_groups",              "groupid");
-	dump_table(fp, "gw_groupmembers",        "groupmemberid");
-	dump_table(fp, "gw_mailaccounts",        "mailaccountid");
-	dump_table(fp, "gw_mailfilters",         "mailfilterid");
-	dump_table(fp, "gw_mailfolders",         "mailfolderid");
-	dump_table(fp, "gw_mailheaders",         "mailheaderid");
-	dump_table(fp, "gw_messages",            "messageid");
-	dump_table(fp, "gw_notes",               "noteid");
-	dump_table(fp, "gw_orders",              "orderid");
-	dump_table(fp, "gw_orderitems",          "orderitemid");
-	dump_table(fp, "gw_products",            "productid");
-	dump_table(fp, "gw_projects",            "projectid");
-	dump_table(fp, "gw_queries",             "queryid");
-	dump_table(fp, "gw_smtp_relayrules",     "relayruleid");
-	dump_table(fp, "gw_tasks",               "taskid");
-	dump_table(fp, "gw_zones",               "zoneid");
-	fclose(fp);
-	printf("done.\r\n");
-	sqlDisconnect();
-	return -1;
 }
 
 int init_table(char *query, char *tablename)
@@ -123,175 +85,6 @@ int init_table(char *query, char *tablename)
 	return 0;
 }
 
-#ifdef WIN32
-int init_mdb(void)
-{
-	if (init_table(MDB_DBINFO,			"gw_dbinfo")!=0)		return -1;
-	if (init_table(MDB_ACCOUNTING_ACCOUNTS,		"gw_accounting_accounts")!=0)	return -1;
-	if (init_table(MDB_ACCOUNTING_JOURNAL,		"gw_accounting_journal")!=0)	return -1;
-	if (init_table(MDB_ACTIVITY,			"gw_activity")!=0)		return -1;
-	if (init_table(MDB_BOOKMARKFOLDERS,		"gw_bookmarkfolders")!=0)	return -1;
-	if (init_table(MDB_BOOKMARKS,			"gw_bookmarks")!=0)		return -1;
-	if (init_table(MDB_CALLS,			"gw_calls")!=0)			return -1;
-	if (init_table(MDB_CALLACTIONS,			"gw_callactions")!=0)		return -1;
-	if (init_table(MDB_CONTACTS,			"gw_contacts")!=0)		return -1;
-	if (init_table(MDB_DOMAINS,			"gw_domains")!=0)		return -1;
-	if (init_table(MDB_DOMAINALIASES,		"gw_domainaliases")!=0)		return -1;
-	if (init_table(MDB_EVENTS,			"gw_events")!=0)		return -1;
-	if (init_table(MDB_EVENTCLOSINGS,		"gw_eventclosings")!=0)		return -1;
-	if (init_table(MDB_EVENTTYPES,			"gw_eventtypes")!=0)		return -1;
-	if (init_table(MDB_FILES,			"gw_files")!=0)			return -1;
-	if (init_table(MDB_FORUMS,			"gw_forums")!=0)		return -1;
-	if (init_table(MDB_FORUMGROUPS,			"gw_forumgroups")!=0)		return -1;
-	if (init_table(MDB_FORUMPOSTS,			"gw_forumposts")!=0)		return -1;
-	if (init_table(MDB_GROUPS,			"gw_groups")!=0)		return -1;
-	if (init_table(MDB_GROUPMEMBERS,		"gw_groupmembers")!=0)		return -1;
-	if (init_table(MDB_MAILACCOUNTS,		"gw_mailaccounts")!=0)		return -1;
-	if (init_table(MDB_MAILFILTERS,			"gw_mailfilters")!=0)		return -1;
-	if (init_table(MDB_MAILFOLDERS,			"gw_mailfolders")!=0)		return -1;
-	if (init_table(MDB_MAILHEADERS,			"gw_mailheaders")!=0)		return -1;
-	if (init_table(MDB_MESSAGES,			"gw_messages")!=0)		return -1;
-	if (init_table(MDB_NOTES,			"gw_notes")!=0)			return -1;
-	if (init_table(MDB_ORDERS,			"gw_orders")!=0)		return -1;
-	if (init_table(MDB_ORDERITEMS,			"gw_orderitems")!=0)		return -1;
-	if (init_table(MDB_PRODUCTS,			"gw_products")!=0)		return -1;
-	if (init_table(MDB_PROJECTS,			"gw_projects")!=0)		return -1;
-	if (init_table(MDB_QUERIES,			"gw_queries")!=0)		return -1;
-	if (init_table(MDB_SMTP_RELAYRULES,		"gw_smtp_relayrules")!=0)	return -1;
-	if (init_table(MDB_TASKS,			"gw_tasks")!=0)			return -1;
-	if (init_table(MDB_USERS1 MDB_USERS2,		"gw_users")!=0)			return -1;
-	if (init_table(MDB_ZONES,			"gw_zones")!=0)			return -1;
-	return 0;
-}
-#endif
-
-int init_mysql(void)
-{
-	if (init_table(MYSQLDB_DBINFO,			"gw_dbinfo")!=0)		return -1;
-	if (init_table(MYSQLDB_ACCOUNTING_ACCOUNTS,	"gw_accounting_accounts")!=0)	return -1;
-	if (init_table(MYSQLDB_ACCOUNTING_JOURNAL,	"gw_accounting_journal")!=0)	return -1;
-	if (init_table(MYSQLDB_ACTIVITY,		"gw_activity")!=0)		return -1;
-	if (init_table(MYSQLDB_BOOKMARKFOLDERS,		"gw_bookmarkfolders")!=0)	return -1;
-	if (init_table(MYSQLDB_BOOKMARKS,		"gw_bookmarks")!=0)		return -1;
-	if (init_table(MYSQLDB_CALLS,			"gw_calls")!=0)			return -1;
-	if (init_table(MYSQLDB_CALLACTIONS,		"gw_callactions")!=0)		return -1;
-	if (init_table(MYSQLDB_CONTACTS,		"gw_contacts")!=0)		return -1;
-	if (init_table(MYSQLDB_DOMAINS,			"gw_domains")!=0)		return -1;
-	if (init_table(MYSQLDB_DOMAINALIASES,		"gw_domainaliases")!=0)		return -1;
-	if (init_table(MYSQLDB_EVENTS,			"gw_events")!=0)		return -1;
-	if (init_table(MYSQLDB_EVENTCLOSINGS,		"gw_eventclosings")!=0)		return -1;
-	if (init_table(MYSQLDB_EVENTTYPES,		"gw_eventtypes")!=0)		return -1;
-	if (init_table(MYSQLDB_FILES,			"gw_files")!=0)			return -1;
-	if (init_table(MYSQLDB_FORUMS,			"gw_forums")!=0)		return -1;
-	if (init_table(MYSQLDB_FORUMGROUPS,		"gw_forumgroups")!=0)		return -1;
-	if (init_table(MYSQLDB_FORUMPOSTS,		"gw_forumposts")!=0)		return -1;
-	if (init_table(MYSQLDB_GROUPS,			"gw_groups")!=0)		return -1;
-	if (init_table(MYSQLDB_GROUPMEMBERS,		"gw_groupmembers")!=0)		return -1;
-	if (init_table(MYSQLDB_MAILACCOUNTS,		"gw_mailaccounts")!=0)		return -1;
-	if (init_table(MYSQLDB_MAILFILTERS,		"gw_mailfilters")!=0)		return -1;
-	if (init_table(MYSQLDB_MAILFOLDERS,		"gw_mailfolders")!=0)		return -1;
-	if (init_table(MYSQLDB_MAILHEADERS,		"gw_mailheaders")!=0)		return -1;
-	if (init_table(MYSQLDB_MESSAGES,		"gw_messages")!=0)		return -1;
-	if (init_table(MYSQLDB_NOTES,			"gw_notes")!=0)			return -1;
-	if (init_table(MYSQLDB_ORDERS,			"gw_orders")!=0)		return -1;
-	if (init_table(MYSQLDB_ORDERITEMS,		"gw_orderitems")!=0)		return -1;
-	if (init_table(MYSQLDB_PRODUCTS,		"gw_products")!=0)		return -1;
-	if (init_table(MYSQLDB_PROJECTS,		"gw_projects")!=0)		return -1;
-	if (init_table(MYSQLDB_QUERIES,			"gw_queries")!=0)		return -1;
-	if (init_table(MYSQLDB_SMTP_RELAYRULES,		"gw_smtp_relayrules")!=0)	return -1;
-	if (init_table(MYSQLDB_TASKS,			"gw_tasks")!=0)			return -1;
-	if (init_table(MYSQLDB_USERS1 MYSQLDB_USERS2,	"gw_users")!=0)			return -1;
-	if (init_table(MYSQLDB_ZONES,			"gw_zones")!=0)			return -1;
-	return 0;
-}
-
-int init_pgsql(void)
-{
-	int i;
-
-	for (i=0;;i++) {
-		if (pgseq[i].tablename==NULL) break;
-		sqlUpdatef(0, "DROP SEQUENCE %s;", pgseq[i].seqname);
-		sqlUpdatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgseq[i].seqname);
-	}
-	if (init_table(PGSQLDB_DBINFO,			"gw_dbinfo")!=0)		return -1;
-	if (init_table(PGSQLDB_ACCOUNTING_ACCOUNTS,	"gw_accounting_accounts")!=0)	return -1;
-	if (init_table(PGSQLDB_ACCOUNTING_JOURNAL,	"gw_accounting_journal")!=0)	return -1;
-	if (init_table(PGSQLDB_ACTIVITY,		"gw_activity")!=0)		return -1;
-	if (init_table(PGSQLDB_BOOKMARKFOLDERS,		"gw_bookmarkfolders")!=0)	return -1;
-	if (init_table(PGSQLDB_BOOKMARKS,		"gw_bookmarks")!=0)		return -1;
-	if (init_table(PGSQLDB_CALLS,			"gw_calls")!=0)			return -1;
-	if (init_table(PGSQLDB_CALLACTIONS,		"gw_callactions")!=0)		return -1;
-	if (init_table(PGSQLDB_CONTACTS,		"gw_contacts")!=0)		return -1;
-	if (init_table(PGSQLDB_DOMAINS,			"gw_domains")!=0)		return -1;
-	if (init_table(PGSQLDB_DOMAINALIASES,		"gw_domainaliases")!=0)		return -1;
-	if (init_table(PGSQLDB_EVENTS,			"gw_events")!=0)		return -1;
-	if (init_table(PGSQLDB_EVENTCLOSINGS,		"gw_eventclosings")!=0)		return -1;
-	if (init_table(PGSQLDB_EVENTTYPES,		"gw_eventtypes")!=0)		return -1;
-	if (init_table(PGSQLDB_FILES,			"gw_files")!=0)			return -1;
-	if (init_table(PGSQLDB_FORUMS,			"gw_forums")!=0)		return -1;
-	if (init_table(PGSQLDB_FORUMGROUPS,		"gw_forumgroups")!=0)		return -1;
-	if (init_table(PGSQLDB_FORUMPOSTS,		"gw_forumposts")!=0)		return -1;
-	if (init_table(PGSQLDB_GROUPS,			"gw_groups")!=0)		return -1;
-	if (init_table(PGSQLDB_GROUPMEMBERS,		"gw_groupmembers")!=0)		return -1;
-	if (init_table(PGSQLDB_MAILACCOUNTS,		"gw_mailaccounts")!=0)		return -1;
-	if (init_table(PGSQLDB_MAILFILTERS,		"gw_mailfilters")!=0)		return -1;
-	if (init_table(PGSQLDB_MAILFOLDERS,		"gw_mailfolders")!=0)		return -1;
-	if (init_table(PGSQLDB_MAILHEADERS,		"gw_mailheaders")!=0)		return -1;
-	if (init_table(PGSQLDB_MESSAGES,		"gw_messages")!=0)		return -1;
-	if (init_table(PGSQLDB_NOTES,			"gw_notes")!=0)			return -1;
-	if (init_table(PGSQLDB_ORDERS,			"gw_orders")!=0)		return -1;
-	if (init_table(PGSQLDB_ORDERITEMS,		"gw_orderitems")!=0)		return -1;
-	if (init_table(PGSQLDB_PRODUCTS,		"gw_products")!=0)		return -1;
-	if (init_table(PGSQLDB_PROJECTS,		"gw_projects")!=0)		return -1;
-	if (init_table(PGSQLDB_QUERIES,			"gw_queries")!=0)		return -1;
-	if (init_table(PGSQLDB_SMTP_RELAYRULES,		"gw_smtp_relayrules")!=0)	return -1;
-	if (init_table(PGSQLDB_TASKS,			"gw_tasks")!=0)			return -1;
-	if (init_table(PGSQLDB_USERS1 PGSQLDB_USERS2,	"gw_users")!=0)			return -1;
-	if (init_table(PGSQLDB_ZONES,			"gw_zones")!=0)			return -1;
-	return 0;
-}
-
-int init_sqlite(void)
-{
-	if (init_table(SQLITEDB_DBINFO,			"gw_dbinfo")!=0)		return -1;
-	if (init_table(SQLITEDB_ACCOUNTING_ACCOUNTS,	"gw_accounting_accounts")!=0)	return -1;
-	if (init_table(SQLITEDB_ACCOUNTING_JOURNAL,	"gw_accounting_journal")!=0)	return -1;
-	if (init_table(SQLITEDB_ACTIVITY,		"gw_activity")!=0)		return -1;
-	if (init_table(SQLITEDB_BOOKMARKFOLDERS,	"gw_bookmarkfolders")!=0)	return -1;
-	if (init_table(SQLITEDB_BOOKMARKS,		"gw_bookmarks")!=0)		return -1;
-	if (init_table(SQLITEDB_CALLS,			"gw_calls")!=0)			return -1;
-	if (init_table(SQLITEDB_CALLACTIONS,		"gw_callactions")!=0)		return -1;
-	if (init_table(SQLITEDB_CONTACTS,		"gw_contacts")!=0)		return -1;
-	if (init_table(SQLITEDB_DOMAINS,		"gw_domains")!=0)		return -1;
-	if (init_table(SQLITEDB_DOMAINALIASES,		"gw_domainaliases")!=0)		return -1;
-	if (init_table(SQLITEDB_EVENTS,			"gw_events")!=0)		return -1;
-	if (init_table(SQLITEDB_EVENTCLOSINGS,		"gw_eventclosings")!=0)		return -1;
-	if (init_table(SQLITEDB_EVENTTYPES,		"gw_eventtypes")!=0)		return -1;
-	if (init_table(SQLITEDB_FILES,			"gw_files")!=0)			return -1;
-	if (init_table(SQLITEDB_FORUMS,			"gw_forums")!=0)		return -1;
-	if (init_table(SQLITEDB_FORUMGROUPS,		"gw_forumgroups")!=0)		return -1;
-	if (init_table(SQLITEDB_FORUMPOSTS,		"gw_forumposts")!=0)		return -1;
-	if (init_table(SQLITEDB_GROUPS,			"gw_groups")!=0)		return -1;
-	if (init_table(SQLITEDB_GROUPMEMBERS,		"gw_groupmembers")!=0)		return -1;
-	if (init_table(SQLITEDB_MAILACCOUNTS,		"gw_mailaccounts")!=0)		return -1;
-	if (init_table(SQLITEDB_MAILFILTERS,		"gw_mailfilters")!=0)		return -1;
-	if (init_table(SQLITEDB_MAILFOLDERS,		"gw_mailfolders")!=0)		return -1;
-	if (init_table(SQLITEDB_MAILHEADERS,		"gw_mailheaders")!=0)		return -1;
-	if (init_table(SQLITEDB_MESSAGES,		"gw_messages")!=0)		return -1;
-	if (init_table(SQLITEDB_NOTES,			"gw_notes")!=0)			return -1;
-	if (init_table(SQLITEDB_ORDERS,			"gw_orders")!=0)		return -1;
-	if (init_table(SQLITEDB_ORDERITEMS,		"gw_orderitems")!=0)		return -1;
-	if (init_table(SQLITEDB_PRODUCTS,		"gw_products")!=0)		return -1;
-	if (init_table(SQLITEDB_PROJECTS,		"gw_projects")!=0)		return -1;
-	if (init_table(SQLITEDB_QUERIES,		"gw_queries")!=0)		return -1;
-	if (init_table(SQLITEDB_SMTP_RELAYRULES,	"gw_smtp_relayrules")!=0)	return -1;
-	if (init_table(SQLITEDB_TASKS,			"gw_tasks")!=0)			return -1;
-	if (init_table(SQLITEDB_USERS1 SQLITEDB_USERS2,	"gw_users")!=0)			return -1;
-	if (init_table(SQLITEDB_ZONES,			"gw_zones")!=0)			return -1;
-	return 0;
-}
-
 int pgsql_sequence_sync(void)
 {
 	int max;
@@ -300,15 +93,15 @@ int pgsql_sequence_sync(void)
 	int i;
 
 	for (i=0;;i++) {
-		if (pgseq[i].tablename==NULL) break;
-		if ((sqr=sqlQueryf("SELECT max(%s) FROM %s", pgseq[i].tableindex, pgseq[i].tablename))<0) return -1;
+		if (pgsqldb_tables[i].seqname==NULL) break;
+		if ((sqr=sqlQueryf("SELECT max(%s) FROM %s", pgsqldb_tables[i].index, pgsqldb_tables[i].name))<0) return -1;
 		if (sqlNumtuples(sqr)!=1) {
 			sqlFreeconnect(sqr);
 			return -1;
 		}
 		max=atoi(sqlGetvalue(sqr, 0, 0))+1;
 		sqlFreeconnect(sqr);
-		if ((sqr=sqlQueryf("SELECT last_value FROM %s", pgseq[i].seqname))<0) return -1;
+		if ((sqr=sqlQueryf("SELECT last_value FROM %s", pgsqldb_tables[i].seqname))<0) return -1;
 		if (sqlNumtuples(sqr)!=1) {
 			sqlFreeconnect(sqr);
 			return -1;
@@ -316,7 +109,7 @@ int pgsql_sequence_sync(void)
 		seq=atoi(sqlGetvalue(sqr, 0, 0));
 		sqlFreeconnect(sqr);
 		if (seq<max) seq=max;
-		if ((sqr=sqlQueryf("SELECT setval ('\"%s\"', %d, false);", pgseq[i].seqname, seq))<0) return -1;
+		if ((sqr=sqlQueryf("SELECT setval ('\"%s\"', %d, false);", pgsqldb_tables[i].seqname, seq))<0) return -1;
 		if (sqlNumtuples(sqr)!=1) {
 			sqlFreeconnect(sqr);
 			return -1;
@@ -398,22 +191,94 @@ int table_check()
 	return 0;
 }
 
+int dump_db(char *filename)
+{
+	FILE *fp;
+
+	printf("Dumping %s database to %s...", config.sql_type, filename);
+	fp=fopen(filename, "wa");
+	if (fp==NULL) {
+		printf("\r\nCould not create output file.\r\n");
+		return -1;
+	}
+	dump_table(fp, "gw_dbinfo",              "dbversion");
+	dump_table(fp, "gw_users",               "userid");
+	dump_table(fp, "gw_usersessions",        "sessionid");
+	dump_table(fp, "gw_accounting_accounts", "accountid");
+	dump_table(fp, "gw_accounting_journal",  "journalentryid");
+	dump_table(fp, "gw_activity",            "activityid");
+	dump_table(fp, "gw_bookmarkfolders",     "folderid");
+	dump_table(fp, "gw_bookmarks",           "bookmarkid");
+	dump_table(fp, "gw_calls",               "callid");
+	dump_table(fp, "gw_callactions",         "callactionid");
+	dump_table(fp, "gw_contacts",            "contactid");
+	dump_table(fp, "gw_contactsessions",     "sessionid");
+	dump_table(fp, "gw_domains",             "domainid");
+	dump_table(fp, "gw_domainaliases",       "domainaliasid");
+	dump_table(fp, "gw_events",              "eventid");
+	dump_table(fp, "gw_eventclosings",       "eventclosingid");
+	dump_table(fp, "gw_eventtypes",          "eventtypeid");
+	dump_table(fp, "gw_files",               "fileid");
+	dump_table(fp, "gw_forums",              "forumid");
+	dump_table(fp, "gw_forumgroups",         "forumgroupid");
+	dump_table(fp, "gw_forumposts",          "messageid");
+	dump_table(fp, "gw_groups",              "groupid");
+	dump_table(fp, "gw_groupmembers",        "groupmemberid");
+	dump_table(fp, "gw_mailaccounts",        "mailaccountid");
+	dump_table(fp, "gw_mailfilters",         "mailfilterid");
+	dump_table(fp, "gw_mailfolders",         "mailfolderid");
+	dump_table(fp, "gw_mailheaders",         "mailheaderid");
+	dump_table(fp, "gw_messages",            "messageid");
+	dump_table(fp, "gw_notes",               "noteid");
+	dump_table(fp, "gw_orders",              "orderid");
+	dump_table(fp, "gw_orderitems",          "orderitemid");
+	dump_table(fp, "gw_products",            "productid");
+	dump_table(fp, "gw_projects",            "projectid");
+	dump_table(fp, "gw_queries",             "queryid");
+	dump_table(fp, "gw_smtp_relayrules",     "relayruleid");
+	dump_table(fp, "gw_tasks",               "taskid");
+	dump_table(fp, "gw_zones",               "zoneid");
+	fclose(fp);
+	printf("done.\r\n");
+	sqlDisconnect();
+	return -1;
+}
+
 int init_db(void)
 {
+	int i;
+
 	if (strcasecmp(config.sql_type, "MYSQL")==0) {
 		printf("Initialising MySQL database...");
-		if (init_mysql()<0) return -1;
+		for (i=0;;i++) {
+			if (mysqldb_tables[i].name==NULL) break;
+			if (init_table(mysqldb_tables[i].schema, mysqldb_tables[i].name)!=0) return -1;
+		}
 #ifdef WIN32
 	} else if (strcasecmp(config.sql_type, "ODBC")==0) {
 		printf("Initialising ODBC *.mdb database...");
-		if (init_mdb()<0) return -1;
+		for (i=0;;i++) {
+			if (mdb_tables[i].name==NULL) break;
+			if (init_table(mdb_tables[i].schema, mdb_tables[i].name)!=0) return -1;
+		}
 #endif
 	} else if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		printf("Initialising PostgreSQL database...");
-		if (init_pgsql()<0) return -1;
+		for (i=0;;i++) {
+			if (pgsqldb_tables[i].seqname==NULL) break;
+			sqlUpdatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
+			sqlUpdatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
+		}
+		for (i=0;;i++) {
+			if (pgsqldb_tables[i].name==NULL) break;
+			if (init_table(pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
+		}
 	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
 		printf("Initialising SQLite database...");
-		if (init_sqlite()<0) return -1;
+		for (i=0;;i++) {
+			if (sqlitedb_tables[i].name==NULL) break;
+			if (init_table(sqlitedb_tables[i].schema, sqlitedb_tables[i].name)!=0) return -1;
+		}
 	}
 	table_check();
 	if (strcasecmp(config.sql_type, "PGSQL")==0) {
@@ -435,6 +300,7 @@ int restore_db(char *filename)
 	char line[32768];
 	char *pTemp;
 	FILE *fp;
+	int i;
 
 	fp=fopen(filename, "r");
 	if (fp==NULL) {
@@ -443,18 +309,35 @@ int restore_db(char *filename)
 	}
 	if (strcasecmp(config.sql_type, "MYSQL")==0) {
 		printf("Restoring MySQL database from %s...", filename);
-		if (init_mysql()<0) return -1;
+		for (i=0;;i++) {
+			if (mysqldb_tables[i].name==NULL) break;
+			if (init_table(mysqldb_tables[i].schema, mysqldb_tables[i].name)!=0) return -1;
+		}
 #ifdef WIN32
 	} else if (strcasecmp(config.sql_type, "ODBC")==0) {
 		printf("Restoring ODBC database from %s...", filename);
-		if (init_mdb()<0) return -1;
+		for (i=0;;i++) {
+			if (mdb_tables[i].name==NULL) break;
+			if (init_table(mdb_tables[i].schema, mdb_tables[i].name)!=0) return -1;
+		}
 #endif
 	} else if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		printf("Restoring PostgreSQL database from %s...", filename);
-		if (init_pgsql()<0) return -1;
+		for (i=0;;i++) {
+			if (pgsqldb_tables[i].seqname==NULL) break;
+			sqlUpdatef(0, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
+			sqlUpdatef(0, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
+		}
+		for (i=0;;i++) {
+			if (pgsqldb_tables[i].name==NULL) break;
+			if (init_table(pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
+		}
 	} else if (strcasecmp(config.sql_type, "SQLITE")==0) {
 		printf("Restoring SQLite database from %s...", filename);
-		if (init_sqlite()<0) return -1;
+		for (i=0;;i++) {
+			if (sqlitedb_tables[i].name==NULL) break;
+			if (init_table(sqlitedb_tables[i].schema, sqlitedb_tables[i].name)!=0) return -1;
+		}
 	}
 	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
 		while ((line[strlen(line)-1]=='\n')||(line[strlen(line)-1]=='\r')) {

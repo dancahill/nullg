@@ -75,18 +75,17 @@ static int auth_renewcookie(CONN *sid, int settoken)
 	int sqr;
 	int i, j;
 
+	int userid=0;
+	int domainid=0;
+
 	DEBUG_IN(sid, "auth_renewcookie()");
 	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
 	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
-	if (strlen(sid->dat->user_username)==0) {
-		DEBUG_OUT(sid, "auth_renewcookie()");
-		return -1;
-	}
 	if ((settoken)&&(strlen(sid->dat->user_token)!=32)) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d AND enabled > 0", sid->dat->user_username, sid->dat->user_did))<0) {
+	if ((sqr=sql_queryf("SELECT userid, domainid FROM gw_usersessions WHERE remoteip = '%s' AND token = '%s'", sid->dat->in_RemoteAddr, sid->dat->user_token))<0) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
@@ -95,20 +94,22 @@ static int auth_renewcookie(CONN *sid, int settoken)
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if (settoken) {
-		if (strcmp(sid->dat->in_RemoteAddr, sql_getvaluebyname(sqr, 0, "loginip"))!=0) {
-			sql_freeresult(sqr);
-			DEBUG_OUT(sid, "auth_renewcookie()");
-			return -1;
-		}
-		if (strcmp(sid->dat->user_token, sql_getvaluebyname(sqr, 0, "logintoken"))!=0) {
-			sql_freeresult(sqr);
-			DEBUG_OUT(sid, "auth_renewcookie()");
-			return -1;
-		}
+	userid   = atoi(sql_getvalue(sqr, 0, 0));
+	domainid = atoi(sql_getvalue(sqr, 0, 1));
+	sql_freeresult(sqr);
+	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE userid = %d AND domainid = %d AND enabled > 0", userid, domainid))<0) {
+		DEBUG_OUT(sid, "auth_renewcookie()");
+		return -1;
+	}
+	if (sql_numtuples(sqr)!=1) {
+		sql_freeresult(sqr);
+		DEBUG_OUT(sid, "auth_renewcookie()");
+		return -1;
 	}
 	sid->dat->user_uid = atoi(sql_getvaluebyname(sqr, 0, "userid"));
 	sid->dat->user_gid = atoi(sql_getvaluebyname(sqr, 0, "groupid"));
+	sid->dat->user_did = atoi(sql_getvaluebyname(sqr, 0, "domainid"));
+	snprintf(sid->dat->user_username, sizeof(sid->dat->user_username)-1, "%s", sql_getvaluebyname(sqr, 0, "username"));
 	/* memset((char *)&sid->dat->auth, 0, sizeof(sid->dat->auth)); */
 	for (i=0,j=0;i<sql_numfields(sqr);i++) {
 		if (strncmp(sql_getname(sqr, i), "auth", 4)!=0) continue;
@@ -136,6 +137,10 @@ static int auth_renewcookie(CONN *sid, int settoken)
 		sid->dat->user_menustyle=0;
 	}
 	sql_freeresult(sqr);
+//	if (strlen(sid->dat->user_username)==0) {
+//		DEBUG_OUT(sid, "auth_renewcookie()");
+//		return -1;
+//	}
 	if (sid->dat->user_daystart<0)   sid->dat->user_daystart=0;
 	if (sid->dat->user_daystart>23)  sid->dat->user_daystart=23;
 	if (sid->dat->user_daylength<1)  sid->dat->user_daylength=1;
@@ -149,14 +154,10 @@ static int auth_renewcookie(CONN *sid, int settoken)
 		snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
 	}
 	if (settoken) {
-		t=time(NULL)+604800;
+		t=time(NULL)+86400;
 		memset(timebuffer, 0, sizeof(timebuffer));
 		strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-		snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s:%s; expires=%s; path=/", sid->dat->user_username, sid->dat->user_domainname, timebuffer);
-		t=time(NULL)+43200;
-		memset(timebuffer, 0, sizeof(timebuffer));
-		strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-		snprintf(sid->dat->out_SetCookiePass, sizeof(sid->dat->out_SetCookiePass)-1, "gwtoken=%s; expires=%s; path=/", sid->dat->user_token, timebuffer);
+		snprintf(sid->dat->out_SetCookieToken, sizeof(sid->dat->out_SetCookieToken)-1, "gwtoken=%s; expires=%s; path=/", sid->dat->user_token, timebuffer);
 	}
 	DEBUG_OUT(sid, "auth_renewcookie()");
 	return 0;
@@ -181,24 +182,10 @@ char *auth_setpass(CONN *sid, char *rpassword)
 int auth_getcookie(CONN *sid)
 {
 	char *ptemp;
-	int domainid;
 
 	DEBUG_IN(sid, "auth_getcookie()");
 	snprintf(sid->dat->user_language, sizeof(sid->dat->user_language)-1, "en");
 	snprintf(sid->dat->user_theme, sizeof(sid->dat->user_theme)-1, "default");
-	ptemp=strstr(sid->dat->in_Cookie, "gwuser=");
-	if (ptemp==NULL) {
-		DEBUG_OUT(sid, "auth_getcookie()");
-		return -1;
-	}
-	ptemp+=7;
-	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_username)<sizeof(sid->dat->user_username))) {
-		sid->dat->user_username[strlen(sid->dat->user_username)]=*ptemp++;
-	}
-	ptemp++;
-	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_domainname)<sizeof(sid->dat->user_domainname)-1)) {
-		sid->dat->user_domainname[strlen(sid->dat->user_domainname)]=*ptemp++;
-	}
 	ptemp=strstr(sid->dat->in_Cookie, "gwtoken=");
 	if (ptemp==NULL) {
 		DEBUG_OUT(sid, "auth_getcookie()");
@@ -207,12 +194,6 @@ int auth_getcookie(CONN *sid)
 	ptemp+=8;
 	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_token)<sizeof(sid->dat->user_token))) {
 		sid->dat->user_token[strlen(sid->dat->user_token)]=*ptemp++;
-	}
-	domainid=domain_getid(sid->dat->user_domainname);
-	if (domainid<0) {
-		sid->dat->user_did=1;
-	} else {
-		sid->dat->user_did=domainid;
 	}
 	DEBUG_OUT(sid, "auth_getcookie()");
 	return auth_renewcookie(sid, 1);
@@ -229,6 +210,7 @@ int auth_setcookie(CONN *sid)
 	int result;
 	struct timeval ttime;
 	struct timezone tzone;
+	int sqr;
 	int domainid;
 	int i;
 
@@ -290,7 +272,13 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'AND domainid = %d", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username, sid->dat->user_did);
+			if ((sqr=sql_queryf("SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did))<0) return -1;
+			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(sqr);i++) {
+				if (i<0) continue;
+				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
+			}
+			sql_freeresult(sqr);
+			sql_updatef("INSERT INTO gw_usersessions (obj_ctime, obj_mtime, obj_uid, obj_did, remoteip, token, userid, domainid) VALUES ('%s', '%s', %d, %d, '%s', '%s', %d, %d)", timebuffer, timebuffer, sid->dat->user_uid, sid->dat->user_did, sid->dat->in_RemoteAddr, sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 1);
@@ -320,7 +308,13 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s' AND domainid = %d", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username, sid->dat->user_did);
+			if ((sqr=sql_queryf("SELECT sessionid FROM gw_usersessions WHERE userid = %d AND domainid = %d ORDER BY obj_mtime DESC", sid->dat->user_uid, sid->dat->user_did))<0) return -1;
+			for (i=http_proc.config.http_sesslimit-1;i<sql_numtuples(sqr);i++) {
+				if (i<0) continue;
+				sql_updatef("DELETE FROM gw_usersessions WHERE sessionid = %d AND userid = %d AND domainid = %d", atoi(sql_getvalue(sqr, i, 0)), sid->dat->user_uid, sid->dat->user_did);
+			}
+			sql_freeresult(sqr);
+			sql_updatef("INSERT INTO gw_usersessions (obj_ctime, obj_mtime, obj_uid, obj_did, remoteip, token, userid, domainid) VALUES ('%s', '%s', %d, %d, '%s', '%s', %d, %d)", timebuffer, timebuffer, sid->dat->user_uid, sid->dat->user_did, sid->dat->in_RemoteAddr, sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 1);
@@ -336,11 +330,10 @@ void auth_logout(CONN *sid)
 	char timebuffer[100];
 
 	DEBUG_IN(sid, "auth_logout()");
-	sql_updatef("UPDATE gw_users SET logintoken='NULL' WHERE username = '%s' AND domainid = %d", sid->dat->user_username, sid->dat->user_did);
+	sql_updatef("DELETE FROM gw_usersessions WHERE token = '%s' AND userid = %d AND domainid = %d", sid->dat->user_token, sid->dat->user_uid, sid->dat->user_did);
 	t=time(NULL)+604800;
 	strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-	snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s:%s; expires=%s; path=/", sid->dat->user_username, sid->dat->user_domainname, timebuffer);
-	snprintf(sid->dat->out_SetCookiePass, sizeof(sid->dat->out_SetCookiePass)-1, "gwtoken=NULL; path=/");
+	snprintf(sid->dat->out_SetCookieToken, sizeof(sid->dat->out_SetCookieToken)-1, "gwtoken=NULL; path=/");
 	htpage_logout(sid);
 	DEBUG_OUT(sid, "auth_logout()");
 }
@@ -358,7 +351,6 @@ int auth_priv(CONN *sid, char *service)
 			break;
 		}
 	}
-
 	if (authlevel&A_ADMIN) authlevel=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 	return authlevel;
 }

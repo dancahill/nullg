@@ -152,8 +152,7 @@ typedef struct {
 	char out_Pragma[40];
 	char out_Protocol[20];
 	char out_Server[128];
-	char out_SetCookieUser[128];
-	char out_SetCookiePass[128];
+	char out_SetCookieToken[128];
 	unsigned char out_ReplyData[MAX_REPLYSIZE];
 	/* BUFFERS */
 	short int lastbuf;
@@ -205,6 +204,7 @@ typedef struct {
 	short int http_maxconn;
 	short int http_maxidle;
 	int       http_maxpostsize;
+	short int http_sesslimit;
 } HTTP_CONFIG;
 
 typedef struct {

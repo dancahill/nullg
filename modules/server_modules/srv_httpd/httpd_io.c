@@ -83,12 +83,8 @@ void flushheader(CONN *sid)
 			snprintf(line, sizeof(line)-1, "Pragma: %s\r\n", sid->dat->out_Pragma);
 			printf("%s", line);
 		}
-		if (strlen(sid->dat->out_SetCookieUser)) {
-			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser);
-			printf("%s", line);
-		}
-		if (strlen(sid->dat->out_SetCookiePass)) {
-			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookiePass);
+		if (strlen(sid->dat->out_SetCookieToken)) {
+			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieToken);
 			printf("%s", line);
 		}
 		if (sid->dat->out_status) {
@@ -142,11 +138,8 @@ void flushheader(CONN *sid)
 			if (tcp_fprintf(&sid->socket, "Pragma: %s\r\n", sid->dat->out_Pragma)<0) goto err;
 		}
 		if (tcp_fprintf(&sid->socket, "Server: %s %s\r\n", SERVER_NAME, PACKAGE_VERSION)<0) goto err;
-		if (strlen(sid->dat->out_SetCookieUser)) {
-			if (tcp_fprintf(&sid->socket, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser)<0) goto err;
-		}
-		if (strlen(sid->dat->out_SetCookiePass)) {
-			if (tcp_fprintf(&sid->socket, "Set-Cookie: %s\r\n", sid->dat->out_SetCookiePass)<0) goto err;
+		if (strlen(sid->dat->out_SetCookieToken)) {
+			if (tcp_fprintf(&sid->socket, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieToken)<0) goto err;
 		}
 		if (sid->dat->cgi_lite) {
 			if (tcp_fprintf(&sid->socket, "Status: %d\r\n", sid->dat->out_status)<0) goto err;

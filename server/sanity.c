@@ -140,6 +140,7 @@ int sanity_checkdb()
 	if (sanity_dbcheck_table("gw_callactions",	"callactionid",		CALLACTIONFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_calls",		"callid",		CALLFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_contacts",		"contactid",		CONTACTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_contactsessions",	"sessionid",		CONTACTSESSIONFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_domains",		"domainid",		DOMAINFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_domainaliases",	"domainaliasid",	DOMAINALIASFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_eventclosings",	"eventclosingid",	EVENTCLOSINGFIELDS)==-1) checkerror++;
@@ -163,6 +164,7 @@ int sanity_checkdb()
 	if (sanity_dbcheck_table("gw_queries",		"queryid",		QUERYFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_tasks",		"taskid",		TASKFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_users",		"userid",		USERFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_usersessions",	"sessionid",		USERSESSIONFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_zones",		"zoneid",		ZONEFIELDS)==-1) checkerror++;
 	if (checkerror!=0) {
 		log_error("core", __FILE__, __LINE__, 0, "Please use dbutil to dump and restore the database");

@@ -40,6 +40,7 @@
    max keepalive     = 15
    max idle          = 120
    max post size     = 33554432
+   session limit     = 1
 
    load module       = mod_html
    load module       = mod_admin
