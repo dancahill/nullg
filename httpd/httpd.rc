@@ -30,8 +30,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 //
 
 IDR_VERSION VERSIONINFO
- FILEVERSION 1,2,6,0
- PRODUCTVERSION 1,2,6,0
+ FILEVERSION 1,2,7,0
+ PRODUCTVERSION 1,2,7,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -49,14 +49,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "NullLogic\0"
             VALUE "FileDescription", "NullLogic Groupware Server\0"
-            VALUE "FileVersion", "1.2.6\0"
+            VALUE "FileVersion", "1.2.7\0"
             VALUE "InternalName", "NullLogic Groupware\0"
             VALUE "LegalCopyright", "Copyright © 2000-2004\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "nullgw-httpd.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "NullLogic Groupware\0"
-            VALUE "ProductVersion", "1.2.6\0"
+            VALUE "ProductVersion", "1.2.7\0"
             VALUE "SpecialBuild", "\0"
         END
     END

@@ -1,6 +1,6 @@
 Summary: NullLogic Groupware
 Name: nullgroupware
-Version: 1.2.6
+Version: 1.2.7
 Release: 1
 License: GPL
 Packager: Dan Cahill <nulllogic@users.sourceforge.net>

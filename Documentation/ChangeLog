@@ -1,3 +1,9 @@
+1.2.7
+-----
+- fixed minor incompatibilities with OpenBSD
+- upgraded SQLite to 2.8.13
+- e-mail headers are now reread and updated after a virus and/or spam is found
+
 1.2.6
 -----
 - fixed rpm .spec file

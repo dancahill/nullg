@@ -57,43 +57,55 @@ stuff:
 }
 #endif
 
+int wmfilter_scan(CONN *sid, wmheader *header, char *msgfilename, int accountid, int messageid)
+{
+	FILE *fp;
+	struct stat sb;
+	char cmdline[512];
+	short int err=0;
+
+	if (strlen(config->util_scanmail)<1) return 0;
+	memset(cmdline, 0, sizeof(cmdline));
+	snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
+#ifdef WIN32
+	err=winsystem(cmdline);
+#else
+	err=system(cmdline);
+#endif
+	if (err>255) err=err>>8;
+	if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
+		sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
+	}
+	if ((err==1)||(err==2)||(err==3)) {
+		fp=fopen(msgfilename, "r");
+		if (fp!=NULL) {
+			webmailheader(sid, header, &fp);
+		}
+		if (fp!=NULL) fclose(fp);
+		if (err==1) prints(sid, "[SPAM]");
+		if (err==2) prints(sid, "[VIRUS]");
+		if (err==3) prints(sid, "[VIRUS+SPAM]");
+		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 7, status = 'o', hdr_subject = '%s', hdr_contenttype = '%s', hdr_boundary = '%s' WHERE mailheaderid = %d AND accountid = %d", header->Subject, header->contenttype, header->boundary, messageid, accountid);
+		return 7;
+	}
+	return 0;
+}
+
 int wmfilter_apply(CONN *sid, wmheader *header, int accountid, int messageid)
 {
-	char cmdline[512];
 	char msgfilename[512];
 	char *hptr;
 	int dstmbox;
 	int i;
 	int match;
 	int sqr1;
-	short int err=0;
-	struct stat sb;
+	int rc;
 
 	memset(msgfilename, 0, sizeof(msgfilename));
 	snprintf(msgfilename, sizeof(msgfilename)-1, "%s/%04d/%06d.msg", config->server_dir_var_mail, sid->dat->user_mailcurrent, messageid);
 	fixslashes(msgfilename);
-	if (strlen(config->util_scanmail)>0) {
-		memset(cmdline, 0, sizeof(cmdline));
-		snprintf(cmdline, sizeof(cmdline)-1, "%s %s", config->util_scanmail, msgfilename);
-//		logerror(sid, __FILE__, __LINE__, 0, "[%s]", cmdline);
-#ifdef WIN32
-		err=winsystem(cmdline);
-#else
-		err=system(cmdline);
-#endif
-		if (err>255) err=err>>8;
-		if ((stat(msgfilename, &sb)==0)&&(sb.st_size>0)) {
-			sql_updatef(sid, "UPDATE gw_mailheaders SET size = %d WHERE mailheaderid = %d AND accountid = %d", (int)sb.st_size, messageid, accountid);
-		}
-	}
-//	prints(sid, "[%d]", err);
-	if ((err==1)||(err==2)||(err==3)) {
-		if (err==1) prints(sid, "[SPAM]");
-		if (err==2) prints(sid, "[VIRUS]");
-		if (err==3) prints(sid, "[VIRUS+SPAM]");
-		sql_updatef(sid, "UPDATE gw_mailheaders SET folder = 7, status = 'o' WHERE mailheaderid = %d AND accountid = %d", messageid, accountid);
-		return 7;
-	}
+	rc=wmfilter_scan(sid, header, msgfilename, accountid, messageid);
+	if (rc>0) return rc;
 	dstmbox=1;
 	if ((sqr1=sql_queryf(sid, "SELECT header, string, rule, action, dstfolderid FROM gw_mailfilters WHERE obj_uid = %d AND accountid = %d ORDER BY mailfilterid ASC", sid->dat->user_uid, accountid))<0) return -1;
 	if (sql_numtuples(sqr1)<1) {

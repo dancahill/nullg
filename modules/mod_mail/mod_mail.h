@@ -90,9 +90,8 @@ void htselect_mailfolderjump(CONN *sid, int selected);
 void htselect_mailjump(CONN *sid, int selected);
 /* mod_mail_main.c */
 void wmloginform(CONN *sid);
-int  webmailheader(CONN *sid, wmheader *header);
 /* mod_mail_mime.c */
-int webmailheader(CONN *sid, wmheader *header);
+int  webmailheader(CONN *sid, wmheader *header, FILE **fp);
 void webmailfiledl(CONN *sid);
 char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
 int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth);

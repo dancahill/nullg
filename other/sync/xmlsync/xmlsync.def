@@ -1,5 +1,5 @@
 LIBRARY		xmlsync
-VERSION		1.2.6
+VERSION		1.2.7
 EXPORTS
 	xmlrpc_contact_listopen
 	xmlrpc_contact_listread

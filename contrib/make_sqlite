@@ -1,19 +1,23 @@
 #!/bin/sh
 
-case "$1" in
-'build')
-	if [ ! -r "sqlite-2.8.11.tar.gz" ]; then
+do_configure() {
+	if [ ! -r "sqlite-2.8.13.tar.gz" ]; then
 		echo "sqlite source not found"
 		exit 0
 	fi
 	if [ ! -r "sqlite/configure" ]; then
-		tar zxf sqlite-2.8.11.tar.gz
+		tar zxf sqlite-2.8.13.tar.gz
 	fi
 	mkdir -p build
 	cd build
 	if [ ! -r "Makefile" ]; then
 		../sqlite/configure --disable-static
 	fi
+}
+
+case "$1" in
+'build')
+	do_configure
 	if [ "`uname`" != "Linux" ]; then
 		gmake -s
 	else
@@ -23,6 +27,9 @@ case "$1" in
 	if [ -r "build/.libs/libsqlite.so.0.8.6" ]; then
 		strip build/.libs/libsqlite.so.0.8.6
 		cp -p build/.libs/libsqlite.so.0.8.6 ../distrib/lib/libsqlite.so
+	elif [ -r "build/.libs/libsqlite.so.8.6" ]; then
+		strip build/.libs/libsqlite.so.8.6
+		cp -p build/.libs/libsqlite.so.8.6 ../distrib/lib/libsqlite.so
 	elif [ -r "build/.libs/libsqlite.so.8" ]; then
 		strip build/.libs/libsqlite.so.8
 		cp -p build/.libs/libsqlite.so.8 ../distrib/lib/libsqlite.so
@@ -32,7 +39,10 @@ case "$1" in
 	rm -rf sqlite
 	rm -rf build
 	;;
+'configure')
+	do_configure
+	;;
 *)
-	echo "Usage: $0 {build|clean}"
+	echo "Usage: $0 {build|clean|configure}"
 esac
 exit 0

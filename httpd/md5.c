@@ -290,7 +290,7 @@ char *md5_crypt(CONN *sid, char *pw, char *salt)
 		    md5_update(&ctx, pw, 1);
 
 	/* Now make the output string */
-	strncpy(passwd,magic, sizeof(passwd)-1);
+	strcpy(passwd, magic);
 	strncat(passwd,sp,sl);
 	strcat(passwd,"$");
 	md5_final(final,&ctx);

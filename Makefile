@@ -2,7 +2,7 @@
 
 include Rules.mak
 
-all: _dbutil _httpd _pop3d _smtpd _modules _sqlite
+all: _sqlite _dbutil _httpd _modules
 	@cp -p other/rc.groupware distrib/bin/rc.groupware
 	@cp -p other/cron.daily distrib/bin/cron.daily
 	@cp -p other/configure distrib/bin/configure
@@ -56,7 +56,7 @@ clean:
 	@rm -f distrib/bin/* distrib/lib/* *~
 	@echo "done."
 
-mrclean: clean
+distclean: clean
 	@ln -sf Rules/Linux Rules.mak
 	@cd contrib;./make_sqlite clean
 

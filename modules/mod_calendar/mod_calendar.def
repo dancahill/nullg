@@ -1,5 +1,5 @@
 LIBRARY		mod_calendar
-VERSION		1.2.6
+VERSION		1.2.7
 EXPORTS
 	mod_init
 	mod_main

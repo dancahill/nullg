@@ -913,7 +913,7 @@ int wmserver_mlistsync(CONN *sid, char ***uidl_list)
 		if (headerid<1) headerid=1;
 		wmserver_msghead(sid, i+1);
 		memset((char *)&header, 0, sizeof(header));
-		if (webmailheader(sid, &header)!=0) {
+		if (webmailheader(sid, &header, NULL)!=0) {
 			nummessages=-1;
 			goto cleanup;
 		}
