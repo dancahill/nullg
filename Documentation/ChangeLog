@@ -1,3 +1,18 @@
+1.3.5
+-----
+- virtual domain data is now properly restricted to only users of that domain
+- SMTP server now accepts mail for virtual domains
+- fixed an uninitialized buffer on the login page
+- uniqueness of users, groups, domains, and zones in now properly checked
+- user-defined SQL queries now require domain admin priveledges
+
+1.3.4
+-----
+- added a per-connection flag for more graceful shutdown notifications
+- fixed a large memory leak in SSL connection handling
+- fixed segfault in SSL connection terminations
+- added a new system to allow for virtual domains
+
 1.3.3
 -----
 - added pop3s server support

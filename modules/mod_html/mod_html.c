@@ -181,10 +181,14 @@ domenu:
 	prints(sid, "<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	switch (menu) {
 		case MENU_ADMIN:
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CONFIG);
+			if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+				prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CONFIG);
+			}
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/activitylist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_LOGS);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/domainlist>DOMAINS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/status>STATUS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+				prints(sid, "<A CLASS='TBAR' HREF=%s/admin/domainlist>DOMAINS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				prints(sid, "<A CLASS='TBAR' HREF=%s/admin/status>STATUS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			}
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/syscheck>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CHECK);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/userlist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_USERS);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/grouplist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_GROUPS);
@@ -276,8 +280,10 @@ domenu:
 			break;
 		case MENU_SEARCHES:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/search/>SEARCHES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
-			if (auth_priv(sid, "query")&A_ADMIN) {
-				prints(sid, "<A CLASS='TBAR' HREF=%s/search/sqlrun>SQL QUERIES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+			if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+				if (auth_priv(sid, "query")&A_ADMIN) {
+					prints(sid, "<A CLASS='TBAR' HREF=%s/search/sqlrun>SQL QUERIES</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
+				}
 			}
 			break;
 		case MENU_WEBMAIL:
@@ -331,6 +337,7 @@ void mod_html_login(CONN *sid)
 	int sqr;
 
 	memset(pageuri, 0, sizeof(pageuri));
+	memset(domain, 0, sizeof(domain));
 	if ((ptemp=getpostenv(sid, "PAGEURI"))!=NULL) {
 		snprintf(pageuri, sizeof(pageuri)-1, "%s", ptemp);
 	} else {
@@ -358,7 +365,7 @@ void mod_html_login(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\r\n");
 	prints(sid, "<FORM METHOD=POST ACTION=\"%s/\" AUTOCOMPLETE=OFF NAME=login>\r\n", sid->dat->in_ScriptName);
 	prints(sid, "<INPUT TYPE=hidden NAME=pageuri VALUE=\"%s\">\r\n", pageuri);
-	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>NullLogic Groupware Login</TH></TR>\r\n");
+	prints(sid, "<TR><TH COLSPAN=2 STYLE='padding:1px'>%s Login</TH></TR>\r\n", SERVER_NAME);
 	memset(username, 0, sizeof(username));
 	memset(password, 0, sizeof(password));
 	if ((sqr=sql_query("SELECT username, password FROM gw_users WHERE userid = 1"))<0) return;

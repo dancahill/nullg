@@ -31,6 +31,7 @@ int dbread_contact(CONN *sid, short int perm, int index, REC_CONTACT *contact)
 	if (index==0) {
 		contact->obj_uid=sid->dat->user_uid;
 		contact->obj_gid=sid->dat->user_gid;
+		contact->obj_did=sid->dat->user_did;
 		contact->obj_gperm=1;
 		contact->obj_operm=1;
 		contact->enabled=1;

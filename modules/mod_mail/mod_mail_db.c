@@ -32,6 +32,7 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 	if (index==0) {
 		mailacct->obj_uid=sid->dat->user_uid;
 		mailacct->obj_gid=sid->dat->user_gid;
+		mailacct->obj_did=sid->dat->user_did;
 		mailacct->obj_gperm=1;
 		mailacct->obj_operm=1;
 		snprintf(mailacct->hosttype, sizeof(mailacct->hosttype)-1, "POP3");

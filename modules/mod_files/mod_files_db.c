@@ -31,14 +31,15 @@ int dbread_file(CONN *sid, short int perm, int index, REC_FILE *file)
 	if (index==0) {
 		file->obj_uid=sid->dat->user_uid;
 		file->obj_gid=sid->dat->user_gid;
+		file->obj_did=sid->dat->user_did;
 		file->obj_gperm=1;
 		file->obj_operm=1;
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_files where fileid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_files where fileid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_files where fileid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_files where fileid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) AND obj_did = %d", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);

@@ -416,7 +416,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if (contact->contactid>0) {
 		if (module_exists(sid, "mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr=sql_queryf("SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Calls</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");
@@ -429,7 +429,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			sql_freeresult(sqr);
 		}
 		if (module_exists(sid, "mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0)", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr=sql_queryf("SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", contact->contactid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Events</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");
@@ -442,7 +442,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 			sql_freeresult(sqr);
 		}
 		if (module_exists(sid, "mod_orders")&&(auth_priv(sid, "orders")&A_READ)) {
-			if ((sqr=sql_queryf("SELECT count(orderid) FROM gw_orders WHERE contactid = %d", contact->contactid))<0) return;
+			if ((sqr=sql_queryf("SELECT count(orderid) FROM gw_orders WHERE contactid = %d AND obj_did = %d", contact->contactid, sid->dat->user_did))<0) return;
 			prints(sid, "<TR CLASS=\"EDITFORM\">");
 			prints(sid, "<TD NOWRAP WIDTH=100%%>%d Orders</TD>\n", atoi(sql_getvalue(sqr, 0, 0)));
 			prints(sid, "<TD>");

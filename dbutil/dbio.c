@@ -456,6 +456,7 @@ int init_db(void)
 	if (sqlUpdate(1, DBDATA_19)<0) { printf("\r\nError inserting dbdata_19\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_20)<0) { printf("\r\nError inserting dbdata_20\r\n"); return -1; }
 	if (sqlUpdate(1, DBDATA_21)<0) { printf("\r\nError inserting dbdata_21\r\n"); return -1; }
+	if (sqlUpdate(1, DBDATA_22)<0) { printf("\r\nError inserting dbdata_22\r\n"); return -1; }
 	if (strcasecmp(config.sql_type, "PGSQL")==0) {
 		init_pgsqlseq();
 	}

@@ -33,7 +33,7 @@ void htselect_groupfilter(CONN *sid, int groupid, char *baseuri)
 	prints(sid, "	location=document.groupfilter.groupid.options[document.groupfilter.groupid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=groupid onChange=\"go2()\">');\r\n");
-	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did))<0) return;
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr, i, 0)));
 		prints(sid, "'%s>%s\");\n", atoi(sql_getvalue(sqr, i, 0))==groupid?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
@@ -70,7 +70,7 @@ void messagestatus(CONN *sid, int messageid, char status)
 	if ((messageid==0)&&((ptemp=getgetenv(sid, "MESSAGEID"))!=NULL)) {
 		messageid=atoi(ptemp);
 	}
-	if ((sqr=sql_queryf("SELECT messageid FROM gw_messages WHERE obj_uid = %d AND messageid = %d", sid->dat->user_uid, messageid))<0) return;
+	if ((sqr=sql_queryf("SELECT messageid FROM gw_messages WHERE obj_uid = %d AND obj_did = %d AND messageid = %d", sid->dat->user_uid, sid->dat->user_did, messageid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		sql_freeresult(sqr);
 		return;
@@ -79,7 +79,7 @@ void messagestatus(CONN *sid, int messageid, char status)
 	t=time(NULL);
 	strftime(timebuffer, sizeof(timebuffer), "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (status=='0') {
-		sql_updatef("DELETE FROM gw_messages WHERE obj_uid = %d and messageid = %d", sid->dat->user_uid, messageid);
+		sql_updatef("DELETE FROM gw_messages WHERE obj_uid = %d AND obj_did = %d and messageid = %d", sid->dat->user_uid, sid->dat->user_did, messageid);
 	} else {
 		sql_updatef("UPDATE gw_messages SET obj_mtime = '%s', status = %c WHERE obj_uid = %d AND messageid = %d", timebuffer, status, sid->dat->user_uid, messageid);
 	}
@@ -104,7 +104,7 @@ void messages_userlist(CONN *sid)
 		groupid=sid->dat->user_gid;
 	}
 	htselect_groupfilter(sid, groupid, "/messages/userlist");
-	if ((sqr=sql_queryf("SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d AND groupid = %d ORDER BY username ASC", sid->dat->user_uid, groupid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username, givenname, surname FROM gw_users WHERE userid != %d AND groupid = %d AND domainid = %d ORDER BY username ASC", sid->dat->user_uid, groupid, sid->dat->user_did))<0) return;
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
 	prints(sid, "function ViewHistory(userid, username)\r\n");
 	prints(sid, "{\r\n");
@@ -209,8 +209,8 @@ void messages_send(CONN *sid)
 		if ((ptemp=getpostenv(sid, "MESSAGE"))!=NULL) snprintf(message, sizeof(message)-1, "%s", ptemp);
 		if (strlen(message)>0) {
 			time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
-			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, userid, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
-			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, 3, '%s')", curdate, curdate, sid->dat->user_uid, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
+			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, obj_did, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, %d, 3, '%s')", curdate, curdate, userid, sid->dat->user_did, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
+			if (sql_updatef("INSERT INTO gw_messages (obj_ctime, obj_mtime, obj_uid, obj_did, sender, rcpt, status, message) values ('%s', '%s', %d, %d, %d, %d, 3, '%s')", curdate, curdate, sid->dat->user_uid, sid->dat->user_did, sid->dat->user_uid, userid, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, message))<0) return;
 		}
 	}
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
@@ -253,7 +253,7 @@ void messages_reload(CONN *sid)
 	prints(sid, "}\r\n");
 	flushbuffer(sid);
 	for (retry=0;retry<10;retry++) {
-		if ((sqr=sql_queryf("SELECT messageid, sender, rcpt, message FROM gw_messages WHERE obj_uid = %d AND status > 2 AND (rcpt = %d OR sender = %d) ORDER BY obj_ctime, messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
+		if ((sqr=sql_queryf("SELECT messageid, sender, rcpt, message FROM gw_messages WHERE obj_uid = %d AND obj_did = %d AND status > 2 AND (rcpt = %d OR sender = %d) ORDER BY obj_ctime, messageid ASC", sid->dat->user_uid, sid->dat->user_did, userid, userid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				if (atoi(sql_getvalue(sqr, i, 1))==sid->dat->user_uid) {
@@ -294,7 +294,7 @@ void messages_history(CONN *sid)
 	}
 	memset(username, 0, sizeof(username));
 	if ((ptemp=getgetenv(sid, "userid"))!=NULL) userid=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d", userid))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE userid = %d AND domainid = %d", userid, sid->dat->user_did))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;
@@ -309,7 +309,7 @@ void messages_history(CONN *sid)
 	prints(sid, "// -->\r\n</SCRIPT>\r\n");
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<BR><B>Message history for %s</B><BR>\n", username);
-	if ((sqr=sql_queryf("SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid ASC", sid->dat->user_uid, userid, userid))<0) return;
+	if ((sqr=sql_queryf("SELECT messageid, obj_ctime, sender, rcpt, status, message FROM gw_messages WHERE obj_uid = %d AND obj_did = %d AND status > 0 AND (rcpt = %d OR sender = %d) ORDER BY messageid ASC", sid->dat->user_uid, sid->dat->user_did, userid, userid))<0) return;
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<BR><B>No Messages</B><BR>\n");
 		sql_freeresult(sqr);

@@ -40,7 +40,7 @@ void htselect_notefilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
 	prints(sid, "<!--\r\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users order by username ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d ORDER BY username ASC", sid->dat->user_did))<0) return;
 	prints(sid, "function go1() {\r\n");
 	prints(sid, "	location=document.notefilter.userid.options[document.notefilter.userid.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
@@ -92,9 +92,9 @@ void notes_sublist(CONN *sid, char *table, int index, int colspan)
 	int sqr;
 
 	if (auth_priv(sid, "admin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d ORDER BY noteid ASC", table, index))<0) return;
+		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_did))<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if ((sqr=sql_queryf("SELECT noteid, notetitle, notetext FROM gw_notes WHERE tablename = '%s' AND tableindex = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid ASC", table, index, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
 		for (i=0;i<sql_numtuples(sqr);i++) {
@@ -329,9 +329,9 @@ void noteslist(CONN *sid)
 		case 8: { snprintf(tablename, sizeof(tablename)-1, "users"); break; }
 	}
 	if (auth_priv(sid, "admin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' ORDER BY noteid DESC", userid, tablename))<0) return;
+		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_did))<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY noteid DESC", userid, tablename, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if ((sqr=sql_queryf("SELECT noteid, notetitle, obj_mtime, tablename, tableindex FROM gw_notes WHERE obj_uid = %d AND tablename like '%s' AND (obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY noteid DESC", userid, tablename, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<BR>\r\n");

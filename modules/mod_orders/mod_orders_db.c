@@ -87,6 +87,7 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 	if (index==0) {
 		rec.head->obj_uid=sid->dat->user_uid;
 		rec.head->obj_gid=sid->dat->user_gid;
+		rec.head->obj_did=sid->dat->user_did;
 		rec.head->obj_gperm=1;
 		rec.head->obj_operm=1;
 		switch (table) {
@@ -111,13 +112,13 @@ int db_read(CONN *sid, short int perm, short int table, int index, void *record)
 	}
 	switch (table) {
 	case DB_ORDERS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_orders where orderid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_orders where orderid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 		break;
 	case DB_ORDERITEMS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_orderitems where orderitemid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_orderitems where orderitemid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 		break;
 	case DB_PRODUCTS:
-		if ((sqr=sql_queryf("SELECT * FROM gw_products where productid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_products where productid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 		break;
 	default:
 		return -1;

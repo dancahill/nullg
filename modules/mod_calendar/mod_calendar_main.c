@@ -65,8 +65,8 @@ void htselect_eventfilter(CONN *sid, int userid, int groupid, char *baseuri)
 	prints(sid, "	location=document.eventfilter.status.options[document.eventfilter.status.selectedIndex].value\r\n");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=userid onChange=\"go1()\">');\r\n");
-	if ((sqr=sql_queryf("SELECT userid, groupid, username FROM gw_users order by username ASC"))<0) return;
-	if ((sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
+	if ((sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did))<0) return;
 	for (i=0;i<sql_numtuples(sqr2);i++) {
 		prints(sid, "document.write(\"<OPTION VALUE='%s%s?groupid=%d", sid->dat->in_ScriptName, baseuri, atoi(sql_getvalue(sqr2, i, 0)));
 		if ((ptemp1=getgetenv(sid, "DAY"))!=NULL) {
@@ -182,7 +182,7 @@ void calendarreminders(CONN *sid)
 	}
 	t=time(NULL)+604800;
 	strftime(posttime, sizeof(posttime), "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 ORDER BY eventstart ASC", posttime, sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT eventid, eventname, eventstart, reminder FROM gw_events where eventstart < '%s' and assignedto = %d and reminder > 0 AND obj_did = %d ORDER BY eventstart ASC", posttime, sid->dat->user_uid, sid->dat->user_did))<0) return;
 	prints(sid, "<BR><CENTER>\n<B><FONT COLOR=#808080 SIZE=3>%s</FONT></B>\n", CAL_EVENT_TITLE);
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		a=time_sql2unix(sql_getvalue(sqr, i, 2))-time(NULL);
@@ -229,7 +229,7 @@ void reminderstatus(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "EVENTID"))==NULL) return;
 	eventid=atoi(ptemp);
-	if ((sqr=sql_queryf("SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d", eventid, sid->dat->user_uid))<0) return;
+	if ((sqr=sql_queryf("SELECT reminder, eventstart FROM gw_events where eventid = %d and assignedto = %d AND obj_did = %d", eventid, sid->dat->user_uid, sid->dat->user_did))<0) return;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		return;

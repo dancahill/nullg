@@ -72,9 +72,9 @@ void searchcontacts(CONN *sid)
 		}
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY surname, givenname ASC");
+		strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did);
 	} else {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid);
+		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
 	}
 	sql_freeresult(sqr1);
 	prints(sid, "<CENTER>\n");

@@ -71,6 +71,7 @@ void htpage_login(CONN *sid)
 		return;
 	}
 	memset(pageuri, 0, sizeof(pageuri));
+	memset(domain, 0, sizeof(domain));
 	if ((ptemp=getpostenv(sid, "PAGEURI"))!=NULL) {
 		snprintf(pageuri, sizeof(pageuri)-1, "%s", ptemp);
 	} else {
@@ -103,14 +104,23 @@ void htpage_login(CONN *sid)
 	if (strlen(username)==0) {
 		snprintf(username, sizeof(username)-1, "%s", sid->dat->user_username);
 	}
-	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
-	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
+	if (strlen(domain)==0) {
+		if (strlen(sid->dat->user_domainname)==0) {
+			snprintf(domain, sizeof(domain)-1, "%s", sid->dat->in_Host);
+		} else {
+			snprintf(domain, sizeof(domain)-1, "%s", sid->dat->user_domainname);
+		}
+	}
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
 	if ((sqr=sql_query("SELECT COUNT(*) FROM gw_domains"))<0) return;
-	if (sql_numtuples(sqr)>1) {
-		prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", domain);
+	if (atoi(sql_getvalue(sqr, 0, 0))>1) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", domain);
+	} else {
+		prints(sid, "<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
 	}
 	sql_freeresult(sqr);
-	prints(sid, "<TR CLASS=EDITFORM><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
 		prints(sid, "<BR><TABLE>\r\n");
@@ -565,13 +575,32 @@ void htselect_contact(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_query("SELECT contactid, surname, givenname FROM gw_contacts order by surname, givenname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\r\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
 		prints(sid, "<OPTION VALUE='%d'%s>%s", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
 		if (strlen(sql_getvalue(sqr, i, 1))&&strlen(sql_getvalue(sqr, i, 2))) prints(sid, ", ");
 		prints(sid, "%s\n", str2html(sid, sql_getvalue(sqr, i, 2)));
+	}
+	sql_freeresult(sqr);
+	return;
+}
+
+void htselect_domain(CONN *sid, int selected)
+{
+	int i, j;
+	int sqr;
+
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT domainid, domainname FROM gw_domains order by domainname ASC"))<0) return;
+	} else {
+		if ((sqr=sql_queryf("SELECT domainid, domainname FROM gw_domains WHERE domainid = %d ORDER BY domainname ASC", sid->dat->user_did))<0) return;
+	}
+	prints(sid, "<OPTION VALUE='0'>\n");
+	for (i=0;i<sql_numtuples(sqr);i++) {
+		j=atoi(sql_getvalue(sqr, i, 0));
+		prints(sid, "<OPTION VALUE='%d'%s>%s\n", j, j==selected?" SELECTED":"", str2html(sid, sql_getvalue(sqr, i, 1)));
 	}
 	sql_freeresult(sqr);
 	return;
@@ -593,7 +622,7 @@ void htselect_group(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_query("SELECT groupid, groupname FROM gw_groups order by groupname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -659,7 +688,7 @@ void htselect_user(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_query("SELECT userid, username FROM gw_users order by username ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<OPTION VALUE=0>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -674,7 +703,7 @@ void htselect_zone(CONN *sid, int selected)
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_query("SELECT zoneid, zonename FROM gw_zones order by zonename ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d order by zonename ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\r\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -707,6 +736,19 @@ char *htview_contact(CONN *sid, int selected)
 		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 0)));
 		if (strlen(sql_getvalue(sqr, 0, 0))&&strlen(sql_getvalue(sqr, 0, 1))) strcat(buffer, ", ");
 		strncatf(buffer, sizeof(sid->dat->smallbuf[0])-strlen(buffer)-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
+	}
+	sql_freeresult(sqr);
+	return buffer;
+}
+
+char *htview_domain(CONN *sid, int selected)
+{
+	char *buffer=getbuffer(sid);
+	int sqr;
+
+	if ((sqr=sql_queryf("SELECT domainname FROM gw_domains WHERE domainid = %d", selected))<0) return buffer;
+	if (sql_numtuples(sqr)==1) {
+		snprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 0)));
 	}
 	sql_freeresult(sqr);
 	return buffer;

@@ -156,6 +156,17 @@ void admindomainsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
+		if ((sqr=sql_queryf("SELECT domainname FROM gw_domains where domainname = '%s' AND domainid <> %d", domain.domainname, domain.domainid))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<CENTER>Domain %s already exists</CENTER><BR>\n", domain.domainname);
+			sql_freeresult(sqr);
+			return;
+		}
+		sql_freeresult(sqr);
+		if (strlen(domain.domainname)<1) {
+			prints(sid, "<CENTER>Domain name is too short</CENTER><BR>\n");
+			return;
+		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_domains SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, domain.obj_uid, domain.obj_gid, domain.obj_gperm, domain.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "domainname = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, domain.domainname));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE domainid = %d", domain.domainid);

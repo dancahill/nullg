@@ -31,6 +31,7 @@ int dbread_task(CONN *sid, short int perm, int index, REC_TASK *task)
 	if (index==0) {
 		task->obj_uid=sid->dat->user_uid;
 		task->obj_gid=sid->dat->user_gid;
+		task->obj_did=sid->dat->user_did;
 		task->obj_gperm=1;
 		task->obj_operm=1;
 		task->assignedby=sid->dat->user_uid;
@@ -41,9 +42,9 @@ int dbread_task(CONN *sid, short int perm, int index, REC_TASK *task)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_tasks where taskid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_tasks where taskid = %d and obj_did = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_tasks where taskid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_tasks where taskid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) and obj_did = %d", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -87,8 +88,8 @@ int dbwrite_task(CONN *sid, int index, REC_TASK *task)
 		task->taskid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (task->taskid<1) task->taskid=1;
-		strcpy(query, "INSERT INTO gw_tasks (taskid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, assignedby, assignedto, taskname, status, priority, reminder, duedate, details) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", task->taskid, curdate, curdate, task->obj_uid, task->obj_gid, task->obj_gperm, task->obj_operm);
+		strcpy(query, "INSERT INTO gw_tasks (taskid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, assignedby, assignedto, taskname, status, priority, reminder, duedate, details) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", task->taskid, curdate, curdate, task->obj_uid, task->obj_gid, task->obj_did, task->obj_gperm, task->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", task->assignedto);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, task->taskname));

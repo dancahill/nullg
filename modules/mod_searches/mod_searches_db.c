@@ -31,6 +31,7 @@ int dbread_query(CONN *sid, short int perm, int index, REC_QUERY *query)
 	if (index==0) {
 		query->obj_uid=sid->dat->user_uid;
 		query->obj_gid=sid->dat->user_gid;
+		query->obj_did=sid->dat->user_did;
 		query->obj_gperm=1;
 		query->obj_operm=1;
 		return 0;
@@ -76,9 +77,10 @@ int dbwrite_query(CONN *sid, int index, REC_QUERY *query)
 		query->queryid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (query->queryid<1) query->queryid=1;
-		strcpy(querybuf, "INSERT INTO gw_queries (queryid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, queryname, query) values (");
-		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", query->queryid, curdate, curdate, query->obj_uid, query->obj_gid, query->obj_gperm, query->obj_operm);
+		strcpy(querybuf, "INSERT INTO gw_queries (queryid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, queryname, query) values (");
+		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", query->queryid, curdate, curdate, query->obj_uid, query->obj_gid, query->obj_did, query->obj_gperm, query->obj_operm);
 		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->queryname));
+		query->obj_did=sid->dat->user_did;
 		strncatf(querybuf, sizeof(querybuf)-strlen(querybuf)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, query->query));
 		if (sql_update(querybuf)<0) return -1;
 		return query->queryid;

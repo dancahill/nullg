@@ -77,7 +77,11 @@ void adminzonelist(CONN *sid)
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_query("SELECT zoneid, zonename FROM gw_zones ORDER BY zonename ASC"))<0) return;
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT zoneid, zonename FROM gw_zones ORDER BY zonename ASC"))<0) return;
+	} else {
+		if ((sqr=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d ORDER BY zonename ASC", sid->dat->user_did))<0) return;
+	}
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
@@ -130,6 +134,13 @@ void adminzonesave(CONN *sid)
 		prints(sid, "<CENTER>Zone %d deleted successfully</CENTER><BR>\n", zone.zoneid);
 		db_log_activity(sid, 1, "zones", zone.zoneid, "delete", "%s - %s deleted zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);
 	} else if (zone.zoneid==0) {
+		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND obj_did = %d", zone.zonename, zone.obj_did))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<CENTER>Zone %s already exists</CENTER><BR>\n", zone.zonename);
+			sql_freeresult(sqr);
+			return;
+		}
+		sql_freeresult(sqr);
 		if (strlen(zone.zonename)<1) {
 			prints(sid, "<CENTER>Zone name is too short</CENTER><BR>\n");
 			return;
@@ -138,8 +149,8 @@ void adminzonesave(CONN *sid)
 		zone.zoneid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (zone.zoneid<1) zone.zoneid=1;
-		strcpy(query, "INSERT INTO gw_zones (zoneid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, zonename) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", zone.zoneid, curdate, curdate, zone.obj_uid, zone.obj_gid, zone.obj_gperm, zone.obj_operm);
+		strcpy(query, "INSERT INTO gw_zones (zoneid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, zonename) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", zone.zoneid, curdate, curdate, zone.obj_uid, zone.obj_gid, zone.obj_did, zone.obj_gperm, zone.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, zone.zonename));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Zone %d added successfully</CENTER><BR>\n", zone.zoneid);
@@ -149,9 +160,20 @@ void adminzonesave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
+		if ((sqr=sql_queryf("SELECT zonename FROM gw_zones where zonename = '%s' AND zoneid <> %d AND obj_did = %d", zone.zonename, zone.zoneid, zone.obj_did))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<CENTER>Zone %s already exists</CENTER><BR>\n", zone.zonename);
+			sql_freeresult(sqr);
+			return;
+		}
+		sql_freeresult(sqr);
+		if (strlen(zone.zonename)<1) {
+			prints(sid, "<CENTER>Zone name is too short</CENTER><BR>\n");
+			return;
+		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_zones SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, zone.obj_uid, zone.obj_gid, zone.obj_gperm, zone.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "zonename = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, zone.zonename));
-		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE zoneid = %d", zone.zoneid);
+		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE zoneid = %d AND obj_did = %d", zone.zoneid, zone.obj_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Zone %d modified successfully</CENTER><BR>\n", zone.zoneid);
 		db_log_activity(sid, 1, "zones", zone.zoneid, "modify", "%s - %s modified zone %d", sid->dat->in_RemoteAddr, sid->dat->user_username, zone.zoneid);

@@ -31,6 +31,7 @@ int dbread_call(CONN *sid, short int perm, int index, REC_CALL *call)
 	if (index==0) {
 		call->obj_uid=sid->dat->user_uid;
 		call->obj_gid=sid->dat->user_gid;
+		call->obj_did=sid->dat->user_did;
 		call->obj_gperm=1;
 		call->obj_operm=1;
 		call->assignedby=sid->dat->user_uid;

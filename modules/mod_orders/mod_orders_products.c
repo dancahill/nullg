@@ -117,7 +117,7 @@ void productlist(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_query("SELECT productid, productname, category, unitprice, internalcost FROM gw_products ORDER BY productname ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT productid, productname, category, unitprice, internalcost FROM gw_products WHERE obj_did = %d ORDER BY productname ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<CENTER>\n");
 	prints(sid, "Listing %d products.<BR>\n", sql_numtuples(sqr));
 	if (sql_numtuples(sqr)>0) {
@@ -189,8 +189,8 @@ void productsave(CONN *sid)
 		product.productid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (product.productid<1) product.productid=1;
-		strcpy(query, "INSERT INTO gw_products (productid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, productname, category, discount, unitprice, internalcost, tax1, tax2, details) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", product.productid, curdate, curdate, sid->dat->user_uid);
+		strcpy(query, "INSERT INTO gw_products (productid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, productname, category, discount, unitprice, internalcost, tax1, tax2, details) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", product.productid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, product.productname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, product.category));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%1.3f', ", product.discount);

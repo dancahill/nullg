@@ -119,6 +119,9 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->username));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password VALUE=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->password));
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Domain  &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=domainid style='width:255px'%s>\n", !(auth_priv(sid, "domainadmin")&A_ADMIN)||(user->userid>0)?" DISABLED":"");
+	htselect_domain(sid, user->domainid);
+	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n");
 	htselect_group(sid, user->groupid);
 	prints(sid, "</SELECT></TD></TR>\n");
@@ -388,19 +391,41 @@ void adminuserlist(CONN *sid)
 	int sqr1;
 	int sqr2;
 	int sqr3;
+	int sqr4;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr1=sql_query("SELECT userid, username, surname, givenname, groupid, prefgeozone FROM gw_users ORDER BY userid ASC"))<0) return;
-	if ((sqr2=sql_query("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		sqr1=sql_queryf("SELECT userid, username, surname, givenname, groupid, prefgeozone, domainid FROM gw_users ORDER BY domainid, userid ASC");
+	} else {
+		sqr1=sql_queryf("SELECT userid, username, surname, givenname, groupid, prefgeozone, domainid FROM gw_users WHERE domainid = %d ORDER BY domainid, userid ASC", sid->dat->user_did);
+	}
+	if (sqr1<0) return;
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC");
+	} else {
+		sqr2=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d ORDER BY groupid ASC", sid->dat->user_did);
+	}
+	if (sqr2<0) {
 		sql_freeresult(sqr1);
 		return;
 	}
-	if ((sqr3=sql_query("SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC"))<0) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		sqr3=sql_queryf("SELECT zoneid, zonename FROM gw_zones ORDER BY zoneid ASC");
+	} else {
+		sqr3=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d ORDER BY zoneid ASC", sid->dat->user_did);
+	}
+	if (sqr3<0) {
 		sql_freeresult(sqr1);
 		sql_freeresult(sqr2);
+		return;
+	}
+	if ((sqr4=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) {
+		sql_freeresult(sqr1);
+		sql_freeresult(sqr2);
+		sql_freeresult(sqr3);
 		return;
 	}
 	prints(sid, "<CENTER>\n");
@@ -408,6 +433,9 @@ void adminuserlist(CONN *sid)
 	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Real Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Group&nbsp;</TH>");
 	if (sql_numtuples(sqr3)>0) {
 		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Zone&nbsp;</TH>");
+	}
+	if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(sql_numtuples(sqr4)>0)) {
+		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Domain&nbsp;</TH>");
 	}
 	prints(sid, "</TR>\n");
 	for (i=0;i<sql_numtuples(sqr1);i++) {
@@ -437,14 +465,26 @@ void adminuserlist(CONN *sid)
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			}
 		}
+		if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(sql_numtuples(sqr4)>0)) {
+			for (j=0;j<sql_numtuples(sqr4);j++) {
+				if (atoi(sql_getvalue(sqr4, j, 0))==atoi(sql_getvalue(sqr1, i, 6))) {
+					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr4, j, 1)));
+					break;
+				}
+			}
+			if (j==sql_numtuples(sqr4)) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+			}
+		}
 		prints(sid, "</TR>\n");
 	}
 	prints(sid, "</TABLE>\n");
+	prints(sid, "<A HREF=%s/admin/usereditnew>New User</A>", sid->dat->in_ScriptName);
+	prints(sid, "</CENTER>");
 	sql_freeresult(sqr1);
 	sql_freeresult(sqr2);
 	sql_freeresult(sqr3);
-	prints(sid, "<A HREF=%s/admin/usereditnew>New User</A>", sid->dat->in_ScriptName);
-	prints(sid, "</CENTER>");
+	sql_freeresult(sqr4);
 	return;
 }
 
@@ -473,6 +513,9 @@ void adminusersave(CONN *sid)
 	snprintf(opassword, sizeof(opassword)-1, "%s", user.password);
 	if ((ptemp=getpostenv(sid, "USERNAME"))!=NULL) snprintf(user.username, sizeof(user.username)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "PASSWORD"))!=NULL) snprintf(user.password, sizeof(user.password)-1, "%s", ptemp);
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if ((ptemp=getpostenv(sid, "DOMAINID"))!=NULL) user.domainid=atoi(ptemp);
+	}
 	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) user.groupid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "ENABLED"))!=NULL) user.enabled=atoi(ptemp);
 	if (module_exists(sid, "mod_admin")) {
@@ -631,7 +674,7 @@ void adminusersave(CONN *sid)
 		db_log_activity(sid, 1, "users", user.userid, "delete", "%s - %s deleted user %d", sid->dat->in_RemoteAddr, sid->dat->user_username, user.userid);
 		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/admin/userlist\">\n", sid->dat->in_ScriptName);
 	} else if (user.userid==0) {
-		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s'", user.username))<0) return;
+		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' AND domainid = %d", user.username, user.domainid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
 			sql_freeresult(sqr);
@@ -708,7 +751,7 @@ void adminusersave(CONN *sid)
 			prints(sid, "<CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
-		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' and userid <> %d", user.username, user.userid))<0) return;
+		if ((sqr=sql_queryf("SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", user.username, user.userid, user.domainid))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>User %s already exists</B></CENTER>\n", user.username);
 			sql_freeresult(sqr);

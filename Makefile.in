@@ -76,9 +76,9 @@ install: _all
 
 upgrade: _all
 	@chown -R root.root * 1>/dev/null 2>&1
-	/etc/rc.d/init.d/nullgw stop
+	/etc/init.d/nullgw stop
 	@cd distrib;./setup upgrade
-	/etc/rc.d/init.d/nullgw start
+	/etc/init.d/nullgw start
 
 wc:
 	wc `find -name *.[ch]`

@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.3.4"
+MAIN_TITLE="NullLogic Groupware Configuration v1.3.5"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..
@@ -52,7 +52,6 @@ read_config() {
 		if [ "$HAVE_DIALOG" = "yes" ]; then
 			dialog --backtitle "$MAIN_TITLE" --title "NULLLOGIC GROUPWARE CONFIGURATION" --infobox "\nPrevious config found - importing settings..." 5 50
 		else
-			clear 2>/dev/null
 			echo "Previous config found - importing settings..."
 		fi
 		TMPSTR=`grep -i SERVER\.DIR\.BASE $CFG_FILE | awk -F'#' '{ print $1 }'`

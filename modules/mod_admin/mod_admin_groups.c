@@ -82,7 +82,11 @@ void admingrouplist(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((sqr=sql_query("SELECT groupid, groupname FROM gw_groups ORDER BY groupid ASC"))<0) return;
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups ORDER BY groupname ASC"))<0) return;
+	} else {
+		if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d ORDER BY groupname ASC", sid->dat->user_did))<0) return;
+	}
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
@@ -137,7 +141,7 @@ void admingroupsave(CONN *sid)
 		prints(sid, "<CENTER>Group %d deleted successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "delete", "%s - %s deleted group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);
 	} else if (group.groupid==0) {
-		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s'", group.groupname))<0) return;
+		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND obj_did = %d", group.groupname, group.obj_did))<0) return;
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER>Group %s already exists</CENTER><BR>\n", group.groupname);
 			sql_freeresult(sqr);
@@ -152,8 +156,8 @@ void admingroupsave(CONN *sid)
 		group.groupid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (group.groupid<1) group.groupid=1;
-		strcpy(query, "INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, groupname, availability, motd, members) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", group.groupid, curdate, curdate, group.obj_uid, group.obj_gid, group.obj_gperm, group.obj_operm);
+		strcpy(query, "INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupname, availability, motd, members) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", group.groupid, curdate, curdate, group.obj_uid, group.obj_gid, group.obj_did, group.obj_gperm, group.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.groupname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.availability));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.motd));
@@ -166,11 +170,22 @@ void admingroupsave(CONN *sid)
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 			return;
 		}
+		if ((sqr=sql_queryf("SELECT groupname FROM gw_groups where groupname = '%s' AND groupid <> %d AND obj_did = %d", group.groupname, group.groupid, group.obj_did))<0) return;
+		if (sql_numtuples(sqr)>0) {
+			prints(sid, "<CENTER>Group %s already exists</CENTER><BR>\n", group.groupname);
+			sql_freeresult(sqr);
+			return;
+		}
+		sql_freeresult(sqr);
+		if (strlen(group.groupname)<1) {
+			prints(sid, "<CENTER>Group name is too short</CENTER><BR>\n");
+			return;
+		}
 		snprintf(query, sizeof(query)-1, "UPDATE gw_groups SET obj_mtime = '%s', obj_uid = '%d', obj_gid = '%d', obj_gperm = '%d', obj_operm = '%d', ", curdate, group.obj_uid, group.obj_gid, group.obj_gperm, group.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "groupname = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.groupname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "motd = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.motd));
 		strncatf(query, sizeof(query)-strlen(query)-1, "members = '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, group.members));
-		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE groupid = %d", group.groupid);
+		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE groupid = %d AND obj_did = %d", group.groupid, group.obj_did);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Group %d modified successfully</CENTER><BR>\n", group.groupid);
 		db_log_activity(sid, 1, "groups", group.groupid, "modify", "%s - %s modified group %d", sid->dat->in_RemoteAddr, sid->dat->user_username, group.groupid);

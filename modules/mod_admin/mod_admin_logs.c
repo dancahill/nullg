@@ -45,7 +45,7 @@ void htselect_logfilter(CONN *sid, int selected, char *baseuri)
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
 	prints(sid, "<!--\r\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users order by username ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d ORDER BY username ASC", sid->dat->user_did))<0) return;
 	if (strncmp(sid->dat->in_RequestURI, "/admin/activity", 15)==0) {
 		prints(sid, "function go1() {\r\n");
 		prints(sid, "	location=document.logfilter.userid.options[document.logfilter.userid.selectedIndex].value\r\n");
@@ -181,9 +181,9 @@ void adminactivitylist(CONN *sid)
 	prints(sid, "<TD ALIGN=RIGHT>&nbsp;</TD>\r\n</TR></TABLE>\r\n");
 	prints(sid, "<CENTER>\n");
 	if (userid==0) {
-		if ((sqr=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action FROM gw_activity WHERE category like '%s' ORDER BY activityid DESC", category))<0) return;
+		if ((sqr=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action FROM gw_activity WHERE category like '%s' AND obj_did = %d ORDER BY activityid DESC", category, sid->dat->user_did))<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action FROM gw_activity WHERE userid = %d and category like '%s' ORDER BY activityid DESC", userid, category))<0) return;
+		if ((sqr=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action FROM gw_activity WHERE userid = %d AND category like '%s' AND obj_did = %d ORDER BY activityid DESC", userid, category, sid->dat->user_did))<0) return;
 	}
 	if (sql_numtuples(sqr)>0) {
 		prints(sid, "Listing %d Log Entries\r\n", sql_numtuples(sqr));
@@ -273,7 +273,7 @@ void adminactivityview(CONN *sid)
 	}
 	if ((ptemp=getgetenv(sid, "LOGID"))==NULL) return;
 	logid=atoi(ptemp);
-	if ((sqr1=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action, details FROM gw_activity WHERE activityid  = %d", logid))<0) return;
+	if ((sqr1=sql_queryf("SELECT activityid, obj_ctime, userid, clientip, category, indexid, action, details FROM gw_activity WHERE activityid = %d AND obj_did = %d", logid, sid->dat->user_did))<0) return;
 	if (sql_numtuples(sqr1)!=1) {
 		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", logid);
 		return;

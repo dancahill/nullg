@@ -32,6 +32,7 @@ int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain)
 	if (index==0) {
 		domain->obj_uid=sid->dat->user_uid;
 		domain->obj_gid=sid->dat->user_gid;
+		domain->obj_did=sid->dat->user_did;
 		domain->obj_gperm=1;
 		domain->obj_operm=1;
 		snprintf(domain->domainname, sizeof(domain->domainname)-1, "New Domain");
@@ -73,15 +74,18 @@ int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 	if (index==0) {
 		group->obj_uid=sid->dat->user_uid;
 		group->obj_gid=sid->dat->user_gid;
+		group->obj_did=sid->dat->user_did;
 		group->obj_gperm=1;
 		group->obj_operm=1;
 		strncpy(group->availability, "000000000000000000000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000000000000000000", sizeof(group->availability)-1);
 		return 0;
 	}
-	if (authlevel&A_ADMIN) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
 		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d", index))<0) return -1;
+	} else if (authlevel&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_groups where groupid = %d AND obj_did = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -120,9 +124,11 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	if (index==0) {
 		user->obj_uid=sid->dat->user_uid;
 		user->obj_gid=sid->dat->user_gid;
+		user->obj_did=sid->dat->user_did;
 		user->obj_gperm=1;
 		user->obj_operm=1;
 		user->groupid=2;
+		user->domainid=sid->dat->user_did;
 		user->enabled=1;
 		user->authbookmarks=A_READ+A_MODIFY+A_INSERT+A_DELETE;
 		user->authcalendar=A_READ+A_MODIFY+A_INSERT+A_DELETE;
@@ -146,10 +152,12 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 		strncpy(user->availability, "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", sizeof(user->availability)-1);
 		return 0;
 	}
-	if (authlevel&A_ADMIN) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
 		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d", index))<0) return -1;
+	} else if (authlevel&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d AND domainid = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_users where userid = %d AND domainid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -247,15 +255,18 @@ int dbread_zone(CONN *sid, short int perm, int index, REC_ZONE *zone)
 	if (index==0) {
 		zone->obj_uid=sid->dat->user_uid;
 		zone->obj_gid=sid->dat->user_gid;
+		zone->obj_did=sid->dat->user_did;
 		zone->obj_gperm=1;
 		zone->obj_operm=1;
 		snprintf(zone->zonename, sizeof(zone->zonename)-1, "New Zone");
 		return 0;
 	}
-	if (authlevel&A_ADMIN) {
+	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
 		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d", index))<0) return -1;
+	} else if (authlevel&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_zones where zoneid = %d AND obj_did = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_did, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);

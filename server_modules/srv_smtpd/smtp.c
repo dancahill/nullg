@@ -55,6 +55,7 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 	char *host;
 	char *buf_ptr;
 	int i;
+	int localdomainid;
 	int userid;
 	int sqr;
 	int is_remote;
@@ -71,12 +72,16 @@ static void smtp_accept(CONN *sid, MAILCONN *mconn)
 		} else {
 			host="localhost";
 		}
-		if (strcasecmp(host, "localhost")==0) {
+		localdomainid=domain_getid(host);
+		if (localdomainid>0) {
 			userid=0;
-			if ((sqr=sql_queryf("SELECT userid FROM gw_users WHERE username = '%s'", tmpaddr))<0) return;
+			if ((sqr=sql_queryf("SELECT userid FROM gw_users WHERE username = '%s' AND domainid = %d", tmpaddr, localdomainid))<0) return;
 			if (sql_numtuples(sqr)==1) userid=atoi(sql_getvalue(sqr, 0, 0));
 			sql_freeresult(sqr);
-			if (userid<1) continue;
+			if (userid<1) {
+				log_error("smtpd", __FILE__, __LINE__, 1, "no such mailbox: '%s', sent from '%s'", mconn->rcpt[i], mconn->from);
+				continue;
+			}
 			memset(tmpname, 0, sizeof(tmpname));
 			snprintf(tmpname, sizeof(tmpname)-1, "%s/local/%s", config->server_dir_var_mail, tmpaddr);
 			if (stat(tmpname, &sb)!=0) {
@@ -210,7 +215,7 @@ static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
 	} else {
 		host="localhost";
 	}
-	if (strcasecmp(host, "localhost")==0) mconn->sender_is_local=1;
+	if (domain_getid(host)>0) mconn->sender_is_local=1;
 	if (strlen(mconn->from)) {
 		tcp_fprintf(&sid->socket, "250 Sender '%s' OK\r\n", mconn->from);
 	} else {

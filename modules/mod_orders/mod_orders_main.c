@@ -269,7 +269,7 @@ void orderlist(CONN *sid)
 			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, searchstring);
 		}
 	}
-	strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY orderdate DESC");
+	strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY orderdate DESC", sid->dat->user_did);
 	sql_freeresult(sqr1);
 	prints(sid, "<CENTER>\n");
 	if ((sqr1=sql_query(query))<0) return;
@@ -384,8 +384,8 @@ void ordersave(CONN *sid)
 		order.orderid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (order.orderid<1) order.orderid=1;
-		strcpy(query, "INSERT INTO gw_orders (orderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, contactid, userid, orderdate, ordertype, paymentmethod, paymentdue, paymentreceived, status, details) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", order.orderid, curdate, curdate, sid->dat->user_uid);
+		strcpy(query, "INSERT INTO gw_orders (orderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, contactid, userid, orderdate, ordertype, paymentmethod, paymentdue, paymentreceived, status, details) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '%d', '0', '0', ", order.orderid, curdate, curdate, sid->dat->user_uid, sid->dat->user_did);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", order.contactid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", order.userid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", time_unix2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, order.orderdate));

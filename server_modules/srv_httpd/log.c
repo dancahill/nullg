@@ -31,8 +31,8 @@ int db_log_activity(CONN *sid, int loglevel, char *category, int indexid, char *
 	va_start(ap, format);
 	vsnprintf(details, sizeof(details)-1, format, ap);
 	va_end(ap);
-	strcpy(query, "INSERT INTO gw_activity (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, userid, clientip, category, indexid, action, details) values (");
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '0', '0', '0', ", curdate, curdate);
+	strcpy(query, "INSERT INTO gw_activity (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, userid, clientip, category, indexid, action, details) values (");
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '0', '%d', '0', '0', ", curdate, curdate, sid->dat->user_did);
 	if (sid!=NULL) {
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", sid->dat->user_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", sid->dat->in_RemoteAddr);

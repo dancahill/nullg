@@ -348,11 +348,11 @@ void tasks_list(CONN *sid, int userid, int groupid)
 		status=0;
 	}
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks ORDER BY priority DESC, taskid ASC"))<0) return;
+		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_did))<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+		if ((sqr=sql_queryf("SELECT taskid, status, assignedto, taskname FROM gw_tasks WHERE (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY priority DESC, taskid ASC", sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 	}
-	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users"))<0) {
+	if ((sqr2=sql_queryf("SELECT userid, groupid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) {
 		sql_freeresult(sqr);
 		return;
 	}

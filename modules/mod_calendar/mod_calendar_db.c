@@ -23,9 +23,9 @@ int dblist_events(CONN *sid, char *startdate, char *enddate)
 	int sqr;
 
 	if (auth_priv(sid, "calendar")&A_ADMIN) {
-		sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' ORDER BY eventstart ASC", startdate, enddate);
+		sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and obj_did = %d ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_did);
 	} else {
-		sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid);
+		sqr=sql_queryf("SELECT eventid, eventstart, eventfinish, status, assignedto, eventname FROM gw_events where eventstart >= '%s' and eventstart < '%s' and (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) and obj_did = %d  ORDER BY eventstart ASC", startdate, enddate, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
 	}
 	return sqr;
 }
@@ -43,6 +43,7 @@ int dbread_event(CONN *sid, short int perm, int index, REC_EVENT *event)
 	if (index==0) {
 		event->obj_uid=sid->dat->user_uid;
 		event->obj_gid=sid->dat->user_gid;
+		event->obj_did=sid->dat->user_did;
 		event->obj_gperm=1;
 		event->obj_operm=1;
 		snprintf(event->eventname, sizeof(event->eventname)-1, "New Event");
@@ -55,9 +56,9 @@ int dbread_event(CONN *sid, short int perm, int index, REC_EVENT *event)
 		return 0;
 	}
 	if (authlevel&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT * FROM gw_events where eventid = %d", index))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_events where eventid = %d and obj_did = %d", index, sid->dat->user_did))<0) return -1;
 	} else {
-		if ((sqr=sql_queryf("SELECT * FROM gw_events where eventid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+		if ((sqr=sql_queryf("SELECT * FROM gw_events where eventid = %d and (obj_uid = %d or assignedby = %d or assignedto = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d) and obj_did = %d", index, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, perm, perm, sid->dat->user_did))<0) return -1;
 	}
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
@@ -107,8 +108,8 @@ int dbwrite_event(CONN *sid, int index, REC_EVENT *event)
 		event->eventid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (event->eventid<1) event->eventid=1;
-		strcpy(query, "INSERT INTO gw_events (eventid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, eventname, assignedby, assignedto, eventtype, contactid, priority, reminder, eventstart, eventfinish, busy, status, closingstatus, details) values (");
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", event->eventid, curdate, curdate, event->obj_uid, event->obj_gid, event->obj_gperm, event->obj_operm);
+		strcpy(query, "INSERT INTO gw_events (eventid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventname, assignedby, assignedto, eventtype, contactid, priority, reminder, eventstart, eventfinish, busy, status, closingstatus, details) values (");
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', ", event->eventid, curdate, curdate, event->obj_uid, event->obj_gid, event->obj_did, event->obj_gperm, event->obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, event->eventname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", event->assignedby);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", event->assignedto);
