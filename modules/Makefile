@@ -1,5 +1,7 @@
 # Makefile for NullLogic Groupware mods
 
+include ../Rules.mak
+
 all:
 	@echo " mod_admin"     ; cd mod_admin     ; $(MAKE)
 	@echo " mod_bookmarks" ; cd mod_bookmarks ; $(MAKE)

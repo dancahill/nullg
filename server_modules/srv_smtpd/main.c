@@ -179,7 +179,7 @@ DllExport int mod_init(_PROC *_proc, FUNCTION *_functions)
 	config=&proc->config;
 	functions=_functions;
 	if (mod_import()!=0) return -1;
-	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpd %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
+	log_error("core", __FILE__, __LINE__, 1, "Starting %s smtpd %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if (config->smtp_port) {
 		if ((ListenSocket=tcp_bind(config->smtp_hostname, config->smtp_port))<0) return -1;
 	}

@@ -325,6 +325,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	notify		integer,\n\
 	remove		integer,\n\
 	lastcheck	datetime	NOT NULL,\n\
+	showdebug	varchar(10)	NOT NULL,\n\
 	signature	memo,\n\
 	PRIMARY KEY (mailaccountid)\n\
 );"

@@ -64,6 +64,7 @@ typedef struct {
 	short int smtpport;
 	short int connected;
 	short int remove;
+	short int showdebug;
 	short int imapidx;
 	short int codecstate;
 	short int numfiles;

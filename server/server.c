@@ -142,13 +142,15 @@ void init()
 		exit(0);
 	}
 #endif
-#ifdef FREEBSD  // calling daemon() here is necessary for freebsd
+// calling daemon() here is necessary for freebsd
+#ifndef WIN32
+#ifndef VALGRIND
 	daemon(0, 0);
+#endif
 #endif
 #ifndef WIN32
 	setsigs();
 #endif
-	log_error("core", __FILE__, __LINE__, 1, "Starting %s %s (%s)", SERVER_NAME, SERVER_VERSION, __DATE__);
 	pthread_mutex_init(&Lock.Global, NULL);
 	pthread_mutex_init(&Lock.DB_mheader, NULL);
 	pthread_mutex_init(&Lock.FileList, NULL);
@@ -164,12 +166,8 @@ void init()
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
 		exit(-2);
 	}
-#ifndef WIN32
-#ifndef FREEBSD
-#ifndef VALGRIND
-	daemon(0, 0);
-#endif
-#endif
+#ifdef HAVE_LIBSSL
+	ssl_init();
 #endif
 	return;
 }

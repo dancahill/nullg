@@ -66,7 +66,7 @@ struct MD5Context {
 	uint32 bits[2];
 	unsigned char in[64];
 };
-typedef struct MD5Context MD5_CTX;
+typedef struct MD5Context MD5_CONTEXT;
 #define MD5_SIZE 16
 /* end MD5 */
 
@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
 	short int socket;
 	struct sockaddr_in ClientAddr;
-#ifdef HAVE_SSL
+#ifdef HAVE_LIBSSL
 	SSL *ssl;
 #else
 	void *ssl;

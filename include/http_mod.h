@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "config.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -44,11 +45,18 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #endif
+#ifdef HAVE_LIBSSL
+#include <openssl/rsa.h>
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
 #include "defines.h"
 #include "typedefs.h"
 #include "http_records.h"
 #include "http_typedefs.h"
-#include "version.h"
 
 /*
 typedef	int   (*MAIN_AUTH_SETCOOKIE)(CONN *);

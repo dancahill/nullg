@@ -2,23 +2,11 @@
 
 include Rules.mak
 
-all: _dbutil _server _server_modules _modules _sqlite
+all: _sqlite _dbutil _server _server_modules _modules
 	@cp -p other/rc.groupware distrib/bin/rc.groupware
 	@cp -p other/cron.daily distrib/bin/cron.daily
 	@cp -p other/configure distrib/bin/configure
 	@cp -p other/setup distrib/setup
-
-linux:
-	@ln -sf Rules/Linux Rules.mak
-	@$(MAKE) all
-
-oldlinux:
-	@ln -sf Rules/Linux2.0 Rules.mak
-	@$(MAKE) all
-
-freebsd:
-	@ln -sf Rules/FreeBSD Rules.mak
-	@make all
 
 _dbutil:
 	@echo "dbutil"
@@ -38,7 +26,14 @@ _modules:
 
 _sqlite:
 	@echo "sqlite"
-	@cd contrib;./make_sqlite build
+	@cd sqlite;./make_sqlite build
+
+autoconf:
+	@echo ifnames *.[ch]
+	@echo autoscan
+	@echo mv configure.scan configure.in
+	@echo autoheader
+	@echo autoconf
 
 clean:
 	@echo -n "Cleaning..."
@@ -51,10 +46,12 @@ clean:
 	@rm -f distrib/bin/* distrib/lib/* *~
 	@echo "done."
 
-mrclean: clean
-	@ln -sf Rules/Linux Rules.mak
-	@cd contrib;./make_sqlite clean
+distclean: clean
+	@cd sqlite;./make_sqlite clean
 	@rm -f `find -name *~`
+	@autoconf
+	@rm -rf autom4te.cache
+	@rm -f config.log config.status include/config.h Makefile Rules.mak
 
 install: all
 	@cd distrib;./setup

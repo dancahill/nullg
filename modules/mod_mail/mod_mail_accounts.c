@@ -133,6 +133,11 @@ void wmaccount_edit(CONN *sid)
 	prints(sid, "<OPTION VALUE='1'%s>when retrieved\n",  mailacct.remove==1?" SELECTED":"");
 	prints(sid, "<OPTION VALUE='2'%s>when deleted from 'Trash'\n", mailacct.remove==2?" SELECTED":"");
 	prints(sid, "</SELECT>\n</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Show Debug    </B>&nbsp;</TD><TD ALIGN=RIGHT>\n");
+	prints(sid, "<SELECT NAME=showdebug style='width:217px'>\n");
+	prints(sid, "<OPTION VALUE='0'%s>No\n", mailacct.showdebug==0?" SELECTED":"");
+	prints(sid, "<OPTION VALUE='1'%s>Yes\n", mailacct.showdebug==1?" SELECTED":"");
+	prints(sid, "</SELECT>\n</TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "</DIV>\r\n");
 	prints(sid, "<DIV ID=page4 STYLE='display: block'>\r\n");
@@ -251,6 +256,7 @@ void wmaccount_save(CONN *sid)
 	if ((ptemp=getpostenv(sid, "SMTPAUTH"))!=NULL) snprintf(mailacct.smtpauth, sizeof(mailacct.smtpauth)-1, "%s", ptemp);
 	if ((ptemp=getpostenv(sid, "NOTIFY"))!=NULL) mailacct.notify=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "REMOVE"))!=NULL) mailacct.remove=atoi(ptemp);
+	if ((ptemp=getpostenv(sid, "SHOWDEBUG"))!=NULL) mailacct.showdebug=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "SIGNATURE"))!=NULL) snprintf(mailacct.signature, sizeof(mailacct.signature)-1, "%s", ptemp);
 	memset(curdate, 0, sizeof(curdate));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
@@ -286,7 +292,7 @@ void wmaccount_save(CONN *sid)
 		mailacct.mailaccountid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (mailacct.mailaccountid<1) mailacct.mailaccountid=1;
-		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, signature) values (");
+		strcpy(query, "INSERT INTO gw_mailaccounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, smtphost, smtpport, popusername, poppassword, smtpauth, lastcount, notify, remove, showdebug, signature) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '0', '0', '0', ", mailacct.mailaccountid, curdate, curdate, sid->dat->user_uid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.accountname));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.realname));
@@ -304,6 +310,7 @@ void wmaccount_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.lastcount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.notify);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", mailacct.remove);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%c', ", mailacct.showdebug==0?'n':'y');
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
 		if (sql_update(query)<0) return;
 		memset(dirname, 0, sizeof(dirname));
@@ -348,6 +355,7 @@ void wmaccount_save(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "lastcount = '%d', ",    mailacct.lastcount);
 		strncatf(query, sizeof(query)-strlen(query)-1, "notify = '%d', ",       mailacct.notify);
 		strncatf(query, sizeof(query)-strlen(query)-1, "remove = '%d', ",       mailacct.remove);
+		strncatf(query, sizeof(query)-strlen(query)-1, "showdebug = '%c', ",    mailacct.showdebug==0?'n':'y');
 		strncatf(query, sizeof(query)-strlen(query)-1, "signature = '%s'",      str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, mailacct.signature));
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE mailaccountid = %d and obj_uid = %d", mailacct.mailaccountid, sid->dat->user_uid);
 		if (sql_update(query)<0) return;

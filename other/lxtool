@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgroupware-1.3.1-x86
+OUTFILE=nullgroupware-1.3.2-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "Linux" ]; then
@@ -110,7 +110,7 @@ from_dos() {
 }
 
 dedos() {
-	rm -f contrib/libsqlite.dll 2>/dev/null
+	rm -f sqlite/libsqlite.dll 2>/dev/null
 	rm -f distrib/bin/* 2>/dev/null
 	rm -f distrib/lib/* 2>/dev/null
 	rm -rf obj 2>/dev/null
@@ -125,7 +125,7 @@ dedos() {
 	fi
 
 	ln -sf Rules/Linux Rules.mak
-	chmod 644 contrib/sqlite-*.tar.gz
+	chmod 644 sqlite/sqlite-*.tar.gz
 	chmod g-w * -R
 	chmod o-w * -R
 
@@ -201,7 +201,7 @@ dedos() {
 	chmod 0755 other/setup
 	chmod 0755 distrib -R
 	set_perms
-	cp -av other/make_sqlite contrib/make_sqlite
+	cp -av other/make_sqlite sqlite/make_sqlite
 }
 
 case "$1" in

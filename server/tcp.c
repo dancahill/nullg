@@ -75,7 +75,15 @@ int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 {
 	int rc;
 
+#ifdef HAVE_LIBSSL
+	if (socket->ssl) {
+		rc=SSL_read(socket->ssl, buffer, len);
+	} else {
+		rc=recv(socket->socket, buffer, len, flags);
+	}
+#else
 	rc=recv(socket->socket, buffer, len, flags);
+#endif
 	if (rc>0) {
 		socket->atime=time(NULL);
 		socket->bytes_in+=rc;
@@ -87,7 +95,15 @@ int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 {
 	int rc;
 
+#ifdef HAVE_LIBSSL
+	if (socket->ssl) {
+		rc=SSL_write(socket->ssl, buffer, len);
+	} else {
+		rc=send(socket->socket, buffer, len, flags);
+	}
+#else
 	rc=send(socket->socket, buffer, len, flags);
+#endif
 	if (rc>0) {
 		socket->atime=time(NULL);
 		socket->bytes_out+=rc;
@@ -167,6 +183,9 @@ int tcp_close(TCP_SOCKET *socket)
 		/* shutdown(x,0=recv, 1=send, 2=both) */
 		shutdown(socket->socket, 2);
 		closesocket(socket->socket);
+#ifdef HAVE_LIBSSL
+//		ssl_close(socket);
+#endif
 		socket->socket=-1;
 	}
 	return 0;

@@ -197,7 +197,7 @@ int auth_getcookie(CONN *sid)
 
 int auth_setcookie(CONN *sid)
 {
-	MD5_CTX c;
+	MD5_CONTEXT c;
 	unsigned char md[MD5_SIZE];
 	char timebuffer[32];
 	char password[64];

@@ -34,6 +34,10 @@ int wmprints(CONN *sid, const char *format, ...)
 	ob=tcp_send(&sid->dat->wm->socket, buffer, strlen(buffer), 0);
 //	striprn(buffer);
 //	logerror(sid, __FILE__, __LINE__, 4, "> %s", buffer);
+	if (sid->dat->wm->showdebug) {
+		prints(sid, "<FONT COLOR=green>%s</FONT><BR>\r\n", buffer);
+		flushbuffer(sid);
+	}
 	return ob;
 }
 
@@ -89,7 +93,13 @@ retry:
 		if ((lf)||(*obuffer=='\0')) break;
 	}
 	*pbuffer='\0';
-	if (n>max-1) return n;
+	if (n>max-1) {
+		if (sid->dat->wm->showdebug) {
+			prints(sid, "<FONT COLOR=blue>%s</FONT><BR>\r\n", buffer);
+			flushbuffer(sid);
+		}
+		return n;
+	}
 	if (!lf) {
 		if (sid->dat->wm->socket.recvbufsize>0) {
 			memmove(sid->dat->wm->socket.recvbuf, sid->dat->wm->socket.recvbuf+sid->dat->wm->socket.recvbufoffset, sid->dat->wm->socket.recvbufsize);
@@ -109,6 +119,10 @@ retry:
 	}
 
 //	logerror(sid, __FILE__, __LINE__, 4, "< %s", buffer);
+	if (sid->dat->wm->showdebug) {
+		prints(sid, "<FONT COLOR=blue>%s</FONT><BR>\r\n", buffer);
+		flushbuffer(sid);
+	}
 	return n;
 }
 
@@ -210,7 +224,7 @@ int wmserver_connect(CONN *sid, int verbose)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
+	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
@@ -221,7 +235,7 @@ int wmserver_connect(CONN *sid, int verbose)
 		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
 		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
+		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", sid->dat->user_mailcurrent, sid->dat->user_uid))<0) return -1;
 	}
 	if (sql_numtuples(sqr)==1) {
 		strncpy(sid->dat->wm->realname,     sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
@@ -237,7 +251,12 @@ int wmserver_connect(CONN *sid, int verbose)
 		strncpy(sid->dat->wm->address,      sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
 		strncpy(sid->dat->wm->replyto,      sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
 		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 12));
-		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 13), sizeof(sid->dat->wm->signature)-1);
+		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 13));
+		ptemp=sql_getvalue(sqr, 0, 13);
+		if ((tolower(ptemp[0])=='y')&&(verbose)) {
+			sid->dat->wm->showdebug=1;
+		}
+		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
 	}
 	sql_freeresult(sqr);
 	if (strcmp(sid->dat->in_RequestMethod,"POST")==0) {
@@ -1228,7 +1247,7 @@ cleanup:
 			if (wmserver_send(sid, atoi(sql_getvalue(sqr, i, 0)), verbose)!=0) smtperror=1;
 		}
 		sql_freeresult(sqr);
-		if (!smtperror) {
+		if ((!smtperror)&&(!sid->dat->wm->showdebug)) {
 			if (sid->dat->user_menustyle>0) {
 				prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=%s/mail/main\">\r\n", sid->dat->in_ScriptName);
 			} else {

@@ -193,6 +193,7 @@ typedef struct {
 	int notify;
 	int remove;
 	time_t lastcheck;
+	short int showdebug;
 	char signature[1025];
 } REC_MAILACCT;
 typedef struct {

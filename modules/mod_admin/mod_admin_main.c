@@ -25,7 +25,7 @@ void admin_stats(CONN *sid)
 
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	prints(sid, "<TR><TH COLSPAN=2 STYLE='border-style:solid'>Server Statistics</TH></TR>\n");
-	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" STYLE='border-style:solid'>Version         </TD><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>%s</TD></TR>\r\n", SERVER_VERSION);
+	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" STYLE='border-style:solid'>Version         </TD><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>%s</TD></TR>\r\n", PACKAGE_VERSION);
 	if (http_proc->RunAsCGI) {
 		prints(sid, "<TR><TD CLASS=\"FIELDNAME\" STYLE='border-style:solid'>Host            </TD><TD CLASS=\"FIELDVAL\" STYLE='border-style:solid'>");
 		if ((ptemp=getenv("SERVER_SOFTWARE"))!=NULL) {

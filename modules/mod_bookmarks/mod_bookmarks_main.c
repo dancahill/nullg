@@ -188,8 +188,8 @@ void bookmarkfoldersave(CONN *sid)
 		sql_freeresult(sqr);
 		if (sql_updatef("DELETE FROM gw_bookmarkfolders WHERE folderid = %d", bookmarkfolder.folderid)<0) return;
 		prints(sid, "<CENTER>Bookmark Folder %d deleted successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/bookmarks/list?folder=%d\">\n", sid->dat->in_ScriptName, bookmarkfolder.parentid);
 		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "delete", "%s - %s deleted bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		folderid=bookmarkfolder.parentid;
 	} else if (bookmarkfolder.folderid==0) {
 		if (strlen(bookmarkfolder.foldername)<1) {
 			prints(sid, "<CENTER>Folder name is too short</CENTER><BR>\n");
@@ -205,8 +205,8 @@ void bookmarkfoldersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, bookmarkfolder.foldername));
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Bookmark folder %d added successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/bookmarks/list?folder=%d\">\n", sid->dat->in_ScriptName, bookmarkfolder.folderid);
 		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "insert", "%s - %s added bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		folderid=bookmarkfolder.folderid;
 	} else {
 		if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
@@ -218,9 +218,15 @@ void bookmarkfoldersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, " WHERE folderid = %d", bookmarkfolder.folderid);
 		if (sql_update(query)<0) return;
 		prints(sid, "<CENTER>Bookmark folder %d modified successfully</CENTER><BR>\n", bookmarkfolder.folderid);
-		prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/bookmarks/list?folder=%d\">\n", sid->dat->in_ScriptName, bookmarkfolder.parentid);
 		db_log_activity(sid, 1, "bookmarkfolders", bookmarkfolder.folderid, "modify", "%s - %s modified bookmarkfolders %d", sid->dat->in_RemoteAddr, sid->dat->user_username, bookmarkfolder.folderid);
+		folderid=bookmarkfolder.parentid;
 	}
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\n<!--\n");
+	prints(sid, "location.replace(\"%s/bookmarks/list?folder=%d\");\n", sid->dat->in_ScriptName, folderid);
+	prints(sid, "// -->\n</SCRIPT>\n");
+	prints(sid, "<NOSCRIPT>\n");
+	prints(sid, "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/bookmarks/list?folder=%d\">\n", sid->dat->in_ScriptName, folderid);
+	prints(sid, "</NOSCRIPT>\n");
 	return;
 }
 

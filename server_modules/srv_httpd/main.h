@@ -120,7 +120,9 @@ int modules_init();
 #ifdef SRVMOD_MAIN
 	CONN *conn;
 	HTTP_PROC http_proc;
+	pthread_mutex_t ListenerMutex;
 #else
 	extern CONN *conn;
 	extern HTTP_PROC http_proc;
+	extern pthread_mutex_t ListenerMutex;
 #endif

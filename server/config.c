@@ -158,6 +158,10 @@ int config_read(CONFIG *config)
 				strncpy(config->http_hostname, pVal, sizeof(config->http_hostname)-1);
 			} else if (strcmp(pVar, "HTTP.PORT")==0) {
 				config->http_port=atoi(pVal);
+#ifdef HAVE_LIBSSL
+			} else if (strcmp(pVar, "HTTP.SSLPORT")==0) {
+				config->http_port_ssl=atoi(pVal);
+#endif
 			} else if (strcmp(pVar, "HTTP.MAXCONN")==0) {
 				config->http_maxconn=atoi(pVal);
 			} else if (strcmp(pVar, "HTTP.MAXIDLE")==0) {
@@ -308,6 +312,7 @@ int config_write(CONFIG *config)
 	fprintf(fp, "SERVER.USERNAME       = \"%s\"\n", config->server_username);
 	fprintf(fp, "HTTP.HOSTNAME         = \"%s\"\n", config->http_hostname);
 	fprintf(fp, "HTTP.PORT             = \"%d\"\n", config->http_port);
+	fprintf(fp, "HTTP.SSLPORT          = \"%d\"\n", config->http_port_ssl);
 	fprintf(fp, "HTTP.MAXCONN          = \"%d\"\n", config->http_maxconn);
 	fprintf(fp, "HTTP.MAXIDLE          = \"%d\"\n", config->http_maxidle);
 	fprintf(fp, "HTTP.MAXPOSTSIZE      = \"%d\"\n", config->http_maxpostsize);

@@ -255,7 +255,7 @@ char *md5_crypt(char *passwd, char *pw, char *salt)
 	char *sp,*ep, *p;
 	unsigned char final[MD5_SIZE];
 	int sl,pl,i;
-	MD5_CTX	ctx,ctx1;
+	MD5_CONTEXT ctx,ctx1;
 	unsigned long l;
 
 	/* Refine the Salt first */

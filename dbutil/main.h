@@ -21,6 +21,7 @@
 #define DEFAULT_BASE_DIR "/usr/local/nullgroupware"
 #endif
 
+#include "config.h"
 #include <stdio.h>
 #include <time.h>
 #ifdef WIN32
@@ -36,7 +37,6 @@
 	#include <stdlib.h>
 	#include <string.h>
 #endif
-#include "version.h"
 
 typedef struct {
 	char name[40];

@@ -692,7 +692,7 @@ void send_error(CONN *sid, int status, char* title, char* text)
 	prints(sid, "<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\">\r\n");
 	prints(sid, "<H1>%d %s</H1>\r\n", status, title);
 	prints(sid, "%s\r\n", str2html(sid, text));
-	prints(sid, "<HR>\r\n<ADDRESS>%s %s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME, SERVER_VERSION);
+	prints(sid, "<HR>\r\n<ADDRESS>%s %s</ADDRESS>\r\n</BODY></HTML>\r\n", SERVER_NAME, PACKAGE_VERSION);
 	sid->dat->out_bodydone=1;
 	flushbuffer(sid);
 	log_access("http", "%s \"%s %s %s\" %d %d \"%s\"", sid->dat->in_RemoteAddr, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent);

@@ -354,6 +354,7 @@ CREATE TABLE gw_mailaccounts (\n\
 	notify		int4		NOT NULL DEFAULT 0,\n\
 	remove		int4		NOT NULL DEFAULT 0,\n\
 	lastcheck	timestamp	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	showdebug	varchar(10)	NOT NULL DEFAULT 'n',\n\
 	signature	text		NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (mailaccountid)\n\
 );\n\n"

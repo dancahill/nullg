@@ -1,5 +1,7 @@
 # Makefile for NullLogic Groupware server mods
 
+include ../Rules.mak
+
 all:
 	@echo " srv_httpd" ; cd srv_httpd ; $(MAKE)
 	@echo " srv_pop3d" ; cd srv_pop3d ; $(MAKE)

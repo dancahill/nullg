@@ -831,7 +831,7 @@ void webmailsave(CONN *sid)
 	} else {
 		fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "iso-8859-1");
 	}
-	fprintf(fp, "X-Mailer: %s %s\r\n", SERVER_NAME, SERVER_VERSION);
+	fprintf(fp, "X-Mailer: %s %s\r\n", SERVER_NAME, PACKAGE_VERSION);
 	fprintf(fp, "\r\n");
 	if (filesize>0) {
 		fprintf(fp, "This is a multi-part message in MIME format.\r\n\r\n");
@@ -960,7 +960,13 @@ void webmailmove(CONN *sid)
 //		deleted=i;
 		flushbuffer(sid);
 	}
-	if (purge) wmserver_purge(sid, 2);
+	if (purge) {
+		wmserver_purge(sid, 2);
+		if (sid->dat->wm->showdebug) {
+			sql_freeresult(sqr);
+			return;
+		}
+	}
 //	if ((purge)&&(sid->dat->wm->remove>0)) wmserver_purge(sid, 2);
 //	snprintf(msgnum, sizeof(msgnum)-1, "%d", deleted);
 //	if (deleted>=nummessages) deleted=nummessages-1;

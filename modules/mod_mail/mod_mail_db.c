@@ -20,6 +20,7 @@
 
 int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *mailacct)
 {
+	char *ptemp;
 	int authlevel;
 	int sqr;
 
@@ -77,16 +78,21 @@ int dbread_mailaccount(CONN *sid, short int perm, int index, REC_MAILACCT *maila
 	mailacct->notify=atoi(sql_getvalue(sqr, 0, 22));
 	mailacct->remove=atoi(sql_getvalue(sqr, 0, 23));
 	mailacct->lastcheck=time_sql2unix(sql_getvalue(sqr, 0, 24));
-	strncpy(mailacct->signature,	sql_getvalue(sqr, 0, 25), sizeof(mailacct->signature)-1);
+	ptemp=sql_getvalue(sqr, 0, 25);
+	if (tolower(ptemp[0])=='y') {
+		mailacct->showdebug=1;
+	}
+	strncpy(mailacct->signature,	sql_getvalue(sqr, 0, 26), sizeof(mailacct->signature)-1);
 	sql_freeresult(sqr);
 	return 0;
 }
 
 int dbread_mailcurrent(CONN *sid, int mailcurrent)
 {
+	char *ptemp;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
+	if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
 	if (sql_numtuples(sqr)!=1) {
 		sql_freeresult(sqr);
 		if ((sqr=sql_queryf("SELECT mailaccountid FROM gw_mailaccounts where obj_uid = %d", sid->dat->user_uid))<0) return -1;
@@ -97,7 +103,7 @@ int dbread_mailcurrent(CONN *sid, int mailcurrent)
 		sid->dat->user_mailcurrent=atoi(sql_getvalue(sqr, 0, 0));
 		if (sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", sid->dat->user_mailcurrent, sid->dat->user_username)<0) return -1;
 		sql_freeresult(sqr);
-		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
+		if ((sqr=sql_queryf("SELECT realname, organization, popusername, poppassword, smtpauth, hosttype, pophost, popport, smtphost, smtpport, address, replyto, remove, showdebug, signature FROM gw_mailaccounts where mailaccountid = %d and obj_uid = %d", mailcurrent, sid->dat->user_uid))<0) return -1;
 	}
 	if (sql_numtuples(sqr)==1) {
 		strncpy(sid->dat->wm->realname,     sql_getvalue(sqr, 0, 0), sizeof(sid->dat->wm->realname)-1);
@@ -113,7 +119,11 @@ int dbread_mailcurrent(CONN *sid, int mailcurrent)
 		strncpy(sid->dat->wm->address,      sql_getvalue(sqr, 0, 10), sizeof(sid->dat->wm->address)-1);
 		strncpy(sid->dat->wm->replyto,      sql_getvalue(sqr, 0, 11), sizeof(sid->dat->wm->replyto)-1);
 		sid->dat->wm->remove=atoi(sql_getvalue(sqr, 0, 12));
-		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 13), sizeof(sid->dat->wm->signature)-1);
+		ptemp=sql_getvalue(sqr, 0, 13);
+		if (tolower(ptemp[0])=='y') {
+			sid->dat->wm->showdebug=1;
+		}
+		strncpy(sid->dat->wm->signature,    sql_getvalue(sqr, 0, 14), sizeof(sid->dat->wm->signature)-1);
 	}
 	sql_freeresult(sqr);
 	return 0;

@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Configuration v1.3.1"
+MAIN_TITLE="NullLogic Groupware Configuration v1.3.2"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 cd ..
@@ -26,6 +26,7 @@ SERVER_USERNAME="nullgw"
 SERVER_GROUPNAME=$SERVER_USERNAME
 HTTP_HOSTNAME="INADDR_ANY"
 HTTP_PORT="4110"
+HTTP_SSLPORT="4112"
 HTTP_MAXCONN="50"
 HTTP_MAXIDLE="120"
 POP3_HOSTNAME="INADDR_ANY"
@@ -74,6 +75,10 @@ read_config() {
 		TMPSTR=`grep -i HTTP\.PORT $CFG_FILE | awk -F'#' '{ print $1 }'`
 		if test -n "$TMPSTR"; then
 			HTTP_PORT=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
+		fi
+		TMPSTR=`grep -i HTTP\.SSLPORT $CFG_FILE | awk -F'#' '{ print $1 }'`
+		if test -n "$TMPSTR"; then
+			HTTP_SSLPORT=`echo $TMPSTR | awk -F'"' '{ print $2 }'`
 		fi
 		TMPSTR=`grep -i SQL\.TYPE $CFG_FILE | awk -F'#' '{ print $1 }'`
 		if test -n "$TMPSTR"; then
@@ -129,6 +134,7 @@ SERVER.LOGLEVEL   = "$SERVER_LOGLEVEL"
 SERVER.USERNAME   = "$SERVER_USERNAME"
 HTTP.HOSTNAME     = "$HTTP_HOSTNAME"
 HTTP.PORT         = "$HTTP_PORT"
+HTTP.SSLPORT      = "$HTTP_SSLPORT"
 HTTP.MAXCONN      = "$HTTP_MAXCONN"
 HTTP.MAXIDLE      = "$HTTP_MAXIDLE"
 SQL.TYPE          = "$SQL_TYPE"

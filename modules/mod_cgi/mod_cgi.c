@@ -128,9 +128,9 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_PROTOCOL=HTTP/1.1");
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_SIGNATURE=<ADDRESS>%s %s</ADDRESS>", SERVER_NAME, SERVER_VERSION);
+	snprintf(env[n++], 1023, "SERVER_SIGNATURE=<ADDRESS>%s %s</ADDRESS>", SERVER_NAME, PACKAGE_VERSION);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_SOFTWARE=%s %s", SERVER_NAME, SERVER_VERSION);
+	snprintf(env[n++], 1023, "SERVER_SOFTWARE=%s %s", SERVER_NAME, PACKAGE_VERSION);
 #ifdef WIN32
 	if ((ptemp=getenv("SYSTEMROOT"))!=NULL) {
 		env[n]=calloc(1024, sizeof(char));

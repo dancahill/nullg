@@ -50,7 +50,7 @@ int xmlrpc_auth_checkpass(CONN *sid, char *username, char *password)
 
 int xmlrpc_auth_login(CONN *sid)
 {
-	MD5_CTX c;
+	MD5_CONTEXT c;
 	unsigned char md[MD5_SIZE];
 	char timebuffer[100];
 	char username[64];

@@ -18,7 +18,7 @@
 */
 #include "main.h"
 
-#ifdef HAVE_SSL
+#ifdef HAVE_LIBSSL
 
 static SSL_CTX *ctx;
 static SSL_METHOD *meth;
@@ -30,46 +30,46 @@ int ssl_init()
 	meth=SSLv23_server_method();
 	ctx=SSL_CTX_new(meth);
 	if (!ctx) {
-		logerror(NULL, __FILE__, __LINE__, 0, "SSL Error");
+		log_error("core", __FILE__, __LINE__, 0, "SSL Error");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 	if (SSL_CTX_use_certificate_file(ctx, "../etc/cert.pem", SSL_FILETYPE_PEM)<=0) {
-		logerror(NULL, __FILE__, __LINE__, 0, "SSL Error");
+		log_error("core",  __FILE__, __LINE__, 0, "SSL Error loading cert.pem");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 	if (SSL_CTX_use_PrivateKey_file(ctx, "../etc/priv.pem", SSL_FILETYPE_PEM)<=0) {
-		logerror(NULL, __FILE__, __LINE__, 0, "SSL Error");
+		log_error("core", __FILE__, __LINE__, 0, "SSL Error loading priv.pem");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
 	if (!SSL_CTX_check_private_key(ctx)) {
-		logerror(NULL, __FILE__, __LINE__, 0, "Private key does not match the certificate public key");
+		log_error("core", __FILE__, __LINE__, 0, "Private key does not match the certificate public key");
 		ERR_print_errors_fp(stderr);
 		return -1;
 	}
-	logerror(NULL, __FILE__, __LINE__, 2, "ssl_init() completed");
+	log_error("core", __FILE__, __LINE__, 2, "ssl_init() completed");
 	return 0;
 }
 
-int ssl_accept(CONN *sid)
+int ssl_accept(TCP_SOCKET *sock)
 {
-	if ((sid->ssl=SSL_new(ctx))==NULL) {
+	if ((sock->ssl=SSL_new(ctx))==NULL) {
 		return -1;
 	}
-	SSL_set_fd(sid->ssl, sid->socket);
-	if (SSL_accept(sid->ssl)==-1) {
+	SSL_set_fd(sock->ssl, sock->socket);
+	if (SSL_accept(sock->ssl)==-1) {
 		return -1;
 	}
 	return 0;
 }
 
-int ssl_close(CONN *sid)
+int ssl_close(TCP_SOCKET *sock)
 {
-	if (sid->ssl!=NULL) {
-		SSL_free(sid->ssl);
-		sid->ssl=NULL;
+	if (sock->ssl!=NULL) {
+		SSL_free(sock->ssl);
+		sock->ssl=NULL;
 	}
 	return 0;
 }
@@ -80,4 +80,4 @@ int ssl_shutdown()
 	return 0;
 }
 
-#endif /* HAVE_SSL */
+#endif /* HAVE_LIBSSL */

@@ -153,7 +153,7 @@ void flushheader(CONN *sid)
 			snprintf(line, sizeof(line)-1, "Pragma: %s\r\n", sid->dat->out_Pragma);
 			if (tcp_send(&sid->socket, line, strlen(line), 0)<0) goto err;
 		}
-		snprintf(line, sizeof(line)-1, "Server: %s %s\r\n", SERVER_NAME, SERVER_VERSION);
+		snprintf(line, sizeof(line)-1, "Server: %s %s\r\n", SERVER_NAME, PACKAGE_VERSION);
 		if (tcp_send(&sid->socket, line, strlen(line), 0)<0) goto err;
 		if (strlen(sid->dat->out_SetCookieUser)) {
 			snprintf(line, sizeof(line)-1, "Set-Cookie: %s\r\n", sid->dat->out_SetCookieUser);

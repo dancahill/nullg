@@ -15,6 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#include "config.h"
 /* #includes */
 #include <ctype.h>
 #include <fcntl.h>
@@ -70,7 +71,7 @@
 	#include <sys/wait.h>
 	#define closesocket close
 #endif
-#ifdef HAVE_SSL
+#ifdef HAVE_LIBSSL
 	#include <openssl/rsa.h>
 	#include <openssl/crypto.h>
 	#include <openssl/x509.h>
@@ -95,7 +96,6 @@
 
 #include "i18n/httpd.h"
 #include "defines.h"
-#include "version.h"
 #include "typedefs.h"
 #include "functions.h"
 
