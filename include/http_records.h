@@ -102,6 +102,17 @@ typedef struct {
 	char workpostalcode[11];
 } REC_CONTACT;
 typedef struct {
+	int domainid;
+	time_t obj_ctime;
+	time_t obj_mtime;
+	int obj_uid;
+	int obj_gid;
+	int obj_did;
+	int obj_gperm;
+	int obj_operm;
+	char domainname[64];
+} REC_DOMAIN;
+typedef struct {
 	int eventid;
 	time_t obj_ctime;
 	time_t obj_mtime;
@@ -310,7 +321,9 @@ typedef struct {
 	char username[51];
 	char password[51];
 	int groupid;
+	int domainid;
 	int enabled;
+	int authdomainadmin;
 	int authadmin;
 	int authbookmarks;
 	int authcalendar;

@@ -78,6 +78,8 @@ int module_load(char *modname)
 		{ "config_read",		config_read			},
 		{ "config_write",		config_write			},
 		{ "decode_base64",		decode_base64			},
+		{ "domain_getname",		domain_getname			},
+		{ "domain_getid",		domain_getid			},
 		{ "log_access",			log_access			},
 		{ "log_error",			log_error			},
 		{ "md5_init",			md5_init			},

@@ -51,7 +51,7 @@ void htselect_callfilter(CONN *sid, int selected, char *baseuri)
 	if (selected<1) {
 		selected=sid->dat->user_uid;
 	}
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users order by username ASC"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", sid->dat->user_did))<0) return;
 	prints(sid, "<FORM METHOD=GET NAME=callfilter ACTION=%s%s>\r\n", sid->dat->in_ScriptName, baseuri);
 	prints(sid, "<TD ALIGN=LEFT>\r\n");
 	prints(sid, "<SCRIPT LANGUAGE=\"javascript\">\r\n");
@@ -335,7 +335,7 @@ void callview(CONN *sid)
 	call.callstart+=time_tzoffset(sid, call.callstart);
 	call.callfinish+=time_tzoffset(sid, call.callfinish);
 	memset(contactname, 0, sizeof(contactname));
-	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d", call.contactid))<0) return;
+	if ((sqr=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE contactid = %d AND obj_did = %d", call.contactid, sid->dat->user_did))<0) return;
 	if (sql_numtuples(sqr)>0) {
 		snprintf(contactname, sizeof(contactname)-1, "%s", str2html(sid, sql_getvalue(sqr, 0, 1)));
 		if (strlen(sql_getvalue(sqr, 0, 1))&&strlen(sql_getvalue(sqr, 0, 2))) strncat(contactname, ", ", sizeof(contactname)-strlen(contactname)-1);
@@ -353,7 +353,7 @@ void callview(CONN *sid)
 		}
 	}
 	prints(sid, "</TH></TR>\n");
-	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users"))<0) return;
+	if ((sqr=sql_queryf("SELECT userid, username FROM gw_users WHERE obj_did = %d", sid->dat->user_did))<0) return;
 	prints(sid, "<TR><TD CLASS=\"FIELDNAME\" NOWRAP STYLE='border-style:solid'><B>Assigned By </B></TD><TD CLASS=\"FIELDVAL\" NOWRAP WIDTH=50%% STYLE='border-style:solid'><NOBR>");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		if (atoi(sql_getvalue(sqr, i, 0))==call.assignedby) {
@@ -423,18 +423,18 @@ void calllist(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	if (status==2) {
 		if (auth_priv(sid, "calls")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d ORDER BY callid DESC", userid))<0) return;
+			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_did))<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 		}
 	} else {
 		if (auth_priv(sid, "calls")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d ORDER BY callid DESC", userid, status))<0) return;
+			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_did))<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) ORDER BY callid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr1=sql_queryf("SELECT callid, action, contactid, callstart, callfinish, status, assignedto FROM gw_calls where assignedto = %d AND status = %d AND (assignedby = %d or assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d ORDER BY callid DESC", userid, status, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 		}
 	}
-	if ((sqr2=sql_query("SELECT contactid, surname, givenname FROM gw_contacts"))<0) return;
+	if ((sqr2=sql_queryf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d", sid->dat->user_did))<0) return;
 	total=0;
 	for (i=0;i<sql_numtuples(sqr1);i++) {
 		if (atoi(sql_getvalue(sqr1, i, 6))==userid) total++;

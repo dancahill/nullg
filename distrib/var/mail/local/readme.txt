@@ -1,1 +1,0 @@
-This file is only a placeholder, and is safe to delete.

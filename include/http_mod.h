@@ -62,129 +62,14 @@
 #include "http_records.h"
 #include "http_typedefs.h"
 
-/*
-typedef	int   (*MAIN_AUTH_SETCOOKIE)(CONN *);
-typedef	int   (*MAIN_AUTH_PRIV)(CONN *, char *);
-typedef	char *(*MAIN_AUTH_SETPASS)(CONN *, char *);
-typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
-typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
-typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, int, char *, int, char *, const char *, ...);
-typedef	void  (*MAIN_LOGACCESS)(CONN *, const char *, ...);
-typedef	void  (*MAIN_LOGERROR)(CONN *, char *, int, int, const char *, ...);
-typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
-typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
-typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_DAY)(CONN *, char *);
-typedef	void  (*MAIN_HTSELECT_EVENTSTATUS)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_GROUP)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_HOUR)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_MINUTES)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_MONTH)(CONN *, char *);
-typedef	void  (*MAIN_HTSELECT_NUMBER)(CONN *, int, int, int, int);
-typedef	void  (*MAIN_HTSELECT_PRIORITY)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_QHOURS)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_QMINUTES)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_REMINDER)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_TIME)(CONN *, time_t);
-typedef	void  (*MAIN_HTSELECT_TIMEZONE)(CONN *, short int);
-typedef	void  (*MAIN_HTSELECT_USER)(CONN *, int);
-typedef	void  (*MAIN_HTSELECT_YEAR)(CONN *, int, char *);
-typedef	void  (*MAIN_HTSELECT_ZONE)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_CALLACTION)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_CONTACT)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTCLOSINGSTATUS)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTSTATUS)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_EVENTTYPE)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_HOLIDAY)(char *);
-typedef	char *(*MAIN_HTVIEW_REMINDER)(CONN *, int);
-typedef	char *(*MAIN_HTVIEW_USER)(CONN *, int);
-typedef void  (*MAIN_HTSCRIPT_SHOWPAGE)(CONN *, short int);
-typedef	void  (*MAIN_MD5_INIT)(struct MD5Context *);
-typedef	void  (*MAIN_MD5_UPDATE)(struct MD5Context *, unsigned char const *, unsigned);
-typedef	void  (*MAIN_MD5_FINAL)(unsigned char*, struct MD5Context *);
-typedef	char *(*MAIN_MD5_CRYPT)(CONN *, char *, char *);
-typedef	void  (*MAIN_SQL_FREERESULT)(int);
-typedef	char *(*MAIN_SQL_GETNAME)(int, int);
-typedef	char *(*MAIN_SQL_GETVALUE)(int, int, int);
-typedef	char *(*MAIN_SQL_GETVALUEBYNAME)(int, int, char *);
-typedef	int   (*MAIN_SQL_NUMFIELDS)(int);
-typedef	int   (*MAIN_SQL_NUMTUPLES)(int);
-typedef	int   (*MAIN_SQL_QUERY)(CONN *, char *);
-typedef	int   (*MAIN_SQL_QUERYF)(CONN *, char *, ...);
-typedef	int   (*MAIN_SQL_UPDATE)(CONN *, char *);
-typedef	int   (*MAIN_SQL_UPDATEF)(CONN *, const char *, ...);
-typedef	char *(*MAIN_TIME_SQL2DATETEXT)(CONN *, char *);
-typedef	char *(*MAIN_TIME_SQL2TIMETEXT)(CONN *, char *);
-typedef	time_t(*MAIN_TIME_SQL2UNIX)(char *);
-typedef	int   (*MAIN_TIME_TZOFFSET)(CONN *, time_t);
-typedef	int   (*MAIN_TIME_TZOFFSET2)(CONN *, time_t, int);
-typedef	int   (*MAIN_TIME_TZOFFSETCON)(CONN *, time_t, int);
-typedef	char *(*MAIN_TIME_UNIX2SQL)(CONN *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2TEXT)(CONN *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2LOTIMETEXT)(CONN *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2TIMETEXT)(CONN *, time_t);
-typedef	char *(*MAIN_TIME_UNIX2DATETEXT)(CONN *, time_t);
-typedef	time_t(*MAIN_TIME_WMGETDATE)(char *);
-typedef	char *(*MAIN_GETBUFFER)(CONN *);
-typedef	char *(*MAIN_GETGETENV)(CONN *, char *);
-typedef	char *(*MAIN_GETMIMEENV)(CONN *, char *, unsigned int *);
-typedef	char *(*MAIN_GETPOSTENV)(CONN *, char *);
-typedef	char *(*MAIN_GETXMLENV)(CONN *, char *);
-typedef	char *(*MAIN_GETXMLPARAM)(CONN *, int, char *);
-typedef	char *(*MAIN_GETXMLSTRUCT)(CONN *, char *, char *);
-typedef	int   (*MAIN_PRINTS)(CONN *, const char *, ...);
-typedef	int   (*MAIN_RAW_PRINTS)(CONN *, const char *, ...);
-typedef	int   (*MAIN_PRINTHEX)(CONN *, const char *, ...);
-typedef	int   (*MAIN_PRINTHT)(CONN *, const char *, ...);
-typedef	void  (*MAIN_PRINTLINE)(CONN *, short int, char *);
-typedef	void  (*MAIN_PRINTLINE2)(CONN *, int, char *);
-typedef	char *(*MAIN_STR2HTML)(CONN *, char *);
-typedef	char *(*MAIN_STRNCATF)(char *, int, const char *, ...);
-typedef	void  (*MAIN_SEND_ERROR)(CONN *, int, char *, char *);
-typedef	void  (*MAIN_SEND_HEADER)(CONN *, int, int, char *, char *, char *, int, time_t);
-typedef	void  (*MAIN_DECODEURL)(unsigned char *);
-typedef	char *(*MAIN_ENCODEURL)(CONN *, unsigned char *);
-typedef	char *(*MAIN_DECODE_B64S)(CONN *, char *);
-typedef	void  (*MAIN_FIXSLASHES)(char *);
-typedef	void  (*MAIN_STRIPRN)(char *);
-typedef	void  (*MAIN_FLUSHBUFFER)(CONN *);
-typedef	char *(*MAIN_STR2SQL)(CONN *, char *);
-typedef	char *(*MAIN_STR2SQLBUF)(CONN *, char *, char *, int);
-typedef	char *(*MAIN_GET_MIME_TYPE)(char *);
-typedef	int   (*MAIN_FILESEND)(CONN *, char *);
-typedef	int   (*MAIN_TCP_SEND)(CONN *, int, const char *, int, int);
-typedef	int   (*MAIN_CLOSECONNECT)(CONN *, int);
-typedef	int   (*MAIN_HEX2INT)(char *);
-typedef	char *(*MAIN_P_STRCASESTR)(char *, char *);
-typedef	char *(*MAIN_SRV_RESTART)(void);
-typedef	int   (*MAIN_MODULE_EXISTS)(CONN *, char *);
-typedef	void *(*MAIN_MODULE_CALL)(CONN *, char *);
-#ifdef WIN32
-typedef	int   (*MAIN_GETTIMEOFDAY)(struct timeval *, struct timezone *);
-typedef	DIR  *(*MAIN_OPENDIR)(char *);
-typedef	struct	direct *(*MAIN_READDIR)(DIR *);
-typedef	void  (*MAIN_CLOSEDIR)(DIR *);
-#endif
-//typedef	void  (*MAIN_NOTESSUBLIST)(void);
-
-typedef	int   (*MOD_CONTACTS_READ)(CONN *, short int, int, REC_CONTACT *);
-typedef	int   (*MOD_CONTACTS_WRITE)(CONN *, int, REC_CONTACT *);
-*/
-
-
-
-
-
-
-
-
 typedef	int   (*MAIN_AUTH_SETCOOKIE)(CONN *);
 typedef	int   (*MAIN_AUTH_PRIV)(CONN *, char *);
 typedef	char *(*MAIN_AUTH_SETPASS)(CONN *, char *);
 typedef int   (*MAIN_CONFIG_READ)(CONFIG *);
 typedef int   (*MAIN_CONFIG_WRITE)(CONFIG *);
 typedef	char *(*MAIN_DECODE_BASE64)(char *, int, char *);
+typedef char *(*MAIN_DOMAIN_GETNAME)(char *, int, int);
+typedef int   (*MAIN_DOMAIN_GETID)(char *);
 typedef	char *(*MAIN_GETBUFFER)(CONN *);
 typedef	char *(*MAIN_GET_MIME_TYPE)(char *);
 typedef	char *(*MAIN_GETGETENV)(CONN *, char *);
@@ -245,7 +130,7 @@ typedef	int   (*MAIN_TCP_FGETS)(char *, int, TCP_SOCKET *);
 typedef	int   (*MAIN_TCP_FPRINTF)(TCP_SOCKET *, const char *, ...);
 typedef	int   (*MAIN_TCP_RECV)(TCP_SOCKET *, char *, int, int);
 typedef	int   (*MAIN_TCP_SEND)(TCP_SOCKET *, const char *, int, int);
-typedef	int   (*MAIN_TCP_CLOSE)(TCP_SOCKET *);
+typedef	int   (*MAIN_TCP_CLOSE)(TCP_SOCKET *, short int);
 typedef	time_t(*MAIN_TIME_SQL2UNIX)(char *);
 typedef	char *(*MAIN_TIME_UNIX2SQL)(char *, int, time_t);
 typedef	char *(*MAIN_TIME_SQL2DATETEXT)(CONN *, char *);
@@ -305,6 +190,8 @@ EXTERN MAIN_AUTH_SETPASS		auth_setpass;
 EXTERN MAIN_CONFIG_READ			config_read;
 EXTERN MAIN_CONFIG_WRITE		config_write;
 EXTERN MAIN_DECODE_BASE64		decode_base64;
+EXTERN MAIN_DOMAIN_GETNAME		domain_getname;
+EXTERN MAIN_DOMAIN_GETID		domain_getid;
 EXTERN MAIN_GETBUFFER			getbuffer;
 EXTERN MAIN_GET_MIME_TYPE		get_mime_type;
 EXTERN MAIN_GETGETENV			getgetenv;
@@ -360,7 +247,7 @@ EXTERN MAIN_SQL_GETVALUEBYNAME		sql_getvaluebyname;
 EXTERN MAIN_SQL_NUMFIELDS		sql_numfields;
 EXTERN MAIN_SQL_NUMTUPLES		sql_numtuples;
 //EXTERN MAIN_TCP_BIND			tcp_bind;
-//EXTERN MAIN_TCP_ACCEPT			tcp_accept;
+//EXTERN MAIN_TCP_ACCEPT		tcp_accept;
 EXTERN MAIN_TCP_FGETS			tcp_fgets;
 EXTERN MAIN_TCP_FPRINTF			tcp_fprintf;
 EXTERN MAIN_TCP_RECV			tcp_recv;
@@ -461,6 +348,8 @@ int mod_import()
 	if (_get_func((void *)&config_read,			"config_read"			)!=0) return -1;
 	if (_get_func((void *)&config_write,			"config_write"			)!=0) return -1;
 	if (_get_func((void *)&decode_base64,			"decode_base64"			)!=0) return -1;
+	if (_get_func((void *)&domain_getname,			"domain_getname"		)!=0) return -1;
+	if (_get_func((void *)&domain_getid,			"domain_getid"			)!=0) return -1;
 	if (_get_func((void *)&getbuffer,			"getbuffer"			)!=0) return -1;
 	if (_get_func((void *)&get_mime_type,			"get_mime_type"			)!=0) return -1;
 	if (_get_func((void *)&getgetenv,			"getgetenv"			)!=0) return -1;

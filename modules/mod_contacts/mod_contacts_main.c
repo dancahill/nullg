@@ -129,9 +129,9 @@ void contactsearch2(CONN *sid)
 		}
 	}
 	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") ORDER BY surname, givenname ASC");
+		strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did);
 	} else {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid);
+		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did);
 	}
 	sql_freeresult(sqr1);
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
@@ -689,22 +689,22 @@ void contactlist(CONN *sid)
 	strncpy(searchstring, ptemp, sizeof(searchstring)-1);
 	if (strcasecmp(searchstring, "All")==0) {
 		if (auth_priv(sid, "contacts")&A_ADMIN) {
-			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts ORDER BY surname, givenname ASC", searchstring))<0) return;
+			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_did))<0) return;
 		} else {
-			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid))<0) return;
+			if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 		}
 	} else {
 		if (auth_priv(sid, "contacts")&A_ADMIN) {
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') ORDER BY surname, givenname ASC", searchstring))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%') AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_did))<0) return;
 			} else {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%')) ORDER BY surname, givenname ASC", searchstring))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%')) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_did))<0) return;
 			}
 		} else {
 			if (strcmp(config->sql_type, "ODBC")==0) {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%')  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (surname like '%s%%')  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			} else {
-				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%'))  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid))<0) return;
+				if ((sqr1=sql_queryf("SELECT contactid, surname, givenname, organization, worknumber, email from gw_contacts WHERE (lower(surname) like lower('%s%%'))  and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", searchstring, sid->dat->user_uid, sid->dat->user_gid, sid->dat->user_did))<0) return;
 			}
 		}
 	}
@@ -1065,9 +1065,9 @@ void contactsave(CONN *sid)
 			return;
 		}
 		if (strcmp(config->sql_type, "ODBC")==0) {
-			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s'", contact.surname, contact.givenname))<0) return;
+			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE surname LIKE '%s' AND givenname LIKE '%s' AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did))<0) return;
 		} else {
-			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s')", contact.surname, contact.givenname))<0) return;
+			if ((sqr=sql_queryf("SELECT contactid FROM gw_contacts WHERE lower(surname) LIKE lower('%s') AND lower(givenname) LIKE lower('%s') AND obj_did = %d", contact.surname, contact.givenname, sid->dat->user_did))<0) return;
 		}
 		if (sql_numtuples(sqr)>0) {
 			prints(sid, "<CENTER><B>This contact appears to be a duplicate of <A HREF=%s/contacts/view?contactid=%d>contact #%d</A>.</B></CENTER>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, 0, 0)), atoi(sql_getvalue(sqr, 0, 0)));

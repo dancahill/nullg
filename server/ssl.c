@@ -22,6 +22,7 @@
 
 int ssl_init()
 {
+	if (proc.ssl_is_loaded) return 0;
 	SSL_load_error_strings();
 	SSLeay_add_ssl_algorithms();
 	proc.ssl_meth=SSLv23_server_method();
@@ -56,6 +57,7 @@ int ssl_accept(TCP_SOCKET *sock)
 	if ((sock->ssl=SSL_new(proc.ssl_ctx))==NULL) {
 		return -1;
 	}
+//	SSL_clear(sock->ssl);
 	SSL_set_fd(sock->ssl, sock->socket);
 	if (SSL_accept(sock->ssl)==-1) {
 		return -1;
@@ -66,6 +68,11 @@ int ssl_accept(TCP_SOCKET *sock)
 int ssl_close(TCP_SOCKET *sock)
 {
 	if (sock->ssl!=NULL) {
+		if (SSL_get_shutdown(sock->ssl)&SSL_RECEIVED_SHUTDOWN) {
+			SSL_shutdown(sock->ssl);
+		} else {
+			SSL_clear(sock->ssl);
+		}
 		SSL_free(sock->ssl);
 		sock->ssl=NULL;
 	}

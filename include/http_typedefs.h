@@ -95,6 +95,7 @@ typedef struct {
 	// USER DATA
 	char       user_username[64];
 	char       user_token[64];
+	char       user_domainname[64];
 	short int  user_uid;
 	short int  user_gid;
 	short int  user_did;

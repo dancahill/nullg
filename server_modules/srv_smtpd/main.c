@@ -106,7 +106,7 @@ void *smtploop(void *x)
 	smtp_dorequest(&conn[sid]);
 	conn[sid].state=0;
 	log_error("smtpd", __FILE__, __LINE__, 4, "Closing connection thread [%u]", conn[sid].socket);
-	tcp_close(&conn[sid].socket);
+	tcp_close(&conn[sid].socket, 1);
 	conn[sid].socket.socket=-1;
 	pthread_exit(0);
 	return 0;
@@ -308,7 +308,7 @@ DllExport int mod_cron()
 		}
 		log_error("smtpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
 //		closeconnect(&conn[i], 0);
-		tcp_close(&conn[i].socket);
+		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;
 }

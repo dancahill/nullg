@@ -58,6 +58,9 @@ int pthread_kill(pthread_t handle, int sig);
 /* config.c functions */
 int     config_read(CONFIG *config);
 int     config_write(CONFIG *config);
+/* domains.c functions */
+char   *domain_getname(char *outstring, int outlen, int domainid);
+int     domain_getid(char *domainname);
 /* format.c */
 char *decode_base64(char *dest, int szdest, char *src);
 //char   *getbuffer(CONN *sid);
@@ -77,7 +80,8 @@ int     tcp_fgets(char *buffer, int max, TCP_SOCKET *socket);
 int     tcp_fprintf(TCP_SOCKET *socket, const char *format, ...);
 int     tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags);
 int     tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags);
-int     tcp_close(TCP_SOCKET *socket);
+//int     tcp_close(TCP_SOCKET *socket);
+int     tcp_close(TCP_SOCKET *socket, short int owner_killed);
 /* modctl.c functions */
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x);

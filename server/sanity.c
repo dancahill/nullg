@@ -146,6 +146,7 @@ int sanity_dbcheck()
 	if (sanity_dbcheck_table("gw_callactions",	"callactionid",		CALLACTIONFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_calls",		"callid",		CALLFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_contacts",		"contactid",		CONTACTFIELDS)==-1) checkerror++;
+	if (sanity_dbcheck_table("gw_domains",		"domainid",		DOMAINFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_eventclosings",	"eventclosingid",	EVENTCLOSINGFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_events",		"eventid",		EVENTFIELDS)==-1) checkerror++;
 	if (sanity_dbcheck_table("gw_eventtypes",	"eventtypeid",		EVENTTYPEFIELDS)==-1) checkerror++;

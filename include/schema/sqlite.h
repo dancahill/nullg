@@ -155,6 +155,20 @@ CREATE TABLE gw_contacts (\n\
 	PRIMARY KEY (contactid)\n\
 );"
 
+#define SQLITEDB_DOMAINS "\
+CREATE TABLE gw_domains (\n\
+	domainid	INTEGER,\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (domainid)\n\
+);"
+
 #define SQLITEDB_EVENTS "\
 CREATE TABLE gw_events (\n\
 	eventid		INTEGER,\n\
@@ -530,7 +544,7 @@ CREATE TABLE gw_tasks (\n\
 	PRIMARY KEY (taskid)\n\
 );"
 
-#define SQLITEDB_USERS "\
+#define SQLITEDB_USERS1 "\
 CREATE TABLE gw_users (\n\
 	userid		INTEGER,\n\
 	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
@@ -546,7 +560,9 @@ CREATE TABLE gw_users (\n\
 	username	varchar(50)	NOT NULL DEFAULT '',\n\
 	password	varchar(50)	NOT NULL DEFAULT '',\n\
 	groupid		int4		NOT NULL DEFAULT 0,\n\
+	domainid	int4		NOT NULL DEFAULT 0,\n\
 	enabled		int4		NOT NULL DEFAULT 0,\n\
+	authdomainadmin	int4		NOT NULL DEFAULT 0,\n\
 	authadmin	int4		NOT NULL DEFAULT 0,\n\
 	authbookmarks	int4		NOT NULL DEFAULT 0,\n\
 	authcalendar	int4		NOT NULL DEFAULT 0,\n\
@@ -568,6 +584,9 @@ CREATE TABLE gw_users (\n\
 	preftimezone	int4		NOT NULL DEFAULT 0,\n\
 	prefgeozone	int4		NOT NULL DEFAULT 0,\n\
 	availability	varchar(170)	NOT NULL DEFAULT '',\n\
+"
+
+#define SQLITEDB_USERS2 "\
 	surname		varchar(50),\n\
 	givenname	varchar(50),\n\
 	jobtitle	varchar(50),\n\

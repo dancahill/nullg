@@ -18,6 +18,47 @@
 #include "http_mod.h"
 #include "mod_admin.h"
 
+int dbread_domain(CONN *sid, short int perm, int index, REC_DOMAIN *domain)
+{
+	int authlevel;
+	int sqr;
+
+	memset(domain, 0, sizeof(REC_DOMAIN));
+	authlevel=auth_priv(sid, "admin");
+	if (authlevel<1) return -1;
+	if (!(authlevel&A_MODIFY)&&(perm==2)) return -1;
+	if (!(authlevel&A_INSERT)&&(index==0)) return -1;
+//	if ((perm>1)&&(table==DB_PRODUCTS)&&(!(authlevel&A_ADMIN))) return -1;
+	if (index==0) {
+		domain->obj_uid=sid->dat->user_uid;
+		domain->obj_gid=sid->dat->user_gid;
+		domain->obj_gperm=1;
+		domain->obj_operm=1;
+		snprintf(domain->domainname, sizeof(domain->domainname)-1, "New Domain");
+		return 0;
+	}
+	if (authlevel&A_ADMIN) {
+		if ((sqr=sql_queryf("SELECT * FROM gw_domains where domainid = %d", index))<0) return -1;
+	} else {
+		if ((sqr=sql_queryf("SELECT * FROM gw_domains where domainid = %d and (obj_uid = %d or (obj_gid = %d and obj_gperm>=%d) or obj_operm>=%d)", index, sid->dat->user_uid, sid->dat->user_gid, perm, perm))<0) return -1;
+	}
+	if (sql_numtuples(sqr)!=1) {
+		sql_freeresult(sqr);
+		return -2;
+	}
+	domain->domainid  = atoi(sql_getvalue(sqr, 0, 0));
+	domain->obj_ctime = time_sql2unix(sql_getvalue(sqr, 0, 1));
+	domain->obj_mtime = time_sql2unix(sql_getvalue(sqr, 0, 2));
+	domain->obj_uid   = atoi(sql_getvalue(sqr, 0, 3));
+	domain->obj_gid   = atoi(sql_getvalue(sqr, 0, 4));
+	domain->obj_did   = atoi(sql_getvalue(sqr, 0, 5));
+	domain->obj_gperm = atoi(sql_getvalue(sqr, 0, 6));
+	domain->obj_operm = atoi(sql_getvalue(sqr, 0, 7));
+	strncpy(domain->domainname, sql_getvalue(sqr, 0, 8), sizeof(domain->domainname)-1);
+	sql_freeresult(sqr);
+	return 0;
+}
+
 int dbread_group(CONN *sid, short int perm, int index, REC_GROUP *group)
 {
 	int authlevel;
@@ -128,48 +169,50 @@ int dbread_user(CONN *sid, short int perm, int index, REC_USER *user)
 	strncpy(user->username,         sql_getvalue(sqr, 0, 11), sizeof(user->username)-1);
 	strncpy(user->password,         sql_getvalue(sqr, 0, 12), sizeof(user->password)-1);
 	user->groupid=atoi(sql_getvalue(sqr, 0, 13));
-	user->enabled=atoi(sql_getvalue(sqr, 0, 14));
-	user->authadmin=atoi(sql_getvalue(sqr, 0, 15));
-	user->authbookmarks=atoi(sql_getvalue(sqr, 0, 16));
-	user->authcalendar=atoi(sql_getvalue(sqr, 0, 17));
-	user->authcalls=atoi(sql_getvalue(sqr, 0, 18));
-	user->authcontacts=atoi(sql_getvalue(sqr, 0, 19));
-	user->authfiles=atoi(sql_getvalue(sqr, 0, 20));
-	user->authforums=atoi(sql_getvalue(sqr, 0, 21));
-	user->authmessages=atoi(sql_getvalue(sqr, 0, 22));
-	user->authorders=atoi(sql_getvalue(sqr, 0, 23));
-	user->authprofile=atoi(sql_getvalue(sqr, 0, 24));
-	user->authquery=atoi(sql_getvalue(sqr, 0, 25));
-	user->authwebmail=atoi(sql_getvalue(sqr, 0, 26));
-	user->prefdaystart=atoi(sql_getvalue(sqr, 0, 27));
-	user->prefdaylength=atoi(sql_getvalue(sqr, 0, 28));
-	user->prefmailcurrent=atoi(sql_getvalue(sqr, 0, 29));
-	user->prefmaildefault=atoi(sql_getvalue(sqr, 0, 30));
-	user->prefmaxlist=atoi(sql_getvalue(sqr, 0, 31));
-	user->prefmenustyle=atoi(sql_getvalue(sqr, 0, 32));
-	user->preftimezone=atoi(sql_getvalue(sqr, 0, 33));
-	user->prefgeozone=atoi(sql_getvalue(sqr, 0, 34));
-	strncpy(user->availability,     sql_getvalue(sqr, 0, 35), sizeof(user->availability)-1);
-	strncpy(user->surname,          sql_getvalue(sqr, 0, 36), sizeof(user->surname)-1);
-	strncpy(user->givenname,        sql_getvalue(sqr, 0, 37), sizeof(user->givenname)-1);
-	strncpy(user->jobtitle,         sql_getvalue(sqr, 0, 38), sizeof(user->jobtitle)-1);
-	strncpy(user->division,         sql_getvalue(sqr, 0, 39), sizeof(user->division)-1);
-	strncpy(user->supervisor,       sql_getvalue(sqr, 0, 40), sizeof(user->supervisor)-1);
-	strncpy(user->address,          sql_getvalue(sqr, 0, 41), sizeof(user->address)-1);
-	strncpy(user->locality,         sql_getvalue(sqr, 0, 42), sizeof(user->locality)-1);
-	strncpy(user->region,           sql_getvalue(sqr, 0, 43), sizeof(user->region)-1);
-	strncpy(user->country,          sql_getvalue(sqr, 0, 44), sizeof(user->country)-1);
-	strncpy(user->postalcode,       sql_getvalue(sqr, 0, 45), sizeof(user->postalcode)-1);
-	strncpy(user->homenumber,       sql_getvalue(sqr, 0, 46), sizeof(user->homenumber)-1);
-	strncpy(user->worknumber,       sql_getvalue(sqr, 0, 47), sizeof(user->worknumber)-1);
-	strncpy(user->faxnumber,        sql_getvalue(sqr, 0, 48), sizeof(user->faxnumber)-1);
-	strncpy(user->cellnumber,       sql_getvalue(sqr, 0, 49), sizeof(user->cellnumber)-1);
-	strncpy(user->pagernumber,      sql_getvalue(sqr, 0, 50), sizeof(user->pagernumber)-1);
-	strncpy(user->email,            sql_getvalue(sqr, 0, 51), sizeof(user->email)-1);
-	strncpy(user->birthdate,        sql_getvalue(sqr, 0, 52), 10);
-	strncpy(user->hiredate,         sql_getvalue(sqr, 0, 53), 10);
-	strncpy(user->sin,              sql_getvalue(sqr, 0, 54), sizeof(user->sin)-1);
-	strncpy(user->isactive,         sql_getvalue(sqr, 0, 55), sizeof(user->isactive)-1);
+	user->domainid=atoi(sql_getvalue(sqr, 0, 14));
+	user->enabled=atoi(sql_getvalue(sqr, 0, 15));
+	user->authdomainadmin=atoi(sql_getvalue(sqr, 0, 16));
+	user->authadmin=atoi(sql_getvalue(sqr, 0, 17));
+	user->authbookmarks=atoi(sql_getvalue(sqr, 0, 18));
+	user->authcalendar=atoi(sql_getvalue(sqr, 0, 19));
+	user->authcalls=atoi(sql_getvalue(sqr, 0, 20));
+	user->authcontacts=atoi(sql_getvalue(sqr, 0, 21));
+	user->authfiles=atoi(sql_getvalue(sqr, 0, 22));
+	user->authforums=atoi(sql_getvalue(sqr, 0, 23));
+	user->authmessages=atoi(sql_getvalue(sqr, 0, 24));
+	user->authorders=atoi(sql_getvalue(sqr, 0, 25));
+	user->authprofile=atoi(sql_getvalue(sqr, 0, 26));
+	user->authquery=atoi(sql_getvalue(sqr, 0, 27));
+	user->authwebmail=atoi(sql_getvalue(sqr, 0, 28));
+	user->prefdaystart=atoi(sql_getvalue(sqr, 0, 29));
+	user->prefdaylength=atoi(sql_getvalue(sqr, 0, 30));
+	user->prefmailcurrent=atoi(sql_getvalue(sqr, 0, 31));
+	user->prefmaildefault=atoi(sql_getvalue(sqr, 0, 32));
+	user->prefmaxlist=atoi(sql_getvalue(sqr, 0, 33));
+	user->prefmenustyle=atoi(sql_getvalue(sqr, 0, 34));
+	user->preftimezone=atoi(sql_getvalue(sqr, 0, 35));
+	user->prefgeozone=atoi(sql_getvalue(sqr, 0, 36));
+	strncpy(user->availability,     sql_getvalue(sqr, 0, 37), sizeof(user->availability)-1);
+	strncpy(user->surname,          sql_getvalue(sqr, 0, 38), sizeof(user->surname)-1);
+	strncpy(user->givenname,        sql_getvalue(sqr, 0, 39), sizeof(user->givenname)-1);
+	strncpy(user->jobtitle,         sql_getvalue(sqr, 0, 40), sizeof(user->jobtitle)-1);
+	strncpy(user->division,         sql_getvalue(sqr, 0, 41), sizeof(user->division)-1);
+	strncpy(user->supervisor,       sql_getvalue(sqr, 0, 42), sizeof(user->supervisor)-1);
+	strncpy(user->address,          sql_getvalue(sqr, 0, 43), sizeof(user->address)-1);
+	strncpy(user->locality,         sql_getvalue(sqr, 0, 44), sizeof(user->locality)-1);
+	strncpy(user->region,           sql_getvalue(sqr, 0, 45), sizeof(user->region)-1);
+	strncpy(user->country,          sql_getvalue(sqr, 0, 46), sizeof(user->country)-1);
+	strncpy(user->postalcode,       sql_getvalue(sqr, 0, 47), sizeof(user->postalcode)-1);
+	strncpy(user->homenumber,       sql_getvalue(sqr, 0, 48), sizeof(user->homenumber)-1);
+	strncpy(user->worknumber,       sql_getvalue(sqr, 0, 49), sizeof(user->worknumber)-1);
+	strncpy(user->faxnumber,        sql_getvalue(sqr, 0, 50), sizeof(user->faxnumber)-1);
+	strncpy(user->cellnumber,       sql_getvalue(sqr, 0, 51), sizeof(user->cellnumber)-1);
+	strncpy(user->pagernumber,      sql_getvalue(sqr, 0, 52), sizeof(user->pagernumber)-1);
+	strncpy(user->email,            sql_getvalue(sqr, 0, 53), sizeof(user->email)-1);
+	strncpy(user->birthdate,        sql_getvalue(sqr, 0, 54), 10);
+	strncpy(user->hiredate,         sql_getvalue(sqr, 0, 55), 10);
+	strncpy(user->sin,              sql_getvalue(sqr, 0, 56), sizeof(user->sin)-1);
+	strncpy(user->isactive,         sql_getvalue(sqr, 0, 57), sizeof(user->isactive)-1);
 	if (strlen(user->availability)==0) {
 		strncpy(user->availability, "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(user->availability)-1);
 	}

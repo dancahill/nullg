@@ -32,7 +32,6 @@ ALL : "..\..\distrib\lib\srv_smtpq.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\main.obj"
-	-@erase "$(INTDIR)\smtp.obj"
 	-@erase "$(INTDIR)\smtpclient.obj"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(OUTDIR)\srv_smtpq.exp"
@@ -85,7 +84,6 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\srv_smtpq.pdb" /machine:I386 /out:"..\..\distrib\lib\srv_smtpq.dll" /implib:"$(OUTDIR)\srv_smtpq.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\main.obj" \
-	"$(INTDIR)\smtp.obj" \
 	"$(INTDIR)\smtpclient.obj"
 
 "..\..\distrib\lib\srv_smtpq.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -98,11 +96,6 @@ LINK32_OBJS= \
 SOURCE=.\main.c
 
 "$(INTDIR)\main.obj" : $(SOURCE) "$(INTDIR)"
-
-
-SOURCE=.\smtp.c
-
-"$(INTDIR)\smtp.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\smtpclient.c

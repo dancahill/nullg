@@ -22,7 +22,7 @@ typedef struct {
 //	char      user_token[64];
 	short int user_uid;
 	short int user_gid;
-//	short int user_did;
+	short int user_did;
 	short int user_mailcurrent;
 //	short int user_maildefault;
 } CONNDATA;

@@ -22,6 +22,7 @@ CREATE SEQUENCE bfldid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 ca
 CREATE SEQUENCE callid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE calaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE contid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
+CREATE SEQUENCE domaid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE evenid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE ecloid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
 CREATE SEQUENCE etypid_seq start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;\n\
@@ -182,6 +183,20 @@ CREATE TABLE gw_contacts (\n\
 	workcountry	varchar(50)	NOT NULL DEFAULT '',\n\
 	workpostalcode	varchar(10)	NOT NULL DEFAULT '',\n\
 	PRIMARY KEY (contactid)\n\
+);\n\n"
+
+#define PGSQLDB_DOMAINS "\
+CREATE TABLE gw_domains (\n\
+	domainid	int4		NOT NULL DEFAULT nextval('domaid_seq'::text),\n\
+	obj_ctime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_mtime	datetime	NOT NULL DEFAULT '1970-01-01 00:00:00',\n\
+	obj_uid		int4		NOT NULL DEFAULT 0,\n\
+	obj_gid		int4		NOT NULL DEFAULT 0,\n\
+	obj_did		int4		NOT NULL DEFAULT 0,\n\
+	obj_gperm	int4		NOT NULL DEFAULT 0,\n\
+	obj_operm	int4		NOT NULL DEFAULT 0,\n\
+	domainname	varchar(50)	NOT NULL DEFAULT '',\n\
+	PRIMARY KEY (domainid)\n\
 );\n\n"
 
 #define PGSQLDB_EVENTS "\
@@ -559,7 +574,7 @@ CREATE TABLE gw_tasks (\n\
 	PRIMARY KEY (taskid)\n\
 );\n\n"
 
-#define PGSQLDB_USERS "\
+#define PGSQLDB_USERS1 "\
 CREATE TABLE gw_users ( \
 	userid		int4		NOT NULL DEFAULT nextval('userid_seq'::text), \
 	obj_ctime	timestamp	NOT NULL DEFAULT '1970-01-01', \
@@ -575,7 +590,9 @@ CREATE TABLE gw_users ( \
 	username	varchar(50)	NOT NULL DEFAULT '', \
 	password	varchar(50)	NOT NULL DEFAULT '', \
 	groupid		int4		NOT NULL DEFAULT 0, \
+	domainid	int4		NOT NULL DEFAULT 0, \
 	enabled		int4		NOT NULL DEFAULT 0, \
+	authdomainadmin	int4		NOT NULL DEFAULT 0, \
 	authadmin	int4		NOT NULL DEFAULT 0, \
 	authbookmarks	int4		NOT NULL DEFAULT 0, \
 	authcalendar	int4		NOT NULL DEFAULT 0, \
@@ -597,6 +614,9 @@ CREATE TABLE gw_users ( \
 	preftimezone	int4		NOT NULL DEFAULT 0, \
 	prefgeozone	int4		NOT NULL DEFAULT 0, \
 	availability	varchar(170)	NOT NULL DEFAULT '', \
+"
+
+#define PGSQLDB_USERS2 "\
 	surname		varchar(50), \
 	givenname	varchar(50), \
 	jobtitle	varchar(50), \

@@ -1,5 +1,5 @@
 #!/bin/sh
-MAIN_TITLE="NullLogic Groupware Setup v1.3.3"
+MAIN_TITLE="NullLogic Groupware Setup v1.3.4"
 HAVE_CONFIG="no"
 HAVE_DIALOG="no"
 LOGFILE="/tmp/nullgw_install-`date +%s`.log"
@@ -84,9 +84,6 @@ setup_console() {
 	do_copying
 	cat $LOGFILE
 	echo "done."
-	echo
-	echo "Press enter to read the README file."
-	read TMP
 }
 
 setup_dialog() {
@@ -127,6 +124,9 @@ if [ -x /bin/dialog ]; then
 	dialog --textbox README.txt 21 76
 	setup_dialog
 else
+	echo
+	echo "Press enter to read the README file."
+	read TMP
 	less README.txt
 	setup_console
 fi

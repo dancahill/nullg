@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-int auth_checkpass(CONN *sid, char *password)
+static int auth_checkpass(CONN *sid, char *password)
 {
 	char cpassword[64];
 	char cpass[64];
@@ -30,7 +30,7 @@ int auth_checkpass(CONN *sid, char *password)
 		DEBUG_OUT(sid, "auth_checkpass()");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT userid, password FROM gw_users WHERE username = '%s' and enabled > 0", sid->dat->user_username))<0) {
+	if ((sqr=sql_queryf("SELECT userid, password FROM gw_users WHERE username = '%s' AND domainid = %d AND enabled > 0", sid->dat->user_username, sid->dat->user_did))<0) {
 		DEBUG_OUT(sid, "auth_checkpass()");
 		return -1;
 	}
@@ -68,23 +68,7 @@ int auth_checkpass(CONN *sid, char *password)
 	return 0;
 }
 
-char *auth_setpass(CONN *sid, char *rpassword)
-{
-	char itoa64[]="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-	char *cpassword=getbuffer(sid);
-	char salt[10];
-	int i;
-
-	DEBUG_IN(sid, "auth_setpass()");
-	memset(salt, 0, sizeof(salt));
-	srand(time(NULL));
-	for (i=0;i<8;i++) salt[i]=itoa64[(rand()%64)];
-	md5_crypt(cpassword, rpassword, salt);
-	DEBUG_OUT(sid, "auth_setpass()");
-	return cpassword;
-}
-
-int auth_renewcookie(CONN *sid, int settoken)
+static int auth_renewcookie(CONN *sid, int settoken)
 {
 	char timebuffer[100];
 	time_t t;
@@ -100,7 +84,7 @@ int auth_renewcookie(CONN *sid, int settoken)
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
-	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s'", sid->dat->user_username))<0) {
+	if ((sqr=sql_queryf("SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d AND enabled > 0", sid->dat->user_username, sid->dat->user_did))<0) {
 		DEBUG_OUT(sid, "auth_renewcookie()");
 		return -1;
 	}
@@ -158,7 +142,7 @@ int auth_renewcookie(CONN *sid, int settoken)
 		t=time(NULL)+604800;
 		memset(timebuffer, 0, sizeof(timebuffer));
 		strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-		snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s; expires=%s; path=/", sid->dat->user_username, timebuffer);
+		snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s:%s; expires=%s; path=/", sid->dat->user_username, sid->dat->user_domainname, timebuffer);
 		t=time(NULL)+43200;
 		memset(timebuffer, 0, sizeof(timebuffer));
 		strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
@@ -168,9 +152,26 @@ int auth_renewcookie(CONN *sid, int settoken)
 	return 0;
 }
 
+char *auth_setpass(CONN *sid, char *rpassword)
+{
+	char itoa64[]="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	char *cpassword=getbuffer(sid);
+	char salt[10];
+	int i;
+
+	DEBUG_IN(sid, "auth_setpass()");
+	memset(salt, 0, sizeof(salt));
+	srand(time(NULL));
+	for (i=0;i<8;i++) salt[i]=itoa64[(rand()%64)];
+	md5_crypt(cpassword, rpassword, salt);
+	DEBUG_OUT(sid, "auth_setpass()");
+	return cpassword;
+}
+
 int auth_getcookie(CONN *sid)
 {
 	char *ptemp;
+	int domainid;
 
 	DEBUG_IN(sid, "auth_getcookie()");
 	ptemp=strstr(sid->dat->in_Cookie, "gwuser=");
@@ -182,6 +183,10 @@ int auth_getcookie(CONN *sid)
 	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_username)<sizeof(sid->dat->user_username))) {
 		sid->dat->user_username[strlen(sid->dat->user_username)]=*ptemp++;
 	}
+	ptemp++;
+	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_domainname)<sizeof(sid->dat->user_domainname)-1)) {
+		sid->dat->user_domainname[strlen(sid->dat->user_domainname)]=*ptemp++;
+	}
 	ptemp=strstr(sid->dat->in_Cookie, "gwtoken=");
 	if (ptemp==NULL) {
 		DEBUG_OUT(sid, "auth_getcookie()");
@@ -191,6 +196,12 @@ int auth_getcookie(CONN *sid)
 	while ((*ptemp)&&(*ptemp!=':')&&(*ptemp!=';')&&(strlen(sid->dat->user_token)<sizeof(sid->dat->user_token))) {
 		sid->dat->user_token[strlen(sid->dat->user_token)]=*ptemp++;
 	}
+	domainid=domain_getid(sid->dat->user_domainname);
+	if (domainid<0) {
+		sid->dat->user_did=1;
+	} else {
+		sid->dat->user_did=domainid;
+	}
 	DEBUG_OUT(sid, "auth_getcookie()");
 	return auth_renewcookie(sid, 1);
 }
@@ -199,11 +210,14 @@ int auth_setcookie(CONN *sid)
 {
 	MD5_CONTEXT c;
 	unsigned char md[MD5_SIZE];
+	char *ptemp;
 	char timebuffer[32];
 	char password[64];
+	char domain[64];
 	int result;
 	struct timeval ttime;
 	struct timezone tzone;
+	int domainid;
 	int i;
 
 	DEBUG_IN(sid, "auth_setcookie()");
@@ -225,9 +239,21 @@ int auth_setcookie(CONN *sid)
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 0);
 		}
-	} else if ((getpostenv(sid, "USERNAME")!=NULL)&&(getpostenv(sid, "PASSWORD")!=NULL)) {
+	} else if ((getpostenv(sid, "USERNAME")!=NULL)&&(getpostenv(sid, "PASSWORD")!=NULL)&&(getpostenv(sid, "DOMAIN")!=NULL)) {
 		strncpy(sid->dat->user_username, getpostenv(sid, "USERNAME"), sizeof(sid->dat->user_username)-1);
 		strncpy(password, getpostenv(sid, "PASSWORD"), sizeof(password)-1);
+		ptemp=getpostenv(sid, "DOMAIN");
+		domainid=domain_getid(ptemp);
+		if (domainid<0) {
+			sid->dat->user_did=1;
+		} else {
+			sid->dat->user_did=domainid;
+		}
+		if ((ptemp=domain_getname(domain, sizeof(domain)-1, sid->dat->user_did))!=NULL) {
+			strncpy(sid->dat->user_domainname, ptemp, sizeof(sid->dat->user_domainname)-1);
+		} else {
+			strncpy(sid->dat->user_domainname, "NULL", sizeof(sid->dat->user_domainname)-1);
+		}
 		result=auth_checkpass(sid, password);
 		if (result==0) {
 			md5_init(&c);
@@ -236,14 +262,26 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username);
+			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'AND domainid = %d", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 1);
 		}
-	} else if ((getgetenv(sid, "USERNAME")!=NULL)&&(getgetenv(sid, "PASSWORD")!=NULL)) {
+	} else if ((getgetenv(sid, "USERNAME")!=NULL)&&(getgetenv(sid, "PASSWORD")!=NULL)&&(getgetenv(sid, "DOMAIN")!=NULL)) {
 		strncpy(sid->dat->user_username, getgetenv(sid, "USERNAME"), sizeof(sid->dat->user_username)-1);
 		strncpy(password, getgetenv(sid, "PASSWORD"), sizeof(password)-1);
+		ptemp=getpostenv(sid, "DOMAIN");
+		domainid=domain_getid(ptemp);
+		if (domainid<0) {
+			sid->dat->user_did=1;
+		} else {
+			sid->dat->user_did=domainid;
+		}
+		if ((ptemp=domain_getname(domain, sizeof(domain)-1, sid->dat->user_did))!=NULL) {
+			strncpy(sid->dat->user_domainname, ptemp, sizeof(sid->dat->user_domainname)-1);
+		} else {
+			strncpy(sid->dat->user_domainname, "NULL", sizeof(sid->dat->user_domainname)-1);
+		}
 		result=auth_checkpass(sid, password);
 		if (result==0) {
 			md5_init(&c);
@@ -252,7 +290,7 @@ int auth_setcookie(CONN *sid)
 			md5_final(&(md[0]),&c);
 			memset(sid->dat->user_token, 0, sizeof(sid->dat->user_token));
 			for (i=0;i<MD5_SIZE;i++) strncatf(sid->dat->user_token, sizeof(sid->dat->user_token)-strlen(sid->dat->user_token)-1, "%02x", md[i]);
-			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s'", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username);
+			sql_updatef("UPDATE gw_users SET loginip='%s', logintime='%s', logintoken='%s' WHERE username = '%s' AND domainid = %d", sid->dat->in_RemoteAddr, timebuffer, sid->dat->user_token, sid->dat->user_username, sid->dat->user_did);
 			memset(password, 0, sizeof(password));
 			DEBUG_OUT(sid, "auth_setcookie()");
 			return auth_renewcookie(sid, 1);
@@ -268,10 +306,10 @@ void auth_logout(CONN *sid)
 	char timebuffer[100];
 
 	DEBUG_IN(sid, "auth_logout()");
-	sql_updatef("UPDATE gw_users SET logintoken='NULL' WHERE username = '%s'", sid->dat->user_username);
+	sql_updatef("UPDATE gw_users SET logintoken='NULL' WHERE username = '%s' AND domainid = %d", sid->dat->user_username, sid->dat->user_did);
 	t=time(NULL)+604800;
 	strftime(timebuffer, sizeof(timebuffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-	snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s; expires=%s; path=/", sid->dat->user_username, timebuffer);
+	snprintf(sid->dat->out_SetCookieUser, sizeof(sid->dat->out_SetCookieUser)-1, "gwuser=%s:%s; expires=%s; path=/", sid->dat->user_username, sid->dat->user_domainname, timebuffer);
 	snprintf(sid->dat->out_SetCookiePass, sizeof(sid->dat->out_SetCookiePass)-1, "gwtoken=NULL; path=/");
 	htpage_logout(sid);
 	DEBUG_OUT(sid, "auth_logout()");

@@ -33,6 +33,7 @@ ALL : "..\..\distrib\lib\mod_admin.dll"
 CLEAN :
 	-@erase "$(INTDIR)\mod_admin_config.obj"
 	-@erase "$(INTDIR)\mod_admin_db.obj"
+	-@erase "$(INTDIR)\mod_admin_domains.obj"
 	-@erase "$(INTDIR)\mod_admin_groups.obj"
 	-@erase "$(INTDIR)\mod_admin_logs.obj"
 	-@erase "$(INTDIR)\mod_admin_main.obj"
@@ -93,6 +94,7 @@ DEF_FILE= \
 LINK32_OBJS= \
 	"$(INTDIR)\mod_admin_config.obj" \
 	"$(INTDIR)\mod_admin_db.obj" \
+	"$(INTDIR)\mod_admin_domains.obj" \
 	"$(INTDIR)\mod_admin_groups.obj" \
 	"$(INTDIR)\mod_admin_logs.obj" \
 	"$(INTDIR)\mod_admin_main.obj" \
@@ -115,6 +117,11 @@ SOURCE=.\mod_admin_config.c
 SOURCE=.\mod_admin_db.c
 
 "$(INTDIR)\mod_admin_db.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\mod_admin_domains.c
+
+"$(INTDIR)\mod_admin_domains.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\mod_admin_groups.c

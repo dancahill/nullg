@@ -115,7 +115,7 @@ void *htloop(void *x)
 		log_access("httpd", "%s \"%s %s %s\" %d %d \"%s\"", conn[sid].dat->in_RemoteAddr, conn[sid].dat->in_RequestMethod, conn[sid].dat->in_RequestURI, conn[sid].dat->in_Protocol, conn[sid].dat->out_status, conn[sid].dat->out_bytecount, conn[sid].dat->in_UserAgent);
 		conn[sid].state=0;
 		if (conn[sid].dat->wm!=NULL) {
-			tcp_close(&conn[sid].dat->wm->socket);
+			tcp_close(&conn[sid].dat->wm->socket, 1);
 			free(conn[sid].dat->wm);
 			conn[sid].dat->wm=NULL;
 		}
@@ -336,8 +336,14 @@ DllExport int mod_cron()
 			if (ctime-conn[i].socket.atime<config->http_maxidle) continue;
 		}
 		log_error("http", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
+//	closeconnect is _not_ ssl-friendly
 //		closeconnect(&conn[i], 0);
-		tcp_close(&conn[i].socket);
+		if (&conn[i].dat!=NULL) {
+			if (&conn[i].dat->wm!=NULL) {
+//				tcp_close(&conn[i].dat->wm->socket, 0);
+			}
+		}
+//		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;
 }

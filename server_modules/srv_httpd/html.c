@@ -62,6 +62,7 @@ void htpage_login(CONN *sid)
 	char pageuri[200];
 	char username[32];
 	char password[32];
+	char domain[64];
 	char *ptemp;
 	int sqr;
 
@@ -104,6 +105,11 @@ void htpage_login(CONN *sid)
 	}
 	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
 	prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
+	if ((sqr=sql_query("SELECT COUNT(*) FROM gw_domains"))<0) return;
+	if (sql_numtuples(sqr)>1) {
+		prints(sid, "<TR CLASS=EDITFORM><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", domain);
+	}
+	sql_freeresult(sqr);
 	prints(sid, "<TR CLASS=EDITFORM><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {
@@ -251,6 +257,7 @@ domenu:
 		case MENU_ADMIN:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CONFIG);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/activitylist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_LOGS);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/domainlist>DOMAINS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/status>STATUS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/syscheck>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CHECK);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/userlist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_USERS);

@@ -201,6 +201,21 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	prints(sid, "<DIV ID=page6 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%>&nbsp;</TD><TD ALIGN=CENTER><B>Read&nbsp;</B></TD><TD ALIGN=CENTER><B>Modify&nbsp;</B></TD><TD ALIGN=CENTER><B>Insert&nbsp;</B></TD><TD ALIGN=CENTER><B>Delete&nbsp;</B></TD><TD ALIGN=CENTER><B>Admin</B></TD></TR>");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Domain Administration&nbsp;</B></TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
+	if (user->userid==1) {
+		prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authdomainadmin_a VALUE='1' CHECKED DISABLED></TD>");
+	} else {
+		if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+			prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authdomainadmin_a VALUE='1' %s></TD>", (user->authdomainadmin&A_ADMIN)?"checked":"");
+		} else {
+			prints(sid, "<TD ALIGN=CENTER><INPUT TYPE=checkbox NAME=authdomainadmin_a VALUE='1' %s DISABLED></TD>", (user->authdomainadmin&A_ADMIN)?"checked":"");
+		}
+	}
+	prints(sid, "</TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP WIDTH=100%%><B>&nbsp;Administration&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
 	prints(sid, "<TD ALIGN=CENTER>&nbsp;</TD>");
@@ -461,6 +476,14 @@ void adminusersave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "GROUPID"))!=NULL) user.groupid=atoi(ptemp);
 	if ((ptemp=getpostenv(sid, "ENABLED"))!=NULL) user.enabled=atoi(ptemp);
 	if (module_exists(sid, "mod_admin")) {
+		user.authdomainadmin=0;
+		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_R"))!=NULL) user.authdomainadmin+=A_READ;
+		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_M"))!=NULL) user.authdomainadmin+=A_MODIFY;
+		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_I"))!=NULL) user.authdomainadmin+=A_INSERT;
+		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_D"))!=NULL) user.authdomainadmin+=A_DELETE;
+		if ((ptemp=getpostenv(sid, "AUTHDOMAINADMIN_A"))!=NULL) user.authdomainadmin+=A_ADMIN;
+	}
+	if (module_exists(sid, "mod_admin")) {
 		user.authadmin=0;
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_R"))!=NULL) user.authadmin+=A_READ;
 		if ((ptemp=getpostenv(sid, "AUTHADMIN_M"))!=NULL) user.authadmin+=A_MODIFY;
@@ -591,6 +614,7 @@ void adminusersave(CONN *sid)
 	if ((ptemp=getpostenv(sid, "ISACTIVE"))!=NULL) snprintf(user.isactive, sizeof(user.isactive)-1, "%s", ptemp);
 	if (user.userid==1) {
 		user.enabled=1;
+		user.authdomainadmin=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 		user.authadmin=A_READ+A_MODIFY+A_INSERT+A_DELETE+A_ADMIN;
 	}
 	if (strlen(user.birthdate)==0) snprintf(user.birthdate, sizeof(user.birthdate)-1, "1900-01-01");
@@ -625,13 +649,15 @@ void adminusersave(CONN *sid)
 		user.userid=atoi(sql_getvalue(sqr, 0, 0))+1;
 		sql_freeresult(sqr);
 		if (user.userid<1) user.userid=1;
-		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, enabled, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
+		strcpy(query, "INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_gperm, obj_operm, loginip, logintime, logintoken, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authfiles, authforums, authmessages, authorders, authprofile, authquery, authwebmail, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) values (");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', '%s', '%s', '%d', '%d', '%d', '%d', ", user.userid, curdate, curdate, user.obj_uid, user.obj_gid, user.obj_gperm, user.obj_operm);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'0.0.0.0', '1900-01-01 00:00:00', '', ");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", user.password);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.groupid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.domainid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.enabled);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authdomainadmin);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authadmin);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authbookmarks);
 		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", user.authcalendar);
@@ -702,7 +728,9 @@ void adminusersave(CONN *sid)
 		strncatf(query, sizeof(query)-strlen(query)-1, "username = '%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, user.username));
 		strncatf(query, sizeof(query)-strlen(query)-1, "password = '%s', ", user.password);
 		strncatf(query, sizeof(query)-strlen(query)-1, "groupid = '%d', ", user.groupid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "domainid = '%d', ", user.domainid);
 		strncatf(query, sizeof(query)-strlen(query)-1, "enabled = '%d', ", user.enabled);
+		strncatf(query, sizeof(query)-strlen(query)-1, "authdomainadmin = '%d', ", user.authdomainadmin);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authadmin = '%d', ", user.authadmin);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authbookmarks = '%d', ", user.authbookmarks);
 		strncatf(query, sizeof(query)-strlen(query)-1, "authcalendar = '%d', ", user.authcalendar);

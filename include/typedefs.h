@@ -85,12 +85,13 @@ typedef struct {
 #endif
 	time_t ctime; // Creation time
 	time_t atime; // Last Access time
+	unsigned int bytes_in;
+	unsigned int bytes_out;
+	short int want_close;
 	// TCP INPUT BUFFER
 	short int recvbufsize;
 	short int recvbufoffset;
 	char      recvbuf[2048];
-	unsigned int bytes_in;
-	unsigned int bytes_out;
 } TCP_SOCKET;
 
 typedef struct {
@@ -193,7 +194,7 @@ typedef struct {
 	SSL_METHOD *ssl_meth;
 #else
 	void *ssl_ctx;
-	void *ssl_meth
+	void *ssl_meth;
 #endif
 #ifdef WIN32
 	HINSTANCE hInst;

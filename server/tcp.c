@@ -75,9 +75,15 @@ int tcp_recv(TCP_SOCKET *socket, char *buffer, int len, int flags)
 {
 	int rc;
 
+	if (socket->socket==-1) return -1;
+	if (socket->want_close) {
+		tcp_close(socket, 1);
+		return -1;
+	}
 #ifdef HAVE_LIBSSL
 	if (socket->ssl) {
 		rc=SSL_read(socket->ssl, buffer, len);
+		if (rc==0) rc=-1;
 	} else {
 		rc=recv(socket->socket, buffer, len, flags);
 	}
@@ -95,6 +101,11 @@ int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 {
 	int rc;
 
+	if (socket->socket==-1) return -1;
+	if (socket->want_close) {
+		tcp_close(socket, 1);
+		return -1;
+	}
 #ifdef HAVE_LIBSSL
 	if (socket->ssl) {
 		rc=SSL_write(socket->ssl, buffer, len);
@@ -177,16 +188,23 @@ retry:
 	return n;
 }
 
-int tcp_close(TCP_SOCKET *socket)
+int tcp_close(TCP_SOCKET *socket, short int owner_killed)
 {
-	if (socket->socket>-1) {
-		/* shutdown(x,0=recv, 1=send, 2=both) */
-		shutdown(socket->socket, 2);
-		closesocket(socket->socket);
-#ifdef HAVE_LIBSSL
-//		ssl_close(socket);
-#endif
+	short int tmpsock;
+
+	if (socket->socket<0) return 0;
+	if (!owner_killed) {
+		socket->want_close=1;
+	} else {
+		socket->want_close=0;
+		tmpsock=socket->socket;
 		socket->socket=-1;
+		/* shutdown(x,0=recv, 1=send, 2=both) */
+		shutdown(tmpsock, 2);
+		closesocket(tmpsock);
+#ifdef HAVE_LIBSSL
+		ssl_close(socket);
+#endif
 	}
 	return 0;
 }

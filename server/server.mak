@@ -35,6 +35,7 @@ ALL : "$(OUTDIR)\nullgroupware.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\config.obj"
+	-@erase "$(INTDIR)\domains.obj"
 	-@erase "$(INTDIR)\format.obj"
 	-@erase "$(INTDIR)\log.obj"
 	-@erase "$(INTDIR)\main.obj"
@@ -97,6 +98,7 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libcmt.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"$(OUTDIR)\nullgroupware.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\config.obj" \
+	"$(INTDIR)\domains.obj" \
 	"$(INTDIR)\format.obj" \
 	"$(INTDIR)\log.obj" \
 	"$(INTDIR)\main.obj" \
@@ -119,6 +121,11 @@ LINK32_OBJS= \
 SOURCE=.\config.c
 
 "$(INTDIR)\config.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\domains.c
+
+"$(INTDIR)\domains.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\format.c

@@ -118,7 +118,16 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
-	if ((ptemp=getgetenv(sid, "QUERYID"))!=NULL) {
+	if ((ptemp=getgetenv(sid, "QUERYSTRING"))!=NULL) {
+		if (auth_priv(sid, "query")&A_ADMIN) {
+			memset((char *)&query, 0, sizeof(query));
+			snprintf(query.query, sizeof(query.query)-1, "%s", ptemp);
+			queryid=-1;
+		} else {
+			prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
+			return;
+		}
+	} else if ((ptemp=getgetenv(sid, "QUERYID"))!=NULL) {
 		queryid=atoi(ptemp);
 	} else {
 		queryid=0;
@@ -137,6 +146,19 @@ void searchsqlrun(CONN *sid)
 				prints(sid, "<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 			}
 			prints(sid, "<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'>Query Name</TH></TR>\n");
+			if (auth_priv(sid, "query")&A_ADMIN) {
+				prints(sid, "<TR CLASS=\"FIELDVAL\">");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?querystring=", sid->dat->in_ScriptName);
+				if (strcmp(proc->config.sql_type, "MYSQL")==0) {
+					prints(sid, "%s", encodeurl(sid, "SHOW TABLES"));
+				} else if (strcmp(proc->config.sql_type, "SQLITE")==0) {
+					prints(sid, "%s", encodeurl(sid, "SELECT tbl_name AS 'Table Name' FROM sqlite_master WHERE type = 'table'"));
+				}
+				prints(sid, ">SHOW TABLES</A>&nbsp;</TD>\n");
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>\n");
+				prints(sid, "</TR>\n");
+			}
 			for (i=0;i<sql_numtuples(sqr);i++) {
 				prints(sid, "<TR CLASS=\"FIELDVAL\">");
 				if (auth_priv(sid, "query")&A_ADMIN) {
@@ -144,7 +166,6 @@ void searchsqlrun(CONN *sid)
 				}
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%s>", sid->dat->in_ScriptName, sql_getvalue(sqr, i, 0));
 				prints(sid, "%s</A>&nbsp;</TD>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
-
 				if (strncasecmp("SELECT", sql_getvalue(sqr, i, 2), 6)==0) {
 					prints(sid, "<TD NOWRAP STYLE='border-style:solid'><A HREF=%s/search/sqlrun?queryid=%d&format=csv>CSV</A></TD>\n", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
 				} else {
@@ -163,9 +184,11 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "</CENTER>\n");
 		return;
 	}
-	if (dbread_query(sid, 1, queryid, &query)!=0) {
-		prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", queryid);
-		return;
+	if (queryid>-1) {
+		if (dbread_query(sid, 1, queryid, &query)!=0) {
+			prints(sid, "<CENTER>No matching record found for %d</CENTER>\n", queryid);
+			return;
+		}
 	}
 	memset(querytype, 0, sizeof(querytype));
 	strncpy(querytype, query.query, 6);
@@ -213,7 +236,6 @@ void searchsqlrun(CONN *sid)
 		prints(sid, "<CENTER>Unknown SQL query type.</CENTER>\n");
 		return;
 	}
-
 	if ((ptemp=getgetenv(sid, "FORMAT"))!=NULL) {
 		snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=query.csv");
 		send_header(sid, 1, 200, "OK", "1", "application/octet-stream", -1, -1);
@@ -239,7 +261,6 @@ void searchsqlrun(CONN *sid)
 		sql_freeresult(sqr);
 		return;
 	}
-
 	if (sql_numtuples(sqr)<1) {
 		prints(sid, "<CENTER>Query [%s] returned no results.</CENTER>\n", query.queryname);
 		sql_freeresult(sqr);
@@ -267,7 +288,11 @@ void searchsqlrun(CONN *sid)
 	prints(sid, "<CENTER>\n");
 	if (sql_numtuples(sqr)>sid->dat->user_maxlist) {
 		if (offset>(sid->dat->user_maxlist-1)) {
-			prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset-sid->dat->user_maxlist);
+			if (queryid>-1) {
+				prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset-sid->dat->user_maxlist);
+			} else {
+				prints(sid, "[<A HREF=%s/search/sqlrun?querystring=%s&offset=%d>", sid->dat->in_ScriptName, encodeurl(sid, query.query), offset-sid->dat->user_maxlist);
+			}
 			min=offset-sid->dat->user_maxlist+1;
 			max=offset;
 			if (min<0) min=0;
@@ -279,7 +304,11 @@ void searchsqlrun(CONN *sid)
 			prints(sid, "[Previous]\n");
 		}
 		if (offset+sid->dat->user_maxlist<sql_numtuples(sqr)) {
-			prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset+sid->dat->user_maxlist);
+			if (queryid>-1) {
+				prints(sid, "[<A HREF=%s/search/sqlrun?queryid=%d&offset=%d>", sid->dat->in_ScriptName, queryid, offset+sid->dat->user_maxlist);
+			} else {
+				prints(sid, "[<A HREF=%s/search/sqlrun?querystring=%s&offset=%d>", sid->dat->in_ScriptName, encodeurl(sid, query.query), offset+sid->dat->user_maxlist);
+			}
 			min=offset+sid->dat->user_maxlist+1;
 			max=offset+sid->dat->user_maxlist+sid->dat->user_maxlist;
 			if (min<0) min=0;

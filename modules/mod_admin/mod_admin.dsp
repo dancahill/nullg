@@ -72,6 +72,10 @@ SOURCE=.\mod_admin_db.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mod_admin_domains.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mod_admin_groups.c
 # End Source File
 # Begin Source File

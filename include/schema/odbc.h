@@ -155,6 +155,20 @@ CREATE TABLE gw_contacts (\n\
 	PRIMARY KEY (contactid)\n\
 );"
 
+#define MDB_DOMAINS "\
+CREATE TABLE gw_domains (\n\
+	domainid	autoincrement,\n\
+	obj_ctime	datetime	NOT NULL,\n\
+	obj_mtime	datetime	NOT NULL,\n\
+	obj_uid		integer,\n\
+	obj_gid		integer,\n\
+	obj_did		integer,\n\
+	obj_gperm	integer,\n\
+	obj_operm	integer,\n\
+	domainname	varchar(50)	NOT NULL,\n\
+	PRIMARY KEY (domainid)\n\
+);"
+
 #define MDB_EVENTS "\
 CREATE TABLE gw_events (\n\
 	eventid		autoincrement,\n\
@@ -530,7 +544,7 @@ CREATE TABLE gw_tasks (\n\
 	PRIMARY KEY (taskid)\n\
 );"
 
-#define MDB_USERS "\
+#define MDB_USERS1 "\
 CREATE TABLE gw_users (\n\
 	userid		autoincrement,\n\
 	obj_ctime	datetime	NOT NULL,\n\
@@ -546,7 +560,9 @@ CREATE TABLE gw_users (\n\
 	username	varchar(50)	NOT NULL,\n\
 	password	varchar(50),\n\
 	groupid		integer		NOT NULL,\n\
+	domainid	integer		NOT NULL,\n\
 	enabled		integer		NOT NULL,\n\
+	authdomainadmin	integer		NOT NULL,\n\
 	authadmin	integer		NOT NULL,\n\
 	authbookmarks	integer		NOT NULL,\n\
 	authcalendar	integer		NOT NULL,\n\
@@ -568,6 +584,9 @@ CREATE TABLE gw_users (\n\
 	preftimezone	integer		NOT NULL,\n\
 	prefgeozone	integer		NOT NULL,\n\
 	availability	varchar(170),\n\
+"
+
+#define MDB_USERS2 "\
 	surname		varchar(50),\n\
 	givenname	varchar(50),\n\
 	jobtitle	varchar(50),\n\

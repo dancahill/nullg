@@ -174,7 +174,7 @@ void flushheader(CONN *sid)
 	sid->dat->out_headdone=1;
 	return;
 err:
-	tcp_close(&sid->socket);
+	tcp_close(&sid->socket, 1);
 	sid->dat->out_headdone=1;
 	return;
 }
@@ -378,10 +378,10 @@ int closeconnect(CONN *sid, int exitflag)
 	} else if (sid!=NULL) {
 		if (sid->dat!=NULL) {
 			if (sid->dat->wm!=NULL) {
-				tcp_close(&sid->dat->wm->socket);
+				tcp_close(&sid->dat->wm->socket, 1);
 			}
 		}
-		tcp_close(&sid->socket);
+		tcp_close(&sid->socket, 1);
 	}
 	if ((exitflag)&&(sid!=NULL)) {
 		log_error("http", __FILE__, __LINE__, 4, "Closing connection [%u]", sid->socket.socket);

@@ -107,6 +107,12 @@ void mod_main(CONN *sid)
 		adminconfigedit(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/configsave", 17)==0)
 		adminconfigsave(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/admin/domainedit", 17)==0)
+		admindomainedit(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/admin/domainlist", 17)==0)
+		admindomainlist(sid);
+	else if (strncmp(sid->dat->in_RequestURI, "/admin/domainsave", 17)==0)
+		admindomainsave(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/groupedit", 16)==0)
 		admingroupedit(sid);
 	else if (strncmp(sid->dat->in_RequestURI, "/admin/grouplist", 16)==0)

@@ -136,7 +136,7 @@ DllExport int mod_cron()
 		}
 		log_error("smtpd", __FILE__, __LINE__, 4, "Reaping idle thread 0x%08X (idle %d seconds)", conn[i].id, ctime-conn[i].socket.atime);
 //		closeconnect(&conn[i], 0);
-		tcp_close(&conn[i].socket);
+		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;
 }

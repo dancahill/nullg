@@ -183,6 +183,7 @@ domenu:
 		case MENU_ADMIN:
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/configedit>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CONFIG);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/activitylist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_LOGS);
+			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/domainlist>DOMAINS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/status>STATUS</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/syscheck>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_CHECK);
 			prints(sid, "<A CLASS='TBAR' HREF=%s/admin/userlist>%s</A>&nbsp;&middot;&nbsp;", sid->dat->in_ScriptName, ADM_MENU_USERS);
@@ -323,6 +324,7 @@ void mod_html_login(CONN *sid)
 	char file[100];
 	char username[32];
 	char password[32];
+	char domain[64];
 	char *ptemp;
 	FILE *fp;
 	int ich;
@@ -370,8 +372,22 @@ void mod_html_login(CONN *sid)
 	if (strlen(username)==0) {
 		snprintf(username, sizeof(username)-1, "%s", sid->dat->user_username);
 	}
+	if (strlen(domain)==0) {
+		if (strlen(sid->dat->user_domainname)==0) {
+			snprintf(domain, sizeof(domain)-1, "%s", sid->dat->in_Host);
+		} else {
+			snprintf(domain, sizeof(domain)-1, "%s", sid->dat->user_domainname);
+		}
+	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", username);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", password);
+	if ((sqr=sql_query("SELECT COUNT(*) FROM gw_domains"))<0) return;
+	if (atoi(sql_getvalue(sqr, 0, 0))>1) {
+		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='%s'></TD></TR>\r\n", domain);
+	} else {
+		prints(sid, "<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
+	}
+	sql_freeresult(sqr);
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><CENTER><INPUT TYPE=SUBMIT VALUE='Login'></CENTER></TD></TR>\r\n");
 	prints(sid, "</FORM>\r\n</TABLE>\r\n");
 	if (strcmp(password, "visual")==0) {

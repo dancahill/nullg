@@ -5,8 +5,10 @@
 
 BASEDIR=/usr/local/nullgroupware
 CURDATE=`date +%Y-%m-%d`
+OLDDATE=`date +%Y-%m-%d -d '7 days ago'`
 
 mkdir -p ${BASEDIR}/var/backup
+rm -f ${BASEDIR}/var/backup/backup-${OLDDATE}.tgz 
 cd ${BASEDIR}/bin
 ${BASEDIR}/bin/dbutil dump ../backup-${CURDATE}
 cd ${BASEDIR}
