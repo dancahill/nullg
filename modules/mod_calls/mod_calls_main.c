@@ -160,7 +160,7 @@ void calledit(CONN *sid)
 	prints(sid, "<INPUT TYPE=hidden NAME=callstart VALUE='%d'>\n", call.callstart);
 	prints(sid, "<TR><TD ALIGN=LEFT>");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
-	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>CALL INFO</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SETTINGS</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>DETAILS</A>&nbsp;</TD>\n");
 	prints(sid, "<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>PERMISSIONS</A>&nbsp;</TD>\n");
 	prints(sid, "</TR></TABLE>");
@@ -248,7 +248,7 @@ void calledit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "calls")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, call.obj_gid);
+	htselect_group(sid, call.obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", call.obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");

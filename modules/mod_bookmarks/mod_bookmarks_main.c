@@ -84,32 +84,43 @@ void bookmarkfolderedit(CONN *sid)
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
+	htscript_showpage(sid, 2);
 	prints(sid, "// -->\n</SCRIPT>\n");
 	prints(sid, "<CENTER>\n");
-	prints(sid, "<FORM METHOD=POST ACTION=%s/bookmarks/foldersave NAME=folderedit>\n", sid->dat->in_ScriptName);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
-	prints(sid, "<INPUT TYPE=hidden NAME=folderid VALUE='%d'>\n", bookmarkfolder.folderid);
-	if (folderid!=0) {
-		prints(sid, "<TR><TH COLSPAN=2>Bookmark Folder %d</TH></TR>\n", folderid);
+	if (folderid>0) {
+		prints(sid, "<B>Bookmark Folder %d</B>\n", folderid);
 	} else {
-		prints(sid, "<TR><TH COLSPAN=2>New Bookmark Folder</TH></TR>\n");
+		prints(sid, "<B>New Bookmark Folder</B>\n");
 	}
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP COLSPAN=2>\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=350>\n");
+	prints(sid, "<FORM METHOD=POST ACTION=%s/bookmarks/foldersave NAME=folderedit>\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=hidden NAME=folderid VALUE='%d'>\n", bookmarkfolder.folderid);
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SETTINGS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Parent Folder&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=parentid style='width:217px'>\n");
 	htselect_bookmarkfolder(sid, bookmarkfolder.parentid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Folder Name  &nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'><INPUT TYPE=TEXT NAME=foldername value=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, bookmarkfolder.foldername));
-	prints(sid, "</TABLE></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((bookmarkfolder.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, bookmarkfolder.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, bookmarkfolder.obj_gid);
+		htselect_group(sid, bookmarkfolder.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmarkfolder.obj_gperm==0?" CHECKED":"");
@@ -123,13 +134,21 @@ void bookmarkfolderedit(CONN *sid)
 		prints(sid, "</TD></TR>\n");
 	}
 	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "bookmarks")&A_ADMIN)&&(folderid>0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
+	prints(sid, "</TD></TR>\n");
 	prints(sid, "</FORM>\n");
+	prints(sid, "</TABLE>\n");
 	prints(sid, "</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.folderedit.foldername.focus();\n// -->\n</SCRIPT>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "showpage(1);\n");
+	prints(sid, "document.folderedit.foldername.focus();\n// -->\n</SCRIPT>\n");
 	return;
 }
 
@@ -266,32 +285,46 @@ void bookmarksedit(CONN *sid)
 	prints(sid, "function ConfirmDelete() {\n");
 	prints(sid, "	return confirm(\"Are you sure you want to delete this record?\");\n");
 	prints(sid, "}\n");
+	htscript_showpage(sid, 2);
 	prints(sid, "// -->\n</SCRIPT>\n");
-	prints(sid, "<CENTER>\n<FORM METHOD=POST ACTION=%s/bookmarks/save NAME=bookmarkedit>\n", sid->dat->in_ScriptName);
-	prints(sid, "<INPUT TYPE=hidden NAME=bookmarkid VALUE='%d'>\n", bookmark.bookmarkid);
-	prints(sid, "<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=350>\n");
-	if (bookmarkid!=0) {
-		prints(sid, "<TR><TH COLSPAN=2>Bookmark Number %d</FONT></TH></TR>\n", bookmark.bookmarkid);
+	prints(sid, "<CENTER>\n");
+	if (bookmarkid>0) {
+		prints(sid, "<B>Bookmark %d</B>\n", bookmarkid);
 	} else {
-		prints(sid, "<TR><TH COLSPAN=2>New Bookmark</FONT></TH></TR>");
+		prints(sid, "<B>New Bookmark</B>\n");
 	}
-	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP COLSPAN=2>\n");
+
+
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=350>\n");
+	prints(sid, "<FORM METHOD=POST ACTION=%s/bookmarks/save NAME=bookmarkedit>\n", sid->dat->in_ScriptName);
+	prints(sid, "<INPUT TYPE=hidden NAME=bookmarkid VALUE='%d'>\n", bookmark.bookmarkid);
+	prints(sid, "<TR><TD ALIGN=LEFT>");
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\n<TR CLASS=\"FIELDNAME\">\n");
+	prints(sid, "<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SETTINGS</A>&nbsp;</TD>\n");
+	prints(sid, "<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>PERMISSIONS</A>&nbsp;</TD>\n");
+	prints(sid, "</TR></TABLE>");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "<DIV ID=page1 STYLE='display: block'>\r\n");
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Bookmark Folder &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=folderid style='width:217px'>\n");
 	htselect_bookmarkfolder(sid, bookmark.folderid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Bookmark Name   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=bookmarkname    VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, bookmark.bookmarkname));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Bookmark Address&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=bookmarkurl     VALUE=\"%s\" SIZE=30 style='width:217px'></TD></TR>\n", str2html(sid, bookmark.bookmarkurl));
-	prints(sid, "</TABLE></TD></TR>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<DIV ID=page2 STYLE='display: block'>\r\n");
+	prints(sid, "<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>\n");
 	if ((bookmark.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "bookmarks")&A_ADMIN)) {
-		prints(sid, "<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Owner&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
 		htselect_user(sid, bookmark.obj_uid);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "bookmarks")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, bookmark.obj_gid);
+		htselect_group(sid, bookmark.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", bookmark.obj_gperm==0?" CHECKED":"");
@@ -305,12 +338,21 @@ void bookmarksedit(CONN *sid)
 		prints(sid, "</TD></TR>\n");
 	}
 	prints(sid, "</TABLE>\n");
+	prints(sid, "</DIV>\r\n");
+	prints(sid, "<HR>\r\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "<TR><TD ALIGN=CENTER>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\n");
 	if ((auth_priv(sid, "bookmarks")&A_DELETE)&&(bookmarkid!=0)) {
 		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\n");
 	}
-	prints(sid, "</FORM>\n</CENTER>\n");
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\ndocument.bookmarkedit.bookmarkname.focus();\n// -->\n</SCRIPT>\n");
+	prints(sid, "</TD></TR>\n");
+	prints(sid, "</FORM>\n");
+	prints(sid, "</TABLE>\n");
+	prints(sid, "</CENTER>\n");
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+	prints(sid, "showpage(1);\n");
+	prints(sid, "document.bookmarkedit.bookmarkname.focus();\n// -->\n</SCRIPT>\n");
 	return;
 }
 

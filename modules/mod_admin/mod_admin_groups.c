@@ -75,34 +75,64 @@ void admingroupedit(CONN *sid)
 
 void admingrouplist(CONN *sid)
 {
-	int i;
-	int sqr;
+	int i, j;
+	int lastdomain;
+	int thisdomain;
+	int sqr1;
+	int sqr2;
 
 	if (!(auth_priv(sid, "admin")&A_ADMIN)) {
 		prints(sid, "<BR><CENTER>%s</CENTER><BR>\n", ERR_NOACCESS);
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups ORDER BY groupname ASC"))<0) return;
+		if ((sqr1=sql_queryf("SELECT groupid, obj_did, groupname FROM gw_groups ORDER BY obj_did, groupname ASC"))<0) return;
 	} else {
-		if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d ORDER BY groupname ASC", sid->dat->user_did))<0) return;
+		if ((sqr1=sql_queryf("SELECT groupid, obj_did, groupname FROM gw_groups WHERE obj_did = %d ORDER BY obj_did, groupname ASC", sid->dat->user_did))<0) return;
+	}
+	if ((sqr2=sql_query("SELECT domainid, domainname FROM gw_domains ORDER BY domainid ASC"))<0) {
+		sql_freeresult(sqr1);
+		return;
 	}
 	prints(sid, "<CENTER>\n");
-	if (sql_numtuples(sqr)>0) {
-		prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-		prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=150 STYLE='border-style:solid'>&nbsp;Group Name&nbsp;</TH></TR>\n");
-		for (i=0;i<sql_numtuples(sqr);i++) {
-			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr, i, 0)));
-			prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr, i, 1)));
-		}
-		prints(sid, "</TABLE>\n");
-	} else {
+	if (sql_numtuples(sqr1)<1) {
 		prints(sid, "There are no groups<BR>\n");
+		prints(sid, "<A HREF=%s/admin/groupeditnew>New Group</A>\n", sid->dat->in_ScriptName);
+		prints(sid, "</CENTER>\n");
+		sql_freeresult(sqr2);
+		sql_freeresult(sqr1);
+		return;
 	}
-	sql_freeresult(sqr);
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR><TH ALIGN=LEFT NOWRAP WIDTH=200 STYLE='border-style:solid'>&nbsp;Group Name&nbsp;</TH></TR>\n");
+	lastdomain=-1;
+	if (sql_numtuples(sqr2)<2) {
+		lastdomain=atoi(sql_getvalue(sqr1, 0, 1));
+	}
+	for (i=0;i<sql_numtuples(sqr1);i++) {
+		thisdomain=atoi(sql_getvalue(sqr1, i, 1));
+		if (lastdomain!=thisdomain) {
+			lastdomain=thisdomain;
+			prints(sid, "<TR CLASS=\"FIELDNAME\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
+			for (j=0;j<sql_numtuples(sqr2);j++) {
+				if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
+					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
+					break;
+				}
+			}
+			if (j==sql_numtuples(sqr2)) {
+				prints(sid, "&nbsp;</TD>");
+			}
+		}
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/groupedit?groupid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "<A HREF=%s/admin/groupedit?groupid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
+		prints(sid, "%s</A>&nbsp;</TD></TR>\n", str2html(sid, sql_getvalue(sqr1, i, 2)));
+	}
+	prints(sid, "</TABLE>\n");
 	prints(sid, "<A HREF=%s/admin/groupeditnew>New Group</A>\n", sid->dat->in_ScriptName);
 	prints(sid, "</CENTER>\n");
+	sql_freeresult(sqr2);
+	sql_freeresult(sqr1);
 	return;
 }
 

@@ -381,7 +381,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=geozone style='width:255px'%s>\n", greytoggle);
-	htselect_zone(sid, contact->geozone);
+	htselect_zone(sid, contact->geozone, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Time Zone      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=timezone style='width:255px'%s>\n", greytoggle);
 	htselect_timezone(sid, contact->timezone);
@@ -398,7 +398,7 @@ void contactview(CONN *sid, REC_CONTACT *contact)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\n", (auth_priv(sid, "contacts")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, contact->obj_gid);
+	htselect_group(sid, contact->obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 	prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\n", contact->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");

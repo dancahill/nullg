@@ -1,3 +1,10 @@
+1.3.12
+------
+- fixed the layout of user/group/domain lists
+- added a new SMTP delivery client
+- fixed MX DNS lookups to use native posix/win32 system calls
+- minor rpm .spec file fixes
+
 1.3.11
 ------
 - renamed dbutil and groupware to nullgw-dbutil and nullgw-server to help

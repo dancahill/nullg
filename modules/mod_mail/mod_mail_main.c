@@ -684,6 +684,7 @@ void webmailwrite(CONN *sid)
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD WIDTH=10%%>&nbsp;<B>Attachment</B>&nbsp;</TD><TD WIDTH=90%%><INPUT TYPE=FILE NAME=fattach SIZE=70></TD></TR>\n");
 	prints(sid, "</TABLE>\n");
 	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Send Mail'>\n");
+	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Save As Draft'>\n");
 	prints(sid, "</FORM>\n</CENTER>\n");
 	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
 	prints(sid, "document.wmcompose.msgto.focus();\r\n");

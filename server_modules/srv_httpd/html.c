@@ -617,12 +617,12 @@ void htselect_eventstatus(CONN *sid, int selected)
 	return;
 }
 
-void htselect_group(CONN *sid, int selected)
+void htselect_group(CONN *sid, int selected, int domainid)
 {
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", sid->dat->user_did))<0) return;
+	if ((sqr=sql_queryf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d order by groupname ASC", domainid))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));
@@ -698,12 +698,12 @@ void htselect_user(CONN *sid, int selected)
 	return;
 }
 
-void htselect_zone(CONN *sid, int selected)
+void htselect_zone(CONN *sid, int selected, int domainid)
 {
 	int i, j;
 	int sqr;
 
-	if ((sqr=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d order by zonename ASC", sid->dat->user_did))<0) return;
+	if ((sqr=sql_queryf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d order by zonename ASC", domainid))<0) return;
 	prints(sid, "<OPTION VALUE='0'>\r\n");
 	for (i=0;i<sql_numtuples(sqr);i++) {
 		j=atoi(sql_getvalue(sqr, i, 0));

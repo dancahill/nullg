@@ -455,7 +455,7 @@ int fileul(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, file.obj_gid);
+		htselect_group(sid, file.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
@@ -527,7 +527,7 @@ int filemkdir(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, file.obj_gid);
+		htselect_group(sid, file.obj_gid, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");
 		prints(sid, "<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\n", file.obj_gperm==0?" CHECKED":"");
@@ -586,7 +586,7 @@ void fileinfoedit(CONN *sid)
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 	prints(sid, "<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\n", (auth_priv(sid, "files")&A_ADMIN)?"":" DISABLED");
-	htselect_group(sid, file.obj_gid);
+	htselect_group(sid, file.obj_gid, sid->dat->user_did);
 	prints(sid, "</SELECT></TD></TR>\n");
 	if ((file.obj_uid==sid->dat->user_uid)||(auth_priv(sid, "files")&A_ADMIN)) editperms=1;
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'>&nbsp;<B>Group Members</B>&nbsp;</TD><TD ALIGN=RIGHT STYLE='padding:0px'>\n");

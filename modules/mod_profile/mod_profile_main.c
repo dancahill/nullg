@@ -73,7 +73,7 @@ void profileedit(CONN *sid)
 		prints(sid, "</SELECT></TD></TR>\n");
 		prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT>\n");
 		prints(sid, "<SELECT NAME=prefgeozone style='width:255px'>\n");
-		htselect_zone(sid, user.prefgeozone);
+		htselect_zone(sid, user.prefgeozone, sid->dat->user_did);
 		prints(sid, "</SELECT></TD></TR>\n");
 	}
 	if (module_exists(sid, "mod_mail")&&(auth_priv(sid, "webmail")>0)) {

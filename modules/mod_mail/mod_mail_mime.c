@@ -566,7 +566,6 @@ int webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *b
 			while (bodysize>0) {
 				if ((i=prints(sid, "%s", ptemp))<1) break;
 				ptemp+=i;
-log_error("mod_mail", __FILE__, __LINE__, 1, "a[%d]", i);
 			}
 		}
 		free(bodytemp);
@@ -731,7 +730,6 @@ log_error("mod_mail", __FILE__, __LINE__, 1, "a[%d]", i);
 			while (bodysize>0) {
 				if ((i=prints(sid, "%s", ptemp))<1) break;
 				ptemp+=i;
-log_error("mod_mail", __FILE__, __LINE__, 1, "b[%d]", i);
 			}
 		}
 		free(bodytemp);

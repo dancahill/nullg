@@ -65,9 +65,11 @@ int tcp_accept(int listensock, struct sockaddr *addr)
 {
 	int clientsock;
 	int fromlen;
+//	int timeout=500;	// 0.5 seconds
 
 	fromlen=sizeof(struct sockaddr);
 	clientsock=accept(listensock, addr, &fromlen);
+//	setsockopt(clientsock, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout));
 	return clientsock;
 }
 
@@ -190,20 +192,29 @@ retry:
 
 int tcp_close(TCP_SOCKET *socket, short int owner_killed)
 {
-	short int tmpsock;
-
-	if (socket->socket<0) return 0;
+//	if (socket->socket<0) return 0;
 	if (!owner_killed) {
 		socket->want_close=1;
+#ifdef HAVE_LIBSSL
+//		if (socket->ssl!=NULL) {
+//			SSL_shutdown(socket->ssl);
+//		}
+#endif
+		if (socket->socket>-1) {
+			shutdown(socket->socket, 2);
+			closesocket(socket->socket);
+			socket->socket=-1;
+		}
 	} else {
 		socket->want_close=0;
-		tmpsock=socket->socket;
-		socket->socket=-1;
-		/* shutdown(x,0=recv, 1=send, 2=both) */
-		shutdown(tmpsock, 2);
-		closesocket(tmpsock);
 #ifdef HAVE_LIBSSL
 		ssl_close(socket);
+#else
+		if (socket->socket>-1) {
+			shutdown(socket->socket, 2);
+			closesocket(socket->socket);
+			socket->socket=-1;
+		}
 #endif
 	}
 	return 0;

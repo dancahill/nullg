@@ -123,7 +123,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	htselect_domain(sid, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Group   &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=groupid style='width:255px'>\n");
-	htselect_group(sid, user->groupid);
+	htselect_group(sid, user->groupid, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Allow Login&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'%s>\n", user->userid==1?" DISABLED":"");
 	if ((user->userid==1)||(user->enabled)) {
@@ -197,7 +197,7 @@ void adminuseredit(CONN *sid, REC_USER *user)
 	htselect_timezone(sid, user->preftimezone);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=prefgeozone style='width:255px'>\n");
-	htselect_zone(sid, user->prefgeozone);
+	htselect_zone(sid, user->prefgeozone, user->domainid);
 	prints(sid, "</SELECT></TD></TR>\n");
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Language&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preflanguage    value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preflanguage));
 	prints(sid, "<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Theme&nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=preftheme   value=\"%s\" SIZE=45 style='width:255px'></TD></TR>\n", str2html(sid, user->preftheme));
@@ -390,6 +390,8 @@ void adminuseredit(CONN *sid, REC_USER *user)
 void adminuserlist(CONN *sid)
 {
 	int i, j;
+	int lastdomain;
+	int thisdomain;
 	int sqr1;
 	int sqr2;
 	int sqr3;
@@ -400,9 +402,9 @@ void adminuserlist(CONN *sid)
 		return;
 	}
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-		sqr1=sql_queryf("SELECT userid, username, surname, givenname, groupid, prefgeozone, domainid FROM gw_users ORDER BY domainid, userid ASC");
+		sqr1=sql_queryf("SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users ORDER BY domainid, username ASC");
 	} else {
-		sqr1=sql_queryf("SELECT userid, username, surname, givenname, groupid, prefgeozone, domainid FROM gw_users WHERE domainid = %d ORDER BY domainid, userid ASC", sid->dat->user_did);
+		sqr1=sql_queryf("SELECT userid, groupid, domainid, username, surname, givenname, prefgeozone FROM gw_users WHERE domainid = %d ORDER BY domainid, username ASC", sid->dat->user_did);
 	}
 	if (sqr1<0) return;
 	if (auth_priv(sid, "domainadmin")&A_ADMIN) {
@@ -432,23 +434,38 @@ void adminuserlist(CONN *sid)
 	}
 	prints(sid, "<CENTER>\n");
 	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>");
-	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Real Name&nbsp;</TH><TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Group&nbsp;</TH>");
-	if (sql_numtuples(sqr3)>0) {
-		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Zone&nbsp;</TH>");
-	}
-	if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(sql_numtuples(sqr4)>0)) {
-		prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Domain&nbsp;</TH>");
-	}
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH>");
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Real Name&nbsp;</TH>");
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Group&nbsp;</TH>");
+	prints(sid, "<TH ALIGN=LEFT NOWRAP WIDTH=100 STYLE='border-style:solid'>&nbsp;Zone&nbsp;</TH>");
 	prints(sid, "</TR>\n");
+	lastdomain=-1;
+	if (sql_numtuples(sqr4)<2) {
+		lastdomain=atoi(sql_getvalue(sqr1, 0, 2));
+	}
 	for (i=0;i<sql_numtuples(sqr1);i++) {
+		thisdomain=atoi(sql_getvalue(sqr1, i, 2));
+		if (lastdomain!=thisdomain) {
+			lastdomain=thisdomain;
+			prints(sid, "<TR CLASS=\"FIELDNAME\"><TD COLSPAN=4 NOWRAP style='border-style:solid'>");
+			for (j=0;j<sql_numtuples(sqr4);j++) {
+				if (atoi(sql_getvalue(sqr4, j, 0))==atoi(sql_getvalue(sqr1, i, 2))) {
+					prints(sid, "<B>%s</B></TD>", str2html(sid, sql_getvalue(sqr4, j, 1)));
+					break;
+				}
+			}
+			if (j==sql_numtuples(sqr4)) {
+				prints(sid, "&nbsp;</TD>");
+			}
+		}
 		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='%s/admin/useredit?userid=%d'\">", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
 		prints(sid, "<A HREF=%s/admin/useredit?userid=%d>", sid->dat->in_ScriptName, atoi(sql_getvalue(sqr1, i, 0)));
-		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 1)));
-		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(sqr1, i, 2)));
-		if (strlen(sql_getvalue(sqr1, i, 2))&&strlen(sql_getvalue(sqr1, i, 3))) prints(sid, ", ");
-		prints(sid, "%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
+		prints(sid, "%s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 3)));
+		prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s", str2html(sid, sql_getvalue(sqr1, i, 4)));
+		if (strlen(sql_getvalue(sqr1, i, 4))&&strlen(sql_getvalue(sqr1, i, 5))) prints(sid, ", ");
+		prints(sid, "%s&nbsp;</TD>", str2html(sid, sql_getvalue(sqr1, i, 5)));
 		for (j=0;j<sql_numtuples(sqr2);j++) {
-			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 4))) {
+			if (atoi(sql_getvalue(sqr2, j, 0))==atoi(sql_getvalue(sqr1, i, 1))) {
 				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr2, j, 1)));
 				break;
 			}
@@ -456,27 +473,14 @@ void adminuserlist(CONN *sid)
 		if (j==sql_numtuples(sqr2)) {
 			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
-		if (sql_numtuples(sqr3)>0) {
-			for (j=0;j<sql_numtuples(sqr3);j++) {
-				if (atoi(sql_getvalue(sqr3, j, 0))==atoi(sql_getvalue(sqr1, i, 5))) {
-					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr3, j, 1)));
-					break;
-				}
-			}
-			if (j==sql_numtuples(sqr3)) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
+		for (j=0;j<sql_numtuples(sqr3);j++) {
+			if (atoi(sql_getvalue(sqr3, j, 0))==atoi(sql_getvalue(sqr1, i, 6))) {
+				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr3, j, 1)));
+				break;
 			}
 		}
-		if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(sql_numtuples(sqr4)>0)) {
-			for (j=0;j<sql_numtuples(sqr4);j++) {
-				if (atoi(sql_getvalue(sqr4, j, 0))==atoi(sql_getvalue(sqr1, i, 6))) {
-					prints(sid, "<TD NOWRAP STYLE='border-style:solid'>%s</TD>", str2html(sid, sql_getvalue(sqr4, j, 1)));
-					break;
-				}
-			}
-			if (j==sql_numtuples(sqr4)) {
-				prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
-			}
+		if (j==sql_numtuples(sqr3)) {
+			prints(sid, "<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		}
 		prints(sid, "</TR>\n");
 	}

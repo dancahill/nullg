@@ -164,7 +164,7 @@ void calendar_availmap(CONN *sid)
 		prints(sid, "<TR BGCOLOR=#F0F0F0>\n");
 		prints(sid, "<TD ALIGN=LEFT NOWRAP CLASS=\"FIELDNAME\" STYLE='border-style:solid'><B>&nbsp;%s&nbsp;</B></TD>\n", dow[i]);
 		for (j=0;j<24;j++) {
-			prints(sid, "<TD STYLE='border-style:solid'>");
+			prints(sid, "<TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR BGCOLOR=#A0A0A0>");
 			for (k=0;k<4;k++) {
 				t=unixdate+(i*86400)+(j*3600)+(k*900);
 				t1=t;
@@ -177,28 +177,20 @@ void calendar_availmap(CONN *sid)
 					if (t3<=t) continue;
 					if ((status!=2)&&(status!=atoi(sql_getvalue(sqr, x, 3)))) continue;
 					if ((userid>0)&&(userid!=atoi(sql_getvalue(sqr, x, 4)))) continue;
-//					if (groupid>0) {
-//						for (k=0;k<sql_numtuples(sqr2);k++) {
-//							if (atoi(sql_getvalue(sqr, x, 4))!=atoi(sql_getvalue(sqr2, k, 0))) continue;
-//							if (groupid!=atoi(sql_getvalue(sqr2, k, 1))) continue;
-//							break;
-//						}
-//						if (k==sql_numtuples(sqr2)) continue;
-//					}
 					busyevent=atoi(sql_getvalue(sqr, x, 0));
 					break;
 				}
 				if (busyevent) {
-					prints(sid, "<SPAN STYLE=background-color:#FF4040><A HREF=%s/calendar/view?eventid=%d>&nbsp;&nbsp;</A></SPAN>", sid->dat->in_ScriptName, busyevent);
+					prints(sid, "<TD BGCOLOR=#FF4040><A HREF=%s/calendar/view?eventid=%d>&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, busyevent);
 				} else if (uavailability[i*24+j]=='X') {
-					prints(sid, "<SPAN STYLE=background-color:#909090>&nbsp;&nbsp;</SPAN>");
+					prints(sid, "<TD>&nbsp;&nbsp;</TD>");
 				} else if (uavailability[i*24+j]=='0') {
-					prints(sid, "<SPAN STYLE=background-color:#A0A0A0>&nbsp;&nbsp;</SPAN>");
+					prints(sid, "<TD BGCOLOR=#B0B0B0>&nbsp;&nbsp;</TD>");
 				} else {
-					prints(sid, "<SPAN STYLE=background-color:#7070FF><A HREF=%s/calendar/editnew?userid=%d&time=%d>&nbsp;&nbsp;</A></SPAN>", sid->dat->in_ScriptName, userid, t1);
+					prints(sid, "<TD BGCOLOR=#7070FF><A HREF=%s/calendar/editnew?userid=%d&time=%d>&nbsp;&nbsp;</A></TD>", sid->dat->in_ScriptName, userid, t1);
 				}
 			}
-			prints(sid, "</TD>\n");
+			prints(sid, "</TR></TABLE></TD>\n");
 		}
 		prints(sid, "</TR>\n");
 	}

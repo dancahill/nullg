@@ -16,7 +16,7 @@ all: _all
 	@echo "The next step is to run 'make install'."
 	@echo ""
 
-_all: _sqlite _dbutil _server _server_modules _modules
+_all: _sqlite _dbutil _smtpc _server _server_modules _modules
 	@cp -p scripts/setup distrib/setup
 	@cp -p scripts/cron.daily distrib/bin/cron.daily
 	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
@@ -26,6 +26,10 @@ _all: _sqlite _dbutil _server _server_modules _modules
 _dbutil:
 	@echo "dbutil"
 	@cd dbutil;$(MAKE)
+
+_smtpc:
+	@echo "smtpc"
+	@cd tools/smtpc;$(MAKE)
 
 _server:
 	@echo "server"
@@ -57,6 +61,7 @@ clean:
 	@echo -n "Cleaning..."
 	@chmod 0755 scripts/lxtool
 	@cd dbutil;$(MAKE) clean
+	@cd tools/smtpc;$(MAKE) clean
 	@cd server;$(MAKE) clean
 	@cd server_modules;$(MAKE) clean
 	@cd modules;$(MAKE) clean
