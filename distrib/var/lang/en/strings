@@ -75,7 +75,7 @@
    MAIL_DELETE        = "Delete"
    MAIL_CHECKING      = "Checking for new mail"
    MAIL_OK            = "OK"
-   MAIL_SENT          = "Message %d Sent."
+   MAIL_SENT          = "Message Sent."
    MAIL_ERR_DNS_POP3  = "Could not find POP3 server"
    MAIL_ERR_DNS_SMTP  = "Could not find SMTP server"
    MAIL_ERR_CON_POP3  = "Could not connect to POP3 server"

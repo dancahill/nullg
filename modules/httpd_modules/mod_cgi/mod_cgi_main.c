@@ -168,7 +168,7 @@ DllExport int mod_main(CONN *sid)
 		{ ".pl",  "/usr/bin/perl" },
 		{ NULL,   NULL }
 	};
-	union wait status;
+	int status;
 	int pset1[2];
 	int pset2[2];
 #endif

@@ -1,9 +1,8 @@
-# Rules.mak for NullLogic Groupware executables (Linux 2.2, 2.4, +)
+# Rules.mak for NullLogic Groupware executables
 
 CC            = @CC@
 MAKE          = make -s
 
-#BIN_CFLAGS   = -Wall -O2 -I../include -DSIGCONTEXT
 BIN_CFLAGS    = -Wall -O2 -I../include
 BIN_LDFLAGS   = -s @UTIL_LIBS@
 BIN_LDFLAGS_T = -s @LIBS@
