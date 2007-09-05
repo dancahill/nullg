@@ -1,0 +1,23 @@
+print("
+<SCRIPT LANGUAGE=JavaScript>
+<!--
+function showdebug() {
+	if (document.getElementById('debug').style.display=='none') {
+		document.getElementById('debug').style.display='block';
+	} else {
+		document.getElementById('debug').style.display='none';
+	}
+}
+// -->
+</SCRIPT>
+");
+print("<A HREF=javascript:showdebug()>SHOW DEBUG</A>\n");
+print("</CENTER>\n");
+print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");
+#if (typeof(sqlquery)=='function') {
+#	sqlquery('_q1', "SELECT * FROM nullgs_sessions");
+#	sqlquery('_q2', "SELECT * FROM nullgs_entries");
+#}
+print("global _GLOBALS = ");
+printvar(_GLOBALS);
+print("</FONT></PRE></DIV>\n");

@@ -1,0 +1,176 @@
+
+function encodeurl(in) {
+	return in;
+}
+
+function search_sql() {
+//	if (!(auth_priv(sid, "query")&A_READ)) {
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//		return;
+//	}
+	if (_GET['QUERYSTRING']!=null) {
+//		if (!(auth_priv(sid, "query")&A_ADMIN)) {
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			return;
+//		}
+		id=-1;
+		qname=_GET['QUERYSTRING'];
+		query=_GET['QUERYSTRING'];
+	} else if (_GET['ID']!=null) {
+		id=tonumber(_GET['ID']);
+//		global Q="{_tuples=1,_rows={[0]={id=0,pid="+_USER['domainid']+",did="+_USER['domainid']+",_data={cn='New Query',query=''}}}}");
+		global Q=ldir.getentry("dbquery", id);
+		if (typeof(Q)=='null') {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		qname=Q['_rows'][0]['_data']['cn'];
+		query=Q['_rows'][0]['_data']['query'];
+	} else {
+		print("missing something?");
+		return;
+	}
+	if ((string.nicmp("SELECT", query, 6)!=0)&&(string.nicmp("SHOW", query, 4)!=0)) {
+		if (string.nicmp("DELETE", query, 6)==0) {
+			global Q=sqlquery(query);
+		} else if (string.nicmp("INSERT", query, 6)==0) {
+			global Q=sqlquery(query);
+		} else if (string.nicmp("UPDATE", query, 6)==0) {
+			global Q=sqlquery(query);
+		} else {
+			print("<CENTER>Unknown SQL query type.</CENTER>\r\n");
+			return;
+		}
+		if (typeof(Q)=='null') {
+			print("<CENTER>SQL update failed.</CENTER>\r\n");
+		} else {
+			print("<CENTER>SQL update successful.</CENTER>\r\n");
+		}
+		return;
+	}
+	global Q=sqlquery(query);
+	if (typeof(Q)=='null') {
+		print("<CENTER>SQL query failed.</CENTER>\r\n");
+		return;
+	} else if (typeof(Q._error)!='null') {
+		print("<CENTER>SQL query failed.  [",Q._error,"]</CENTER>\r\n");
+		return;
+	}
+/*
+	if (sql_query(proc->N, &qobj2, query)<0) {
+		print("<CENTER>SQL query failed.</CENTER>\r\n");
+		goto cleanup;
+	}
+	if ((ptemp=getgetenv(sid, "FORMAT"))!=NULL) {
+		nes_setstr(sid->N, rtobj, "CONTENT_DISPOSITION", "attachment; filename=query.csv", strlen("attachment; filename=query.csv"));
+		send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
+		flushbuffer(sid);
+		for (i=0;i<sql_numfields(proc->N, &qobj2);i++) {
+			print("\"%s\"", sql_getname(proc->N, &qobj2, i));
+			if (i<sql_numfields(proc->N, &qobj2)-1) {
+				print(",");
+			} else {
+				print("\r\n");
+			}
+		}
+		for (i=0;i<sql_numtuples(proc->N, &qobj2);i++) {
+			for (j=0;j<sql_numfields(proc->N, &qobj2);j++) {
+				print("\"%s\"", str2html(sid, sql_getvalue(proc->N, &qobj2, i, j)));
+				if (j<sql_numfields(proc->N, &qobj2)-1) {
+					print(",");
+				} else {
+					print("\r\n");
+				}
+			}
+		}
+		goto cleanup;
+	}
+*/
+	if (Q._tuples<1) {
+		print("<CENTER>Query [",qname,"] returned no results.</CENTER>\r\n");
+		return;
+	}
+	if (_GET['OFFSET']!=null) {
+		offset=tonumber(_GET['OFFSET']);
+	} else {
+		offset=0;
+	}
+	print("<CENTER>\r\n");
+	if (offset>(_USER.pref.maxlist-1)) {
+		if (id>=0) {
+			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
+		} else {
+			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
+		}
+	} else {
+		print("&lt;&lt;");
+	}
+	print(" ",qname," - ",Q._tuples," results ");
+	if (offset+_USER.pref.maxlist<Q._tuples) {
+		if (id>=0) {
+			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
+		} else {
+			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
+		}
+	} else {
+		print("&gt;&gt;");
+	}
+	print("<BR />\r\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+	print("<TR>");
+	for (i=0;i<Q._fields;i++) {
+		print("<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>",str2html(iname(Q['_rows'][0], i)),"</TH>");
+	}
+	print("</TR>\r\n");
+	for (i=offset;(i<Q._tuples)&&(i<offset+_USER.pref.maxlist);i++) {
+		print("<TR CLASS=\"FIELDVAL\">");
+		for (j=0;j<Q._fields;j++) {
+			print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i][iname(Q['_rows'][i], j)]),"&nbsp;</TD>");
+		}
+		print("</TR>\r\n");
+	}
+	print("</TABLE></CENTER>\r\n");
+	print("<CENTER>\r\n");
+	if (Q._tuples>_USER.pref.maxlist) {
+		if (offset>(_USER.pref.maxlist-1)) {
+			if (id>=0) {
+				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">");
+			} else {
+				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">");
+			}
+			min=offset-_USER.pref.maxlist+1;
+			max=offset;
+			if (min<0) min=0; else if (min>Q._tuples) min=Q._tuples;
+			if (max<0) max=0; else if (max>Q._tuples) max=Q._tuples;
+			print("Previous (",min," to ",max,")</A>]\r\n");
+		} else {
+			print("[Previous]\r\n");
+		}
+		if (offset+_USER.pref.maxlist<Q._tuples) {
+			if (id>=0) {
+				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">");
+			} else {
+				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">");
+			}
+			min=offset+_USER.pref.maxlist+1;
+			max=offset+_USER.pref.maxlist+_USER.pref.maxlist;
+			if (min<0) min=0; else if (min>Q._tuples) min=Q._tuples;
+			if (max<0) max=0; else if (max>Q._tuples) max=Q._tuples;
+			print("Next (",min," to ",max,")</A>]\r\n");
+		} else {
+			print("[Next]\r\n");
+		}
+	}
+	print("</CENTER>\r\n");
+	Q=null;
+	return;
+}
+
+include_template("html/header.ns");
+global _TEMP={ modname="searches" };
+include_template("html/headmenu.ns");
+print("<BR>\r\n");
+
+search_sql();
+
+include_template("html/debug.ns");
+include_template("html/footer.ns");

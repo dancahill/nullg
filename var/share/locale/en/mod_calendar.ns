@@ -1,0 +1,6 @@
+global _SERVER['LANGUAGE']['en']['mod_calendar'] = {
+	event_title     = "GroupServer Event Reminder",
+	event_reset     = "reset",
+	event_none      = "You have no outstanding reminders.",
+	event_name      = "Event Name"
+};

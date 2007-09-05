@@ -1,0 +1,84 @@
+
+/*
+ * standard tcp:
+ * nesla -e "include('popsync.nes');pop3_sync('username', 'password', 'hostname.com');"
+ * or:
+ * nesla -e "include('popsync.nes');pop3_sync('username', 'password', 'hostname.com', 110, false);"
+ * tcp with ssl:
+ * nesla -e "include('popsync.nes');pop3_sync('username', 'password', 'hostname.com', 995, true);"
+ */
+
+function swrite(sock, text) {
+	print(text);
+	return tcp.write(sock, text);
+}
+
+function sread(sock) {
+	in=tcp.gets(sock);
+	if (typeof(in)!='string') {
+		print("input error\n");
+		exit;
+	}
+	print(in+"\n");
+	return in;
+}
+
+function popclose(sock) {
+	swrite(sock, "QUIT\r\n");
+	sread(sock);
+	tcp.close(sock);
+}
+
+function pop3_sync(user, pass, host, port, use_ssl) {
+	if (host==null) host='localhost';
+	if (port==null) port=110;
+	var dirname=user+"@"+host;
+	sock=tcp.open(host, port, use_ssl);
+	if (typeof(sock)!='sock4') {
+		print("can't connect to pop3 server\n");
+		return;
+	}
+	line=sread(sock);
+	swrite(sock, "USER "+user+"\r\n");
+	line=sread(sock);
+	if (string.sub(line, 0, 3)!="+OK") {
+		print("pop3 error: "+line+"\n");
+		popclose(sock);
+		return;
+	}
+	swrite(sock, "PASS "+pass+"\r\n");
+	line=sread(sock);
+	if (string.sub(line, 0, 3)!="+OK") {
+		print("pop3 error: "+line+"\n");
+		popclose(sock);
+		return;
+	}
+	if (typeof(file.stat(dirname))!='table') system("mkdir "+dirname);
+	swrite(sock, "STAT\r\n");
+	line=sread(sock);
+	status=string.split(line, " ");
+	count=tonumber(status[1]);
+	if (count==1) plural=''; else plural='s';
+	print("\nE-mail status for "+user+"@"+host+"\nYou have "+count+" message"+plural+"\n\n");
+	for (i=1;i<=count;i++) {
+		/* get uidl */
+		swrite(sock, "UIDL "+(i)+"\r\n");
+		line=sread(sock);
+		if (string.sub(line, 0, 3)!="+OK") break;
+		x=string.split(line, " ");
+		uidl=x[2];
+//		filename=tostring(i)+"."+base64.encode(uidl)+".msg";
+		filename=uidl;
+		/* now get msg */
+		if (typeof(file.stat(dirname+"/"+filename))=='table') continue;
+		swrite(sock, "RETR "+i+"\r\n");
+		line=sread(sock);
+		if (string.sub(line, 0, 3)!="+OK") break;
+		msg="";
+		for (x=sread(sock);x!=".";x=sread(sock)) msg+=x+"\r\n";
+		if (x!=".") break;
+		file.write(dirname+"/"+filename, msg);
+	}
+	popclose(sock);
+	return;
+}

@@ -1,0 +1,101 @@
+#!/bin/sh
+FILEDATE="`date +%Y-%m-%d` 01:03"
+OUTFILE=nullgs-1.3.30-x86
+if [ "`uname`" = "FreeBSD" ]; then
+	OUTFILE=$OUTFILE-freebsd
+elif [ "`uname`" = "OpenBSD" ]; then
+	OUTFILE=$OUTFILE-openbsd
+elif [ "`uname`" = "Linux" ]; then
+	if [ "`uname -r | awk -F'.' '{ print $1"."$2 }'`" = "2.0" ]; then
+		OUTFILE=$OUTFILE-oldlinux-libc5
+	else
+		OUTFILE=$OUTFILE-linux
+	fi
+else
+	OUTFILE=$OUTFILE-unknown
+fi
+
+build_pack() {
+	rm -rf ${OUTFILE}
+	rm -rf ${OUTFILE}.tar.gz
+	cd src/scripts;touch --date="$FILEDATE" `find *`;cd ../..
+	cd bin;touch --date="$FILEDATE" `find *`;cd ..
+	cd etc;touch --date="$FILEDATE" `find *`;cd ..
+	cd lib;touch --date="$FILEDATE" `find *`;cd ..
+	cd var;touch --date="$FILEDATE" `find *`;cd ..
+	mkdir ${OUTFILE}
+	cp -pR bin ${OUTFILE}/
+	cp -pR etc ${OUTFILE}/
+	cp -pR lib ${OUTFILE}/
+	cp -pR var ${OUTFILE}/
+	tar zcf ${OUTFILE}.tar.gz ${OUTFILE}
+	rm -rf ${OUTFILE}
+	touch --date="$FILEDATE" ${OUTFILE}.tar.gz
+	md5sum ${OUTFILE}.tar.gz > ${OUTFILE}.txt
+	echo "" >> ${OUTFILE}.txt
+	file bin/nullgs >> ${OUTFILE}.txt
+	ldd bin/nullgs >> ${OUTFILE}.txt
+}
+
+build_slackpack() {
+	rm -rf slackroot
+	rm -rf ${OUTFILE}.tgz
+	cd bin;touch --date="$FILEDATE" `find -name "*"`;cd ..
+	cd etc;touch --date="$FILEDATE" `find -name "*"`;cd ..
+	cd lib;touch --date="$FILEDATE" `find -name "*"`;cd ..
+	cd var;touch --date="$FILEDATE" `find -name "*"`;cd ..
+	mkdir -p slackroot/usr/local/nullgs
+	mkdir -p slackroot/install
+	cp -pR bin slackroot/usr/local/nullgs
+	cp -pR etc slackroot/usr/local/nullgs
+	cp -pR lib slackroot/usr/local/nullgs
+	cp -pR var slackroot/usr/local/nullgs
+	cat << EOF > slackroot/install/doinst.sh
+( cd /usr/local/nullgs/bin ; ./nullgs-confutil )
+EOF
+	cat << EOF > slackroot/install/slack-desc
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':'.
+
+
+|-----handy-ruler------------------------------------------------------|
+nullgs: nullgs
+nullgs:
+nullgs: NullLogic GroupServer
+nullgs:
+nullgs: This is the NullLogic GroupServer Suite written and maintained
+nullgs: by Dan Cahill.
+nullgs:
+nullgs:
+nullgs:
+nullgs:
+nullgs:
+EOF
+	chmod 755 slackroot/install/doinst.sh
+	chmod 644 slackroot/install/slack-desc
+	cd slackroot
+	tar zcf ../${OUTFILE}.tgz *
+	cd ..
+	rm -rf slackroot
+	touch --date="$FILEDATE" ${OUTFILE}.tgz
+	md5sum ${OUTFILE}.tar.gz > ${OUTFILE}.txt
+	echo "" >> ${OUTFILE}.txt
+	file bin/nullgs >> ${OUTFILE}.txt
+	ldd bin/nullgs >> ${OUTFILE}.txt
+}
+
+case "$1" in
+'pack')
+	build_pack
+	;;
+'slackpack')
+	build_slackpack
+	;;
+*)
+	echo "Usage: $0 {pack|slackpack}"
+esac
+exit 0

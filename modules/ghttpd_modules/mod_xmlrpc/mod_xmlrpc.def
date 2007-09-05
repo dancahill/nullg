@@ -1,6 +1,0 @@
-LIBRARY		mod_xmlrpc
-VERSION		1.3.29
-EXPORTS
-	mod_init
-	mod_main
-	mod_exit

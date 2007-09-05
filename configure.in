@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(nullgroupware, 1.3.29, nulllogic@users.sourceforge.net)
-AC_CONFIG_HEADER([include/config.h])
+AC_INIT(nullgs, 1.3.30, nulllogic@users.sourceforge.net)
+AC_CONFIG_HEADER([include/nullgs/config.h])
 AC_CANONICAL_HOST
 
 AC_PROG_CC
@@ -8,8 +8,12 @@ AC_PROG_CC
 TOP_BUILD_DIR=`pwd`
 AC_SUBST(TOP_BUILD_DIR)
 
+AC_PREFIX_DEFAULT(/usr/local/nullgs)
+
 # Checks for libraries.
 AC_CHECK_LIB([dl], [dlopen])
+AC_CHECK_LIB([m], [sin])
+AC_CHECK_LIB([resolv], [dn_expand])
 UTIL_LIBS=$LIBS
 AC_SUBST(UTIL_LIBS)
 
@@ -23,11 +27,13 @@ if test "$check_pthread" != no; then
 	AC_CHECK_LIB([pthread], [pthread_create])
 fi
 
-AC_CHECK_LIB([resolv], [dn_expand])
 #AC_CHECK_LIB([crypto], [main])
 #AC_CHECK_LIB([ssl], [main])
 AC_CHECK_FUNC(gethostent, , AC_CHECK_LIB(nsl, gethostent))
 AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
+
+#AC_CHECK_TYPE([socklen_t],, [AC_DEFINE([socklen_t], [size_t], [Define to `size_t' if `socklen_t' is missing.])], [
+AC_CHECK_TYPE(socklen_t, , AC_DEFINE(socklen_t, int, [Define to `int' if `socklen_t' is missing.]))
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -36,6 +42,7 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([		\
 	arpa/inet.h		\
 	arpa/nameser_compat.h	\
+	dlfcn.h			\
 	fcntl.h			\
 	netdb.h			\
 	netinet/in.h		\
@@ -89,13 +96,14 @@ AC_CHECK_FUNCS([			\
 	pthread_attr_setstacksize	\
 ])
 
-AC_CONFIG_FILES([Rules.mak Makefile include/config-nt.h])
+AC_CONFIG_FILES([Makefile src/Rules.mak include/nullgs/config-nt.h src/scripts/nullgs-backup.sh src/scripts/nullgs-init.sh src/scripts/nullgs-scanfile.sh src/scripts/setup.sh])
 AC_OUTPUT
+chmod 0755 src/scripts/*.sh
 
 echo
 echo "Configuring SQLite"
 echo
-cd sqlite;./libsqlite_make configure;cd ..
+cd src/sqlite;./libsqlite_make configure;cd ../..
 
 echo
 echo "Configuration completed."

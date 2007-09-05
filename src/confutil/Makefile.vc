@@ -1,0 +1,25 @@
+# Makefile for NullLogic GroupServer Confutil
+
+OBJDIR  = ../../obj
+INTDIR  = $(OBJDIR)/confutil
+
+include ../Rules.mak.vc
+
+CFLAGS  = $(BIN_CFLAGS)
+OBJECTS = $(INTDIR)/main.obj
+TARGET  = $(BIN_TARGETDIR)/nullgs-confutil.exe
+
+all: _dirs _nullgs
+
+_dirs:
+	@if not exist "$(BIN_TARGETDIR)" mkdir "$(BIN_TARGETDIR)"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_nullgs: $(OBJECTS)
+	rc.exe /l 0x409 /fo"$(INTDIR)/confutil.res" /d "NDEBUG" confutil.rc
+	$(LINK) $(BIN_LDFLAGS) /out:$(TARGET) $(OBJECTS) $(INTDIR)/confutil.res
+
+clean:
+	@-erase "$(TARGET)"
+	@-erase "$(INTDIR)/*"

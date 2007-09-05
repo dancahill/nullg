@@ -1,0 +1,48 @@
+function swrite(sock, text) {
+	print(text);
+	return tcp.write(sock, text);
+}
+
+function sread(sock) {
+	in=tcp.gets(sock);
+	if (typeof(in)!='string') {
+		print("input error\n");
+		exit;
+	}
+	print(in+"\n");
+	return in;
+}
+
+function send_mail(msg, host, port) {
+	/*
+	 * most smtp clients at least pretend to check for errors, but not us...
+	 */
+	if (host==null) host='localhost';
+	if (port==null) port=25;
+//	sock=tcp.open(host, port, 0);
+	sock=tcp.open(host, 465, 1);
+	if (typeof(sock)!='sock4') {
+		print("can't connect to smtp server\n");
+		return;
+	}
+	i=sread(sock);
+	o=swrite(sock, "HELO <localhost>\r\n");
+	i=sread(sock);
+	o=swrite(sock, "MAIL From: <"+msg.from+">\r\n");
+	i=sread(sock);
+	o=swrite(sock, "RCPT To: <"+msg.to+">\r\n");
+	i=sread(sock);
+	o=swrite(sock, "DATA\r\n");
+	i=sread(sock);
+	o=swrite(sock, "From: "+msg.from+"\r\n");
+	o=swrite(sock, "To: "+msg.to+"\r\n");
+	o=swrite(sock, "Subject: "+msg.subject+"\r\n");
+	o=swrite(sock, "\r\n");
+	o=swrite(sock, ""+msg.body+"\r\n");
+	o=swrite(sock, ".\r\n");
+	i=sread(sock);
+	o=swrite(sock, "QUIT\r\n");
+	i=sread(sock);
+	tcp.close(sock);
+	return;
+}

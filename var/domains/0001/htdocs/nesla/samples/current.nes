@@ -1,0 +1,19 @@
+#!/usr/bin/nesla
+/*
+ * the following code performs the same task as:
+ *   wget http://nesla.sourceforge.net/files/nesla-current.tar.gz
+ */
+if (typeof(http.get)!='function') {
+	print("http.get is not a function\n");
+	exit;
+}
+var hostname="nesla.sourceforge.net";
+var filename="/files/nesla-current.tar.gz";
+print("\tsucking http://"+hostname+""+filename+"\n");
+io.flush();
+if (typeof(x=http.get(0, hostname, 80, filename))=='table') {
+	print("\t", x.status, "\n");
+//	system("rm -rf nesla-*");
+	file.write("nesla-current.tar.gz", x.body);
+//	system("tar zxf nesla-current.tar.gz");
+}

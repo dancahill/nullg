@@ -1,0 +1,264 @@
+1.3.30
+------
+- upgraded SQLite to 3.3.6
+- added SSL client code
+- SSL e-mail client support
+- added mod_spellcheck (experimental spell-checker that uses aspell)
+- fixed e-mail text attachment downloading
+- management of users, groups and zones for other domains has been improved
+- added home folders to bookmarks and files
+- added a 'su' function for domain admins to switch users
+- added a common sql result pruner function for easier permission enforcement
+- fixed startup dir detection on NT when _not_ running as a service
+- all new connections are now handled by a single select() thread
+- tcp io is now entirely managed by the core
+- dns resolution failure on win32 now returns NULL
+
+1.3.29
+------
+- debian packaging now works
+- failed htmod calls can now trigger a secondary response
+- upgraded SQLite to 3.1.3
+- added legacy support for SQLite 2.8.x to make upgrading easier
+
+1.3.28
+------
+- mod_php was rewritten and tested with 4.3.10 and 5.0.3
+- several trivial build incompatibilities were fixed for non-Linux OSs
+
+1.3.27
+------
+- fixed zero domain ownership on newly created mail filters
+- added ClamAV support to sample scanner script
+- cleaned up some of the page transitions in mod_mail
+- SQL subsystem was rewritten to handle an arbitrary number of cached queries
+
+1.3.26
+------
+- renamed httpd module to ghttpd
+- added simple HTTPd server module
+- fixed zero domain ownership on newly created mail folders
+- fixed zombie processes from mod_cgi
+
+1.3.25
+------
+- fixed POST key matching
+- HTML mail composer now works for Firefox
+- core module names and paths have been updated
+- minor fixes in mod_php
+
+1.3.24
+------
+- default language is now runtime-configurable (translations still needed)
+- fixed contact vCard export
+- fixed file scanning
+
+1.3.23
+------
+- added unique key to prevent duplicate files
+- restructured html help layout
+- fixed e-mail searching, and made it more accessible
+- fixed dependency on paths.h
+- umask is now configurable
+
+1.3.22
+------
+- reformatted sql schema include files
+- added optional multiple concurrent logins per user
+
+1.3.21
+------
+- fixed FreeBSD build error
+- fixed segfault caused by failed bind()ing
+- fixed broken html mail composer (XP SP2 really broke this)
+- a local mail account is now added upon creation of a new user
+- added bookmark export for Mozilla
+- upgraded SQLite to 3.0.8
+
+1.3.20
+------
+- added php sapi module (experimental)
+- upgraded SQLite to 3.0.4
+- default config file is now written if no config is found at startup
+
+1.3.19
+------
+- added logging of newly created threads and their pids
+- removed servers.cfg usage
+- fixed smtpd welcome banner
+- reorganized module source tree
+- added mod_accounting and mod_php skeleton modules
+- fixed unclean disconnects in pop3d and smtpd
+- added better logging of raw tcp io
+- added basic message header parsing to smtpd
+- fixed broken contact sql inserts
+- added selectable themes to mod_profile
+
+1.3.18
+------
+- enforce \r\n line endings for smtp spool client
+- upgraded SQLite to 2.8.14
+- added projectid fields to events and tasks to support new project module
+- added contactid field to tasks
+- added new PROJECTS module
+- fixed inconsistent userrec mappings
+- fixed single dots in outgoing e-mail bodies
+
+1.3.17
+------
+- fixed a heap overflow in mod_mail caused by large message bodies
+- fixed overflowing text formatting in Mozilla and Konqueror
+- added smarter db upgrade code to dbutil
+- fixed xml-rpc domain auth and sample php scripts
+- fixed annoying _getshort compile warnings
+- use dynamic linking at runtime to load OpenSSL
+- added SSL support for win32
+
+1.3.16
+------
+- fixed Received: headers in outgoing mail
+- fixed PostgreSQL schema incompatibilities
+- fixed sound in Mozilla
+- added website and folderid fields to contact records
+- users can now be members of more than one group
+- contacts have been adapted to new group ownership model
+
+1.3.15
+------
+- info for each message in the SMTP spool is now stored in a separate file
+- added support for sending delivery status notifications
+- fixed build errors in mod_cgi
+- fixed redundant malloc()s of conn data struct in server modules
+- added mod_exit call to server modules
+
+1.3.14
+------
+- total rewrite of configuration file code
+- added support for spam/virus filtering to smtp server
+- improved logging in smtp server
+
+1.3.13
+------
+- fixed minor build incompatibilities with OpenBSD
+- updated included SQL headers
+- new MX DNS lookup system is now integrated and working
+- fixed sanity check for directories on win32
+- fixed SMTP rejection of NULL sender
+- added much better logging of DNS errors
+- fixed socket disconnect code on non-ssl connections
+
+1.3.12
+------
+- fixed the layout of user/group/domain lists
+- added a new SMTP delivery client
+- fixed MX DNS lookups to use native posix/win32 system calls
+- minor rpm .spec file fixes
+
+1.3.11
+------
+- renamed dbutil and groupware to nullgs-dbutil and nullgs-server to help
+  resolve naming conflicts
+- added domain aliases
+- added domain integrity checks to syscheck
+- fixed freebsd pthread detection
+- fixed dialog support in setup scripts
+
+1.3.10
+------
+- fixed missing dir check to occur after setuid call
+- fixed missing notes lists in event views and task views
+- fixed missing default theme and language vars for login page
+- relocated cgi-bin directory under var
+- added per-domain cgi-bin and htdocs directories
+- fixed directory references in e-mail reindexing
+
+1.3.9
+-----
+- added mini calendar popup for easier date selection
+- forwarded e-mail messages are now sent as attachments
+- event form now uses tabbed layout
+- converted all gif files to png
+- added pop-before-smtp authentication method
+- added iCalendar export support
+- fixed missing message body error when doing cross-mailbox searches
+
+1.3.8
+-----
+- fixed truncated display of html e-mails
+- fixed prints() to return number of bytes actually printed
+- fixed login page to use 'default' theme
+- fixed POP3d and SMTPd to work with new directory layout
+- added option to copy events
+
+1.3.7
+-----
+- added search form for e-mail
+- modified e-mail MIME decoding to use buffers, instead of direct output
+- e-mail message bodies are now fully searchable
+- e-mail files are now stored in subdirectories corresponding to their mailboxid
+- e-mail accounts and files are now stored in corresponding domain directories
+
+1.3.6
+-----
+- added mail header fields for scanresult
+- added searchable message body for e-mails
+- fixed mail address book inter-domain permissions check
+- e-mail headers are now reread and updated after a virus and/or spam is found
+- added basic support for user-selectable themes
+- added user option to change language
+
+1.3.5
+-----
+- virtual domain data is now properly restricted to only users of that domain
+- SMTP server now accepts mail for virtual domains
+- fixed an uninitialized buffer on the login page
+- uniqueness of users, groups, domains, and zones in now properly checked
+- user-defined SQL queries now require domain admin priveledges
+
+1.3.4
+-----
+- added a per-connection flag for more graceful shutdown notifications
+- fixed a large memory leak in SSL connection handling
+- fixed segfault in SSL connection terminations
+- added a new system to allow for virtual domains
+
+1.3.3
+-----
+- added pop3s server support
+- added smtps server support
+- SMTP queueing is now handled by its own module
+- added 'sslcert' option to Makefile
+- fixed FreeBSD autoconf detection
+- fixed win32 build support (added static config.h)
+- fixed missing dependency in non-SSL build
+- fixed pthread_attr_setstacksize dependency for _old_ Linux systems
+- fixed several problems found with RPM .spec file
+- upgraded SQLite to 2.8.13
+
+1.3.2
+-----
+- Added autoconf support
+- Added https server support
+
+1.3.1
+-----
+- Colours are now entirely controlled by CSS
+- Fixed process model to allow servers to be run as separate processes
+  (controlled by command-line parameters)
+- Forum tree sorting code was rewritten to allow a greater degree of
+  reuseability, and flexibility with varying sorting methods
+- Fixed mail module to _not_ try to sync account 0
+- mod_xmlrpc is now enabled by default in new installations
+- Updated SQLite to 2.8.12
+- Fixed several minor resource leaks caused by the process model rewrite
+- Changed default html charset to iso-8859-1 to avoid having high-ascii
+  characters clobbered
+
+1.3.0
+-----
+- Initial 1.3 development release
+- Each server, i.e. http, pop3, is now loaded as a module by a common core
+  server, and can either be loaded as a single process, or as separate server
+  processes
+- A new TCP socket handling interface has been designed to allow transparent
+  use of SSL (not finished yet)

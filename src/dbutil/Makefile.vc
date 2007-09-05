@@ -1,0 +1,25 @@
+# Makefile for NullLogic GroupServer DButil
+
+OBJDIR  = ../../obj
+INTDIR  = $(OBJDIR)/dbutil
+
+include ../Rules.mak.vc
+
+CFLAGS  = $(BIN_CFLAGS)
+OBJECTS = $(INTDIR)/main.obj
+TARGET  = $(BIN_TARGETDIR)/nullgs-dbutil.exe
+
+all: _dirs _nullgs
+
+_dirs:
+	@if not exist "$(BIN_TARGETDIR)" mkdir "$(BIN_TARGETDIR)"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_nullgs: $(OBJECTS)
+	rc.exe /l 0x409 /fo"$(INTDIR)/dbutil.res" /d "NDEBUG" dbutil.rc
+	$(LINK) $(BIN_LDFLAGS) /out:$(TARGET) $(OBJECTS) $(INTDIR)/dbutil.res
+
+clean:
+	@-erase "$(TARGET)"
+	@-erase "$(INTDIR)/*"

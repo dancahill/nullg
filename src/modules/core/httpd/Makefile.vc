@@ -1,0 +1,30 @@
+# Makefile for NullLogic GroupServer module
+
+OBJDIR  = ../../../../obj
+INTDIR  = $(OBJDIR)/modules/core/httpd
+
+include ../../../Rules.mak.vc
+
+CFLAGS  = $(LIB_CFLAGS)
+OBJECTS = $(INTDIR)/httpd_auth.obj $(INTDIR)/httpd_cgi.obj $(INTDIR)/httpd_format.obj $(INTDIR)/httpd_html.obj $(INTDIR)/httpd_http.obj $(INTDIR)/httpd_io.obj $(INTDIR)/httpd_lang.obj $(INTDIR)/httpd_ldir.obj $(INTDIR)/httpd_log.obj $(INTDIR)/httpd_main.obj $(INTDIR)/httpd_modctl.obj $(INTDIR)/httpd_nesla.obj $(INTDIR)/httpd_sql.obj
+TARGET  = $(LIB_TARGETDIR)/core/httpd.dll
+
+all: _dirs _nullgs
+
+_dirs:
+	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
+	@if not exist "$(LIB_TARGETDIR)/core" mkdir "$(LIB_TARGETDIR)/core"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(OBJDIR)/modules" mkdir "$(OBJDIR)/modules"
+	@if not exist "$(OBJDIR)/modules/core" mkdir "$(OBJDIR)/modules/core"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_nullgs: $(OBJECTS)
+	$(LINK) $(LIB_LDFLAGS) /out:$(TARGET) /implib:$(INTDIR)/httpd.lib $(OBJECTS)
+
+clean:
+	@-erase "$(TARGET)"
+	@-erase "$(INTDIR)/*"
+
+.c{$(INTDIR)}.obj:
+	$(CC) $(CFLAGS) $<

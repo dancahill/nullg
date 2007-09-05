@@ -1,0 +1,18 @@
+These are simple samples of Nesla programs.
+
+   _ajax.nes       included file used to add AJAX functions
+   _cards.nes      included file used to define playing cards
+   ansi.nes        simple ANSI codes
+   current.nes     download latest test release of Nesla (via http)
+   eliza.nes       psychiatry for the lonely and desparate
+   eliza-l.nes     language file for eliza.nes
+   hello.nes       the first program in every language
+   ht-bj.nes       blackjack game for web servers using ajax (kinda)
+   ht-cms.nes      A _very_ crude Content Management System
+   ht-index.nes    html file listing script
+   ht-poker.nes    poker game for web servers using ajax (kinda)
+   ht-shell.nes    simple shell for web servers
+   httpd.nes       functioning demo web server
+   popsync.nes     pop3 client to sync mail account with a local dir
+   smtpc.nes       smtp client
+   src2html.nes    converts scripts to html

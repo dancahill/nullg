@@ -1,0 +1,15 @@
+print("
+function showpage(page) {
+	for (var i=1;i<",pages+1,";i++) {
+		if (i==page) {
+			document.getElementById('page'+i+'tab').style.borderBottom='solid 0px #000000';
+			document.getElementById('page'+i+'tab').bgColor='#F0F0F0';
+			document.getElementById('page'+i).style.display='block';
+		} else {
+			document.getElementById('page'+i+'tab').style.borderBottom='solid 1px #000000';
+			document.getElementById('page'+i+'tab').bgColor='#E0E0E0';
+			document.getElementById('page'+i).style.display='none';
+		}
+	}
+}
+");

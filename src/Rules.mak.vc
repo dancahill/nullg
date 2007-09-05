@@ -1,0 +1,24 @@
+# Rules.mak for NullLogic GroupServer executables
+
+CC            = cl.exe /nologo
+LINK          = link.exe /nologo
+MAKE          = nmake.exe /C /S /Y /F
+
+#prefix="C:/Program Files/NullLogic GroupServer"
+#exec_prefix=${prefix}
+#bindir=${exec_prefix}/bin
+#sysconfdir=${prefix}/etc
+#libdir=${exec_prefix}/lib
+#localstatedir=${prefix}/var
+
+BIN_CFLAGS    = /W3 /O2 /MT /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /I "../../include" /c
+BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"libc" advapi32.lib kernel32.lib libcmt.lib ../../lib/libngs.lib ../../lib/libnesla.lib
+BIN_TARGETDIR = ../../bin
+
+LIB_CFLAGS    = /W3 /O2 /MT /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /I "../../../../include" /c
+LIB_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 /dll /incremental:no advapi32.lib
+LIB_TARGETDIR = ../../../../lib
+
+#.c{$(INTDIR)}.obj::
+.c{$(INTDIR)}.obj:
+	$(CC) $(CFLAGS) $<

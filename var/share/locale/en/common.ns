@@ -1,0 +1,11 @@
+global _SERVER['LANGUAGE']['en']['common'] = {
+	html_charset    = "us-ascii",
+	mime_charset    = "iso-8859-1",
+#	apptitle        = "NullLogic GroupServer",
+	err_noaccess    = "Access Denied",
+	err_norecord    = "No matching record found",
+	warn_delconfirm = "Are you sure you want to delete this record?",
+	form_delete     = "Delete",
+	form_reset      = "Reset",
+	form_save       = "Save"
+};

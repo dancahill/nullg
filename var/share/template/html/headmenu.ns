@@ -1,0 +1,279 @@
+	var mailcurrent = tonumber(_USER['pref']['mailcurrent']);
+	var maildefault = tonumber(_USER['pref']['maildefault']);
+	var maxlist     = tonumber(_USER['pref']['maxlist']);
+	var menustyle   = tonumber(_USER['pref']['menustyle']);
+
+	global menu=_TEMP['modname'];
+	print("<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
+	print("function ShowHelp()\r\n");
+	print("{\r\n");
+	print("	window.open('/help/",_USER.pref.language,"/");
+	if (menu=='admin')          print("ch-02.html");
+	else if (menu=='bookmarks') print("ch-03.html");
+	else if (menu=='calendar')  print("ch-04.html");
+	else if (menu=='calls')     print("ch-05.html");
+	else if (menu=='contacts')  print("ch-06.html");
+	else if (menu=='email')     print("ch-07.html");
+	else if (menu=='files')     print("ch-08.html");
+	else if (menu=='forums')    print("ch-09.html");
+	else if (menu=='invoices')  print("ch-12.html");
+	else if (menu=='notes')     print("ch-11.html");
+	else if (menu=='profile')   print("ch-13.html");
+	else if (menu=='searches')  print("ch-14.html");
+	else if (menu=='tasks')     print("ch-04.html");
+	else if (menu=='weblog')    print("index.html");
+	else                        print("index.html");
+	print("','helpwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=yes,width=780,height=550');\r\n");
+	print("}\r\n");
+	if ((menu=='admin')||(menu=='contacts')||(menu=='searches')) {
+		print("function MsgTo(msg) {\r\n");
+		print("	window.open('/mail/write?to='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n");
+		print("}\r\n");
+	} else if (menu=='email') {
+		print(
+			"function ComposeMail() {\r\n",
+			"	window.open('/mail/write','_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n",
+			"}\r\n",
+			"function MsgTo(msg) {\r\n",
+			"	window.open('/mail/write?to='+msg,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n",
+			"}\r\n"
+		);
+	} else if (menu=='files') {
+		if (typeof(_GET['LOCATION'])!='null') p=_GET['LOCATION']; else p=_SERVER['REQUEST_URI'];
+		print(
+			"function FileUpload() {\r\n",
+			"	window.open('/fileul?location=",p,"','fileulwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=450,height=320');\r\n",
+			"}\r\n"
+		);
+	}
+	print(
+		"function ListUsers() {\r\n",
+		"	window.open('/messages/userlist','msguserlist','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=200,height=300');\r\n",
+		"}\r\n"
+	);
+	print("// -->\r\n</SCRIPT>\r\n");
+	if ((menu=='email')&&(menustyle>0)) {
+/*
+		if (strncmp(RequestURI, "/mail/accounts", 14)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/filters", 13)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/folders", 13)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/list", 10)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/purge", 11)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/quit", 10)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/search", 12)==0) goto domenu;
+		if (strncmp(RequestURI, "/mail/sync", 10)==0) goto domenu;
+		return;
+*/
+	}
+	print(
+		"<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\n",
+		"function GoTo(url) {\r\n",
+		"	if (top.gwmain) top.gwmain.location.replace(url); else location.replace(url);\r\n",
+		"	return false;\r\n",
+		"}\r\n",
+		"// -->\r\n</SCRIPT>\r\n"
+	);
+	print("<CENTER>\r\n");
+	print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	print("<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\"><TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
+	modlist=_CONFIG.MODULES;
+	for (i=0;i<sizeof(modlist);i++) {
+		name=iname(modlist, i);
+		mod=modlist[name];
+		if (typeof(mod['name'])=='null') continue;
+		if (sizeof(mod['name'])==0) continue;
+		print("<A CLASS='TBAR' HREF=");
+		if (string.nicmp(mod['uri'], "javascript:", 11)==0) {
+			print(mod['uri']);
+		} else {
+			print("\"",mod['uri'],"\" onClick=\"return GoTo('",mod['uri'],"');\"");
+		}
+		print("><IMG BORDER=0 HEIGHT=16 WIDTH=16 SRC=\"/images/icons/",mod['pic'],"\" ALT=\"",mod['name'],"\"></A>&nbsp;");
+	}
+	print("&nbsp;</TD>\r\n<TD ALIGN=right NOWRAP>&nbsp;");
+	print("<A CLASS='TBAR' HREF=javascript:ShowHelp();>",lang_gets("httpd", "menu_top_help"),"</A>&nbsp;&middot;&nbsp;");
+	print("<A CLASS='TBAR' HREF=javascript:window.print()>",lang_gets("httpd", "menu_top_print"),"</A>&nbsp;&middot;&nbsp;");
+//	if (module_exists("profile")) {
+		if ((menu=='email')&&(menustyle>0)) {
+			print("<A CLASS='TBAR' HREF=\"/profile/\" TARGET=gwmain>PROFILE</A>&nbsp;&middot;&nbsp;");
+		} else {
+			print("<A CLASS='TBAR' HREF=\"/profile/\" onClick=\"return GoTo('/profile/');\">PROFILE</A>&nbsp;&middot;&nbsp;");
+		}
+//	}
+//	print("<A CLASS='TBAR' HREF=/logout TARGET=_top>%s</A>", lang_gets(sid, "httpd", "menu_top_logout"));
+	print("<A CLASS='TBAR' HREF=/logout TARGET=_top>","LOG OUT","</A>");
+	print("&nbsp;&nbsp;</TD>\r\n");
+	print("</TR></TABLE>\r\n</TD></TR>\r\n");
+	print("<TR><TD STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%><TR VALIGN=middle CLASS=\"TBAR\">\r\n");
+	print("<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
+	var cnt=0;
+	if (menu=='admin') {
+//		if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+//			print("<A CLASS='TBAR' HREF=/admin/configedit>%s</A>", lang_gets(sid, "httpd", "menu_adm_config"));
+//		}
+//		if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/admin/domainlist>DOMAINS</A>");
+//		}
+//		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(sid, "httpd", "menu_adm_logs"));
+//		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(sid, "httpd", "menu_adm_check"));
+//		print("<A CLASS='TBAR' HREF=/admin/userlist>%s</A>", lang_gets(sid, "httpd", "menu_adm_users"));
+//		print("<A CLASS='TBAR' HREF=/admin/grouplist>%s</A>", lang_gets(sid, "httpd", "menu_adm_groups"));
+//		print("<A CLASS='TBAR' HREF=/admin/zonelist>%s</A>", lang_gets(sid, "httpd", "menu_adm_zones"));
+	} else if (menu=='bookmarks') {
+		if (typeof(_GET['PID'])!='null') folderid=tonumber(_GET['PID']); else folderid=0;
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=\"/bookmarks/list\" onClick=\"return GoTo('/bookmarks/list');\">LIST BOOKMARKS</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=\"/bookmarks/editnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/editnew?pid=",folderid,"');\">NEW BOOKMARK</A>");
+//		if (auth_priv(sid, "bookmarks")&A_ADMIN) {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=\"/bookmarks/foldereditnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/foldereditnew?pid=",folderid,"');\">NEW FOLDER</A>");
+//		}
+	} else if ((menu=='calendar')||(menu=='tasks')) {
+/*
+		var status=0;
+		var userid=-1;
+		var groupid=-1;
+
+		if (typeof(_GET['STATUS'])!='null')  status  = tonumber(_GET['STATUS']);
+		if (typeof(_GET['USERID'])!='null')  userid  = tonumber(_GET['USERID']);
+		if (typeof(_GET['GROUPID'])!='null') groupid = tonumber(_GET['GROUPID']);
+
+		print("<A CLASS='TBAR' HREF=%s/calendar/list?status=%d", ScriptName, status);
+		if (userid>0) print("&userid=%d", userid);
+		if (groupid>0) print("&groupid=%d", groupid);
+		print(">TODAY</A>");
+		print("<A CLASS='TBAR' HREF=%s/calendar/wlist?status=%d", ScriptName, status);
+		if (userid>0) print("&userid=%d", userid);
+		if (groupid>0) print("&groupid=%d", groupid);
+		print(">WEEK</A>");
+		print("<A CLASS='TBAR' HREF=%s/calendar/mlist?status=%d", ScriptName, status);
+		if (userid>0) print("&userid=%d", userid);
+		if (groupid>0) print("&groupid=%d", groupid);
+		print(">MONTH</A>");
+		print("<A CLASS='TBAR' HREF=%s/calendar/ylist?status=%d", ScriptName, status);
+		if (userid>0) print("&userid=%d", userid);
+		if (groupid>0) print("&groupid=%d", groupid);
+		print(">YEAR</A>");
+		print("<A CLASS='TBAR' HREF=%s/calendar/availmap?status=%d", ScriptName, status);
+		if (userid>0) print("&userid=%d", userid);
+		if (groupid>0) print("&groupid=%d", groupid);
+		print(">AVAILMAP</A>");
+		print("<A CLASS='TBAR' HREF=%s/calendar/editnew>NEW EVENT</A>", ScriptName);
+		print("<A CLASS='TBAR' HREF=%s/tasks/editnew>NEW TASK</a>", ScriptName);
+		break;
+*/
+	} else if (menu=='calls') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/calls/list>CALLS</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/calls/editnew>NEW CALL</A>");
+	} else if (menu=='contacts') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/contacts/list>CONTACTS</A>");
+		if (string.sub(_SERVER['REQUEST_URI'], 0, 16)=="/contacts/search") {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/contacts/viewnew2>NEW CONTACT</A>");
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/contacts/search1>SEARCH</A>");
+		} else {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/contacts/view?id=0>NEW CONTACT</A>");
+		}
+	} else if (menu=='email') {
+		if (menustyle>0) {
+			if (mailcurrent>0) {
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' TARGET=gwmain HREF=/mail/main onClick=\"return GoTo('/mail/main');\");return false;\">INBOX</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' HREF=\"javascript:ComposeMail();\">COMPOSE</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' TARGET=gwmain HREF=/mail/sync onClick=\"return GoTo('/mail/sync');\");return false;\">SEND/RECV</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' TARGET=gwmain HREF=/mail/search onClick=\"return GoTo('/mail/search');\");return false;\">SEARCH</A>");
+			}
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' TARGET=gwmain HREF=/mail/accounts/list onClick=\"return GoTo('/mail/accounts/list');\");return false;\">ACCOUNTS</A>");
+		} else {
+			if (mailcurrent>0) {
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' HREF=/mail/list>INBOX</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' HREF=/mail/write>COMPOSE</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' HREF=/mail/sync>SEND/RECV</A>");
+				if (cnt++) print("&nbsp;&middot;&nbsp;");
+				print("<A CLASS='TBAR' HREF=/mail/search>SEARCH</A>");
+			}
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/mail/accounts/list>ACCOUNTS</A>");
+		}
+		if (mailcurrent>0) {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/mail/quit");
+			if (menustyle>0) print(" TARGET=gwmain");
+			print(">QUIT</A>");
+		}
+	} else if (menu=='files') {
+/*
+		if ((ptemp=getgetenv(sid, "LOCATION"))==NULL) ptemp=RequestURI;
+		print("<A CLASS='TBAR' HREF=%s", ScriptName);
+		printhex(sid, "%s", ptemp);
+		print(">REFRESH</A>");
+		if (auth_priv(sid, "files")&A_MODIFY) {
+			print("<A CLASS='TBAR' HREF=javascript:FileUpload()>UPLOAD FILE</A>", RequestURI);
+			print("<A CLASS='TBAR' HREF=%s/filemkdir?location=", ScriptName);
+			printhex(sid, "%s", ptemp);
+			print(">NEW FOLDER</A>");
+		}
+*/
+	} else if (menu=='finance') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/finance/accounts/>ACCOUNTS</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/finance/inventory/list>INVENTORY</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/finance/invoices/>INVOICES</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/finance/journal/>JOURNAL</A>");
+	} else if (menu=='forums') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/forums/list>LIST FORUMS</A>");
+//		if (auth_priv(sid, "forums")&A_ADMIN) {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/forums/grouplist>GROUPS</A>");
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=/forums/post>NEW FORUM</A>");
+//		}
+	} else if (menu=='main') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/frames/motd>MAIN</A>");
+	} else if (menu=='notes') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/notes/list>LIST NOTES</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/notes/editnew>NEW NOTE</A>");
+	} else if (menu=='profile') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/profile/edit.ns>EDIT PROFILE</A>");
+	} else if (menu=='projects') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/projects/list>PROJECTS</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/projects/editnew>NEW PROJECT</A>");
+	} else if (menu=='searches') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=\"/search/\" onClick=\"return GoTo('/search/');\">SEARCHES</A>");
+//		if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(auth_priv(sid, "query")&A_ADMIN)) {
+			if (cnt++) print("&nbsp;&middot;&nbsp;");
+			print("<A CLASS='TBAR' HREF=\"/search/sql/\" onClick=\"return GoTo('/search/sql/');\">SQL QUERIES</A>");
+//		}
+	} else if (menu=='weblog') {
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/weblog/list onClick=\"location.replace('/weblog/list');return false;\">LIST BLOGS</A>");
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/weblog/editnew onClick=\"location.replace('/weblog/editnew');return false;\">NEW BLOG</A>");
+	}
+	print("&nbsp;</TD><TD ALIGN=right NOWRAP>&nbsp;</TD></TR>\r\n");
+	print("</TABLE>\r\n</TD></TR></TABLE>\r\n</CENTER>\r\n");

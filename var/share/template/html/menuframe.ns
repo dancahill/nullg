@@ -1,0 +1,105 @@
+	print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
+	print("<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic GroupServer Menu</TITLE>\r\n");
+	print("<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/themes/",_USER['pref']['theme'],"/style.css\">\r\n");
+	print("<STYLE TYPE=text/css>\r\n");
+	print("DIV     { position:absolute; }\r\n");
+	print("A       { font-family: Arial, Verdana, sans-serif; font-size=9pt; color: #FFFFFF; text-decoration: none}\r\n");
+	print("A:HOVER { font-family: Arial, Verdana, sans-serif; font-size=9pt; color: #399CDE; text-decoration: none}\r\n");
+	print("</STYLE>\r\n");
+	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
+	print("function GoTo(url) {\r\n	parent.gwmain.location.replace(url);\r\n	return false;\r\n	}\r\n");
+	print(
+		"var browser_type=navigator.appName;\r\n",
+		"var browser_version=parseInt(navigator.appVersion);\r\n",
+		"function onMouseDownHandler(e) {\r\n",
+		"	if (e.which==3) {\r\n",
+		"		return false;\r\n",
+		"	}\r\n",
+		"}\r\n",
+		"if (browser_type == \"Netscape\" && browser_version>=4) {\r\n",
+		"	if (document.layers) {\r\n",
+		"		window.captureEvents(Event.MOUSEDOWN);\r\n",
+		"		window.onmousedown=onMouseDownHandler;\r\n",
+		"	}\r\n",
+		"}\r\n\r\n"
+	);
+	print("function ListUsers() { \r\n	window.open('/messages/userlist','msguserlist','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=200,height=300');\r\n}\r\n");
+	print("function ListEmail() { \r\n	window.open('/mail/notice','mailwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\r\n}\r\n");
+	print("function ListEvents() {\r\n	window.open('/calendar/reminders','calendarwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\r\n}\r\n");
+	print("function ListMsgs(id, nick) {\r\n	window.open('/messages/frame?userid='+id,'msgwin_'+nick,'toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=yes,width=400,height=200');\r\n}\r\n");
+	print("function ListTasks() { \r\n	window.open('/tasks/reminders','taskwin','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=20,left=20,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=200');\r\n}\r\n");
+	print(
+		"function newXMLHttpRequest() {\r\n",
+		"	var xmlreq = false;\r\n",
+		"\r\n",
+		"	if (window.XMLHttpRequest) {\r\n",
+		"		xmlreq = new XMLHttpRequest();\r\n",
+		"	} else if (window.ActiveXObject) {\r\n",
+		"		try {\r\n",
+		"			xmlreq = new ActiveXObject(\"Msxml2.XMLHTTP\");\r\n",
+		"		} catch (e1) {\r\n",
+		"			try {\r\n",
+		"				xmlreq = new ActiveXObject(\"Microsoft.XMLHTTP\");\r\n",
+		"			} catch (e2) {\r\n",
+		"				// Unable to create an XMLHttpRequest with ActiveX\r\n",
+		"			}\r\n",
+		"		}\r\n",
+		"	}\r\n",
+		"	return xmlreq;\r\n",
+		"}\r\n"
+	);
+	print(
+		"function doreminder(c) {\r\n",
+		"	return function () {\r\n",
+		"		if (c.readyState==4) {\r\n",
+		"			if (c.status==200) {\r\n",
+		"				eval(c.responseText);\r\n",
+		"			}\r\n",
+		"		}\r\n",
+		"	}\r\n",
+		"}\r\n"
+	);
+	print(
+		"function reminders() {\r\n",
+		"	var c = newXMLHttpRequest();\r\n",
+		"	var handlerFunction = doreminder(c);\r\n",
+		"\r\n",
+		"	c.onreadystatechange = handlerFunction;\r\n",
+		"	c.open(\"get\", \"/frames/update\", true);\r\n",
+		"	c.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\r\n",
+		"	c.setRequestHeader('Connection', 'close');\r\n",
+		"	c.send(null);\r\n",
+		"	setTimeout(\"reminders()\", 60000);\r\n",
+		"}\r\n"
+	);
+	print("// -->\r\n</SCRIPT>\r\n");
+	print("</HEAD>\r\n");
+	print("<BODY BGCOLOR=#808080 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onLoad=reminders(); onContextMenu='return false'>\r\n");
+	print("<CENTER>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 HEIGHT=100%% WIDTH=100%%>\r\n");
+	print("<TR><TD><A HREF=/frames/motd target='gwmain' onclick=\"window.open('/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/images/nullgs.png HEIGHT=50 WIDTH=125 ALT='%s logged in'></A></TD></TR>\r\n");
+	print("<TR><TD><BR />");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");
+/*
+	for (i=0;;i++) {
+		if (strlen(htproc.mod_menuitems[i].mod_name)==0) break;
+		if (strlen(htproc.mod_menuitems[i].mod_menuname)==0) continue;
+		if (strlen(htproc.mod_menuitems[i].mod_menuperm)!=0) {
+			if (!auth_priv(sid, htproc.mod_menuitems[i].mod_menuperm)) continue;
+		}
+		// Mozilla treats this as double click.  Bad gecko.
+		print("<TR><TD style=\"cursor:hand\"");
+		if (strncasecmp(htproc.mod_menuitems[i].mod_menuuri, "javascript:", 11)==0) {
+			print(" onClick=\"%s\"><A HREF=\"%s\" CLASS='MENULINK'>", htproc.mod_menuitems[i].mod_menuuri, htproc.mod_menuitems[i].mod_menuuri);
+		} else {
+			print(" onClick=\"return GoTo('%s%s');\">", ScriptName, htproc.mod_menuitems[i].mod_menuuri);
+			print("<A HREF=\"%s%s\" TARGET=gwmain CLASS='MENULINK'", ScriptName, htproc.mod_menuitems[i].mod_menuuri);
+			print(" onClick=\"return GoTo('%s%s');\">", ScriptName, htproc.mod_menuitems[i].mod_menuuri);
+		}
+		print("<FONT SIZE=2><B>%s</B></FONT></A></TD></TR>\r\n", htproc.mod_menuitems[i].mod_menuname);
+	}
+*/
+	print("</TABLE></TD></TR>\r\n");
+	print("<TR><TD HEIGHT=100%% VALIGN=BOTTOM><SPAN ID=\"remstatus\"></SPAN></TD></TR>\r\n");
+	print("</TABLE>\r\n");
+	print("</CENTER>\r\n");

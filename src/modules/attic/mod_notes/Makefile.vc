@@ -1,0 +1,30 @@
+# Makefile for NullLogic GroupServer module
+
+OBJDIR  = ../../../../obj
+INTDIR  = $(OBJDIR)/modules/httpd/mod_notes
+
+include ../../../Rules.mak.vc
+
+CFLAGS  = $(LIB_CFLAGS)
+OBJECTS = $(INTDIR)/mod_notes_db.obj $(INTDIR)/mod_notes_main.obj
+TARGET  = $(LIB_TARGETDIR)/httpd/mod_notes.dll
+
+all: _dirs _nullgs
+
+_dirs:
+	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
+	@if not exist "$(LIB_TARGETDIR)/httpd" mkdir "$(LIB_TARGETDIR)/httpd"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(OBJDIR)/modules" mkdir "$(OBJDIR)/modules"
+	@if not exist "$(OBJDIR)/modules/httpd" mkdir "$(OBJDIR)/modules/httpd"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_nullgs: $(OBJECTS)
+	$(LINK) $(LIB_LDFLAGS) /out:$(TARGET) /implib:$(INTDIR)/mod_notes.lib $(OBJECTS)
+
+clean:
+	@-erase "$(TARGET)"
+	@-erase "$(INTDIR)/*"
+
+.c{$(INTDIR)}.obj:
+	$(CC) $(CFLAGS) $<

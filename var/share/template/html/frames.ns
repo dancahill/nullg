@@ -1,0 +1,12 @@
+print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Frameset//EN\">\n");
+print("<HTML>\n<HEAD>\n<TITLE>NullLogic GroupServer</TITLE>\n");
+print("<SCRIPT LANGUAGE=JavaScript>\n<!--\n");
+print("if (self!=parent) open('", _SERVER['SCRIPT_NAME'], "/','_top');\n");
+print("// -->\n</SCRIPT>\n");
+print("</HEAD>\n");
+print("<FRAMESET COLS=\"125,*\" BORDER=0 FRAMEBORDER=0 FRAMESPACING=0>\n");
+print("<FRAME BORDER=0 NAME=\"gwmenu\" SRC=", _SERVER['SCRIPT_NAME'], "/frames/menu MARGINHEIGHT=0 MARGINWIDTH=0 NORESIZE SCROLLING=NO>\n");
+print("<FRAME BORDER=0 NAME=\"gwmain\" SRC=", _SERVER['SCRIPT_NAME'], "/frames/motd MARGINHEIGHT=0 MARGINWIDTH=0 NORESIZE SCROLLING=YES>\n");
+print("</FRAMESET>\n");
+print("To view this page, you need a web browser capable of displaying frames.\n");
+print("</HTML>\n");

@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<TITLE>NullLogic GroupServer Documentation - Chapter 12 Index</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
+</HEAD>
+<BODY BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF ALINK=#0000FF VLINK=#0000FF TOPMARGIN=0 MARGINHEIGHT=0>
+<A HREF="ch-11.html"><IMG SRC ="../../images/help_previous.gif" ALT="Previous"></A>
+<A HREF="toc.html"><IMG SRC ="../../images/help_contents.gif" ALT="Contents"></A>
+<A HREF="ch-13.html"><IMG SRC ="../../images/help_next.gif" ALT="Next"></A>
+<HR>
+<H2>12 - Orders</H2>
+
+<A NAME="list"></A>
+<H3>12.1 - Listing Orders</H3>
+<UL>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+When you first enter the orders section, you will be presented with a form for
+searching for orders.  On the left side of the form is an option box which
+will allow you either search for a match in all fields, or just a selected
+field.  The textbox allows you to specify a string of text to search for.
+This can be the order id, a name, or anything else you wish to search for.
+Wildcards such as * and ? can be used in searches.  The button on the right is
+used to submit the search.  Searches are case insensitive.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+If a search returns more than 50 results, then the output will be broken up
+into pages, each page having 50 or less results.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+If you are unfamiliar with wildcards, a quick summary is as follows.  The '*'
+character can be substituted in a search string for any number of characters.
+The '?' character can be substituted for only one.  For example, a search for
+"*" (the default) will return all records.  A search for "*1*" would return
+all records that have a 1 anywhere in them.  Searching for "1?" would return
+only records which have a matching field two characters long, with the first
+one being a 1.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+After submitting a search, a list of all matches will be returned.  This list
+will show the order id, customer name, order date, amount due and amount
+received.  Clicking on the order id number will bring up a view of that order.
+Clicking on the customer name will bring up a view of the contact.
+</P>
+<H3>Viewing Orders</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Order views can be accessed by several means, two of which are from contact
+order list, and of course, the order search/list.  Both the viewer and the
+editor display the same information, however the editor can be used to add and
+edit orders.
+</P>
+<H3>Order Date</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Date' field is the date on which the order was originally created.
+</P>
+<H3>Customer</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Customer' field is the name of the customer associated with this order.
+When working with the order system, the words 'customer' and 'contact' may be
+used interchangeably.  All customers should have an entry in the contact
+section.
+</P>
+<H3>Employee</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Employee' field is used to record the username of the person who originally
+created this order.
+</P>
+<H3>Order Type</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Type' field is used to indicate the nature of this order.
+Possible entries include 'Sale', 'AR Payment' (Accounts Receivable) and
+'Quote'.
+</P>
+<H3>Payment Method</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Method' field is used to indicate the means of payment used for
+this order.  Possible entries include 'Cash', 'Cheque', 'Credit Card', 'Debit
+Card' and 'Money Order'.
+</P>
+<H3>Payment Due</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Due' field is the sum amount due for all items in this order,
+including applicable taxes.
+</P>
+<H3>Payment Received</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Payment Received' field is the total payment made on this order.
+</P>
+<H3>Details</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Details' field is used to record any additional details for anything
+which may not be clear in the invoice and/or any reasons for changing the
+order information at a later date.
+</P>
+<H3>Order Items</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Order Items' list displays all items or products which have been added
+to this order.  Each item entry shows the product name, the quantity, any
+discount, the base price of the product, PST, and GST.  Order items can be
+added or edited by clicking on 'Add Item' or 'edit' respectively.  Items can
+be deleting by clicking on 'edit' and then 'Delete'.
+</P>
+<H3>Notes on Taxes</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The default taxes, PST (Provincial Sales Tax) and GST (Goods and Services Tax)
+may have the wrong percentages for your region, or may be entirely the wrong
+taxes for your country.  The names and default percentages of both taxes can
+be changed by modifying the corresponding entries in the 'gw_dbinfo' table.
+</P>
+</UL>
+
+<A NAME="edit"></A>
+<H3>12.2 - Adding and Editing Orders</H3>
+<UL>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+When adding a new order, you will first be asked for the customer id.  If the
+name of the customer does not appear on the list, then you may have to add
+this customer as a new contact in the contact section.  Once the contact info
+is provided, you may create an order for this customer.  Choose the name of
+the customer from the list, and click on save.  A new order will be created.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Now that you've created a new order, you can add items to the order.
+Click on 'Add Item' to add a new item to the list.  You will be prompted for
+the product name, and the quantity.  If the requested product is not on the
+list, and you do not have an entry for 'miscellaneous', then you may have to
+add the product to the database before this order can be completed.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Adding the new item will bring you back to the order view form.  The new item
+you just added will be listed at the bottom of the page.  If you need to change
+any details for this item (e.g. to change the quantity or the discount), you
+can do so by clicking 'edit' beside the item.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Continue adding items until all requested items are on the order.  Once this
+is done, click 'edit' at the top of the order form, and confirm that all fields
+are filled in correctly.  Check the order type and payment method to make sure
+they are correct, and change the 'Payment Received' field to reflect any payment
+which has been made for this invoice.  If there are any notes or comments to
+be attached to this order, now would be a good time to add them in the
+'Invoice Notes' box.  Click on 'Save' and your order is done.
+</P>
+</UL>
+
+<A NAME="edit"></A>
+<H3>12.3 - Adding and Editing Products</H3>
+<UL>
+<H3>Listing Products</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+A complete listing of all products in the database can be accessed by clicking
+on 'VIEW PRODUCTS' from any page in the order system.  In the left column of
+the list will be the product name.  Clicking on the product name will take you
+to a view of the product's information.  In the second column of the product
+list will be the category of the product.  In the third column will be the
+unmodified base unit price of the product.
+</P>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+At the bottom of the products list will be a link 'New Product' which will
+allow you to add a new product.
+</P>
+<H3>Viewing Products</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The product view and edit forms display the exact same information.  Both
+forms include the following fields.
+</P>
+<H3>Product Name</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Product Name' field is the short descriptive name that will be used to
+identify this product (or service) in most order views.
+</P>
+<H3>Category</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Category' field indicates the general class of product or service under
+which this item falls.  This field is used as a user guide, and has no effect
+on the function of the order system.
+</P>
+<H3>Discount</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Discount' field indicates whether any discount should be assigned to this
+product.  If it is non-zero, future sales of this product will receive the
+indicated discount.  Note that the number shown on this form is the decimal
+notation of the discount percentage (e.g. 50% will appear as 0.50).
+</P>
+<H3>Unit Price</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Unit Price' field is the base unit price (before discounts and taxes) of
+this product for one unit.
+</P>
+<H3>Internal Cost</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'Internal Cost' field can be used for accounting purposes to calculate
+net profit for a sale (e.g. Unit Price - Internal Cost = Profit).  This value
+is not used in the processing of a customer invoice.
+</P>
+<H3>PST (Provincial Sales Tax)</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'PST' field is used to indicate the percentage of the unit price to charge
+for tax 1.  As with the 'Discount' field, this field is in decimal notation.
+8% tax would be entered as 0.08.
+</P>
+<H3>GST (Goods and Services Tax)</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The 'GST' field is used to indicate the percentage of the unit price to charge
+for tax 2.  As with the 'Discount' field, this field is in decimal notation.
+8% tax would be entered as 0.08.
+</P>
+<H3>Notes on Taxes</H3>
+<P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The default taxes, PST (Provincial Sales Tax) and GST (Goods and Services Tax)
+may have the wrong percentages for your region, or may be entirely the wrong
+taxes for your country.  The names and default percentages of both taxes can
+be changed by modifying the corresponding entries in the 'gw_dbinfo' table.
+</P>
+</UL>
+
+<HR>
+<A HREF="ch-11.html"><IMG SRC ="../../images/help_previous.gif" ALT="Previous"></A>
+<A HREF="toc.html"><IMG SRC ="../../images/help_contents.gif" ALT="Contents"></A>
+<A HREF="ch-13.html"><IMG SRC ="../../images/help_next.gif" ALT="Next"></A>
+</BODY>
+</HTML>

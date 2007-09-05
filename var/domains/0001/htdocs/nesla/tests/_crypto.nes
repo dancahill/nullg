@@ -1,0 +1,61 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.nes");
+function testcrypto() {
+	if (typeof(crypto)!='table') {
+		print("SKIPPING CRYPTO TESTS\n");
+		return;
+	}
+//	filename="/NullLogic/nesla/nesla-0.9.0.tar.gz";
+	filename=_filepath+'/'+_filename;
+	filestat=file.stat(filename);
+	if (typeof(crypto.md5_file)!='function') {
+		print("crypto.md5_file() missing\n");
+	} else {
+		expect("crypto.md5_string", crypto.md5_string("crypto.md5_string"), "3ddf04a6a255b13acceec3c2936c19f6");
+		print("crypto.md5_file() exists\n");
+		if (typeof(filestat)!='table') {
+			print("test file ", filename, " does not exist.\n");
+		} else {
+			print(crypto.md5_file(filename), " *",filename,"\n");
+			system("md5sum \""+filename+"\"");
+		}
+	}
+	if (typeof(crypto.sha1_file)!='function') {
+		print("crypto.sha1_file() missing\n");
+	} else {
+		expect("crypto.sha1_string", crypto.sha1_string("crypto.sha1_string"), "5d9cf4ef484c23283557fd18e17e81884da4964a");
+		print("crypto.sha1_file() exists\n");
+		if (typeof(filestat)!='table') {
+			print("test file ", filename, " does not exist.\n");
+		} else {
+			print(crypto.sha1_file(filename), " *",filename,"\n");
+			system("sha1sum \""+filename+"\"");
+		}
+	}
+	if (typeof(crypto.aes_encrypt)!='function') {
+		print("crypto.aes_encrypt() missing\n");
+	} else {
+		print("crypto.aes_encrypt() exists\n");
+		if (typeof(filestat)!='table') {
+			print("test file ", filename, " does not exist.\n");
+		} else {
+			x=file.read(filename);
+			file.write(filename+".raw1", x);
+			print("x=[",mx=crypto.md5_string(x),"]\n");
+			y=crypto.aes_encrypt(x, "hex:E76B2413958B00E193");
+			file.write(filename+".crypt", y);
+			print("y=[",crypto.md5_string(y),"]\n");
+			z=crypto.aes_decrypt(y, "hex:E76B2413958B00E193");
+			file.write(filename+".raw2", z);
+			print("z=[",mz=crypto.md5_string(z),"]\n");
+			expect(mx, mz, mx);
+			file.unlink(filename+".crypt");
+			file.unlink(filename+".raw2");
+			file.unlink(filename+".raw1");
+		}
+	}
+	return;
+}
+io.flush();
+testcrypto();
+io.flush();

@@ -1,0 +1,125 @@
+#!/usr/bin/nesla
+
+if (typeof(tcp.bind)!='function') {
+	print("missing tcp/ip support\n");
+	exit;
+}
+
+function serve_sendfile(sock) {
+	f=file.read(pageroot+_SERVER['REQUEST_URI']);
+	if (typeof(f)=='string') tcp.write(sock, f);
+	return;
+}
+
+function serve_dirlist(sock) {
+	dir=dirlist(pageroot+_SERVER['REQUEST_URI']);
+	if (typeof(dir)!='table') return;
+	o=tcp.write(sock, "<CENTER><TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=80%>\n");
+	for (i=0;;i++) {
+		var x=iname(dir, i);
+		if (typeof(dir[x])!='table') break;
+		if (string.cmp(x, '.')==0) {
+		} else if (string.cmp(x, '..')==0) {
+			o=tcp.write(sock, "<TR><TD COLSPAN=3 STYLE='border-style:solid'>&nbsp;<A HREF='"+x+"'>Parent Directory</A></TD></TR>\n");
+		} else if ((dir[x].type=='dir')||(dir[x].type=='dirp')) {
+			o=tcp.write(sock,
+				"<TR>"+
+				"<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>dir - <A HREF='"+x+"/'>"+x+"/</A></TD>"+
+				"<TD ALIGN=right NOWRAP STYLE='border-style:solid'>&nbsp;</TD>"+
+				"<TD ALIGN=right NOWRAP STYLE='border-style:solid'>"+time.sqldate(dir[x].mtime)+" "+time.sqltime(dir[x].mtime)+"</TD>"+
+				"</TR>\n"
+			);
+		}
+	}
+	for (i=0;;i++) {
+		var x=iname(dir, i);
+		if (typeof(dir[x])!='table') break;
+		if ((dir[x].type=='file')||(dir[x].type=='filep')) {
+			o=tcp.write(sock,
+				"<TR>"+
+				"<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF='"+x+"'>"+x+"</A></TD>"+
+				"<TD ALIGN=right NOWRAP STYLE='border-style:solid'>"+dir[x].size+"&nbsp;</TD>"+
+				"<TD ALIGN=right NOWRAP STYLE='border-style:solid'>"+time.sqldate(dir[x].mtime)+" "+time.sqltime(dir[x].mtime)+"</TD>"+
+				"</TR>\n"
+			);
+		}
+	}
+	o=tcp.write(sock, "\n</TABLE></CENTER>\n");
+	return;
+}
+
+function serve_page(sock) {
+	global _SERVER = {};
+
+	if (counter==null) global counter=0;
+	print(".");
+	i=tcp.gets(sock);
+	if (typeof(i)!='string') return -1;
+	r=string.split(i, " ");
+	_SERVER['REQUEST_METHOD']  = r[0];
+	_SERVER['REQUEST_URI']     = r[1];
+	_SERVER['SERVER_PROTOCOL'] = r[2];
+	while (1) {
+		i=tcp.gets(sock);
+		if (typeof(i)!='string') break;
+		if (i=="") break;
+		x=string.str(i, ":");
+		if (x==null) break;
+		p=string.sub(i, 0, sizeof(i)-sizeof(x));
+		c=string.sub(x, 2, sizeof(x));
+		_SERVER[string.toupper(p)]=c;
+	}
+	sort.byname(_SERVER, 0, +1);
+	// print("_SERVER = ");printvar(_SERVER);print(";\n");
+page="<HTML>
+<HEAD><TITLE>NESLA *COUGH* HTTPD</TITLE></HEAD>
+<BODY>
+<CENTER>THIS IS NOT A REAL WEB SERVER<HR>BTW.  You are visitor "+(++counter)+".</CENTER>
+</BODY>
+</HTML>";
+	o=tcp.write(sock, "HTTP/1.0 200 OK\r\n");
+	o=tcp.write(sock, "Connection: Close\r\n");
+	x=file.stat(pageroot+_SERVER['REQUEST_URI']);
+	if (typeof(x)=='table') {
+		if (x.type=='file') {
+			o=tcp.write(sock, "Content-Length: "+x.size+"\r\n");
+			o=tcp.write(sock, "Content-Type: application/octet-stream\r\n\r\n");
+			serve_sendfile(sock);
+		} else if (x.type=='dir') {
+			o=tcp.write(sock, "Content-Type: text/html\r\n\r\n");
+			o=tcp.write(sock, page);
+			serve_dirlist(sock);
+		}
+	} else {
+		o=tcp.write(sock, "Content-Type: text/html\r\n\r\n");
+		o=tcp.write(sock, page);
+	}
+	return;
+}
+
+global pageroot="/var/www/html";
+host="INADDR_ANY";
+use_ssl=true;
+
+if (use_ssl) {
+	port=8042;
+	certs = { certfile='/etc/nullgw/ssl-cert.pem', keyfile='/etc/nullgw/ssl-priv.pem' };
+	print("binding to ",host,":",port," (SSL)\n");
+	bsock=tcp.bind(host, port, use_ssl, certs);
+} else {
+	port=8041;
+	print("binding to ",host,":",port,"\n");
+	bsock=tcp.bind(host, port);
+}
+if (typeof(bsock)=='sock4') {
+	while (1) {
+		io.flush();
+		if (typeof(asock=tcp.accept(bsock))=='sock4') {
+			serve_page(asock);
+			tcp.close(asock);
+		}
+	}
+	tcp.close(bsock);
+} else {
+	print("bind failure\n");
+}

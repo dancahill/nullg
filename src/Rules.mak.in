@@ -1,0 +1,29 @@
+# Rules.mak for NullLogic GroupServer executables
+
+CC            = @CC@
+MAKE          = make -s
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+sysconfdir=@sysconfdir@
+libdir=@libdir@
+localstatedir=@localstatedir@
+
+BIN_CFLAGS    = -Wall -O2 -I../../include -DBINDIR=\"$(bindir)\" -DETCDIR=\"$(sysconfdir)\" -DLIBDIR=\"$(libdir)\" -DVARDIR=\"$(localstatedir)\"
+BIN_LDFLAGS   = -rdynamic -L../../lib -lnesla -lngs -s @UTIL_LIBS@
+BIN_LDFLAGS_T = -rdynamic -L../../lib -lnesla -lngs -s @LIBS@
+BIN_TARGETDIR = ../../bin
+
+LIB_CFLAGS    = -Wall -O2 -fPIC -I../../../../include
+LIB_LDFLAGS   = -s -shared
+LIB_TARGETDIR = ../../../../lib
+
+MOD_CFLAGS    = -Wall -O2 -fPIC -I../../../../include
+MOD_LDFLAGS   = -s -shared
+MOD_TARGETDIR = ../../../../lib
+
+TOP_BUILD_DIR = @TOP_BUILD_DIR@
+
+.c.o:
+	@echo "  CC $@" && $(CC) $(CFLAGS) -c $< -o $@

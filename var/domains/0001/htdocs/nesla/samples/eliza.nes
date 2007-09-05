@@ -1,0 +1,89 @@
+#!/usr/bin/nesla
+if (typeof(_SERVER)=='table') {
+	rc=dl.loadlib("/usr/local/lib/nesla/libneslaext.so");
+	global X=xml.read(file.read("/home/null/gw/aiml/startup.xml"));
+	global Y=xml.read(file.read("/home/null/gw/aiml/std-65percent.aiml"));
+	global Z=xml.read(file.read("/home/null/gw/aiml/std-pickup.aiml"));
+	print("<pre>");printvar(X);print("</pre>");
+}
+
+if (typeof(io.gets)!='function') { print("you need io.gets()\n"); exit; }
+if (typeof(regex.replace)!='function') { print("you need regex.replace()\n"); exit; }
+if (include(_filepath+"/eliza-l.nes")!=0) { print("can't find language file eliza-l.nes\n"); exit; }
+
+function print_response(res) {
+	if (_ENV['TERM']!=null) {
+		print("\e[01;37;40m", res, "\e[00m\n\n");
+	} else {
+		print(res, "\n\n");
+	}
+	return;
+}
+
+function transpose(input) {
+	t=string.split(input, " ");
+	output="";
+	for (i=0;i<sizeof(t);i++) {
+		match=false;
+		if (i>0) output+=" ";
+		for (j=0;j<sizeof(trans);j++) {
+			if (t[i]==trans[j][0]) {
+				output+=trans[j][1];
+				match=true;
+				break;
+			}
+		}
+		if (match==false) output+=t[i];
+	}
+	return output;
+}
+
+print("eliza\n\n");
+i=math.rand(sizeof(greetings));
+print_response(greetings[i]);
+for (loop=0;;loop++) {
+	in=io.gets();
+	print("\n");
+	in=string.toupper(in);
+	if (sizeof(in)<1) {
+		i=math.rand(sizeof(blankres));
+		print_response(blankres[i]);
+		continue;
+	}
+	match=-1;
+	for (i=0;i<sizeof(keyphrases);i++) {
+		if (typeof(keyphrases[i][0])=='table') {
+			for (j=0;j<sizeof(keyphrases[i][0]);j++) {
+				if (string.istr(in, keyphrases[i][0][j])!=null) {
+					match=i;
+					break;
+				}
+			}
+		} else {
+			if (string.istr(in, keyphrases[i][0])!=null) {
+				match=i;
+			}
+		}
+		if (match>=0) break;
+	}
+	if (match>=0) {
+		if (typeof(keyphrases[match][1])=='table') {
+			i=math.rand(sizeof(keyphrases[match][1]));
+			if (typeof(keyphrases[match][1][i])=='function') {
+				print_response(keyphrases[match][1][i](in));
+			} else {
+				print_response(keyphrases[match][1][i]);
+			}
+		} else {
+			print_response(keyphrases[match][1]);
+		}
+	} else {
+//		out=transpose(in);
+//		print_response(out+"?");
+		i=math.rand(sizeof(confusedres));
+		print_response(confusedres[i]);
+	}
+	if ((in=='bye')||(in=='quit')) {
+		break;
+	}
+}

@@ -1,0 +1,118 @@
+print(
+	"<BR />\r\n<CENTER>\r\n",
+	"<TABLE WIDTH=90% BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n",
+	"<TR><TD COLSPAN=2>",
+
+	"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100% STYLE='border-style:solid'>\r\n",
+	"<TR><TH STYLE='border-style:solid'><TABLE WIDTH=100% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>",
+	"<TH WIDTH=100% NOWRAP ALIGN=left>Welcome, ",str2html(_USER.uid),".&nbsp;</TH>",
+	"<TH WIDTH=100% NOWRAP ALIGN=right>&nbsp;",_TEMP.showtime,"</TH>",
+	"</TR></TABLE></TD></TR>\r\n",
+	"<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>",
+"
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+And Jesus said unto them, \"And whom do you say that I am?\"
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+They replied, \"You are the eschatological manifestation of
+the ground of our being, the ontological foundation of the
+context of our very selfhood revealed.\"
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+And Jesus replied, \"What?\"
+<BR />
+",
+	"<BR /></TD></TR>\r\n",
+	"</TABLE>",
+
+	"</TD></TR>\r\n",
+	"</TABLE>",
+	"</CENTER>"
+);
+
+/*
+
+	if ((auth_priv(sid, "calendar")&A_READ)<1) {
+		prints(sid, "</TABLE>\r\n</CENTER>\r\n");
+		htpage_footer(sid);
+		return;
+	}
+	prints(sid, "<TR><TD VALIGN=TOP WIDTH=100%%>\r\n");
+	unixdate=(time(NULL)+time_tzoffset(sid, time(NULL)))/86400;
+	if (unixdate<0) unixdate=0;
+	if (unixdate>24836) unixdate=24836;
+	unixdate*=86400;
+	unixdate-=time_tzoffset(sid, unixdate);
+	t=unixdate;
+	strftime(posttime1, sizeof(posttime1), "%Y-%m-%d %H:%M:%S", gmtime(&t));
+	t=unixdate+172800;
+	strftime(posttime2, sizeof(posttime2), "%Y-%m-%d %H:%M:%S", gmtime(&t));
+	if (sql_queryf(proc->N, &qobj1, "SELECT eventid, eventstart, eventfinish, eventname FROM gw_events where status = 0 and eventstart >= '%s' and eventstart < '%s' and assignedto = %d ORDER BY eventstart ASC", posttime1, posttime2, sid->dat->uid)<0) return;
+	prints(sid, "<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+	prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP VALIGN=TOP STYLE='border-style:solid'>Calendar</TH></TR>\r\n");
+	for (i=0;i<2;i++) {
+		t=unixdate+(i*86400);
+		prints(sid, "<TR CLASS=\"FIELDVAL\"><TD ALIGN=LEFT COLSPAN=2 NOWRAP STYLE='border-style:solid'><B><A HREF=/calendar/list?day=%d>", (int)(t/86400));
+		if (i==0) {
+			prints(sid, "Today");
+		} else if (i==1) {
+			prints(sid, "Tomorrow");
+		}
+		prints(sid, "</A></B></TD></TR>\r\n");
+		k=1;
+		for (j=0;j<sql_numtuples(proc->N, &qobj1);j++) {
+			t2=time_sql2unix(sql_getvalue(proc->N, &qobj1, j, 1));
+			if ((t2<t)||(t2>=t+86400)) continue;
+			prints(sid, "<TR CLASS=\"FIELDVAL\">");
+			prints(sid, "<TD ALIGN=RIGHT NOWRAP STYLE='border-style:solid'><FONT SIZE=2>");
+			t2=time_sql2unix(sql_getvalue(proc->N, &qobj1, j, 1))+time_tzoffset(sid, time_sql2unix(sql_getvalue(proc->N, &qobj1, j, 1)));
+			prints(sid, "<A HREF=/calendar/edit?eventid=%s>%s", sql_getvalue(proc->N, &qobj1, j, 0), time_unix2timetext(sid, t2));
+			t2=time_sql2unix(sql_getvalue(proc->N, &qobj1, j, 2))+time_tzoffset(sid, time_sql2unix(sql_getvalue(proc->N, &qobj1, j, 2)));
+			prints(sid, " - %s</A></FONT></TD><TD NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>", time_unix2timetext(sid, t2));
+			prints(sid, "<A HREF=/calendar/edit?eventid=%s>%s</A>&nbsp;", sql_getvalue(proc->N, &qobj1, j, 0), str2html(sid, sql_getvalue(proc->N, &qobj1, j, 3)));
+			prints(sid, "</FONT></TD></TR>\r\n");
+			if (k>0) k--;
+		}
+		while (k>0) {
+			prints(sid, "<TR CLASS=\"FIELDVAL\"><TD COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'><FONT SIZE=2>&nbsp;</FONT></TD></TR>\r\n");
+			k--;
+		}
+	}
+	sql_freeresult(proc->N, &qobj1);
+	prints(sid, "</TABLE>\r\n");
+	prints(sid, "</TD><TD VALIGN=TOP>\r\n");
+	if (module_exists("mod_email")&&(auth_priv(sid, "email")>0)) {
+		if (sql_queryf(proc->N, &qobj1, "SELECT mailaccountid, accountname FROM gw_email_accounts where obj_uid = %d ORDER BY accountname ASC", sid->dat->uid)<0) return;
+		if (sql_numtuples(proc->N, &qobj1)>0) {
+			prints(sid, "<TABLE BORDER=1 CELLPADDING=1 CELLSPACING=0 WIDTH=100%% STYLE='border-style:solid'>\r\n");
+			prints(sid, "<TR><TH ALIGN=LEFT COLSPAN=2 NOWRAP WIDTH=100%% STYLE='border-style:solid'>");
+			prints(sid, "<FONT SIZE=2>&nbsp;E-Mail</FONT></TH></TR>\r\n");
+			for (i=0;i<sql_numtuples(proc->N, &qobj1);i++) {
+				if (sql_queryf(proc->N, &qobj2, "SELECT count(mailheaderid) FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and status = 'n'", sid->dat->uid, atoi(sql_getvalue(proc->N, &qobj1, i, 0)))<0) continue;
+				newmessages=atoi(sql_getvalue(proc->N, &qobj2, 0, 0));
+				sql_freeresult(proc->N, &qobj2);
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD WIDTH=100%% STYLE='border-style:solid'><TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%%>");
+				prints(sid, "<TR CLASS=\"FIELDVAL\"><TD WIDTH=100%% ALIGN=LEFT NOWRAP style='cursor:hand;'");
+				/ * if (sid->dat->menustyle>0) { * /
+					prints(sid, " onClick=\"location.replace('/mail/main?accountid=%d');return false;\">", atoi(sql_getvalue(proc->N, &qobj1, i, 0)));
+					prints(sid, "<A HREF=/mail/main?accountid=%d onClick=\"location.replace('/mail/main?accountid=%d');return false;\">", atoi(sql_getvalue(proc->N, &qobj1, i, 0)), atoi(sql_getvalue(proc->N, &qobj1, i, 0)));
+/ *
+				} else {
+					prints(sid, " onClick=\"location.replace('/mail/list?accountid=%d');return false;\">", atoi(sql_getvalue(proc->N, &qobj1, i, 0)));
+					prints(sid, "<A HREF=/mail/list?accountid=%d onClick=\"location.replace('/mail/list?accountid=%d');return false;\">", atoi(sql_getvalue(proc->N, &qobj1, i, 0)), atoi(sql_getvalue(proc->N, &qobj1, i, 0)));
+				}
+* /
+				prints(sid, "%-.25s</A>&nbsp;</TD>", str2html(sid, sql_getvalue(proc->N, &qobj1, i, 1)));
+				prints(sid, "<TD ALIGN=RIGHT NOWRAP>%s%d New%s</TD></TR></TABLE></TD></TR>\r\n", newmessages?"<FONT COLOR=BLUE><B>":"", newmessages, newmessages?"</B></FONT>":"");
+			}
+			prints(sid, "</TABLE>\r\n<BR />\r\n");
+		}
+		sql_freeresult(proc->N, &qobj1);
+	}
+	if ((mod_tasks_list=(HTMOD_TASKS_LIST)module_call("mod_tasks_list"))!=NULL) {
+		mod_tasks_list(sid, sid->dat->uid, -1);
+	}
+	prints(sid, "</TD></TR>\r\n");
+	prints(sid, "</TABLE>\r\n</CENTER>\r\n");
+	htpage_footer(sid);
+
+
+*/

@@ -1,0 +1,42 @@
+void profiletimesave(CONN *sid)
+{
+	obj_t *htobj=nes_getobj(sid->N, &sid->N->g, "_SERVER");
+	char availability[170];
+	char curdate[40];
+	char qvar[10];
+	char *ptemp;
+	char *pdest;
+	int i;
+	int j;
+
+	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
+		prints(sid, "<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+		return;
+	}
+	if (strcmp(nes_getstr(sid->N, htobj, "REQUEST_METHOD"),"POST")!=0) return;
+	memset(availability, 0, sizeof(availability));
+	pdest=availability;
+	for (i=0;i<7;i++) {
+		for (j=0;j<24;j++) {
+			memset(qvar, 0, sizeof(qvar));
+			snprintf(qvar, sizeof(qvar)-1, "D%dT%d", i, j);
+			if ((ptemp=getpostenv(sid, qvar))==NULL) {
+				*pdest++='0';
+				continue;
+			}
+			if (strcasecmp(ptemp, "false")==0) {
+				*pdest++='1';
+			} else {
+				*pdest++='1';
+			}
+		}
+	}
+	memset(curdate, 0, sizeof(curdate));
+	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	if (sql_updatef(proc->N, "UPDATE gw_users SET obj_mtime = '%s', availability = '%s' WHERE userid = %d", curdate, availability, sid->dat->uid)<0) return;
+	prints(sid, "<CENTER>Availability modified successfully</CENTER><BR />\r\n");
+	db_log_activity(sid, "profile", 0, "modify", "%s - %s modified availability", sid->socket.RemoteAddr, sid->dat->username);
+	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\nlocation.replace(\"%s/profile/edit\");\r\n// -->\r\n</SCRIPT>\r\n", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
+	prints(sid, "<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=%s/profile/edit\"></NOSCRIPT>\r\n", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
+	return;
+}
