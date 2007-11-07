@@ -5,6 +5,7 @@ function testdl() {
 		print("\tloading libs...\n");
 		io.flush();
 		if (typeof(_SERVER)=='table') {
+			rc=dl.loadlib("/usr/local/lib/nesla/libneslacrypto.so");
 			rc=dl.loadlib("/usr/local/lib/nesla/libneslaext.so");
 			rc=dl.loadlib("/usr/local/lib/nesla/libneslaregex.so");
 			rc=dl.loadlib("/usr/local/lib/nesla/libneslatcp.so");
@@ -16,4 +17,5 @@ function testdl() {
 	}
 	return;
 }
-testdl();
+if (_ostype_!='OpenBSD/gcc') testdl();
+global testdl=null;

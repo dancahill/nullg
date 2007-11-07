@@ -13,3 +13,4 @@ function testloop() {
 	return;
 }
 testloop();
+global testloop=null;

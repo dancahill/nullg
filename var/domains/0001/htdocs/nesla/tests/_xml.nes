@@ -106,3 +106,4 @@ function testxml() {
 	return;
 }
 testxml();
+global testxml=null;

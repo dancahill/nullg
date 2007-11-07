@@ -9,3 +9,4 @@ function testsize() {
 	return;
 }
 testsize();
+global testsize=null;

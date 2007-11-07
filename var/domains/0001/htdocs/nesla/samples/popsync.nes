@@ -8,28 +8,32 @@
  * nesla -e "include('popsync.nes');pop3_sync('username', 'password', 'hostname.com', 995, true);"
  */
 
-function swrite(sock, text) {
-	print(text);
-	return tcp.write(sock, text);
-}
-
-function sread(sock) {
-	in=tcp.gets(sock);
-	if (typeof(in)!='string') {
-		print("input error\n");
-		exit;
-	}
-	print(in+"\n");
-	return in;
-}
-
-function popclose(sock) {
-	swrite(sock, "QUIT\r\n");
-	sread(sock);
-	tcp.close(sock);
-}
-
 function pop3_sync(user, pass, host, port, use_ssl) {
+	/*
+	 * code inside a local function can _not_ reference another local
+	 * function, since that other function will only exist in another
+	 * local context on a different level from the first function.
+	 * trust me on this one.
+	 */
+	local swrite = function (sock, text) {
+		print(text);
+		return tcp.write(sock, text);
+	}
+	local sread = function (sock) {
+		in=tcp.gets(sock);
+		if (typeof(in)!='string') {
+			print("input error\n");
+			exit;
+		}
+		print(in+"\n");
+		return in;
+	}
+	local popclose = function (sock) {
+		tcp.write(sock, "QUIT\r\n");
+		tcp.gets(sock);
+		tcp.close(sock);
+	}
+
 	if (host==null) host='localhost';
 	if (port==null) port=110;
 	var dirname=user+"@"+host;
@@ -78,6 +82,7 @@ function pop3_sync(user, pass, host, port, use_ssl) {
 		for (x=sread(sock);x!=".";x=sread(sock)) msg+=x+"\r\n";
 		if (x!=".") break;
 		file.write(dirname+"/"+filename, msg);
+//		file.write("S:/nullgw/var/domains/0001/mailspool/nulllogic/"+filename, msg);
 	}
 	popclose(sock);
 	return;

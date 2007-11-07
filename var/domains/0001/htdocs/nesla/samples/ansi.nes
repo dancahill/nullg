@@ -1,11 +1,8 @@
 #!/usr/bin/nesla
 # ANSI sample prog by Dan Cahill
-global ANSI = {
-	cls="\e[2J",
-	home="\e[H"
-};
-global lamemsg="\nHello, ANSI.";
+global ANSI = { cls="\e[2J", home="\e[H" };
 print(ANSI.cls, ANSI.home);
+
 print("\e[00;30;40m", lamemsg, " dark black");
 print("\e[01;30;40m", lamemsg, " light black");
 print("\e[00;31;40m", lamemsg, " dark red");

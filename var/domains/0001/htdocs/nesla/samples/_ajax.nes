@@ -46,7 +46,7 @@ function printxml() {
 		"	}\n",
 		"	fdata+='&opt='+opt;\n",
 		"	c.onreadystatechange = handlerFunction;\n",
-		"	c.open('post', '", _SERVER['SCRIPT_NAME'], "', true);\n",
+		"	c.open('post', '", _SERVER['PATH_INFO'], "', true);\n",
 		"	c.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\n",
 		"	c.setRequestHeader('Connection', 'close');\n",
 		"	c.send(fdata);\n",

@@ -49,7 +49,7 @@ void     n_try          (nes_state *N);
 uchar   *n_decompose    (nes_state *N, uchar *rawtext);
 void     n_decompile    (nes_state *N);
 /* exec.c */
-obj_t   *n_execfunction (nes_state *N, obj_t *cobj, obj_t *pobj);
+obj_t   *n_execfunction (nes_state *N, obj_t *fobj, obj_t *pobj);
 /* lib.c */
 NES_FUNCTION(nl_flush);
 NES_FUNCTION(nl_print);
@@ -74,6 +74,8 @@ NES_FUNCTION(nl_time);
 NES_FUNCTION(nl_gmtime);
 NES_FUNCTION(nl_sleep);
 NES_FUNCTION(nl_runtime);
+NES_FUNCTION(nl_eval);
+NES_FUNCTION(nl_exec);
 NES_FUNCTION(nl_iname);
 NES_FUNCTION(nl_ival);
 NES_FUNCTION(nl_include);
@@ -96,7 +98,7 @@ int      nc_snprintf    (nes_state *N, char *str, int size, const char *format, 
 int      nc_printf      (nes_state *N, const char *format, ...);
 int      nc_gettimeofday(struct timeval *tv, void *tz);
 char    *nc_memcpy      (char *dst, const char *src, int n);
-int      nc_strlen      (char *s);
+int      nc_strlen      (const char *s);
 char    *nc_strchr      (const char *s, int c);
 char    *nc_strncpy     (char *d, const char *s, int n);
 int      nc_strcmp      (const char *s1, const char *s2);
@@ -134,8 +136,8 @@ obj_t   *n_storeval     (nes_state *N, obj_t *cobj);
 #define  readi4(ptr)    (int)(ptr[0]+ptr[1]*256+ptr[2]*65536+ptr[3]*16777216)
 #define  readi2(ptr)    (int)(ptr[0]+ptr[1]*256)
 
-#define  writei4(n,ptr) ptr[0]=n&255; ptr[1]=(n>>8)&255; ptr[2]=(n>>16)&255; ptr[3]=(n>>24)&255;
-#define  writei2(n,ptr) ptr[0]=n&255; ptr[1]=(n>>8)&255;
+#define  writei4(n,ptr) ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255); ptr[2]=(uchar)((n>>16)&255); ptr[3]=(uchar)((n>>24)&255);
+#define  writei2(n,ptr) ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255);
 
 #define striprn(s) { int n=strlen(s)-1; while (n>-1&&(s[n]=='\r'||s[n]=='\n')) s[n--]='\0'; }
 

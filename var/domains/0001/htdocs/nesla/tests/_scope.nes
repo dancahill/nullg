@@ -1,16 +1,16 @@
 #!/usr/bin/nesla
 if (typeof(expect)!='function') include("_expect.nes");
 function testscope() {
-	function subf1(p1, p2) {
+	local subf1 = function (p1, p2) {
 		local p3="b";
 		expect("testing subscope", "[5][x][b]",     "["+tostring(p1)+"]["+tostring(p2)+"]["+tostring(p3)+"]");
 		return;
 	}
-	function subf2(p1, p2, p3) {
+	local subf2 = function (p1, p2, p3) {
 		expect("testing subscope(t)", "[5][x][1][null]",     "["+tostring(p1)+"]["+tostring(p2)+"]["+tostring(p3.a)+"]["+tostring(p3.c)+"]");
 		return;
 	}
-	function subf3(p1, p2, p3) {
+	local subf3 = function (p1, p2, p3) {
 		expect("testing subscope(t)", "[5][x][null][2]",     "["+tostring(p1)+"]["+tostring(p2)+"]["+tostring(p3.a)+"]["+tostring(p3.c)+"]");
 		return;
 	}
@@ -45,3 +45,4 @@ function testscope() {
 	return;
 }
 testscope();
+global testscope=null;

@@ -10,3 +10,4 @@ function testldap() {
 	return;
 }
 testldap();
+global testldap=null;

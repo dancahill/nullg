@@ -1,0 +1,37 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.nes");
+function testeval() {
+	if (typeof(eval)=='function') {
+		expect("eval(\"5*5\")",      25,    eval("5*5"));
+		expect("eval(5*42)",         210,   eval(5*42));
+		expect("eval(\"xx='abc'\")", 'abc', eval("xx='abc'"));
+		expect("eval(\"'def'\")",    'def', eval("'def'"));
+//		print("[",xx,"]\n"); /* xx _should_ be 'abc' */
+
+		z=eval;
+		try x=z("'zzz'");
+		if (_exception!=null) {
+			print("\t[",_exception.errno,"][",_exception.errtext,"]\n");
+			_exception=null;
+			expect("z(\"'zzz'\")",    'null', 'null');
+		} else {
+			expect("z(\"'zzz'\")",    'null', x);
+		}
+
+		x=eval("y=42");
+		print("[",x,"]\n");
+		print("[",y,"]\n");
+
+		/*
+		 * exec() is a kludge.  an ugly hack.  don't be shocked if it vanishes.
+		 * eval() _should_ be able to do this stuff...
+		 */
+		x=exec("y=42;print(y);");
+		print("[",x,"]\n");
+		print("[",y,"]\n");
+
+	}
+	return;
+}
+testeval();
+global testeval=null;

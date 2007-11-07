@@ -22,13 +22,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
-#ifdef WIN32
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 #include <io.h>
-#else
-#ifdef __TURBOC__
-#else
+#elif !defined( __TURBOC__)
 #include <unistd.h>
-#endif
 #endif
 
 #ifndef STDOUT_FILENO
@@ -575,7 +573,6 @@ NES_FUNCTION(nl_strstr)
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	unsigned int i=0, j=0;
 
-	nes_unlinkval(N, &N->r);
 	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
 	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg2");
 	if (cobj2->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "zero length arg2");
@@ -728,12 +725,92 @@ NES_FUNCTION(nl_sleep)
 	int n=1;
 
 	if (cobj1->val->type==NT_NUMBER) n=(int)cobj1->val->d.num;
-#ifdef WIN32
+#if defined(__BORLANDC__)
+	sleep(n);
+#elif defined(WIN32)
 	Sleep(n*1000);
 #else
 	sleep(n);
 #endif
 	nes_setnum(N, &N->r, "", 0);
+	return 0;
+}
+
+NES_FUNCTION(nl_eval)
+{
+	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	uchar *p;
+
+	if (nc_strcmp(cobj0->val->d.str, "eval")!=0) {
+		n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "cowardly refusing to run aliased eval");
+	}
+	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->d.str!=NULL)) {
+		uchar *oldbptr=N->blockptr;
+		uchar *oldbend=N->blockend;
+		uchar *oldrptr=N->readptr;
+		jmp_buf *savjmp;
+
+		p=n_decompose(N, (uchar *)cobj1->val->d.str);
+		if (p!=N->blockptr) N->blockptr=p; else p=NULL;
+		N->blockend=N->blockptr+readi4((N->blockptr+8));
+		N->readptr=N->blockptr+readi4((N->blockptr+12));
+
+		savjmp=N->savjmp;
+		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+		if (setjmp(*N->savjmp)==0) {
+			nes_linkval(N, &N->r, nes_eval(N, (char *)N->readptr));
+		}
+		n_free(N, (void *)&N->savjmp);
+		N->savjmp=savjmp;
+
+		if (p) n_free(N, (void *)&p);
+
+		N->blockptr=oldbptr;
+		N->blockend=oldbend;
+		N->readptr=oldrptr;
+	} else {
+		nes_linkval(N, &N->r, cobj1);
+	}
+	return 0;
+}
+
+NES_FUNCTION(nl_exec)
+{
+	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	uchar *p;
+
+	if (nc_strcmp(cobj0->val->d.str, "exec")!=0) {
+		n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "cowardly refusing to run aliased exec");
+	}
+	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->d.str!=NULL)) {
+		uchar *oldbptr=N->blockptr;
+		uchar *oldbend=N->blockend;
+		uchar *oldrptr=N->readptr;
+		jmp_buf *savjmp;
+
+		p=n_decompose(N, (uchar *)cobj1->val->d.str);
+		if (p!=N->blockptr) N->blockptr=p; else p=NULL;
+		N->blockend=N->blockptr+readi4((N->blockptr+8));
+		N->readptr=N->blockptr+readi4((N->blockptr+12));
+
+		savjmp=N->savjmp;
+		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+		if (setjmp(*N->savjmp)==0) {
+			nes_linkval(N, &N->r, nes_exec(N, (char *)N->readptr));
+		}
+		n_free(N, (void *)&N->savjmp);
+		N->savjmp=savjmp;
+
+		if (p) n_free(N, (void *)&p);
+
+		N->blockptr=oldbptr;
+		N->blockend=oldbend;
+		N->readptr=oldrptr;
+	} else {
+		nes_linkval(N, &N->r, cobj1);
+	}
 	return 0;
 }
 

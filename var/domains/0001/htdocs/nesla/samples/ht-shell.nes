@@ -1,6 +1,6 @@
 #!/usr/bin/nesla
 if (typeof(_SERVER)!='table') {
-	global _SERVER = { REQUEST_METHOD="GET", SCRIPT_NAME="/nesla/blah" };
+	global _SERVER = { REQUEST_METHOD="GET", PATH_INFO="/nesla/blah" };
 } # this is a debug block
 if (string.cmp(_SERVER['REQUEST_METHOD'], "POST")==0) {
 	var path=_POST['PATH'];
@@ -20,7 +20,7 @@ print(
 	"</HEAD>\n",
 	"<BODY>\n",
 	"<CENTER>\n",
-	"<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='shell'>\n",
+	"<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='shell'>\n",
 	"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 BGCOLOR='#E0E0E0'>\n",
 	"<TR><TD>Path   </TD><TD><INPUT SIZE=50 NAME='path'    VALUE='", path, "'></TD></TR>\n",
 	"<TR><TD>Command</TD><TD><INPUT SIZE=50 NAME='command' VALUE='", command, "'></TD></TR>\n",

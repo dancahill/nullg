@@ -20,3 +20,4 @@ function testtypes() {
 	return;
 }
 testtypes();
+global testtypes=null;

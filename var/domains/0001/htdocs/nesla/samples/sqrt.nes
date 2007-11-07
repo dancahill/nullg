@@ -1,0 +1,61 @@
+#!/usr/bin/nesla
+/*
+ * SQRT() sample prog by Dan Cahill
+ *
+ * calculate precise square roots without libm.
+ * minor tweaks are obvious and boring.  don't bother.
+ *
+ * it sucks for a proc to do it this way, but i'm testing a method for humans.
+ * good logic will translate.  bad logic isn't worth the effort.
+ *
+ * every floor()ed square root from 0 to 100.  a monkey could memorize this.
+ * swapping this for a float table would probably save one whole cycle.
+ * the square root of zero _is_ zero, but one in its place makes decimals work.
+ */
+
+function mysqrt(vol) {
+	local square = {
+		1, 1, 1, 1, 2, 2, 2, 2, 2, 3,
+		3, 3, 3, 3, 3, 3, 4, 4, 4, 4,
+		4, 4, 4, 4, 4, 5, 5, 5, 5, 5,
+		5, 5, 5, 5, 5, 5, 6, 6, 6, 6,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 8, 8, 8, 8, 8, 8,
+		8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+		8, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+		9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+		10
+	}
+	local vt=tonumber(vol);
+	local depth=0;
+	local base1=0;
+
+	if (vt<0) return "piss off";
+	while (vt>100) {
+		vt/=100;
+		depth++;
+	}
+	base1=square[math.floor(vt)];
+	while (depth--) base1*=10;
+	print("\nthe square root of ",vol," is...\n");
+	vol=tonumber(vol);
+	for (i=0;i<5;i++) {
+		if ((diff=vol/base1-base1)==0) break;
+		print("base\t=",string.sub(tostring(base1)+" "*30, 0, 30),"\tdiff\t=",diff,"\n");
+		base1+=diff*0.5;
+	}
+	print("",base1,"(",math.sqrt(vol),")\n");
+	return base1;
+}
+
+mysqrt(-1);
+mysqrt(0.09);
+mysqrt(2);
+mysqrt(64);
+mysqrt(625);
+mysqrt(1000);
+mysqrt(9801);
+mysqrt(1234567890);
+mysqrt(4294967296);
+mysqrt("1000000000000000000000000000");

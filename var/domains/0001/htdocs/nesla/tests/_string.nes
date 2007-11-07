@@ -13,6 +13,11 @@ function teststring() {
 	expect("string.nicmp(x)",       0,        string.nicmp(x, "aabb", 4));
 	expect("string.sub(x)",         "is a",   string.sub("this is a test.", 5, 4));
 	expect("string.sub(x)",         "test",   string.sub("this is a test.", -5, 4));
+
+	expect("x='x'*8",               "xxxxxxxx", 'x'*8);
+	local x='yy';
+	expect("x='yy';x*=3",           "yyyyyy",   x*=3);
+
 	expect("'123'=='456'",          false,    '123'=='456');
 	expect("'123'>='456'",          false,    '123'>='456');
 	expect("'123'>'456'",           false,    '123'>'456');
@@ -44,3 +49,4 @@ function teststring() {
 	return;
 }
 teststring();
+global teststring=null;

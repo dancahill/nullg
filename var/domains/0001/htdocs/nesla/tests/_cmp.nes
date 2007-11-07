@@ -36,3 +36,4 @@ function testcmp() {
 	return;
 }
 testcmp();
+global testcmp=null;

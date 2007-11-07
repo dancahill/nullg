@@ -1,5 +1,5 @@
 LIBRARY		libnesla
-VERSION		0.9.0
+VERSION		0.9.1
 EXPORTS
 	nes_newstate
 	nes_endstate

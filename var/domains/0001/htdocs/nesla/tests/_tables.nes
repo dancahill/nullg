@@ -35,3 +35,4 @@ function testtables() {
 	return;
 }
 testtables();
+global testtables=null;

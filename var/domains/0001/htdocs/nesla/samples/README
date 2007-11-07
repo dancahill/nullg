@@ -4,8 +4,10 @@ These are simple samples of Nesla programs.
    _cards.nes      included file used to define playing cards
    ansi.nes        simple ANSI codes
    current.nes     download latest test release of Nesla (via http)
+   dirhash.nes     create md5 hashes of all files in a directory (recursively)
    eliza.nes       psychiatry for the lonely and desparate
    eliza-l.nes     language file for eliza.nes
+   factorial.nes   calculates the factorial of a number
    hello.nes       the first program in every language
    ht-bj.nes       blackjack game for web servers using ajax (kinda)
    ht-cms.nes      A _very_ crude Content Management System
@@ -13,6 +15,8 @@ These are simple samples of Nesla programs.
    ht-poker.nes    poker game for web servers using ajax (kinda)
    ht-shell.nes    simple shell for web servers
    httpd.nes       functioning demo web server
+   litemeld.nes    meld all required source files for neslite into a single c file
    popsync.nes     pop3 client to sync mail account with a local dir
    smtpc.nes       smtp client
+   sqrt.nes        simple square root algorithm
    src2html.nes    converts scripts to html

@@ -15,3 +15,4 @@ function testrot13() {
 	return;
 }
 testrot13();
+global testrot13=null;

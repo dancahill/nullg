@@ -34,7 +34,7 @@ function main() {
 	global numtests=0;
 	global numerrors=0;
 
-	function subf() { return 42; }
+	local subf = function () { return 42; }
 	include("../samples/_cards.nes");
 	include("_expect.nes");
 	if (typeof(_SERVER)=='table') {
@@ -58,6 +58,8 @@ function main() {
 	include("_loops.nes");
 	print("-------------------------------------------------------------------\n");
 	include("_cmp.nes");
+	print("-------------------------------------------------------------------\n");
+	include("_eval.nes");
 	print("-------------------------------------------------------------------\n");
 	include("_math.nes");
 	print("-------------------------------------------------------------------\n");
@@ -89,7 +91,7 @@ function main() {
 		var f=_ENV['HOME']+"/test.nes";
 		if (typeof(file.stat(f))=='table') {
 			print("\trunning ", f, "\n");
-//			include(f);
+			include(f);
 			print("-------------------------------------------------------------------\n");
 		}
 	}
@@ -100,11 +102,11 @@ function main() {
 	expect("total errors", 0, tonumber(numerrors));
 	if (numerrors>1) numerrors--;
 	print("-------------------------------------------------------------------\n");
-
+	global decomped_script=null;
+	global cx=null;
+	global cx2=null;
 	global _ARGS={};
 	global _ENV={};
-	global decomped_script=null;
-	
 	vars();
 	if (typeof(_SERVER)=='table') print("</BODY></HTML>");
 	return;

@@ -37,7 +37,7 @@ A:HOVER  { background-color: #E0E0FF; }
 </HEAD>
 <BODY>
 <CENTER>
-<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='login'>
+<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='login'>
 <TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>
 <TR><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT SIZE=50 style='width:200px' NAME='username' VALUE='", user, "'></TD></TR>
 <TR><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT SIZE=50 style='width:200px' NAME='password' VALUE='", pass, "' TYPE=password></TD></TR>
@@ -56,8 +56,8 @@ if (_POST['PASSWORD']!=null) {
 		#printf("Set-Cookie: wminfo=%.2s:%.4s:%s:%s:%s; path=%s/; expires=%s\r\n");
 		#printf("Set-Cookie: wmpass=%s; path=%s/\r\n");
 		_HEADER['SET-COOKIE']="NESLACMS="+_POST['PASSWORD'];
-		print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"", _SERVER['SCRIPT_NAME'], "\");\r\n// -->\r\n</SCRIPT>\r\n");
-		print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=", _SERVER['SCRIPT_NAME'], "\"></NOSCRIPT>\r\n");
+		print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"", _SERVER['PATH_INFO'], "\");\r\n// -->\r\n</SCRIPT>\r\n");
+		print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=", _SERVER['PATH_INFO'], "\"></NOSCRIPT>\r\n");
 	} else {
 		print("bad pass");
 	}
@@ -139,7 +139,7 @@ if (_SERVER['REQUEST_METHOD']=='POST') {
 				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'><A HREF='javascript:nexthand(\"edit\", \"", _POST['PATH']+'/'+x, "\");'>edit</A></TD>");
 #				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'>file - <A HREF='", x, "'>", x, "</A></TD>");
 #				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF='javascript:download(\"", _POST['PATH']+'/'+x, "\");'>", x, "</A></TD>");
-				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF=\"", _SERVER['SCRIPT_NAME'], "?download=", _POST['PATH']+'/'+x, "\" TARGET=\"_blank\">", x, "</A></TD>");
+				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF=\"", _SERVER['PATH_INFO'], "?download=", _POST['PATH']+'/'+x, "\" TARGET=\"_blank\">", x, "</A></TD>");
 				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", math.ceil(dir[x].size/1024), " KiB</TD>");
 				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", time.sqldate(dir[x].mtime), " ", time.sqltime(dir[x].mtime), "</TD>");
 				print("</TR>\n");
@@ -169,8 +169,8 @@ if (_SERVER['REQUEST_METHOD']=='POST') {
 		} else {
 			system("chmod 644 "+_POST['EDITNAME']+"-new");
 			print("Wrote '", _POST['EDITNAME'], "' (", x, " bytes).\n");
-			print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"", _SERVER['SCRIPT_NAME'], "\");\r\n// -->\r\n</SCRIPT>\r\n");
-			print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=", _SERVER['SCRIPT_NAME'], "\"></NOSCRIPT>\r\n");
+			print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"", _SERVER['PATH_INFO'], "\");\r\n// -->\r\n</SCRIPT>\r\n");
+			print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=", _SERVER['PATH_INFO'], "\"></NOSCRIPT>\r\n");
 		}
 	} else {
 		print("INVALID REQUEST");
@@ -235,7 +235,7 @@ function printjs() {
 		"		fdata+='&'+document.shell[i].name+'='+document.shell[i].value;\n",
 		"	}\n",
 		"	c.onreadystatechange = handlerFunction;\n",
-		"	c.open('post', '", _SERVER['SCRIPT_NAME'], "', true);\n",
+		"	c.open('post', '", _SERVER['PATH_INFO'], "', true);\n",
 		"	c.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\n",
 		"	c.setRequestHeader('Connection', 'close');\n",
 		"	c.send(fdata);\n",
@@ -320,7 +320,7 @@ print("
 <CENTER>
 ");
 print("
-<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='shell' onsubmit=\"return doshell();\">
+<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='shell' onsubmit=\"return doshell();\">
 <TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>
 <TR><TD>Path   </TD><TD><INPUT SIZE=50 NAME='path'    VALUE='", path, "'></TD><TD VALIGN=BOTTOM ROWSPAN=2><input type='submit' value='run' name='submit'></TD></TR>
 <TR><TD>Command</TD><TD><INPUT SIZE=50 NAME='command' VALUE='", command, "'></TD></TR>
@@ -356,8 +356,8 @@ print("
 
 <DIV ID=page3 STYLE='display: block'>
 <TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>
-<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='editor' ENCTYPE='multipart/form-data'>
-<!--FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='editor'-->
+<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='editor' ENCTYPE='multipart/form-data'>
+<!--FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='editor'-->
 <INPUT TYPE=hidden NAME=path VALUE='", path, "'>
 <INPUT TYPE=hidden NAME=opt VALUE='save'>
 <TR><TD COLSPAN=2><B>&nbsp;Editor window&nbsp;</B></TD></TR>

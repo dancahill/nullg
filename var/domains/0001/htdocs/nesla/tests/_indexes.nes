@@ -21,3 +21,4 @@ function testindexing() {
 	return;
 }
 testindexing();
+global testindexing=null;

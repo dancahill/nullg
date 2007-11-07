@@ -14,6 +14,7 @@ function expect(msg, a, b) {
 		} else {
 			print("[FAILED] expected [ ", a, " ]\n");
 			global numerrors++;
+			io.flush();
 		}
 	} else {
 		print("\t", msg, string.sub(sp, lm, 20-lm));
@@ -23,6 +24,7 @@ function expect(msg, a, b) {
 		} else {
 			print("[\e[00;31;40mFAILED\e[00m] expected [ ", a, " ]\n");
 			global numerrors++;
+			io.flush();
 		}
 	}
 	global numtests++;

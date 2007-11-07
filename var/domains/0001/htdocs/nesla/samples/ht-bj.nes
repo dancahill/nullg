@@ -62,13 +62,13 @@ function prepcards() {
 			}
 		} else if (opt=="Stand") {
 			for (n=2;n<5;n++) {
-				global dt=dv[0]+dv[1]+dv[2]+dv[3]+dv[4];
+				global dt=tonumber(dv[0])+tonumber(dv[1])+tonumber(dv[2])+tonumber(dv[3])+tonumber(dv[4]);
 				if ((dt>21)&&(dv[4]==11)) dv[4]=1;
 				if ((dt>21)&&(dv[3]==11)) dv[3]=1;
 				if ((dt>21)&&(dv[2]==11)) dv[2]=1;
 				if ((dt>21)&&(dv[1]==11)) dv[1]=1;
 				if ((dt>21)&&(dv[0]==11)) dv[0]=1;
-				global dt=dv[0]+dv[1]+dv[2]+dv[3]+dv[4];
+				global dt=tonumber(dv[0])+tonumber(dv[1])+tonumber(dv[2])+tonumber(dv[3])+tonumber(dv[4]);
 				if (dt>15) break;
 				d[n]=getcard();
 				dv[n]=cardval(d[n]);
@@ -104,7 +104,7 @@ function printredraw() {
 
 function main() {
 	if (_SERVER['REQUEST_METHOD']==null) {
-		global _SERVER = { REQUEST_METHOD="GET", SCRIPT_NAME="/nesla/blah" }
+		global _SERVER = { REQUEST_METHOD="GET", PATH_INFO="/nesla/blah" }
 	} # this is a debug block
 	if (typeof(_SESSION)!='table') global _SESSION = { };
 	if (typeof(_SESSION['BJ'])!='table') _SESSION['BJ'] = { };
@@ -122,7 +122,7 @@ function main() {
 		printredraw();
 		print("<SPAN ID='remstatus'>");
 	}
-	print("<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='game'>\n");
+	print("<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='game'>\n");
 	for (n=0;n<5;n++) if (d[n]!=null) print("<INPUT TYPE=hidden NAME=d", n, " VALUE='", d[n], "'>\n");
 	for (n=0;n<5;n++) if (c[n]!=null) print("<INPUT TYPE=hidden NAME=c", n, " VALUE='", c[n], "'>\n");
 	print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
@@ -143,11 +143,11 @@ function main() {
 	if (ct>21) {
 		_SESSION['BJ'].lost++;
 		print("<B><FONT COLOR=RED>bust - DEALER WINS</FONT></B><BR>\n");
-		print("<A HREF='", _SERVER['SCRIPT_NAME'], "'>Play again</A>\n");
+		print("<A HREF='", _SERVER['PATH_INFO'], "'>Play again</A>\n");
 	} else if (ct==21) {
 		_SESSION['BJ'].won++;
 		print("<B><FONT COLOR=GREEN>21! - YOU WIN</FONT></B><BR>\n");
-		print("<A HREF='", _SERVER['SCRIPT_NAME'], "'>Play again</A>\n");
+		print("<A HREF='", _SERVER['PATH_INFO'], "'>Play again</A>\n");
 	} else if (opt=="Stand") {
 		if (dt>21) {
 			_SESSION['BJ'].won++;
@@ -161,7 +161,7 @@ function main() {
 			print("dealer has ", dt, " - you have ", ct, "<BR>\n");
 			print("<B><FONT COLOR=GREEN>YOU WIN</FONT></B><BR>\n");
 		}
-		print("<A HREF='", _SERVER['SCRIPT_NAME'], "' 'onClick=location.replace('", _SERVER['SCRIPT_NAME'], "');return false;'>Play again</A>\n");
+		print("<A HREF='", _SERVER['PATH_INFO'], "' 'onClick=location.replace('", _SERVER['PATH_INFO'], "');return false;'>Play again</A>\n");
 	} else if (ct<21) {
 		print("[<A HREF=javascript:nexthand('Hit');> HIT </A>]\n");
 		print("[<A HREF=javascript:nexthand('Stand');> STAND </A>]\n");

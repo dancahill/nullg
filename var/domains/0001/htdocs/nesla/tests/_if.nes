@@ -25,3 +25,4 @@ function testif() {
 	return;
 }
 testif();
+global testif=null;

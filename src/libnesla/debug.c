@@ -20,10 +20,10 @@
 
 #include <stdio.h>
 
-void dumpsyms(nes_state *N, char *file, int line, uchar *ptr, int count)
+void dumpsyms(nes_state *N, char *file, long line, uchar *ptr, long count)
 {
 #define __FUNCTION__ "dumpsyms"
-	int i=0;
+	long i=0;
 
 	n_warn(N, __FUNCTION__, "%s:%d next %d ops 0x%08x [%d]", file, line, count, N->readptr, *N->readptr);
 	do {
@@ -46,21 +46,21 @@ void n_decompile(nes_state *N)
 {
 #define __FUNCTION__ "n_decompile"
 	uchar *p;
-	int len;
+	long len;
 	uchar *offset=NULL;
-	int showbold;
+	short showbold;
 
 	nl_flush(N);
 	if (N->blockptr==NULL) { printf(" N->blockptr is NULL\n"); return; }
 	if (N->readptr==NULL) { printf(" N->readptr is NULL\n"); return; }
 	if (N->blockend==NULL) { printf(" N->blockend is NULL\n"); return; }
 	printf("\n----\nrecomposed source is:\n\n");
-	printf(" 0x%08X\n 0x%08X <-you are here\n 0x%08X\n\n", (unsigned int)N->blockptr, (unsigned int)N->readptr, (unsigned int)N->blockend);
+	printf(" 0x%08lX\n 0x%08lX <-you are here\n 0x%08lX\n\n", (unsigned long)N->blockptr, (unsigned long)N->readptr, (unsigned long)N->blockend);
 	if (N->readptr>N->blockend) {
-		printf(" N->readptr is %d bytes past the end of the block\n\n", (int)(N->readptr-N->blockend));
+		printf(" N->readptr is %ld bytes past the end of the block\n\n", (unsigned long)(N->readptr-N->blockend));
 		N->blockptr=N->readptr;
 	} else if (N->readptr<N->blockptr) {
-		printf(" N->readptr is %d bytes before the block\n\n", (int)(N->blockptr-N->readptr));
+		printf(" N->readptr is %ld bytes before the block\n\n", (unsigned long)(N->blockptr-N->readptr));
 		N->blockptr=N->readptr;
 	} else {
 		offset=N->readptr;
@@ -80,13 +80,13 @@ void n_decompile(nes_state *N)
 			p+=len;
 			break;
 		case OP_NUMDATA:
-			len=(int)(p[1]);
+			len=(long)(p[1]);
 			p+=2;
 			printf("%s ", p);
 			p+=len;
 			break;
 		case OP_LABEL  :
-			len=(int)(p[1]);
+			len=(long)(p[1]);
 			p+=2;
 			printf("%s ", p);
 			p+=len;

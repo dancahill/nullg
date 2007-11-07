@@ -103,3 +103,5 @@ rem CD ..\..\..\MODULES\HTTPD\MOD_XMLRPC
 rem NMAKE /C /S /F MAKEFILE.VC
 
 CD ..\..\..\win
+
+pause

@@ -143,17 +143,22 @@ typedef char      *(*MAIN_LDIR_GETVAL)(obj_t **, int, char *);
 
 typedef nes_state *(*MAIN_NES_NEWSTATE)  (void);
 typedef nes_state *(*MAIN_NES_ENDSTATE)  (nes_state *);
-typedef obj_t     *(*MAIN_NES_EXEC)      (nes_state *, char *);
+typedef obj_t     *(*MAIN_NES_EXEC)      (nes_state *, const char *);
 typedef int        (*MAIN_NES_EXECFILE)  (nes_state *, char *);
+
+typedef void       (*MAIN_NES_SETVALTYPE)(nes_state *, obj_t *, unsigned short);
 typedef void       (*MAIN_NES_LINKVAL)   (nes_state *, obj_t *, obj_t *);
 typedef void       (*MAIN_NES_UNLINKVAL) (nes_state *, obj_t *);
 typedef void       (*MAIN_NES_FREETABLE) (nes_state *, obj_t *);
 typedef obj_t     *(*MAIN_NES_GETOBJ)    (nes_state *, obj_t *, char *);
-typedef obj_t     *(*MAIN_NES_GETIOBJ)   (nes_state *, obj_t *, int);
-typedef obj_t     *(*MAIN_NES_SETOBJ)    (nes_state *, obj_t *, char *, unsigned short, NES_CFUNC, num_t, char *, int);
-typedef obj_t     *(*MAIN_NES_STRCAT)    (nes_state *, obj_t *, char *, int);
+typedef obj_t     *(*MAIN_NES_GETIOBJ)   (nes_state *, obj_t *, unsigned long);
+typedef obj_t     *(*MAIN_NES_SETOBJ)    (nes_state *, obj_t *, char *, unsigned short, NES_CFUNC, num_t, char *, long);
+typedef void       (*MAIN_NES_STRCAT)    (nes_state *, obj_t *, char *, long);
+typedef void       (*MAIN_NES_STRMUL)    (nes_state *, obj_t *, unsigned long);
+typedef short      (*MAIN_NES_TOBOOL)    (nes_state *, obj_t *);
 typedef num_t      (*MAIN_NES_TONUM)     (nes_state *, obj_t *);
 typedef char      *(*MAIN_NES_TOSTR)     (nes_state *, obj_t *);
+
 typedef obj_t     *(*MAIN_NES_EVAL)      (nes_state *, char *);
 typedef obj_t     *(*MAIN_NES_EVALF)     (nes_state *, const char *, ...);
 

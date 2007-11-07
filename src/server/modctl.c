@@ -24,6 +24,7 @@ SRVMOD_INIT mod_init;
 /*
  * using -rdynamic to link makes this semi-pointless, but we still need some
  * kind of reference to these functions, or they'll get optimized away...
+ * oh..  and -rdynamic + openbsd = hardcore breakage
  */
 static int regfunctions()
 {

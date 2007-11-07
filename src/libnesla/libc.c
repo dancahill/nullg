@@ -19,14 +19,13 @@
 #include "opcodes.h"
 #include <math.h>
 #include <stdarg.h>
-#ifdef WIN32
+#if defined(_MSC_VER)||defined(__TURBOC__)
 #include <time.h>
 #include <sys/timeb.h>
 #endif
-#ifdef __TURBOC__
-#include <time.h>
-#include <sys/timeb.h>
-#endif
+
+#define __USE_ISOC99
+#include <limits.h>
 
 /* *printf() */
 static const char nchars[]="0123456789ABCDEF";
@@ -54,16 +53,15 @@ int nc_vsnprintf(nes_state *N, char *dest, int max, const char *format, va_list 
 		}
 		switch (*s) {
 		case 'c': tmp[0]=(char)va_arg(ap, int); tmp[1]=0; goto end;
-		case 'd': p=n_ntoa(N, tmp, va_arg(ap, int),          -10, 0); goto out;
-		case 'i': p=n_ntoa(N, tmp, va_arg(ap, int),          -10, 0); goto out;
-		case 'o': p=n_ntoa(N, tmp, va_arg(ap, int),            8, 0); goto out;
-		case 'u': p=n_ntoa(N, tmp, va_arg(ap, unsigned int),  10, 0); goto out;
-		case 'x': p=n_ntoa(N, tmp, va_arg(ap, unsigned int),  16, 0); goto out;
-		case 'f': p=n_ntoa(N, tmp, va_arg(ap, double),       -10, 6); goto out;
-		case 's': p=va_arg(ap, char *); if (p==NULL) p="(null)"; goto out;
-		default : p="orphan %"; goto out;
+		case 'd': p=n_ntoa(N, tmp, va_arg(ap, int),          -10, 0); break;
+		case 'i': p=n_ntoa(N, tmp, va_arg(ap, int),          -10, 0); break;
+		case 'o': p=n_ntoa(N, tmp, va_arg(ap, int),            8, 0); break;
+		case 'u': p=n_ntoa(N, tmp, va_arg(ap, unsigned int),  10, 0); break;
+		case 'x': p=n_ntoa(N, tmp, va_arg(ap, unsigned int),  16, 0); break;
+		case 'f': p=n_ntoa(N, tmp, va_arg(ap, double),       -10, 6); break;
+		case 's': p=va_arg(ap, char *); if (p==NULL) p="(null)"; break;
+		default : p="orphan %"; break;
 		}
-out:
 		nc_strncpy(d, p, max-len); len+=nc_strlen(p); d=dest+len;
 end:
 		esc=0;
@@ -99,15 +97,7 @@ int nc_printf(nes_state *N, const char *format, ...)
 /* time stuff */
 int nc_gettimeofday(struct timeval *tv, void *tz)
 {
-#ifdef WIN32
-	struct timeb tb;
-
-	if (tv==NULL) return -1;
-	ftime(&tb);
-	tv->tv_sec=tb.time;
-	tv->tv_usec=tb.millitm*1000;
-#else
-#ifdef __TURBOC__
+#if defined(_MSC_VER)||defined(__BORLANDC__)||defined(__TURBOC__)
 	struct timeb tb;
 
 	if (tv==NULL) return -1;
@@ -116,7 +106,6 @@ int nc_gettimeofday(struct timeval *tv, void *tz)
 	tv->tv_usec=tb.millitm*1000;
 #else
 	gettimeofday(tv, tz);
-#endif
 #endif
 	return 0;
 }
@@ -130,12 +119,12 @@ char *nc_memcpy(char *dst, const char *src, int n)
 	return dst;
 }
 
-int nc_strlen(char *s)
+int nc_strlen(const char *s)
 {
-	int len=0;
+	char *p=(char *)s;
 
-	while (*s++!=0) len++;
-	return len;
+	while (*p) p++;
+	return p-(char *)s;
 }
 
 char *nc_strchr(const char *s, int c)
@@ -163,17 +152,17 @@ char *nc_strncpy(char *dst, const char *src, int n)
 
 int nc_strcmp(const char *s1, const char *s2)
 {
-	uchar *a=(uchar *)s1, *b=(uchar *)s2;
+	uchar *a, *b;
 
-	if (a==b) return 0;
-	if (!a) a=(uchar *)"";
-	if (!b) b=(uchar *)"";
-	do {
-		if (*a!=*b) return *a-*b;
-		if (*a==0) break;
+	if (s1==s2) return 0;
+	else if (!s1) return -(uchar)*s2;
+	else if (!s2) return +(uchar)*s1;
+	a=(uchar *)s1;
+	b=(uchar *)s2;
+	while (*a==*b&&*a!='\0') {
 		a++; b++;
-	} while (1);
-	return 0;
+	}
+	return *a-*b;
 }
 
 int nc_strncmp(const char *s1, const char *s2, int n)
@@ -193,7 +182,7 @@ void *nc_memset(void *s, int c, int n)
 {
 	uchar *a=s;
 
-	while (n) a[--n]=c;
+	while (n) a[--n]=(uchar)c;
 	return s;
 }
 
@@ -258,30 +247,46 @@ num_t n_aton(nes_state *N, const char *str)
 {
 	char *s=(char *)str;
 	num_t rval=0;
+	num_t rdot=0.1;
 
 	while (nc_isdigit(*s)) {
 		rval=10*rval+(*s++-'0');
 	}
-	if (*s=='.') {
-		num_t dot=1;
-
-		s++;
-		while (nc_isdigit(*s)) {
-			dot*=0.1;
-			rval+=(*s++-'0')*dot;
-		}
+	if (*s!='.') return rval;
+	s++;
+	while (nc_isdigit(*s)) {
+		rval+=(*s++-'0')*rdot;
+		rdot*=0.1;
 	}
 	return rval;
 }
 
 char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 {
-	int n=(int)num;
-	num_t f=(num_t)num-(int)num;
+/*
+#  define LLONG_MAX	9223372036854775807LL
+#  define ULONG_MAX     0xffffffffUL  / * maximum unsigned long value * /
+
+#  define LONG_MAX	2147483647L
+#  define LONG_MIN	(-LONG_MAX - 1L)
+*/
+
+#if defined (LLONG_MAX)
+	long long int n=(long long int)num;
+	num_t f=(num_t)num-(long long int)num;
+#else
+//#elif defined(_MSC_VER)||defined(__BORLANDC__)
+	/* long long int causes fires - need working substitute */
+	long int n=(long int)num;
+	num_t f=(num_t)num-(long int)num;
+#endif
 	unsigned int i;
 	char c, sign='+';
 	char *p, *q;
 
+#ifndef LLONG_MAX
+	if (num>ULONG_MAX) n_warn(N, "n_ntoa", "broken number display...");
+#endif
 /*
 	if (isinf(f)) {
 		nc_strncpy(str, "inf", 4);
@@ -291,19 +296,20 @@ char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 		return str;
 	}
 */
-	if ((num<0)&&(base<0)) {
-		sign='-';
-		n*=-1;
-		f*=-1;
+	if (base<0) {
+		if (num<0) {
+			sign='-';
+			n*=-1;
+			f*=-1;
+		}
+		base=-base;
 	}
-	base=base<0?-base:base;
 	p=q=str;
 	/* need a _real_ fix */
 	if (n%base<0) {
 		nc_strncpy(str, "nan", 4);
 		return str;
 	}
-
 	do {
 		*p++=nchars[n%base];
 	} while ((n/=base)>0);

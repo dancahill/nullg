@@ -33,41 +33,60 @@ void n_if(nes_state *N)
 {
 #define __FUNCTION__ "n_if"
 	char done=0, t=0;
-	obj_t *cobj;
 
 	DEBUG_IN();
 l1:
 	if (*N->readptr==OP_POPAREN) {
 		N->readptr++;
-		if (!done) {
-			cobj=nes_eval(N, (char *)N->readptr);
-			t=nes_tonum(N, cobj)?1:0;
-		}
+		if (!done) t=(char)nes_tobool(N, nes_eval(N, (char *)N->readptr));
 		n_skipto(N, __FUNCTION__, OP_PCPAREN);
 		N->readptr++;
 	}
 l2:
+	if (!t||done) {
+		if (*N->readptr==OP_POBRACE) {
+			N->readptr++;
+			n_skipto(N, __FUNCTION__, OP_PCBRACE);
+			N->readptr++;
+		} else {
+			n_skipto(N, __FUNCTION__, OP_PSEMICOL);
+			if (*N->readptr==OP_PSEMICOL) N->readptr++;
+		}
+	} else {
+		done=1;
+		if (*N->readptr==OP_POBRACE) {
+			nes_exec(N, (char *)N->readptr);
+			n_skipto(N, __FUNCTION__, OP_PCBRACE);
+			N->readptr++;
+		} else {
+			N->single=1;
+			nes_exec(N, (char *)N->readptr);
+			if (*N->readptr==OP_PSEMICOL) N->readptr++;
+		}
+	}
+/*
 	if (*N->readptr==OP_POBRACE) {
-		if ((t)&&(!done)) {
+		if (!t||done) {
+			N->readptr++;
+		} else {
 			done=1;
 			nes_exec(N, (char *)N->readptr);
-		} else {
-			N->readptr++;
 		}
 		n_skipto(N, __FUNCTION__, OP_PCBRACE);
 		N->readptr++;
-		if (N->ret) { DEBUG_OUT(); return; }
 	} else {
-		if ((t)&&(!done)) {
+		if (!t||done) {
+			n_skipto(N, __FUNCTION__, OP_PSEMICOL);
+		} else {
 			done=1;
 			N->single=1;
 			nes_exec(N, (char *)N->readptr);
-		} else {
-			n_skipto(N, __FUNCTION__, OP_PSEMICOL);
 		}
 		if (*N->readptr==OP_PSEMICOL) N->readptr++;
-		if (N->ret) { DEBUG_OUT(); return; }
 	}
+*/
+
+	if (N->ret) { DEBUG_OUT(); return; }
 	if (*N->readptr==OP_KELSE) {
 		N->readptr++;
 		if (*N->readptr==OP_KIF) {
@@ -88,7 +107,7 @@ void n_for(nes_state *N)
 	uchar *arginit, *argcomp, *argexec;
 	uchar *bs, *be;
 	obj_t *cobj;
-	short int single;
+	short single;
 
 	DEBUG_IN();
 	n_expect(N, __FUNCTION__, OP_POPAREN);
@@ -118,21 +137,11 @@ void n_for(nes_state *N)
 			if (nes_tonum(N, cobj)==0) break;
 		}
 		N->readptr=bs;
-		if (single) {
-			N->single=1;
-			nes_exec(N, (char *)N->readptr);
-		} else {
-			if (*N->readptr==OP_POBRACE) {
-				nes_exec(N, (char *)N->readptr);
-			} else {
-				n_error(N, NE_SYNTAX, __FUNCTION__, "...");
-			}
-			n_skipto(N, __FUNCTION__, OP_PCBRACE);
-			N->readptr++;
-		}
-		if (N->cnt>0) { N->cnt=0; }
-		if (N->brk>0) { N->brk--; break; }
-		if (N->ret) { break; }
+		N->single=single;
+		nes_exec(N, (char *)N->readptr);
+		if (N->cnt) N->cnt=0;
+		if (N->brk) { N->brk--; break; }
+		if (N->ret) break;
 		N->readptr=argexec;
 		n_readvar(N, &N->l, NULL);
 	}
@@ -148,7 +157,7 @@ void n_do(nes_state *N)
 	uchar *argcomp;
 	uchar *bs, *be;
 	obj_t *cobj;
-	short int single;
+	short single;
 
 	DEBUG_IN();
 	bs=N->readptr;
@@ -165,21 +174,11 @@ void n_do(nes_state *N)
 	be=N->readptr;
 	for (;;) {
 		N->readptr=bs;
-		if (single) {
-			N->single=1;
-			nes_exec(N, (char *)N->readptr);
-		} else {
-			if (*N->readptr==OP_POBRACE) {
-				nes_exec(N, (char *)N->readptr);
-			} else {
-				n_error(N, NE_SYNTAX, __FUNCTION__, "...");
-			}
-			n_skipto(N, __FUNCTION__, OP_PCBRACE);
-			N->readptr++;
-		}
-		if (N->cnt>0) { N->cnt=0; }
+		N->single=single;
+		nes_exec(N, (char *)N->readptr);
+		if (N->cnt>0) N->cnt=0;
 		if (N->brk>0) { N->brk--; break; }
-		if (N->ret) { break; }
+		if (N->ret) break;
 		N->readptr=be;
 		n_expect(N, __FUNCTION__, OP_KWHILE);
 		N->readptr++;
@@ -202,7 +201,7 @@ void n_while(nes_state *N)
 	uchar *argcomp;
 	uchar *bs, *be;
 	obj_t *cobj;
-	short int single;
+	short single;
 
 	DEBUG_IN();
 	n_expect(N, __FUNCTION__, OP_POPAREN);
@@ -226,22 +225,11 @@ void n_while(nes_state *N)
 		N->readptr++;
 		if (nes_tonum(N, cobj)==0) break;
 		N->readptr=bs;
-		if (single) {
-			N->single=1;
-			nes_exec(N, (char *)N->readptr);
-			if (*N->readptr==OP_PSEMICOL) N->readptr++;
-		} else {
-			if (*N->readptr==OP_POBRACE) {
-				nes_exec(N, (char *)N->readptr);
-			} else {
-				n_error(N, NE_SYNTAX, __FUNCTION__, "...");
-			}
-			n_skipto(N, __FUNCTION__, OP_PCBRACE);
-			N->readptr++;
-		}
-		if (N->cnt>0) { N->cnt=0; }
+		N->single=single;
+		nes_exec(N, (char *)N->readptr);
+		if (N->cnt>0) N->cnt=0;
 		if (N->brk>0) { N->brk--; break; }
-		if (N->ret) { break; }
+		if (N->ret) break;
 	}
 	N->readptr=be;
 	DEBUG_OUT();
@@ -274,7 +262,6 @@ void n_try(nes_state *N)
 		tobj=nes_getobj(N, &N->l, "_exception");
 		if (!nes_isnull(tobj)) nes_unlinkval(N, tobj);
 	} else {
-		/* if (N->debug) n_warn(N, __FUNCTION__, "some kind of error?"); */
 		tobj=nes_settable(N, &N->l, "_exception");
 		nes_setnum(N, tobj, "errno", N->err);
 		nes_setstr(N, tobj, "errtext", N->errbuf, -1);

@@ -1,6 +1,7 @@
 #!/usr/bin/nesla
 if (typeof(expect)!='function') include("_expect.nes");
 function testregex() {
+	if (_ostype_=="DOS/turboc") return;
 	if (typeof(regex)!='table') {
 		print("SKIPPING REGEX TESTS\n");
 		return;
@@ -26,9 +27,12 @@ function testregex() {
 	if (typeof(p)!='string') { print("can't find _regex.txt\n"); return; }
 	p=string.split(p, '\n');
 	for (i=0;p[i]!=null;i++) {
-		if (i<100) continue;
+		if (i<100) { p[i]=null; continue; }
 		if (i==95) continue; // test 95 seems broken
 		if (sizeof(p[i])==0) break;
+		if (string.sub(p[i], sizeof(p[i])-1)=='\r') {
+			p[i]=string.sub(p[i], 0, sizeof(p[i])-1);
+		}
 		r=string.split(p[i], '\t');
 		if (r[2]=='c') {
 			continue;
@@ -47,4 +51,4 @@ function testregex() {
 	return;
 }
 testregex();
-p=null;
+global testregex=null;

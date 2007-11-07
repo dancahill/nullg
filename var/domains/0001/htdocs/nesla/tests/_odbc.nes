@@ -15,3 +15,4 @@ function testodbc() {
 	return;
 }
 testodbc();
+global testodbc=null;

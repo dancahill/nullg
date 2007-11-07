@@ -1,0 +1,123 @@
+#!/usr/bin/nesla
+/*
+ * This script makes a summary report of all files in a directory (recursive).
+ * It records the date, time, size, and a cryptographic hash (md5 or sha1)
+ * of the contents of each file.  Directories themselves are mostly ignored.
+ *
+ * If a previous summary exists, a detailed comparison can be made of the
+ * differences, including files with modified contents, deleted files, and
+ * also new files.
+ *
+ * Creating a new report from a script;
+ * nesla -e "global newlist=1;include('/utils/scripts/dirhash.nes');" > hashlist.txt
+ *
+ * Comparing an old report with the current status from a script;
+ * nesla -e "global hashlist='hashlist.txt';include('/utils/scripts/dirhash.nes');"
+ * or just
+ * nesla -f dirhash.nes
+ *
+ */
+
+global hashtype='sha1';
+//global hashtype='md5';
+if (newlist!=null) {
+	global noise=2;
+} else {
+	global noise=1;
+}
+global totalfiles=0;
+global totalsize=0;
+global newtab={};
+
+function printcommas(n) {
+	if ((n=math.floor(n))>=1000) {
+		printcommas(n/1000);
+		print(","+string.sub(tostring(n), -3));
+	} else {
+		print(tostring(n));
+	}
+}
+
+function dirsub(pwd) {
+	_d=dirlist(pwd);
+	for (i=0;;i++) {
+		var x=iname(_d, i);
+		if (typeof(_d[x])!='table') break;
+		if (string.cmp(x, '.')==0) continue;
+		if (string.cmp(x, '..')==0) continue;
+		fullname=pwd+"/"+x;
+		if (_d[x].type=='dir') {
+			dirsub(fullname);
+		} else if (_d[x].type=='file') {
+			if (hashtype=='sha1') h=file.sha1(fullname);
+			else /* default md5 */ h=file.md5(fullname);
+			l=h+"|"+string.sub(tostring(_d[x].size)+"         ",0,9)+"|"+_d[x].mtime+"|"+fullname;
+			newtab[totalfiles]={ date=_d[x].mtime, hash=h, name=fullname, size=_d[x].size };
+			if (noise>1) print(l+"\n"); else if (noise==1) print(".");
+			global totalsize+=_d[x].size;
+			totalfiles++;
+			io.flush();
+		}
+	}
+	return;
+}
+
+function dircmp() {
+	io.flush();
+	if (hashlist==null) global hashlist="hashlist.txt";
+	if (typeof(file.stat(hashlist))!='table') return;
+	global oldtab=string.split(file.read(hashlist), '\n');
+	s1=sizeof(newtab);
+	s2=sizeof(oldtab);
+	for (i=0;i<s1;i++) {
+		if (typeof(newtab[i])!='table') continue;
+		if (sizeof(newtab[i])!=4) continue;
+		for (j=0;j<s2;j++) {
+			if (typeof(oldtab[j])=='string') {
+				if (string.sub(oldtab[j], -1)=='\r') {
+					oldtab[j]=string.sub(oldtab[j], 0, sizeof(oldtab[j])-1);
+				}
+				t=string.split(oldtab[j], '|');
+				if (sizeof(t)!=4) { oldtab[j]=null; continue; }
+				oldtab[j]={ date=tonumber(t[2]), hash=t[0], name=t[3], size=tonumber(t[1]) };
+			}
+			if (typeof(oldtab[j])!='table') continue;
+			if (sizeof(oldtab[j])!=4) continue;
+			if (newtab[i].name==oldtab[j].name) {
+				/* name match */
+				if (newtab[i].hash!=oldtab[j].hash) {
+					print("\nhash mismatch ["+newtab[i].name+"]");
+					if (noise>0) print("\n");
+				} else if (newtab[i].size!=oldtab[j].size) {
+					print("\nsize mismatch ["+newtab[i].name+"]");
+					if (noise>0) print("\n");
+				} else if (newtab[i].date!=oldtab[j].date) {
+					print("\ndate mismatch ["+newtab[i].name+"]");
+					if (noise>0) print("\n");
+				}
+				newtab[i]=null;
+				oldtab[j]=null;
+			}
+		}
+		if (noise>0) print(".");
+		io.flush();
+	}
+	print("\n");
+	for (i=0;i<sizeof(oldtab);i++) {
+		var x=iname(oldtab, i);
+		print("\ndeleted file [",oldtab[x].name,"] ");
+	}
+	for (i=0;i<sizeof(newtab);i++) {
+		var x=iname(newtab, i);
+		print("\nnew file [",newtab[x].name,"] ");
+	}
+	return;
+}
+
+dirsub(".");
+if (newlist==null) {
+	print("\n"+totalfiles+" files ");
+	printcommas(totalsize);
+	print(" bytes\n");
+	dircmp();
+}

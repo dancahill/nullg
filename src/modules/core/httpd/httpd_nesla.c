@@ -22,15 +22,15 @@
 #endif
 static CONN *get_sid()
 {
-	int maxconn=(int)nes_getnum(proc->N, nes_getobj(proc->N, nes_getobj(proc->N, &proc->N->g, "CONFIG"), "httpd"), "max_connections");
-	int i;
+	int i, maxconn;
 
-	if (htproc.conn==NULL) return NULL;
-	for (i=0;i<maxconn;i++) {
-		if (htproc.conn[i].id==pthread_self()) break;
+	if (htproc.conn!=NULL) {
+		maxconn=(int)nes_getnum(proc->N, nes_getobj(proc->N, nes_getobj(proc->N, &proc->N->g, "CONFIG"), "httpd"), "max_connections");
+		for (i=0;i<maxconn;i++) {
+			if (htproc.conn[i].id==pthread_self()) return &htproc.conn[i];
+		}
 	}
-	if ((i<0)||(i>=maxconn)) return NULL;
-	return &htproc.conn[i];
+	return NULL;
 }
 
 NES_FUNCTION(nesladl_loadlib)

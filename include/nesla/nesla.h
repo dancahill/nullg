@@ -18,27 +18,22 @@
 #ifndef _NESLA_H
 #define _NESLA_H 1
 
-#ifdef TINYCC
-/* missing in the supplied win32 headers */
+#if defined(TINYCC)||defined(__TURBOC__)
 struct timeval { long tv_sec; long tv_usec; };
 #endif
-#ifdef WIN32
+#if defined(_MSC_VER)
 #define WIN32_LEAN_AND_MEAN
 /* always include winsock2 before windows */
 #include <winsock2.h>
 #include <windows.h>
 #include <time.h>
-#else
-#ifdef __TURBOC__
-struct timeval { long tv_sec; long tv_usec; };
-#else
+#elif !defined(__TURBOC__)
 #include <sys/time.h>
-#endif
 #endif
 #include <setjmp.h>
 
 #define NESLA_NAME      "nesla"
-#define NESLA_VERSION   "0.9.0"
+#define NESLA_VERSION   "0.9.1"
 
 #define MAX_OBJNAMELEN  64
 #define MAX_OUTBUFLEN   8192
@@ -88,7 +83,7 @@ typedef struct nes_valrec {
 	unsigned short type; /* val type */
 	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
 	unsigned short refs; /* number of references to this node */
-	unsigned int   size; /* storage size of string, nfunc or cdata */
+	unsigned long  size; /* storage size of string, nfunc or cdata */
 	union {
 		num_t  num;
 		char  *str;
@@ -110,17 +105,17 @@ typedef struct nes_state {
 	obj_t g;
 	obj_t l;
 	obj_t r;
-	short int brk;
-	short int cnt;
-	short int ret;
-	short int err;
-	short int debug;
-	short int single;
-	short int strict;
-	short int warnings;
+	short brk;
+	short cnt;
+	short ret;
+	short err;
+	short debug;
+	short single;
+	short strict;
+	short warnings;
 	jmp_buf *savjmp;
 	struct timeval ttime;
-	unsigned short int outbuflen;
+	unsigned short outbuflen;
 	char numbuf[128];
 	char outbuf[MAX_OUTBUFLEN+1];
 	char errbuf[256];
@@ -133,14 +128,16 @@ nes_state *nes_endstate   (nes_state *N);
 obj_t     *nes_exec       (nes_state *N, const char *string);
 int        nes_execfile   (nes_state *N, char *file);
 /* objects */
-obj_t     *nes_linkval    (nes_state *N, obj_t *cobj1, obj_t *cobj2);
+void       nes_setvaltype (nes_state *N, obj_t *cobj, unsigned short type);
+void       nes_linkval    (nes_state *N, obj_t *cobj1, obj_t *cobj2);
 void       nes_unlinkval  (nes_state *N, obj_t *cobj);
 void       nes_freetable  (nes_state *N, obj_t *tobj);
 obj_t     *nes_getobj     (nes_state *N, obj_t *tobj, char *oname);
-obj_t     *nes_getiobj    (nes_state *N, obj_t *tobj, int oindex);
-obj_t     *nes_setobj     (nes_state *N, obj_t *tobj, char *oname, unsigned short otype, NES_CFUNC _fptr, num_t _num, char *_str, int _slen);
-obj_t     *nes_strcat     (nes_state *N, obj_t *cobj, char *str, int len);
-num_t      nes_tobool     (nes_state *N, obj_t *cobj);
+obj_t     *nes_getiobj    (nes_state *N, obj_t *tobj, unsigned long oindex);
+obj_t     *nes_setobj     (nes_state *N, obj_t *tobj, char *oname, unsigned short otype, NES_CFUNC _fptr, num_t _num, char *_str, long _slen);
+void       nes_strcat     (nes_state *N, obj_t *cobj, char *str, long len);
+void       nes_strmul     (nes_state *N, obj_t *cobj, unsigned long n);
+short      nes_tobool     (nes_state *N, obj_t *cobj);
 num_t      nes_tonum      (nes_state *N, obj_t *cobj);
 char      *nes_tostr      (nes_state *N, obj_t *cobj);
 /* parser */

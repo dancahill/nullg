@@ -54,17 +54,18 @@ char *n_getlabel(nes_state *N, char *buf)
 /* read a number val from N->readptr */
 num_t n_getnumber(nes_state *N)
 {
-	char *p=(char *)N->readptr+2;
-	num_t rval=0, rdot=0.1;
+	char *s=(char *)N->readptr+2;
+	num_t rval=0;
+	num_t rdot=0.1;
 
 	N->readptr+=3+N->readptr[1];
-	while (nc_isdigit(*p)) {
-		rval=10*rval+(*p++-'0');
+	while (nc_isdigit(*s)) {
+		rval=10*rval+(*s++-'0');
 	}
-	if (*p!='.') return rval;
-	p++;
-	while (nc_isdigit(*p)) {
-		rval+=(*p++-'0')*rdot;
+	if (*s!='.') return rval;
+	s++;
+	while (nc_isdigit(*s)) {
+		rval+=(*s++-'0')*rdot;
 		rdot*=0.1;
 	}
 	/* if (N->debug) n_warn(N, __FUNCTION__, "[%f]", rval); */
@@ -75,11 +76,11 @@ num_t n_getnumber(nes_state *N)
 obj_t *n_getstring(nes_state *N)
 {
 	int size=readi4((N->readptr+1));
-	obj_t *cobj=nes_strcat(N, nes_setstr(N, &N->r, "", NULL, 0), (char *)N->readptr+5, size);
 
+	nes_strcat(N, nes_setstr(N, &N->r, "", NULL, 0), (char *)N->readptr+5, size);
 	N->readptr+=6+size;
 	/* if (N->debug) n_warn(N, __FUNCTION__, "%d '%s'", size, nes_tostr(N, cobj)); */
-	return cobj;
+	return &N->r;
 }
 
 /* return the next table index */
@@ -185,11 +186,9 @@ data:
 		if (*N->readptr==OP_PCOMMA||*N->readptr==OP_PSEMICOL) {
 			N->readptr++;
 			continue;
-		} else if (*N->readptr==OP_PCBRACE) {
-			break;
-		} else {
-			n_error(N, NE_SYNTAX, __FUNCTION__, "error reading table var [%s][%s]", n_getsym(N, *N->readptr), namebuf);
 		}
+		n_expect(N, __FUNCTION__, OP_PCBRACE);
+		break;
 	}
 end:
 	DEBUG_OUT();
@@ -263,8 +262,14 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 			}
 			return cobj;
 		}
-	case OP_MSUBEQ :
 	case OP_MMULEQ :
+		if (nes_typeof(cobj)==NT_STRING) {
+			N->readptr++;
+			nobj=nes_eval(N, (char *)N->readptr);
+			nes_strmul(N, cobj, (int)nobj->val->d.num);
+			return cobj;
+		}
+	case OP_MSUBEQ :
 	case OP_MDIVEQ :
 		op=*N->readptr++;
 		if (nes_typeof(cobj)!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "object is not a number");
@@ -288,7 +293,8 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 		nobj=nes_eval(N, (char *)N->readptr);
 		/* if (!OP_ISEND(N->lastop)) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a ';' %d", N->lastop); */
 		switch (nes_typeof(nobj)) {
-		case NT_NULL   : nes_unlinkval(N, cobj);
+		case NT_NULL   :
+			nes_unlinkval(N, cobj);
 		case NT_TABLE  :
 		case NT_STRING :
 			if (cobj!=nobj) {
@@ -310,13 +316,14 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 {
 #define __FUNCTION__ "n_evalobj"
+	cobj->val=NULL;
 	if (*N->readptr==OP_POBRACE) {
-		cobj->val=n_newval(N, NT_TABLE);
+		nes_setvaltype(N, cobj, NT_TABLE);
+//		cobj->val=n_newval(N, NT_TABLE);
 		n_readtable(N, cobj);
 		n_expect(N, __FUNCTION__, OP_PCBRACE);
 		N->readptr++;
 	} else if (*N->readptr==OP_POPAREN) {
-		cobj->val=NULL;
 		N->readptr++;
 		nes_linkval(N, cobj, nes_eval(N, (char *)N->readptr));
 		n_expect(N, __FUNCTION__, OP_PCPAREN);
@@ -327,11 +334,12 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 		uchar *p;
 		char *l;
 
-		cobj->val=NULL;
 		if (*N->readptr==OP_STRDATA) {
-			return nes_linkval(N, cobj, n_getstring(N));
+			nes_linkval(N, cobj, n_getstring(N));
+			return cobj;
 		} else if (*N->readptr==OP_NUMDATA) {
-			return nes_setnum(N, cobj, NULL, (preop!=OP_MSUB)?+n_getnumber(N):-n_getnumber(N));
+			nes_setnum(N, cobj, NULL, (preop!=OP_MSUB)?+n_getnumber(N):-n_getnumber(N));
+			return cobj;
 		} else if (*N->readptr==OP_LABEL) {
 			p=N->readptr;
 			l=n_getlabel(N, NULL);
@@ -354,8 +362,11 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 			case OP_MEQ     : N->readptr=p; nobj=n_readvar(N, &N->l, NULL); break;
 			}
 			switch (nes_typeof(nobj)) {
-			case NT_NULL   : cobj->val=n_newval(N, NT_NULL); break;
+			case NT_NULL   :
+//				nes_setvaltype(N, cobj, NT_NULL); break;
+				cobj->val=n_newval(N, NT_NULL); break;
 			case NT_NUMBER :
+//				nes_setvaltype(N, cobj, NT_NUMBER);
 				cobj->val=n_newval(N, NT_NUMBER);
 				/* shouldn't ~ and ! be here? */
 				switch (preop) {
@@ -388,8 +399,9 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 	if (nes_isnull(nobj)) {
 		n=nes_isnull(cobj);
 		t=nes_istrue(cobj);
-		nes_unlinkval(N, cobj);
-		cobj->val=n_newval(N, NT_BOOLEAN);
+//		nes_unlinkval(N, cobj);
+//		cobj->val=n_newval(N, NT_BOOLEAN);
+		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
 		case OP_MCEQ   : cobj->val->d.num=n?1:0; break;
 		case OP_MCNE   : cobj->val->d.num=n?0:1; break;
@@ -403,8 +415,9 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 	case NT_NULL:
 		n=nes_isnull(nobj);
 		t=nes_istrue(nobj);
-		nes_unlinkval(N, cobj);
-		cobj->val=n_newval(N, NT_BOOLEAN);
+//		nes_unlinkval(N, cobj);
+//		cobj->val=n_newval(N, NT_BOOLEAN);
+		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
 		case OP_MCEQ   : cobj->val->d.num=n?1:0; break;
 		case OP_MCNE   : cobj->val->d.num=n?0:1; break;
@@ -503,7 +516,12 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			return cobj;
 */
 		case NT_NUMBER:
-			nes_setstr(N, nobj, "", n_ntoa(N, N->numbuf, nobj->val->d.num, 10, 6), -1);
+			if (op==OP_MMUL) {
+				nes_strmul(N, cobj, (int)nobj->val->d.num);
+				return cobj;
+			} else {
+				nes_setstr(N, nobj, "", n_ntoa(N, N->numbuf, nobj->val->d.num, 10, 6), -1);
+			}
 		case NT_STRING:
 			if (op==OP_MADD) {
 				nes_strcat(N, cobj, nobj->val->d.str, nobj->val->size);
@@ -535,8 +553,9 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		switch (nes_typeof(nobj)) {
 /*
 		case NT_NULL:
-			nes_unlinkval(N, cobj);
-			cobj->val=n_newval(N, NT_BOOLEAN);
+//			nes_unlinkval(N, cobj);
+//			cobj->val=n_newval(N, NT_BOOLEAN);
+			nes_setvaltype(N, cobj, NT_BOOLEAN);
 			switch (op) {
 			case OP_MCEQ   : cobj->val->d.num=0; break;
 			case OP_MCNE   : cobj->val->d.num=1; break;
@@ -546,8 +565,9 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		case NT_TABLE: {
 			int cmp=(cobj->val->d.table==nobj->val->d.table);
 
-			nes_unlinkval(N, cobj);
-			cobj->val=n_newval(N, NT_BOOLEAN);
+//			nes_unlinkval(N, cobj);
+//			cobj->val=n_newval(N, NT_BOOLEAN);
+			nes_setvaltype(N, cobj, NT_BOOLEAN);
 			switch (op) {
 			case OP_MCEQ   : cobj->val->d.num=cmp?1:0; break;
 			case OP_MCNE   : cobj->val->d.num=cmp?0:1; break;
@@ -570,7 +590,8 @@ static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1)
 	while (OP_ISMATH(*N->readptr)) {
 		op2=*N->readptr++;
 		n_evalobj(N, &obj2);
-		if (OP_ISMATH(*N->readptr)&&(oplist[OP_UNDEFINED-*N->readptr].priority>oplist[OP_UNDEFINED-op2].priority)) {
+		/* this should do something based on the type of the _first_ object in the list... i.e. string addition... */
+		if (OP_ISMATH(*N->readptr)&&(oplist[(uchar)*N->readptr].priority>oplist[(uchar)op2].priority)) {
 			n_evalsub(N, op2, &obj2);
 		}
 		n_evalmath(N, obj1, op2, &obj2);
@@ -588,33 +609,34 @@ obj_t *nes_eval(nes_state *N, const char *string)
 {
 #define __FUNCTION__ "nes_eval"
 	obj_t obj1;
-	uchar *p;
-	uchar jmp=N->savjmp?1:0;
 
 	DEBUG_IN();
-	if (jmp==0) {
+	sanetest();
+	if (N->savjmp!=NULL) {
+		N->readptr=(uchar *)string;
+		n_evalobj(N, &obj1);
+		n_evalsub(N, 0, &obj1);
 		nes_unlinkval(N, &N->r);
-		if (string==NULL||string[0]==0) goto end;
-		p=n_decompose(N, (uchar *)string);
-		if (p!=N->blockptr) {
-			N->blockptr=p;
-		} else {
-			p=NULL;
+		N->r.val=obj1.val;
+	} else {
+		uchar *p;
+
+		if (string==NULL||string[0]==0) {
+			nes_unlinkval(N, &N->r);
+			DEBUG_OUT();
+			return &N->r;
 		}
+		p=n_decompose(N, (uchar *)string);
+		if (p!=N->blockptr) N->blockptr=p; else p=NULL;
 		N->blockend=N->blockptr+readi4((N->blockptr+8));
 		N->readptr=N->blockptr+readi4((N->blockptr+12));
 		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
-		if (setjmp(*N->savjmp)!=0) goto end;
-	} else {
-		N->readptr=(uchar *)string;
-	}
-	sanetest();
-	n_evalobj(N, &obj1);
-	n_evalsub(N, 0, &obj1);
-	nes_unlinkval(N, &N->r);
-	N->r.val=obj1.val;
-end:
-	if (jmp==0) {
+		if (setjmp(*N->savjmp)==0) {
+			n_evalobj(N, &obj1);
+			n_evalsub(N, 0, &obj1);
+			nes_unlinkval(N, &N->r);
+			N->r.val=obj1.val;
+		}
 		n_free(N, (void *)&N->savjmp);
 		if (p) n_free(N, (void *)&p);
 		N->blockend=NULL;

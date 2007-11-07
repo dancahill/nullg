@@ -181,7 +181,7 @@ function main() {
 
 /*
 	if (_SERVER==null) { # this is a debug block
-		global _SERVER = { REQUEST_METHOD="POST", SCRIPT_NAME="/nesla/blah" }
+		global _SERVER = { REQUEST_METHOD="POST", PATH_INFO="/nesla/blah" }
 		global _POST = { c0=12, c1=16, c2=20, c3=24, c4=28, h0=1, h1=1, h2=1, h3=1, h4=1 }
 	}
 */
@@ -194,7 +194,7 @@ function main() {
 	printxml();
 	printredraw();
 	print("<SPAN ID='remstatus'>");
-	print("<FORM ACTION='", _SERVER['SCRIPT_NAME'], "' METHOD='POST' NAME='game'>\n");
+	print("<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='game'>\n");
 	global r=ratehand();
 	showscore(r);
 	for (n=0;n<5;n++) {
@@ -220,7 +220,7 @@ function main() {
 	print("</TABLE>\n");
 /*
 	if (string.cmp(opt, "Deal")==0) {
-		print("<A HREF='", _SERVER['SCRIPT_NAME'], "' 'onClick=location.replace('", _SERVER['SCRIPT_NAME'], "');return false;'>Play again</A>\n");
+		print("<A HREF='", _SERVER['PATH_INFO'], "' 'onClick=location.replace('", _SERVER['PATH_INFO'], "');return false;'>Play again</A>\n");
 	}
 */
 	print("</FORM>\n");

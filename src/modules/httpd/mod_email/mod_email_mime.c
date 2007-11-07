@@ -107,7 +107,7 @@ int webmailheader(CONN *sid, obj_t **hobj, FILE **fp)
 				while ((*p2)&&(*p2!=';')&&!isspace(*p2)) p2++;
 			}
 			cobj=nes_setstr(sid->N, *hobj, "boundary", "--", 2);
-			cobj=nes_strcat(sid->N, cobj, p1, p2-p1);
+			nes_strcat(sid->N, cobj, p1, p2-p1);
 		}
 	}
 	cobj=nes_getobj(sid->N, *hobj, "reply-to");
@@ -416,7 +416,7 @@ char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize)
 
 	if (cobj->val->type==NT_STRING) {
 		snprintf(xfilename, 1024, "%s", nes_getstr(sid->N, pobj, "ATTACHMENT1_name"));
-		snprintf(xfilesize, 9, "%d", cobj->val->size);
+		snprintf(xfilesize, 9, "%lu", cobj->val->size);
 		if ((xfilename[0]=='\0')||(cobj->val->size==0)) return NULL;
 		return cobj->val->d.str;
 	}

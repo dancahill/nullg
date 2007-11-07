@@ -1,0 +1,58 @@
+# Makefile for NullLogic Embedded Scripting Language
+
+OBJDIR  = ..\..\obj
+INTDIR  = $(OBJDIR)\libnesla
+
+CC            = BCC32.EXE
+LIB           = TLIB.EXE
+LINK          = ILINK32.EXE
+#MAKE         = MAKE.EXE /C /S /Y /F
+MAKE          = MAKE.EXE
+
+#LIB_CFLAGS   = /nologo /W3 /O2 /ML /G5 /GX /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /c
+#LIB_LDFLAGS  = -lib
+LIB_CFLAGS    = -O2 -q -w-par -w-aus -DWIN32 -DBCC -I../../include -c
+LIB_LDFLAGS   = -x -Gn
+LIB_TARGETDIR = ..\..\lib
+
+CFLAGS   = $(LIB_CFLAGS)
+OBJECTS  = $(INTDIR)\block.obj $(INTDIR)\compile.obj $(INTDIR)\debug.obj $(INTDIR)\exec.obj $(INTDIR)\libc.obj $(INTDIR)\libn.obj $(INTDIR)\objects.obj $(INTDIR)\opcodes.obj $(INTDIR)\parser.obj
+OBJECTS2 = +$(INTDIR)\block.obj +$(INTDIR)\compile.obj +$(INTDIR)\debug.obj +$(INTDIR)\exec.obj +$(INTDIR)\libc.obj +$(INTDIR)\libn.obj +$(INTDIR)\objects.obj +$(INTDIR)\opcodes.obj +$(INTDIR)\parser.obj
+TARGET   = $(LIB_TARGETDIR)\libnesla.lib
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+all: _dirs _libnesla
+
+_dirs:
+	@if not exist "$(LIB_TARGETDIR)/$(NULL)" mkdir "$(LIB_TARGETDIR)"
+	@if not exist "$(OBJDIR)/$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+_libnesla: $(OBJECTS)
+	@-erase "$(TARGET)" 2>nul
+	@$(LIB) $(TARGET) $(OBJECTS2)
+
+clean:
+	@-erase "$(TARGET)" 2>nul
+	@-erase "*.tds" 2>nul
+	@-erase "$(INTDIR)\*.obj" 2>nul
+	@-erase "$(INTDIR)\*.idb" 2>nul
+	@if exist "$(INTDIR)" rmdir "$(INTDIR)"
+
+$(INTDIR)\block.obj:   block.c
+$(INTDIR)\compile.obj: compile.c
+$(INTDIR)\debug.obj:   debug.c
+$(INTDIR)\exec.obj:    exec.c
+$(INTDIR)\libc.obj:    libc.c
+$(INTDIR)\libn.obj:    libn.c
+$(INTDIR)\objects.obj: objects.c
+$(INTDIR)\opcodes.obj: opcodes.c
+$(INTDIR)\parser.obj:  parser.c
+
+.c.obj:
+	@$(CC) $(CFLAGS) -o$(INTDIR)\$& $<

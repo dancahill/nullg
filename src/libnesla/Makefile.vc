@@ -7,7 +7,7 @@ CC            = cl.exe
 LINK          = link.exe
 MAKE          = nmake.exe /C /S /Y /F
 
-LIB_CFLAGS    = /nologo /W3 /O2 /ML /GX /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /c
+LIB_CFLAGS    = /nologo /W3 /O2 /ML /G5 /GX /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /c
 LIB_LDFLAGS   = -lib
 LIB_TARGETDIR = ..\..\lib
 

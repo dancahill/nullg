@@ -1,7 +1,7 @@
 #!/usr/bin/nesla
 if (typeof(expect)!='function') include("_expect.nes");
 function testtcp() {
-	function test_tcpserv() {
+	local test_tcpserv = function () {
 		/* requires _tcpserv.nes to be running */
 		sock=tcp.open("localhost", 1234, 0);
 		if (typeof(sock)!='sock4') {
@@ -16,16 +16,14 @@ function testtcp() {
 		io.flush();
 		return;
 	}
-	function test_http() {
-		print("\ttrying http://localhost:80/\n");
+	local test_http = function () {
+		print("\ttrying http://localhost:80/   - ");
 		sock=tcp.open("localhost", 80, 0);
 		if (typeof(sock)!='sock4') {
 			print("can't connect to http server\n");
 			return;
 		}
 		o=tcp.write(sock, "GET /nesla/version.php HTTP/1.0\r\n\r\n");
-//		print("\twrote ", o, " bytes\n");
-
 		i=tcp.gets(sock);
 		x=string.str(i, " ");
 		p=string.sub(i, 0, sizeof(i)-sizeof(x));
@@ -34,41 +32,35 @@ function testtcp() {
 		c=string.sub(c, 0, sizeof(c)-sizeof(x));
 		x=string.sub(x, 1, sizeof(x));
 //		print("\t[", i, "]\n");
-		print("\t[", p, "][", c, "][", x, "]\n");
-
+		print("[", p, "][", c, "][", x, "]\n");
 		while (1) {
 			i=tcp.gets(sock);
 			if (i=="") break;
-//			print("read: ", i, "\n");
 		}
 		while (1) {
 			i=tcp.read(sock);
 			if (i=="") break;
-//			print("read body :\n", i, "\n");
 		}
 		tcp.close(sock);
 		io.flush();
 		return;
 	}
-	function test_https() {
-		print("\ttrying https://localhost:443/\n");
+	local test_https = function () {
+		print("\ttrying https://localhost:443/ - ");
 		sock=tcp.open("localhost", 443, true);
 		if (typeof(sock)!='sock4') {
 			print("can't connect to http server\n");
 			return;
 		}
 		o=tcp.write(sock, "GET / HTTP/1.0\r\n\r\n");
-//		print("\twrote ", o, " bytes\n");
 		i=tcp.gets(sock);
-		print("\t["+i+"]\n");
-//		print("\nread: "+i+"");
+		print("["+i+"]\n");
 		io.flush();
 		while (1) {
 			i=tcp.gets(sock);
 			if (typeof(i)!='string') break;
 			if (i=="") break;
 			i=string.join(string.split(i, "<"), "&lt;");
-//			print("\nread head : "+i+"");
 		}
 		io.flush();
 		while (1) {
@@ -76,13 +68,12 @@ function testtcp() {
 			if (typeof(i)!='string') break;
 			if (sizeof(i)==0) break;
 			i=string.join(string.split(i, "<"), "&lt;");
-//			print("\nread body :", i, "\n");
 		}
 		tcp.close(sock);
 		io.flush();
 		return;
 	}
-	function test_ftp() {
+	local test_ftp = function () {
 		sock=tcp.open("localhost", 21, 0);
 		if (typeof(sock)!='sock4') {
 			print("can't connect to ftp server\n");
@@ -145,7 +136,7 @@ function testtcp() {
 		io.flush();
 		return;
 	}
-	function test_pop3() {
+	local test_pop3 = function () {
 		sock=tcp.open("localhost", 110, 0);
 		if (typeof(sock)!='sock4') {
 			print("can't connect to pop3 server\n");
@@ -171,7 +162,7 @@ function testtcp() {
 		io.flush();
 		return;
 	}
-	function test_smtp() {
+	local test_smtp = function () {
 		sock=tcp.open("localhost", 25, 0);
 		if (typeof(sock)!='sock4') {
 			print("can't connect to smtp server\n");
@@ -213,7 +204,7 @@ function testtcp() {
 	print("\tsucking http://nesla.sourceforge.net/nesla/\n");
 	io.flush();
 	ht=http.get(0, "nesla.sourceforge.net", 80, "/nesla/");
-#	expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
+//	expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
 	if (typeof(ht)!='table') {
 		print("\t[", ht, "]\n");
 	} else {
@@ -226,7 +217,7 @@ function testtcp() {
 		}
 		print("\tsucking http://nesla.sourceforge.net/nesla/version.php\n");
 		ht=http.get(0, "nesla.sourceforge.net", 80, "/nesla/version.php");
-#		expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
+//		expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
 		if (typeof(ht)!='table') {
 			print("\t[", ht, "]\n");
 		} else {
@@ -244,20 +235,16 @@ function testtcp() {
 #	printvar(ht);
 	if (typeof(tcp.open)=='function') {
 		print("\truntime = ", runtime(), " seconds\n");
-		test_tcpserv();
-		print("\truntime = ", runtime(), " seconds\n");
+#		test_tcpserv();
 		test_http();
-		print("\truntime = ", runtime(), " seconds\n");
 		test_https();
-		print("\truntime = ", runtime(), " seconds\n");
 #		test_ftp();
-#		print("\truntime = ", runtime(), " seconds\n");
 #		test_pop3();
-#		print("\truntime = ", runtime(), " seconds\n");
 #		test_smtp();
-#		print("\truntime = ", runtime(), " seconds\n");
+		print("\truntime = ", runtime(), " seconds\n");
 	}
 	return;
 }
 testtcp();
 io.flush();
+global testtcp=null;

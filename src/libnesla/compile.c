@@ -18,6 +18,11 @@
 #include "nesla/libnesla.h"
 #include "opcodes.h"
 
+/*
+ * calling this a compiler is something of a misnomer. it does not _compile_
+ * code from multiple sources.  it tokenizes and optimizes source chunks.  that's all.
+ */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,16 +30,17 @@
 
 typedef struct cstate {
 	uchar *destbuf;
-	int destmax;
+	long destmax;
 	obj_t *tobj1;
 	obj_t *lobj1;
-	int index;
-	int offset;
+	long index;
+	long lineno;
+	long offset;
 } cstate;
 
-static int n_unescape(nes_state *N, char *src, char *dst, int len)
+static long n_unescape(nes_state *N, char *src, char *dst, long len, cstate *state)
 {
-	int i, n;
+	long i, n;
 	short e=0;
 
 	if (dst==NULL) return 0;
@@ -79,7 +85,7 @@ static obj_t *n_newobj(nes_state *N, cstate *state)
 }
 
 /* Advance readptr to next non-blank */
-static void n_skipblank(nes_state *N)
+static void n_skipblank(nes_state *N, cstate *state)
 {
 	uchar *p=N->readptr;
 
@@ -87,21 +93,30 @@ static void n_skipblank(nes_state *N)
 		if (p[0]=='#') {
 			p++;
 			while (*p) {
-				if (*p=='\r'||*p=='\n') { break; }
+				if (*p=='\n') { state->lineno++; break; }
+				else if (*p=='\r') break;
 				p++;
 			}
 		} else if (p[0]=='/'&&p[1]=='/') {
 			p+=2;
 			while (*p) {
-				if (*p=='\r'||*p=='\n') { break; }
+				if (*p=='\n') { state->lineno++; break; }
+				else if (*p=='\r') break;
 				p++;
 			}
 		} else if (p[0]=='/'&&p[1]=='*') {
 			p+=2;
 			while (*p) {
-				if (p[0]=='*'&&p[1]=='/') { p+=2; break; }
+				if (*p=='\n') state->lineno++;
+				else if (p[0]=='*'&&p[1]=='/') {
+					p+=2;
+					if (*p=='\n') state->lineno++;
+					break;
+				}
 				p++;
 			}
+		} else {
+			if (*p=='\n') state->lineno++;
 		}
 		if (!nc_isspace(*p)) break;
 		p++;
@@ -127,7 +142,7 @@ static void n_skipquote(nes_state *N, unsigned short c)
 }
 
 /* return the next quoted block */
-static obj_t *n_extractquote(nes_state *N)
+static obj_t *n_extractquote(nes_state *N, cstate *state)
 {
 	obj_t *cobj;
 	char q=*N->readptr;
@@ -144,7 +159,7 @@ static obj_t *n_extractquote(nes_state *N)
 	n_skipquote(N, q);
 	qe=(char *)N->readptr;
 	cobj=nes_setstr(N, &N->r, "", NULL, qe-qs-1);
-	cobj->val->size=n_unescape(N, qs, cobj->val->d.str, qe-qs-1);
+	cobj->val->size=n_unescape(N, qs, cobj->val->d.str, qe-qs-1, state);
 	DEBUG_OUT();
 	return cobj;
 }
@@ -154,13 +169,13 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 	char lastname[MAX_OBJNAMELEN+1];
 	char *p;
 	short op;
-	int len;
 
 	while (*N->readptr) {
-		n_skipblank(N);
+		n_skipblank(N, state);
 		op=n_getop(N, lastname);
+		n_skipblank(N, state);
 		if (op==OP_UNDEFINED) {
-			n_warn(N, "x", "bad op? index=%d op=%d:%d name='%s'", state->index, op, N->readptr[0], lastname);
+			n_warn(N, "x", "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, N->readptr[0], lastname);
 /*
 			obj_t *cobj;
 
@@ -172,17 +187,17 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 			n_error(N, NE_SYNTAX, "n_decompose_sub", "bad op");
 */
 			return;
-		}
-
-		if (OP_ISMATH(op)||OP_ISKEY(op)||OP_ISPUNC(op)) {
+		} else if (op==OP_LABEL) {
+			n_newobj(N, state);
+			nes_setstr(N, state->lobj1, NULL, lastname, -1);
+			state->lobj1->val->attr=op;
+		} else if (OP_ISMATH(op)||OP_ISKEY(op)||OP_ISPUNC(op)) {
 /*
 			if (op==OP_PCPAREN) return;
 			if (op==OP_PCBRACE) return;
 */
 			n_newobj(N, state);
-			p=n_getsym(N, op);
-			len=nc_strlen(p);
-			nes_setstr(N, state->lobj1, NULL, p, len);
+			nes_setstr(N, state->lobj1, NULL, n_getsym(N, op), -1);
 			state->lobj1->val->attr=op;
 /*
 			if (op==OP_POBRACE) {
@@ -209,36 +224,16 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 				}
 			}
 */
-		} else if (op==OP_LABEL) {
+		} else if ((*N->readptr=='\"')||(*N->readptr=='\'')) {
 			n_newobj(N, state);
-			len=nc_strlen(lastname);
-			nes_setstr(N, state->lobj1, NULL, lastname, len);
-			state->lobj1->val->attr=op;
-		} else if (nc_isdigit(*N->readptr)) {
-			p=(char *)N->readptr;
-			while (nc_isdigit(*N->readptr)||*N->readptr=='.') N->readptr++;
-			n_newobj(N, state);
-			len=(char *)N->readptr-p;
-			nes_setstr(N, state->lobj1, NULL, p, len);
-			state->lobj1->val->attr=OP_NUMDATA;
-		}
-x:
-		if (!*N->readptr) return;
-		n_skipblank(N);
-		if ((*N->readptr=='\"')||(*N->readptr=='\'')) {
-			n_newobj(N, state);
-			nes_linkval(N, state->lobj1, n_extractquote(N));
+			nes_linkval(N, state->lobj1, n_extractquote(N, state));
 			state->lobj1->val->attr=OP_STRDATA;
-			len=state->lobj1->val->size;
-			goto x;
 		} else if (nc_isdigit(*N->readptr)) {
 			p=(char *)N->readptr;
 			while (nc_isdigit(*N->readptr)||*N->readptr=='.') N->readptr++;
 			n_newobj(N, state);
-			len=(char *)N->readptr-p;
-			nes_setstr(N, state->lobj1, NULL, p, len);
+			nes_setstr(N, state->lobj1, NULL, p, (char *)N->readptr-p);
 			state->lobj1->val->attr=OP_NUMDATA;
-			goto x;
 		}
 	}
 	return;
@@ -267,6 +262,7 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 		return rawtext;
 	}
 	nc_memset((char *)&state, 0, sizeof(state));
+	state.lineno=1;
 	state.destmax=1024;
 	state.destbuf=malloc(state.destmax);
 	N->readptr=rawtext;
@@ -275,13 +271,30 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 	state.tobj1=nes_settable(N, tobj, "code");
 	n_decompose_sub(N, &state);
 	/* header - 8 bytes */
-	testgrow(8); state.offset+=sprintf((char *)state.destbuf+state.offset, "%c%c%c%c%c%c%c%c", 0x0D, 0xAC, 0, 0, 0, 0, 0, 0);
+	testgrow(8); /* safe portable use of sprintf is still considered dangerous according to openbsd */
+	state.destbuf[state.offset++]=0x0D;
+	state.destbuf[state.offset++]=0xAC;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
 	/* file size - 4 bytes */
-	testgrow(4); state.offset+=sprintf((char *)state.destbuf+state.offset, "%c%c%c%c", 0, 0, 0, 0);
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
 	/* optab offset  - 4 bytes (little endian) */
-	testgrow(4); state.offset+=sprintf((char *)state.destbuf+state.offset, "%c%c%c%c", 0, 0, 0, 0);
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
 	/* symtab offset - 4 bytes (little endian) */
-	testgrow(4); state.offset+=sprintf((char *)state.destbuf+state.offset, "%c%c%c%c", 0, 0, 0, 0);
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
+	state.destbuf[state.offset++]=0;
 	/* now write the ops */
 	/* optab offset */
 	writei4(state.offset, (state.destbuf+12));
@@ -291,7 +304,7 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 		if (!nes_isstr(cobj)) break;
 		if (op==OP_UNDEFINED) break;
 		if (op==OP_STRDATA) {
-			testgrow((int)(6+cobj->val->size));
+			testgrow((long)(6+cobj->val->size));
 			state.destbuf[state.offset++]=op&255;
 			writei4(cobj->val->size, (state.destbuf+state.offset));
 			state.offset+=4;
@@ -299,18 +312,22 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 			state.offset+=cobj->val->size;
 			state.destbuf[state.offset++]=0;
 		} else if (op==OP_NUMDATA) {
-			testgrow((int)(3+cobj->val->size));
+			testgrow((long)(3+cobj->val->size));
 			state.destbuf[state.offset++]=op&255;
-			state.offset+=sprintf((char *)state.destbuf+state.offset, "%c", cobj->val->size&255);
+			state.destbuf[state.offset++]=(uchar)(cobj->val->size&255);
 			nc_memcpy((char *)state.destbuf+state.offset, cobj->val->d.str, cobj->val->size);
 			state.offset+=cobj->val->size;
 			state.destbuf[state.offset++]=0;
 		} else if (op==OP_LABEL) {
-			testgrow((int)(3+cobj->val->size));
-			state.offset+=sprintf((char *)state.destbuf+state.offset, "%c%c%s%c", op&255, cobj->val->size&255, cobj->val->d.str, '\0');
+			testgrow((long)(3+cobj->val->size));
+			state.destbuf[state.offset++]=op&255;
+			state.destbuf[state.offset++]=(uchar)(cobj->val->size&255);
+			nc_memcpy((char *)state.destbuf+state.offset, cobj->val->d.str, cobj->val->size);
+			state.offset+=cobj->val->size;
+			state.destbuf[state.offset++]='\0';
 		} else if (OP_ISMATH(op)||OP_ISKEY(op)||OP_ISPUNC(op)) {
 			testgrow(1);
-			state.offset+=sprintf((char *)state.destbuf+state.offset, "%c", op&255);
+			state.destbuf[state.offset++]=op&255;
 		} else {
 			n_warn(N, __FUNCTION__, "bad op?");
 		}
