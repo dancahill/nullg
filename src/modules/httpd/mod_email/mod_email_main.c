@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,12 +63,12 @@ void wmloginform(CONN *sid)
 {
 	char *ScriptName=nes_getstr(sid->N, nes_settable(sid->N, &sid->N->g, "_SERVER"), "SCRIPT_NAME");
 	char msgto[512];
-	char *ptemp;
+	char *p;
 //	SQLRES sqr;
 
 	memset(msgto, 0, sizeof(msgto));
-	if ((ptemp=getgetenv(sid, "MSGTO"))!=NULL) {
-		strncpy(msgto, ptemp, sizeof(msgto)-1);
+	if ((p=getgetenv(sid, "MSGTO"))!=NULL) {
+		strncpy(msgto, p, sizeof(msgto)-1);
 	}
 /*
 	if (sql_queryf(&sqr, "SELECT popusername, poppassword FROM gw_email_accounts where mailaccountid = %d and obj_uid = %d", sid->dat->mailcurrent, sid->dat->uid)<0) return;
@@ -112,18 +112,18 @@ void webmailraw(CONN *sid)
 	FILE *fp;
 	char inbuffer[1024];
 	char msgfilename[512];
-	char *ptemp;
+	char *p;
 	int accountid;
 	int folderid;
 	int headerid;
 	int msgnum=0;
 
 	send_header(sid, 1, 200, "1", "text/plain", -1, -1);
-	if ((ptemp=getgetenv(sid, "MSG"))==NULL) {
+	if ((p=getgetenv(sid, "MSG"))==NULL) {
 		prints(sid, "No such message.<BR />");
 		return;
 	}
-	msgnum=atoi(ptemp);
+	msgnum=atoi(p);
 //	if (sql_queryf(&sqr, "SELECT mailheaderid, folder, status FROM gw_email_headers WHERE obj_uid = %d and accountid = %d AND mailheaderid = %d and status != 'd'", sid->dat->uid, sid->dat->mailcurrent, msgnum)<0) return;
 	if ((qobj=ldir_getentry(sid->N, "emailheader", NULL, msgnum, sid->dat->did))==NULL) {
 		prints(sid, "No such message.<BR />");
@@ -166,7 +166,7 @@ void webmaillist(CONN *sid)
 	char searchstring[256];
 	char curdate[40];
 	char *ScriptName=nes_getstr(sid->N, nes_settable(sid->N, &sid->N->g, "_SERVER"), "SCRIPT_NAME");
-	char *ptemp;
+	char *p;
 	obj_t *qobj1=NULL;
 	obj_t *tobj;
 	short int neworder;
@@ -180,9 +180,8 @@ void webmaillist(CONN *sid)
 	int i;
 	time_t unixdate;
 
-	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
-	if (order<0) order=0;
-	if (order>7) order=7;
+	if ((p=getgetenv(sid, "ORDER"))!=NULL) order=atoi(p);
+	if (order<0) order=0; else if (order>7) order=7;
 	if ((tobj=ldir_getlist(sid->N, "emailaccount", sid->dat->uid, sid->dat->did))==NULL) {
 		prints(sid, "error listing accounts"); return;
 	}
@@ -198,9 +197,11 @@ void webmaillist(CONN *sid)
 //	accountid=atoi(ldir_getval(&tobj, 0, "id"));
 	accountid=(int)nes_getnum(sid->N, nes_settable(sid->N, nes_settable(sid->N, &sid->N->g, "_USER"), "pref"), "mailcurrent");
 	ldir_freeresult(&tobj);
-	if ((ptemp=getgetenv(sid, "FOLDERID"))!=NULL) {
-		folderid=atoi(ptemp);
+	if ((p=getgetenv(sid, "FOLDERID"))!=NULL) {
+		folderid=atoi(p);
 	} else {
+		folderid=1;
+/*
 		if ((tobj=ldir_getlist(sid->N, "emailfolder", accountid, sid->dat->did))==NULL) {
 			prints(sid, "error listing folders"); return;
 		}
@@ -211,12 +212,13 @@ void webmaillist(CONN *sid)
 			}
 		}
 		ldir_freeresult(&tobj);
+*/
 	}
 	wmfolder_testcreate(sid, accountid, folderid);
-	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
-		if (accountid!=atoi(ptemp)) {
-			accountid=atoi(ptemp);
-//			sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->username);
+	if ((p=getgetenv(sid, "ACCOUNTID"))!=NULL) {
+		if (accountid!=atoi(p)) {
+			accountid=atoi(p);
+//			sql_updatef("UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(p), sid->dat->username);
 			if ((qobj1=ldir_getentry(sid->N, "person", NULL, sid->dat->uid, sid->dat->did))!=NULL) {
 				tobj=nes_settable(sid->N, nes_settable(sid->N, nes_getiobj(sid->N, nes_settable(sid->N, qobj1, "_rows"), 0), "_data"), "pref");
 				nes_setnum(sid->N, tobj, "mailcurrent", accountid);
@@ -254,14 +256,15 @@ void webmaillist(CONN *sid)
 		prints(sid, "error listing headers"); return;
 	}
 	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
-	if (wmsearch_doquery(sid, &tobj, order_by[order], folderid)<0) return;
+//	if (wmsearch_doquery(sid, &tobj, order_by[order], folderid)<0) return;
+	if (wmsearch_doquery(sid, &tobj, order_by[order], accountid, folderid)<0) return;
 	nummessages=ldir_numentries(&tobj);
 	if (nummessages<1) {
 		prints(sid, "<BR /><CENTER><B>You have no messages in this mailbox</B></CENTER><BR />\r\n");
 		ldir_freeresult(&tobj);
 		return;
 	}
-	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
+	if ((p=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(p);
 //	if (offset>nummessages-sid->dat->maxlist) offset=nummessages-sid->dat->maxlist;
 	if (offset<0) offset=0;
 	prints(sid, "<script language='JavaScript'>\r\n<!--\r\n");
@@ -417,7 +420,7 @@ void webmailread(CONN *sid)
 //	wmheader header;
 	struct stat sb;
 	FILE *fp;
-	char *ptemp;
+	char *p;
 	char curdate[40];
 	char inbuffer[512];
 	char msgfilename[512];
@@ -429,13 +432,14 @@ void webmailread(CONN *sid)
 	int nummessages;
 	int localid=0;
 	int remoteid=-1;
-//	int i;
+	int accountid;
+	int i;
 //	SQLRES sqr;
 	time_t unixdate;
 
 //	memset((char *)&header, 0, sizeof(header));
-	if ((ptemp=getgetenv(sid, "MSG"))!=NULL) localid=atoi(ptemp);
-	if ((ptemp=getgetenv(sid, "ORDER"))!=NULL) order=atoi(ptemp);
+	if ((p=getgetenv(sid, "MSG"))!=NULL) localid=atoi(p);
+	if ((p=getgetenv(sid, "ORDER"))!=NULL) order=atoi(p);
 	if (order<0) order=0;
 	if (order>7) order=7;
 	if ((tobj=ldir_getentry(sid->N, "emailheader", NULL, localid, sid->dat->did))==NULL) {
@@ -453,13 +457,13 @@ void webmailread(CONN *sid)
 //	snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
 //	if (wmsearch_doquery(sid, &sqr, order_by[order], folderid)<0) return;
 //	nummessages=sql_numtuples(&sqr);
-//	for (i=0;i<nummessages;i++) {
+	for (i=0;i<nummessages;i++) {
 //		if (localid==atoi(sql_getvalue(&sqr, i, 0))) {
 //			dbread_getheader(sid, &sqr, i, &header);
-//			remoteid=i+1;
+			remoteid=i+1;
 //			break;
 //		}
-//	}
+	}
 //	if (remoteid==-1) {
 //		prints(sid, "No such message.<BR />");
 //		sql_freeresult(&sqr);
@@ -494,9 +498,10 @@ void webmailread(CONN *sid)
 		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\r\n", lang_gets(sid, "mod_email", "mail_replyall"));
 		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\r\n",  lang_gets(sid, "mod_email", "mail_forward"));
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_reply"));
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\r\n", ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_replyall"));
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_forward"));
+		accountid=atoi(ldir_getval(&tobj, remoteid-1, "accountid"));
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_reply"));
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\r\n", ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_replyall"));
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_forward"));
 	}
 	prints(sid, "[<A HREF=javascript:window.print()>%s</A>]\r\n", lang_gets(sid, "mod_email", "mail_print"));
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\r\n", ScriptName, localid, ldir_getval(&tobj, remoteid-2, "uidl"), lang_gets(sid, "mod_email", "mail_delete"));
@@ -510,6 +515,7 @@ void webmailread(CONN *sid)
 	prints(sid, "<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 WIDTH=100%%>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang_gets(sid, "mod_email", "mail_from"));
 //	prints(sid, "<A HREF=\"javascript:ViewContact('%s','%s');\">%s</A> - ", encodeurl(sid, header.FromName), header.FromAddr, str2html(sid, header.From));
+	prints(sid, "<A HREF=\"javascript:ViewContact('%s','%s');\">%s</A> - ", encodeurl(sid, ldir_getval(&tobj, remoteid-1, "FromName")), ldir_getval(&tobj, remoteid-1, "FromAddr"), str2html(sid, ldir_getval(&tobj, remoteid-1, "hdr_from")));
 //	prints(sid, "<A HREF=\"javascript:MsgTo('&quot;%s&quot; <%s>');\">Send Mail</A>", encodeurl(sid, header.FromName), header.ReplyTo);
 	prints(sid, "</TD></TR>\r\n");
 	prints(sid, "<TR><TH ALIGN=LEFT VALIGN=TOP>&nbsp;%s&nbsp;</TH><TD CLASS=\"FIELDVAL\" WIDTH=100%%>&nbsp;", lang_gets(sid, "mod_email", "mail_to"));
@@ -580,9 +586,10 @@ void webmailread(CONN *sid)
 		prints(sid, "[<A HREF=javascript:ReplyAll();>%s</A>]\r\n", lang_gets(sid, "mod_email", "mail_replyall"));
 		prints(sid, "[<A HREF=javascript:Forward();>%s</A>]\r\n",  lang_gets(sid, "mod_email", "mail_forward"));
 	} else {
-		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_reply"));
-		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\r\n", ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_replyall"));
-		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, atoi(ldir_getval(&tobj, remoteid-2, "accountid")), lang_gets(sid, "mod_email", "mail_forward"));
+		accountid=atoi(ldir_getval(&tobj, remoteid-1, "accountid"));
+		prints(sid, "[<A HREF=%s/mail/write?replyto=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_reply"));
+		prints(sid, "[<A HREF=%s/mail/write?replyall=%d&accountid=%d>%s</A>]\r\n", ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_replyall"));
+		prints(sid, "[<A HREF=%s/mail/write?forward=%d&accountid=%d>%s</A>]\r\n",  ScriptName, localid, accountid, lang_gets(sid, "mod_email", "mail_forward"));
 	}
 	prints(sid, "[<A HREF=javascript:window.print()>%s</A>]\r\n", lang_gets(sid, "mod_email", "mail_print"));
 	prints(sid, "[<A HREF=%s/mail/move?%d=%s onClick=\"return ConfirmDelete();\">%s</A>]\r\n", ScriptName, localid, ldir_getval(&tobj, remoteid-2, "uidl"), lang_gets(sid, "mod_email", "mail_delete"));
@@ -599,6 +606,7 @@ void webmailread(CONN *sid)
 void webmailwrite(CONN *sid)
 {
 	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
+	obj_t *tobj;
 	char *ScriptName=nes_getstr(sid->N, nes_settable(sid->N, &sid->N->g, "_SERVER"), "SCRIPT_NAME");
 	FILE *fp=NULL;
 //	wmheader header;
@@ -608,7 +616,7 @@ void webmailwrite(CONN *sid)
 	char msgcc[2048];
 	char msgbcc[2048];
 	char subject[512];
-	char *ptemp;
+	char *p;
 //	short int accountid=sid->dat->mailcurrent;
 	short int accountid=0;
 	short int folderid=0;
@@ -623,13 +631,13 @@ void webmailwrite(CONN *sid)
 	memset(msgbcc, 0, sizeof(msgbcc));
 	memset(subject, 0, sizeof(subject));
 //	memset((char *)&header, 0, sizeof(header));
-	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) accountid=atoi(ptemp);
-	if ((ptemp=getgetenv(sid, "REPLYTO"))!=NULL) replyto=atoi(ptemp);
-	if ((ptemp=getgetenv(sid, "REPLYALL"))!=NULL) { replyto=atoi(ptemp); replyall=1; }
-	if ((ptemp=getgetenv(sid, "FORWARD"))!=NULL) forward=atoi(ptemp);
-	if ((ptemp=getgetenv(sid, "TO"))!=NULL) strncpy(msgto, ptemp, sizeof(msgto)-1);
-	if ((ptemp=getgetenv(sid, "CC"))!=NULL) strncpy(msgcc, ptemp, sizeof(msgcc)-1);
-	if ((ptemp=getgetenv(sid, "BCC"))!=NULL) strncpy(msgbcc, ptemp, sizeof(msgbcc)-1);
+	if ((p=getgetenv(sid, "ACCOUNTID"))!=NULL) accountid=atoi(p);
+	if ((p=getgetenv(sid, "REPLYTO"))!=NULL) replyto=atoi(p);
+	if ((p=getgetenv(sid, "REPLYALL"))!=NULL) { replyto=atoi(p); replyall=1; }
+	if ((p=getgetenv(sid, "FORWARD"))!=NULL) forward=atoi(p);
+	if ((p=getgetenv(sid, "TO"))!=NULL) strncpy(msgto, p, sizeof(msgto)-1);
+	if ((p=getgetenv(sid, "CC"))!=NULL) strncpy(msgcc, p, sizeof(msgcc)-1);
+	if ((p=getgetenv(sid, "BCC"))!=NULL) strncpy(msgbcc, p, sizeof(msgbcc)-1);
 	if (replyto>0) {
 		msgnum=replyto;
 	} else if (forward>0) {
@@ -638,6 +646,15 @@ void webmailwrite(CONN *sid)
 		msgnum=0;
 	}
 	if (msgnum) {
+
+		if ((tobj=ldir_getentry(sid->N, "emailheader", NULL, msgnum, sid->dat->did))==NULL) {
+			prints(sid, "No such message.<BR />");
+			return;
+		}
+		accountid=atoi(ldir_getval(&tobj, 0, "accountid"));
+		folderid=atoi(ldir_getval(&tobj, 0, "folderid"));
+		msgnum=atoi(ldir_getval(&tobj, 0, "mailheaderid"));
+
 //		if (sql_queryf(&sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and status != 'd' AND mailheaderid = %d", sid->dat->uid, accountid, msgnum)<0) return;
 //		if (sql_numtuples(&sqr)!=1) {
 //			sql_freeresult(&sqr);
@@ -648,12 +665,15 @@ void webmailwrite(CONN *sid)
 //		dbread_getheader(sid, &sqr, 0, &header);
 //		sql_freeresult(&sqr);
 		if (replyto>0) {
-//			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(header.Subject, "RE:", 3)==0)?"":"Re: ", header.Subject);
+			p=ldir_getval(&tobj, 0, "hdr_subject");
+			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(p, "RE:", 3)==0)?"":"Re: ", p);
 		} else if (forward>0) {
-//			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(header.Subject, "FWD:", 4)==0)?"":"Fwd: ", header.Subject);
+			p=ldir_getval(&tobj, 0, "hdr_subject");
+			snprintf(subject, sizeof(subject)-1, "%s%s", (strncasecmp(p, "FWD:", 4)==0)?"":"Fwd: ", p);
 		}
 		if (replyto>0) {
-//			snprintf(msgto, sizeof(msgto)-1, "%s", header.ReplyTo);
+			p=ldir_getval(&tobj, 0, "hdr_replyto");
+			snprintf(msgto, sizeof(msgto)-1, "%s", p);
 		}
 		if (replyall) {
 //			if ((strlen(msgto)>0)&&(strlen(header.To)>0)) strncat(msgto, ", ", sizeof(msgto)-strlen(msgto)-1);
@@ -743,7 +763,7 @@ void webmailwrite(CONN *sid)
 		if (forward>0) {
 			prints(sid, "Note: forwarded message attached.\r\n");
 		} else {
-//			prints(sid, "--- %s wrote:\r\n", header.From);
+			prints(sid, "--- %s wrote:\r\n", ldir_getval(&tobj, 0, "hdr_from"));
 			memset(msgfilename, 0, sizeof(msgfilename));
 			snprintf(msgfilename, sizeof(msgfilename)-1, "%s/domains/%04d/mail/%04d/%04d/%06d.msg", nes_getstr(proc->N, confobj, "var_path"), sid->dat->did, accountid, folderid, msgnum);
 			fixslashes(msgfilename);
@@ -753,10 +773,13 @@ void webmailwrite(CONN *sid)
 					if (strlen(inbuffer)==0) break;
 				}
 //				webmailmime(sid, &fp, header.contenttype, header.encoding, header.boundary, msgnum, 1, 0);
+				webmailmime(sid, &fp, ldir_getval(&tobj, 0, "hdr_contenttype"), ldir_getval(&tobj, 0, "hdr_encoding"), ldir_getval(&tobj, 0, "hdr_boundary"), msgnum, 1, 0);
+
 			} else {
-				prints(sid, "\r\nCould not retrieve message body!\r\n");
+				prints(sid, "\r\nCould not retrieve message body!\r\n%s\r\n", msgfilename);
 			}
 		}
+		ldir_freeresult(&tobj);
 	}
 	prints(sid, "</TEXTAREA></CENTER>\r\n");
 	prints(sid, "</TD></TR>\r\n");
@@ -776,13 +799,13 @@ void webmailframeset(CONN *sid)
 {
 	obj_t *qobj=NULL;
 	char *ScriptName=nes_getstr(sid->N, nes_settable(sid->N, &sid->N->g, "_SERVER"), "SCRIPT_NAME");
-	char *ptemp;
+	char *p;
 
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);
 	prints(sid, "<HTML>\r\n<HEAD>\r\n<TITLE>NullLogic GroupServer Webmail</TITLE>\r\n</HEAD>\r\n");
-	if ((ptemp=getgetenv(sid, "ACCOUNTID"))!=NULL) {
-//		if (sql_updatef(proc->N, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(ptemp), sid->dat->username)==0) {
-//			sid->dat->mailcurrent=atoi(ptemp);
+	if ((p=getgetenv(sid, "ACCOUNTID"))!=NULL) {
+//		if (sql_updatef(proc->N, "UPDATE gw_users SET prefmailcurrent = '%d' WHERE username = '%s'", atoi(p), sid->dat->username)==0) {
+//			sid->dat->mailcurrent=atoi(p);
 //		}
 	}
 	if (sql_queryf(proc->N, &qobj, "SELECT id FROM nullgs_entries WHERE class = 'emailaccount' AND pid = %d AND did = %d", sid->dat->uid, sid->dat->did)<0) return;
@@ -793,12 +816,12 @@ void webmailframeset(CONN *sid)
 	} else {
 		prints(sid, "<FRAMESET ROWS=\"50%%,50%%\" BORDER=0 FRAMEBORDER=1 FRAMESPACING=1>\r\n");
 		prints(sid, "<FRAME BORDER=0 NAME=\"wmlist\" SRC=%s/mail/list", ScriptName);
-		if ((ptemp=getgetenv(sid, "FOLDERID"))!=NULL) {
-			prints(sid, "?folderid=%d", atoi(ptemp));
-		} else if ((ptemp=getgetenv(sid, "C"))!=NULL) {
-			prints(sid, "?c=%s", ptemp);
-			if ((ptemp=getgetenv(sid, "TEXT"))!=NULL) {
-				prints(sid, "&text=%s", ptemp);
+		if ((p=getgetenv(sid, "FOLDERID"))!=NULL) {
+			prints(sid, "?folderid=%d", atoi(p));
+		} else if ((p=getgetenv(sid, "C"))!=NULL) {
+			prints(sid, "?c=%s", p);
+			if ((p=getgetenv(sid, "TEXT"))!=NULL) {
+				prints(sid, "&text=%s", p);
 			}
 		}
 		prints(sid, " MARGINHEIGHT=1 MARGINWIDTH=1 SCROLLING=YES>\r\n", ScriptName);

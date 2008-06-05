@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,36 +19,48 @@
 #include "nesla/libnesla.h"
 #include <stdlib.h>
 
+//static val_t __null = { NT_NULL, 0, 1, 0, NULL, { 0 } };
 static val_t __null = { NT_NULL, 0, 1, 0, { 0 } };
 static obj_t _null = { NULL, NULL, &__null, "" };
 
 void *n_alloc(nes_state *N, int size, short zero)
 {
+#define __FUNCTION__ __FILE__ ":n_alloc()"
 	char *p;
 
-	if ((p=zero?calloc(1, size):malloc(size))==NULL) n_error(N, NE_MEM, "n_alloc", "can't alloc %d bytes", size);
+	settrace();
+	if ((p=zero?calloc(1, size):malloc(size))==NULL) n_error(N, NE_MEM, __FUNCTION__, "can't alloc %d bytes", size);
 	return p;
+#undef __FUNCTION__
 }
 
 void *n_realloc(nes_state *N, void **p, int size, short zero)
 {
+#define __FUNCTION__ __FILE__ ":n_realloc()"
 	char *p2;
 
-	if ((p2=realloc(*p, size))==NULL) n_error(N, NE_MEM, "n_realloc", "can't realloc %d bytes", size);
+	settrace();
+	if ((p2=realloc(*p, size))==NULL) n_error(N, NE_MEM, __FUNCTION__, "can't realloc %d bytes", size);
 	return p2;
+#undef __FUNCTION__
 }
 
 void n_free(nes_state *N, void **p)
 {
+#define __FUNCTION__ __FILE__ ":n_free()"
+	settrace();
 	if (*p) { free(*p); *p=NULL; }
-//	else n_error(N, NE_MEM, "n_free", "freeing 0x%08X twice", *p); /* pedantic, but useful */
+//	else n_error(N, NE_MEM, __FUNCTION__, "freeing 0x%08X twice", *p); /* pedantic, but useful */
 	return;
+#undef __FUNCTION__
 }
 
 void n_copyval(nes_state *N, obj_t *cobj1, obj_t *cobj2)
 {
+#define __FUNCTION__ __FILE__ ":n_copyval()"
 	unsigned short type2=nes_typeof(cobj2);
 
+	settrace();
 	if (cobj1==cobj2) return;
 //	nes_setvaltype(N, cobj1, type2);
 	if (cobj1->val) nes_unlinkval(N, cobj1);
@@ -57,20 +70,23 @@ void n_copyval(nes_state *N, obj_t *cobj1, obj_t *cobj2)
 	case NT_NULL    : return;
 	case NT_BOOLEAN :
 	case NT_NUMBER  : cobj1->val->d.num=cobj2->val->d.num; break;
-	case NT_CDATA   : n_warn(N, "n_copyval", "copying cdata '%s'?", cobj2->val->d.str);
+	case NT_CDATA   : n_warn(N, __FUNCTION__, "copying cdata '%s'?", cobj2->val->d.str);
 	case NT_STRING  :
 	case NT_NFUNC   : nes_strcat(N, cobj1, cobj2->val->d.str, cobj2->val->size); break;
 	case NT_CFUNC   : cobj1->val->d.cfunc=cobj2->val->d.cfunc; break;
-	default: n_error(N, NE_SYNTAX, "n_copyval", "unhandled object type");
+	default: n_error(N, NE_SYNTAX, __FUNCTION__, "unhandled object type");
 	}
 	return;
+#undef __FUNCTION__
 }
 
 void n_freeval(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":n_freeval()"
 	NES_CDATA *chead;
 	NES_CFREE cfunc;
 
+	settrace();
 	switch (nes_typeof(cobj)) {
 	case NT_NULL    : return;
 	case NT_BOOLEAN :
@@ -94,29 +110,36 @@ void n_freeval(nes_state *N, obj_t *cobj)
 	cobj->val->type=NT_NULL;
 	cobj->val->size=0;
 	return;
+#undef __FUNCTION__
 }
 
 val_t *n_newval(nes_state *N, unsigned short type)
 {
+#define __FUNCTION__ __FILE__ ":n_newval()"
 	val_t *val=n_alloc(N, sizeof(val_t), 0);
 
+	settrace();
 	val->type=type;
 	val->attr=0;
 	val->refs=1;
 	val->size=0;
 	val->d.num=0;
 	return val;
+#undef __FUNCTION__
 }
 
 obj_t *n_newiobj(nes_state *N, int index)
 {
+#define __FUNCTION__ __FILE__ ":n_newiobj()"
 	obj_t *obj=n_alloc(N, sizeof(obj_t), 0);
 
+	settrace();
 	obj->prev=NULL;
 	obj->next=NULL;
 	obj->val=NULL;
 	n_ntoa(N, obj->name, index, 10, 0);
 	return obj;
+#undef __FUNCTION__
 }
 
 /*
@@ -125,6 +148,8 @@ obj_t *n_newiobj(nes_state *N, int index)
 
 void nes_setvaltype(nes_state *N, obj_t *cobj, unsigned short type)
 {
+#define __FUNCTION__ __FILE__ ":nes_setvaltype()"
+	settrace();
 	if (cobj->val==NULL) {
 		cobj->val=n_alloc(N, sizeof(val_t), 0);
 	} else if (cobj->val->refs<2) {
@@ -139,10 +164,13 @@ void nes_setvaltype(nes_state *N, obj_t *cobj, unsigned short type)
 	cobj->val->size=0;
 	cobj->val->d.num=0;
 	return;
+#undef __FUNCTION__
 }
 
 void nes_linkval(nes_state *N, obj_t *cobj1, obj_t *cobj2)
 {
+#define __FUNCTION__ __FILE__ ":nes_linkval()"
+	settrace();
 	if (cobj1==NULL||cobj1==cobj2) return;
 	if (cobj2==NULL||cobj2->val==NULL) {
 		nes_unlinkval(N, cobj1);
@@ -159,10 +187,13 @@ void nes_linkval(nes_state *N, obj_t *cobj1, obj_t *cobj2)
 	}
 	if (cobj1->val) cobj1->val->refs++;
 	return;
+#undef __FUNCTION__
 }
 
 void nes_unlinkval(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":nes_unlinkval()"
+	settrace();
 /*
 	if (cobj->val==NULL) return;
 	switch (cobj->val->refs) {
@@ -178,12 +209,15 @@ void nes_unlinkval(nes_state *N, obj_t *cobj)
 		n_free(N, (void *)&cobj->val);
 	}
 	return;
+#undef __FUNCTION__
 }
 
 void nes_freetable(nes_state *N, obj_t *tobj)
 {
+#define __FUNCTION__ __FILE__ ":nes_freetable()"
 	obj_t *cobj, *oobj;
 
+	settrace();
 	if (!nes_istable(tobj)) return;
 	cobj=tobj->val->d.table;
 	while (cobj!=NULL) {
@@ -194,12 +228,15 @@ void nes_freetable(nes_state *N, obj_t *tobj)
 	}
 	tobj->val->d.table=NULL;
 	return;
+#undef __FUNCTION__
 }
 
 obj_t *nes_getobj(nes_state *N, obj_t *tobj, char *oname)
 {
+#define __FUNCTION__ __FILE__ ":nes_getobj()"
 	obj_t *cobj;
 
+	settrace();
 	if (tobj==&N->r) return tobj;
 	if (!nes_istable(tobj)) return &_null;
 	if (N==NULL) {
@@ -209,6 +246,7 @@ obj_t *nes_getobj(nes_state *N, obj_t *tobj, char *oname)
 		}
 	} else if (tobj==&N->l||tobj==&N->g) {
 		for (cobj=N->l.val->d.table; cobj; cobj=cobj->next) {
+//printf("%s oname=%s 0x%08X %s\n", __FUNCTION__, oname, cobj, cobj->name);
 			if (cobj->name[0]!=oname[0]) continue;
 			if (nc_strcmp(cobj->name, oname)==0) return cobj;
 		}
@@ -223,13 +261,16 @@ obj_t *nes_getobj(nes_state *N, obj_t *tobj, char *oname)
 		}
 	}
 	return &_null;
+#undef __FUNCTION__
 }
 
 obj_t *nes_getiobj(nes_state *N, obj_t *tobj, unsigned long oindex)
 {
+#define __FUNCTION__ __FILE__ ":nes_getiobj()"
 	obj_t *cobj;
 	unsigned long i=0;
 
+	settrace();
 	if (!nes_istable(tobj)) return &_null;
 	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
 		if (nes_isnull(cobj)||cobj->val->attr&NST_SYSTEM) continue;
@@ -237,17 +278,20 @@ obj_t *nes_getiobj(nes_state *N, obj_t *tobj, unsigned long oindex)
 		i++;
 	}
 	return &_null;
+#undef __FUNCTION__
 }
 
 /* change or create an object and return it */
 obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, NES_CFUNC _fptr, num_t _num, char *_str, long _slen)
 {
+#define __FUNCTION__ __FILE__ ":nes_setobj()"
 	obj_t *oobj, *cobj;
 	char *ostr=NULL;
 	char *p;
 	int cmp=-1;
 	unsigned short sortattr;
 
+	settrace();
 	if ((tobj==&N->r)||(!nes_istable(tobj))) {
 		cobj=tobj;
 		nes_unlinkval(N, cobj);
@@ -334,56 +378,68 @@ obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 	}
 	if (ostr) n_free(N, (void *)&ostr);
 	return cobj;
+#undef __FUNCTION__
 }
 
 obj_t *nes_setiobj(nes_state *N, obj_t *tobj, int index, unsigned short otype, NES_CFUNC _fptr, num_t _num, char *_str, long _slen)
 {
+#define __FUNCTION__ __FILE__ ":nes_setiobj()"
 	char numbuf[12];
 
+	settrace();
 	return nes_setobj(N, tobj, n_ntoa(N, numbuf, index, 10, 0), otype, _fptr, _num, _str, _slen);
+#undef __FUNCTION__
 }
 
 void nes_strcat(nes_state *N, obj_t *cobj, char *str, long len)
 {
+#define __FUNCTION__ __FILE__ ":nes_strcat()"
 	unsigned short ctype=nes_typeof(cobj);
 	unsigned long olen, tlen;
 	char *p;
 
+	settrace();
 	if (ctype!=NT_STRING&&ctype!=NT_NFUNC&&ctype!=NT_CDATA) return;
 	if (len==-1&&str!=NULL) len=nc_strlen(str);
 	if (len<1) return;
 	olen=cobj->val->size;
 	tlen=olen+len;
 	p=olen?n_realloc(N, (void *)&cobj->val->d.str, tlen+1, 0):n_alloc(N, tlen+1, 0);
-	if (p==NULL) n_error(N, NE_MEM, "nes_strcat", "can't alloc %d bytes", tlen+1);
+	if (p==NULL) n_error(N, NE_MEM, __FUNCTION__, "can't alloc %d bytes", tlen+1);
 	cobj->val->size=tlen;
 	cobj->val->d.str=p;
 	nc_memcpy(cobj->val->d.str+olen, str, len);
 	cobj->val->d.str[tlen]=0;
 	return;
+#undef __FUNCTION__
 }
 
 void nes_strmul(nes_state *N, obj_t *cobj, unsigned long n)
 {
+#define __FUNCTION__ __FILE__ ":nes_strmul()"
 	unsigned short ctype=nes_typeof(cobj);
 	unsigned long i, olen, tlen;
 	char *p;
 
+	settrace();
 	if (ctype!=NT_STRING) return;
 	if (n<2) return;
 	olen=cobj->val->size;
 	tlen=olen*n;
 	p=olen?n_realloc(N, (void *)&cobj->val->d.str, tlen+1, 0):n_alloc(N, tlen+1, 0);
-	if (p==NULL) n_error(N, NE_MEM, "nes_strmul", "can't alloc %d bytes", tlen+1);
+	if (p==NULL) n_error(N, NE_MEM, __FUNCTION__, "can't alloc %d bytes", tlen+1);
 	cobj->val->size=tlen;
 	cobj->val->d.str=p;
 	for (i=1;i<n;i++) nc_memcpy(p+olen*i, cobj->val->d.str, olen);
 	cobj->val->d.str[tlen]=0;
 	return;
+#undef __FUNCTION__
 }
 
 short nes_tobool(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":nes_tobool()"
+	settrace();
 	switch (nes_typeof(cobj)) {
 	case NT_NULL    : return 0;
 	case NT_BOOLEAN : return cobj->val->d.num?1:0;
@@ -394,10 +450,13 @@ short nes_tobool(nes_state *N, obj_t *cobj)
 	case NT_CFUNC   : return 1;
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 num_t nes_tonum(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":nes_tonum()"
+	settrace();
 	switch (nes_typeof(cobj)) {
 	case NT_NULL    : return 0;
 	case NT_BOOLEAN : return cobj->val->d.num?1:0;
@@ -408,10 +467,13 @@ num_t nes_tonum(nes_state *N, obj_t *cobj)
 	case NT_CFUNC   : return 0;
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 char *nes_tostr(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":nes_tostr()"
+	settrace();
 	switch (nes_typeof(cobj)) {
 	case NT_NULL    : return "null";
 	case NT_BOOLEAN : return cobj->val->d.num?"true":"false";
@@ -422,4 +484,5 @@ char *nes_tostr(nes_state *N, obj_t *cobj)
 	case NT_CFUNC   : return "";
 	}
 	return "";
+#undef __FUNCTION__
 }

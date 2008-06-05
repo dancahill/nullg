@@ -6,22 +6,22 @@ function testcmp() {
 	} else {
 		local pi = 3.1415926535897932384626433832795029;
 	}
-	expect("2==2",  true,  2==2);
-	expect("2<=2",  true,  2<=2);
-	expect("2>=2",  true,  2>=2);
-	expect("2!=2",  false, 2!=2);
-	expect("2<2",   false, 2<2);
-	expect("2>2",   false, 2>2);
-	expect("42",    42,    (42));
-	expect("21",    21,    21);
-	expect("pi-pi", 0,     pi-pi);
-	expect("pi/pi", 1,     pi/pi);
-	expect("pi%pi", 0,     pi%pi);
-	expect("pi&pi", 3,     pi&pi);
-	expect("pi|pi", 3,     pi|pi);
-	expect("pi^pi", 0,     pi^pi);
-	expect("3&&4",  true,  3&&4);
-	expect("3||4",  true,  3||4);
+	expect("2 == 2",  true,  2==2);
+	expect("2 <= 2",  true,  2<=2);
+	expect("2 >= 2",  true,  2>=2);
+	expect("2 != 2",  false, 2!=2);
+	expect("2 < 2",   false, 2<2);
+	expect("2 > 2",   false, 2>2);
+	expect("42",      42,    (42));
+	expect("21",      21,    21);
+	expect("pi - pi", 0,     pi-pi);
+	expect("pi / pi", 1,     pi/pi);
+	expect("pi % pi", 0,     pi%pi);
+	expect("pi & pi", 3,     pi&pi);
+	expect("pi | pi", 3,     pi|pi);
+	expect("pi ^ pi", 0,     pi^pi);
+	expect("3 && 4",  true,  3&&4);
+	expect("3 || 4",  true,  3||4);
 
 	var x=0;   if (x==false) x=false; else x=true; expect("(x=0)",   false, x);
 	var x=1;   if (x==false) x=false; else x=true; expect("(x=1)",   true,  x);

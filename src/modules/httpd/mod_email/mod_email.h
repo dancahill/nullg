@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,7 +78,8 @@ char *webmailfileul(CONN *sid, char *xfilename, char *xfilesize);
 int   webmailmime(CONN *sid, FILE **fp, char *contenttype, char *encoding, char *boundary, int nummessage, short int reply, short int depth);
 /* mod_email_search.c */
 char *wmsearch_makestring(CONN *sid);
-int   wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int folderid);
+int   wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int accountid, int folderid);
+//int   wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int folderid);
 void  wmsearch_form(CONN *sid);
 /* mod_email_folders.c */
 int  wmfolder_makedefaults(CONN *sid, int accountid);

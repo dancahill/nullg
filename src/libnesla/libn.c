@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 #include <sys/stat.h>
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
+#include <direct.h>
 #include <io.h>
 #elif !defined( __TURBOC__)
 #include <unistd.h>
@@ -39,11 +41,13 @@
 /* works ok, but written to handle direct output */
 static int n_escape(nes_state *N, const char *str, int len)
 {
+#define __FUNCTION__ __FILE__ ":n_escape()"
 	char *dst=N->outbuf;
 	int i, n=N->outbuflen;
 
+	settrace();
 	for (i=0;i<len;i++) {
-		if (MAX_OUTBUFLEN-n<32) { nl_flush(N); continue; }
+		if (MAX_OUTBUFLEN-n<32) { N->outbuflen=n; nl_flush(N); n=N->outbuflen; }
 		switch (str[i]) {
 		case '\a' : dst[n++]='\\'; dst[n++]='a'; break;
 		case '\t' : dst[n++]='\\'; dst[n++]='t'; break;
@@ -60,16 +64,19 @@ static int n_escape(nes_state *N, const char *str, int len)
 	dst[n]='\0';
 	N->outbuflen=n;
 	return len;
+#undef __FUNCTION__
 }
 
 static void n_dumpvars(nes_state *N, obj_t *tobj, int depth)
 {
+#define __FUNCTION__ __FILE__ ":n_dumpvars()"
 	obj_t *cobj=tobj;
 	int i;
 	char b;
 	char *g;
 	int ent=0;
 
+	settrace();
 	for (;cobj;cobj=cobj->next) {
 		if (nes_isnull(cobj)||cobj->val->attr&NST_HIDDEN||cobj->val->attr&NST_SYSTEM) continue;
 		g=(depth<1)?"global ":"";
@@ -111,44 +118,48 @@ static void n_dumpvars(nes_state *N, obj_t *tobj, int depth)
 	if (ent) nc_printf(N, "%s", depth?"\n":"");
 	nl_flush(N);
 	return;
+#undef __FUNCTION__
 }
 
 /*
  * basic i/o functions
  */
-/* windows is retarded..  from unistd.. */
 NES_FUNCTION(nl_flush)
 {
-	obj_t *cobj=nes_getobj(N, &N->g, "io");
-	NES_CFUNC cfunc=(NES_CFUNC)nl_flush;
-	int rc;
+#define __FUNCTION__ __FILE__ ":nl_flush()"
+	obj_t *cobj;
 
-	if (cobj->val->type!=NT_TABLE) {
-		nes_setnum(N, &N->r, "", -1);
-		return -1;
-	}
-	cobj=nes_getobj(N, cobj, "flush");
-	if (cobj->val->type==NT_CFUNC) {
-		cfunc=cobj->val->d.cfunc;
-		if (cfunc!=(NES_CFUNC)nl_flush) {
-			rc=cfunc(N);
-			nes_setnum(N, &N->r, "", rc);
-			return rc;
+	if (N==NULL||N->outbuflen==0) return 0;
+	cobj=&N->g;
+	if (!nes_istable(cobj)) goto flush;
+	for (cobj=cobj->val->d.table;cobj;cobj=cobj->next) {
+		if (nc_strcmp(cobj->name, "io")!=0) continue;
+		if (cobj->val->type!=NT_TABLE) goto flush;
+		for (cobj=cobj->val->d.table;cobj;cobj=cobj->next) {
+			if (nc_strcmp(cobj->name, "flush")!=0) continue;
+			if (cobj->val->type!=NT_CFUNC) goto flush;
+			if (cobj->val->d.cfunc==(NES_CFUNC)nl_flush) goto flush;
+			return cobj->val->d.cfunc(N);
 		}
 	}
+flush:
+	if (N->outbuflen==0) return 0;
 	N->outbuf[N->outbuflen]='\0';
 	write(STDOUT_FILENO, N->outbuf, N->outbuflen);
 	N->outbuflen=0;
 	/* do NOT touch &N->r */
 	return 0;
+#undef __FUNCTION__
 }
 
 static int writestr(nes_state *N, obj_t *cobj)
 {
+#define __FUNCTION__ __FILE__ ":writestr()"
 	unsigned int i;
 	unsigned int len=0;
 	char *p;
 
+	settrace();
 	if (nes_isstr(cobj)) {
 		p=cobj->val->d.str;
 		len=cobj->val->size;
@@ -162,37 +173,68 @@ static int writestr(nes_state *N, obj_t *cobj)
 	}
 	N->outbuf[N->outbuflen]='\0';
 	return len;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_print)
 {
+#define __FUNCTION__ __FILE__ ":nl_print()"
 	obj_t *cobj=N->l.val->d.table;
 	int tlen=0;
 
+	settrace();
 	for (cobj=cobj->next;cobj;cobj=cobj->next) {
 		if (cobj->name[0]!='n') tlen+=writestr(N, cobj);
 	}
 	if (N->debug) nl_flush(N);
 	nes_setnum(N, &N->r, "", tlen);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_write)
 {
+#define __FUNCTION__ __FILE__ ":nl_write()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	int len;
 
+	settrace();
 	len=writestr(N, cobj1);
 	nes_setnum(N, &N->r, "", len);
 	return 0;
+#undef __FUNCTION__
 }
 
 /*
  * file functions
  */
+NES_FUNCTION(nl_filemkdir)
+{
+#define __FUNCTION__ __FILE__ ":nl_filemkdir()"
+	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+#if !defined(_MSC_VER) && !defined(__BORLANDC__) && !defined( __TURBOC__)
+	mode_t umask=755;
+#endif
+	int rc;
+
+	settrace();
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+#if !defined(_MSC_VER) && !defined(__BORLANDC__) && !defined( __TURBOC__)
+	if (cobj2->val->type==NT_NUMBER) umask=(mode_t)cobj2->val->d.num;
+	rc=mkdir(cobj1->val->d.str, ~umask&0777);
+#else
+	rc=mkdir(cobj1->val->d.str);
+#endif
+	nes_setnum(N, &N->r, "", rc);
+	return rc;
+#undef __FUNCTION__
+}
+
+
 NES_FUNCTION(nl_fileread)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_fileread()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *robj;
@@ -203,7 +245,8 @@ NES_FUNCTION(nl_fileread)
 	int r;
 	int offset=0;
 
-	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
 	if (stat(cobj1->val->d.str, &sb)!=0) {
 		nes_setnum(N, &N->r, "", -1);
 		return -1;
@@ -221,20 +264,20 @@ NES_FUNCTION(nl_fileread)
 	robj->val->d.str=n_alloc(N, bl+2, 0);
 	robj->val->size=bl;
 	p=(char *)robj->val->d.str;
-	for (;;) {
-		r=read(fd, p, bl);
+	while (bl>0) {
+		if ((r=read(fd, p, bl))<0) break;
 		p+=r;
 		bl-=r;
-		if (bl<1) break;
 	}
 	close(fd);
 	robj->val->d.str[sb.st_size]='\0';
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_filestat)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_filestat()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t tobj;
 	struct stat sb;
@@ -242,16 +285,10 @@ NES_FUNCTION(nl_filestat)
 	int sym=0;
 	char *file;
 
-	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
 	file=cobj1->val->d.str;
-#ifdef WIN32
-	rc=stat(file, &sb);
-	if (rc!=0) {
-		nes_setnum(N, &N->r, "", rc);
-		return 0;
-	}
-#else
-#ifdef __TURBOC__
+#if defined(WIN32) || defined(__TURBOC__)
 	rc=stat(file, &sb);
 	if (rc!=0) {
 		nes_setnum(N, &N->r, "", rc);
@@ -268,7 +305,6 @@ NES_FUNCTION(nl_filestat)
 		if (stat(file, &sb)!=0) sym=2;
 	}
 #endif
-#endif
 	tobj.val=n_newval(N, NT_TABLE);
 	nes_setnum(N, &tobj, "mtime", sb.st_mtime);
 	if (sym==2) {
@@ -284,16 +320,18 @@ NES_FUNCTION(nl_filestat)
 	nes_linkval(N, &N->r, &tobj);
 	nes_unlinkval(N, &tobj);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_fileunlink)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_fileunlink()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	int rc=-1;
 	int i;
 
-	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
 	for (i=1;;i++) {
 		cobj1=nes_getiobj(N, &N->l, i);
 		if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) break;
@@ -302,21 +340,29 @@ NES_FUNCTION(nl_fileunlink)
 	}
 	nes_setnum(N, &N->r, "", rc);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_filewrite)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_filewrite()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj3=nes_getiobj(N, &N->l, 3);
-	int fd;
+	char *fname=nes_getstr(N, &N->l, "0");
+	int fd=-1;
 	int w=0;
 	int offset=0;
 
+	settrace();
 	/* umask(022); */
-	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if ((fd=open(cobj1->val->d.str, O_WRONLY|O_BINARY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE))==-1) {
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (nc_strcmp(fname, "write")==0) {
+		fd=open(cobj1->val->d.str, O_WRONLY|O_BINARY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE);
+	} else if (nc_strcmp(fname, "append")==0) {
+		fd=open(cobj1->val->d.str, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
+	}
+	if (fd==-1) {
 		nes_setnum(N, &N->r, "", -1);
 		return -1;
 	}
@@ -330,6 +376,7 @@ NES_FUNCTION(nl_filewrite)
 	close(fd);
 	nes_setnum(N, &N->r, "", w);
 	return 0;
+#undef __FUNCTION__
 }
 
 /*
@@ -337,11 +384,13 @@ NES_FUNCTION(nl_filewrite)
  */
 NES_FUNCTION(nl_math1)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_math1()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	char *fname=nes_getstr(N, &N->l, "0");
 	num_t n;
 
-	if (nc_strcmp(cobj0->val->d.str, "rand")==0) {
+	settrace();
+	if (nc_strcmp(fname, "rand")==0) {
 		n=rand();
 		if (cobj1->val->type==NT_NUMBER&&(int)cobj1->val->d.num) {
 			n=(int)n%(int)cobj1->val->d.num;
@@ -350,36 +399,42 @@ NES_FUNCTION(nl_math1)
 		nes_setnum(N, &N->r, "", n);
 		return 0;
 	}
-	if (cobj1->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number");
-	if (nc_strcmp(cobj0->val->d.str, "abs")==0) {
+	if (cobj1->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number");
+	if (nc_strcmp(fname, "abs")==0) {
 		n=fabs(cobj1->val->d.num);
-	} else if (nc_strcmp(cobj0->val->d.str, "ceil")==0) {
+	} else if (nc_strcmp(fname, "ceil")==0) {
 		n=cobj1->val->d.num;
 		if ((int)n<n) n=(int)n+1; else n=(int)n;
-	} else if (nc_strcmp(cobj0->val->d.str, "floor")==0) {
+	} else if (nc_strcmp(fname, "floor")==0) {
 		n=(int)cobj1->val->d.num;
 	} else {
 		n=0;
 	}
 	nes_setnum(N, &N->r, "", n);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_tonumber)
 {
+#define __FUNCTION__ __FILE__ ":nl_tonumber()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 
+	settrace();
 	nes_setnum(N, &N->r, "", nes_tonum(N, cobj1));
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_tostring)
 {
+#define __FUNCTION__ __FILE__ ":nl_tostring()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	unsigned short d;
 	char *p;
 
+	settrace();
 	if (cobj1->val->type==NT_NUMBER&&cobj2->val->type==NT_NUMBER) {
 		d=(unsigned short)cobj2->val->d.num;
 		if (d>sizeof(N->numbuf)-2) d=sizeof(N->numbuf)-2;
@@ -389,6 +444,7 @@ NES_FUNCTION(nl_tostring)
 	}
 	nes_setstr(N, &N->r, "", p, p?nc_strlen(p):0);
 	return 0;
+#undef __FUNCTION__
 }
 
 /*
@@ -396,13 +452,14 @@ NES_FUNCTION(nl_tostring)
  */
 NES_FUNCTION(nl_strcat)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strcat()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *robj;
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg2");
 	robj=nes_setstr(N, &N->r, "", NULL, 0);
 	robj->val->size=cobj1->val->size+cobj2->val->size;
 	robj->val->d.str=n_alloc(N, robj->val->size+1, 0);
@@ -410,19 +467,22 @@ NES_FUNCTION(nl_strcat)
 	nc_memcpy(robj->val->d.str+cobj1->val->size, cobj2->val->d.str, cobj2->val->size);
 	robj->val->d.str[robj->val->size]=0;
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strcmp)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strcmp()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj3=nes_getiobj(N, &N->l, 3);
+	char *fname=nes_getstr(N, &N->l, "0");
 	uchar *s1, *s2;
 	int i, rval=0;
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg2");
 	if (cobj1->val->d.str==NULL) {
 		if (cobj2->val->d.str==NULL) rval=0; else rval=(int)cobj2->val->d.str[0];
 		nes_setnum(N, &N->r, "", rval); return 0;
@@ -430,19 +490,19 @@ NES_FUNCTION(nl_strcmp)
 		rval=-(int)cobj1->val->d.str[0];
 		nes_setnum(N, &N->r, "", rval); return 0;
 	}
-	if (nc_strcmp(cobj0->val->d.str, "cmp")==0) {
+	if (nc_strcmp(fname, "cmp")==0) {
 		rval=nc_strcmp(cobj1->val->d.str, cobj2->val->d.str);
-	} else if (nc_strcmp(cobj0->val->d.str, "ncmp")==0) {
-		if (cobj3->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number for arg3");
+	} else if (nc_strcmp(fname, "ncmp")==0) {
+		if (cobj3->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number for arg3");
 		rval=nc_strncmp(cobj1->val->d.str, cobj2->val->d.str, (int)cobj3->val->d.num);
-	} else if (nc_strcmp(cobj0->val->d.str, "icmp")==0) {
+	} else if (nc_strcmp(fname, "icmp")==0) {
 		s1=(uchar *)cobj1->val->d.str; s2=(uchar *)cobj2->val->d.str;
 		do {
 			if ((rval=(nc_tolower(*s1)-nc_tolower(*s2)))!=0) break;
 			s1++; s2++;
 		} while (*s1!=0);
-	} else if (nc_strcmp(cobj0->val->d.str, "nicmp")==0) {
-		if (cobj3->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number for arg3");
+	} else if (nc_strcmp(fname, "nicmp")==0) {
+		if (cobj3->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number for arg3");
 		s1=(uchar *)cobj1->val->d.str; s2=(uchar *)cobj2->val->d.str; i=(int)cobj3->val->d.num;
 		do {
 			if ((rval=(nc_tolower(*s1)-nc_tolower(*s2)))!=0) break;
@@ -452,11 +512,12 @@ NES_FUNCTION(nl_strcmp)
 	}
 	nes_setnum(N, &N->r, "", rval);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strjoin)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strjoin()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj, *robj;
@@ -464,7 +525,8 @@ NES_FUNCTION(nl_strjoin)
 	int len1=0, len2=0;
 	int cnt=0;
 
-	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a table for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a table for arg1");
 	if (cobj2->val->type==NT_STRING&&cobj2->val->size>0) { p=cobj2->val->d.str; len2=cobj2->val->size; }
 	for (cobj=cobj1->val->d.table;cobj;cobj=cobj->next) {
 		if (cobj->val->type==NT_STRING) {
@@ -511,21 +573,24 @@ NES_FUNCTION(nl_strjoin)
 		robj->val->d.str[robj->val->size]=0;
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strlen)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strlen()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
 	nes_setnum(N, &N->r, "", cobj1->val->size);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strsplit)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strsplit()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t tobj;
@@ -535,8 +600,9 @@ NES_FUNCTION(nl_strsplit)
 	int l2;
 	char namebuf[MAX_OBJNAMELEN+1];
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg2");
 	tobj.val=n_newval(N, NT_TABLE);
 	if (cobj1->val->d.str) {
 		if (cobj2->val->d.str) {
@@ -564,49 +630,54 @@ NES_FUNCTION(nl_strsplit)
 	nes_linkval(N, &N->r, &tobj);
 	nes_unlinkval(N, &tobj);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strstr)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strstr()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+	char *fname=nes_getstr(N, &N->l, "0");
 	unsigned int i=0, j=0;
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg2");
-	if (cobj2->val->size<1) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "zero length arg2");
-	if (nc_strcmp(cobj0->val->d.str, "str")==0) {
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (cobj2->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg2");
+	if (cobj2->val->size<1) n_error(N, NE_SYNTAX, __FUNCTION__, "zero length arg2");
+	if (nc_strcmp(fname, "str")==0) {
 		for (i=0,j=0;i<cobj1->val->size;i++,j++) {
 			if (j==cobj2->val->size) break;
 			if (cobj2->val->d.str[j]=='\0') { j=0; break; }
 			if (cobj2->val->d.str[j]!=cobj1->val->d.str[i]) j=-1;
 		}
-	} else if (nc_strcmp(cobj0->val->d.str, "istr")==0) {
+	} else if (nc_strcmp(fname, "istr")==0) {
 		for (i=0,j=0;i<cobj1->val->size;i++,j++) {
 			if (j==cobj2->val->size) break;
 			if (cobj2->val->d.str[j]=='\0') { j=0; break; }
 			if (nc_tolower(cobj2->val->d.str[j])!=nc_tolower(cobj1->val->d.str[i])) j=-1;
 		}
 	} else {
-		n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "................");
+		n_error(N, NE_SYNTAX, __FUNCTION__, "................");
 	}
 	if (i<=cobj1->val->size&&j==cobj2->val->size) {
 		nes_setstr(N, &N->r, "", cobj1->val->d.str+i-j, cobj1->val->size-i+j);
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strsub)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strsub()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj3=nes_getiobj(N, &N->l, 3);
 	unsigned int offset, max=0;
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
-	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
+	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number for arg2");
 	if (cobj2->val->d.num<0) {
 		offset=cobj1->val->size-abs((int)cobj2->val->d.num);
 	} else {
@@ -617,67 +688,79 @@ NES_FUNCTION(nl_strsub)
 	if (max>cobj1->val->size-offset) max=cobj1->val->size-offset;
 	nes_setstr(N, &N->r, "", cobj1->val->d.str+offset, max);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_strtolower)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_strtolower()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *robj;
+	char *fname=nes_getstr(N, &N->l, "0");
 	int i;
 
-	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a string for arg1");
+	settrace();
+	if (cobj1->val->type!=NT_STRING) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a string for arg1");
 	robj=nes_setstr(N, &N->r, "", NULL, 0);
 	if (cobj1->val->d.str!=NULL) {
 		robj->val->size=cobj1->val->size;
 		robj->val->d.str=n_alloc(N, robj->val->size+1, 0);
 		robj->val->d.str[0]=0;
 		i=robj->val->size-1;
-		if (nc_strcmp(cobj0->val->d.str, "tolower")==0) {
+		if (nc_strcmp(fname, "tolower")==0) {
 			for (;i>-1;i--) robj->val->d.str[i]=nc_tolower(cobj1->val->d.str[i]);
-		} else if (nc_strcmp(cobj0->val->d.str, "toupper")==0) {
+		} else if (nc_strcmp(fname, "toupper")==0) {
 			for (;i>-1;i--) robj->val->d.str[i]=nc_toupper(cobj1->val->d.str[i]);
 		}
 		robj->val->d.str[robj->val->size]=0;
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_sqltime)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_sqltime()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	char *fname=nes_getstr(N, &N->l, "0");
 	struct timeval ttime;
 	char timebuf[16];
 
+	settrace();
 	if (cobj1->val->type==NT_NUMBER) {
 		ttime.tv_sec=(time_t)cobj1->val->d.num;
 	} else {
 		nc_gettimeofday(&ttime, NULL);
 	}
-	if (nc_strcmp(cobj0->val->d.str, "sqldate")==0) {
+	if (nc_strcmp(fname, "sqldate")==0) {
 		strftime(timebuf, sizeof(timebuf)-1, "%Y-%m-%d", localtime((time_t *)&ttime.tv_sec));
-	} else if (nc_strcmp(cobj0->val->d.str, "sqltime")==0) {
+	} else if (nc_strcmp(fname, "sqltime")==0) {
 		strftime(timebuf, sizeof(timebuf)-1, "%H:%M:%S", localtime((time_t *)&ttime.tv_sec));
 	}
 	nes_setstr(N, &N->r, "", timebuf, -1);
 	return 0;	
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_time)
 {
+#define __FUNCTION__ __FILE__ ":nl_time()"
+	settrace();
 	nes_setnum(N, &N->r, "", time(NULL));
 	return 0;	
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_gmtime)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_gmtime()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	char *fname=nes_getstr(N, &N->l, "0");
 	obj_t tobj;
 	time_t t;
 	struct tm *tp;
 
+	settrace();
 	if (cobj1->val->type==NT_NUMBER) {
 		t=(time_t)cobj1->val->d.num;
 	} else {
@@ -685,9 +768,9 @@ NES_FUNCTION(nl_gmtime)
 	}
 	tobj.val=n_newval(N, NT_TABLE);
 	tobj.val->attr&=~NST_AUTOSORT;
-	if (nc_strcmp(cobj0->val->d.str, "gmtime")==0) {
+	if (nc_strcmp(fname, "gmtime")==0) {
 		tp=gmtime(&t);
-	} else if (nc_strcmp(cobj0->val->d.str, "localtime")==0) {
+	} else if (nc_strcmp(fname, "localtime")==0) {
 		tp=localtime(&t);
 	} else {
 		nes_setnum(N, &N->r, "", 0);
@@ -706,24 +789,30 @@ NES_FUNCTION(nl_gmtime)
 	nes_linkval(N, &N->r, &tobj);
 	nes_unlinkval(N, &tobj);
 	return 0;	
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_runtime)
 {
+#define __FUNCTION__ __FILE__ ":nl_runtime()"
 	struct timeval ttime;
 	int totaltime;
 
+	settrace();
 	nc_gettimeofday(&ttime, NULL);
 	totaltime=((ttime.tv_sec-N->ttime.tv_sec)*1000000)+(ttime.tv_usec-N->ttime.tv_usec);
 	nes_setnum(N, &N->r, "", (num_t)totaltime/1000000);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_sleep)
 {
+#define __FUNCTION__ __FILE__ ":nl_sleep()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	int n=1;
 
+	settrace();
 	if (cobj1->val->type==NT_NUMBER) n=(int)cobj1->val->d.num;
 #if defined(__BORLANDC__)
 	sleep(n);
@@ -734,16 +823,19 @@ NES_FUNCTION(nl_sleep)
 #endif
 	nes_setnum(N, &N->r, "", 0);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_eval)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_eval()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	char *fname=nes_getstr(N, &N->l, "0");
 	uchar *p;
 
-	if (nc_strcmp(cobj0->val->d.str, "eval")!=0) {
-		n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "cowardly refusing to run aliased eval");
+	settrace();
+	if (nc_strcmp(fname, "eval")!=0) {
+		n_error(N, NE_SYNTAX, __FUNCTION__, "cowardly refusing to run aliased eval");
 	}
 	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->d.str!=NULL)) {
 		uchar *oldbptr=N->blockptr;
@@ -773,16 +865,19 @@ NES_FUNCTION(nl_eval)
 		nes_linkval(N, &N->r, cobj1);
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_exec)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_exec()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	char *fname=nes_getstr(N, &N->l, "0");
 	uchar *p;
 
-	if (nc_strcmp(cobj0->val->d.str, "exec")!=0) {
-		n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "cowardly refusing to run aliased exec");
+	settrace();
+	if (nc_strcmp(fname, "exec")!=0) {
+		n_error(N, NE_SYNTAX, __FUNCTION__, "cowardly refusing to run aliased exec");
 	}
 	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->d.str!=NULL)) {
 		uchar *oldbptr=N->blockptr;
@@ -812,17 +907,19 @@ NES_FUNCTION(nl_exec)
 		nes_linkval(N, &N->r, cobj1);
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_iname)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_iname()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj;
 
-	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a table for arg1");
-	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a table for arg1");
+	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number for arg2");
 	cobj=nes_getiobj(N, cobj1, (int)cobj2->val->d.num);
 	if (nes_isnull(cobj)) {
 		nes_setnum(N, &N->r, "", 0);
@@ -830,32 +927,33 @@ NES_FUNCTION(nl_iname)
 		nes_setstr(N, &N->r, "", cobj->name, -1);
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_ival)
 {
-	obj_t *cobj0=nes_getiobj(N, &N->l, 0);
+#define __FUNCTION__ __FILE__ ":nl_ival()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
 	obj_t *cobj;
 
-	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a table for arg1");
-	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, nes_tostr(N, cobj0), "expected a number for arg2");
+	settrace();
+	if (cobj1->val->type!=NT_TABLE) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a table for arg1");
+	if (cobj2->val->type!=NT_NUMBER) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a number for arg2");
 	cobj=nes_getiobj(N, cobj1, (int)cobj2->val->d.num);
-	if (nes_isnull(cobj)) {
-		nes_unlinkval(N, &N->r);
-	} else {
-		nes_linkval(N, &N->r, cobj);
-	}
+	if (!nes_isnull(cobj)) nes_linkval(N, &N->r, cobj);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_include)
 {
+#define __FUNCTION__ __FILE__ ":nl_include()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	uchar *p;
 	int n=0;
 
+	settrace();
 	if (!nes_isnull(cobj1)) {
 		p=N->readptr;
 		n=nes_execfile(N, (char *)cobj1->val->d.str);
@@ -863,24 +961,30 @@ NES_FUNCTION(nl_include)
 	}
 	nes_setnum(N, &N->r, "", n);
 	return n;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_printvar)
 {
+#define __FUNCTION__ __FILE__ ":nl_printvar()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 
+	settrace();
 	if (!nes_isnull(cobj1)) {
 		n_dumpvars(N, cobj1, 0);
 		nes_setnum(N, &N->r, "", 0);
 	}
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_sizeof)
 {
+#define __FUNCTION__ __FILE__ ":nl_sizeof()"
 	obj_t *cobj=nes_getiobj(N, &N->l, 1);
 	int size=0;
 
+	settrace();
 	if (nes_isnull(cobj)) {
 		nes_setnum(N, &N->r, "", 0);
 		return 0;
@@ -901,14 +1005,17 @@ NES_FUNCTION(nl_sizeof)
 	}
 	nes_setnum(N, &N->r, "", size);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_typeof)
 {
+#define __FUNCTION__ __FILE__ ":nl_typeof()"
 	obj_t *cobj=nes_getiobj(N, &N->l, 1);
 	NES_CDATA *chead;
 	char *p;
 
+	settrace();
 	switch (cobj->val->type) {
 	case NT_BOOLEAN : p="boolean";  break;
 	case NT_NUMBER  : p="number";   break;
@@ -924,17 +1031,21 @@ NES_FUNCTION(nl_typeof)
 	}
 	nes_setstr(N, &N->r, "", p, -1);
 	return 0;
+#undef __FUNCTION__
 }
 
 NES_FUNCTION(nl_system)
 {
+#define __FUNCTION__ __FILE__ ":nl_system()"
 	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
 	int n=-1;
 
+	settrace();
 	if (cobj1->val->type==NT_STRING&&cobj1->val->d.str!=NULL) {
 		nl_flush(N);
 		n=system(cobj1->val->d.str);
 	}
 	nes_setnum(N, &N->r, "", n);
 	return 0;
+#undef __FUNCTION__
 }

@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ char *wmsearch_makestring(CONN *sid)
 	return searchstring;
 }
 
-int wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int folderid)
+int wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int accountid, int folderid)
 {
 /*
 	char *ptemp1;
@@ -73,7 +73,12 @@ int wmsearch_doquery(CONN *sid, obj_t **qobj, const char *order_by, int folderid
 	}
 	return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d AND folder = %d AND status != 'd' ORDER BY %s", sid->dat->uid, sid->dat->mailcurrent, folderid, order_by);
 */
-	return -1;
+
+	if ((*qobj=ldir_getlist(sid->N, "emailheader", accountid, sid->dat->did))==NULL) {
+		return -1;
+	}
+
+	return 0;
 }
 
 void wmsearch_form(CONN *sid)

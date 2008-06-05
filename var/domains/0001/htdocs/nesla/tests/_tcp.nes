@@ -41,6 +41,7 @@ function testtcp() {
 			i=tcp.read(sock);
 			if (i=="") break;
 		}
+//		printvar(tcp.info(sock));
 		tcp.close(sock);
 		io.flush();
 		return;
@@ -69,6 +70,7 @@ function testtcp() {
 			if (sizeof(i)==0) break;
 			i=string.join(string.split(i, "<"), "&lt;");
 		}
+//		printvar(tcp.info(sock));
 		tcp.close(sock);
 		io.flush();
 		return;
@@ -230,17 +232,17 @@ function testtcp() {
 			}
 		}
 	}
-#	print("[[[", ht.head, "]]]\n");
-#	print("[[[", ht.body, "]]]\n");
-#	printvar(ht);
+//	print("[[[", ht.head, "]]]\n");
+//	print("[[[", ht.body, "]]]\n");
+//	printvar(ht);
 	if (typeof(tcp.open)=='function') {
 		print("\truntime = ", runtime(), " seconds\n");
-#		test_tcpserv();
+//		test_tcpserv();
 		test_http();
 		test_https();
-#		test_ftp();
-#		test_pop3();
-#		test_smtp();
+//		test_ftp();
+//		test_pop3();
+//		test_smtp();
 		print("\truntime = ", runtime(), " seconds\n");
 	}
 	return;

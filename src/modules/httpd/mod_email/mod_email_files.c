@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -108,32 +108,98 @@ int wmfolder_msgmove(CONN *sid, int accountid, int messageid, int srcfolderid, i
 
 int wmfolder_makedefaults(CONN *sid, int accountid)
 {
-	char curdate[40];
-	char *p;
+//	char curdate[40];
+	obj_t *cobj, *robj, *tobj;
+	short changed=0;
 
-	memset(curdate, 0, sizeof(curdate));
-	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
-	if (wmfolder_testcreate(sid, accountid, 1)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 2)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 3)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 4)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 5)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 6)<0) return -1;
-	if (wmfolder_testcreate(sid, accountid, 7)<0) return -1;
-	p=lang_gets(sid, "mod_email", "folder1_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+	if ((robj=ldir_getentry(sid->N, "emailaccount", NULL, accountid, sid->dat->did))==NULL) {
+//		prints(sid, "<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+		prints(sid, "<BR /><CENTER>%s</CENTER><BR />\r\n", "invalid mail account");
+		return -1;
+	}
+	tobj=nes_settable(sid->N, nes_settable(sid->N, nes_settable(sid->N, nes_settable(sid->N, robj, "_rows"), "0"), "_data"), "folders");
+//	memset(curdate, 0, sizeof(curdate));
+//	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL));
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "1")))) {
+		cobj=nes_settable(sid->N, tobj, "1");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder1_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 1);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "2")))) {
+		cobj=nes_settable(sid->N, tobj, "2");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder2_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 2);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "3")))) {
+		cobj=nes_settable(sid->N, tobj, "3");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder3_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 3);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "4")))) {
+		cobj=nes_settable(sid->N, tobj, "4");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder4_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 4);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "5")))) {
+		cobj=nes_settable(sid->N, tobj, "5");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder5_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 5);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "6")))) {
+		cobj=nes_settable(sid->N, tobj, "6");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder6_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 6);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (!nes_istable((cobj=nes_getobj(sid->N, tobj, "7")))) {
+		cobj=nes_settable(sid->N, tobj, "7");
+		nes_setstr(sid->N, cobj, "cn", lang_gets(sid, "mod_email", "folder7_name"), -1);
+		nes_setnum(sid->N, cobj, "folderid", 7);
+		nes_setnum(sid->N, cobj, "parentid", 0);
+		changed=1;
+	}
+	if (changed) {
+		ldir_saveentry(sid, accountid, "emailaccount", &robj);
+	}
+	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
+//		prints(sid, "<BR />%s<BR />\r\n", cobj->name);
+		if (!isdigit(cobj->name[0])) continue;
+		if (wmfolder_testcreate(sid, accountid, atoi(cobj->name)<0)) return -1;
+	}
+
+//	if (wmfolder_testcreate(sid, accountid, 1)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 2)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 3)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 4)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 5)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 6)<0) return -1;
+//	if (wmfolder_testcreate(sid, accountid, 7)<0) return -1;
+
+/*
 	p=lang_gets(sid, "mod_email", "folder2_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
 	p=lang_gets(sid, "mod_email", "folder3_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
 	p=lang_gets(sid, "mod_email", "folder4_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
 	p=lang_gets(sid, "mod_email", "folder5_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
 	p=lang_gets(sid, "mod_email", "folder6_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
 	p=lang_gets(sid, "mod_email", "folder7_name");
-	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+//	sql_updatef(proc->N, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', 'emailfolder', '%s', '{ foldername=''%s'' }');", accountid, sid->dat->did, curdate, curdate, p, p);
+*/
 	return 0;
 }
 

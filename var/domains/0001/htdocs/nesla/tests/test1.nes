@@ -91,7 +91,7 @@ function main() {
 		var f=_ENV['HOME']+"/test.nes";
 		if (typeof(file.stat(f))=='table') {
 			print("\trunning ", f, "\n");
-			include(f);
+//			include(f);
 			print("-------------------------------------------------------------------\n");
 		}
 	}

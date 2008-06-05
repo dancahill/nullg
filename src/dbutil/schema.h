@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -241,34 +241,34 @@ char *sqldata_new[] = {
 };
 /*
 char *sqldata_callactions[7] = {
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('1', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Phoned');",
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('2', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Returned your call');",
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('3', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Please call');",
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('4', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Came to see you');",
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('5', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Wants to see you');",
-	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('6', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Will call again');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Phoned');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Returned your call');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Please call');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('4', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Came to see you');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('5', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Wants to see you');",
+	"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('6', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Will call again');",
 	NULL
 };
 
 char *sqldata_domains[2] = {
-	"INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2007-01-01', '2007-01-01', '0', '0', '1', '0', '0', 'localhost');",
+	"INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'localhost');",
 	NULL
 };
 
 char *sqldata_eventclosings[4] = {
-	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('1', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Completed');",
-	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('2', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Cancelled');",
-	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('3', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Rescheduled');",
+	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Completed');",
+	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Cancelled');",
+	"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Rescheduled');",
 	NULL
 };
 
 char *sqldata_eventtypes[7] = {
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('1', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'All Day Event');",
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('2', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Anniversary');",
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('3', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Appointment');",
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('4', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Meeting');",
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('5', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Reminder');",
-	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('6', '2007-01-01', '2007-01-01', '0', '0', '0', '0', '0', 'Service Call');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'All Day Event');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Anniversary');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Appointment');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('4', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Meeting');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('5', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Reminder');",
+	"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('6', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Service Call');",
 	NULL
 };
 */

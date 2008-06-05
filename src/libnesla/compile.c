@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,9 +41,11 @@ typedef struct cstate {
 
 static long n_unescape(nes_state *N, char *src, char *dst, long len, cstate *state)
 {
+#define __FUNCTION__ __FILE__ ":n_unescape()"
 	long i, n;
 	short e=0;
 
+	settrace();
 	if (dst==NULL) return 0;
 	for (i=0,n=0;i<len;i++) {
 		if (!e) {
@@ -69,10 +72,13 @@ static long n_unescape(nes_state *N, char *src, char *dst, long len, cstate *sta
 	}
 	dst[n]='\0';
 	return n;
+#undef __FUNCTION__
 }
 
 static obj_t *n_newobj(nes_state *N, cstate *state)
 {
+#define __FUNCTION__ __FILE__ ":n_newobj()"
+	settrace();
 	if (state->lobj1==NULL) {
 		state->lobj1=state->tobj1->val->d.table=n_newiobj(N, state->index);
 	} else {
@@ -82,13 +88,16 @@ static obj_t *n_newobj(nes_state *N, cstate *state)
 	}
 	state->index++;
 	return state->lobj1;
+#undef __FUNCTION__
 }
 
 /* Advance readptr to next non-blank */
 static void n_skipblank(nes_state *N, cstate *state)
 {
+#define __FUNCTION__ __FILE__ ":n_skipblank()"
 	uchar *p=N->readptr;
 
+	settrace();
 	while (*p) {
 		if (p[0]=='#') {
 			p++;
@@ -123,11 +132,14 @@ static void n_skipblank(nes_state *N, cstate *state)
 	}
 	N->readptr=p;
 	return;
+#undef __FUNCTION__
 }
 
 /* Advance readptr to next matching quote */
 static void n_skipquote(nes_state *N, unsigned short c)
 {
+#define __FUNCTION__ __FILE__ ":n_skipquote()"
+	settrace();
 	while (*N->readptr) {
 		if (*N->readptr=='\\') {
 			N->readptr++;
@@ -136,19 +148,22 @@ static void n_skipquote(nes_state *N, unsigned short c)
 			break;
 		}
 		N->readptr++;
-		if (!*N->readptr) n_error(N, NE_SYNTAX, "n_skipquote", "unterminated string");
+		if (!*N->readptr) n_error(N, NE_SYNTAX, __FUNCTION__, "unterminated string");
 	}
 	return;
+#undef __FUNCTION__
 }
 
 /* return the next quoted block */
 static obj_t *n_extractquote(nes_state *N, cstate *state)
 {
+#define __FUNCTION__ __FILE__ ":n_extractquote()"
 	obj_t *cobj;
 	char q=*N->readptr;
 	char *qs, *qe;
 
 	DEBUG_IN();
+	settrace();
 	sanetest();
 	if ((q!='\'')&&(q!='\"')) {
 		DEBUG_OUT();
@@ -162,29 +177,32 @@ static obj_t *n_extractquote(nes_state *N, cstate *state)
 	cobj->val->size=n_unescape(N, qs, cobj->val->d.str, qe-qs-1, state);
 	DEBUG_OUT();
 	return cobj;
+#undef __FUNCTION__
 }
 
 static void n_decompose_sub(nes_state *N, cstate *state)
 {
+#define __FUNCTION__ __FILE__ ":n_decompose_sub()"
 	char lastname[MAX_OBJNAMELEN+1];
 	char *p;
 	short op;
 
+	settrace();
 	while (*N->readptr) {
 		n_skipblank(N, state);
 		op=n_getop(N, lastname);
 		n_skipblank(N, state);
 		if (op==OP_UNDEFINED) {
-			n_warn(N, "x", "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, N->readptr[0], lastname);
+			n_warn(N, __FUNCTION__, "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, N->readptr[0], lastname);
 /*
 			obj_t *cobj;
 
-			n_warn(N, "x", "bad op? index=%d op=%d:%d name='%s'", state->index, op, N->readptr[0], lastname);
+			n_warn(N, __FUNCTION__, "bad op? index=%d op=%d:%d name='%s'", state->index, op, N->readptr[0], lastname);
 			for (cobj=state->tobj1->val->d.table;cobj;cobj=cobj->next) {
 				cobj->val->attr=0;
 			}
 			n_dumpvars(N, &N->g, 0);
-			n_error(N, NE_SYNTAX, "n_decompose_sub", "bad op");
+			n_error(N, NE_SYNTAX, __FUNCTION__, "bad op");
 */
 			return;
 		} else if (op==OP_LABEL) {
@@ -237,6 +255,7 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 		}
 	}
 	return;
+#undef __FUNCTION__
 }
 
 #ifndef O_BINARY
@@ -252,11 +271,12 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 
 uchar *n_decompose(nes_state *N, uchar *rawtext)
 {
-#define __FUNCTION__ "n_decompose"
+#define __FUNCTION__ __FILE__ ":n_decompose()"
 	cstate state;
 	obj_t *cobj, *tobj;
 	unsigned short op;
 
+	settrace();
 	if ((rawtext[0]==0x0D)&&((rawtext[1]==0xAC))) {
 		n_warn(N, __FUNCTION__, "already chewed on this");
 		return rawtext;

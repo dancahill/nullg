@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,11 +33,13 @@ static const char nchars[]="0123456789ABCDEF";
 
 int nc_vsnprintf(nes_state *N, char *dest, int max, const char *format, va_list ap)
 {
+#define __FUNCTION__ __FILE__ ":nc_vsnprintf()"
 	char tmp[80];
 	char *d, *s, *p;
 	char esc=0;
 	int len=0;
 
+	settrace();
 	for (s=(char *)format,d=dest;*s!='\0';s++) {
 		if (!esc) {
 			if (*s=='%') esc=1; else { *d++=*s; len++; }
@@ -68,30 +71,37 @@ end:
 	}
 	*d='\0';
 	return len;
+#undef __FUNCTION__
 }
 
 int nc_snprintf(nes_state *N, char *str, int size, const char *format, ...)
 {
+#define __FUNCTION__ __FILE__ ":nc_snprintf()"
 	va_list ap;
 	int len;
 
+	settrace();
 	va_start(ap, format);
 	len=nc_vsnprintf(N, str, size, format, ap);
 	va_end(ap);
 	return len;
+#undef __FUNCTION__
 }
 
 int nc_printf(nes_state *N, const char *format, ...)
 {
+#define __FUNCTION__ __FILE__ ":nc_printf()"
 	va_list ap;
 	int len;
 
+	settrace();
 	if (N->outbuflen>OUTBUFLOWAT) nl_flush(N);
 	va_start(ap, format);
 	len=nc_vsnprintf(N, N->outbuf+N->outbuflen, MAX_OUTBUFLEN-N->outbuflen, format, ap);
 	N->outbuflen+=len;
 	va_end(ap);
 	return len;
+#undef __FUNCTION__
 }
 
 /* time stuff */
@@ -188,9 +198,11 @@ void *nc_memset(void *s, int c, int n)
 
 void n_error(nes_state *N, short int err, const char *fname, const char *format, ...)
 {
+#define __FUNCTION__ __FILE__ ":n_error()"
 	va_list ap;
 	int len;
 
+	settrace();
 	N->err=err;
 	if (N->err) {
 		len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : ", fname);
@@ -202,41 +214,47 @@ void n_error(nes_state *N, short int err, const char *fname, const char *format,
 	if (N->savjmp!=NULL) {
 		longjmp(*N->savjmp, 1);
 	} else {
-		n_warn(N, "n_error", "jmp ptr not set - errno=%d :: \r\n%s", N->err, N->errbuf);
+		n_warn(N, __FUNCTION__, "jmp ptr not set - errno=%d :: \r\n%s", N->err, N->errbuf);
 	}
 	return;
+#undef __FUNCTION__
 }
 
 void n_expect(nes_state *N, const char *fname, uchar op)
 {
+#define __FUNCTION__ __FILE__ ":n_expect()"
+	settrace();
 	if (*N->readptr!=op) n_error(N, NE_SYNTAX, fname, "expected a '%s'", n_getsym(N, op));
-/*
-	if (*N->readptr==op) return;
-	switch (op) {
-	case OP_STRDATA : n_error(N, NE_SYNTAX, fname, "expected a string");
-	case OP_NUMDATA : n_error(N, NE_SYNTAX, fname, "expected a number");
-	case OP_LABEL   : n_error(N, NE_SYNTAX, fname, "expected a label");
-	default         : n_error(N, NE_SYNTAX, fname, "expected a '%s'", n_getsym(N, op));
-	}
-*/
+#undef __FUNCTION__
 }
 
 void n_warn(nes_state *N, const char *fname, const char *format, ...)
 {
+#define __FUNCTION__ __FILE__ ":n_warn()"
 	va_list ap;
 
-	if (++N->warnings>10000) n_error(N, NE_SYNTAX, "n_warn", "too many warnings (%d)\n", N->warnings);
+	settrace();
+	if (++N->warnings>10000) n_error(N, NE_SYNTAX, __FUNCTION__, "too many warnings (%d)\n", N->warnings);
 	if (N->outbuflen>OUTBUFLOWAT) nl_flush(N);
-	nc_printf(N, "[01;33;40m%s\r\t\t : ", fname);
+#if defined(__GNUC__)
+	nc_printf(N, "\r\n[01;33;40m%s : ", fname);
+#else
+	nc_printf(N, "\r\n%s : ", fname);
+#endif
 	va_start(ap, format);
 	N->outbuflen+=nc_vsnprintf(N, N->outbuf+N->outbuflen, MAX_OUTBUFLEN-N->outbuflen, format, ap);
 	va_end(ap);
+#if defined(__GNUC__)
 	nc_printf(N, "\r\n[00m");
+#else
+	nc_printf(N, "\r\n");
+#endif
 	nl_flush(N);
 	if ((N->strict)&&(N->savjmp!=NULL)) {
 		longjmp(*N->savjmp, 1);
 	}
 	return;
+#undef __FUNCTION__
 }
 
 
@@ -245,10 +263,12 @@ void n_warn(nes_state *N, const char *fname, const char *format, ...)
  */
 num_t n_aton(nes_state *N, const char *str)
 {
+#define __FUNCTION__ __FILE__ ":n_aton()"
 	char *s=(char *)str;
 	num_t rval=0;
 	num_t rdot=0.1;
 
+	settrace();
 	while (nc_isdigit(*s)) {
 		rval=10*rval+(*s++-'0');
 	}
@@ -259,10 +279,12 @@ num_t n_aton(nes_state *N, const char *str)
 		rdot*=0.1;
 	}
 	return rval;
+#undef __FUNCTION__
 }
 
 char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 {
+#define __FUNCTION__ __FILE__ ":n_ntoa()"
 /*
 #  define LLONG_MAX	9223372036854775807LL
 #  define ULONG_MAX     0xffffffffUL  / * maximum unsigned long value * /
@@ -274,8 +296,10 @@ char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 #if defined (LLONG_MAX)
 	long long int n=(long long int)num;
 	num_t f=(num_t)num-(long long int)num;
+#elif defined (_MSC_VER)&&(_MSC_VER<=1400)
+	__int64 n=(__int64)num;
+	num_t f=(num_t)num-(__int64)num;
 #else
-//#elif defined(_MSC_VER)||defined(__BORLANDC__)
 	/* long long int causes fires - need working substitute */
 	long int n=(long int)num;
 	num_t f=(num_t)num-(long int)num;
@@ -284,8 +308,11 @@ char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 	char c, sign='+';
 	char *p, *q;
 
-#ifndef LLONG_MAX
-	if (num>ULONG_MAX) n_warn(N, "n_ntoa", "broken number display...");
+	settrace();
+#ifdef LLONG_MAX
+#elif defined (_MSC_VER)&&(_MSC_VER<=1400)
+#else
+	if (num>ULONG_MAX) n_warn(N, __FUNCTION__, "broken number display...");
 #endif
 /*
 	if (isinf(f)) {
@@ -337,4 +364,5 @@ char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 		if (str[i]=='.') str[i--]='\0';
 	}
 	return str;
+#undef __FUNCTION__
 }

@@ -21,11 +21,12 @@ function contact_view() {
 	}
 	CONTACT=Q['_rows'][0]['_data'];
 	if ((sizeof(CONTACT['homeaddress'])>0)&&(sizeof(CONTACT['homelocality'])>0)&&(sizeof(CONTACT['homeregion'])>0)&&(sizeof(CONTACT['homecountry'])>0)) {
-//		haddr="http://maps.google.com/maps?q="+CONTACT['homeaddress']+" "+CONTACT['homelocality']+" "+CONTACT['homeregion']+" "+CONTACT['homecountry'];
-		haddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['homecountry']+"&address="+CONTACT['homeaddress']+"&city="+CONTACT['homelocality']+"&state="+CONTACT['homeregion'];
+//		haddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['homecountry']+"&address="+CONTACT['homeaddress']+"&city="+CONTACT['homelocality']+"&state="+CONTACT['homeregion'];
+		haddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
 	}
 	if ((sizeof(CONTACT['workaddress'])>0)&&(sizeof(CONTACT['worklocality'])>0)&&(sizeof(CONTACT['workregion'])>0)&&(sizeof(CONTACT['workcountry'])>0)) {
-		waddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['workcountry']+"&address="+CONTACT['workaddress']+"&city="+CONTACT['worklocality']+"&state="+CONTACT['workregion'];
+//		waddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['workcountry']+"&address="+CONTACT['workaddress']+"&city="+CONTACT['worklocality']+"&state="+CONTACT['workregion'];
+		waddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['workaddress']+", "+CONTACT['worklocality']+", "+CONTACT['workregion']+", "+CONTACT['workcountry'];
 	}
 	disabled=" DISABLED";
 	is_editable=0;

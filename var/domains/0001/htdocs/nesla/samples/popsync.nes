@@ -57,7 +57,7 @@ function pop3_sync(user, pass, host, port, use_ssl) {
 		popclose(sock);
 		return;
 	}
-	if (typeof(file.stat(dirname))!='table') system("mkdir "+dirname);
+	if (typeof(file.stat(dirname))!='table') file.mkdir(dirname);
 	swrite(sock, "STAT\r\n");
 	line=sread(sock);
 	status=string.split(line, " ");

@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,20 +22,24 @@
 /* Advance readptr to next specified char */
 void n_skipto(nes_state *N, const char *fn, unsigned short c)
 {
+#define __FUNCTION__ __FILE__ ":n_skipto()"
+	settrace();
 	while (*N->readptr) {
 		if (*N->readptr==c) return;
 		N->readptr=n_seekop(N, N->readptr, 1, 1);
 	}
 	n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, c));
 	return;
+#undef __FUNCTION__
 }
 
 void n_if(nes_state *N)
 {
-#define __FUNCTION__ "n_if"
+#define __FUNCTION__ __FILE__ ":n_if()"
 	char done=0, t=0;
 
 	DEBUG_IN();
+	settrace();
 l1:
 	if (*N->readptr==OP_POPAREN) {
 		N->readptr++;
@@ -103,13 +108,14 @@ l2:
 
 void n_for(nes_state *N)
 {
-#define __FUNCTION__ "n_for"
+#define __FUNCTION__ __FILE__ ":n_for()"
 	uchar *arginit, *argcomp, *argexec;
 	uchar *bs, *be;
 	obj_t *cobj;
 	short single;
 
 	DEBUG_IN();
+	settrace();
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	arginit=++N->readptr;
 	n_skipto(N, __FUNCTION__, OP_PSEMICOL);
@@ -153,13 +159,14 @@ void n_for(nes_state *N)
 
 void n_do(nes_state *N)
 {
-#define __FUNCTION__ "n_do"
+#define __FUNCTION__ __FILE__ ":n_do()"
 	uchar *argcomp;
 	uchar *bs, *be;
 	obj_t *cobj;
 	short single;
 
 	DEBUG_IN();
+	settrace();
 	bs=N->readptr;
 	if (*N->readptr==OP_POBRACE) {
 		N->readptr++;
@@ -197,13 +204,14 @@ void n_do(nes_state *N)
 
 void n_while(nes_state *N)
 {
-#define __FUNCTION__ "n_while"
+#define __FUNCTION__ __FILE__ ":n_while()"
 	uchar *argcomp;
 	uchar *bs, *be;
 	obj_t *cobj;
 	short single;
 
 	DEBUG_IN();
+	settrace();
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	argcomp=++N->readptr;
 	n_skipto(N, __FUNCTION__, OP_PCPAREN);
@@ -239,12 +247,13 @@ void n_while(nes_state *N)
 
 void n_try(nes_state *N)
 {
-#define __FUNCTION__ "n_try"
+#define __FUNCTION__ __FILE__ ":n_try()"
 	jmp_buf *savjmp;
 	uchar *bs, *be;
 	obj_t *tobj;
 
 	DEBUG_IN();
+	settrace();
 	bs=N->readptr;
 	if (*N->readptr==OP_POBRACE) {
 		N->readptr++;

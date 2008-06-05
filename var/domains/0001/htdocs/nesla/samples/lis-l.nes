@@ -1,0 +1,96 @@
+#!/usr/bin/nesla
+global greetings = {
+	"Make it quick.  I gotta go flush my cache in 15ms.",
+	"How are you this beautiful day?",
+	"What's up?",
+	"Yo."
+}
+
+global blankres = {
+	"You type like old people screw.",
+	"Is that all you have to say?",
+	"Say something interesting.",
+	"That's meaningless."
+}
+
+global confusedres = {
+	"I don't get it.",
+	"That's meaningless."
+}
+
+global keyphrases = {
+	{ { "shit", "fuck" }, {
+		"Stop swearing at me, or I shall say stop a second time.",
+		"Do you massage your momma's balls with that tongue?",
+		"They don't pay me enough for this kind of abuse.",
+		"Don't swear at me, you little fucking troll.",
+		"Vulgarity is the refuge of an empty mind."
+	} },
+	{ { "cunt", "bitch" }, {
+		"Do you really think offending half the human race is a good idea?"
+	} },
+	{ { "bye", "quit" }, {
+		"Your bill will be mailed to you.",
+		"I thought you'd never leave."
+	} },
+	{ "douchebag",      "Does anyone with an I.Q. over 50 really use that as an insult?" },
+	{ "you moron",      "Hey.  I was programmed this way.  What's your excuse?"          },
+	{ "nesla",          "really?  i'm written in nesla!"                                 },
+	{ "probably not",   "I didn't think so."                                             },
+	{ { "piss off", "wanker" }, {
+		"What are you, Manchester United?",
+		"Bloody bollocks, mate!"
+	} },
+	{ "you think",      "I don't think anything.  I'm a computer, you dimwit."           },
+	{ "you don't know", "You're right.  I don't know."                                   },
+	{ "i don't know",   "Why don't you know that?"                                       },
+	{ "i said",         "Really?"                                                        },
+	{ "i'm bored",      "So you expect me to fix your boredom?"                          },
+	{ "i just said",    "I know what you said.  I'm not a mindless computer..."          },
+	{ "speaking of ", {
+		function (input) { return regex.replace("speaking of (.*)", "What about \\1?", input); },
+		"Is it really?"
+	} },
+	{ "it is ", {
+		function (input) { return regex.replace("it is (.*)", "Is it really \\1?  How is that?", transpose(input)); },
+		"Is it really?"
+	} },
+	{ "because",        "Is that really a good enough answer?"                           },
+	{ "i really think", "I hope you weren't expecting me to care."                       },
+	{ "think",          "Why do you think that?"                                         },
+	{ " hate ",         "So you hate something - tell me more."                          },
+	{ "what",           "Why do you ask?"                                                },
+	{ "want",           "Why do you want that?"                                          },
+	{ "need",           "We all need many things - is this special?"                     },
+	{ "why",            "Remember, therapy is good for you."                             },
+	{ "know",           "How do you know that?"                                          },
+	{ "murder",         "I don't like killing."                                          },
+	{ "kill",           "It is wrong to kill."                                           },
+	{ "jerk",           "Don't ever call me a jerk!"                                     },
+	{ "failure",        "Strive for success."                                            },
+	{ { "can't", "never" },
+		"Don't be negative - be positive."
+	},
+//	{ "you",            "Let's not talk about me."                                       },
+	{ "unhappy",        "Why are you unhappy?"                                           }
+}
+
+global trans = {
+//	{ "i was",   "you were" },
+	{ "was",     "were"     },
+//	{ "i am",    "you are"  },
+	{ "am",      "are"      },
+	{ "i'll",    "you'll"   },
+	{ "i'm",     "you're"   },
+	{ "i",       "you"      },
+	{ "me",      "you"      },
+	{ "my",      "your"     },
+	{ "us",      "you"      },
+	{ "we",      "you"      },
+	{ "were",    "was"      },
+	{ "you're",  "i'm"      },
+//	{ "you are", "i am"     },
+	{ "are",     "am"       },
+	{ "your",    "my"       },
+	{ "you",     "i"        }
+}

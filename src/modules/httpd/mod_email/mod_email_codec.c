@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -138,12 +138,9 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 			}
 		} else if (sid->dat->wm->codecstate==1) {
 			while ((*src)&&(*src!='>')) src++;
-			if (*src) {
-				sid->dat->wm->codecstate=0;
-				src++;
-			} else {
-				sid->dat->wm->codecstate=1;
-			}
+			if (!*src) break;
+			sid->dat->wm->codecstate=0;
+			src++;
 		}
 		if (strncasecmp(src, "<!--", 4)==0) {
 			sid->dat->wm->codecstate=2;
@@ -165,10 +162,10 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 		} else if (strncasecmp(src, "<PARAM", 6)==0) {
 			sid->dat->wm->codecstate=1;
 		// SPECIAL CASES FOR HTML REPLY FORMATTING
-		} else if ((strncasecmp(src, "<BR />", 4)==0)||(strncasecmp(src, "<P>", 3)==0)||(strncasecmp(src, "<TR", 3)==0)) {
+		} else if ((strncasecmp(src, "<BR", 3)==0)||(strncasecmp(src, "<P>", 3)==0)||(strncasecmp(src, "<TR", 3)==0)) {
 			if (reply) {
 				sid->dat->wm->codecstate=1;
-				strncat(dest, "\r\n", sizeof(dest)-strlen(dest)-1);
+				strncat(dest, "\r\n", szdest-strlen(dest)-1);
 				destidx+=2;
 			} else {
 				*destidx++=*src++;
@@ -177,7 +174,7 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 			if (reply) {
 				sid->dat->wm->codecstate=1;
 //				strncat(dest, "\r\n> * ", sizeof(dest)-strlen(dest)-1);
-				strncat(dest, "\r\n* ", sizeof(dest)-strlen(dest)-1);
+				strncat(dest, "\r\n* ", szdest-strlen(dest)-1);
 				destidx+=4;
 			} else {
 				*destidx++=*src++;
@@ -202,6 +199,49 @@ int DecodeHTML(CONN *sid, char *dest, unsigned int szdest, char *src, short int 
 			} else {
 				*destidx++=*src++;
 			}
+		} else if (strncasecmp(src, "<BLOCKQUOTE", 11)==0) {
+			if (reply) {
+				sid->dat->wm->codecstate=1;
+			} else {
+//				strncat(dest, "<BLOCKQUOTE>", sizeof(dest)-strlen(dest)-1);
+				strncat(dest, "<BLOCKQUOTE style=\"PADDING-LEFT: 1ex; MARGIN: 0px 0px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid\">", sizeof(dest)-strlen(dest)-1);
+				destidx+=94;
+				while (*src&&*src!='>') src++;
+				if (*src=='>') src++;
+			}
+		} else if (strncasecmp(src, "</DIV>", 6)==0) {
+			if (reply) {
+				sid->dat->wm->codecstate=1;
+				strncat(dest, "\r\n", szdest-strlen(dest)-1);
+				destidx+=2;
+			} else {
+				strncat(dest, "<BR>", szdest-strlen(dest)-1);
+				destidx+=4;
+				sid->dat->wm->codecstate=1;
+				src++;
+			}
+		} else if (strncasecmp(src, "</BLOCKQUOTE>", 13)==0) {
+			if (reply) {
+				sid->dat->wm->codecstate=1;
+			} else {
+				strncat(dest, "</BLOCKQUOTE>", sizeof(dest)-strlen(dest)-1);
+				src+=13;
+				destidx+=13;
+			}
+/*
+		} else if (strncasecmp(src, "&gt;", 4)==0) {
+			if (reply) {
+				strncat(dest, ">", sizeof(dest)-strlen(dest)-1);
+				src+=4;
+				destidx+=1;
+			}
+		} else if (strncasecmp(src, "&lt;", 4)==0) {
+			if (reply) {
+				strncat(dest, "<", sizeof(dest)-strlen(dest)-1);
+				src+=4;
+				destidx+=1;
+			}
+*/
 		// PRESERVE CLOSING TAGS IN READS
 		} else if (strncasecmp(src, "</", 2)==0) {
 			if (reply) {

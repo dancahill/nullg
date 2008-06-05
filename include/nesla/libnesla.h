@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@
 #define NE_INTERNAL	3
 
 #define sanetest()	/*{ if (N->readptr==NULL) n_error(N, NE_SYNTAX, __FUNCTION__, "NULL readptr"); }*/
+#define settrace()	/* if (N!=NULL) { N->tracefn=__FUNCTION__; nl_flush(N); printf("%s\n", __FUNCTION__); } */
 #define DEBUG_IN()
 #define DEBUG_OUT()
 
@@ -50,10 +52,39 @@ uchar   *n_decompose    (nes_state *N, uchar *rawtext);
 void     n_decompile    (nes_state *N);
 /* exec.c */
 obj_t   *n_execfunction (nes_state *N, obj_t *fobj, obj_t *pobj);
-/* lib.c */
+/* libc.c */
+#define  nc_isdigit(c)  ((c>='0'&&c<='9')?1:0)
+#define  nc_isalpha(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')?1:0)
+#define  nc_isalnum(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')?1:0)
+#define  nc_isupper(c)  ((c>='A'&&c<='Z')?1:0)
+#define  nc_islower(c)  ((c>='a'&&c<='z')?1:0)
+#define  nc_isspace(c)  (c=='\r'||c=='\n'||c=='\t'||c==' ')
+#define  nc_tolower(c)  ((c>='A'&&c<='Z')?(c+('a'-'A')):c)
+#define  nc_toupper(c)  ((c>='a'&&c<='z')?(c-('a'-'A')):c)
+int      nc_snprintf    (nes_state *N, char *str, int size, const char *format, ...);
+int      nc_printf      (nes_state *N, const char *format, ...);
+int      nc_gettimeofday(struct timeval *tv, void *tz);
+char    *nc_memcpy      (char *dst, const char *src, int n);
+int      nc_strlen      (const char *s);
+char    *nc_strchr      (const char *s, int c);
+char    *nc_strncpy     (char *d, const char *s, int n);
+int      nc_strcmp      (const char *s1, const char *s2);
+int      nc_strncmp     (const char *s1, const char *s2, int n);
+void    *nc_memset      (void *s, int c, int n);
+
+void     n_error        (nes_state *N, short int err, const char *fname, const char *format, ...);
+void     n_expect       (nes_state *N, const char *fname, uchar op);
+//#define  n_expect(N,fn,op)	{ if (*N->readptr!=op) n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, op)); }
+
+void     n_warn         (nes_state *N, const char *fname, const char *format, ...);
+
+num_t    n_aton         (nes_state *N, const char *str);
+char    *n_ntoa         (nes_state *N, char *str, num_t num, short base, unsigned short dec);
+/* libn.c */
 NES_FUNCTION(nl_flush);
 NES_FUNCTION(nl_print);
 NES_FUNCTION(nl_write);
+NES_FUNCTION(nl_filemkdir);
 NES_FUNCTION(nl_fileread);
 NES_FUNCTION(nl_filestat);
 NES_FUNCTION(nl_fileunlink);
@@ -85,33 +116,7 @@ NES_FUNCTION(nl_sort_name);
 NES_FUNCTION(nl_sort_key);
 NES_FUNCTION(nl_typeof);
 NES_FUNCTION(nl_system);
-/* libc.c */
-#define  nc_isdigit(c)  ((c>='0'&&c<='9')?1:0)
-#define  nc_isalpha(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')?1:0)
-#define  nc_isalnum(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')?1:0)
-#define  nc_isupper(c)  ((c>='A'&&c<='Z')?1:0)
-#define  nc_islower(c)  ((c>='a'&&c<='z')?1:0)
-#define  nc_isspace(c)  (c=='\r'||c=='\n'||c=='\t'||c==' ')
-#define  nc_tolower(c)  ((c>='A'&&c<='Z')?(c+('a'-'A')):c)
-#define  nc_toupper(c)  ((c>='a'&&c<='z')?(c-('a'-'A')):c)
-int      nc_snprintf    (nes_state *N, char *str, int size, const char *format, ...);
-int      nc_printf      (nes_state *N, const char *format, ...);
-int      nc_gettimeofday(struct timeval *tv, void *tz);
-char    *nc_memcpy      (char *dst, const char *src, int n);
-int      nc_strlen      (const char *s);
-char    *nc_strchr      (const char *s, int c);
-char    *nc_strncpy     (char *d, const char *s, int n);
-int      nc_strcmp      (const char *s1, const char *s2);
-int      nc_strncmp     (const char *s1, const char *s2, int n);
-void    *nc_memset      (void *s, int c, int n);
-
-void     n_error        (nes_state *N, short int err, const char *fname, const char *format, ...);
-void     n_expect       (nes_state *N, const char *fname, uchar op);
-void     n_warn         (nes_state *N, const char *fname, const char *format, ...);
-/* libc */
-num_t    n_aton         (nes_state *N, const char *str);
-char    *n_ntoa         (nes_state *N, char *str, num_t num, short base, unsigned short dec);
-/* obj.c */
+/* objects.c */
 void    *n_alloc        (nes_state *N, int size, short zero);
 void    *n_realloc      (nes_state *N, void **p, int size, short zero);
 void     n_free         (nes_state *N, void **p);
@@ -119,11 +124,11 @@ void     n_copyval      (nes_state *N, obj_t *cobj1, obj_t *cobj2);
 val_t   *n_newval       (nes_state *N, unsigned short type);
 void     n_freeval      (nes_state *N, obj_t *cobj);
 obj_t   *n_newiobj      (nes_state *N, int index);
-/* opcode.c */
+/* opcodes.c */
 short    n_getop        (nes_state *N, char *name);
 char    *n_getsym       (nes_state *N, short op);
 uchar   *n_seekop       (nes_state *N, uchar *readptr, int ops, int sb);
-/* parse.c */
+/* parser.c */
 obj_t   *n_getfunction  (nes_state *N);
 char    *n_getlabel     (nes_state *N, char *buf);
 num_t    n_getnumber    (nes_state *N);

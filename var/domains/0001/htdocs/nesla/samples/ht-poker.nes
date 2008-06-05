@@ -60,17 +60,17 @@ function ratehand() {
 	straight = { };
 
 	for (i=0;i<5;i++) CARDS[c[i]].dealt=true;
-#	CHECK FOR ROYAL FLUSH
+//	CHECK FOR ROYAL FLUSH
 //	for (n=0;n<4;n++) print("[", CARDS[n+36].dealt==true, CARDS[n+40].dealt==true, CARDS[n+44].dealt==true, CARDS[n+48].dealt==true, CARDS[n+0].dealt==true, "]");
 //	for (n=0;n<4;n++) print("[", ((CARDS[n+36].dealt==true)&&(CARDS[n+40].dealt==true)&&(CARDS[n+44].dealt==true)&&(CARDS[n+48].dealt==true)&&(CARDS[n+0].dealt==true)), "]");
 	for (n=0;n<4;n++) if ((CARDS[n+36].dealt==true)&&(CARDS[n+40].dealt==true)&&(CARDS[n+44].dealt==true)&&(CARDS[n+48].dealt==true)&&(CARDS[n+0].dealt==true)) return 9;
-#	CHECK FOR STRAIGHT FLUSH
+//#	CHECK FOR STRAIGHT FLUSH
 	for (n=0;n<36;n++) if ((CARDS[n+0].dealt==true)&&(CARDS[n+4].dealt==true)&&(CARDS[n+8].dealt==true)&&(CARDS[n+12].dealt==true)&&(CARDS[n+16].dealt==true)) return 8;
-#	CHECK FOR 4 OF A KIND
+//	CHECK FOR 4 OF A KIND
 	kind     = { };
 	for (n=0;n<5;n++)  kind[math.floor(tonumber(c[n])/4)]++;
 	for (n=0;n<13;n++) if (kind[n]==4) return 7;
-#	CHECK FOR A FULL HOUSE
+//	CHECK FOR A FULL HOUSE
 	kind     = { };
 	pair=0;
 	for (n=0;n<5;n++)  kind[math.floor(tonumber(c[n])/4)]++;
@@ -79,7 +79,7 @@ function ratehand() {
 		if (kind[n]==2) global pair=pair+1;
 	}
 	if (pair==2.5) return 6;
-#	CHECK FOR A FLUSH
+//	CHECK FOR A FLUSH
 	flush    = { };
 	for (n=0;n<13;n++) {
 		if (CARDS[n*4+0].dealt==true) flush[0]++;
@@ -88,23 +88,23 @@ function ratehand() {
 		if (CARDS[n*4+3].dealt==true) flush[3]++;
 	}
 	for (n=0;n<3;n++) if (flush[n]==5) return 5;
-#	CHECK FOR A STRAIGHT
+//	CHECK FOR A STRAIGHT
 	straight = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 //	straight = { };
 	for (n=0;n<5;n++)  straight[math.floor(tonumber(c[n])/4)]=1;
 	straight[13]=straight[0];
 	for (n=0;n<10;n++) if (straight[n]+straight[n+1]+straight[n+2]+straight[n+3]+straight[n+4]==5) return 4;
-#	CHECK FOR 3 OF A KIND
+//	CHECK FOR 3 OF A KIND
 	kind     = { };
 	for (n=0;n<5;n++)  kind[math.floor(tonumber(c[n])/4)]++;
 	for (n=0;n<13;n++) if (kind[n]==3) return 3;
-#	CHECK FOR 2 PAIRS
+//	CHECK FOR 2 PAIRS
 	global pair=0;
 	kind     = { };
 	for (n=0;n<5;n++)  kind[math.floor(tonumber(c[n])/4)]++;
 	for (n=0;n<13;n++) if (kind[n]==2) global pair=pair+1;
 	if (pair==2) return 2;
-#	CHECK FOR HIGH PAIR
+//	CHECK FOR HIGH PAIR
 	kind     = { };
 	for (n=0;n<5;n++)  kind[math.floor(tonumber(c[n])/4)]++;
 	if ((kind[10]==2)||(kind[11]==2)||(kind[12]==2)||(kind[0]==2)) return 1;
@@ -164,7 +164,7 @@ function xmlmain() {
 //	print("<PRE>");printvar(_GLOBALS);print("</PRE>");
 	global opt = _POST['OPT'];
 	global r=ratehand();
-#	if response header isn't text/xml, IE will choke on this
+//	if response header isn't text/xml, IE will choke on this
 	_HEADER['CONTENT_TYPE']="text/xml";
 	print("<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n");
 	print("<response>\n");
@@ -180,7 +180,7 @@ function main() {
 	global opt = "";
 
 /*
-	if (_SERVER==null) { # this is a debug block
+	if (_SERVER==null) { // this is a debug block
 		global _SERVER = { REQUEST_METHOD="POST", PATH_INFO="/nesla/blah" }
 		global _POST = { c0=12, c1=16, c2=20, c3=24, c4=28, h0=1, h1=1, h2=1, h3=1, h4=1 }
 	}

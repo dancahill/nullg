@@ -12,13 +12,14 @@
  * Options +ExecCGI
  * AddHandler nes-script .nes
  * Action nes-script /cgi-bin/nesla.cgi
+ * DirectoryIndex index.html index.nes index.php
  *
- * and that'a about it..
+ * and that's about it..
  *
  * the most likely problem is file permissions, but you're on your own there.
  */
 
-// This thing has serious limits that make its usefuless rather limited.
+// This thing has serious limits that make its usefulness rather limited.
 
 global MASTERPASSWORD="nesla";
 if (typeof(_SERVER)!='table') exit;
@@ -53,8 +54,8 @@ A:HOVER  { background-color: #E0E0FF; }
 if (_POST['PASSWORD']!=null) {
 	_GET['DOWNLOAD']='';
 	if (_POST['PASSWORD']==MASTERPASSWORD) {
-		#printf("Set-Cookie: wminfo=%.2s:%.4s:%s:%s:%s; path=%s/; expires=%s\r\n");
-		#printf("Set-Cookie: wmpass=%s; path=%s/\r\n");
+//		printf("Set-Cookie: wminfo=%.2s:%.4s:%s:%s:%s; path=%s/; expires=%s\r\n");
+//		printf("Set-Cookie: wmpass=%s; path=%s/\r\n");
 		_HEADER['SET-COOKIE']="NESLACMS="+_POST['PASSWORD'];
 		print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"", _SERVER['PATH_INFO'], "\");\r\n// -->\r\n</SCRIPT>\r\n");
 		print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=", _SERVER['PATH_INFO'], "\"></NOSCRIPT>\r\n");
@@ -69,7 +70,7 @@ if (_COOKIE['NESLACMS']==null) {
 }
 global MASTERPASSWORD="********";
 
-#if user is logged in, and download request exists, process that instead
+// if user is logged in, and download request exists, process that instead
 if (_GET['DOWNLOAD']!=null) {
 	if (_GET['DOWNLOAD']!='') {
 		sendfile(_GET['DOWNLOAD']);
@@ -80,7 +81,7 @@ if (_GET['DOWNLOAD']!=null) {
 if (_SERVER['REQUEST_METHOD']=='POST') {
 	var opt=_POST['OPT'];
 	if (opt=='browse') {
-		# limit browsing to docroot
+		// limit browsing to docroot
 		if (_SERVER['DOCUMENT_ROOT']==null) {
 			print("you have no docroot");
 		} else {
@@ -101,7 +102,7 @@ if (_SERVER['REQUEST_METHOD']=='POST') {
 			parent=parent+'/'+x[j];
 		}
 		if (parent=='') parent='/';
-		# limit browsing to docroot
+		// limit browsing to docroot
 		if (_SERVER['DOCUMENT_ROOT']==null) {
 			print("you have no docroot");
 		} else {
@@ -132,13 +133,13 @@ if (_SERVER['REQUEST_METHOD']=='POST') {
 			if (string.cmp(x, '.')==0) {
 			} else if (string.cmp(x, '..')==0) {
 			} else if (dir[x].type=='dir') {
-			# hide htaccess files
+			// hide htaccess files
 			} else if (string.cmp(x, '.htaccess')==0) {
 			} else {
 				print("<TR>");
 				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'><A HREF='javascript:nexthand(\"edit\", \"", _POST['PATH']+'/'+x, "\");'>edit</A></TD>");
-#				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'>file - <A HREF='", x, "'>", x, "</A></TD>");
-#				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF='javascript:download(\"", _POST['PATH']+'/'+x, "\");'>", x, "</A></TD>");
+//				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'>file - <A HREF='", x, "'>", x, "</A></TD>");
+//				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF='javascript:download(\"", _POST['PATH']+'/'+x, "\");'>", x, "</A></TD>");
 				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid' WIDTH=66%>file - <A HREF=\"", _SERVER['PATH_INFO'], "?download=", _POST['PATH']+'/'+x, "\" TARGET=\"_blank\">", x, "</A></TD>");
 				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", math.ceil(dir[x].size/1024), " KiB</TD>");
 				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", time.sqldate(dir[x].mtime), " ", time.sqltime(dir[x].mtime), "</TD>");
@@ -207,7 +208,7 @@ function printjs() {
 		"function doresponse(opt, c) {\n",
 		"	return function () {\n",
 		"		if (c.readyState==4) {\n",
-#		"			alert('HTTP status: '+c.status+'\\nHTTP return: '+c.responseText);\n",
+//		"			alert('HTTP status: '+c.status+'\\nHTTP return: '+c.responseText);\n",
 		"			if (c.status==200) {\n",
 		"				redraw(opt, c);\n",
 		"			} else {\n",
@@ -231,7 +232,7 @@ function printjs() {
 		"		fdata+='&file='+filename;\n",
 		"	}\n",
 		"	for (var i=0;i<document.shell.elements.length;i++) {\n",
-#		"		alert(document.shell[i].name+'='+document.shell[i].value);\n",
+//		"		alert(document.shell[i].name+'='+document.shell[i].value);\n",
 		"		fdata+='&'+document.shell[i].name+'='+document.shell[i].value;\n",
 		"	}\n",
 		"	c.onreadystatechange = handlerFunction;\n",
@@ -244,10 +245,10 @@ function printjs() {
 	print("function redraw(opt, c) {\n");
 	print("	if (opt=='browse') {\n");
 	print(
-#		"		r=c.responseXML.documentElement;\n"
+//		"		r=c.responseXML.documentElement;\n"
 		"		r=c.responseText;\n",
 		"		document.getElementById('browsewindow').innerHTML=r;\n"
-#		"		document.getElementById('browsewindow').innerText=r;\n"
+//		"		document.getElementById('browsewindow').innerText=r;\n"
 	);
 	print("	} else if (opt=='shell') {\n");
 	print("		r=c.responseText;\n");

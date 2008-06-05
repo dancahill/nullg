@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +71,7 @@
 
 obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj)
 {
-#define __FUNCTION__ "n_execfunction"
+#define __FUNCTION__ __FILE__ ":n_execfunction()"
 	obj_t listobj;
 	obj_t *cobj, *nobj;
 	val_t *olobj;
@@ -78,6 +79,7 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj)
 	int e;
 
 	DEBUG_IN();
+	settrace();
 	if (fobj->val->type!=NT_CFUNC&&fobj->val->type!=NT_NFUNC) {
 		n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", fobj->name);
 	}
@@ -177,7 +179,7 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj)
 
 obj_t *nes_exec(nes_state *N, const char *string)
 {
-#define __FUNCTION__ "nes_exec"
+#define __FUNCTION__ __FILE__ ":nes_exec()"
 	char namebuf[MAX_OBJNAMELEN+1];
 	obj_t *cobj, *tobj;
 	uchar block, ctype, op;
@@ -185,6 +187,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 	uchar *p;
 
 	DEBUG_IN();
+	settrace();
 	N->single=0;
 	if (jmp==0) {
 		nes_unlinkval(N, &N->r);
@@ -208,6 +211,9 @@ obj_t *nes_exec(nes_state *N, const char *string)
 		block=1;
 	} else block=0;
 	while (*N->readptr) {
+		if (N->signal) {
+			n_error(N, NE_INTERNAL, __FUNCTION__, "killed by external request");
+		}
 		if (block&&(N->brk>0||N->cnt>0||*N->readptr==OP_PCBRACE)) goto end;
 		if (*N->readptr==OP_PCBRACE) {
 			N->readptr++;
@@ -236,7 +242,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 				goto endstmt;
 			case OP_KBREAK:
 				if ((!block)&&(!single)) n_error(N, NE_SYNTAX, __FUNCTION__, "break without block");
-				N->brk=(*N->readptr==OP_NUMDATA)?(int)n_ntoa(N, namebuf, n_getnumber(N), 10, 0):1;
+				N->brk=(short)(*N->readptr==OP_NUMDATA?n_getnumber(N):1);
 				if (*N->readptr==OP_PSEMICOL) N->readptr++;
 				goto end;
 			case OP_KCONT:
@@ -250,7 +256,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 				N->ret=1;
 				goto end;
 			case OP_KEXIT:
-				N->err=(*N->readptr==OP_NUMDATA)?(int)n_ntoa(N, namebuf, n_getnumber(N), 10, 0):0;
+				N->err=(short)(*N->readptr==OP_NUMDATA?n_getnumber(N):0);
 				n_error(N, N->err, __FUNCTION__, "exiting normally");
 			case OP_KELSE:  n_error(N, NE_SYNTAX, __FUNCTION__, "stray else");
 			}
@@ -306,7 +312,7 @@ end:
 #include <string.h>
 int nes_writefile(nes_state *N, char *file, uchar *dat)
 {
-#define __FUNCTION__ "nes_writefile"
+#define __FUNCTION__ __FILE__ ":nes_writefile()"
 	char outfile[512];
 	int fd;
 
@@ -323,7 +329,7 @@ int nes_writefile(nes_state *N, char *file, uchar *dat)
 
 int nes_execfile(nes_state *N, char *file)
 {
-#define __FUNCTION__ "nes_execfile"
+#define __FUNCTION__ __FILE__ ":nes_execfile()"
 	obj_t *cobj=nes_getobj(N, &N->g, "_filepath");
 	char buf[512];
 	char *pfile;
@@ -339,6 +345,7 @@ int nes_execfile(nes_state *N, char *file)
 	int rc;
 	char *o;
 
+	settrace();
 	if (jmp==0) {
 		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
 		if (setjmp(*N->savjmp)==0) {
@@ -417,6 +424,8 @@ nes_state *nes_newstate()
 		{ NULL, NULL }
 	};
 	FUNCTION list_file[]={
+		{ "append",	(NES_CFUNC)nl_filewrite	},
+		{ "mkdir",	(NES_CFUNC)nl_filemkdir	},
 		{ "read",	(NES_CFUNC)nl_fileread	},
 		{ "stat",	(NES_CFUNC)nl_filestat  },
 		{ "unlink",	(NES_CFUNC)nl_fileunlink},
@@ -522,7 +531,9 @@ nes_state *nes_newstate()
 
 nes_state *nes_endstate(nes_state *N)
 {
+#define __FUNCTION__ __FILE__ ":nes_endstate()"
 	if (N!=NULL) {
+		settrace();
 		if (N->outbuflen) nl_flush(N);
 		nes_freetable(N, &N->g);
 		nes_freetable(N, &N->l);
@@ -533,4 +544,5 @@ nes_state *nes_endstate(nes_state *N)
 		n_free(N, (void *)&N);
 	}
 	return NULL;
+#undef __FUNCTION__
 }

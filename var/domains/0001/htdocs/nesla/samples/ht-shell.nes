@@ -1,7 +1,7 @@
 #!/usr/bin/nesla
 if (typeof(_SERVER)!='table') {
 	global _SERVER = { REQUEST_METHOD="GET", PATH_INFO="/nesla/blah" };
-} # this is a debug block
+} // this is a debug block
 if (string.cmp(_SERVER['REQUEST_METHOD'], "POST")==0) {
 	var path=_POST['PATH'];
 	var command=_POST['COMMAND'];

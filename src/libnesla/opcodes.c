@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -289,9 +290,10 @@ const optab oplist[] = {
 /* return the next op/cmp and advance the readptr */
 short n_getop(nes_state *N, char *name)
 {
-#define __FUNCTION__ "n_getop"
+#define __FUNCTION__ __FILE__ ":n_getop()"
 	short i;
 
+	settrace();
 	if (N->readptr==NULL) n_error(N, NE_SYNTAX, __FUNCTION__, "NULL readptr");
 	if (*N->readptr>127) {
 		name[0]=0;
@@ -342,6 +344,8 @@ short n_getop(nes_state *N, char *name)
 
 char *n_getsym(nes_state *N, short op)
 {
+#define __FUNCTION__ __FILE__ ":n_getsym()"
+	settrace();
 	switch (op) {
 	case OP_STRDATA : return "string";
 	case OP_NUMDATA : return "number";
@@ -349,12 +353,15 @@ char *n_getsym(nes_state *N, short op)
 	default         : if (op>OP_LABEL&&op<OP_UNDEFINED) return oplist[op].name;
 	}
 	return "(unknown)";
+#undef __FUNCTION__
 }
 
 #define skipblock(op) { while (*p) { if (*p==op) return p+1; else p=n_seekop(N, p, 1, 1); } }
 
 uchar *n_seekop(nes_state *N, uchar *p, int ops, int sb)
 {
+#define __FUNCTION__ __FILE__ ":n_seekop()"
+	settrace();
 	while (ops-->0) {
 		switch (*p) {
 		case '\0'       : return p;
@@ -367,4 +374,5 @@ uchar *n_seekop(nes_state *N, uchar *p, int ops, int sb)
 		}
 	}
 	return p;
+#undef __FUNCTION__
 }

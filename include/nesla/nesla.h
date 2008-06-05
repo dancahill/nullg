@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +34,7 @@ struct timeval { long tv_sec; long tv_usec; };
 #include <setjmp.h>
 
 #define NESLA_NAME      "nesla"
-#define NESLA_VERSION   "0.9.1"
+#define NESLA_VERSION   "0.9.2"
 
 #define MAX_OBJNAMELEN  64
 #define MAX_OUTBUFLEN   8192
@@ -84,6 +85,7 @@ typedef struct nes_valrec {
 	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
 	unsigned short refs; /* number of references to this node */
 	unsigned long  size; /* storage size of string, nfunc or cdata */
+//	obj_t ptable;        /* parent table for hierarchical lookups */
 	union {
 		num_t  num;
 		char  *str;
@@ -109,6 +111,8 @@ typedef struct nes_state {
 	short cnt;
 	short ret;
 	short err;
+	/* intended for external signals to the parser.  for now, non-zero just means to shut down */
+	short signal;
 	short debug;
 	short single;
 	short strict;
@@ -119,6 +123,7 @@ typedef struct nes_state {
 	char numbuf[128];
 	char outbuf[MAX_OUTBUFLEN+1];
 	char errbuf[256];
+	char *tracefn;
 } nes_state;
 
 #ifndef NESLA_NOFUNCTIONS

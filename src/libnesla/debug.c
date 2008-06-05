@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,9 +23,10 @@
 
 void dumpsyms(nes_state *N, char *file, long line, uchar *ptr, long count)
 {
-#define __FUNCTION__ "dumpsyms"
+#define __FUNCTION__ __FILE__ ":dumpsyms()"
 	long i=0;
 
+	settrace();
 	n_warn(N, __FUNCTION__, "%s:%d next %d ops 0x%08x [%d]", file, line, count, N->readptr, *N->readptr);
 	do {
 		switch (*ptr) {
@@ -44,12 +46,13 @@ void dumpsyms(nes_state *N, char *file, long line, uchar *ptr, long count)
 
 void n_decompile(nes_state *N)
 {
-#define __FUNCTION__ "n_decompile"
+#define __FUNCTION__ __FILE__ ":n_decompile()"
 	uchar *p;
 	long len;
 	uchar *offset=NULL;
 	short showbold;
 
+	settrace();
 	nl_flush(N);
 	if (N->blockptr==NULL) { printf(" N->blockptr is NULL\n"); return; }
 	if (N->readptr==NULL) { printf(" N->readptr is NULL\n"); return; }

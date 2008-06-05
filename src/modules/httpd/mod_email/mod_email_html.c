@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -127,18 +127,37 @@ void htselect_mailjump(CONN *sid, int selected)
 	return;
 }
 */
+
+static int htselect_folders_r(CONN *sid, obj_t *qobj, int depth, int accountid, int parentid, int selected)
+{
+	obj_t *cobj, *tobj;
+	int foldercount=0;
+	int fid, pid;
+	int i;
+
+	tobj=nes_settable(sid->N, nes_settable(sid->N, qobj, "_data"), "folders");
+	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
+		pid=nes_getnum(sid->N, cobj, "parentid");
+		if (pid==parentid) {
+			fid=nes_getnum(sid->N, cobj, "folderid");
+			prints(sid, "document.write('<OPTION VALUE=\"accountid=%d&folderid=%d\">&nbsp;&nbsp;&nbsp;&nbsp;", accountid, fid);
+			for (i=0;i<depth;i++) prints(sid, "&nbsp;&nbsp;&nbsp;&nbsp;");
+			prints(sid, "%s", str2html(sid, nes_getstr(sid->N, cobj, "cn")));
+//			if ((account==accountid)&&(x==folderid)) prints(sid, " - (Current)");
+			if (fid==selected) prints(sid, " - (Current)");
+			prints(sid, "');\r\n");
+			foldercount+=htselect_folders_r(sid, qobj, depth+1, accountid, fid, selected);
+		}
+	}
+	return foldercount;
+}
+
 void htselect_mailjump(CONN *sid, int accountid, int folderid)
 {
 	char *ScriptName=nes_getstr(sid->N, nes_settable(sid->N, &sid->N->g, "_SERVER"), "SCRIPT_NAME");
-	_btree *btree;
-	_ptree *ptree;
-//	char curdate[32];
 	int account;
-	int base;
-	int depth;
-	int indent;
 	int menustyle=0;
-	int i, j, k;
+	int i, j;
 	int x;
 	obj_t *qobj1=NULL;
 	obj_t *qobj2=NULL;
@@ -154,12 +173,34 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 	prints(sid, "	%slocation.replace('%s/mail/%s?'+document.mailjump.accountid.options[document.mailjump.accountid.selectedIndex].value);\r\n", menustyle?"top.gwmain.":"", ScriptName, menustyle?"main":"list");
 	prints(sid, "}\r\n");
 	prints(sid, "document.write('<SELECT NAME=accountid style=\"width:250px\" onChange=\"ChangeMail()\">');\r\n");
+
+	qobj2=nes_settable(sid->N, qobj1, "_rows");
+	for (qobj2=qobj2->val->d.table;qobj2;qobj2=qobj2->next) {
+		account=nes_getnum(sid->N, qobj2, "id");
+		x=-1;
+		for (j=0;j<ldir_numentries(&qobj2);j++) {
+			if (atoi(ldir_getval(&qobj2, j, "id"))==folderid) x=j;
+		}
+		prints(sid, "document.write('<OPTION VALUE=\"accountid=%d&folderid=1\"", account);
+		if (account==accountid) prints(sid, " SELECTED CLASS=selBold");
+		prints(sid, ">[ %s ]", str2html(sid, nes_getstr(sid->N, nes_settable(sid->N, qobj2, "_data"), "cn")));
+//		if (account==accountid) prints(sid, " - %s", x>-1?str2html(sid, ldir_getval(&qobj2, x, "cn")):"");
+		prints(sid, "');\r\n");
+		if (account==accountid) {
+			htselect_folders_r(sid, qobj2, 1, accountid, 0, folderid);
+		}
+	}
+
+/*
 	for (i=0;i<ldir_numentries(&qobj1);i++) {
 		account=atoi(ldir_getval(&qobj1, i, "id"));
 		base=0;
 		depth=1;
 		indent=0;
 //		if (sql_queryf(&sqr2, "SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->uid, account)<0) continue;
+		tobj=nes_settable(sid->N, nes_settable(sid->N, qobj2, "_data"), "folders");
+		qobj2=qobj2->next;
+/ *
 		if ((qobj2=ldir_getlist(sid->N, "emailfolder", account, sid->dat->did))==NULL) {
 			prints(sid, "error listing folders"); break;
 		}
@@ -171,6 +212,7 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 				prints(sid, "error listing folders"); break;
 			}
 		}
+* /
 		btree=calloc(ldir_numentries(&qobj2)+2, sizeof(_btree));
 		ptree=calloc(ldir_numentries(&qobj2)+2, sizeof(_ptree));
 		k=0;
@@ -219,6 +261,7 @@ widthloop:
 		free(btree);
 		ldir_freeresult(&qobj2);
 	}
+*/
 	prints(sid, "document.write('</SELECT>');\r\n");
 	prints(sid, "//-->\r\n");
 	prints(sid, "</SCRIPT>\r\n");

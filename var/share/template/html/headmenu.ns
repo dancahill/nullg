@@ -115,6 +115,10 @@
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
 			print("<A CLASS='TBAR' HREF=/admin/domainlist>DOMAINS</A>");
 //		}
+
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/admin/printdb.ns>DB DUMP</A>");
+
 //		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(sid, "httpd", "menu_adm_logs"));
 //		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(sid, "httpd", "menu_adm_check"));
 //		print("<A CLASS='TBAR' HREF=/admin/userlist>%s</A>", lang_gets(sid, "httpd", "menu_adm_users"));

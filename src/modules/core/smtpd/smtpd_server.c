@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2007 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ typedef struct {
 	short unsigned int rcptalloc;
 	int msgbodysize;
 	char helo[1024];
+	char ehlo[1024];
 	char from[1024];
 	char *msgbody;
 	char **rcpt;
@@ -422,6 +423,7 @@ void smtp_dorequest(CONN *sid)
 
 	memset((char *)&mconn, 0, sizeof(mconn));
 	mconn.sender_can_relay=allow_relay(sid);
+	log_access(proc->N, MODSHORTNAME, "%s:%d - NEW CONNECTION", sid->dat->RemoteAddr, sid->dat->RemotePort);
 /*
 	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_can_relay?" - relaying allowed":" - relaying denied");
 */
@@ -437,8 +439,19 @@ void smtp_dorequest(CONN *sid)
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(mconn.helo, sizeof(mconn.helo)-1, "%s", ptemp);
-			tcp_fprintf(&sid->socket, "250 Hello, %s\r\n", mconn.helo);
+			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.helo, sid->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.helo);
 			if (strlen(mconn.helo)) {
+				sid->state=1;
+				break;
+			}
+		} else if (strncasecmp(line, "ehlo", 4)==0) {
+			ptemp=line+4;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			snprintf(mconn.ehlo, sizeof(mconn.ehlo)-1, "%s", ptemp);
+			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.ehlo, sid->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.ehlo);
+			if (strlen(mconn.ehlo)) {
 				sid->state=1;
 				break;
 			}
@@ -456,6 +469,20 @@ void smtp_dorequest(CONN *sid)
 		if (strcasecmp(line, "quit")==0) {
 			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");
 			break;
+
+		} else if (strncasecmp(line, "helo", 4)==0) {
+			ptemp=line+4;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			snprintf(mconn.helo, sizeof(mconn.helo)-1, "%s", ptemp);
+			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.helo, sid->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.helo);
+		} else if (strncasecmp(line, "ehlo", 4)==0) {
+			ptemp=line+4;
+			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
+			snprintf(mconn.ehlo, sizeof(mconn.ehlo)-1, "%s", ptemp);
+			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.ehlo, sid->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.ehlo);
+
 		} else if (strncasecmp(line, "mail from:", 10)==0) {
 			smtp_from(sid, &mconn, line+10);
 		} else if (strncasecmp(line, "rcpt to:", 8)==0) {

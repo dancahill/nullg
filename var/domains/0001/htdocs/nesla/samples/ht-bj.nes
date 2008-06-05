@@ -105,7 +105,7 @@ function printredraw() {
 function main() {
 	if (_SERVER['REQUEST_METHOD']==null) {
 		global _SERVER = { REQUEST_METHOD="GET", PATH_INFO="/nesla/blah" }
-	} # this is a debug block
+	} // this is a debug block
 	if (typeof(_SESSION)!='table') global _SESSION = { };
 	if (typeof(_SESSION['BJ'])!='table') _SESSION['BJ'] = { };
 	_SESSION['BJ'].won  = tonumber(_SESSION['BJ'].won);

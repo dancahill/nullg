@@ -1,5 +1,6 @@
 /*
-    NESLA NullLogic Embedded Scripting Language - Copyright (C) 2007 Dan Cahill
+    NESLA NullLogic Embedded Scripting Language
+    Copyright (C) 2007-2008 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,9 +23,10 @@
 /* read a function from N->readptr */
 obj_t *n_getfunction(nes_state *N)
 {
-#define __FUNCTION__ "n_getfunction"
+#define __FUNCTION__ __FILE__ ":n_getfunction()"
 	uchar *as, *be;
 
+	settrace();
 	/* if (N->debug) n_warn(N, __FUNCTION__, "snorting lines from %s()", cobj->name); */
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	as=N->readptr++;
@@ -44,20 +46,25 @@ obj_t *n_getfunction(nes_state *N)
 /* read a label from N->readptr */
 char *n_getlabel(nes_state *N, char *buf)
 {
+#define __FUNCTION__ __FILE__ ":n_getlabel()"
 	char *p=(char *)N->readptr+2;
 
+	settrace();
 	N->readptr+=3+N->readptr[1];
 	if (buf) p=nc_strncpy(buf, p, MAX_OBJNAMELEN);
 	return p;
+#undef __FUNCTION__
 }
 
 /* read a number val from N->readptr */
 num_t n_getnumber(nes_state *N)
 {
+#define __FUNCTION__ __FILE__ ":n_getnumber()"
 	char *s=(char *)N->readptr+2;
 	num_t rval=0;
 	num_t rdot=0.1;
 
+	settrace();
 	N->readptr+=3+N->readptr[1];
 	while (nc_isdigit(*s)) {
 		rval=10*rval+(*s++-'0');
@@ -70,27 +77,32 @@ num_t n_getnumber(nes_state *N)
 	}
 	/* if (N->debug) n_warn(N, __FUNCTION__, "[%f]", rval); */
 	return rval;
+#undef __FUNCTION__
 }
 
 /* read a string val from N->readptr */
 obj_t *n_getstring(nes_state *N)
 {
+#define __FUNCTION__ __FILE__ ":n_getstring()"
 	int size=readi4((N->readptr+1));
 
+	settrace();
 	nes_strcat(N, nes_setstr(N, &N->r, "", NULL, 0), (char *)N->readptr+5, size);
 	N->readptr+=6+size;
 	/* if (N->debug) n_warn(N, __FUNCTION__, "%d '%s'", size, nes_tostr(N, cobj)); */
 	return &N->r;
+#undef __FUNCTION__
 }
 
 /* return the next table index */
 obj_t *n_readindex(nes_state *N, obj_t *tobj, char *lastname)
 {
-#define __FUNCTION__ "n_readindex"
+#define __FUNCTION__ __FILE__ ":n_readindex()"
 	obj_t *cobj;
 	char *p;
 
 	DEBUG_IN();
+	settrace();
 	sanetest();
 	if (lastname) lastname[0]=0;
 	if (*N->readptr==OP_PDOT) {
@@ -119,12 +131,13 @@ end:
 /* read the following list of values into the supplied table */
 obj_t *n_readtable(nes_state *N, obj_t *tobj)
 {
-#define __FUNCTION__ "n_readtable"
+#define __FUNCTION__ __FILE__ ":n_readtable()"
 	char namebuf[MAX_OBJNAMELEN+1];
 	unsigned int i;
 	obj_t *cobj;
 
 	DEBUG_IN();
+	settrace();
 	sanetest();
 	n_expect(N, __FUNCTION__, OP_POBRACE);
 	N->readptr++;
@@ -199,12 +212,13 @@ end:
 /* read a var (or table) from N->readptr */
 obj_t *n_readvar(nes_state *N, obj_t *tobj, obj_t *cobj)
 {
-#define __FUNCTION__ "n_readvar"
+#define __FUNCTION__ __FILE__ ":n_readvar()"
 	char namebuf[MAX_OBJNAMELEN+1];
 	char *nameptr=namebuf;
 	uchar preop=0;
 
 	DEBUG_IN();
+	settrace();
 	sanetest();
 	if (cobj==NULL) {
 		if (*N->readptr=='\0') { DEBUG_OUT(); return NULL; }
@@ -236,10 +250,11 @@ obj_t *n_readvar(nes_state *N, obj_t *tobj, obj_t *cobj)
 /* store a val in the supplied object */
 obj_t *n_storeval(nes_state *N, obj_t *cobj)
 {
-#define __FUNCTION__ "n_storeval"
+#define __FUNCTION__ __FILE__ ":n_storeval()"
 	obj_t *nobj;
 	uchar op;
 
+	settrace();
 	switch (*N->readptr) {
 	case OP_MADDADD:
 		N->readptr++;
@@ -266,7 +281,8 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 		if (nes_typeof(cobj)==NT_STRING) {
 			N->readptr++;
 			nobj=nes_eval(N, (char *)N->readptr);
-			nes_strmul(N, cobj, (int)nobj->val->d.num);
+			if (nobj->val->d.num<0) nes_strmul(N, cobj, 0);
+			else nes_strmul(N, cobj, (int)nobj->val->d.num);
 			return cobj;
 		}
 	case OP_MSUBEQ :
@@ -315,7 +331,8 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 
 static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 {
-#define __FUNCTION__ "n_evalobj"
+#define __FUNCTION__ __FILE__ ":n_evalobj()"
+	settrace();
 	cobj->val=NULL;
 	if (*N->readptr==OP_POBRACE) {
 		nes_setvaltype(N, cobj, NT_TABLE);
@@ -393,9 +410,10 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 
 static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 {
+#define __FUNCTION__ __FILE__ ":n_evalmath()"
 	int n, t;
 
-#define __FUNCTION__ "n_evalmath"
+	settrace();
 	if (nes_isnull(nobj)) {
 		n=nes_isnull(cobj);
 		t=nes_istrue(cobj);
@@ -517,7 +535,8 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 */
 		case NT_NUMBER:
 			if (op==OP_MMUL) {
-				nes_strmul(N, cobj, (int)nobj->val->d.num);
+				if (nobj->val->d.num<0) nes_strmul(N, cobj, 0);
+				else nes_strmul(N, cobj, (int)nobj->val->d.num);
 				return cobj;
 			} else {
 				nes_setstr(N, nobj, "", n_ntoa(N, N->numbuf, nobj->val->d.num, 10, 6), -1);
@@ -583,10 +602,11 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 
 static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1)
 {
-#define __FUNCTION__ "n_evalsub"
+#define __FUNCTION__ __FILE__ ":n_evalsub()"
 	obj_t obj2;
 	uchar op2;
 
+	settrace();
 	while (OP_ISMATH(*N->readptr)) {
 		op2=*N->readptr++;
 		n_evalobj(N, &obj2);
@@ -607,10 +627,11 @@ static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1)
 
 obj_t *nes_eval(nes_state *N, const char *string)
 {
-#define __FUNCTION__ "nes_eval"
+#define __FUNCTION__ __FILE__ ":nes_eval()"
 	obj_t obj1;
 
 	DEBUG_IN();
+	settrace();
 	sanetest();
 	if (N->savjmp!=NULL) {
 		N->readptr=(uchar *)string;
@@ -653,6 +674,7 @@ int nc_vsnprintf(nes_state *N, char *dest, int max, const char *format, va_list 
 
 obj_t *nes_evalf(nes_state *N, const char *fmt, ...)
 {
+#define __FUNCTION__ __FILE__ ":nes_evalf()"
 	va_list ap;
 	uchar *buf;
 	uchar *oldbptr=N->blockptr;
@@ -660,6 +682,7 @@ obj_t *nes_evalf(nes_state *N, const char *fmt, ...)
 	uchar *oldrptr=N->readptr;
 	obj_t *cobj;
 
+	settrace();
 	if ((buf=n_alloc(N, MAXBUF, 1))==NULL) return NULL;
 	va_start(ap, fmt);
 	nc_vsnprintf(N, (char *)buf, MAXBUF, fmt, ap);
@@ -671,4 +694,5 @@ obj_t *nes_evalf(nes_state *N, const char *fmt, ...)
 	N->blockend=oldbend;
 	N->readptr=oldrptr;
 	return cobj;
+#undef __FUNCTION__
 }
