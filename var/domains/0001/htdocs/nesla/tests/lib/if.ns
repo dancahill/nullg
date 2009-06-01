@@ -1,0 +1,28 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testif() {
+	local x=2;
+	local str="";
+
+	if (x==1) {
+		str=str+"test 1 (bad)";
+	} else if (x==2) {
+		str=str+"test 2 (good)";
+	} else {
+		str=str+"test 3 (bad)";
+	}
+	expect("simple 'if' test", "test 2 (good)", str);
+
+	x=0;
+	if (x==0) {
+	} else if (x==x++) {
+	} else if (x==x++) {
+	} else if (x==x++) {
+	}
+	# this actually returned 3 in 0.5.0
+	expect("simple 'if' test 2", 0, x);
+
+	return;
+}
+testif();
+global testif=null;

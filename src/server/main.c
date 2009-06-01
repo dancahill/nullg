@@ -229,6 +229,7 @@ int main(int argc, char *argv[], char *envp[])
 	unsigned short forcerun=0;
 	obj_t *cobj, *tobj;
 	char *ptemp, *p;
+	char pathbuf[MAX_PATH];
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 	memset((char *)&proc, 0, sizeof(proc));
@@ -237,6 +238,21 @@ int main(int argc, char *argv[], char *envp[])
 		printf("nes_newstate() error\r\n");
 		return -1;
 	}
+
+	_snprintf(pathbuf, sizeof(pathbuf)-1, "%s", GetCommandLine());
+	printf("GetCommandLine() = %s\r\n", pathbuf);
+	nes_setstr(proc.N, &proc.N->g, "GetCommandLine", pathbuf, -1);
+	if (isalpha(pathbuf[0]) && pathbuf[1]==':') {
+		p=strrchr(pathbuf, '\\');
+		if (*p!='\0') {
+			*++p='\0';
+			SetCurrentDirectory(pathbuf);
+		}
+	}
+	GetCurrentDirectory(sizeof(pathbuf)-1, pathbuf);
+	printf("GetCurrentDirectory() = %s\r\n", pathbuf);
+	nes_setstr(proc.N, &proc.N->g, "GetCurrentDirectory", pathbuf, -1);
+
 	/* add args */
 	tobj=nes_settable(proc.N, &proc.N->g, "_ARGS");
 	tobj->val->attr|=NST_AUTOSORT;
@@ -253,15 +269,15 @@ int main(int argc, char *argv[], char *envp[])
 		if (!p) continue;
 		*p='\0';
 		p=strchr(envp[i], '=')+1;
-		nes_setstr(proc.N, tobj, tmpbuf, p, strlen(p));
+		nes_setstr(proc.N, tobj, tmpbuf, p, -1);
 	}
 	proc.stats.starttime=time(NULL);
-	cobj=nes_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), strlen(GetCommandLine()));
+	cobj=nes_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), -1);
 	ptemp=cobj->val->d.str;
 	if (p_strcasestr(ptemp, ".exe")!=NULL) {
 		ptemp=p_strcasestr(ptemp, ".exe");
 	}
-	while ((ptemp)&&(*ptemp!=' ')) ptemp++;
+	while (*ptemp && *ptemp!=' ') ptemp++;
 	while (*ptemp==' ') ptemp++;
 	if (!os_version(&g_dwOSVersion)) return 0;
 	if ((g_dwOSVersion!=OS_WINNT)&&(g_dwOSVersion!=OS_WIN2K)) {

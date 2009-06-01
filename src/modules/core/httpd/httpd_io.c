@@ -61,7 +61,7 @@ void flushheader(CONN *sid)
 	memset(line, 0, sizeof(line));
 	if (tcp_fprintf(&sid->socket, "%s %d OK\r\n", nes_getstr(sid->N, hrobj, "PROTOCOL"), sid->dat->out_status)<0) goto err;
 	/* log_error(proc->N, MODSHORTNAME "responses", __FILE__, __LINE__, 1, "%s:%d %s %d OK\r\n", sid->socket.RemoteAddr, sid->socket.RemotePort, nes_getstr(sid->N, hrobj, "PROTOCOL"), sid->dat->out_status); */
-	for (cobj=hrobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=hrobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if ((cobj->val->type!=NT_STRING)&&(cobj->val->type!=NT_NUMBER)) continue;
 		strncpy(tmpnam, cobj->name, sizeof(tmpnam)-1);
 		if (strcmp(tmpnam, "CONTENT_TYPE")==0) ctype=1;

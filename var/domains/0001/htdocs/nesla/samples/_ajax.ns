@@ -1,0 +1,57 @@
+#!/usr/bin/nesla
+function printxml() {
+	print("<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">\n<!--\n");
+	print(
+		"function newXMLHttpRequest() {\n",
+		"	var xmlreq = false;\n",
+		"\n",
+		"	if (window.XMLHttpRequest) {\n",
+		"		xmlreq = new XMLHttpRequest();\n",
+		"	} else if (window.ActiveXObject) {\n",
+		"		try {\n",
+		"			xmlreq = new ActiveXObject('Msxml2.XMLHTTP');\n",
+		"		} catch (e1) {\n",
+		"			try {\n",
+		"				xmlreq = new ActiveXObject('Microsoft.XMLHTTP');\n",
+		"			} catch (e2) {\n",
+		"				// Unable to create an XMLHttpRequest with ActiveX\n",
+		"			}\n",
+		"		}\n",
+		"	}\n",
+		"	return xmlreq;\n",
+		"}\n"
+	);
+	print(
+		"function doresponse(c) {\n",
+		"	return function () {\n",
+		"		if (c.readyState==4) {\n",
+		"			if (c.status==200) {\n",
+		"				redraw(c);\n",
+		"			} else {\n",
+		"				alert('HTTP status: '+c.status+'\\nHTTP return: '+c.responseText);\n",
+		"			}\n",
+		"		}\n",
+		"	}\n",
+		"}\n"
+	);
+	print(
+		"function nexthand(opt) {\n",
+		"	var c = newXMLHttpRequest();\n",
+		"	var handlerFunction = doresponse(c);\n",
+		"	var fdata='';\n",
+		"\n",
+		"	for (var i=0;i<document.game.elements.length;i++) {\n",
+		"		if (i>0) fdata+='&';\n",
+		"		fdata+=document.game[i].name+'='+document.game[i].value;\n",
+		"	}\n",
+		"	fdata+='&opt='+opt;\n",
+		"	c.onreadystatechange = handlerFunction;\n",
+		"	c.open('post', '", _SERVER['PATH_INFO'], "', true);\n",
+		"	c.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');\n",
+		"	c.setRequestHeader('Connection', 'close');\n",
+		"	c.send(fdata);\n",
+		"}\n"
+	);
+	print("// -->\n</SCRIPT>\n");
+	return;
+}

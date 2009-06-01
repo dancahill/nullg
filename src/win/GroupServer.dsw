@@ -15,7 +15,7 @@ Package=<4>
     Project_Dep_Name libngs
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libnil
+    Project_Dep_Name libnesla
     End Project Dependency
 }}}
 
@@ -81,7 +81,7 @@ Package=<4>
     Project_Dep_Name libngs
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libnil
+    Project_Dep_Name libnesla
     End Project Dependency
 }}}
 
@@ -99,7 +99,7 @@ Package=<4>
     Project_Dep_Name libngs
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libnil
+    Project_Dep_Name libnesla
     End Project Dependency
 }}}
 
@@ -117,7 +117,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libnil"="libnil.dsp" - Package Owner=<4>
+Project: "libnesla"="libnesla.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -357,7 +357,7 @@ Package=<4>
     Project_Dep_Name libngs
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name libnil
+    Project_Dep_Name libnesla
     End Project Dependency
 }}}
 

@@ -71,7 +71,7 @@ void dumpvars(nes_state *N, obj_t *tobj, int depth)
 		} else if (cobj->val->type==NT_TABLE) {
 			if (strcmp(cobj->name, "_GLOBALS")==0) continue;
 			fprintf(fp, "%s%s%s%s%s = {\n", indent, g, b?"[":"", cobj->name, b?"]":"");
-			dumpvars(N, cobj->val->d.table, depth+1);
+			dumpvars(N, cobj->val->d.table.f, depth+1);
 			fprintf(fp, "%s}%s\n", indent, l);
 		}
 	}
@@ -91,7 +91,7 @@ int savefile(nes_state *N)
 			return -1;
 		}
 		fprintf(fp, "# This file contains config settings for NullLogic GroupServer.\n\n");
-		dumpvars(N, N->g.val->d.table, 0);
+		dumpvars(N, N->g.val->d.table.f, 0);
 		fclose(fp);
 	}
 	return 0;

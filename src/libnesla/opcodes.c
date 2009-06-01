@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "nesla/libnesla.h"
 #include "opcodes.h"
 
-#define IS_MATHOP(c) (c=='='||c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='&'||c=='|'||c=='^'||c=='!'||c=='<'||c=='>')
+#define IS_MATHOP(c) (c=='='||c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='&'||c=='|'||c=='^'||c=='!'||c=='<'||c=='>'||c==':'||c=='?')
 #define IS_PUNCOP(c) (c=='('||c==')'||c==','||c=='{'||c=='}'||c==';'||c=='.'||c=='['||c==']')
 #define IS_DATA(c)   (c=='\''||c=='\"'||nc_isdigit(c))
 #define IS_LABEL(c)  (c=='_'||c=='$'||nc_isalpha(c))
@@ -221,37 +221,37 @@ const optab oplist[] = {
 	{ NULL,       OP_UNDEFINED, -1 }, /* 193 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 194 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 195 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 196 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 197 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 198 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 199 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 200 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 201 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 202 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 203 */
 
 	/* KEYWORDS */
-	{ "exit",     OP_KEXIT    , -1 },  /* 204 */
-	{ "catch",    OP_KCATCH   , -1 },  /* 205 */
-	{ "try",      OP_KTRY     , -1 },  /* 206 */
-	{ "while",    OP_KWHILE   , -1 },  /* 207 */
-	{ "do",       OP_KDO      , -1 },  /* 208 */
-	{ "for",      OP_KFOR     , -1 },  /* 209 */
-	{ "else",     OP_KELSE    , -1 },  /* 210 */
-	{ "if",       OP_KIF      , -1 },  /* 211 */
-	{ "var",      OP_KVAR     , -1 },  /* 212 */
-	{ "local",    OP_KLOCAL   , -1 },  /* 213 */
-	{ "global",   OP_KGLOB    , -1 },  /* 214 */
-	{ "function", OP_KFUNC    , -1 },  /* 215 */
-	{ "return",   OP_KRET     , -1 },  /* 216 */
-	{ "continue", OP_KCONT    , -1 },  /* 217 */
-	{ "break",    OP_KBREAK   , -1 },  /* 218 */
+	{ "exit",     OP_KEXIT    , -1 },  /* 196 */
+	{ "throw",    OP_KTHROW   , -1 },  /* 197 */
+	{ "finally",  OP_KFINALLY , -1 },  /* 198 */
+	{ "catch",    OP_KCATCH   , -1 },  /* 199 */
+	{ "try",      OP_KTRY     , -1 },  /* 200 */
+	{ "while",    OP_KWHILE   , -1 },  /* 201 */
+	{ "do",       OP_KDO      , -1 },  /* 202 */
+	{ "foreach",  OP_KFOREACH , -1 },  /* 203 */
+	{ "for",      OP_KFOR     , -1 },  /* 204 */
+	{ "else",     OP_KELSE    , -1 },  /* 205 */
+	{ "if",       OP_KIF      , -1 },  /* 206 */
+	{ "var",      OP_KVAR     , -1 },  /* 207 */
+	{ "local",    OP_KLOCAL   , -1 },  /* 208 */
+	{ "global",   OP_KGLOB    , -1 },  /* 209 */
+	{ "function", OP_KFUNC    , -1 },  /* 210 */
+	{ "class",    OP_KCLASS   , -1 },  /* 211 */
+	{ "new",      OP_KNEW     , -1 },  /* 212 */
+	{ "return",   OP_KRET     , -1 },  /* 213 */
+	{ "continue", OP_KCONT    , -1 },  /* 214 */
+	{ "break",    OP_KBREAK   , -1 },  /* 215 */
 	/* MATH */
-	{ ">",        OP_MCGT     , 2  },  /* 219 */
-	{ "<",        OP_MCLT     , 2  },  /* 220 */
-	{ ">=",       OP_MCGE     , 2  },  /* 221 */
-	{ "<=",       OP_MCLE     , 2  },  /* 222 */
-	{ "!=",       OP_MCNE     , 2  },  /* 223 */
+	{ "?",        OP_MQUESTION, 1  },  /* 216 */
+	{ ":",        OP_MCOLON   , 1  },  /* 217 */
+	{ ">",        OP_MCGT     , 2  },  /* 218 */
+	{ "<",        OP_MCLT     , 2  },  /* 219 */
+	{ ">=",       OP_MCGE     , 2  },  /* 220 */
+	{ "<=",       OP_MCLE     , 2  },  /* 221 */
+	{ "!=",       OP_MCNE     , 2  },  /* 222 */
+	{ "===",      OP_MCEEQ    , 2  },  /* 223 */
 	{ "==",       OP_MCEQ     , 2  },  /* 224 */
 	{ "!",        OP_MLNOT    , 1  },  /* 225 */
 	{ "||",       OP_MLOR     , 1  },  /* 226 */
@@ -326,13 +326,16 @@ short n_getop(nes_state *N, char *name)
 		name[i++]=*N->readptr++;
 		if (IS_MATHOP(*N->readptr)) {
 			if (name[0]=='=') {
-				if (N->readptr[0]=='=') name[i++]=*N->readptr++;
+				if (N->readptr[0]=='=') {
+					name[i++]=*N->readptr++;
+					if (N->readptr[0]=='=') name[i++]=*N->readptr++;
+				}
 			} else {
 				name[i++]=*N->readptr++;
 			}
 		}
 		name[i]=0;
-		for (i=OP_MCGT;i<=OP_MEQ;i++) {
+		for (i=OP_MQUESTION;i<=OP_MEQ;i++) {
 			if (nc_strcmp(oplist[i].name, name)==0) return oplist[i].value;
 		}
 	} else {

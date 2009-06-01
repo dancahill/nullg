@@ -1,0 +1,53 @@
+<HTML>
+<TITLE>Simple XML/MIME test page</TITLE>
+<HEAD>
+<STYLE TYPE=text/css>
+A        { color: #0000FF; text-decoration: none; }
+A:HOVER  { background-color: #E0E0FF; }
+</STYLE>
+</HEAD>
+<BODY>
+<CENTER>
+<FORM ACTION='<?nsp print(_SERVER['PATH_INFO']); ?>' METHOD='POST' NAME='TEST'>
+<TEXTAREA WRAP=PHYSICAL NAME=DATA ROWS=25 COLS=80 style='width:100%'><?nsp
+if (_POST['DATA']!=null) print(_POST['DATA']);
+?></TEXTAREA>
+<SELECT NAME=type style='width:255px'>
+<OPTION VALUE=MIME <?nsp if (_POST['TYPE']=='MIME') print(" SELECTED"); ?>>MIME
+<OPTION VALUE=XML <?nsp if (_POST['TYPE']=='XML') print(" SELECTED"); ?>>XML
+</SELECT>
+<input type='submit' value='go' name='submit'>
+</FORM>
+</CENTER>
+<?nsp
+rc=dl.loadlib("/usr/local/lib/nesla/libneslaext.so");
+if (_POST['DATA']!=null) {
+	print("<HR><PRE>");
+	if (_POST['TYPE']=='MIME') {
+		x=mime.read(_POST['DATA']);
+		printvar(x);
+	} else if (_POST['TYPE']=='XML') {
+		x=xml.read(_POST['DATA']);
+		printvar(x);
+	}
+	print("<HR></PRE>");
+}
+?>
+<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">
+<!--
+function showdebug() {
+	if (document.getElementById('debug').style.display=='none') {
+		document.getElementById('debug').style.display='block';
+	} else {
+		document.getElementById('debug').style.display='none';
+	}
+}
+// -->
+</SCRIPT>
+<A HREF=javascript:showdebug()>DEBUG</A>
+</CENTER>
+<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>
+<?nsp printvar(_GLOBALS); ?>
+</FONT></PRE></DIV>
+</BODY>
+</HTML>

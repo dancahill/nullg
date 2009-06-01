@@ -1,0 +1,31 @@
+#!/usr/bin/nesla
+/*
+ * standard tcp:
+ * nesla -e "include('pop3.ns');pop3_sync('username', 'password', 'hostname.com');"
+ * or:
+ * nesla -e "include('pop3.ns');pop3_sync('username', 'password', 'hostname.com', 110, false);"
+ * tcp with ssl:
+ * nesla -e "include('pop3.ns');pop3_sync('username', 'password', 'hostname.com', 995, true);"
+ */
+
+include("class.pop3.ns");
+
+function pop3_sync(user, pass, host, port, use_ssl) { 
+	var dirname=user+"@"+host;
+	var pop=new POP3(host, 110, false);
+	if (pop.login(user, pass)==false) exit;
+	count=pop.stat();
+	if (count==1) plural=''; else plural='s';
+	print("\nE-mail status for "+user+"@"+host+"\nYou have "+count+" message"+plural+"\n\n");
+	if (typeof(file.stat(dirname))!='table') file.mkdir(dirname);
+	for (i=1;i<=count;i++) {
+		filename=pop.uidl(i);
+//		pop.head(i);
+//		pop.size(i);
+		if (typeof(file.stat(dirname+"/"+filename))!='table') {
+			file.write(dirname+"/"+filename, pop.retr(i));
+		}
+	}
+	pop.close();
+	return;
+}

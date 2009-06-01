@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,13 @@
 #ifndef _NESLA_H
 #define _NESLA_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define NESLA_NAME      "nesla"
+#define NESLA_VERSION   "0.9.3"
+
 #if defined(TINYCC)||defined(__TURBOC__)
 struct timeval { long tv_sec; long tv_usec; };
 #endif
@@ -32,9 +39,6 @@ struct timeval { long tv_sec; long tv_usec; };
 #include <sys/time.h>
 #endif
 #include <setjmp.h>
-
-#define NESLA_NAME      "nesla"
-#define NESLA_VERSION   "0.9.2"
 
 #define MAX_OBJNAMELEN  64
 #define MAX_OUTBUFLEN   8192
@@ -60,6 +64,7 @@ struct timeval { long tv_sec; long tv_usec; };
 #define num_t double
 #define uchar unsigned char
 #define obj_t struct nes_objrec
+#define tab_t struct nes_tablerec
 #define val_t struct nes_valrec
 #define nes_t struct nes_state
 
@@ -80,6 +85,10 @@ typedef struct NES_CDATA {
 	NES_CFREE obj_term;     /* now tell us how to kill you */
 	/* now begin the stuff that's type-specific */
 } NES_CDATA;
+typedef struct nes_tablerec {
+	obj_t *f;
+	obj_t *l;
+} nes_tablerec;
 typedef struct nes_valrec {
 	unsigned short type; /* val type */
 	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
@@ -91,13 +100,14 @@ typedef struct nes_valrec {
 		char  *str;
 		NES_CFUNC cfunc;
 		NES_CDATA *cdata;
-		obj_t *table;
+		tab_t table;
 	} d;
 } nes_valrec;
 typedef struct nes_objrec {
 	obj_t *prev;
 	obj_t *next;
 	val_t *val;
+	unsigned long hash;
 	char name[MAX_OBJNAMELEN+1];
 } nes_objrec;
 typedef struct nes_state {
@@ -156,9 +166,9 @@ obj_t     *nes_evalf      (nes_state *N, const char *fmt, ...);
 #define    nes_isstr(o)             (o!=NULL&&o->val!=NULL&&o->val->type==NT_STRING)
 #define    nes_istable(o)           (o!=NULL&&o->val!=NULL&&o->val->type==NT_TABLE)
 
-#define    nes_istrue(o)            nes_tobool(N, o)?1:0
+#define    nes_istrue(o)            (nes_tobool(N, o)?1:0)
 
-#define    nes_typeof(o)            nes_isnull(o)?NT_NULL:o->val->type
+#define    nes_typeof(o)            (nes_isnull(o)?NT_NULL:o->val->type)
 
 #define    nes_getnum(N,o,n)        nes_tonum(N, nes_getobj(N,o,n))
 #define    nes_getstr(N,o,n)        nes_tostr(N, nes_getobj(N,o,n))
@@ -176,5 +186,87 @@ obj_t     *nes_evalf      (nes_state *N, const char *fmt, ...);
 #define    nes_seticfunc(N,t,n,p)   nes_setiobj(N, t, n, NT_CFUNC,  (NES_CFUNC)p,    0, NULL, 0)
 #define    nes_setinfunc(N,t,n,s,l) nes_setiobj(N, t, n, NT_NFUNC,  (NES_CFUNC)NULL, 0, s,    l)
 #define    nes_seticdata(N,t,n,s,l) nes_setiobj(N, t, n, NT_CDATA,  (NES_CFUNC)NULL, 0, (void *)s, l)
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+class NesObject {
+public:
+	NesObject()
+	{
+//		memset(O, 0, sizeof(O));
+	}
+	~NesObject()
+	{
+//		nes_unlink(O);
+	}
+	const char *errbuf()
+	{
+//		return this->N->errbuf;
+	}
+private:
+	obj_t O;
+};
+
+class NesState {
+public:
+	NesState()
+	{
+		this->N=nes_newstate();
+	}
+	~NesState()
+	{
+		nes_endstate(this->N);
+	}
+	obj_t *exec(const char *string)
+	{
+		return nes_exec(this->N, string);
+	}
+	int execfile(char *file)
+	{
+		return nes_execfile(this->N, file);
+	}
+	obj_t *eval(const char *string)
+	{
+		return nes_eval(this->N, string);
+	}
+//	obj_t *evalf(const char *fmt, ...)
+//	{
+//		return nes_evalf(this->N, fmt, ...);
+//	}
+	obj_t *getG()
+	{
+		return &this->N->g;
+	}
+	obj_t *getL()
+	{
+		return &this->N->l;
+	}
+	nes_t *getN()
+	{
+		return this->N;
+	}
+	void setdebug(int x)
+	{
+		this->N->debug=x;
+	}
+	int err()
+	{
+		return this->N->err;
+	}
+	int warnings()
+	{
+		return this->N->warnings;
+	}
+	const char *errbuf()
+	{
+		return this->N->errbuf;
+	}
+private:
+	nes_state *N;
+};
+#endif
 
 #endif /* nesla.h */

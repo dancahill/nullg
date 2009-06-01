@@ -81,15 +81,15 @@ int htpage_dirlist(CONN *sid)
 		fixslashes(index);
 		if (stat(index, &sb)==0) return filesend(sid, index);
 
+		snprintf(index, sizeof(index)-1, "%s/%s/index.nsp", nes_tostr(sid->N, cobj1), dir);
+		decodeurl(index);
+		fixslashes(index);
+		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.nsp");
+
 		snprintf(index, sizeof(index)-1, "%s/%s/index.ns", nes_tostr(sid->N, cobj1), dir);
 		decodeurl(index);
 		fixslashes(index);
 		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.ns");
-
-		snprintf(index, sizeof(index)-1, "%s/%s/index.nes", nes_tostr(sid->N, cobj1), dir);
-		decodeurl(index);
-		fixslashes(index);
-		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.nes");
 	} else {
 		cobj1=NULL;
 	}
@@ -109,15 +109,15 @@ tryshared:
 		fixslashes(index);
 		if (stat(index, &sb)==0) return filesend(sid, index);
 
+		snprintf(index, sizeof(index)-1, "%s/%s/index.nsp", nes_tostr(sid->N, cobj2), dir);
+		decodeurl(index);
+		fixslashes(index);
+		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.nsp");
+
 		snprintf(index, sizeof(index)-1, "%s/%s/index.ns", nes_tostr(sid->N, cobj2), dir);
 		decodeurl(index);
 		fixslashes(index);
 		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.ns");
-
-		snprintf(index, sizeof(index)-1, "%s/%s/index.nes", nes_tostr(sid->N, cobj2), dir);
-		decodeurl(index);
-		fixslashes(index);
-		if (stat(index, &sb)==0) return htnes_doscript_htdocs(sid, dir, "index.nes");
 	} else {
 		cobj2=NULL;
 	}

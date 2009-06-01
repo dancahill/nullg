@@ -135,7 +135,7 @@ _haveconf:
 		tobj=nes_getobj(N, tobj, section);
 		if (tobj->val->type!=NT_TABLE) return 0;
 	}
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (strcmp(cobj->name, "_retval")==0) continue;
 		if (cobj->val->type==NT_NULL) {
 		} else if (cobj->val->type==NT_BOOLEAN) {

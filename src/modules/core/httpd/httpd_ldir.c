@@ -22,7 +22,7 @@
  */
 static void sort_bykey(nes_state *N, obj_t *tobj, char *key, char *subtab, int order)
 {
-	obj_t *cobj, *nobj, *robj=tobj->val->d.table;
+	obj_t *cobj, *nobj, *robj=tobj->val->d.table.f;
 	obj_t *sub1, *sub2;
 	short change, swap;
 
@@ -74,7 +74,7 @@ reloop:
 	}
 	if (change) goto reloop;
 end:
-	tobj->val->d.table=robj;
+	tobj->val->d.table.f=robj;
 	return;
 }
 
@@ -133,7 +133,7 @@ static int dump_sub(nes_state *N, char *out, int max, obj_t *tobj)
 	int len=0;
 	int i;
 
-	for (tobj=tobj->val->d.table;tobj;tobj=tobj->next) {
+	for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
 		if (ent) { strncatf(out+len, max-len, ", "); len+=strlen(out+len); }
 		if (tobj->val->type==NT_TABLE) {
 			strncatf(out+len, max-len-1, "%s={ ", tobj->name);
@@ -262,7 +262,7 @@ obj_t *ldir_getlist(nes_state *N, char *oc, int pid, int did)
 		tobj=nes_settable(proc->N, tobj, "_data");
 		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
 		nes_linkval(N, tobj, nes_eval(N, p));
-		for (tobj=tobj->val->d.table;tobj;tobj=tobj->next) {
+		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
 			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
 				unescape(tobj->val->d.str, tobj->val->d.str);
 			}
@@ -285,7 +285,7 @@ void ldir_sortlist(nes_state *N, obj_t *qobj, char *key, char *subtab, int order
 	tobj=nes_getobj(N, qobj, "_rows");
 	if (!nes_istable(tobj)) return;
 	sort_bykey(N, tobj, "sn", "_data", order);
-	for (i=0,tobj=tobj->val->d.table;tobj;i++,tobj=tobj->next) {
+	for (i=0,tobj=tobj->val->d.table.f;tobj;i++,tobj=tobj->next) {
 		sprintf(tobj->name, "%d", i);
 	}
 	return;
@@ -341,7 +341,7 @@ obj_t *ldir_getentry(nes_state *N, char *oc, char *name, int id, int did)
 		tobj=nes_settable(proc->N, tobj, "_data");
 		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
 		nes_linkval(N, tobj, nes_eval(N, p));
-		for (tobj=tobj->val->d.table;tobj;tobj=tobj->next) {
+		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
 			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
 				unescape(tobj->val->d.str, tobj->val->d.str);
 			}
@@ -366,12 +366,12 @@ char *ldir_getval(obj_t **qobj, int rowset, char *name)
 	if (tobj->val->type!=NT_TABLE) return "";
 	tobj2=nes_getobj(proc->N, tobj, "_data");
 	if (tobj2->val->type==NT_TABLE) {
-		for (cobj=tobj2->val->d.table; cobj; cobj=cobj->next) {
+		for (cobj=tobj2->val->d.table.f; cobj; cobj=cobj->next) {
 			if (strcasecmp(cobj->name, name)!=0) continue;
 			return nes_tostr(proc->N, cobj);
 		}
 	}
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (strcasecmp(cobj->name, name)!=0) continue;
 		return nes_tostr(proc->N, cobj);
 	}

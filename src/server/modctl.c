@@ -109,16 +109,79 @@ static int regfunctions()
 	return 0;
 }
 
+static NES_FUNCTION(nesladl_loadlib)
+{
+//	CONN *sid=get_sid();
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+#ifdef WIN32
+	HINSTANCE l;
+#else
+	void *l;
+#endif
+	NES_CFUNC cfunc;
+	int rc=0;
+
+	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->size>0)) {
+		lib_error();
+		l=lib_open(cobj1->val->d.str);
+		if (l==NULL) {
+			log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
+			rc=-1;
+		} else {
+			lib_error();
+			cfunc=(NES_CFUNC)lib_sym(l, "neslalib_init");
+			if (cfunc==NULL) {
+				log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't find entry point for lib");
+				if (l!=NULL) lib_close(l);
+				rc=-1;
+			} else {
+				rc=cfunc(N);
+			}
+		}
+	} else {
+		rc=-1;
+	}
+	nes_setnum(N, &N->r, "", rc);
+	return 0;
+}
+
+
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x)
 #else
 void *cronloop(void *x)
 #endif
 {
+	nes_state *N;
+	obj_t *tobj, *tobj2;
+	time_t oldt, newt;
 	int i;
 
 	log_error(proc.N, "core", __FILE__, __LINE__, 2, "Starting cronloop() thread");
+	oldt=(time(NULL)/60-1)*60;
 	for (;;) {
+		newt=(time(NULL)/60)*60;
+		if (newt>oldt) {
+			oldt=newt;
+			tobj=nes_getobj(proc.N, nes_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
+			if (nes_typeof(tobj)!=NT_STRING || tobj->val->size<1) {
+				log_error(proc.N, "core", __FILE__, __LINE__, 1, "config.cron_script undefined");
+				goto endrun;
+			}
+			if ((N=nes_newstate())==NULL) {
+				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nes_newstate() failed");
+				goto endrun;
+			}
+			tobj2=nes_settable(N, &N->g, "dl");
+			tobj2->val->attr|=NST_HIDDEN;
+			nes_setcfunc(N, tobj2, "loadlib", (NES_CFUNC)nesladl_loadlib);
+			nes_execfile(N, tobj->val->d.str);
+			if (N->err) {
+				log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
+			}
+			N=nes_endstate(N);
+		}
+endrun:
 		sleep(1);
 		for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
 			if (strlen(proc.srvmod[i].mod_name)<1) break;
@@ -226,7 +289,7 @@ int modules_init(nes_state *N)
 	if (tobj->val->type!=NT_TABLE) return 0;
 	tobj=nes_getobj(N, tobj, "modules");
 	if (tobj->val->type!=NT_TABLE) return 0;
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (cobj->name[0]=='_') continue;
 		if (cobj->val->type==NT_STRING) module_load(cobj->val->d.str);
 	}

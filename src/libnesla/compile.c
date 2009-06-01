@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,6 +57,7 @@ static long n_unescape(nes_state *N, char *src, char *dst, long len, cstate *sta
 			continue;
 		}
 		switch (src[i]) {
+			case '0'  : dst[n++]=0;    break;
 			case 'a'  : dst[n++]='\a'; break;
 			case 't'  : dst[n++]='\t'; break;
 			case 'f'  : dst[n++]='\f'; break;
@@ -80,7 +81,7 @@ static obj_t *n_newobj(nes_state *N, cstate *state)
 #define __FUNCTION__ __FILE__ ":n_newobj()"
 	settrace();
 	if (state->lobj1==NULL) {
-		state->lobj1=state->tobj1->val->d.table=n_newiobj(N, state->index);
+		state->lobj1=state->tobj1->val->d.table.f=n_newiobj(N, state->index);
 	} else {
 		state->lobj1->next=n_newiobj(N, state->index);
 		state->lobj1->next->prev=state->lobj1;
@@ -198,7 +199,7 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 			obj_t *cobj;
 
 			n_warn(N, __FUNCTION__, "bad op? index=%d op=%d:%d name='%s'", state->index, op, N->readptr[0], lastname);
-			for (cobj=state->tobj1->val->d.table;cobj;cobj=cobj->next) {
+			for (cobj=state->tobj1->val->d.table.f;cobj;cobj=cobj->next) {
 				cobj->val->attr=0;
 			}
 			n_dumpvars(N, &N->g, 0);
@@ -318,7 +319,7 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 	/* now write the ops */
 	/* optab offset */
 	writei4(state.offset, (state.destbuf+12));
-	for (cobj=state.tobj1->val->d.table;cobj;cobj=cobj->next) {
+	for (cobj=state.tobj1->val->d.table.f;cobj;cobj=cobj->next) {
 		op=(unsigned short)cobj->val->attr;
 		cobj->val->attr=0;
 		if (!nes_isstr(cobj)) break;

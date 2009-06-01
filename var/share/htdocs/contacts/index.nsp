@@ -1,0 +1,11 @@
+<?nsp
+/* FIX THIS */
+_HEADER['STATUS']=302;
+_HEADER['LOCATION']='list';
+?>
+<SCRIPT LANGUAGE='JavaScript' TYPE='text/javascript'>
+<!--
+location.replace('list');
+// -->
+</SCRIPT>
+<NOSCRIPT><META HTTP-EQUIV='Refresh' CONTENT='1; URL=list'></NOSCRIPT>

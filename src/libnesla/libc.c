@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -205,7 +205,12 @@ void n_error(nes_state *N, short int err, const char *fname, const char *format,
 	settrace();
 	N->err=err;
 	if (N->err) {
-		len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : ", fname);
+		if (fname) {
+			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : ", fname);
+		} else {
+			N->errbuf[0]='\0';
+			len=0;
+		}
 		va_start(ap, format);
 		len+=nc_vsnprintf(N, N->errbuf+len, sizeof(N->errbuf)-len-1, format, ap);
 		va_end(ap);
@@ -281,7 +286,37 @@ num_t n_aton(nes_state *N, const char *str)
 	return rval;
 #undef __FUNCTION__
 }
+/*
+char *n_itoa(nes_state *N, char *str, int num, short base)
+{
+#define __FUNCTION__ __FILE__ ":n_itoa()"
+	int n=num;
+	char c, sign='+';
+	char *p, *q;
 
+	settrace();
+	if (base<0) {
+		if (num<0) {
+			sign='-';
+			n*=-1;
+		}
+		base=-base;
+	}
+	p=q=str;
+	do {
+		*p++=nchars[n%base];
+	} while ((n/=base)>0);
+	if (sign=='-') *p++='-';
+	*p='\0';
+	while (q<--p) {
+		c=*q;
+		*q++=*p;
+		*p=c;
+	}
+	return str;
+#undef __FUNCTION__
+}
+*/
 char *n_ntoa(nes_state *N, char *str, num_t num, short base, unsigned short dec)
 {
 #define __FUNCTION__ __FILE__ ":n_ntoa()"

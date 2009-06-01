@@ -208,7 +208,7 @@ int module_menucall(CONN *sid)
 	char *RequestURI=nes_getstr(sid->N, htobj, "REQUEST_URI");
 	HTMOD_MAIN htmod_main;
 
-	for (tobj=modobj->val->d.table;tobj;tobj=tobj->next) {
+	for (tobj=modobj->val->d.table.f;tobj;tobj=tobj->next) {
 		if (tobj->val->type!=NT_TABLE) break;
 		if (tobj->name[0]=='_') continue;
 		cobj=nes_getobj(proc->N, tobj, "fn_uri");
@@ -267,7 +267,7 @@ int modules_init()
 
 	if (!nes_istable(tobj)) return 0;
 	regfunctions();
-	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f;cobj;cobj=cobj->next) {
 		if (cobj->name[0]=='_') continue;
 		if (nes_isstr(cobj)) module_load(cobj->val->d.str);
 	}

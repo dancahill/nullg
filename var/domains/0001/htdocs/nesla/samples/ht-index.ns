@@ -1,0 +1,32 @@
+#!/usr/bin/nesla
+if (typeof(dirlist)=='function') {
+	print("<H1>INDEX OF ", _SERVER['REQUEST_URI'], "</H1>");
+	print("<PRE><FONT SIZE=2>");
+	if (_SERVER['PWD']!=null) {
+		_d=dirlist(_SERVER['PWD']);
+	} else {
+		_d=dirlist(_filepath);
+	}
+	print("<TABLE BORDER=1 WIDTH=100%>\n");
+	foreach (x in _d) {
+		if (string.cmp(x.name, '.')==0) {
+		} else if (string.cmp(x.name, '..')==0) {
+			print("<TR>");
+			print("<TD>", x.type, "</TD>");
+			print("<TD><A HREF='", x.name, "'>", x.name, "</A></TD>");
+			print("<TD>", x.size, "</TD>");
+			print("<TD>", time.sqldate(x.mtime), " ", time.sqltime(x.mtime), "</TD>");
+			print("</TR>\n");
+		} else {
+			print("<TR>");
+			print("<TD>", x.type, "</TD>");
+			print("<TD><A HREF='", x.name, "'>", x.name, "</A></TD>");
+			print("<TD>", x.size, "</TD>");
+			print("<TD>", time.sqldate(x.mtime), " ", time.sqltime(x.mtime), "</TD>");
+			print("</TR>\n");
+		}
+	}
+	print("</TABLE>\n");
+	print("\truntime = ", runtime(), " seconds\n");
+	print("</FONT></PRE>\n");
+}

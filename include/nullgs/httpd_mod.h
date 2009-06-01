@@ -390,7 +390,7 @@ static obj_t *_getobj(nes_state *N, obj_t *tobj, char *oname)
 	obj_t *cobj;
 
 	if ((tobj==NULL)||(tobj->val->type!=NT_TABLE)) return NULL;
-	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f;cobj;cobj=cobj->next) {
 		if (strcmp(cobj->name, oname)==0) return cobj;
 	}
 	return NULL;

@@ -1,0 +1,23 @@
+<HTML><HEAD><TITLE>NESLA WEB TEST</TITLE></HEAD>
+<BODY>
+<SCRIPT LANGUAGE='JavaScript'>
+<!--
+function showdebug() {
+	if (document.getElementById('debug').style.display=='none') {
+		document.getElementById('debug').style.display='block';
+	} else {
+		document.getElementById('debug').style.display='none';
+	}
+}
+// -->
+</SCRIPT>
+<H1>NESLA WEB TEST</H1>
+<PRE><FONT SIZE=2>
+<?nsp include('test1.ns'); ?>
+</FONT></PRE>
+<A HREF='javascript:showdebug()'>SHOW DEBUG</A>
+<DIV ID='debug' STYLE='display:none'><PRE><FONT SIZE=2>
+global _GLOBALS = <?nsp printvar(_GLOBALS); ?>;
+</FONT></PRE></DIV>
+</BODY>
+</HTML>

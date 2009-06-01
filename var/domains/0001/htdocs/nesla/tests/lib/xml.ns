@@ -1,0 +1,109 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testxml() {
+	if (typeof(xml)!='table') {
+		print("SKIPPING XML TESTS\n");
+		return;
+	}
+#	print("XML TEST\n\n");
+	local xstr = {
+"<?xml version='1.0'?>
+<moldb>
+	<molecule>
+		<name>Alanine</name>
+		<symbol>ala</symbol>
+		<code>A</code>
+		<type>hydrophobic</type>
+	</molecule>
+	<molecule>
+		<name>Lysine</name>
+		<symbol>lys</symbol>
+		<code>K</code>
+		<type>charged</type>
+	</molecule>
+</moldb>"
+,
+"<?xml version='1.0'?>
+<!DOCTYPE chapter SYSTEM '/just/a/test.dtd' [
+<!ENTITY plainEntity 'FOO entity'>
+<!ENTITY systemEntity SYSTEM 'xmltest2.xml'>
+]>
+<chapter>
+ <TITLE>Title &plainEntity;</TITLE>
+ <para>
+  <informaltable>
+   <tgroup cols='3'>
+    <tbody>
+     <row><entry>a1</entry><entry morerows='1'>b1</entry><entry>c1</entry></row>
+     <row><entry>a2</entry><entry>c2</entry></row>
+     <row><entry>a3</entry><entry>b3</entry><entry>c3</entry></row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </para>
+ &systemEntity;
+ <section id='about'>
+  <title>About this Document</title>
+  <para>
+   <!-- this is a comment -->
+   <?php echo 'Hi!  This is PHP version ' . phpversion(); ?>
+  </para>
+ </section>
+</chapter>"
+,
+"<?xml version='1.0' encoding='ISO-8859-1'?>
+<FileZilla>
+<Sites>
+<Folder Name='local'>
+<Site Name='gw.nulllogic.lan' Host='gw.nulllogic.lan' Port='22' User='null' Account='' RemoteDir='' LocalDir='' Pass='000000000000'/>
+<Site Name='lt.nulllogic.lan' Host='lt.nulllogic.lan' Port='22' User='null' Account='' RemoteDir='' LocalDir='' Pass='000000000000'/>
+</Folder>
+</Sites>
+<Settings>
+<Item name='Last Server Port' type='numeric'>22</Item>
+<Item name='Last Server User' type='string'>null</Item>
+<Item name='Last Server account' type='string'></Item>
+<Item name='Last Server dont save pass' type='numeric'>0</Item>
+<Item name='Last Server UTF8' type='numeric'>0</Item>
+<Item name='Last server name' type='string'>lt.nulllogic.lan</Item>
+<Item name='Last Server Pass' type='string'>000000000000</Item>
+<Item name='Last Server Firewall Bypass' type='numeric'>0</Item>
+<Item name='Last Server Path' type='string'>4098 0 4 home 4 null</Item>
+<Item name='Last Server Type' type='numeric'>4098</Item>
+<Item name='Last Server transfer mode' type='numeric'>0</Item>
+<Item name='Last Server Timezone' type='numeric'>0</Item>
+<Item name='Default Folder' type='string'/>
+<Item name='Last Server Host' type='string'>lt.nulllogic.lan</Item>
+</Settings>
+<TransferQueue/>
+<RecentServers/>
+</FileZilla>"
+,
+"<DoDirectPaymentResponse xmlns='urn:ebay:api:PayPalAPI'>
+<Timestamp xmlns='urn:ebay:apis:eBLBaseComponents'>2005-08-26T01:07:03Z</Timestamp>
+<Ack xmlns='urn:ebay:apis:eBLBaseComponents'>Success</Ack>
+<Version xmlns='urn:ebay:apis:eBLBaseComponents'>1.000000</Version>
+<Build xmlns='urn:ebay:apis:eBLBaseComponents'>1.0006</Build>
+<Amount xsi:type='cc:BasicAmountType' currencyID='USD'>489.56</Amount>
+<AVSCode xsi:type='xs:string'>X</AVSCode>
+<CVV2Code xsi:type='xs:string'>M</CVV2Code>
+<TransactionID>33638616GW718753G</TransactionID>
+</DoDirectPaymentResponse>"
+};
+
+	X=xml.read(xstr[0], true);
+//	expect("xml.read(...)", "Lysine", X['moldb'][0]['molecule'][1]['name'][0]['value']);
+	expect("xml.read(...)", "Lysine", X['moldb']['molecule'][1]['name']['value']);
+	X=xml.read(xstr[1], true);
+//	expect("xml.read(...)", "a1", X['chapter'][0]['para'][0]['informaltable'][0]['tgroup'][0]['tbody'][0]['row'][0]['entry'][0]['value']);
+	expect("xml.read(...)", "a1", X['chapter']['para']['informaltable']['tgroup']['tbody']['row'][0]['entry'][0]['value']);
+	X=xml.read(xstr[2], true);
+//	expect("xml.read(...)", "local", X['FileZilla'][0]['Sites'][0]['Folder'][0]['!attributes']['Name']);
+	expect("xml.read(...)", "local", X['FileZilla']['Sites']['Folder']['@attributes']['Name']);
+	X=xml.read(xstr[3], true);
+//	expect("xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse'][0]['TransactionID'][0]['value']);
+	expect("xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse']['TransactionID']['value']);
+	return;
+}
+testxml();
+global testxml=null;

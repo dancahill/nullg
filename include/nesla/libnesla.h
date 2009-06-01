@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifndef _LIBNESLA_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _LIBNESLA_H 1
 #include "nesla/nesla.h"
 
@@ -33,7 +38,8 @@
 /* error numbers */
 #define NE_MEM		1
 #define NE_SYNTAX	2
-#define NE_INTERNAL	3
+#define NE_EXCEPTION	3
+#define NE_INTERNAL	4
 
 #define sanetest()	/*{ if (N->readptr==NULL) n_error(N, NE_SYNTAX, __FUNCTION__, "NULL readptr"); }*/
 #define settrace()	/* if (N!=NULL) { N->tracefn=__FUNCTION__; nl_flush(N); printf("%s\n", __FUNCTION__); } */
@@ -44,6 +50,7 @@
 void     n_skipto       (nes_state *N, const char *fn, unsigned short c);
 void     n_if           (nes_state *N);
 void     n_for          (nes_state *N);
+void     n_foreach      (nes_state *N);
 void     n_do           (nes_state *N);
 void     n_while        (nes_state *N);
 void     n_try          (nes_state *N);
@@ -51,7 +58,7 @@ void     n_try          (nes_state *N);
 uchar   *n_decompose    (nes_state *N, uchar *rawtext);
 void     n_decompile    (nes_state *N);
 /* exec.c */
-obj_t   *n_execfunction (nes_state *N, obj_t *fobj, obj_t *pobj);
+obj_t   *n_execfunction (nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass);
 /* libc.c */
 #define  nc_isdigit(c)  ((c>='0'&&c<='9')?1:0)
 #define  nc_isalpha(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')?1:0)
@@ -79,6 +86,9 @@ void     n_expect       (nes_state *N, const char *fname, uchar op);
 void     n_warn         (nes_state *N, const char *fname, const char *format, ...);
 
 num_t    n_aton         (nes_state *N, const char *str);
+
+//char    *n_itoa         (nes_state *N, char *str, int num, short base);
+
 char    *n_ntoa         (nes_state *N, char *str, num_t num, short base, unsigned short dec);
 /* libn.c */
 NES_FUNCTION(nl_flush);
@@ -92,6 +102,8 @@ NES_FUNCTION(nl_filewrite);
 NES_FUNCTION(nl_math1);
 NES_FUNCTION(nl_tonumber);
 NES_FUNCTION(nl_tostring);
+NES_FUNCTION(nl_atoi);
+NES_FUNCTION(nl_itoa);
 NES_FUNCTION(nl_strcat);
 NES_FUNCTION(nl_strcmp);
 NES_FUNCTION(nl_strjoin);
@@ -116,6 +128,7 @@ NES_FUNCTION(nl_sort_name);
 NES_FUNCTION(nl_sort_key);
 NES_FUNCTION(nl_typeof);
 NES_FUNCTION(nl_system);
+NES_FUNCTION(nl_copy);
 /* objects.c */
 void    *n_alloc        (nes_state *N, int size, short zero);
 void    *n_realloc      (nes_state *N, void **p, int size, short zero);
@@ -124,6 +137,8 @@ void     n_copyval      (nes_state *N, obj_t *cobj1, obj_t *cobj2);
 val_t   *n_newval       (nes_state *N, unsigned short type);
 void     n_freeval      (nes_state *N, obj_t *cobj);
 obj_t   *n_newiobj      (nes_state *N, int index);
+obj_t   *n_setname      (nes_state *N, obj_t *cobj, const char *name);
+obj_t   *n_setnamei     (nes_state *N, obj_t *cobj, unsigned long i);
 /* opcodes.c */
 short    n_getop        (nes_state *N, char *name);
 char    *n_getsym       (nes_state *N, short op);
@@ -145,5 +160,9 @@ obj_t   *n_storeval     (nes_state *N, obj_t *cobj);
 #define  writei2(n,ptr) ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255);
 
 #define striprn(s) { int n=strlen(s)-1; while (n>-1&&(s[n]=='\r'||s[n]=='\n')) s[n--]='\0'; }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* libnesla.h */

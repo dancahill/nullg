@@ -1,0 +1,36 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+
+function dump(obj) {
+	var sp="                              ";
+
+//	printvar(pop);
+	print("\t",sizeof(obj)," members\r\n");
+	for (i=0;i<sizeof(obj);i++) {
+		local n=iname(obj, i);
+		local t=typeof(obj[n]);
+		print("\t",string.sub(t+sp,0,10),string.sub(n+sp,0,13),obj[n],"\n");
+	}
+	return;
+}
+
+function testoo() {
+	class str(val) {
+		size  = function () { return sizeof(/*this.*/value); };
+		lower = function () { return string.tolower(this.value); };
+		upper = function () { return string.toupper(this.value); };
+		get   = function () { return this.value; };
+		set   = function (val) { return this.value=tostring(val) };
+		value = tostring(val);
+	}
+	x=new str("AbC");
+	dump(x);
+	expect("x.size()",  3,        x.size());
+	x.set("aBcDeF");
+	expect("x.size()",  6,        x.size());
+	expect("x.lower()", "abcdef", x.lower());
+	expect("x.upper()", "ABCDEF", x.upper());
+	return;
+}
+testoo();
+global testoo=null;

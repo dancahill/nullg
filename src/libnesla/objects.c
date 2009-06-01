@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 #include "nesla/libnesla.h"
 #include <stdlib.h>
 
-//static val_t __null = { NT_NULL, 0, 1, 0, NULL, { 0 } };
 static val_t __null = { NT_NULL, 0, 1, 0, { 0 } };
-static obj_t _null = { NULL, NULL, &__null, "" };
+static obj_t _null = { NULL, NULL, &__null, 0, "" };
+//static obj_t _null = { NULL, NULL, NULL, 0, "" };
 
 void *n_alloc(nes_state *N, int size, short zero)
 {
@@ -49,8 +49,34 @@ void n_free(nes_state *N, void **p)
 {
 #define __FUNCTION__ __FILE__ ":n_free()"
 	settrace();
-	if (*p) { free(*p); *p=NULL; }
-//	else n_error(N, NE_MEM, __FUNCTION__, "freeing 0x%08X twice", *p); /* pedantic, but useful */
+	if (!*p) n_error(N, NE_MEM, __FUNCTION__, "freeing 0x%08X twice", *p);
+	free(*p);
+	*p=NULL;
+	return;
+#undef __FUNCTION__
+}
+
+void n_copytable(nes_state *N, obj_t *cobj1, obj_t *cobj2)
+{
+#define __FUNCTION__ __FILE__ ":n_copytable()"
+	obj_t *cobj, *iobj, *oobj=NULL;
+
+	if (!nes_istable(cobj2)) return;
+	for (iobj=cobj2->val->d.table.f; iobj; iobj=iobj->next) {
+		cobj=n_alloc(N, sizeof(obj_t), 0);
+		if (oobj!=NULL) {
+			oobj->next=cobj;
+			cobj->prev=oobj;
+		} else {
+			cobj1->val->d.table.f=cobj;
+			cobj->prev=NULL;
+		}
+		cobj->next=NULL;
+		n_setname(N, cobj, iobj->name);
+		n_copyval(N, cobj, iobj);
+		oobj=cobj;
+	}
+	cobj1->val->d.table.l=oobj;
 	return;
 #undef __FUNCTION__
 }
@@ -64,12 +90,13 @@ void n_copyval(nes_state *N, obj_t *cobj1, obj_t *cobj2)
 	if (cobj1==cobj2) return;
 //	nes_setvaltype(N, cobj1, type2);
 	if (cobj1->val) nes_unlinkval(N, cobj1);
-	type2=nes_typeof(cobj2);
+//	type2=nes_typeof(cobj2);
 	cobj1->val=n_newval(N, type2);
 	switch (type2) {
 	case NT_NULL    : return;
 	case NT_BOOLEAN :
 	case NT_NUMBER  : cobj1->val->d.num=cobj2->val->d.num; break;
+	case NT_TABLE   : n_copytable(N, cobj1, cobj2); break;
 	case NT_CDATA   : n_warn(N, __FUNCTION__, "copying cdata '%s'?", cobj2->val->d.str);
 	case NT_STRING  :
 	case NT_NFUNC   : nes_strcat(N, cobj1, cobj2->val->d.str, cobj2->val->size); break;
@@ -137,11 +164,37 @@ obj_t *n_newiobj(nes_state *N, int index)
 	obj->prev=NULL;
 	obj->next=NULL;
 	obj->val=NULL;
-	n_ntoa(N, obj->name, index, 10, 0);
+	n_setnamei(N, obj, index);
 	return obj;
 #undef __FUNCTION__
 }
-
+
+static unsigned long cdb_hash(char *p)
+{
+	unsigned long hash=5381;
+
+	while (*p) hash=(hash+(hash<<5))^*p++;
+	return hash;
+}
+
+obj_t *n_setname(nes_state *N, obj_t *cobj, const char *name)
+{
+#define __FUNCTION__ __FILE__ ":n_setname()"
+	nc_strncpy(cobj->name, name, MAX_OBJNAMELEN);
+	cobj->hash=cdb_hash(cobj->name);
+	return cobj;
+#undef __FUNCTION__
+}
+
+obj_t *n_setnamei(nes_state *N, obj_t *cobj, unsigned long i)
+{
+#define __FUNCTION__ __FILE__ ":n_setname()"
+	n_ntoa(N, cobj->name, i, 10, 0);
+	cobj->hash=cdb_hash(cobj->name);
+	return cobj;
+#undef __FUNCTION__
+}
+
 /*
  * the following functions are public API functions
  */
@@ -194,19 +247,12 @@ void nes_unlinkval(nes_state *N, obj_t *cobj)
 {
 #define __FUNCTION__ __FILE__ ":nes_unlinkval()"
 	settrace();
-/*
-	if (cobj->val==NULL) return;
-	switch (cobj->val->refs) {
-	case 0 : return;
-	case 1 : cobj->val->refs--;n_freeval(N, cobj);n_free(N, (void *)&cobj->val);break;
-	default: cobj->val->refs--;cobj->val=NULL;break;
-//	default: cobj->val->refs--;break;
-	}
-*/
-	if (cobj==NULL||cobj->val==NULL) return;
-	if (--cobj->val->refs<1) {
-		n_freeval(N, cobj);
-		n_free(N, (void *)&cobj->val);
+	if (cobj!=NULL&&cobj->val!=NULL) {
+		if (--cobj->val->refs<1) {
+			n_freeval(N, cobj);
+			n_free(N, (void *)&cobj->val);
+		}
+		cobj->val=NULL;
 	}
 	return;
 #undef __FUNCTION__
@@ -219,14 +265,15 @@ void nes_freetable(nes_state *N, obj_t *tobj)
 
 	settrace();
 	if (!nes_istable(tobj)) return;
-	cobj=tobj->val->d.table;
+	cobj=tobj->val->d.table.f;
 	while (cobj!=NULL) {
 		oobj=cobj;
 		cobj=cobj->next;
 		nes_unlinkval(N, oobj);
 		n_free(N, (void *)&oobj);
 	}
-	tobj->val->d.table=NULL;
+	tobj->val->d.table.f=NULL;
+	tobj->val->d.table.l=NULL;
 	return;
 #undef __FUNCTION__
 }
@@ -234,30 +281,30 @@ void nes_freetable(nes_state *N, obj_t *tobj)
 obj_t *nes_getobj(nes_state *N, obj_t *tobj, char *oname)
 {
 #define __FUNCTION__ __FILE__ ":nes_getobj()"
-	obj_t *cobj;
+	/* unsigned long hashthis=cdb_hash("this"); */
+	static const unsigned long hashthis=2087959715;
+	unsigned long hash=cdb_hash(oname);
+	obj_t *cobj, *thisobj=NULL;
 
 	settrace();
 	if (tobj==&N->r) return tobj;
-	if (!nes_istable(tobj)) return &_null;
-	if (N==NULL) {
-		for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
-			if (cobj->name[0]!=oname[0]) continue;
-			if (nc_strcmp(cobj->name, oname)==0) return cobj;
+	if (N!=NULL&&tobj==NULL) {
+		for (cobj=N->l.val->d.table.f; cobj; cobj=cobj->next) {
+			/* printf("%s oname=%s 0x%08X %s\n", __FUNCTION__, oname, cobj, cobj->name); */
+			if (cobj->hash==hashthis&&nc_strcmp(cobj->name, "this")==0) thisobj=cobj;
+			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 		}
-	} else if (tobj==&N->l||tobj==&N->g) {
-		for (cobj=N->l.val->d.table; cobj; cobj=cobj->next) {
-//printf("%s oname=%s 0x%08X %s\n", __FUNCTION__, oname, cobj, cobj->name);
-			if (cobj->name[0]!=oname[0]) continue;
-			if (nc_strcmp(cobj->name, oname)==0) return cobj;
+		if (nes_istable(thisobj)) {
+			for (cobj=thisobj->val->d.table.f; cobj; cobj=cobj->next) {
+				if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
+			}
 		}
-		for (cobj=N->g.val->d.table; cobj; cobj=cobj->next) {
-			if (cobj->name[0]!=oname[0]) continue;
-			if (nc_strcmp(cobj->name, oname)==0) return cobj;
+		for (cobj=N->g.val->d.table.f; cobj; cobj=cobj->next) {
+			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 		}
-	} else {
-		for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
-			if (cobj->name[0]!=oname[0]) continue;
-			if (nc_strcmp(cobj->name, oname)==0) return cobj;
+	} else if (nes_istable(tobj)) {
+		for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
+			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 		}
 	}
 	return &_null;
@@ -272,7 +319,7 @@ obj_t *nes_getiobj(nes_state *N, obj_t *tobj, unsigned long oindex)
 
 	settrace();
 	if (!nes_istable(tobj)) return &_null;
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (nes_isnull(cobj)||cobj->val->attr&NST_SYSTEM) continue;
 		if (i==oindex) return cobj;
 		i++;
@@ -311,14 +358,14 @@ obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 	} else {
 		if (oname[0]=='\0') { return &_null; }
 		sortattr=tobj->val->attr&NST_AUTOSORT;
-		if (tobj->val->d.table==NULL) {
-			cobj=tobj->val->d.table=n_alloc(N, sizeof(obj_t), 0);
+		if (tobj->val->d.table.f==NULL) {
+			cobj=tobj->val->d.table.l=tobj->val->d.table.f=n_alloc(N, sizeof(obj_t), 0);
 			cobj->prev=NULL;
 			cobj->next=NULL;
 			cobj->val=n_newval(N, otype);
-			nc_strncpy(cobj->name, oname, MAX_OBJNAMELEN);
+			n_setname(N, cobj, oname);
 		} else {
-			oobj=tobj->val->d.table;
+			oobj=tobj->val->d.table.f;
 			for (cobj=oobj; cobj; oobj=cobj,cobj=cobj->next) {
 				/* both strings must be entirely numeric (not even decimals) */
 				p=cobj->name; while (nc_isdigit(*p)) p++;
@@ -334,13 +381,14 @@ obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 			if (cmp>0&&sortattr) {
 				oobj=cobj;
 				cobj=n_alloc(N, sizeof(obj_t), 0);
-				if (oobj==tobj->val->d.table) tobj->val->d.table=cobj;
+				if (oobj==tobj->val->d.table.f) tobj->val->d.table.f=cobj;
 				cobj->prev=oobj->prev;
 				if (cobj->prev) cobj->prev->next=cobj;
 				cobj->next=oobj;
 				oobj->prev=cobj;
 				cobj->val=n_newval(N, otype);
-				nc_strncpy(cobj->name, oname, MAX_OBJNAMELEN);
+				n_setname(N, cobj, oname);
+				if (cobj->next==NULL) tobj->val->d.table.l=cobj;
 			} else if (cobj==NULL) {
 				cobj=n_alloc(N, sizeof(obj_t), 0);
 				if (oobj!=NULL) {
@@ -351,7 +399,8 @@ obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 				}
 				cobj->next=NULL;
 				cobj->val=n_newval(N, otype);
-				nc_strncpy(cobj->name, oname, MAX_OBJNAMELEN);
+				n_setname(N, cobj, oname);
+				if (cobj->next==NULL) tobj->val->d.table.l=cobj;
 			} else {
 				switch (nes_typeof(cobj)) {
 				case NT_NULL   :
@@ -367,7 +416,7 @@ obj_t *nes_setobj(nes_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 				}
 			}
 		}
-		if (cobj->val->type==NT_TABLE&&cobj->val->d.table==NULL) cobj->val->attr|=sortattr;
+		if (cobj->val->type==NT_TABLE&&cobj->val->d.table.f==NULL) cobj->val->attr|=sortattr;
 	}
 	switch (otype) {
 	case NT_NUMBER : cobj->val->d.num=_num; break;
@@ -445,7 +494,7 @@ short nes_tobool(nes_state *N, obj_t *cobj)
 	case NT_BOOLEAN : return cobj->val->d.num?1:0;
 	case NT_NUMBER  : return cobj->val->d.num?1:0;
 	case NT_STRING  : return cobj->val->size?1:0;
-	case NT_TABLE   : return cobj->val->d.table?1:0;
+	case NT_TABLE   : return cobj->val->d.table.f?1:0;
 	case NT_NFUNC   :
 	case NT_CFUNC   : return 1;
 	}

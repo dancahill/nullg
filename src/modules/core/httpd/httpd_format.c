@@ -295,7 +295,7 @@ void htselect_timezone(CONN *sid, short int selected)
 		cobj->val->attr|=NST_HIDDEN;
 		htnes_dotemplate(sid, "", "tzones.ns");
 	}
-	for (tobj=cobj->val->d.table;tobj;tobj=tobj->next) {
+	for (tobj=cobj->val->d.table.f;tobj;tobj=tobj->next) {
 		if (tobj->val->type!=NT_TABLE) continue;
 		n=(int)nes_getnum(sid->N, tobj, "o");
 		prints(sid, "<OPTION VALUE='%d'%s>%s\r\n", i, (i==selected)?" SELECTED":"", nes_getstr(sid->N, tobj, "n"));

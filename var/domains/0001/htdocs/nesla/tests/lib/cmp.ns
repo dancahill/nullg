@@ -1,0 +1,60 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testcmp() {
+	if (math.asin) {
+		local pi = math.asin(1)*2;
+	} else {
+		local pi = 3.1415926535897932384626433832795029;
+	}
+	expect("2 == 2",  true,  2==2);
+	expect("2 <= 2",  true,  2<=2);
+	expect("2 >= 2",  true,  2>=2);
+	expect("2 != 2",  false, 2!=2);
+	expect("2 < 2",   false, 2<2);
+	expect("2 > 2",   false, 2>2);
+	expect("42",      42,    (42));
+	expect("21",      21,    21);
+	expect("pi - pi", 0,     pi-pi);
+	expect("pi / pi", 1,     pi/pi);
+	expect("pi % pi", 0,     pi%pi);
+	expect("pi & pi", 3,     pi&pi);
+	expect("pi | pi", 3,     pi|pi);
+	expect("pi ^ pi", 0,     pi^pi);
+	expect("3 && 4",  true,  3&&4);
+	expect("3 || 4",  true,  3||4);
+
+//	expect("null==false",   true,  null==false);
+	expect("null===false",  false, null===false);
+	expect("false===false", true,  false===false);
+	expect("1===1",         true,  1===1);
+	expect("1===false",     false, 1===false);
+	expect("1===true",      false, 1===true);
+
+	var x=0;   if (x==false) x=false; else x=true; expect("(x=0)",   false, x);
+//	expect("(x=0)", false, 0==false?false:true );
+	var x=1;   if (x==false) x=false; else x=true; expect("(x=1)",   true,  x);
+	var x="";  if (x==false) x=false; else x=true; expect("(x='')",  false, x);
+	var x="x"; if (x==false) x=false; else x=true; expect("(x='x')", true,  x);
+
+	expect("x==null", false, x==null);
+	expect("y==null", true,  y==null);
+	expect("x!=null", true,  x!=null);
+	expect("y!=null", false, y!=null);
+
+	expect("42?1:0",              1,  42?1:0);
+	expect("42?0:1",              0,  42?0:1);
+	expect("true?1:0",            1,  true?1:0);
+	expect("false?0:1",           1,  false?0:1);
+	expect("true?1:true?2:3",     1,  true?1:true?2:3);
+	expect("false?1:false?2:3",   3,  false?1:false?2:3);
+	expect("true?1:(true?2:3)",   1,  true?1:(true?2:3));
+	expect("false?1:(false?2:3)", 3,  false?1:(false?2:3));
+	expect("true?(true?1:2):3",   1,  true?(true?1:2):3);
+	expect("false?(false?1:2):3", 3,  false?(false?1:2):3);
+	expect("true?(false?1:2):3",  2,  true?(false?1:2):3);
+	expect("false?(true?1:2):3",  3,  false?(true?1:2):3);
+
+	return;
+}
+testcmp();
+global testcmp=null;

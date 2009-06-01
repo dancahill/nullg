@@ -1,0 +1,15 @@
+#!/usr/bin/nesla
+if (dl.loadlib("/usr/local/lib/nesla/libneslasrc2html.so")!=0) print('dl error?\n');
+if (typeof(d=dirlist("."))!='table') exit;
+for (i=0;i<sizeof(d);i++) {
+	n=iname(d, i);
+	if (string.sub(n, -4)=='.ns') {
+		print("converting "+n+"\n");
+		file.write(n+".html",src2html(file.read(n)));
+	}
+}
+htdir="/NullLogic/htdocs/nesla/samples/";
+if (typeof(file.stat(htdir))=='table') {
+	system("chmod 644 *.ns.html");
+	system("mv *.ns.html "+htdir);
+}

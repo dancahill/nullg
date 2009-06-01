@@ -1,0 +1,100 @@
+#!/usr/bin/nesla
+
+class POP3(host, port, use_ssl) {
+	debug=true;
+	/* lower level tcp functions */
+	open = function (host, port, use_ssl) {
+		if (host==null) host='localhost';
+		if (port==null) port=110;
+		if (use_ssl!=true) use_ssl=false;
+		this.sock=tcp.open(host, port, use_ssl);
+		if (typeof(sock)!='sock4') {
+			if (debug) print("can't connect to pop3 server\n");
+			return false;
+		}
+		line=this.read();
+		return true;
+	};
+	read = function () {
+		in=tcp.gets(sock);
+		if (typeof(in)!='string') {
+			if (debug) print("input error\n");
+			return null;
+		}
+		if (debug) print(in+"\n");
+		return in;
+	};
+	local write = function (text) {
+		if (debug) print(text);
+		return tcp.write(sock, text);
+	};
+	close = function () {
+		tcp.write(sock, "QUIT\r\n");
+		tcp.gets(sock);
+		tcp.close(sock);
+	};
+	/* now some higher level stuff */
+	login = function (user, pass) {
+		this.write("USER "+user+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") {
+			if (debug) print("pop3 error: "+line+"\n");
+			this.close();
+			return false;
+		}
+		this.write("PASS "+pass+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") {
+			if (debug) print("pop3 error: "+line+"\n");
+			this.close();
+			return false;
+		}
+		return true;
+	};
+	stat = function () {
+		this.write("STAT\r\n");
+		status=string.split(this.read(), " ");
+		return tonumber(status[1]);
+	};
+	uidl = function (i) {
+		this.write("UIDL "+(i)+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") return null;
+		x=string.split(line, " ");
+		return=x[2];
+	};
+	head = function (i) {
+		this.write("HEAD "+i+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") return null;
+		msg="";
+		for (line=this.read(sock);line!=".";line=this.read()) {
+			msg+=line+"\r\n";
+		}
+		if (line!=".") return null;
+		return msg;
+	};
+	retr = function (i) {
+		this.write("RETR "+i+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") return null;
+		msg="";
+		for (line=this.read(sock);line!=".";line=this.read()) {
+			msg+=line+"\r\n";
+		}
+		if (line!=".") return null;
+		return msg;
+	};
+	dele = function (i) {
+		this.write("DELE "+(i)+"\r\n");
+		line=this.read();
+		if (string.sub(line, 0, 3)!="+OK") return false;
+		return=true;
+	};
+	size = function (i) {
+		this.write("LIST"+i+"\r\n");
+		status=string.split(this.read(), " ");
+		return tonumber(status[2]);
+	};
+	if (this.open(host, port, use_ssl)==false) this=null;
+}

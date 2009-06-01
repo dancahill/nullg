@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,79 +69,85 @@
 #endif
 #define _OSTYPE_ _OS_"/"_COMPILER_
 
-obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj)
+obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 {
 #define __FUNCTION__ __FILE__ ":n_execfunction()"
-	obj_t listobj;
-	obj_t *cobj, *nobj;
+	uchar *oldbptr;
+	uchar *oldrptr;
+	uchar *oldbend;
+	jmp_buf *savjmp;
+	obj_t listobj, *cobj;
 	val_t *olobj;
-	unsigned short i;
+	unsigned short ftype, i;
 	int e;
 
 	DEBUG_IN();
 	settrace();
-	if (fobj->val->type!=NT_CFUNC&&fobj->val->type!=NT_NFUNC) {
+	ftype=nes_typeof(fobj);
+	if (ftype!=NT_CFUNC&&ftype!=NT_NFUNC) {
 		n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", fobj->name);
 	}
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	listobj.val=n_newval(N, NT_TABLE);
-	cobj=nes_setstr(N, &listobj, "0", fobj->name, -1);
+	/* set this */
+	cobj=listobj.val->d.table.f=n_alloc(N, sizeof(obj_t), 0);
+	cobj->prev=NULL;
+	cobj->next=NULL;
+	cobj->val=NULL;
+	n_setname(N, cobj, "this");
+	if (isclass) {
+		nes_linkval(N, cobj, &listobj);
+	} else if (pobj) {
+		nes_linkval(N, cobj, pobj);
+	}
+	/* set fn name */
+	cobj->next=n_alloc(N, sizeof(obj_t), 0);
+	cobj->next->prev=cobj;
+	cobj->next->next=NULL;
+	cobj=cobj->next;
+	n_setname(N, cobj, "0");
+	cobj->val=NULL;
+	nes_setstr(N, cobj, "0", fobj->name, -1);
+	/* set args */
 	for (i=1;;i++) {
 		N->readptr++;
 		if (*N->readptr==OP_PCPAREN) break;
-		if ((nobj=nes_eval(N, (char *)N->readptr))!=NULL) {
-			cobj->next=n_alloc(N, sizeof(obj_t), 0);
-			cobj->next->prev=cobj;
-			cobj->next->next=NULL;
-			cobj=cobj->next;
-			cobj->val=NULL;
-			n_ntoa(N, cobj->name, i, 10, 0);
-			nes_linkval(N, cobj, nobj);
-		}
-		if (*N->readptr==OP_PCOMMA) continue;
-		n_expect(N, __FUNCTION__, OP_PCPAREN);
-		break;
-	}
-	if (pobj) {
 		cobj->next=n_alloc(N, sizeof(obj_t), 0);
 		cobj->next->prev=cobj;
 		cobj->next->next=NULL;
 		cobj=cobj->next;
+		n_setnamei(N, cobj, i);
 		cobj->val=NULL;
-		nc_strncpy(cobj->name, "this", MAX_OBJNAMELEN);
-		nes_linkval(N, cobj, pobj);
+		nes_linkval(N, cobj, nes_eval(N, (char *)N->readptr));
+		if (*N->readptr==OP_PCOMMA) continue;
+		n_expect(N, __FUNCTION__, OP_PCPAREN);
+		break;
 	}
+	listobj.val->d.table.l=cobj;
 	N->readptr++;
 	olobj=N->l.val; N->l.val=listobj.val; listobj.val=NULL;
 	/* if (N->debug) n_warn(N, __FUNCTION__, "%s()", fobj->name); */
+	oldbptr=N->blockptr;
+	oldrptr=N->readptr;
+	oldbend=N->blockend;
 	nes_unlinkval(N, &N->r);
-	if (fobj->val->type==NT_CFUNC) {
-		jmp_buf *savjmp;
-
+	if (ftype==NT_CFUNC) {
 		savjmp=N->savjmp;
 		N->savjmp=n_alloc(N, sizeof(jmp_buf), 0);
-		e=setjmp(*N->savjmp);
-		if (!e) {
+		if ((e=setjmp(*N->savjmp))==0) {
 			fobj->val->d.cfunc(N);
 		}
 		n_free(N, (void *)&N->savjmp);
 		N->savjmp=savjmp;
-		nes_unlinkval(N, &N->l);
-		N->l.val=olobj;
 	} else {
-		uchar *oldbptr=N->blockptr;
-		uchar *oldrptr=N->readptr;
-		uchar *oldbend=N->blockend;
-		jmp_buf *savjmp;
-
 		N->blockptr=(uchar *)fobj->val->d.str;
 		N->readptr=(uchar *)fobj->val->d.str;
 		N->blockend=(uchar *)fobj->val->d.str+fobj->val->size;
 		n_expect(N, __FUNCTION__, OP_POPAREN);
 		for (i=1;;i++) {
 			N->readptr++;
-			cobj=nes_getiobj(N, &N->l, i);
-			if (*N->readptr==OP_LABEL) n_getlabel(N, cobj->name);
+			cobj=nes_getobj(N, &N->l, n_ntoa(N, N->numbuf, i, 10, 0));
+			if (*N->readptr==OP_LABEL) n_setname(N, cobj, n_getlabel(N, NULL));
 			if (*N->readptr==OP_PCOMMA) continue;
 			n_expect(N, __FUNCTION__, OP_PCPAREN);
 			N->readptr++;
@@ -150,24 +156,30 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj)
 		n_expect(N, __FUNCTION__, OP_POBRACE);
 		savjmp=N->savjmp;
 		N->savjmp=n_alloc(N, sizeof(jmp_buf), 0);
-		e=setjmp(*N->savjmp);
-		if (!e) {
+		if ((e=setjmp(*N->savjmp))==0) {
 			nes_exec(N, (char *)N->readptr);
 		}
 		n_free(N, (void *)&N->savjmp);
 		N->savjmp=savjmp;
-		nes_unlinkval(N, &N->l);
-		N->l.val=olobj;
-		if (N->ret) N->ret=0;
-//		if (!e) n_skipto(N, __FUNCTION__, OP_PCBRACE);
-		N->blockptr=oldbptr;
-		N->readptr=oldrptr;
-		N->blockend=oldbend;
 	}
-	if (e) {
-		// propagate exceptions before jumping?
-		if (N->savjmp!=NULL) longjmp(*N->savjmp, 1);
+	if (isclass) {
+		/* forced decrementing is an ugly hack, but an effective fix */
+//		obj_t *cobj=nes_getobj(N, &N->l, "this");
+//		n_warn(N, __FUNCTION__, "2]%d", cobj->val->refs);
+//		cobj->val->refs--;
+//		cobj->val=NULL;
+
+//		n_warn(N, __FUNCTION__, "2]%d", N->l.val->refs);
+		N->l.val->refs--;
+		nes_linkval(N, &N->r, &N->l);
 	}
+	nes_unlinkval(N, &N->l);
+	N->l.val=olobj;
+	N->blockptr=oldbptr;
+	N->readptr=oldrptr;
+	N->blockend=oldbend;
+	if (N->ret) N->ret=0;
+	if (e && N->savjmp!=NULL) longjmp(*N->savjmp, 1);
 	DEBUG_OUT();
 	return &N->r;
 #undef __FUNCTION__
@@ -228,14 +240,16 @@ obj_t *nes_exec(nes_state *N, const char *string)
 			op=*N->readptr++;
 			switch (op) {
 			case OP_KLOCAL:
-			case OP_KVAR:   n_readvar(N, &N->l, NULL); goto endstmt;
-			case OP_KGLOB:  n_readvar(N, &N->g, NULL); goto endstmt;
-			case OP_KIF:    n_if(N);    if (N->ret) goto end; else goto endstmt;
-			case OP_KFOR:   n_for(N);   if (N->ret) goto end; else goto endstmt;
-			case OP_KDO:    n_do(N);    if (N->ret) goto end; else goto endstmt;
-			case OP_KWHILE: n_while(N); if (N->ret) goto end; else goto endstmt;
-			case OP_KTRY:   n_try(N);   if (N->ret) goto end; else goto endstmt;
-			case OP_KFUNC:  
+			case OP_KVAR:     n_readvar(N, &N->l, NULL); goto endstmt;
+			case OP_KGLOB:    n_readvar(N, &N->g, NULL); goto endstmt;
+			case OP_KIF:      n_if(N);      if (N->ret) goto end; else goto endstmt;
+			case OP_KFOR:     n_for(N);     if (N->ret) goto end; else goto endstmt;
+			case OP_KFOREACH: n_foreach(N); if (N->ret) goto end; else goto endstmt;
+			case OP_KDO:      n_do(N);      if (N->ret) goto end; else goto endstmt;
+			case OP_KWHILE:   n_while(N);   if (N->ret) goto end; else goto endstmt;
+			case OP_KTRY:     n_try(N);     if (N->ret) goto end; else goto endstmt;
+			case OP_KCLASS:
+			case OP_KFUNC:
 				n_expect(N, __FUNCTION__, OP_LABEL);
 				cobj=nes_setnfunc(N, &N->g, n_getlabel(N, NULL), NULL, 0);
 				nes_linkval(N, cobj, n_getfunction(N));
@@ -255,6 +269,11 @@ obj_t *nes_exec(nes_state *N, const char *string)
 				if (*N->readptr==OP_PSEMICOL) N->readptr++;
 				N->ret=1;
 				goto end;
+			case OP_KTHROW:
+				n_storeval(N, &N->r);
+				n_error(N, NE_EXCEPTION, NULL, "%s",  nes_tostr(N, &N->r));
+				if (*N->readptr==OP_PSEMICOL) N->readptr++;
+				goto end;
 			case OP_KEXIT:
 				N->err=(short)(*N->readptr==OP_NUMDATA?n_getnumber(N):0);
 				n_error(N, N->err, __FUNCTION__, "exiting normally");
@@ -266,7 +285,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 			if (*N->readptr!=OP_LABEL) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a label [%d][%s]", *N->readptr, n_getsym(N, *N->readptr));
 			tobj=&N->l;
 			n_getlabel(N, namebuf);
-			cobj=nes_getobj(N, tobj, namebuf);
+			cobj=nes_getobj(N, NULL, namebuf);
 			while (cobj->val->type==NT_TABLE) {
 				tobj=cobj;
 				if (*N->readptr!=OP_POBRACKET&&*N->readptr!=OP_PDOT) break;
@@ -278,7 +297,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 			}
 			ctype=nes_typeof(cobj);
 			if ((ctype==NT_NFUNC||ctype==NT_CFUNC)&&(*N->readptr==OP_POPAREN)) {
-				n_execfunction(N, cobj, pobj);
+				n_execfunction(N, cobj, pobj, 0);
 				if (*N->readptr==OP_PSEMICOL) N->readptr++;
 				if (single) break;
 				continue;
@@ -421,6 +440,8 @@ nes_state *nes_newstate()
 		{ "tostring",	(NES_CFUNC)nl_tostring	},
 		{ "typeof",	(NES_CFUNC)nl_typeof	},
 		{ "write",	(NES_CFUNC)nl_write	},
+
+		{ "copy",	(NES_CFUNC)nl_copy	},
 		{ NULL, NULL }
 	};
 	FUNCTION list_file[]={
@@ -446,6 +467,8 @@ nes_state *nes_newstate()
 		{ NULL, NULL }
 	};
 	FUNCTION list_string[]={
+		{ "atoi",	(NES_CFUNC)nl_atoi	},
+		{ "itoa",	(NES_CFUNC)nl_itoa	},
 		{ "cat",	(NES_CFUNC)nl_strcat	},
 		{ "cmp",	(NES_CFUNC)nl_strcmp	},
 		{ "icmp",	(NES_CFUNC)nl_strcmp	},
@@ -483,9 +506,9 @@ nes_state *nes_newstate()
 	nes_setvaltype(new_N, &new_N->l, NT_TABLE);
 	new_N->l.val->attr|=NST_AUTOSORT;
 
-	nc_strncpy(new_N->g.name, "!GLOBALS!", MAX_OBJNAMELEN);
-	nc_strncpy(new_N->l.name, "!LOCALS!", MAX_OBJNAMELEN);
-	nc_strncpy(new_N->r.name, "!RETVAL!", MAX_OBJNAMELEN);
+	n_setname(new_N, &new_N->g, "!GLOBALS!");
+	n_setname(new_N, &new_N->l, "!LOCALS!");
+	n_setname(new_N, &new_N->r, "!RETVAL!");
 	cobj=nes_settable(new_N, &new_N->g, "_GLOBALS");
 	cobj->val->attr|=NST_HIDDEN;
 	nes_linkval(new_N, cobj, &new_N->g);

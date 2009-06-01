@@ -38,7 +38,7 @@ static void auth_dumpvars(nes_state *N, obj_t *tobj, char *buf, int len)
 			if (strcmp(cobj->name, "_globals_")==0) continue;
 			x=snprintf(buf, len, "%s%s%s={ ", b?"[":"", cobj->name, b?"]":"");
 			len-=x; buf+=x;
-			auth_dumpvars(N, cobj->val->d.table, buf, len);
+			auth_dumpvars(N, cobj->val->d.table.f, buf, len);
 			len-=strlen(buf); buf+=strlen(buf);
 			x=snprintf(buf, len, "}%s ", l);
 			len-=x; buf+=x;
@@ -55,7 +55,7 @@ void auth_savesession(CONN *sid)
 
 	time_unix2sql(timebuffer, sizeof(timebuffer)-1, time(NULL));
 	if (tobj->val->type==NT_TABLE) {
-		auth_dumpvars(sid->N, tobj->val->d.table, data, MAX_FIELD_SIZE-1);
+		auth_dumpvars(sid->N, tobj->val->d.table.f, data, MAX_FIELD_SIZE-1);
 	}
 	/* log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "[%s]", data); */
 	sql_updatef(proc->N, "UPDATE nullgs_sessions SET mtime = '%s', data = '{ %s}' WHERE token = '%s' AND uid = %d AND did = %d", timebuffer, str2sql(sid->dat->largebuf, sizeof(sid->dat->largebuf)-1, data), sid->dat->token, sid->dat->uid, sid->dat->did);
@@ -164,8 +164,8 @@ blah:
 			cobj=nes_getobj(sid->N, cobj, "_data");
 			if (cobj->val->type==NT_TABLE) {
 				tobj=nes_settable(sid->N, &sid->N->g, "_USER");
-				tobj->val->d.table=cobj->val->d.table;
-				cobj->val->d.table=NULL;
+				tobj->val->d.table.f=cobj->val->d.table.f;
+				cobj->val->d.table.f=NULL;
 			}
 		}
 	}

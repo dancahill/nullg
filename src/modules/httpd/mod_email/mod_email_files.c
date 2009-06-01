@@ -172,7 +172,7 @@ int wmfolder_makedefaults(CONN *sid, int accountid)
 	if (changed) {
 		ldir_saveentry(sid, accountid, "emailaccount", &robj);
 	}
-	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f;cobj;cobj=cobj->next) {
 //		prints(sid, "<BR />%s<BR />\r\n", cobj->name);
 		if (!isdigit(cobj->name[0])) continue;
 		if (wmfolder_testcreate(sid, accountid, atoi(cobj->name)<0)) return -1;

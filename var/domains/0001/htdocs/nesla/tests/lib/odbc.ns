@@ -1,0 +1,18 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testodbc() {
+	if (typeof(odbc.query)!='function') {
+		print("SKIPPING ODBC TESTS\n");
+		return;
+	}
+	io.flush();
+	if (_ENV['OS']=='Windows_NT') DSN="DRIVER=MySQL ODBC 3.51 Driver"; else DSN="DRIVER=MySQL";
+	DSN=DSN+";SERVER=localhost;PORT=3306;DATABASE=nullgroupware;UID=nobody;PASSWORD=secret";
+	Q=odbc.query(DSN, "SELECT * FROM gw_users ORDER BY userid");
+	if (typeof(Q)=='table') sort.byname(Q['_rows'], 1);
+//	Q=odbc.query(DSN, "INSERT INTO gw_users () VALUES ();");
+//	Q=odbc.query(DSN, "DELETE FROM gw_users WHERE userid > 2;");
+	return;
+}
+testodbc();
+global testodbc=null;

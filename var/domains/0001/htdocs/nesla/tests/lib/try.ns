@@ -1,0 +1,62 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testtry() {
+	print("\ttesting try{} blocks\n");
+	try {
+		print("\tThis block _will_ cause errors - That's the point.\n\n");
+		io.flush();
+		try {
+			x=string.split();
+			print("\tx=[",x,"]\n");
+		} catch (e) {
+			print("\t[",e.errno,"][",e.errtext,"]\n");
+		}
+		try {
+			x=void();
+			print("\tx=[",x,"]\n");
+		} catch (e) {
+			print("\t[",e.errno,"][",e.errtext,"]\n");
+		}
+		try {
+//			x=regex.replace("\\((.*), (.*)\\)", "(\\2, \\1)", "(a, b)");
+			x=regex.replace("\\((*), (*)\\)", "(\\2, \\1)", "(a, b)");
+			print("\tx=[",x,"]\n");
+		} catch (e) {
+			print("\t[",e.errno,"][",e.errtext,"]\n");
+		}
+		try {
+			x=void();
+			print("\t[",x,"]\n");
+		} catch (e) {
+			print("\t[",e.errno,"][",e.errtext,"]\n");
+		} finally {
+			print("\tfinally...\n");
+		}
+		print("\n");
+		try {
+			print("\tIn outer try block...\n");
+			try {
+				print("\tIn inner try block...\n");
+				throw "Error 325 from inner try block";
+			} catch (e) {
+				print("\tInner catch block caught "+e.errtext+"\n");
+				throw e.errtext + " re-thrown from inner catch block";
+			} finally {
+				print("\tIn inner finally block...\n");
+			}
+		} catch (e) {
+			print("\tOuter catch block caught "+e.errtext+"\n");
+		} finally {
+			print("\tIn outer finally block...\n");
+		}
+		print("\n");
+	} catch (e) {
+		print("\t[",e.errno,"][",e.errtext,"]\n");
+	} finally {
+		print("\tfinally...\n");
+	}
+	io.flush();
+	return;
+}
+testtry();
+global testtry=null;

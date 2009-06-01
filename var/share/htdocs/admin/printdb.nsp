@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN'>
+<HTML>
+<head>
+</head>
+<body>
+<?nsp
+//global Q=sqlquery("SELECT * FROM nullgs_entries");
+global Q=ldir.getlist("", 0);
+//print("<pre>");printvar(Q);print("</pre>");
+?>
+<table border=1>
+<tr bgcolor=gray>
+<td>row.id</td>
+<td>row.pid</td>
+<td>row.did</td>
+<td>row.ctime</td>
+<td>row.mtime</td>
+<td>row.class</td>
+<td>row.name</td>
+<td width=100%>&nbsp;</td>
+</tr>
+<?nsp
+for (i=0;i<sizeof(Q._rows);i++) {
+	row=Q['_rows'][i];
+	print("<tr>");
+	print("<td nowrap>",row.id,"</td>");
+	print("<td nowrap>",row.pid,"</td>");
+	print("<td nowrap>",row.did,"</td>");
+	print("<td nowrap>",row.ctime,"</td>");
+	print("<td nowrap>",row.mtime,"</td>");
+	print("<td nowrap>",row['class'],"</td>");
+	print("<td nowrap>",row.name,"</td>");
+	print("<td nowrap width=100%>&nbsp;</td>");
+	print("</tr>");
+
+	print("<tr>");
+	print("<td nowrap colspan=1>&nbsp;</td>");
+	print("<td nowrap colspan=7 bgcolor=gray>row.data</td>");
+	print("</tr>");
+
+	print("<tr>");
+	print("<td nowrap colspan=1>&nbsp;</td>");
+	print("<td nowrap colspan=7 bgcolor=silver>",row.data,"</td>");
+	print("</tr>");
+
+	print("<tr>");
+	print("<td nowrap colspan=1>&nbsp;</td>");
+	print("<td nowrap colspan=7 bgcolor=silver><pre>");printvar(row._data);print("</pre></td>");
+	print("</tr>");
+}
+?>
+</table>
+</body>
+</HTML>

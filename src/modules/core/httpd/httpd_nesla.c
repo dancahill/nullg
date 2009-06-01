@@ -36,7 +36,7 @@ static CONN *get_sid()
 NES_FUNCTION(nesladl_loadlib)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 #ifdef WIN32
 	HINSTANCE l;
 #else
@@ -99,8 +99,8 @@ int htnes_flush(nes_state *N)
 static NES_FUNCTION(htnes_lang_gets)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
 
 	nes_setstr(N, &N->r, "", lang_gets(sid, nes_tostr(N, cobj1), nes_tostr(N, cobj2)), -1);
 	return 0;
@@ -111,8 +111,8 @@ static NES_FUNCTION(htnes_lang_gets)
 static NES_FUNCTION(htnes_ldir_deleteentry)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
 	int rc;
 
 	if (cobj1->val->type!=NT_STRING) { prints(sid, "%s() expected a string for arg1\r\n", nes_getstr(N, &N->l, "0")); return 0; }
@@ -125,9 +125,9 @@ static NES_FUNCTION(htnes_ldir_deleteentry)
 static NES_FUNCTION(htnes_ldir_saveentry)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
-	obj_t *cobj3=nes_getiobj(N, &N->l, 3);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
+	obj_t *cobj3=nes_getobj(N, &N->l, "3");
 	int rc;
 
 	if (cobj1->val->type!=NT_STRING) { prints(sid, "%s() expected a string for arg1\r\n", nes_getstr(N, &N->l, "0")); return 0; }
@@ -141,8 +141,8 @@ static NES_FUNCTION(htnes_ldir_saveentry)
 static NES_FUNCTION(htnes_ldir_getlist)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
 	obj_t *qobj=NULL;
 
 	if (cobj1->val->type!=NT_STRING) { prints(sid, "%s() expected a string for arg1\r\n", nes_getstr(N, &N->l, "0")); return 0; }
@@ -156,10 +156,10 @@ static NES_FUNCTION(htnes_ldir_getlist)
 
 static NES_FUNCTION(htnes_ldir_sortlist)
 {
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
-	obj_t *cobj3=nes_getiobj(N, &N->l, 3);
-	obj_t *cobj4=nes_getiobj(N, &N->l, 4);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
+	obj_t *cobj3=nes_getobj(N, &N->l, "3");
+	obj_t *cobj4=nes_getobj(N, &N->l, "4");
 
 	nes_unlinkval(N, &N->r);
 //	ldir_sortlist(N, qobj1, "sn", "_data", 1);
@@ -171,8 +171,8 @@ static NES_FUNCTION(htnes_ldir_sortlist)
 static NES_FUNCTION(htnes_ldir_getentry)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
-	obj_t *cobj2=nes_getiobj(N, &N->l, 2);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	obj_t *cobj2=nes_getobj(N, &N->l, "2");
 	obj_t *qobj=NULL;
 
 //	nes_unlinkval(N, &N->r);
@@ -192,7 +192,7 @@ static NES_FUNCTION(htnes_ldir_getentry)
 static NES_FUNCTION(htnes_sqlquery)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 	obj_t *qobj=NULL;
 	int rc;
 
@@ -210,7 +210,7 @@ static NES_FUNCTION(htnes_sqlquery)
 static NES_FUNCTION(htnes_dirlist)
 {
 	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 	obj_t *tobj=NULL;
 	int rc;
 
@@ -240,11 +240,11 @@ static _htmltags htmltags[]={
 
 static NES_FUNCTION(htnes_str2html)
 {
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 	obj_t *robj;
 	char *p, *p2;
 	int i;
-	int len;
+	unsigned int len;
 
 	if (nes_isnull(cobj1)) {
 		nes_setstr(N, &N->r, "", NULL, 0);
@@ -313,7 +313,7 @@ NES_FUNCTION(htnes_include_template)
 	nes_setnum(N, &N->r, "", n);
 	return n;
 */
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 	obj_t *cobj;
 	uchar *p;
 	struct stat sb;
@@ -356,7 +356,7 @@ static int htnes_system(nes_state *N)
 {
 	CONN *sid=get_sid();
 	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
-	obj_t *cobj1=nes_getiobj(N, &N->l, 1);
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
 	char tempname[255];
 	char line[512];
 	short int err;
@@ -421,6 +421,7 @@ static int htnes_runscript(CONN *sid, char *file)
 {
 	obj_t *tobj=nes_getobj(sid->N, &sid->N->g, "io");
 //	jmp_buf *savjmp;
+	char *p;
 
 	nes_setcfunc(sid->N, &sid->N->g, "dirlist",          (NES_CFUNC)htnes_dirlist);
 	nes_setcfunc(sid->N, &sid->N->g, "include_template", (NES_CFUNC)htnes_include_template);
@@ -447,8 +448,17 @@ static int htnes_runscript(CONN *sid, char *file)
 //	sid->N->savjmp=calloc(1, sizeof(jmp_buf));
 //	if (setjmp(*sid->N->savjmp)==0) {
 //		sid->N->jmpset=1;
+	p=strrchr(file, '.');
+	if (p!=NULL&&strcmp(p, ".nsp")==0) {
+		char hackbuf[512];
+
+		snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') exec(\"print(\\\"\"+string.join(string.split(string.join(string.split(x, \"?>\"), \"print(\\\"\"), \"<?nsp\"), \"\\\");\")+\"\\\");\");", file);
+		nes_exec(sid->N, hackbuf);
+//		nes_execf(sid->N, "if (typeof(x=file.read(\"%s\"))=='string') exec(\"print(\\\"\"+string.join(string.split(string.join(string.split(x, \"?>\"), \"print(\\\"\"), \"<?nsp\"), \"\\\");\")+\"\\\");\");", file);
+	} else {
 		nes_execfile(sid->N, file);
-		htnes_flush(sid->N);
+	}
+	htnes_flush(sid->N);
 //	}
 //	sid->N->jmpset=0;
 //	free(sid->N->savjmp);
@@ -505,7 +515,7 @@ tryshared:
 	if (p==NULL) {
 		return filesend(sid, filename);
 	}
-	if ((strcmp(p, ".ns")!=0)&&(strcmp(p, ".nes")!=0)) {
+	if ((strcmp(p, ".ns")!=0)&&(strcmp(p, ".nes")!=0)&&(strcmp(p, ".nsp")!=0)) {
 		return filesend(sid, filename);
 	}
 	send_header(sid, 0, 200, "1", "text/html", -1, -1);

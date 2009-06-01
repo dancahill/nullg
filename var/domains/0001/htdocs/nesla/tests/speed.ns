@@ -1,0 +1,44 @@
+#!/usr/bin/nesla
+/*
+ speed.c    = 0m0.004s
+ speed.lua  = 0m0.082s
+ speed.pl   = 0m0.193s
+ speed.php5 = 0m0.207s
+ speed.py   = 0m0.406s
+ speed.ns   = 0m0.673s
+
+ i have crappy comps, but these should be relatively representative.
+ basically we do loops like old people screw
+
+ all nesla math used double precision fp, but even
+ that only accounts for about 5% of the runtime
+ */
+//print("\e[2J"+"\e[H");
+
+function test(title, code) {
+	print("\e[01;37;40m",title,"\e[00m\t");
+	oldtime=runtime();
+	system(code);
+	t=runtime()-oldtime;
+	print("\ttime = ", tostring(t, 3), " (", tostring(t/basetime, 1), "xC)\n");
+	return;
+}
+
+file.write("timetest.c", "#include <stdio.h>\nint main()\n{\n\tunsigned int i;\n\tfor (i=1;i<100001;i++) if (i%20000==0) printf(\"%d\", i/20000);\n\treturn 0;\n}\n");
+system("cc -O2 -s -static timetest.c -o timetest.bin");
+print("\n\e[01;37;40mC\e[00m\t");
+oldtime=runtime();
+system("./timetest.bin");
+global basetime=runtime()-oldtime;
+file.unlink("timetest.c", "timetest.bin");
+print("\tbase time = ", tostring(basetime, 3), "\n");
+
+test("LUA",    "lua    -e \"for i=1,100001 do if i%20000==0 then io.write(i/20000) end end\"");
+test("PERL",   "perl   -e \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } }\"");
+test("PHP",    "php    -r \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } }\"");
+test("Python", "python -c \"for i in range(1,100001):\n\tif i%20000==0:\n\t\tprint(i/20000),\"");
+test("Nesla",  "nesla  -e \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } }\"");
+print("-strcat-\r\n");
+test("PERL",   "perl   -e \"\\$i=\\\"\\\"; for (\\$j=0;\\$j<20000;\\$j++) { \\$i+=\\$j; }\"");
+test("PHP",    "php    -r \"\\$i=\\\"\\\"; for (\\$j=0;\\$j<20000;\\$j++) { \\$i+=\\$j; }\"");
+test("Nesla",  "nesla  -e \"\\$i=\\\"\\\"; for (\\$j=0;\\$j<20000;\\$j++) { \\$i+=\\$j; }\"");

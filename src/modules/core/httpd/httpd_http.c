@@ -612,7 +612,7 @@ int read_header(CONN *sid)
 	nes_linkval(sid->N, nes_settable(sid->N, newconfobj, "MODULES"), nes_getobj(proc->N, &proc->N->g, "GWMODULES"));
 
 	/* cheat and peek at the master process's global var table */
-//	nes_linkval(sid->N, nes_settable(sid->N, &sid->N->g, "MASTERGLOBAL"), &proc->N->g);
+	nes_linkval(sid->N, nes_settable(sid->N, &sid->N->g, "MASTERGLOBAL"), &proc->N->g);
 //	nes_linkval(sid->N, nes_settable(sid->N, &sid->N->g, "HTTPDGLOBAL"), &htproc.N->g);
 
 	return 0;
@@ -724,6 +724,8 @@ void send_header(CONN *sid, int cacheable, int status, char *extra_header, char 
 
 	if (status) {
 		sid->dat->out_status=status;
+	} else if ((status=nes_getnum(sid->N, hrobj, "STATUS"))!=0) {
+		sid->dat->out_status=status;
 	} else {
 		sid->dat->out_status=200;
 	}
@@ -738,17 +740,17 @@ void send_header(CONN *sid, int cacheable, int status, char *extra_header, char 
 	strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
 	nes_setstr(sid->N, hrobj, "DATE", timebuf, strlen(timebuf));
 	if (cacheable) {
-		nes_setstr(sid->N, hrobj, "CACHE_CONTROL", "public", strlen("public"));
-		nes_setstr(sid->N, hrobj, "PRAGMA", "public", strlen("public"));
+		nes_setstr(sid->N, hrobj, "CACHE_CONTROL", "public", -1);
+		nes_setstr(sid->N, hrobj, "PRAGMA", "public", -1);
 	} else {
-		nes_setstr(sid->N, hrobj, "CACHE_CONTROL", "no-cache, no-store, must-revalidate", strlen("no-cache, no-store, must-revalidate"));
-		nes_setstr(sid->N, hrobj, "EXPIRES", timebuf, strlen(timebuf));
-		nes_setstr(sid->N, hrobj, "PRAGMA", "no-cache", strlen("no-cache"));
+		nes_setstr(sid->N, hrobj, "CACHE_CONTROL", "no-cache, no-store, must-revalidate", -1);
+		nes_setstr(sid->N, hrobj, "EXPIRES", timebuf, -1);
+		nes_setstr(sid->N, hrobj, "PRAGMA", "no-cache", -1);
 	}
 	if (extra_header!=(char*)0) {
-		nes_setstr(sid->N, hrobj, "CONTENT_TYPE", mime_type, strlen(mime_type));
+		nes_setstr(sid->N, hrobj, "CONTENT_TYPE", mime_type, -1);
 	} else {
-		nes_setstr(sid->N, hrobj, "CONTENT_TYPE", "text/html", strlen("text/html"));
+		nes_setstr(sid->N, hrobj, "CONTENT_TYPE", "text/html", -1);
 	}
 }
 
@@ -879,6 +881,8 @@ void http_dorequest(CONN *sid)
 			if (htnes_doscript(sid)>-1) goto wrap;
 		} else if (test_add(sid, nes_tostr(sid->N, cobj), RequestURI, ".nes")==1) {
 			if (htnes_doscript(sid)>-1) goto wrap;
+		} else if (test_add(sid, nes_tostr(sid->N, cobj), RequestURI, ".nsp")==1) {
+			if (htnes_doscript(sid)>-1) goto wrap;
 		}
 	}
 	/* if it's not in the private htdocs, try the public */
@@ -889,6 +893,8 @@ void http_dorequest(CONN *sid)
 		} else if (test_add(sid, nes_tostr(sid->N, cobj), RequestURI, ".ns")==1) {
 			if (htnes_doscript(sid)>-1) goto wrap;
 		} else if (test_add(sid, nes_tostr(sid->N, cobj), RequestURI, ".nes")==1) {
+			if (htnes_doscript(sid)>-1) goto wrap;
+		} else if (test_add(sid, nes_tostr(sid->N, cobj), RequestURI, ".nsp")==1) {
 			if (htnes_doscript(sid)>-1) goto wrap;
 		}
 	}

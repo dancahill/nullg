@@ -1101,10 +1101,10 @@ char *sql_getname(nes_state *N, obj_t **qobj, int fieldnumber)
 	if ((fieldnumber<0)||(fieldnumber+1>nes_getnum(N, *qobj, "_fields"))) return NULL;
 	cobj=nes_getobj(N, *qobj, "_rows");
 	if (cobj->val->type!=NT_TABLE) return "";
-	for (cobj=cobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=cobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (cobj->val->type==NT_NULL) return "";
 		if (cobj->val->type!=NT_TABLE) continue;
-		for (cobj=cobj->val->d.table; cobj; cobj=cobj->next) {
+		for (cobj=cobj->val->d.table.f; cobj; cobj=cobj->next) {
 			if (j!=fieldnumber) { j++; continue; }
 			return cobj->name;
 		}
@@ -1123,11 +1123,11 @@ char *sql_getvalue(nes_state *N, obj_t **qobj, int tuple, int field)
 	if ((field<0)||(field+1>nes_getnum(N, *qobj, "_fields"))) return NULL;
 	tobj=nes_getobj(N, *qobj, "_rows");
 	if (tobj->val->type!=NT_TABLE) return "";
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (cobj->val->type==NT_NULL) return "";
 		if (cobj->val->type!=NT_TABLE) continue;
 		if (i!=tuple) { i++; continue; }
-		for (cobj=cobj->val->d.table; cobj; cobj=cobj->next) {
+		for (cobj=cobj->val->d.table.f; cobj; cobj=cobj->next) {
 			if (j!=field) { j++; continue; }
 			if (cobj->val->type==NT_STRING) {
 				return cobj->val->d.str?cobj->val->d.str:"";
@@ -1148,7 +1148,7 @@ char *sql_getvaluebyname(nes_state *N, obj_t **qobj, int tuple, char *fieldname)
 	if ((tuple<0)||(tuple+1>nes_getnum(N, *qobj, "_tuples"))) return NULL;
 	tobj=nes_getobj(N, *qobj, "_rows");
 	if (tobj->val->type!=NT_TABLE) return "";
-	for (cobj=tobj->val->d.table; cobj; cobj=cobj->next) {
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (cobj->val->type==NT_NULL) return "";
 		if (cobj->val->type!=NT_TABLE) continue;
 		if (i!=tuple) { i++; continue; }

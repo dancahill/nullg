@@ -67,6 +67,7 @@ int dir_list(nes_state *N, obj_t **dobj, const char *dirname)
 		}
 #endif
 		tobj2=nes_settable(N, *dobj, name);
+		nes_setstr(N, tobj2, "name", name, -1);
 		nes_setnum(N, tobj2, "mtime", sb.st_mtime);
 		if (sym==2) {
 			nes_setnum(N, tobj2, "size", 0);

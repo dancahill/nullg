@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 #include "nesla/libnesla.h"
 #include "opcodes.h"
 #include <math.h>
+
+static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass);
 
 /* read a function from N->readptr */
 obj_t *n_getfunction(nes_state *N)
@@ -87,6 +89,7 @@ obj_t *n_getstring(nes_state *N)
 	int size=readi4((N->readptr+1));
 
 	settrace();
+//	nes_setstr(N, &N->r, "", (char *)N->readptr+5, size);
 	nes_strcat(N, nes_setstr(N, &N->r, "", NULL, 0), (char *)N->readptr+5, size);
 	N->readptr+=6+size;
 	/* if (N->debug) n_warn(N, __FUNCTION__, "%d '%s'", size, nes_tostr(N, cobj)); */
@@ -300,6 +303,13 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 		}
 	case OP_MEQ :
 		op=*N->readptr++;
+		if (*N->readptr==OP_KNEW) {
+//			n_warn(N, __FUNCTION__, "OP_KNEW");
+			N->readptr++;
+			nes_unlinkval(N, cobj);
+			n_evalobj(N, cobj, 1);
+			return cobj;
+		}
 	default:
 		if (*N->readptr==OP_KFUNC) {
 			N->readptr++;
@@ -329,7 +339,7 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 #undef __FUNCTION__
 }
 
-static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
+static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass)
 {
 #define __FUNCTION__ __FILE__ ":n_evalobj()"
 	settrace();
@@ -360,7 +370,7 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 		} else if (*N->readptr==OP_LABEL) {
 			p=N->readptr;
 			l=n_getlabel(N, NULL);
-			nobj=nes_getobj(N, &N->l, l);
+			nobj=nes_getobj(N, NULL, l);
 			while (*N->readptr==OP_POBRACKET||*N->readptr==OP_PDOT) {
 				pobj=nobj;
 				nobj=n_readindex(N, (nobj->val->type==NT_TABLE)?nobj:NULL, NULL);
@@ -370,7 +380,8 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 				if (nobj->val->type!=NT_NFUNC&&nobj->val->type!=NT_CFUNC) {
 					n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", l);
 				}
-				nobj=n_execfunction(N, nobj, pobj);
+				nobj=n_execfunction(N, nobj, pobj, isclass);
+//				if (isclass) return nobj;
 				break;
 			case OP_MADDEQ  :
 			case OP_MSUBEQ  :
@@ -408,12 +419,32 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj)
 #undef __FUNCTION__
 }
 
+static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1);
+
 static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 {
 #define __FUNCTION__ __FILE__ ":n_evalmath()"
 	int n, t;
 
 	settrace();
+	if (op==OP_MCEEQ&&nes_typeof(cobj)!=nes_typeof(nobj)) {
+		nes_setvaltype(N, cobj, NT_BOOLEAN);
+		cobj->val->d.num=0;
+		return cobj;
+	}
+	if (op==OP_MQUESTION) {
+		short bval=nes_tobool(N, cobj);
+		obj_t obj2;
+
+		n_expect(N, __FUNCTION__, OP_MCOLON);
+		N->readptr++;
+		n_evalobj(N, &obj2, 0);
+		n_evalsub(N, 0, &obj2);
+		n_freeval(N, cobj);
+		nes_linkval(N, cobj, bval?nobj:&obj2);
+		nes_unlinkval(N, &obj2);
+		return cobj;
+	}
 	if (nes_isnull(nobj)) {
 		n=nes_isnull(cobj);
 		t=nes_istrue(cobj);
@@ -421,6 +452,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 //		cobj->val=n_newval(N, NT_BOOLEAN);
 		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
+		case OP_MCEEQ  :
 		case OP_MCEQ   : cobj->val->d.num=n?1:0; break;
 		case OP_MCNE   : cobj->val->d.num=n?0:1; break;
 		case OP_MLAND  : cobj->val->d.num=0; break;
@@ -437,6 +469,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 //		cobj->val=n_newval(N, NT_BOOLEAN);
 		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
+		case OP_MCEEQ  :
 		case OP_MCEQ   : cobj->val->d.num=n?1:0; break;
 		case OP_MCNE   : cobj->val->d.num=n?0:1; break;
 		case OP_MLAND  : cobj->val->d.num=0; break;
@@ -448,6 +481,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 /*
 		case NT_NULL:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=0; break;
 			case OP_MCNE   : cobj->val->d.num=1; break;
 			}
@@ -456,6 +490,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		case NT_NUMBER:
 		case NT_BOOLEAN:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=(cobj->val->d.num?1:0)==(nobj->val->d.num?1:0)?1:0; break;
 			case OP_MCNE   : cobj->val->d.num=(cobj->val->d.num?1:0)!=(nobj->val->d.num?1:0)?1:0; break;
 			case OP_MLAND  : cobj->val->d.num=cobj->val->d.num && nobj->val->d.num; break;
@@ -464,13 +499,15 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			return cobj;
 		case NT_STRING:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=(cobj->val->d.num&&(nobj->val->d.str&&nobj->val->d.str[0]))?1:0; break;
 			}
 			return cobj;
 		case NT_TABLE:
 			switch (op) {
-			case OP_MCEQ   : cobj->val->d.num=(cobj->val->d.num?1:0)==(nobj->val->d.table?1:0)?1:0; break;
-			case OP_MCNE   : cobj->val->d.num=(cobj->val->d.num?1:0)!=(nobj->val->d.table?1:0)?1:0; break;
+			case OP_MCEEQ  :
+			case OP_MCEQ   : cobj->val->d.num=(cobj->val->d.num?1:0)==(nobj->val->d.table.f?1:0)?1:0; break;
+			case OP_MCNE   : cobj->val->d.num=(cobj->val->d.num?1:0)!=(nobj->val->d.table.f?1:0)?1:0; break;
 			}
 			return cobj;
 		}
@@ -480,6 +517,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 /*
 		case NT_NULL:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->type=NT_BOOLEAN; cobj->val->d.num=0; break;
 			case OP_MCNE   : cobj->val->type=NT_BOOLEAN; cobj->val->d.num=1; break;
 			}
@@ -489,6 +527,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			nes_setnum(N, nobj, "", n_aton(N, nobj->val->d.str));
 		case NT_NUMBER:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->type=NT_BOOLEAN; cobj->val->d.num=cobj->val->d.num == nobj->val->d.num; break;
 			case OP_MCNE   : cobj->val->type=NT_BOOLEAN; cobj->val->d.num=cobj->val->d.num != nobj->val->d.num; break;
 			case OP_MCLT   : cobj->val->type=NT_BOOLEAN; cobj->val->d.num=cobj->val->d.num <  nobj->val->d.num; break;
@@ -518,6 +557,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		case NT_BOOLEAN:
 			cobj->val->type=NT_BOOLEAN;
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=(cobj->val->d.num?1:0)==(nobj->val->d.num?1:0)?1:0; break;
 			}
 			return cobj;
@@ -528,6 +568,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 /*
 		case NT_NULL:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : nes_setnum(N, cobj, "", 0); cobj->val->type=NT_BOOLEAN; break;
 			case OP_MCNE   : nes_setnum(N, cobj, "", 1); cobj->val->type=NT_BOOLEAN; break;
 			}
@@ -550,6 +591,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 				n_freeval(N, cobj);
 				cobj->val->type=NT_BOOLEAN;
 				switch (op) {
+				case OP_MCEEQ:
 				case OP_MCEQ : cobj->val->d.num=cmp?0:1;    break;
 				case OP_MCNE : cobj->val->d.num=cmp?1:0;    break;
 				case OP_MCLE : cobj->val->d.num=cmp<=0?1:0; break;
@@ -561,6 +603,7 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			return cobj;
 		case NT_BOOLEAN:
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   :
 				nes_setnum(N, cobj, "", ((cobj->val->d.str&&cobj->val->d.str[0])?1:0)==(nobj->val->d.num?1:0)?1:0);
 				cobj->val->type=NT_BOOLEAN;
@@ -576,18 +619,20 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 //			cobj->val=n_newval(N, NT_BOOLEAN);
 			nes_setvaltype(N, cobj, NT_BOOLEAN);
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=0; break;
 			case OP_MCNE   : cobj->val->d.num=1; break;
 			}
 			return cobj;
 */
 		case NT_TABLE: {
-			int cmp=(cobj->val->d.table==nobj->val->d.table);
+			int cmp=(cobj->val->d.table.f==nobj->val->d.table.f);
 
 //			nes_unlinkval(N, cobj);
 //			cobj->val=n_newval(N, NT_BOOLEAN);
 			nes_setvaltype(N, cobj, NT_BOOLEAN);
 			switch (op) {
+			case OP_MCEEQ  :
 			case OP_MCEQ   : cobj->val->d.num=cmp?1:0; break;
 			case OP_MCNE   : cobj->val->d.num=cmp?0:1; break;
 			}
@@ -609,7 +654,7 @@ static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1)
 	settrace();
 	while (OP_ISMATH(*N->readptr)) {
 		op2=*N->readptr++;
-		n_evalobj(N, &obj2);
+		n_evalobj(N, &obj2, 0);
 		/* this should do something based on the type of the _first_ object in the list... i.e. string addition... */
 		if (OP_ISMATH(*N->readptr)&&(oplist[(uchar)*N->readptr].priority>oplist[(uchar)op2].priority)) {
 			n_evalsub(N, op2, &obj2);
@@ -620,7 +665,7 @@ static void n_evalsub(nes_state *N, uchar op1, obj_t *obj1)
 	return;
 #undef __FUNCTION__
 }
-
+
 /*
  * the following functions are public API functions
  */
@@ -635,7 +680,7 @@ obj_t *nes_eval(nes_state *N, const char *string)
 	sanetest();
 	if (N->savjmp!=NULL) {
 		N->readptr=(uchar *)string;
-		n_evalobj(N, &obj1);
+		n_evalobj(N, &obj1, 0);
 		n_evalsub(N, 0, &obj1);
 		nes_unlinkval(N, &N->r);
 		N->r.val=obj1.val;
@@ -653,7 +698,7 @@ obj_t *nes_eval(nes_state *N, const char *string)
 		N->readptr=N->blockptr+readi4((N->blockptr+12));
 		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
 		if (setjmp(*N->savjmp)==0) {
-			n_evalobj(N, &obj1);
+			n_evalobj(N, &obj1, 0);
 			n_evalsub(N, 0, &obj1);
 			nes_unlinkval(N, &N->r);
 			N->r.val=obj1.val;

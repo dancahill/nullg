@@ -1,0 +1,14 @@
+#!/usr/bin/nesla
+if (typeof(_SERVER)!='table') {
+	global I=0;
+	global J=50001;
+	for (I=0;I<J;I++) {
+		include("lib/_load.ns");
+		if (I%500!=0) continue;
+		include("test1.ns");
+		print("", I, "/", J, "\r\n");
+		print("this loops tens of thousands of times... just fyi...\n");
+		system("ps aux | grep nesla | grep -v grep");
+		#io.flush();
+	}
+}

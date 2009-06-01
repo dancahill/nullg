@@ -136,10 +136,10 @@ static int htselect_folders_r(CONN *sid, obj_t *qobj, int depth, int accountid, 
 	int i;
 
 	tobj=nes_settable(sid->N, nes_settable(sid->N, qobj, "_data"), "folders");
-	for (cobj=tobj->val->d.table;cobj;cobj=cobj->next) {
-		pid=nes_getnum(sid->N, cobj, "parentid");
+	for (cobj=tobj->val->d.table.f;cobj;cobj=cobj->next) {
+		pid=(int)nes_getnum(sid->N, cobj, "parentid");
 		if (pid==parentid) {
-			fid=nes_getnum(sid->N, cobj, "folderid");
+			fid=(int)nes_getnum(sid->N, cobj, "folderid");
 			prints(sid, "document.write('<OPTION VALUE=\"accountid=%d&folderid=%d\">&nbsp;&nbsp;&nbsp;&nbsp;", accountid, fid);
 			for (i=0;i<depth;i++) prints(sid, "&nbsp;&nbsp;&nbsp;&nbsp;");
 			prints(sid, "%s", str2html(sid, nes_getstr(sid->N, cobj, "cn")));
@@ -175,8 +175,8 @@ void htselect_mailjump(CONN *sid, int accountid, int folderid)
 	prints(sid, "document.write('<SELECT NAME=accountid style=\"width:250px\" onChange=\"ChangeMail()\">');\r\n");
 
 	qobj2=nes_settable(sid->N, qobj1, "_rows");
-	for (qobj2=qobj2->val->d.table;qobj2;qobj2=qobj2->next) {
-		account=nes_getnum(sid->N, qobj2, "id");
+	for (qobj2=qobj2->val->d.table.f;qobj2;qobj2=qobj2->next) {
+		account=(int)nes_getnum(sid->N, qobj2, "id");
 		x=-1;
 		for (j=0;j<ldir_numentries(&qobj2);j++) {
 			if (atoi(ldir_getval(&qobj2, j, "id"))==folderid) x=j;

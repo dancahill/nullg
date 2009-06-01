@@ -1,0 +1,18 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testloop() {
+	local n=10;
+
+	local x=""; while (n>5) { x=x+tostring(--n); } expect("while (n>5)", "98765", x);
+	local x=""; for (n=0;n<10;n++) { if (n==5) break; x=x+tostring(n); }  expect("for (n=0;n<5;n++)", "01234", x);
+	local x=""; for (n=0;n<5;++n)  { x=x+tostring(n); }  expect("for (n=0;n<5;++n)",  "01234",   x);
+	local x=""; for (n=0;n<5;n+=1) { x=x+tostring(n); }  expect("for (n=0;n<5;n+=1)", "01234",   x);
+	local x=""; for (n=5;n>0;n--)  { x=x+tostring(n); }  expect("for (n=5;n>0;n--)",  "54321",   x);
+	local x=""; for (n=5;n>0;--n)  { x=x+tostring(n); }  expect("for (n=5;n>0;--n)",  "54321",   x);
+	local x=""; for (n=5;n>0;n-=1) { x=x+tostring(n); }  expect("for (n=5;n>0;n-=1)", "54321",   x);
+	array = { a=1, b=2, c=3, d=4, e=5 };
+	local x=""; foreach (n in array) { x=x+tostring(n); } expect("foreach (n in array)", "12345",   x);
+	return;
+}
+testloop();
+global testloop=null;

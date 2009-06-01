@@ -1,0 +1,75 @@
+#!/usr/bin/nesla
+
+function main() {
+	global numtests=0;
+	global numerrors=0;
+	local testlist = {
+		"types.ns";
+		"tables.ns";
+		"size.ns";
+		"scope.ns";
+		"string.ns";
+		"if.ns";
+		"loops.ns";
+		"cmp.ns";
+		"eval.ns";
+		"math.ns";
+		"oo.ns";
+		"indexes.ns";
+		"try.ns";
+		"b64.ns";
+		"rot13.ns";
+		"xml.ns";
+		"regex.ns";
+		"crypto.ns";
+		"dl.ns";
+		"tcp.ns";
+
+//		"ldap.ns";
+//		"odbc.ns";
+	}
+	local subf = function () { return 42; }
+	include("../samples/_cards.ns");
+	include("lib/_expect.ns");
+	print("STARTING TESTS\n");
+	try {
+		foreach (testfile in testlist) {
+			print("-- "+testfile+" "+"-"*(63-string.len(testfile))+"\n");
+			include("lib/"+testfile);
+		}
+	} catch (ex) {
+		print("-------------------------------------------------------------------\n");
+		if (_ENV['TERM']==null) {
+			print("\tUNHANDLED EXCEPTION -> (",ex.errno,") ",ex.errtext,"\n");
+		} else {
+			print("\t\e[00;31;40mUNHANDLED EXCEPTION -> (",ex.errno,") ",ex.errtext,"\e[00m\n");
+		}
+		print("-------------------------------------------------------------------\n");
+	}
+	print("-------------------------------------------------------------------\n");
+	if (_ENV['HOME']!=null) {
+		var f=_ENV['HOME']+"/test.ns";
+		if (typeof(file.stat(f))=='table') {
+			print("\trunning ", f, "\n");
+			include(f);
+			print("-------------------------------------------------------------------\n");
+		}
+	}
+	if (typeof(sqlquery)=='function') Q=sqlquery("SELECT * FROM nullgs_sessions");
+	if (typeof(dirlist)=='function') D=dirlist(_filepath);
+	print("        FINISHED TESTS       = "+runtime()+" seconds\n");
+	expect("tests passed/total", tostring(numtests)+"/"+tostring(numtests), tostring(numtests-numerrors)+"/"+tostring(numtests));
+	if (numerrors>1) numerrors--;
+	numtests--;
+	print("-------------------------------------------------------------------\n");
+	global decomped_script=null;
+	global _ARGS={};
+	global _ENV={};
+	if (typeof(_SERVER)!='table') {
+	print("global _GLOBALS = ");
+		printvar(_GLOBALS);
+		print(";\n");
+	}
+	return;
+}
+main();

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2008 Dan Cahill
+    Copyright (C) 2007-2009 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,34 +54,44 @@
 #define	OP_MLOR		226 /* 0xE2 */
 #define	OP_MLNOT	225 /* 0xE1 */
 #define	OP_MCEQ		224 /* 0xE0 */
-#define	OP_MCNE		223 /* 0xDF */
-#define	OP_MCLE		222 /* 0xDE */
-#define	OP_MCGE		221 /* 0xDD */
-#define	OP_MCLT		220 /* 0xDC */
-#define	OP_MCGT		219 /* 0xDB */
-/* keywords */
-#define	OP_KBREAK	218 /* 0xDA */
-#define	OP_KCONT	217 /* 0xD9 */
-#define	OP_KRET		216 /* 0xD8 */
-#define	OP_KFUNC	215 /* 0xD7 */
-#define	OP_KGLOB	214 /* 0xD6 */
-#define	OP_KLOCAL	213 /* 0xD5 */
-#define	OP_KVAR		212 /* 0xD4 */
-#define	OP_KIF		211 /* 0xD3 */
-#define	OP_KELSE	210 /* 0xD2 */
-#define	OP_KFOR		209 /* 0xD1 */
-#define	OP_KDO		208 /* 0xD0 */
-#define	OP_KWHILE	207 /* 0xCF */
-#define	OP_KTRY		206 /* 0xCE */
-#define	OP_KCATCH	205 /* 0xCD */
-#define	OP_KEXIT	204 /* 0xCC */
+#define	OP_MCEEQ	223 /* 0xDF */
+#define	OP_MCNE		222 /* 0xDE */
+#define	OP_MCLE		221 /* 0xDD */
+#define	OP_MCGE		220 /* 0xDC */
+#define	OP_MCLT		219 /* 0xDB */
+#define	OP_MCGT		218 /* 0xDA */
 
-#define OP_LABEL	203 /* 0xCB */
-#define OP_STRDATA	202 /* 0xCA */
-#define OP_NUMDATA	201 /* 0xC9 */
+#define OP_MCOLON	217 /* 0xD9 */
+#define OP_MQUESTION	216 /* 0xD8 */
+
+/* keywords */
+#define	OP_KBREAK	215 /* 0xD9 */
+#define	OP_KCONT	214 /* 0xD8 */
+#define	OP_KRET		213 /* 0xD7 */
+#define	OP_KNEW		212 /* 0xD6 */
+#define	OP_KCLASS	211 /* 0xD5 */
+#define	OP_KFUNC	210 /* 0xD4 */
+#define	OP_KGLOB	209 /* 0xD3 */
+#define	OP_KLOCAL	208 /* 0xD2 */
+#define	OP_KVAR		207 /* 0xD1 */
+#define	OP_KIF		206 /* 0xD0 */
+#define	OP_KELSE	205 /* 0xCF */
+#define	OP_KFOR		204 /* 0xCE */
+#define	OP_KFOREACH	203 /* 0xCD */
+#define	OP_KDO		202 /* 0xCC */
+#define	OP_KWHILE	201 /* 0xCB */
+#define	OP_KTRY		200 /* 0xCA */
+#define	OP_KCATCH	199 /* 0xC9 */
+#define	OP_KFINALLY	198 /* 0xC8 */
+#define	OP_KTHROW	197 /* 0xC7 */
+#define	OP_KEXIT	196 /* 0xC6 */
+
+#define OP_LABEL	195 /* 0xC5 */
+#define OP_STRDATA	194 /* 0xC4 */
+#define OP_NUMDATA	193 /* 0xC3 */
 
 #define OP_ISPUNC(o)	(o>=OP_PHASH&&o<=OP_POBRACE)
-#define OP_ISMATH(o)	(o>=OP_MCGT&&o<=OP_MEQ)
+#define OP_ISMATH(o)	(o>=OP_MQUESTION&&o<=OP_MEQ)
 #define OP_ISKEY(o)	(o>=OP_KEXIT&&o<=OP_KBREAK)
 #define OP_ISEND(o)	(o>=OP_PSEMICOL&&o<=OP_PCBRACE)
 

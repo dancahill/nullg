@@ -8,14 +8,14 @@ function search_contacts() {
 	print("<CENTER>\r\n");
 	global Q=ldir.getlist("person", 0);
 //	ldir_sortlist(N, qobj1, "sn", "_data", 1);
-	ldir.sortlist(Q, "sn", "_data", 1);
+	print("ldir.sortlist(Q, \"sn\", \"_data\", 1); is broken");
+//	ldir.sortlist(Q, "sn", "_data", 1);
 	if (Q._tuples<1) {
 		print("<B>Found 0 matching contacts</B></CENTER>\r\n");
 		return;
 	} else if (Q._tuples==1) {
 		id=tonumber(Q['_rows'][0]['id']);
-		print(
-			"<B>Found 1 matching contact</B>\r\n",
+		print(	"<B>Found 1 matching contact</B>\r\n",
 			"<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\n",
 			"location.replace(\"/contacts/view?id="+id+"\");\r\n",
 			"// -->\r\n</SCRIPT>\r\n",
@@ -27,79 +27,79 @@ function search_contacts() {
 		);
 		return;
 	}
-	print("<SCRIPT TYPE=\"text/javascript\" LANGUAGE=\"JavaScript\"><!--\r\n");
-	print("function findMailtoLink(text) {\r\n");
-	print("	for (var i=0;i<document.links.length;i++) {\r\n");
-	print("		if (document.links[i].href==text) return i;\r\n");
-	print("	}\r\n");
-	print("	return null;\r\n");
-	print("}\r\n");
-	print(
+	print(	"<SCRIPT TYPE=\"text/javascript\" LANGUAGE=\"JavaScript\"><!--\r\n",
+		"function findMailtoLink(text) {\r\n",
+		"	for (var i=0;i<document.links.length;i++) {\r\n",
+		"		if (document.links[i].href==text) return i;\r\n",
+		"	}\r\n",
+		"	return null;\r\n",
+		"}\r\n",
 		"function MailUpdate() {\r\n",
 		"	var entries=document.mailform.elements.length/2;\r\n"
 	);
 	if (maildefault>0) {
+		if (menustyle>0) {
+			print("	var output=\"javascript:MailTo('\";\r\n");
+		} else {
+			print("	var output=\"/mail/write?\";\r\n");
+		}
 		s1=','; s2='&';
 	} else {
-		s1=';'; s2='?';
-	}
-	if (maildefault==0) {
 		print("	var output=\"mailto:\";\r\n");
-	} else if (menustyle>0) {
-		print("	var output=\"javascript:MailTo('\";\r\n");
-	} else {
-		print("	var output=\"/mail/write?\";\r\n");
+		s1=';'; s2='?';
 	}
 	print("	var cc=0;\r\n");
 	print("	var j=0;\r\n\r\n");
 	if (maildefault>0) {
-		print("	output+='to=';\r\n");
+		print(	"	output+='to=';\r\n");
 	}
-	print("	for (var i=0;i<entries;i++) {\r\n");
-	print("		if (document.mailform[\"option\"+i].value=='TO') {\r\n");
-	print("			if (j>0) output+='"+s1+";';\r\n");
-	print("			output+=document.mailform[\"addr\"+i].value;\r\n");
-	print("			j++;\r\n");
-	print("		}\r\n");
-	print("	}\r\n");
-	print("	var j=0;\r\n");
-	print("	for (var i=0;i<entries;i++) {\r\n");
-	print("		if (document.mailform[\"option\"+i].value=='CC') {\r\n");
-	print("			if (j==0) output+='"+s2+"cc=';\r\n");
-	print("			else if (j>0) output+='"+s1+"';\r\n");
-	print("			output+=document.mailform[\"addr\"+i].value;\r\n");
-	print("			cc=1;\r\n");
-	print("			j++;\r\n");
-	print("		}\r\n");
-	print("	}\r\n");
-	print("	var j=0;\r\n");
-	print("	for (var i=0;i<entries;i++) {\r\n");
-	print("		if (document.mailform[\"option\"+i].value=='BCC') {\r\n");
-	print("			if (j==0) {\r\n");
+	print(	"	for (var i=0;i<entries;i++) {\r\n",
+		"		if (document.mailform[\"option\"+i].value=='TO') {\r\n",
+		"			if (j>0) output+='"+s1+";';\r\n",
+		"			output+=document.mailform[\"addr\"+i].value;\r\n",
+		"			j++;\r\n",
+		"		}\r\n",
+		"	}\r\n",
+		"	var j=0;\r\n",
+		"	for (var i=0;i<entries;i++) {\r\n",
+		"		if (document.mailform[\"option\"+i].value=='CC') {\r\n",
+		"			if (j==0) output+='"+s2+"cc=';\r\n",
+		"			else if (j>0) output+='"+s1+"';\r\n",
+		"			output+=document.mailform[\"addr\"+i].value;\r\n",
+		"			cc=1;\r\n",
+		"			j++;\r\n",
+		"		}\r\n",
+		"	}\r\n",
+		"	var j=0;\r\n",
+		"	for (var i=0;i<entries;i++) {\r\n",
+		"		if (document.mailform[\"option\"+i].value=='BCC') {\r\n",
+		"			if (j==0) {\r\n"
+	);
 	if (maildefault>0) {
-		print("				output+='&bcc=';\r\n");
+		print(	"				output+='&bcc=';\r\n");
 	} else {
-		print("				if (cc==1) {\r\n");
-		print("					output+='&bcc=';\r\n");
-		print("				} else {\r\n");
-		print("					output+='?bcc=';\r\n");
-		print("				}\r\n");
+		print(	"				if (cc==1) {\r\n",
+			"					output+='&bcc=';\r\n",
+			"				} else {\r\n",
+			"					output+='?bcc=';\r\n",
+			"				}\r\n"
+		);
 	}
-	print("			} else if (j>0) output+='"+s1+"';\r\n");
-	print("			output+=document.mailform[\"addr\"+i].value;\r\n");
-	print("			j++;\r\n");
-	print("		}\r\n");
-	print("	}\r\n");
+	print(	"			} else if (j>0) output+='"+s1+"';\r\n",
+		"			output+=document.mailform[\"addr\"+i].value;\r\n",
+		"			j++;\r\n",
+		"		}\r\n",
+		"	}\r\n",
+	);
 	if ((maildefault>0)&&(menustyle>0)) {
-		print("	output+=\"')\";\r\n");
+		print(	"	output+=\"')\";\r\n");
 	}
-	print("	document.links[mailtoLink2].href=output;\r\n");
-	print("}\r\n");
-	print("function MailTo(rcptlist) {\r\n");
-	print("	window.open('/mail/write?'+rcptlist,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n");
-	print("}\r\n");
-	print("//--></SCRIPT>\r\n");
-	print(
+	print(	"	document.links[mailtoLink2].href=output;\r\n",
+		"}\r\n",
+		"function MailTo(rcptlist) {\r\n",
+		"	window.open('/mail/write?'+rcptlist,'_blank','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=no,resizable=no,width=663,height=455');\r\n",
+		"}\r\n",
+		"//--></SCRIPT>\r\n",
 		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\r\n",
 		"<TD ALIGN=LEFT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
 		"<TD ALIGN=CENTER NOWRAP><B>Found ",Q._tuples," matching contacts</B></TD>\r\n",

@@ -13,9 +13,9 @@ all:
 	@if not exist lib mkdir lib
 	@if not exist obj mkdir obj
 #	@if not exist int mkdir int
-	@COPY \NullLogic\gw\libs\libsqlite3.dll ..\..\lib
-	@COPY \NullLogic\gw\libs\libeay32.dll ..\..\lib
-	@COPY \NullLogic\gw\libs\ssleay32.dll ..\..\lib
+#	@COPY \NullLogic\gw\libs\libsqlite3.dll ..\..\lib
+#	@COPY \NullLogic\gw\libs\libeay32.dll ..\..\lib
+#	@COPY \NullLogic\gw\libs\ssleay32.dll ..\..\lib
 	@ECHO libnesla
 	@CD SRC\LIBNESLA
 	@NMAKE /C /S /F MAKEFILE.VC
