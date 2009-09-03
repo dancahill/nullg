@@ -64,6 +64,7 @@ void htpage_logout(CONN *sid);
 void htpage_frameset(CONN *sid);
 void htpage_topmenu(CONN *sid, char *modname);
 void htpage_motd(CONN *sid);
+/*
 void htselect_day(CONN *sid, char *selected);
 void htselect_hour(CONN *sid, int selected);
 void htselect_month(CONN *sid, char *selected);
@@ -90,6 +91,7 @@ char *htview_eventtype(CONN *sid, int selected);
 char *htview_holiday(char *date);
 char *htview_reminder(CONN *sid, int selected);
 char *htview_user(CONN *sid, int selected);
+*/
 void htscript_showpage(CONN *sid, short int pages);
 /* http.c functions */
 char *getgetenv(CONN *sid, char *query);
@@ -131,6 +133,7 @@ int module_load(char *modname);
 int modules_init();
 /* httpd_nesla.c */
 int htnes_flush(nes_state *N);
+int htnes_runinit(CONN *sid);
 int htnes_doscript(CONN *sid);
 int htnes_doscript_htdocs(CONN *sid, char *dir, char *file);
 int htnes_dotemplate(CONN *sid, char *dir, char *file);

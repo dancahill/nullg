@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 
 #include <stdio.h>
@@ -44,65 +46,95 @@ void dumpsyms(nes_state *N, char *file, long line, uchar *ptr, long count)
 #undef __FUNCTION__
 }
 
-void n_decompile(nes_state *N)
+void n_decompile(nes_state *N, uchar *start, uchar *end, char *errbuf, unsigned short errmax)
 {
 #define __FUNCTION__ __FILE__ ":n_decompile()"
+	uchar *oldbptr=N->blockptr;
+	uchar *oldrptr=N->readptr;
+	uchar *oldbend=N->blockend;
 	uchar *p;
-	long len;
 	uchar *offset=NULL;
+	long len;
 	short showbold;
+	short subchunk;
 
 	settrace();
+	subchunk=(start&&end)?1:0;
 	nl_flush(N);
-	if (N->blockptr==NULL) { printf(" N->blockptr is NULL\n"); return; }
-	if (N->readptr==NULL) { printf(" N->readptr is NULL\n"); return; }
-	if (N->blockend==NULL) { printf(" N->blockend is NULL\n"); return; }
-	printf("\n----\nrecomposed source is:\n\n");
-	printf(" 0x%08lX\n 0x%08lX <-you are here\n 0x%08lX\n\n", (unsigned long)N->blockptr, (unsigned long)N->readptr, (unsigned long)N->blockend);
+	if (N->blockptr==NULL) { nc_printf(N, " N->blockptr is NULL\n"); return; }
+	if (N->readptr==NULL) { nc_printf(N, " N->readptr is NULL\n"); return; }
+	if (N->blockend==NULL) { nc_printf(N, " N->blockend is NULL\n"); return; }
+	if (subchunk) {
+		N->blockptr=start;
+		N->readptr=start;
+		N->blockend=end;
+	}
+	if (!subchunk) nc_printf(N, "\n----\nrecomposed source is:\n\n");
+	if (!subchunk) nc_printf(N, " 0x%08lX\n 0x%08lX <-you are here\n 0x%08lX\n\n", (unsigned long)N->blockptr, (unsigned long)N->readptr, (unsigned long)N->blockend);
 	if (N->readptr>N->blockend) {
-		printf(" N->readptr is %ld bytes past the end of the block\n\n", (unsigned long)(N->readptr-N->blockend));
+		nc_printf(N, " N->readptr is %ld bytes past the end of the block\n\n", (unsigned long)(N->readptr-N->blockend));
 		N->blockptr=N->readptr;
 	} else if (N->readptr<N->blockptr) {
-		printf(" N->readptr is %ld bytes before the block\n\n", (unsigned long)(N->blockptr-N->readptr));
+		nc_printf(N, " N->readptr is %ld bytes before the block\n\n", (unsigned long)(N->blockptr-N->readptr));
 		N->blockptr=N->readptr;
 	} else {
 		offset=N->readptr;
 	}
-	p=N->blockptr+readi4((N->blockptr+12));
+	if (subchunk) {
+		p=N->blockptr;
+	} else {
+		p=N->blockptr+readi4((N->blockptr+12));
+	}
 	for (;*p;p++) {
+		if (subchunk&&p>end) break;
 		showbold=0;
 		if ((offset)&&(p>=offset)) {
 			showbold=1;
-			printf("[01;33;40m[->");
+			if (!subchunk) nc_printf(N, "[01;33;40m[->");
 		}
 		switch (*p) {
 		case OP_STRDATA:
 			len=readi4((p+1));
 			p+=5;
-			printf("\"%s\" ", p);
+			if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "\"%s\"", p);
+			else nc_printf(N, "\"%s\"", p);
 			p+=len;
 			break;
 		case OP_NUMDATA:
 			len=(long)(p[1]);
 			p+=2;
-			printf("%s ", p);
+			if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "%s", p);
+			else nc_printf(N, "%s", p);
 			p+=len;
 			break;
 		case OP_LABEL  :
 			len=(long)(p[1]);
 			p+=2;
-			printf("%s ", p);
+			if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "%s", p);
+			else nc_printf(N, "%s", p);
 			p+=len;
 			break;
 		default:
-			printf("%s ", n_getsym(N, *p));
+			if (OP_ISPUNC(*p)||OP_ISMATH(*p)||OP_ISEND(*p)) {
+				if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "%s", n_getsym(N, *p));
+				else nc_printf(N, "%s ", n_getsym(N, *p));
+			} else if (OP_ISKEY(*p)) {
+				if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "%s ", n_getsym(N, *p));
+				else nc_printf(N, "%s ", n_getsym(N, *p));
+			}
 		}
 		if (showbold) {
-			printf("<-][00m");
+			if (!subchunk) nc_printf(N, "<-][00m");
 			offset=NULL;
 		}
 	}
-	printf("\n\n----\n");
+	if (!subchunk) nc_printf(N, "\n\n----\n");
+	if (subchunk) {
+		N->blockptr=oldbptr;
+		N->readptr=oldrptr;
+		N->blockend=oldbend;
+	}
+	if (errbuf==NULL) nc_printf(N, "\n");
 	return;
 #undef __FUNCTION__
 }

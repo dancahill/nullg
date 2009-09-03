@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 #include <math.h>
 
@@ -64,17 +66,18 @@ num_t n_getnumber(nes_state *N)
 #define __FUNCTION__ __FILE__ ":n_getnumber()"
 	char *s=(char *)N->readptr+2;
 	num_t rval=0;
+	num_t rbase=10;
 	num_t rdot=0.1;
 
 	settrace();
 	N->readptr+=3+N->readptr[1];
 	while (nc_isdigit(*s)) {
-		rval=10*rval+(*s++-'0');
+		rval=rval*rbase+(*s++-'0');
 	}
 	if (*s!='.') return rval;
 	s++;
 	while (nc_isdigit(*s)) {
-		rval+=(*s++-'0')*rdot;
+		rval=rval+rdot*(*s++-'0');
 		rdot*=0.1;
 	}
 	/* if (N->debug) n_warn(N, __FUNCTION__, "[%f]", rval); */
@@ -89,8 +92,7 @@ obj_t *n_getstring(nes_state *N)
 	int size=readi4((N->readptr+1));
 
 	settrace();
-//	nes_setstr(N, &N->r, "", (char *)N->readptr+5, size);
-	nes_strcat(N, nes_setstr(N, &N->r, "", NULL, 0), (char *)N->readptr+5, size);
+	nes_setstr(N, &N->r, "", (char *)N->readptr+5, size);
 	N->readptr+=6+size;
 	/* if (N->debug) n_warn(N, __FUNCTION__, "%d '%s'", size, nes_tostr(N, cobj)); */
 	return &N->r;
@@ -98,7 +100,7 @@ obj_t *n_getstring(nes_state *N)
 }
 
 /* return the next table index */
-obj_t *n_readindex(nes_state *N, obj_t *tobj, char *lastname)
+obj_t *n_readindex(nes_state *N, obj_t *tobj, char *lastname, unsigned short *z)
 {
 #define __FUNCTION__ __FILE__ ":n_readindex()"
 	obj_t *cobj;
@@ -107,6 +109,7 @@ obj_t *n_readindex(nes_state *N, obj_t *tobj, char *lastname)
 	DEBUG_IN();
 	settrace();
 	sanetest();
+	if (z) *z=0;
 	if (lastname) lastname[0]=0;
 	if (*N->readptr==OP_PDOT) {
 		N->readptr++;
@@ -122,7 +125,7 @@ obj_t *n_readindex(nes_state *N, obj_t *tobj, char *lastname)
 		cobj=tobj;
 		goto end;
 	}
-	cobj=nes_getobj(N, tobj, p);
+	cobj=nes_getobj_ex(N, tobj, p, 1, z);
 	if (lastname&&cobj->val->type!=NT_TABLE) nc_strncpy(lastname, p, MAX_OBJNAMELEN);
 end:
 	/* if (N->debug) n_warn(N, __FUNCTION__, "[%d '%s' '%s']", cobj->val->type, cobj->name, lastname?lastname:""); */
@@ -167,6 +170,9 @@ obj_t *n_readtable(nes_state *N, obj_t *tobj)
 				n_getlabel(N, namebuf);
 			} else if (*N->readptr==OP_NUMDATA) {
 				n_ntoa(N, namebuf, n_getnumber(N), 10, 0);
+			} else if (*N->readptr==OP_STRDATA) {
+				n_getstring(N);
+				nc_strncpy(namebuf, N->r.val->d.str, MAX_OBJNAMELEN);
 			}
 			n_expect(N, __FUNCTION__, OP_PCBRACKET);
 			N->readptr++;
@@ -219,10 +225,20 @@ obj_t *n_readvar(nes_state *N, obj_t *tobj, obj_t *cobj)
 	char namebuf[MAX_OBJNAMELEN+1];
 	char *nameptr=namebuf;
 	uchar preop=0;
+	uchar op=*N->readptr;
+	unsigned short z;
 
 	DEBUG_IN();
 	settrace();
 	sanetest();
+	if (op==OP_KCLASS || op==OP_KFUNC) {
+		N->readptr++;
+		n_expect(N, __FUNCTION__, OP_LABEL);
+		cobj=nes_setnfunc(N, tobj, n_getlabel(N, NULL), NULL, 0);
+		nes_linkval(N, cobj, n_getfunction(N));
+		DEBUG_OUT();
+		return cobj;
+	}
 	if (cobj==NULL) {
 		if (*N->readptr=='\0') { DEBUG_OUT(); return NULL; }
 		if (*N->readptr==OP_MADDADD||*N->readptr==OP_MSUBSUB) preop=*N->readptr++;
@@ -233,7 +249,8 @@ obj_t *n_readvar(nes_state *N, obj_t *tobj, obj_t *cobj)
 	while (cobj->val->type==NT_TABLE) {
 		tobj=cobj;
 		if (*N->readptr!=OP_POBRACKET&&*N->readptr!=OP_PDOT) break;
-		cobj=n_readindex(N, tobj, namebuf);
+		cobj=n_readindex(N, tobj, namebuf, &z);
+//		if (z) n_warn(N, __FUNCTION__, "found in z %s", namebuf);
 		nameptr=namebuf;
 	}
 	if (nes_isnull(cobj)) cobj=nes_setnum(N, tobj, nameptr, 0);
@@ -304,7 +321,6 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 	case OP_MEQ :
 		op=*N->readptr++;
 		if (*N->readptr==OP_KNEW) {
-//			n_warn(N, __FUNCTION__, "OP_KNEW");
 			N->readptr++;
 			nes_unlinkval(N, cobj);
 			n_evalobj(N, cobj, 1);
@@ -314,6 +330,12 @@ obj_t *n_storeval(nes_state *N, obj_t *cobj)
 		if (*N->readptr==OP_KFUNC) {
 			N->readptr++;
 			nes_linkval(N, cobj, n_getfunction(N));
+			if (*N->readptr==OP_POPAREN) {
+				/* n_warn(N, __FUNCTION__, "execing a declared function"); */
+				n_execfunction(N, cobj, NULL, 0);
+				nes_unlinkval(N, cobj);
+				nes_linkval(N, cobj, &N->r);
+			}
 			return cobj;
 		}
 		nobj=nes_eval(N, (char *)N->readptr);
@@ -346,7 +368,6 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass)
 	cobj->val=NULL;
 	if (*N->readptr==OP_POBRACE) {
 		nes_setvaltype(N, cobj, NT_TABLE);
-//		cobj->val=n_newval(N, NT_TABLE);
 		n_readtable(N, cobj);
 		n_expect(N, __FUNCTION__, OP_PCBRACE);
 		N->readptr++;
@@ -357,9 +378,6 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass)
 		N->readptr++;
 	} else {
 		short preop=OP_ISMATH(*N->readptr)?*N->readptr++:0;
-		obj_t *nobj, *pobj=NULL;
-		uchar *p;
-		char *l;
 
 		if (*N->readptr==OP_STRDATA) {
 			nes_linkval(N, cobj, n_getstring(N));
@@ -368,21 +386,30 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass)
 			nes_setnum(N, cobj, NULL, (preop!=OP_MSUB)?+n_getnumber(N):-n_getnumber(N));
 			return cobj;
 		} else if (*N->readptr==OP_LABEL) {
-			p=N->readptr;
-			l=n_getlabel(N, NULL);
-			nobj=nes_getobj(N, NULL, l);
+			uchar *p=N->readptr;
+			uchar *e;
+			char *l=n_getlabel(N, NULL);
+			obj_t *nobj=nes_getobj(N, NULL, l);
+			obj_t *pobj=NULL;
+
 			while (*N->readptr==OP_POBRACKET||*N->readptr==OP_PDOT) {
 				pobj=nobj;
-				nobj=n_readindex(N, (nobj->val->type==NT_TABLE)?nobj:NULL, NULL);
+				nobj=n_readindex(N, (nobj->val->type==NT_TABLE)?nobj:NULL, NULL, NULL);
 			}
 			switch (*N->readptr) {
 			case OP_POPAREN :
-				if (nobj->val->type!=NT_NFUNC&&nobj->val->type!=NT_CFUNC) {
-					n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", l);
+				if (nobj->val->type==NT_NFUNC||nobj->val->type==NT_CFUNC) {
+					nobj=n_execfunction(N, nobj, isclass?NULL:pobj, isclass);
+					/* if (isclass) return nobj; */
+					break;
+				} else {
+					char errbuf[80];
+
+					e=N->readptr-1;
+					nc_memset(errbuf, 0, sizeof(errbuf));
+					n_decompile(N, p, e, errbuf, sizeof(errbuf)-1);
+					n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", errbuf);
 				}
-				nobj=n_execfunction(N, nobj, pobj, isclass);
-//				if (isclass) return nobj;
-				break;
 			case OP_MADDEQ  :
 			case OP_MSUBEQ  :
 			case OP_MMULEQ  :
@@ -391,10 +418,10 @@ static obj_t *n_evalobj(nes_state *N, obj_t *cobj, uchar isclass)
 			}
 			switch (nes_typeof(nobj)) {
 			case NT_NULL   :
-//				nes_setvaltype(N, cobj, NT_NULL); break;
+				/* nes_setvaltype(N, cobj, NT_NULL); break; */
 				cobj->val=n_newval(N, NT_NULL); break;
 			case NT_NUMBER :
-//				nes_setvaltype(N, cobj, NT_NUMBER);
+				/* nes_setvaltype(N, cobj, NT_NUMBER); */
 				cobj->val=n_newval(N, NT_NUMBER);
 				/* shouldn't ~ and ! be here? */
 				switch (preop) {
@@ -448,8 +475,6 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 	if (nes_isnull(nobj)) {
 		n=nes_isnull(cobj);
 		t=nes_istrue(cobj);
-//		nes_unlinkval(N, cobj);
-//		cobj->val=n_newval(N, NT_BOOLEAN);
 		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
 		case OP_MCEEQ  :
@@ -465,8 +490,6 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 	case NT_NULL:
 		n=nes_isnull(nobj);
 		t=nes_istrue(nobj);
-//		nes_unlinkval(N, cobj);
-//		cobj->val=n_newval(N, NT_BOOLEAN);
 		nes_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
 		case OP_MCEEQ  :
@@ -628,8 +651,6 @@ static obj_t *n_evalmath(nes_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		case NT_TABLE: {
 			int cmp=(cobj->val->d.table.f==nobj->val->d.table.f);
 
-//			nes_unlinkval(N, cobj);
-//			cobj->val=n_newval(N, NT_BOOLEAN);
 			nes_setvaltype(N, cobj, NT_BOOLEAN);
 			switch (op) {
 			case OP_MCEEQ  :
@@ -686,25 +707,26 @@ obj_t *nes_eval(nes_state *N, const char *string)
 		N->r.val=obj1.val;
 	} else {
 		uchar *p;
+		int psize;
 
 		if (string==NULL||string[0]==0) {
 			nes_unlinkval(N, &N->r);
 			DEBUG_OUT();
 			return &N->r;
 		}
-		p=n_decompose(N, (uchar *)string);
-		if (p!=N->blockptr) N->blockptr=p; else p=NULL;
+		n_decompose(N, (uchar *)string, &p, &psize);
+		if (p) N->blockptr=p;
 		N->blockend=N->blockptr+readi4((N->blockptr+8));
 		N->readptr=N->blockptr+readi4((N->blockptr+12));
-		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+		N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 1);
 		if (setjmp(*N->savjmp)==0) {
 			n_evalobj(N, &obj1, 0);
 			n_evalsub(N, 0, &obj1);
 			nes_unlinkval(N, &N->r);
 			N->r.val=obj1.val;
 		}
-		n_free(N, (void *)&N->savjmp);
-		if (p) n_free(N, (void *)&p);
+		n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
+		if (p) n_free(N, (void *)&p, psize);
 		N->blockend=NULL;
 		N->readptr=NULL;
 	}
@@ -728,13 +750,13 @@ obj_t *nes_evalf(nes_state *N, const char *fmt, ...)
 	obj_t *cobj;
 
 	settrace();
-	if ((buf=n_alloc(N, MAXBUF, 1))==NULL) return NULL;
+	if ((buf=(uchar *)n_alloc(N, MAXBUF, 1))==NULL) return NULL;
 	va_start(ap, fmt);
 	nc_vsnprintf(N, (char *)buf, MAXBUF, fmt, ap);
 	va_end(ap);
 	N->blockptr=buf;
 	cobj=nes_eval(N, (char *)N->blockptr);
-	n_free(N, (void *)&N->blockptr);
+	n_free(N, (void *)&N->blockptr, MAXBUF);
 	N->blockptr=oldbptr;
 	N->blockend=oldbend;
 	N->readptr=oldrptr;

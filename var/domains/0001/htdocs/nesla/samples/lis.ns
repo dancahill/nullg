@@ -4,7 +4,7 @@ if (typeof(_SERVER)=='table') {
 	global X=xml.read(file.read("/home/null/gw/aiml/startup.xml"));
 	global Y=xml.read(file.read("/home/null/gw/aiml/std-65percent.aiml"));
 	global Z=xml.read(file.read("/home/null/gw/aiml/std-pickup.aiml"));
-	print("<pre>");printvar(X);print("</pre>");
+	print("<pre>",exportvar(X),"</pre>");
 }
 
 if (typeof(io.gets)!='function') { print("you need io.gets()\n"); exit; }

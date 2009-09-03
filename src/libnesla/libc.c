@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 #include <math.h>
 #include <stdarg.h>
@@ -105,7 +107,7 @@ int nc_printf(nes_state *N, const char *format, ...)
 }
 
 /* time stuff */
-int nc_gettimeofday(struct timeval *tv, void *tz)
+int nc_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
 #if defined(_MSC_VER)||defined(__BORLANDC__)||defined(__TURBOC__)
 	struct timeb tb;
@@ -114,13 +116,14 @@ int nc_gettimeofday(struct timeval *tv, void *tz)
 	ftime(&tb);
 	tv->tv_sec=tb.time;
 	tv->tv_usec=tb.millitm*1000;
+	if (tz) tz->tz_minuteswest=tb.timezone;
 #else
 	gettimeofday(tv, tz);
 #endif
 	return 0;
 }
 
-char *nc_memcpy(char *dst, const char *src, int n)
+char *_nc_memcpy(char *dst, const char *src, int n)
 {
 	uchar *s=(uchar *)src, *d=(uchar *)dst;
 
@@ -129,7 +132,7 @@ char *nc_memcpy(char *dst, const char *src, int n)
 	return dst;
 }
 
-int nc_strlen(const char *s)
+int _nc_strlen(const char *s)
 {
 	char *p=(char *)s;
 
@@ -137,7 +140,7 @@ int nc_strlen(const char *s)
 	return p-(char *)s;
 }
 
-char *nc_strchr(const char *s, int c)
+char *_nc_strchr(const char *s, int c)
 {
 	uchar *a=(uchar *)s;
 
@@ -147,7 +150,7 @@ char *nc_strchr(const char *s, int c)
 	return NULL;
 }
 
-char *nc_strncpy(char *dst, const char *src, int n)
+char *_nc_strncpy(char *dst, const char *src, int n)
 {
 	uchar *s=(uchar *)src, *d=(uchar *)dst;
 
@@ -160,7 +163,7 @@ char *nc_strncpy(char *dst, const char *src, int n)
 	return dst;
 }
 
-int nc_strcmp(const char *s1, const char *s2)
+int _nc_strcmp(const char *s1, const char *s2)
 {
 	uchar *a, *b;
 
@@ -175,7 +178,7 @@ int nc_strcmp(const char *s1, const char *s2)
 	return *a-*b;
 }
 
-int nc_strncmp(const char *s1, const char *s2, int n)
+int _nc_strncmp(const char *s1, const char *s2, int n)
 {
 	uchar *a=(uchar *)s1, *b=(uchar *)s2;
 
@@ -188,9 +191,9 @@ int nc_strncmp(const char *s1, const char *s2, int n)
 	return 0;
 }
 
-void *nc_memset(void *s, int c, int n)
+void *_nc_memset(void *s, int c, int n)
 {
-	uchar *a=s;
+	uchar *a=(uchar *)s;
 
 	while (n) a[--n]=(uchar)c;
 	return s;
@@ -204,7 +207,7 @@ void n_error(nes_state *N, short int err, const char *fname, const char *format,
 
 	settrace();
 	N->err=err;
-	if (N->err) {
+//	if (N->err) {
 		if (fname) {
 			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : ", fname);
 		} else {
@@ -214,7 +217,9 @@ void n_error(nes_state *N, short int err, const char *fname, const char *format,
 		va_start(ap, format);
 		len+=nc_vsnprintf(N, N->errbuf+len, sizeof(N->errbuf)-len-1, format, ap);
 		va_end(ap);
-	}
+//	} else {
+//		N->errbuf[0]='\0';
+//	}
 	nl_flush(N);
 	if (N->savjmp!=NULL) {
 		longjmp(*N->savjmp, 1);

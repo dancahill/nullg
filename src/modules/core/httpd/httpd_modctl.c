@@ -52,7 +52,7 @@ static int regfunctions()
 	nes_setcfunc(proc->N, tobj, "md5_crypt",		(void *)md5_crypt);
 */
 	nes_setcfunc(proc->N, tobj, "ldir_freeresult",		(void *)ldir_freeresult);
-	nes_setcfunc(proc->N, tobj, "ldir_deleteentry",		(void *)ldir_deleteentry);
+	nes_setcfunc(proc->N, tobj, "ldir_deleteentry",	(void *)ldir_deleteentry);
 	nes_setcfunc(proc->N, tobj, "ldir_saveentry",		(void *)ldir_saveentry);
 	nes_setcfunc(proc->N, tobj, "ldir_getlist",		(void *)ldir_getlist);
 	nes_setcfunc(proc->N, tobj, "ldir_getentry",		(void *)ldir_getentry);
@@ -74,7 +74,7 @@ static int regfunctions()
 	nes_setcfunc(proc->N, tobj, "nes_linkval",		(void *)nes_linkval);
 	nes_setcfunc(proc->N, tobj, "nes_unlinkval",		(void *)nes_unlinkval);
 */
-	nes_setcfunc(proc->N, tobj, "htnes_dotemplate",		(void *)htnes_dotemplate);
+	nes_setcfunc(proc->N, tobj, "htnes_dotemplate",	(void *)htnes_dotemplate);
 /*
 	nes_setcfunc(proc->N, tobj, "sql_freeresult",		(void *)sql_freeresult);
 	nes_setcfunc(proc->N, tobj, "sql_update",		(void *)sql_update);
@@ -115,6 +115,7 @@ static int regfunctions()
 	nes_setcfunc(proc->N, tobj, "htpage_footer",		(void *)htpage_footer);
 	nes_setcfunc(proc->N, tobj, "htpage_topmenu",		(void *)htpage_topmenu);
 	nes_setcfunc(proc->N, tobj, "htpage_dirlist",		(void *)htpage_dirlist);
+/*
 	nes_setcfunc(proc->N, tobj, "htselect_contact",		(void *)htselect_contact);
 	nes_setcfunc(proc->N, tobj, "htselect_day",		(void *)htselect_day);
 	nes_setcfunc(proc->N, tobj, "htselect_domain",		(void *)htselect_domain);
@@ -142,12 +143,13 @@ static int regfunctions()
 	nes_setcfunc(proc->N, tobj, "htview_holiday",		(void *)htview_holiday);
 	nes_setcfunc(proc->N, tobj, "htview_reminder",		(void *)htview_reminder);
 	nes_setcfunc(proc->N, tobj, "htview_user",		(void *)htview_user);
+*/
 	nes_setcfunc(proc->N, tobj, "htscript_showpage",	(void *)htscript_showpage);
 	nes_setcfunc(proc->N, tobj, "time_sql2datetext",	(void *)time_sql2datetext);
 	nes_setcfunc(proc->N, tobj, "time_sql2timetext",	(void *)time_sql2timetext);
 	nes_setcfunc(proc->N, tobj, "time_tzoffset",		(void *)time_tzoffset);
 	nes_setcfunc(proc->N, tobj, "time_tzoffset2",		(void *)time_tzoffset2);
-	nes_setcfunc(proc->N, tobj, "time_tzoffsetcon",		(void *)time_tzoffsetcon);
+	nes_setcfunc(proc->N, tobj, "time_tzoffsetcon",	(void *)time_tzoffsetcon);
 	nes_setcfunc(proc->N, tobj, "time_unix2text",		(void *)time_unix2text);
 	nes_setcfunc(proc->N, tobj, "time_unix2lotimetext",	(void *)time_unix2lotimetext);
 	nes_setcfunc(proc->N, tobj, "time_unix2timetext",	(void *)time_unix2timetext);
@@ -161,14 +163,14 @@ static int regfunctions()
 	nes_setcfunc(proc->N, tobj, "getpostenv",		(void *)getpostenv);
 	nes_setcfunc(proc->N, tobj, "decodeurl",		(void *)decodeurl);
 	nes_setcfunc(proc->N, tobj, "encodeurl",		(void *)encodeurl);
-	nes_setcfunc(proc->N, tobj, "filesend",			(void *)filesend);
-	nes_setcfunc(proc->N, tobj, "str2html",			(void *)str2html);
+	nes_setcfunc(proc->N, tobj, "filesend",		(void *)filesend);
+	nes_setcfunc(proc->N, tobj, "str2html",		(void *)str2html);
 	nes_setcfunc(proc->N, tobj, "send_header",		(void *)send_header);
 	nes_setcfunc(proc->N, tobj, "send_error",		(void *)send_error);
 	nes_setcfunc(proc->N, tobj, "printline",		(void *)printline);
 	nes_setcfunc(proc->N, tobj, "prints",			(void *)prints);
 	nes_setcfunc(proc->N, tobj, "raw_prints",		(void *)raw_prints);
-	nes_setcfunc(proc->N, tobj, "printhex",			(void *)printhex);
+	nes_setcfunc(proc->N, tobj, "printhex",		(void *)printhex);
 	nes_setcfunc(proc->N, tobj, "printht",			(void *)printht);
 	nes_setcfunc(proc->N, tobj, "printline2",		(void *)printline2);
 	nes_setcfunc(proc->N, tobj, "getbuffer",		(void *)getbuffer);

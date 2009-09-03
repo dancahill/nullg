@@ -27,10 +27,15 @@ function testtables() {
 	tab['t'] = { [2] = { "x", 'y', x = 41, 42, 43, 'blah', [5]=12, heh=";-)" } };
 	// add another sub
 	tab['t'][3] = { "x", 'y', x = 41, 42, 43, 'blah', [5]=12, heh=";-)" };
-	//printvar(_GLOBALS);
+	//print(exportvar(_GLOBALS));
 
 	a = { [0]=subf()-1, [1]=subf(), x=+1, y=2, z=-3 };
 	expect("a = { ... }", "68 69 1 2 -3", tostring(a[0])+' '+tostring(a[1])+' '+tostring(a['x'])+' '+tostring(a['y'])+' '+tostring(a['z']));
+
+	local status_table = {
+		['A'] = { c='1', t='2' };
+		['B'] = { c='3', t='4' };
+	};
 
 	return;
 }

@@ -27,7 +27,7 @@ function changevis(t) {
 <?nsp
 
 function show_subtree(Q, depth, did, pid) {
-//	print("<pre>");printvar(Q);print("</pre>");
+//	print("<pre>",exportvar(Q),"</pre>");
 	for (i=0;i<Q._tuples;i++) {
 		row=Q['_rows'][i];
 		Q2=sqlquery("SELECT id, pid, did, ctime, mtime, class, name FROM nullgs_entries WHERE pid = "+row['id']+" AND did = "+did+" AND class <> 'emailheader' AND class <> 'organization'");
@@ -65,7 +65,7 @@ function show_org(row) {
 <?nsp
 
 Q=sqlquery("SELECT id, pid, did, ctime, mtime, class, name FROM nullgs_entries WHERE class = 'organization'");
-//print("<pre>");printvar(Q);print("</pre>");
+//print("<pre>",exportvar(Q),"</pre>");
 for (i=0;i<sizeof(Q._rows);i++) {
 	show_org(Q['_rows'][i]);
 }

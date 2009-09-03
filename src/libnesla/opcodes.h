@@ -16,6 +16,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _NESLA_OPCODES_H
+#define _NESLA_OPCODES_H 1
 
 /* ops and cmps */
 #define OP_UNDEFINED    255 /* 0xFF */
@@ -65,30 +67,31 @@
 #define OP_MQUESTION	216 /* 0xD8 */
 
 /* keywords */
-#define	OP_KBREAK	215 /* 0xD9 */
-#define	OP_KCONT	214 /* 0xD8 */
-#define	OP_KRET		213 /* 0xD7 */
-#define	OP_KNEW		212 /* 0xD6 */
-#define	OP_KCLASS	211 /* 0xD5 */
-#define	OP_KFUNC	210 /* 0xD4 */
-#define	OP_KGLOB	209 /* 0xD3 */
-#define	OP_KLOCAL	208 /* 0xD2 */
-#define	OP_KVAR		207 /* 0xD1 */
-#define	OP_KIF		206 /* 0xD0 */
-#define	OP_KELSE	205 /* 0xCF */
-#define	OP_KFOR		204 /* 0xCE */
-#define	OP_KFOREACH	203 /* 0xCD */
-#define	OP_KDO		202 /* 0xCC */
-#define	OP_KWHILE	201 /* 0xCB */
-#define	OP_KTRY		200 /* 0xCA */
-#define	OP_KCATCH	199 /* 0xC9 */
-#define	OP_KFINALLY	198 /* 0xC8 */
-#define	OP_KTHROW	197 /* 0xC7 */
-#define	OP_KEXIT	196 /* 0xC6 */
+#define	OP_KBREAK	215 /* 0xD7 */
+#define	OP_KCONT	214 /* 0xD6 */
+#define	OP_KRET		213 /* 0xD5 */
+#define	OP_KDELETE	212 /* 0xD4 */
+#define	OP_KNEW		211 /* 0xD3 */
+#define	OP_KCLASS	210 /* 0xD2 */
+#define	OP_KFUNC	209 /* 0xD1 */
+#define	OP_KGLOB	208 /* 0xD0 */
+#define	OP_KLOCAL	207 /* 0xCF */
+#define	OP_KVAR		206 /* 0xCE */
+#define	OP_KIF		205 /* 0xCD */
+#define	OP_KELSE	204 /* 0xCC */
+#define	OP_KFOR		203 /* 0xCB */
+#define	OP_KFOREACH	202 /* 0xCA */
+#define	OP_KDO		201 /* 0xC9 */
+#define	OP_KWHILE	200 /* 0xC8 */
+#define	OP_KTRY		199 /* 0xC7 */
+#define	OP_KCATCH	198 /* 0xC6 */
+#define	OP_KFINALLY	197 /* 0xC5 */
+#define	OP_KTHROW	196 /* 0xC4 */
+#define	OP_KEXIT	195 /* 0xC3 */
 
-#define OP_LABEL	195 /* 0xC5 */
-#define OP_STRDATA	194 /* 0xC4 */
-#define OP_NUMDATA	193 /* 0xC3 */
+#define OP_LABEL	194 /* 0xC2 */
+#define OP_STRDATA	193 /* 0xC1 */
+#define OP_NUMDATA	192 /* 0xC0 */
 
 #define OP_ISPUNC(o)	(o>=OP_PHASH&&o<=OP_POBRACE)
 #define OP_ISMATH(o)	(o>=OP_MQUESTION&&o<=OP_MEQ)
@@ -104,3 +107,5 @@ typedef struct {
 extern const optab oplist[];
 
 #define  nextop()       N->readptr=n_seekop(N, N->readptr, 1, 0);
+
+#endif /* _NESLA_OPCODES_H */

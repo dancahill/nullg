@@ -3,7 +3,7 @@ if (dl.loadlib("/usr/local/lib/nesla/libneslasrc2html.so")!=0) print('dl error?\
 if (typeof(d=dirlist("."))!='table') exit;
 for (i=0;i<sizeof(d);i++) {
 	n=iname(d, i);
-	if (string.sub(n, -4)=='.ns') {
+	if (string.sub(n, -3)=='.ns') {
 		print("converting "+n+"\n");
 		file.write(n+".html",src2html(file.read(n)));
 	}

@@ -488,16 +488,16 @@ int read_header(CONN *sid)
 	hrobj->val->attr|=NST_AUTOSORT;
 	hsobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
 	hsobj->val->attr|=NST_AUTOSORT;
-	nes_setstr(sid->N, hsobj, "CONTENT_TYPE",      "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded"));
-	nes_setstr(sid->N, hsobj, "GATEWAY_INTERFACE", "CGI/1.1", strlen("CGI/1.1"));
-	nes_setstr(sid->N, hsobj, "REMOTE_ADDR",       sid->socket.RemoteAddr, strlen(sid->socket.RemoteAddr));
+	nes_setstr(sid->N, hsobj, "CONTENT_TYPE",      "application/x-www-form-urlencoded", -1);
+	nes_setstr(sid->N, hsobj, "GATEWAY_INTERFACE", "CGI/1.1", -1);
+	nes_setstr(sid->N, hsobj, "REMOTE_ADDR",       sid->socket.RemoteAddr, -1);
 	nes_setnum(sid->N, hsobj, "REMOTE_PORT",       sid->socket.RemotePort);
-	nes_setstr(sid->N, hsobj, "REMOTE_USER",       "nobody", strlen("nobody"));
-	nes_setstr(sid->N, hsobj, "SERVER_ADDR",       sid->socket.ServerAddr, strlen(sid->socket.ServerAddr));
+	nes_setstr(sid->N, hsobj, "REMOTE_USER",       "nobody", -1);
+	nes_setstr(sid->N, hsobj, "SERVER_ADDR",       sid->socket.ServerAddr, -1);
 	nes_setnum(sid->N, hsobj, "SERVER_PORT",       sid->socket.ServerPort);
 	snprintf(varname, sizeof(varname)-1, "%s %s", SERVER_NAME, PACKAGE_VERSION);
-	nes_setstr(sid->N, hsobj, "SERVER_SOFTWARE",   varname, strlen(varname));
-	nes_setstr(sid->N, hsobj, "NESLA_VERSION",     NESLA_VERSION, strlen(NESLA_VERSION));
+	nes_setstr(sid->N, hsobj, "SERVER_SOFTWARE",   varname, -1);
+	nes_setstr(sid->N, hsobj, "NESLA_VERSION",     NESLA_VERSION, -1);
 	sid->state=1;
 	pt1=line;
 	if ((pt2=strchr(pt1, ' '))==NULL) { send_error(sid, 400, "Bad Request", "Method not found in request."); return -1; } else *pt2++='\0';
@@ -510,6 +510,10 @@ int read_header(CONN *sid)
 	cobj=nes_setstr(sid->N, hsobj, "REQUEST_METHOD",  pt1, strlen(pt1));
 	RequestMethod=cobj->val->d.str?cobj->val->d.str:"";
 	cobj=nes_setstr(sid->N, hsobj, "REQUEST_URI",     pt2, strlen(pt2));
+
+	/* CHEAP HACK */
+	nes_exec(sid->N, "_SERVER['REQUEST_URI']=string.replace(_SERVER['REQUEST_URI'], '%20', ' ');");
+
 	RequestURI=cobj->val->d.str?cobj->val->d.str:"";
 	cobj=nes_setstr(sid->N, hsobj, "SERVER_PROTOCOL", pt3, strlen(pt3));
 	/* log_error(proc->N, MODSHORTNAME "headers", __FILE__, __LINE__, 1, "%s:%d [%s][%s][%s]", sid->socket.RemoteAddr, sid->socket.RemotePort, pt1, pt2, pt3); */
@@ -531,9 +535,9 @@ int read_header(CONN *sid)
 			}
 			nes_setnum(sid->N, hsobj, "CONTENT_LENGTH", length);
 		} else if (strcmp(varname, "HTTP_CONTENT_TYPE")==0) {
-			nes_setstr(sid->N, hsobj, "CONTENT_TYPE", pt2, strlen(pt2));
+			nes_setstr(sid->N, hsobj, "CONTENT_TYPE", pt2, -1);
 		} else if (strcmp(varname, "HTTP_COOKIE")==0) {
-			nes_setstr(sid->N, hsobj, "HTTP_COOKIE", pt2, strlen(pt2));
+			nes_setstr(sid->N, hsobj, "HTTP_COOKIE", pt2, -1);
 			for (;;) {
 				pt1=pt2;
 				if ((pt2=strchr(pt1, '='))==NULL) { send_error(sid, 400, "Bad Request", "Undefined cookie error."); return -1; } else *pt2++='\0';
@@ -724,7 +728,7 @@ void send_header(CONN *sid, int cacheable, int status, char *extra_header, char 
 
 	if (status) {
 		sid->dat->out_status=status;
-	} else if ((status=nes_getnum(sid->N, hrobj, "STATUS"))!=0) {
+	} else if ((status=(int)nes_getnum(sid->N, hrobj, "STATUS"))!=0) {
 		sid->dat->out_status=status;
 	} else {
 		sid->dat->out_status=200;
@@ -781,12 +785,14 @@ void http_dorequest(CONN *sid)
 {
 	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
 	obj_t *cobj, *htobj, *hrobj, *tobj;
+	obj_t *newconfobj;
 	char buf[255];
 	char *RequestMethod;
 	char *RequestURI;
 	char *ptemp;
 	int relocate=0;
-	int rc;
+	int authenticated=0;
+//	int rc;
 
 	if (read_header(sid)<0) {
 		closeconnect(sid, 1);
@@ -796,73 +802,65 @@ void http_dorequest(CONN *sid)
 	tobj=nes_getobj(sid->N, &sid->N->g, "io");
 	nes_setcfunc(sid->N, tobj, "flush", (void *)htnes_flush);
 	gettimeofday(&sid->dat->runtime, NULL);
-
 	htobj=nes_getobj(sid->N, &sid->N->g, "_SERVER");
 	hrobj=nes_getobj(sid->N, &sid->N->g, "_HEADER");
+	nes_setstr(sid->N, hrobj, "CONTENT_TYPE", "text/html", -1);
 	RequestMethod=nes_getstr(sid->N, htobj, "REQUEST_METHOD");
 	RequestURI=nes_getstr(sid->N, htobj, "REQUEST_URI");
-	proc->stats.http_pages++;
-
-	/* log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 3, "%s - HTTP Request: %s:%d %s", sid->socket.RemoteAddr, sid->socket.RemotePort, RequestMethod, RequestURI); */
 	memset(buf, 0, sizeof(buf));
 	snprintf(buf, sizeof(buf)-1, "%s%s", nes_getstr(proc->N, confobj, "var_htdocs_path"), RequestURI);
-	if (strncmp(RequestURI, "/icons/", strlen("/icons/"))==0) {
-		if (filesend(sid, buf)==0) goto wrap;
-	}
-	if (strncmp(RequestURI, "/"SERVER_BASENAME"/", strlen("/"SERVER_BASENAME"/"))==0) {
-		if (filesend(sid, buf)==0) goto wrap;
-	}
-	if (strncmp(RequestURI, "/xml-rpc/", 9)==0) {
-		if (module_menucall(sid)) goto wrap;
-	}
-	nes_setstr(sid->N, hrobj, "CONTENT_TYPE", "text/html", strlen("text/html"));
-	rc=auth_getcookie(sid);
-//	read_header_scriptinfo(sid, sid->dat->did);
-//	ScriptName=nes_getstr(sid->N, htobj, "SCRIPT_NAME");
-	if ((rc==0)&&(strncmp(RequestURI, "/logout", 7)==0)) {
-		auth_logout(sid);
-		goto wrap;
-	}
-	read_vardata(sid);
+	proc->stats.http_pages++;
 
-	if (rc!=0) {
-		if (auth_setcookie(sid)==0) {
-			db_log_activity(sid, "login", 0, "login", "%s - Login: username=%s", sid->socket.RemoteAddr, sid->dat->username);
-			relocate=1;
-		} else if ((getgetenv(sid, "USERNAME")!=NULL)||(getpostenv(sid, "USERNAME")!=NULL)) {
-			db_log_activity(sid, "login", 0, "failed login", "%s - Login failed: username=%s", sid->socket.RemoteAddr, sid->dat->username);
-			htpage_login(sid);
-			goto wrap;
-		} else {
-			htpage_login(sid);
+	read_vardata(sid);
+	authenticated=!auth_getcookie(sid);
+//	read_header_scriptinfo(sid, sid->dat->did);
+	if (authenticated) {
+		if (strncmp(RequestURI, "/logout", 7)==0) {
+			auth_logout(sid);
 			goto wrap;
 		}
 	}
-
-	if ((ptemp=getpostenv(sid, "PAGEURI"))!=NULL) {
-		snprintf(buf, sizeof(buf)-1, "%s", ptemp);
-	} else {
-		snprintf(buf, sizeof(buf)-1, "%s", RequestURI);
+	if (!authenticated) {
+		if (auth_setcookie(sid)==0) {
+			authenticated=1;
+			relocate=1;
+			db_log_activity(sid, "login", 0, "login", "%s - Login: username=%s", sid->socket.RemoteAddr, sid->dat->username);
+		} else if ((getgetenv(sid, "USERNAME")!=NULL)||(getpostenv(sid, "USERNAME")!=NULL)) {
+			db_log_activity(sid, "login", 0, "failed login", "%s - Login failed: username=%s", sid->socket.RemoteAddr, sid->dat->username);
+		}
 	}
-	if ((ptemp=p_strcasestr(buf, "username"))!=NULL) { *ptemp='\0'; relocate=1; }
-	if ((ptemp=p_strcasestr(buf, "password"))!=NULL) { *ptemp='\0'; relocate=1; }
-	if (buf[strlen(buf)-1]=='&') buf[strlen(buf)-1]='\0';
-	if (buf[strlen(buf)-1]=='?') buf[strlen(buf)-1]='\0';
-
-	if (relocate) {
-		nes_setstr(sid->N, hrobj, "LOCATION", buf, strlen(buf));
-		send_header(sid, 0, 302, "1", "text/html", -1, -1);
-		goto wrap;
+	if (authenticated) {
+		ptemp=getpostenv(sid, "PAGEURI");
+		snprintf(buf, sizeof(buf)-1, "%s", ptemp?ptemp:RequestURI);
+		if ((ptemp=p_strcasestr(buf, "username"))!=NULL) { *ptemp='\0'; relocate=1; }
+		if ((ptemp=p_strcasestr(buf, "password"))!=NULL) { *ptemp='\0'; relocate=1; }
+		if (buf[strlen(buf)-1]=='&') buf[strlen(buf)-1]='\0';
+		if (buf[strlen(buf)-1]=='?') buf[strlen(buf)-1]='\0';
+		if (relocate) {
+			nes_setstr(sid->N, hrobj, "LOCATION", buf, -1);
+			send_header(sid, 0, 302, "1", "text/html", -1, -1);
+			goto wrap;
+		}
+	}
+	htnes_runinit(sid);
+	if (sid->N->err) {
+		sid->N->err=0;
+		if (strcmp(sid->N->errbuf, "authentication required")==0) {
+			htpage_login(sid);
+			goto wrap;
+		} else {
+			snprintf(buf, sizeof(buf)-1, "%s/%04d%s", nes_getstr(proc->N, confobj, "var_domains_path"), sid->dat->did, RequestURI);
+			if (filesend(sid, buf)==0) goto wrap;
+			snprintf(buf, sizeof(buf)-1, "%s%s", nes_getstr(proc->N, confobj, "var_htdocs_path"), RequestURI);
+			if (filesend(sid, buf)==0) goto wrap;
+		}
 	}
 
-	if (1) {
-		obj_t *newconfobj=nes_settable(sid->N, &sid->N->g, "_CONFIG");
-
-		snprintf(buf, sizeof(buf)-1, "%s/%04d/htdocs", nes_getstr(proc->N, confobj, "var_domains_path"), sid->dat->did);
-		nes_setstr(sid->N, newconfobj, "private_htdocs_path", buf, -1);
-		snprintf(buf, sizeof(buf)-1, "%s/%04d/template", nes_getstr(proc->N, confobj, "var_domains_path"), sid->dat->did);
-		nes_setstr(sid->N, newconfobj, "private_template_path", buf, -1);
-	}
+	newconfobj=nes_settable(sid->N, &sid->N->g, "_CONFIG");
+	snprintf(buf, sizeof(buf)-1, "%s/%04d/htdocs", nes_getstr(proc->N, confobj, "var_domains_path"), sid->dat->did);
+	nes_setstr(sid->N, newconfobj, "private_htdocs_path", buf, -1);
+	snprintf(buf, sizeof(buf)-1, "%s/%04d/template", nes_getstr(proc->N, confobj, "var_domains_path"), sid->dat->did);
+	nes_setstr(sid->N, newconfobj, "private_template_path", buf, -1);
 
 	if (strcmp(RequestURI, "/")==0) {
 		htpage_motd(sid);

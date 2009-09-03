@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 
 #define IS_MATHOP(c) (c=='='||c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='&'||c=='|'||c=='^'||c=='!'||c=='<'||c=='>'||c==':'||c=='?')
@@ -220,26 +222,26 @@ const optab oplist[] = {
 	{ NULL,       OP_UNDEFINED, -1 }, /* 192 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 193 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 194 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 195 */
 
 	/* KEYWORDS */
-	{ "exit",     OP_KEXIT    , -1 },  /* 196 */
-	{ "throw",    OP_KTHROW   , -1 },  /* 197 */
-	{ "finally",  OP_KFINALLY , -1 },  /* 198 */
-	{ "catch",    OP_KCATCH   , -1 },  /* 199 */
-	{ "try",      OP_KTRY     , -1 },  /* 200 */
-	{ "while",    OP_KWHILE   , -1 },  /* 201 */
-	{ "do",       OP_KDO      , -1 },  /* 202 */
-	{ "foreach",  OP_KFOREACH , -1 },  /* 203 */
-	{ "for",      OP_KFOR     , -1 },  /* 204 */
-	{ "else",     OP_KELSE    , -1 },  /* 205 */
-	{ "if",       OP_KIF      , -1 },  /* 206 */
-	{ "var",      OP_KVAR     , -1 },  /* 207 */
-	{ "local",    OP_KLOCAL   , -1 },  /* 208 */
-	{ "global",   OP_KGLOB    , -1 },  /* 209 */
-	{ "function", OP_KFUNC    , -1 },  /* 210 */
-	{ "class",    OP_KCLASS   , -1 },  /* 211 */
-	{ "new",      OP_KNEW     , -1 },  /* 212 */
+	{ "exit",     OP_KEXIT    , -1 },  /* 195 */
+	{ "throw",    OP_KTHROW   , -1 },  /* 196 */
+	{ "finally",  OP_KFINALLY , -1 },  /* 197 */
+	{ "catch",    OP_KCATCH   , -1 },  /* 198 */
+	{ "try",      OP_KTRY     , -1 },  /* 199 */
+	{ "while",    OP_KWHILE   , -1 },  /* 200 */
+	{ "do",       OP_KDO      , -1 },  /* 201 */
+	{ "foreach",  OP_KFOREACH , -1 },  /* 202 */
+	{ "for",      OP_KFOR     , -1 },  /* 203 */
+	{ "else",     OP_KELSE    , -1 },  /* 204 */
+	{ "if",       OP_KIF      , -1 },  /* 205 */
+	{ "var",      OP_KVAR     , -1 },  /* 206 */
+	{ "local",    OP_KLOCAL   , -1 },  /* 207 */
+	{ "global",   OP_KGLOB    , -1 },  /* 208 */
+	{ "function", OP_KFUNC    , -1 },  /* 209 */
+	{ "class",    OP_KCLASS   , -1 },  /* 210 */
+	{ "new",      OP_KNEW     , -1 },  /* 211 */
+	{ "delete",   OP_KDELETE  , -1 },  /* 212 */
 	{ "return",   OP_KRET     , -1 },  /* 213 */
 	{ "continue", OP_KCONT    , -1 },  /* 214 */
 	{ "break",    OP_KBREAK   , -1 },  /* 215 */

@@ -83,9 +83,9 @@ _httpd_modules:
 #	@echo " mod_bookmarks"  && cd src/modules/httpd/mod_bookmarks  && $(MAKE) && cd ../../../..
 #	@echo " mod_calendar"   && cd src/modules/httpd/mod_calendar   && $(MAKE) && cd ../../../..
 #	@echo " mod_calls"      && cd src/modules/httpd/mod_calls      && $(MAKE) && cd ../../../..
-#	@echo " mod_cgi"        && cd src/modules/httpd/mod_cgi        && $(MAKE) && cd ../../../..
+	@echo " mod_cgi"        && cd src/modules/httpd/mod_cgi        && $(MAKE) && cd ../../../..
 #	@echo " mod_contacts"   && cd src/modules/httpd/mod_contacts   && $(MAKE) && cd ../../../..
-	@echo " mod_email"      && cd src/modules/httpd/mod_email      && $(MAKE) && cd ../../../..
+#	@echo " mod_email"      && cd src/modules/httpd/mod_email      && $(MAKE) && cd ../../../..
 #	@echo " mod_files"      && cd src/modules/httpd/mod_files      && $(MAKE) && cd ../../../..
 #	@echo " mod_finance"    && cd src/modules/httpd/mod_finance    && $(MAKE) && cd ../../../..
 #	@echo " mod_forums"     && cd src/modules/httpd/mod_forums     && $(MAKE) && cd ../../../..
@@ -119,9 +119,9 @@ clean:
 #	@cd src/modules/httpd/mod_bookmarks  && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_calendar   && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_calls      && $(MAKE) clean && cd ../../../..
-#	@cd src/modules/httpd/mod_cgi        && $(MAKE) clean && cd ../../../..
+	@cd src/modules/httpd/mod_cgi        && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_contacts   && $(MAKE) clean && cd ../../../..
-	@cd src/modules/httpd/mod_email      && $(MAKE) clean && cd ../../../..
+#	@cd src/modules/httpd/mod_email      && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_files      && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_finance    && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_forums     && $(MAKE) clean && cd ../../../..

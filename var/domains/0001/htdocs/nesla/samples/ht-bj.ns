@@ -1,7 +1,7 @@
 #!/usr/bin/nesla
 # blackjack sample prog by Dan Cahill
-include("_cards.ns");
-include("_ajax.ns");
+if (include("_cards.ns")!=0) print("failed to include _cards.ns\r\n");
+if (include("_ajax.ns")!=0) print("failed to include _ajax.ns\r\n");
 
 function cardval(p) {
 	if (typeof(p)!='number') return 0;
@@ -121,13 +121,13 @@ function main() {
 		print("</HEAD>\n<BODY>\n<CENTER>\n");
 		printxml();
 		printredraw();
-		print("<SPAN ID='remstatus'>");
 	}
 	print("<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='game'>\n");
+	print("<SPAN ID='remstatus'>\n");
 	for (n=0;n<5;n++) if (d[n]!=null) print("<INPUT TYPE=hidden NAME=d", n, " VALUE='", d[n], "'>\n");
 	for (n=0;n<5;n++) if (c[n]!=null) print("<INPUT TYPE=hidden NAME=c", n, " VALUE='", c[n], "'>\n");
 	print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>\n");
-	print("<TR><TD ALIGN=LEFT COLSPAN=2 WIDTH=355px>");
+	print("<TR><TD ALIGN=LEFT COLSPAN=2 WIDTH=355>");
 	if (opt=="Stand") {
 		for (n=0;n<5;n++) if (d[n]!=null) print("<IMG WIDTH=71 HEIGHT=96 SRC='/cards/", CARDS[d[n]]['file'] ,"' ALT='", CARDS[d[n]]['name'], "' TITLE='", CARDS[d[n]]['name'], "'>");
 	} else if (ct>20) {
@@ -137,7 +137,7 @@ function main() {
 		if (d[1]!=null) print("<IMG WIDTH=71 HEIGHT=96 SRC='/cards/", CARDS[d[1]]['file'], "' ALT='", CARDS[d[1]]['name'], "' TITLE='", CARDS[d[1]]['name'], "'>");
 	}
 	print("</TD></TR>\n");
-	print("<TR><TD ALIGN=LEFT COLSPAN=2 WIDTH=355px>");
+	print("<TR><TD ALIGN=LEFT COLSPAN=2 WIDTH=355>");
 	for (n=0;n<5;n++) if (c[n]!=null) print("<IMG WIDTH=71 HEIGHT=96 SRC='/cards/", CARDS[c[n]]['file'], "' ALT='", CARDS[c[n]]['name'], "' TITLE='", CARDS[c[n]]['name'], "'>");
 	print("</TD></TR>\n");
 	print("</TABLE>\n");
@@ -167,11 +167,11 @@ function main() {
 		print("[<A HREF=\"javascript:nexthand('Hit');\"> HIT </A>]\n");
 		print("[<A HREF=\"javascript:nexthand('Stand');\"> STAND </A>]\n");
 	}
-	print("</FORM>\n");
-	print("wins:", _SESSION['BJ'].won, " - losses:", _SESSION['BJ'].lost, "<BR>\n");
+	print("<BR>wins:", _SESSION['BJ'].won, " - losses:", _SESSION['BJ'].lost, "<BR>\n");
 	print("runtime = ", runtime(), " seconds\n");
+	print("</SPAN>\n");
+	print("</FORM>\n");
 	if (_SERVER['REQUEST_METHOD']!="POST") {
-		print("</SPAN>\n");
 		print("</CENTER>\n</BODY>\n</HTML>\n");
 	}
 	return;

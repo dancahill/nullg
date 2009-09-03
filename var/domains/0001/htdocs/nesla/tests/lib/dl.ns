@@ -1,20 +1,27 @@
 #!/usr/bin/nesla
 if (typeof(expect)!='function') include("_expect.ns");
 function testdl() {
-	if (typeof(dl.loadlib)=='function') {
-		print("\tloading libs...\n");
-		io.flush();
-		if (typeof(_SERVER)=='table') {
-			rc=dl.loadlib("/usr/local/lib/nesla/libneslacrypto.so");
-			rc=dl.loadlib("/usr/local/lib/nesla/libneslaext.so");
-			rc=dl.loadlib("/usr/local/lib/nesla/libneslaregex.so");
-			rc=dl.loadlib("/usr/local/lib/nesla/libneslatcp.so");
-			rc=dl.loadlib("/usr/local/lib/nesla/libneslatest.so");
+	if (typeof(dl.loadlib)!='function') return;
+	print("        loading libs...\n");
+	io.flush();
+	if (typeof(_SERVER)=='table') {
+		if (_ostype_=="Windows/msvc") {
+			libdir="c:/nullgs/lib/shared";
 		} else {
-			rc=dl.loadlib("lib/shared/libneslatest.so");
+			libdir="/usr/local/lib/nesla";
 		}
-		if (typeof(dltest)=='function') print("\t",dltest(),"\n");
+		d=dirlist(libdir);
+		foreach (f in d) {
+			if (f.name=='.'||f.name=='..') continue;
+			if (string.sub(f.name, -3, 3)!='.so') continue;
+			rc=dl.loadlib(libdir+"/"+f.name);
+			expect(f.name, 0, rc);
+		}
+	} else {
+		rc=dl.loadlib("lib/shared/libneslatest.so");
+		expect("libneslatest", 0, rc);
 	}
+	if (typeof(dltest)=='function') print("        ",dltest(),"\n");
 	return;
 }
 if (_ostype_!='OpenBSD/gcc') testdl();

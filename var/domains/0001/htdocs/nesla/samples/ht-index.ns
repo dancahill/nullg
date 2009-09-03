@@ -1,4 +1,13 @@
 #!/usr/bin/nesla
+
+function commas(n) {
+	if ((n=math.floor(n))>=1000) {
+		return commas(n/1000)+","+string.sub(tostring(n), -3);
+	} else {
+		return tostring(n);
+	}
+}
+
 if (typeof(dirlist)=='function') {
 	print("<H1>INDEX OF ", _SERVER['REQUEST_URI'], "</H1>");
 	print("<PRE><FONT SIZE=2>");
@@ -14,14 +23,14 @@ if (typeof(dirlist)=='function') {
 			print("<TR>");
 			print("<TD>", x.type, "</TD>");
 			print("<TD><A HREF='", x.name, "'>", x.name, "</A></TD>");
-			print("<TD>", x.size, "</TD>");
+			print("<TD ALIGN='right'>", commas(x.size), "</TD>");
 			print("<TD>", time.sqldate(x.mtime), " ", time.sqltime(x.mtime), "</TD>");
 			print("</TR>\n");
 		} else {
 			print("<TR>");
 			print("<TD>", x.type, "</TD>");
 			print("<TD><A HREF='", x.name, "'>", x.name, "</A></TD>");
-			print("<TD>", x.size, "</TD>");
+			print("<TD ALIGN='right'>", commas(x.size), "</TD>");
 			print("<TD>", time.sqldate(x.mtime), " ", time.sqltime(x.mtime), "</TD>");
 			print("</TR>\n");
 		}

@@ -28,8 +28,10 @@ extern "C" {
 
 #if defined(TINYCC)||defined(__TURBOC__)
 struct timeval { long tv_sec; long tv_usec; };
+struct timezone { int tz_minuteswest; int tz_dsttime; };
 #endif
 #if defined(_MSC_VER)
+struct timezone { int tz_minuteswest; int tz_dsttime; };
 #define WIN32_LEAN_AND_MEAN
 /* always include winsock2 before windows */
 #include <winsock2.h>
@@ -41,8 +43,8 @@ struct timeval { long tv_sec; long tv_usec; };
 #include <setjmp.h>
 
 #define MAX_OBJNAMELEN  64
-#define MAX_OUTBUFLEN   8192
-#define OUTBUFLOWAT	4096
+#define MAX_OUTBUFLEN   4096
+#define OUTBUFLOWAT	2048
 
 /* nesla object types */
 #define NT_NULL         0
@@ -70,7 +72,9 @@ struct timeval { long tv_sec; long tv_usec; };
 
 /* should be typedef int(*NES_CFUNC)(nes_state *); */
 typedef int(*NES_CFUNC)(void *);
-#define NES_FUNCTION(name) int name(nes_state *N)
+#define NES_FUNCTION(name)    int name(nes_state *N)
+#define NES_CLASS(name)       int name(nes_state *N)
+#define NES_CLASSMETHOD(name) int name(nes_state *N)
 
 /*
  * define a callback function type so CDATA objects
@@ -94,7 +98,7 @@ typedef struct nes_valrec {
 	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
 	unsigned short refs; /* number of references to this node */
 	unsigned long  size; /* storage size of string, nfunc or cdata */
-//	obj_t ptable;        /* parent table for hierarchical lookups */
+	obj_t *ztable;        /* 'z' table for hierarchical lookups */
 	union {
 		num_t  num;
 		char  *str;
@@ -121,8 +125,7 @@ typedef struct nes_state {
 	short cnt;
 	short ret;
 	short err;
-	/* intended for external signals to the parser.  for now, non-zero just means to shut down */
-	short signal;
+	short signal; /* intended for external signals to the parser.  for now, non-zero just means to shut down */
 	short debug;
 	short single;
 	short strict;
@@ -134,6 +137,13 @@ typedef struct nes_state {
 	char outbuf[MAX_OUTBUFLEN+1];
 	char errbuf[256];
 	char *tracefn;
+	/* debug info */
+	long int allocs;
+	long int allocmem;
+	long int frees;
+	long int freemem;
+	long int peakmem;
+	long int counter1;
 } nes_state;
 
 #ifndef NESLA_NOFUNCTIONS
@@ -147,6 +157,7 @@ void       nes_setvaltype (nes_state *N, obj_t *cobj, unsigned short type);
 void       nes_linkval    (nes_state *N, obj_t *cobj1, obj_t *cobj2);
 void       nes_unlinkval  (nes_state *N, obj_t *cobj);
 void       nes_freetable  (nes_state *N, obj_t *tobj);
+obj_t     *nes_getobj_ex  (nes_state *N, obj_t *tobj, char *oname, unsigned short followz, unsigned short *foundz);
 obj_t     *nes_getobj     (nes_state *N, obj_t *tobj, char *oname);
 obj_t     *nes_getiobj    (nes_state *N, obj_t *tobj, unsigned long oindex);
 obj_t     *nes_setobj     (nes_state *N, obj_t *tobj, char *oname, unsigned short otype, NES_CFUNC _fptr, num_t _num, char *_str, long _slen);
@@ -173,12 +184,14 @@ obj_t     *nes_evalf      (nes_state *N, const char *fmt, ...);
 #define    nes_getnum(N,o,n)        nes_tonum(N, nes_getobj(N,o,n))
 #define    nes_getstr(N,o,n)        nes_tostr(N, nes_getobj(N,o,n))
 
-#define    nes_setnum(N,t,n,v)      nes_setobj(N, t, n, NT_NUMBER, (NES_CFUNC)NULL, v, NULL, 0)
-#define    nes_setstr(N,t,n,s,l)    nes_setobj(N, t, n, NT_STRING, (NES_CFUNC)NULL, 0, s,    l)
-#define    nes_settable(N,t,n)      nes_setobj(N, t, n, NT_TABLE,  (NES_CFUNC)NULL, 0, NULL, 0)
-#define    nes_setcfunc(N,t,n,p)    nes_setobj(N, t, n, NT_CFUNC,  (NES_CFUNC)p,    0, NULL, 0)
-#define    nes_setnfunc(N,t,n,s,l)  nes_setobj(N, t, n, NT_NFUNC,  (NES_CFUNC)NULL, 0, s,    l)
-#define    nes_setcdata(N,t,n,s,l)  nes_setobj(N, t, n, NT_CDATA,  (NES_CFUNC)NULL, 0, (void *)s, l)
+#define    nes_setnull(N,t,n)       nes_setobj(N, t, n, NT_NULL,    (NES_CFUNC)NULL, 0, NULL, 0)
+#define    nes_setnum(N,t,n,v)      nes_setobj(N, t, n, NT_NUMBER,  (NES_CFUNC)NULL, v, NULL, 0)
+#define    nes_setbool(N,t,n,v)     nes_setobj(N, t, n, NT_BOOLEAN, (NES_CFUNC)NULL, v?1:0, NULL, 0)
+#define    nes_setstr(N,t,n,s,l)    nes_setobj(N, t, n, NT_STRING,  (NES_CFUNC)NULL, 0, s,    l)
+#define    nes_settable(N,t,n)      nes_setobj(N, t, n, NT_TABLE,   (NES_CFUNC)NULL, 0, NULL, 0)
+#define    nes_setcfunc(N,t,n,p)    nes_setobj(N, t, n, NT_CFUNC,   (NES_CFUNC)p,    0, NULL, 0)
+#define    nes_setnfunc(N,t,n,s,l)  nes_setobj(N, t, n, NT_NFUNC,   (NES_CFUNC)NULL, 0, s,    l)
+#define    nes_setcdata(N,t,n,s,l)  nes_setobj(N, t, n, NT_CDATA,   (NES_CFUNC)NULL, 0, (void *)s, l)
 
 #define    nes_setinum(N,t,n,v)     nes_setiobj(N, t, n, NT_NUMBER, (NES_CFUNC)NULL, v, NULL, 0)
 #define    nes_setistr(N,t,n,s,l)   nes_setiobj(N, t, n, NT_STRING, (NES_CFUNC)NULL, 0, s,    l)
@@ -196,15 +209,15 @@ class NesObject {
 public:
 	NesObject()
 	{
-//		memset(O, 0, sizeof(O));
+		/* memset(O, 0, sizeof(O)); */
 	}
 	~NesObject()
 	{
-//		nes_unlink(O);
+		/* nes_unlink(O); */
 	}
 	const char *errbuf()
 	{
-//		return this->N->errbuf;
+		/* return this->N->errbuf; */
 	}
 private:
 	obj_t O;
@@ -232,10 +245,12 @@ public:
 	{
 		return nes_eval(this->N, string);
 	}
-//	obj_t *evalf(const char *fmt, ...)
-//	{
-//		return nes_evalf(this->N, fmt, ...);
-//	}
+/*
+	obj_t *evalf(const char *fmt, ...)
+	{
+		return nes_evalf(this->N, fmt, ...);
+	}
+*/
 	obj_t *getG()
 	{
 		return &this->N->g;

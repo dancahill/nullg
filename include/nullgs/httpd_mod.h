@@ -96,6 +96,7 @@ typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
 typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
 typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, char *);
 typedef	int   (*MAIN_HTPAGE_DIRLIST)(CONN *);
+/*
 typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
 typedef	void  (*MAIN_HTSELECT_DAY)(CONN *, char *);
 typedef	void  (*MAIN_HTSELECT_DOMAIN)(CONN *, int);
@@ -123,6 +124,7 @@ typedef	char *(*MAIN_HTVIEW_EVENTTYPE)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_HOLIDAY)(char *);
 typedef	char *(*MAIN_HTVIEW_REMINDER)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_USER)(CONN *, int);
+*/
 typedef void  (*MAIN_HTSCRIPT_SHOWPAGE)(CONN *, short int);
 typedef	int   (*MAIN_DB_LOG_ACTIVITY)(CONN *, char *, int, char *, const char *, ...);
 typedef char *(*MAIN_LANG_GETS)(CONN *, char *, char *);
@@ -241,6 +243,7 @@ EXTERN MAIN_HTPAGE_HEADER		htpage_header;
 EXTERN MAIN_HTPAGE_FOOTER		htpage_footer;
 EXTERN MAIN_HTPAGE_TOPMENU		htpage_topmenu;
 EXTERN MAIN_HTPAGE_DIRLIST		htpage_dirlist;
+/*
 EXTERN MAIN_HTSELECT_CONTACT		htselect_contact;
 EXTERN MAIN_HTSELECT_DAY		htselect_day;
 EXTERN MAIN_HTSELECT_DOMAIN		htselect_domain;
@@ -268,6 +271,7 @@ EXTERN MAIN_HTVIEW_EVENTTYPE		htview_eventtype;
 EXTERN MAIN_HTVIEW_HOLIDAY		htview_holiday;
 EXTERN MAIN_HTVIEW_REMINDER		htview_reminder;
 EXTERN MAIN_HTVIEW_USER			htview_user;
+*/
 EXTERN MAIN_HTSCRIPT_SHOWPAGE		htscript_showpage;
 EXTERN MAIN_LANG_GETS			lang_gets;
 EXTERN MAIN_DB_LOG_ACTIVITY		db_log_activity;
@@ -441,6 +445,7 @@ int mod_import()
 	if (_get_func((void *)&htpage_footer,			"htpage_footer"			)!=0) return -1;
 	if (_get_func((void *)&htpage_topmenu,			"htpage_topmenu"		)!=0) return -1;
 	if (_get_func((void *)&htpage_dirlist,			"htpage_dirlist"		)!=0) return -1;
+/*
 	if (_get_func((void *)&htselect_contact,		"htselect_contact"		)!=0) return -1;
 	if (_get_func((void *)&htselect_day,			"htselect_day"			)!=0) return -1;
 	if (_get_func((void *)&htselect_domain,			"htselect_domain"		)!=0) return -1;
@@ -468,6 +473,7 @@ int mod_import()
 	if (_get_func((void *)&htview_holiday,			"htview_holiday"		)!=0) return -1;
 	if (_get_func((void *)&htview_reminder,			"htview_reminder"		)!=0) return -1;
 	if (_get_func((void *)&htview_user,			"htview_user"			)!=0) return -1;
+*/
 	if (_get_func((void *)&htscript_showpage,		"htscript_showpage"		)!=0) return -1;
 	if (_get_func((void *)&lang_gets,			"lang_gets"			)!=0) return -1;
 	if (_get_func((void *)&md5_init,			"md5_init"			)!=0) return -1;

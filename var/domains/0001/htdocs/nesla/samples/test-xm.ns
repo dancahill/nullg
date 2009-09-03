@@ -28,10 +28,10 @@ if (_POST['DATA']!=null) {
 	print("<HR><PRE>");
 	if (_POST['TYPE']=='MIME') {
 		x=mime.read(_POST['DATA']);
-		printvar(x);
+		print(exportvar(x));
 	} else if (_POST['TYPE']=='XML') {
 		x=xml.read(_POST['DATA']);
-		printvar(x);
+		print(exportvar(x));
 	}
 	print("<HR></PRE>");
 }
@@ -49,6 +49,6 @@ print(
 print("<A HREF=javascript:showdebug()>DEBUG</A>\n");
 print("</CENTER>\n");
 print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");
-printvar(_GLOBALS);
+print(exportvar(_GLOBALS));
 print("</FONT></PRE></DIV>\n");
 print("</BODY>\n</HTML>\n");

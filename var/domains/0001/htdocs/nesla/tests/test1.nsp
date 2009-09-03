@@ -1,6 +1,7 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML><HEAD><TITLE>NESLA WEB TEST</TITLE></HEAD>
 <BODY>
-<SCRIPT LANGUAGE='JavaScript'>
+<SCRIPT LANGUAGE="JavaScript" type="text/javascript">
 <!--
 function showdebug() {
 	if (document.getElementById('debug').style.display=='none') {
@@ -12,12 +13,12 @@ function showdebug() {
 // -->
 </SCRIPT>
 <H1>NESLA WEB TEST</H1>
-<PRE><FONT SIZE=2>
-<?nsp include('test1.ns'); ?>
+<PRE STYLE="display:inline"><FONT SIZE="2">
+<?nsp include("test1.ns"); ?>
 </FONT></PRE>
-<A HREF='javascript:showdebug()'>SHOW DEBUG</A>
-<DIV ID='debug' STYLE='display:none'><PRE><FONT SIZE=2>
-global _GLOBALS = <?nsp printvar(_GLOBALS); ?>;
+<A HREF="javascript:showdebug()">SHOW DEBUG</A>
+<DIV ID="debug" STYLE="display:none"><PRE><FONT SIZE=2>
+global _GLOBALS = <?nsp print(exportvar(_GLOBALS)); ?>;
 </FONT></PRE></DIV>
 </BODY>
 </HTML>

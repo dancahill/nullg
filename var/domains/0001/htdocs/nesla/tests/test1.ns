@@ -13,16 +13,18 @@ function main() {
 		"loops.ns";
 		"cmp.ns";
 		"eval.ns";
+		"function.ns";
 		"math.ns";
 		"oo.ns";
 		"indexes.ns";
 		"try.ns";
+		"zlink.ns";
+//		"dl.ns";
 		"b64.ns";
 		"rot13.ns";
 		"xml.ns";
 		"regex.ns";
 		"crypto.ns";
-		"dl.ns";
 		"tcp.ns";
 
 //		"ldap.ns";
@@ -63,12 +65,10 @@ function main() {
 	numtests--;
 	print("-------------------------------------------------------------------\n");
 	global decomped_script=null;
-	global _ARGS={};
+//	global _ARGS={};
 	global _ENV={};
 	if (typeof(_SERVER)!='table') {
-	print("global _GLOBALS = ");
-		printvar(_GLOBALS);
-		print(";\n");
+		print("global _GLOBALS = ",exportvar(_GLOBALS),";\n");
 	}
 	return;
 }

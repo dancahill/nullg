@@ -386,6 +386,52 @@ static int htnes_system(nes_state *N)
 	return 0;
 }
 
+NES_FUNCTION(htnes_convertnsp)
+{
+	CONN *sid=get_sid();
+	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+	char *ss, *se;
+
+	if (cobj1->val->type!=NT_STRING) {
+		prints(sid, "%s() expected a string for arg1\r\n", nes_getstr(N, &N->l, "0"));
+		return 0;
+	}
+	if (cobj1->val->d.str==NULL) return 0;
+	nes_setstr(N, &N->r, "", "print(\"", 7);
+	se=ss=cobj1->val->d.str;
+	for (;*se;se++) {
+		if (strncmp(se, "?>", 2)==0) {
+			nes_strcat(N, &N->r, ss, se-ss);
+			nes_strcat(N, &N->r, "print(\"", 7);
+			ss=se+=2;
+			if (*se) { --se; continue; }
+			break;
+		} else if (strncmp(se, "\"", 1)==0) {
+			nes_strcat(N, &N->r, ss, se-ss);
+			nes_strcat(N, &N->r, "\\\"", 2);
+			ss=se+=1;
+			if (*se) { --se; continue; }
+			break;
+		} else if (strncmp(se, "\\", 1)==0) {
+			nes_strcat(N, &N->r, ss, se-ss);
+			nes_strcat(N, &N->r, "\\\\", 2);
+			ss=se+=1;
+			if (*se) { --se; continue; }
+			break;
+		} else if (strncmp(se, "<?nsp", 5)==0) {
+			nes_strcat(N, &N->r, ss, se-ss);
+			nes_strcat(N, &N->r, "\");", 3);
+			ss=se+=5;
+			while (se[0]!='?' || se[1]!='>') ++se;
+			if (*se) { --se; continue; }
+			break;
+		}
+	}
+	if (se>ss) nes_strcat(N, &N->r, ss, se-ss);
+	nes_strcat(N, &N->r, "\");", 3);
+	return 0;
+}
+
 static void preppath(nes_state *N, char *name)
 {
 	char buf[512];
@@ -417,11 +463,11 @@ static void preppath(nes_state *N, char *name)
 	return;
 }
 
-static int htnes_runscript(CONN *sid, char *file)
+static int htnes_initenv(CONN *sid)
 {
-	obj_t *tobj=nes_getobj(sid->N, &sid->N->g, "io");
-//	jmp_buf *savjmp;
-	char *p;
+	obj_t *tobj;
+
+	nes_setcfunc(sid->N, &sid->N->g, "convertnsp",       (NES_CFUNC)htnes_convertnsp);
 
 	nes_setcfunc(sid->N, &sid->N->g, "dirlist",          (NES_CFUNC)htnes_dirlist);
 	nes_setcfunc(sid->N, &sid->N->g, "include_template", (NES_CFUNC)htnes_include_template);
@@ -429,12 +475,11 @@ static int htnes_runscript(CONN *sid, char *file)
 	nes_setcfunc(sid->N, &sid->N->g, "str2html",         (NES_CFUNC)htnes_str2html);
 	nes_setcfunc(sid->N, &sid->N->g, "sqlquery",         (NES_CFUNC)htnes_sqlquery);
 	nes_setcfunc(sid->N, &sid->N->g, "system",           (NES_CFUNC)htnes_system);
+	tobj=nes_settable(sid->N, &sid->N->g, "io");
 	nes_setcfunc(sid->N, tobj,       "flush",            (NES_CFUNC)htnes_flush);
-
 	tobj=nes_settable(sid->N, &sid->N->g, "dl");
 	tobj->val->attr|=NST_HIDDEN;
 	nes_setcfunc(sid->N, tobj,       "loadlib",          (NES_CFUNC)nesladl_loadlib);
-
 	tobj=nes_settable(sid->N, &sid->N->g, "ldir");
 	tobj->val->attr|=NST_HIDDEN;
 	nes_setcfunc(sid->N, tobj,       "deleteentry",      (NES_CFUNC)htnes_ldir_deleteentry);
@@ -442,7 +487,32 @@ static int htnes_runscript(CONN *sid, char *file)
 	nes_setcfunc(sid->N, tobj,       "getlist",          (NES_CFUNC)htnes_ldir_getlist);
 	nes_setcfunc(sid->N, tobj,       "sortlist",         (NES_CFUNC)htnes_ldir_sortlist);
 	nes_setcfunc(sid->N, tobj,       "saveentry",        (NES_CFUNC)htnes_ldir_saveentry);
+	return 0;
+}
 
+int htnes_runinit(CONN *sid)
+{
+	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
+	char filename[512];
+	char hackbuf[512];
+	struct stat sb;
+
+	snprintf(filename, sizeof(filename)-1, "%s/scripts/htinit.ns", nes_getstr(proc->N, confobj, "var_path"));
+	if (stat(filename, &sb)!=0) return 0;
+	htnes_initenv(sid);
+//	nes_execfile(sid->N, filename);
+//	nes_execf(sid->N, "if (typeof(x=file.read(\"%s\"))=='string') exec(x);", file);
+	snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') exec(x);", filename);
+	nes_exec(sid->N, hackbuf);
+	return sid->N->err;
+}
+
+static int htnes_runscript(CONN *sid, char *file)
+{
+//	jmp_buf *savjmp;
+	char *p;
+
+	htnes_initenv(sid);
 	preppath(sid->N, file);
 //	savjmp=sid->N->savjmp;
 //	sid->N->savjmp=calloc(1, sizeof(jmp_buf));
@@ -452,7 +522,9 @@ static int htnes_runscript(CONN *sid, char *file)
 	if (p!=NULL&&strcmp(p, ".nsp")==0) {
 		char hackbuf[512];
 
-		snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') exec(\"print(\\\"\"+string.join(string.split(string.join(string.split(x, \"?>\"), \"print(\\\"\"), \"<?nsp\"), \"\\\");\")+\"\\\");\");", file);
+//		snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') exec(\"print(\\\"\"+string.join(string.split(string.join(string.split(x, \"?>\"), \"print(\\\"\"), \"<?nsp\"), \"\\\");\")+\"\\\");\");", file);
+//		snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') { x=convertnsp(x); print(x); exec(x); }", file);
+		snprintf(hackbuf, sizeof(hackbuf)-1, "exec(convertnsp(file.read(\"%s\")));", file);
 		nes_exec(sid->N, hackbuf);
 //		nes_execf(sid->N, "if (typeof(x=file.read(\"%s\"))=='string') exec(\"print(\\\"\"+string.join(string.split(string.join(string.split(x, \"?>\"), \"print(\\\"\"), \"<?nsp\"), \"\\\");\")+\"\\\");\");", file);
 	} else {

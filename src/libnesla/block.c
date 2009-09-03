@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 
 /* Advance readptr to next specified char */
@@ -139,18 +141,32 @@ void n_for(nes_state *N)
 void n_foreach(nes_state *N)
 {
 #define __FUNCTION__ __FILE__ ":n_foreach()"
-	char itemnamebuf[MAX_OBJNAMELEN+1];
+	char itemnamebuf1[MAX_OBJNAMELEN+1];
+	char itemnamebuf2[MAX_OBJNAMELEN+1];
 	char setnamebuf[MAX_OBJNAMELEN+1];
 	obj_t *iobj, *sobj, *xobj;
+	obj_t tobj;
 	uchar *bs, *be;
 	short single;
+	char *namep;
+	char *valp;
 
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	++N->readptr;
 	n_expect(N, __FUNCTION__, OP_LABEL);
-	n_getlabel(N, itemnamebuf);
+	n_getlabel(N, itemnamebuf1);
+	if (*N->readptr==OP_PCOMMA) {
+		++N->readptr;
+		n_expect(N, __FUNCTION__, OP_LABEL);
+		n_getlabel(N, itemnamebuf2);
+		namep=itemnamebuf1;
+		valp=itemnamebuf2;
+	} else {
+		namep=NULL;
+		valp=itemnamebuf1;
+	}
 	n_expect(N, __FUNCTION__, OP_LABEL);
 	if (nc_strcmp(n_getlabel(N, NULL), "in")!=0) {
 		n_error(N, NE_INTERNAL, __FUNCTION__, "expected 'in'");
@@ -170,11 +186,14 @@ void n_foreach(nes_state *N)
 		single=1;
 	}
 	be=++N->readptr;
-	xobj=nes_setnum(N, &N->l, itemnamebuf, 0);
+	nc_memset((void *)&tobj, 0, sizeof(obj_t));
+	nes_linkval(N, &tobj, sobj);
 	for (iobj=sobj->val->d.table.f; iobj; iobj=iobj->next) {
 		if (nes_isnull(iobj) || iobj->val->attr&NST_SYSTEM) continue;
+		if (namep) nes_setstr(N, &N->l, namep, iobj->name, -1);
 		N->readptr=bs;
 		N->single=single;
+		xobj=nes_setnum(N, &N->l, valp, 0);
 		nes_linkval(N, xobj, iobj);
 		nes_exec(N, (char *)N->readptr);
 		nes_unlinkval(N, xobj);
@@ -182,6 +201,7 @@ void n_foreach(nes_state *N)
 		if (N->brk) { N->brk--; break; }
 		if (N->ret) break;
 	}
+	nes_unlinkval(N, &tobj);
 	N->readptr=be;
 	if (single) --N->readptr;
 	DEBUG_OUT();
@@ -303,14 +323,14 @@ void n_try(nes_state *N)
 	be=N->readptr;
 	N->readptr=bs;
 	savjmp=N->savjmp;
-	N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+	N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 1);
 	if (setjmp(*N->savjmp)==0) {
 		nes_exec(N, (char *)N->readptr);
 		except=0;
 	} else {
 		except=1;
 	}
-	n_free(N, (void *)&N->savjmp);
+	n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 	N->savjmp=savjmp;
 	N->readptr=be;
 	if (*N->readptr==OP_KCATCH) {
@@ -339,14 +359,14 @@ void n_try(nes_state *N)
 			nes_setstr(N, tobj, "errtext", N->errbuf, -1);
 			N->err=0;
 			savjmp=N->savjmp;
-			N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+			N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 1);
 			if (setjmp(*N->savjmp)==0) {
 				nes_exec(N, (char *)N->readptr);
 				except=0;
 			} else {
 				except=1;
 			}
-			n_free(N, (void *)&N->savjmp);
+			n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 			N->savjmp=savjmp;
 			n_freeval(N, nes_getobj(N, &N->l, exnamebuf));
 		}

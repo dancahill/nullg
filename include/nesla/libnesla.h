@@ -23,7 +23,9 @@ extern "C" {
 #endif
 
 #define _LIBNESLA_H 1
+#ifndef _NESLA_H
 #include "nesla/nesla.h"
+#endif
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -55,39 +57,60 @@ void     n_do           (nes_state *N);
 void     n_while        (nes_state *N);
 void     n_try          (nes_state *N);
 /* compile.c */
-uchar   *n_decompose    (nes_state *N, uchar *rawtext);
-void     n_decompile    (nes_state *N);
+uchar   *n_decompose    (nes_state *N, uchar *srctext, uchar **dsttext, int *dstsize);
+/* debug.c */
+void     n_decompile    (nes_state *N, uchar *start, uchar *end, char *errbuf, unsigned short errmax);
 /* exec.c */
 obj_t   *n_execfunction (nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass);
 /* libc.c */
-#define  nc_isdigit(c)  ((c>='0'&&c<='9')?1:0)
-#define  nc_isalpha(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')?1:0)
-#define  nc_isalnum(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')?1:0)
-#define  nc_isupper(c)  ((c>='A'&&c<='Z')?1:0)
-#define  nc_islower(c)  ((c>='a'&&c<='z')?1:0)
+#define  nc_isdigit(c)  (c>='0'&&c<='9')
+#define  nc_isalpha(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z'))
+#define  nc_isalnum(c)  ((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9'))
+#define  nc_isupper(c)  (c>='A'&&c<='Z')
+#define  nc_islower(c)  (c>='a'&&c<='z')
 #define  nc_isspace(c)  (c=='\r'||c=='\n'||c=='\t'||c==' ')
 #define  nc_tolower(c)  ((c>='A'&&c<='Z')?(c+('a'-'A')):c)
 #define  nc_toupper(c)  ((c>='a'&&c<='z')?(c-('a'-'A')):c)
 int      nc_snprintf    (nes_state *N, char *str, int size, const char *format, ...);
 int      nc_printf      (nes_state *N, const char *format, ...);
-int      nc_gettimeofday(struct timeval *tv, void *tz);
-char    *nc_memcpy      (char *dst, const char *src, int n);
-int      nc_strlen      (const char *s);
-char    *nc_strchr      (const char *s, int c);
-char    *nc_strncpy     (char *d, const char *s, int n);
-int      nc_strcmp      (const char *s1, const char *s2);
-int      nc_strncmp     (const char *s1, const char *s2, int n);
-void    *nc_memset      (void *s, int c, int n);
+int      nc_gettimeofday(struct timeval *tv, struct timezone *tz);
+
+char    *_nc_memcpy     (char *dst, const char *src, int n);
+int      _nc_strlen     (const char *s);
+char    *_nc_strchr     (const char *s, int c);
+char    *_nc_strncpy    (char *d, const char *s, int n);
+int      _nc_strcmp     (const char *s1, const char *s2);
+int      _nc_strncmp    (const char *s1, const char *s2, int n);
+void    *_nc_memset     (void *s, int c, int n);
+
+#define nc_memcpy  _nc_memcpy
+#define nc_strlen  _nc_strlen
+#define nc_strchr  _nc_strchr
+#define nc_strncpy _nc_strncpy
+#define nc_strcmp  _nc_strcmp
+#define nc_strncmp _nc_strncmp
+#define nc_memset  _nc_memset
+
+/*
+#include <string.h>
+#define nc_memcpy  _nc_memcpy
+#define nc_strlen  strlen
+#define nc_strchr  strchr
+#define nc_strncpy strncpy
+#define nc_strcmp  strcmp
+#define nc_strncmp strncmp
+#define nc_memset  memset
+*/
 
 void     n_error        (nes_state *N, short int err, const char *fname, const char *format, ...);
 void     n_expect       (nes_state *N, const char *fname, uchar op);
-//#define  n_expect(N,fn,op)	{ if (*N->readptr!=op) n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, op)); }
+/* #define  n_expect(N,fn,op)	{ if (*N->readptr!=op) n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, op)); } */
 
 void     n_warn         (nes_state *N, const char *fname, const char *format, ...);
 
 num_t    n_aton         (nes_state *N, const char *str);
 
-//char    *n_itoa         (nes_state *N, char *str, int num, short base);
+/* char    *n_itoa         (nes_state *N, char *str, int num, short base); */
 
 char    *n_ntoa         (nes_state *N, char *str, num_t num, short base, unsigned short dec);
 /* libn.c */
@@ -96,6 +119,7 @@ NES_FUNCTION(nl_print);
 NES_FUNCTION(nl_write);
 NES_FUNCTION(nl_filemkdir);
 NES_FUNCTION(nl_fileread);
+NES_FUNCTION(nl_filerename);
 NES_FUNCTION(nl_filestat);
 NES_FUNCTION(nl_fileunlink);
 NES_FUNCTION(nl_filewrite);
@@ -108,6 +132,7 @@ NES_FUNCTION(nl_strcat);
 NES_FUNCTION(nl_strcmp);
 NES_FUNCTION(nl_strjoin);
 NES_FUNCTION(nl_strlen);
+NES_FUNCTION(nl_strrep);
 NES_FUNCTION(nl_strsplit);
 NES_FUNCTION(nl_strstr);
 NES_FUNCTION(nl_strsub);
@@ -122,17 +147,18 @@ NES_FUNCTION(nl_exec);
 NES_FUNCTION(nl_iname);
 NES_FUNCTION(nl_ival);
 NES_FUNCTION(nl_include);
-NES_FUNCTION(nl_printvar);
+NES_FUNCTION(nl_exportvar);
 NES_FUNCTION(nl_sizeof);
 NES_FUNCTION(nl_sort_name);
 NES_FUNCTION(nl_sort_key);
 NES_FUNCTION(nl_typeof);
 NES_FUNCTION(nl_system);
 NES_FUNCTION(nl_copy);
+NES_FUNCTION(nl_zlink);
 /* objects.c */
 void    *n_alloc        (nes_state *N, int size, short zero);
-void    *n_realloc      (nes_state *N, void **p, int size, short zero);
-void     n_free         (nes_state *N, void **p);
+void    *n_realloc      (nes_state *N, void **p, int size, int osize, short zero);
+void     n_free         (nes_state *N, void **p, int osize);
 void     n_copyval      (nes_state *N, obj_t *cobj1, obj_t *cobj2);
 val_t   *n_newval       (nes_state *N, unsigned short type);
 void     n_freeval      (nes_state *N, obj_t *cobj);
@@ -148,7 +174,7 @@ obj_t   *n_getfunction  (nes_state *N);
 char    *n_getlabel     (nes_state *N, char *buf);
 num_t    n_getnumber    (nes_state *N);
 obj_t   *n_getstring    (nes_state *N);
-obj_t   *n_readindex    (nes_state *N, obj_t *cobj, char *lastname);
+obj_t   *n_readindex    (nes_state *N, obj_t *cobj, char *lastname, unsigned short *z);
 obj_t   *n_readtable    (nes_state *N, obj_t *tobj);
 obj_t   *n_readvar      (nes_state *N, obj_t *tobj, obj_t *cobj);
 obj_t   *n_storeval     (nes_state *N, obj_t *cobj);

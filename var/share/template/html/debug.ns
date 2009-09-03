@@ -1,5 +1,5 @@
 print("
-<SCRIPT LANGUAGE=JavaScript>
+<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">
 <!--
 function showdebug() {
 	if (document.getElementById('debug').style.display=='none') {
@@ -12,12 +12,11 @@ function showdebug() {
 </SCRIPT>
 ");
 print("<A HREF=javascript:showdebug()>SHOW DEBUG</A>\n");
-print("</CENTER>\n");
+/*
+if (typeof(sqlquery)=='function') {
+	sqlquery('_q1', "SELECT * FROM nullgs_sessions");
+	sqlquery('_q2', "SELECT * FROM nullgs_entries");
+}
+*/
 print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");
-#if (typeof(sqlquery)=='function') {
-#	sqlquery('_q1', "SELECT * FROM nullgs_sessions");
-#	sqlquery('_q2', "SELECT * FROM nullgs_entries");
-#}
-print("global _GLOBALS = ");
-printvar(_GLOBALS);
-print("</FONT></PRE></DIV>\n");
+print("global _GLOBALS = ",exportvar(_GLOBALS),"</FONT></PRE></DIV>\n");

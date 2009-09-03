@@ -1,6 +1,7 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML>
-<TITLE>Simple XML/MIME test page</TITLE>
 <HEAD>
+<TITLE>Simple XML/MIME test page</TITLE>
 <STYLE TYPE=text/css>
 A        { color: #0000FF; text-decoration: none; }
 A:HOVER  { background-color: #E0E0FF; }
@@ -25,15 +26,14 @@ if (_POST['DATA']!=null) {
 	print("<HR><PRE>");
 	if (_POST['TYPE']=='MIME') {
 		x=mime.read(_POST['DATA']);
-		printvar(x);
 	} else if (_POST['TYPE']=='XML') {
-		x=xml.read(_POST['DATA']);
-		printvar(x);
+		x=data.xml.read(_POST['DATA']);
 	}
+	print(exportvar(x));
 	print("<HR></PRE>");
 }
 ?>
-<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">
+<SCRIPT LANGUAGE="JavaScript" TYPE="text/javascript">
 <!--
 function showdebug() {
 	if (document.getElementById('debug').style.display=='none') {
@@ -47,7 +47,7 @@ function showdebug() {
 <A HREF=javascript:showdebug()>DEBUG</A>
 </CENTER>
 <DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>
-<?nsp printvar(_GLOBALS); ?>
+<?nsp print(exportvar(_GLOBALS)); ?>
 </FONT></PRE></DIV>
 </BODY>
 </HTML>

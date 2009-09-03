@@ -1,7 +1,7 @@
 #!/usr/bin/nesla
 # poker sample prog by Dan Cahill
-include("_cards.ns");
-include("_ajax.ns");
+if (include("_cards.ns")!=0) print("failed to include _cards.ns\r\n");
+if (include("_ajax.ns")!=0) print("failed to include _ajax.ns\r\n");
 
 function getcard() {
 	do {
@@ -139,12 +139,42 @@ function printredraw() {
 	);
 	print(
 		"function toggle(hc) {\n",
-		"	if (document.getElementById('H'+hc).value==0) {\n",
-		"		document.getElementById('H'+hc).value=1;\n",
-		"		document.getElementById('hbut'+hc).bgColor='#00FF7F';\n",
+		"	var a=null;\n",
+		"	if (document.all) {\n",
+		"		var coll=document.all.tags('TD');\n",
 		"	} else {\n",
-		"		document.getElementById('H'+hc).value=0;\n",
-		"		document.getElementById('hbut'+hc).bgColor='#FFFFFF';\n",
+		"		var coll=document.getElementsByTagName('TD');\n",
+		"	}\n",
+		"	if (coll==null) return;\n",
+		"	for (i=0;i<coll.length;i++) {\n",
+		"		if (coll[i].id=='hbut'+hc) {\n",
+		"			a=coll[i];\n",
+		"		} else {\n",
+		"		}\n",
+		"	}\n",
+		"	var b=null;\n",
+		"	if (document.all) {\n",
+		"		var coll=document.all.tags('INPUT');\n",
+		"	} else {\n",
+		"		var coll=document.getElementsByTagName('INPUT');\n",
+		"	}\n",
+		"	if (coll==null) return;\n",
+		"	for (i=0;i<coll.length;i++) {\n",
+		"		if (coll[i].name=='H'+hc) {\n",
+		"			b=coll[i];\n",
+		"		} else {\n",
+		"		}\n",
+		"	}\n",
+		"	if (a==null || b==null) {\n",
+		"		alert('...');\n",
+		"		return;\n",
+		"	}\n",
+		"	if (b.value==0) {\n",
+		"		a.bgColor='#00FF7F';\n",
+		"		b.value=1;\n",
+		"	} else {\n",
+		"		a.bgColor='#FFFFFF';\n",
+		"		b.value=0;\n",
 		"	}\n",
 		"}\n"
 	);
@@ -161,7 +191,7 @@ function xmlmain() {
 	if (tonumber(_POST['H2'])) held[2]=1; else c[2]=getcard();
 	if (tonumber(_POST['H3'])) held[3]=1; else c[3]=getcard();
 	if (tonumber(_POST['H4'])) held[4]=1; else c[4]=getcard();
-//	print("<PRE>");printvar(_GLOBALS);print("</PRE>");
+//	print("<PRE>",exportvar(_GLOBALS),"</PRE>");
 	global opt = _POST['OPT'];
 	global r=ratehand();
 //	if response header isn't text/xml, IE will choke on this
@@ -185,6 +215,7 @@ function main() {
 		global _POST = { c0=12, c1=16, c2=20, c3=24, c4=28, h0=1, h1=1, h2=1, h3=1, h4=1 }
 	}
 */
+	print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n");
 	print("<HTML>\n<HEAD>\n<TITLE>Nesla-AJAX Poker</TITLE>\n");
 	print("<STYLE TYPE=text/css>\n");
 	print("A       { color: #0000FF; text-decoration: none; }\n");
@@ -193,8 +224,8 @@ function main() {
 	print("</HEAD>\n<BODY>\n<CENTER>\n");
 	printxml();
 	printredraw();
-	print("<SPAN ID='remstatus'>");
 	print("<FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='game'>\n");
+	print("<SPAN ID='remstatus'>\n");
 	global r=ratehand();
 	showscore(r);
 	for (n=0;n<5;n++) {
@@ -215,7 +246,7 @@ function main() {
 			print(" onClick=\"toggle(",n,")\">HOLD</TD>\n");
 		}
 		print("</TR>\n");
-		print("<TR><TD ALIGN=CENTER COLSPAN=5>[<A HREF=javascript:nexthand('Deal');> DEAL </A>]</TD></TR>\n");
+		print("<TR><TD ALIGN=CENTER COLSPAN=5>[<A HREF=\"javascript:nexthand('Deal');\"> DEAL </A>]</TD></TR>\n");
 //	}
 	print("</TABLE>\n");
 /*
@@ -223,10 +254,10 @@ function main() {
 		print("<A HREF='", _SERVER['PATH_INFO'], "' 'onClick=location.replace('", _SERVER['PATH_INFO'], "');return false;'>Play again</A>\n");
 	}
 */
+	print("</SPAN>\n");
 	print("</FORM>\n");
-//	CARDS=null;print("<PRE>");printvar(_GLOBALS);print("</PRE>");
+//	CARDS=null;print("<PRE>",exportvar(_GLOBALS),"</PRE>");
 	if (_SERVER['REQUEST_METHOD']=='GET') {
-		print("</SPAN>\n");
 		print("</CENTER>\n</BODY>\n</HTML>\n");
 	}
 	return;

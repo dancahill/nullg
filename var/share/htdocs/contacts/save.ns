@@ -1,35 +1,88 @@
-function contact_save()
-{
-//	if (!(priv&A_ADMIN)) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
-//		return;
-//	}
+function contact_save() {
+	local fields = {
+		'sn';
+		'gn';
+		'personaltitle';
+		'contacttype';
+		'referredby';
+		'altcontact';
+
+		'hometelephonenumber';
+		'mobiletelephonenumber';
+		'mail';
+		'labeleduri';
+		'homeaddress';
+		'homelocality';
+		'homeregion';
+		'homecountry';
+		'homepostalcode';
+
+		'organization';
+		'title';
+		'worktelephonenumber';
+		'facsimiletelephonenumber';
+		'workaddress';
+		'worklocality';
+		'workregion';
+		'workcountry';
+		'workpostalcode';
+
+		'geozone';
+		'timezone';
+		'prefbilling';
+
+		'uid';
+		'userpassword';
+		'enabled';
+
+		'uidnumber';
+	}
+
+/*
+	if (!(priv&A_ADMIN)) {
+		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+		return;
+	}
+*/
 	if (_SERVER['REQUEST_METHOD']!='POST') return;
 	if (_POST['ID']==null) return;
 	id=tonumber(_POST['ID']);
+	domainid=tonumber(_USER['domainid']);
 	if (id>0) {
 		global Q=ldir.getentry("person", id);
 	} else {
-		global Q={_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
+		global Q={_tuples=1,_rows={[0]={id=0,pid=domainid,did=domainid,_data={cn='New Contact'}}}};
 	}
 	if (typeof(Q)=='null') {
 		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 		return;
 	}
-//	if (dbread_query(sid, 2, id, &qobj)!=0) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
-//		return;
-//	}
-//	if (priv&A_ADMIN) {
-//		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) query.obj_uid=atoi(ptemp);
-//		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) query.obj_gid=atoi(ptemp);
-//	}
-//	if ((priv&A_ADMIN)||(query.obj_uid==sid->dat->uid)) {
-//		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
-//		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
-//	}
-//	if (typeof(_POST['QUERYNAME'])!='null') Q['_rows'][0]['_data']['cn']    = _POST['QUERYNAME'];
-//	if (typeof(_POST['QUERY'])!='null')     Q['_rows'][0]['_data']['query'] = _POST['QUERY'];
+/*
+	if (dbread_query(sid, 2, id, &qobj)!=0) {
+		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+		return;
+	}
+	if (priv&A_ADMIN) {
+		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) query.obj_uid=atoi(ptemp);
+		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) query.obj_gid=atoi(ptemp);
+	}
+	if ((priv&A_ADMIN)||(query.obj_uid==sid->dat->uid)) {
+		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
+		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
+	}
+*/
+	foreach (field in fields) {
+		local F=string.toupper(field);
+
+		if (typeof(_POST[F])=='null') {
+			print("Form is missing "+F+" = "+tostring(_POST[F])+"<BR>");
+			continue;
+		}
+		Q['_rows'][0]['_data'][string.tolower(field)] = _POST[F];
+	}
+
+//	if (typeof(_POST['SN'])!='null') Q['_rows'][0]['_data']['sn']       = _POST['SN'];
+//	if (typeof(_POST['GN'])!='null') Q['_rows'][0]['_data']['gn']       = _POST['GN'];
 //	if (sizeof(Q['_rows'][0]['_data']['cn'])==0) Q['_rows'][0]['_data']['cn'] = "Unnamed Contact";
 	if (_POST['SUBMIT']=="Delete") {
 //		if (!(priv&A_ADMIN)) {

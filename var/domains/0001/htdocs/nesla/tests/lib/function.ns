@@ -1,0 +1,18 @@
+#!/usr/bin/nesla
+if (typeof(expect)!='function') include("_expect.ns");
+function testfunctions() {
+	local function x() { return 1; }
+	expect("...", 1,  x());
+	x=function () { return 2; }
+	expect("...", 2,  x());
+
+//	x=function () { global function testfunctions() { print("x"); }; }();
+//	x=function () { global testfunctions=null }();
+
+	/* declare a lambda, execute it inline, and return the result */
+	x=function (y) { return y*2; }(21);
+	expect("...", 42, x);
+	return;
+}
+testfunctions();
+global testfunctions=null;

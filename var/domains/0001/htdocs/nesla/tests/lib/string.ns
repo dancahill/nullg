@@ -47,11 +47,16 @@ function teststring() {
 			x=string.sub(x, 1, 42);
 		}
 	}
-	expect("string.atoi('abc',0)",  97,       string.atoi("abc", 0));
-	expect("string.atoi('abc',1)",  98,       string.atoi("abc", 1));
-	expect("string.atoi('abc',2)",  99,       string.atoi("abc", 2));
-	expect("string.atoi('abc',3)",  -1,       string.atoi("abc", 3));
-	expect("string.itoa(97)",       'a',      string.itoa(97));
+	expect("string.atoi('abc',0)",  97,         string.atoi("abc", 0));
+	expect("string.atoi('abc',1)",  98,         string.atoi("abc", 1));
+	expect("string.atoi('abc',2)",  99,         string.atoi("abc", 2));
+	expect("string.atoi('abc',3)",  -1,         string.atoi("abc", 3));
+	expect("string.itoa(97)",       'a',        string.itoa(97));
+	expect("split..join",           "ab.*.*cd", string.join(string.split("ab--cd", '-'), '.*'));
+
+
+	expect("string.replace",        "ab.*.*cd", string.replace("ab--cd", '-', '.*'));
+
 	return;
 }
 teststring();

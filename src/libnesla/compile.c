@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 
 /*
@@ -162,6 +164,8 @@ static obj_t *n_extractquote(nes_state *N, cstate *state)
 	obj_t *cobj;
 	char q=*N->readptr;
 	char *qs, *qe;
+	obj_t tobj;
+	int n;
 
 	DEBUG_IN();
 	settrace();
@@ -174,8 +178,16 @@ static obj_t *n_extractquote(nes_state *N, cstate *state)
 	qs=(char *)N->readptr;
 	n_skipquote(N, q);
 	qe=(char *)N->readptr;
+
+	nc_memset((void *)&tobj, 0, sizeof(obj_t));
+	nes_setstr(N, &tobj, "", NULL, qe-qs-1);
+	n=n_unescape(N, qs, tobj.val->d.str, qe-qs-1, state);
+	cobj=nes_setstr(N, &N->r, "", tobj.val->d.str, n);
+	nes_unlinkval(N, &tobj);
+/*
 	cobj=nes_setstr(N, &N->r, "", NULL, qe-qs-1);
 	cobj->val->size=n_unescape(N, qs, cobj->val->d.str, qe-qs-1, state);
+*/
 	DEBUG_OUT();
 	return cobj;
 #undef __FUNCTION__
@@ -223,7 +235,7 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 				nobj=nes_settable(N, tobj, n_ntoa(N, x, *index, 10, 0));
 				*index+=1;
 				while (N->lastop!=OP_PCBRACE) {
-					n_decompose_sub(N, rawtext, nobj, index);
+					n_decompose_sub(N, srctext, nobj, index);
 				}
 				if (N->lastop==OP_PCBRACE) {
 					nes_setstr(N, tobj, n_ntoa(N, x, *index, 10, 0), lastname, -1);
@@ -235,7 +247,7 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 				nobj=nes_settable(N, tobj, n_ntoa(N, x, *index, 10, 0));
 				*index+=1;
 				while (N->lastop!=OP_PCPAREN) {
-					n_decompose_sub(N, rawtext, nobj, index);
+					n_decompose_sub(N, srctext, nobj, index);
 				}
 				if (N->lastop==OP_PCPAREN) {
 					nes_setstr(N, tobj, n_ntoa(N, x, *index, 10, 0), lastname, -1);
@@ -265,12 +277,12 @@ static void n_decompose_sub(nes_state *N, cstate *state)
 
 #define testgrow(b) \
 	if (state.offset+b+1>state.destmax) { \
+		state.destbuf=n_realloc(N, (void *)&state.destbuf, state.destmax+b+1024, state.destmax, 0); \
 		state.destmax+=b+1024; \
-		state.destbuf=n_realloc(N, (void *)&state.destbuf, state.destmax, 0); \
 		if (state.destbuf==NULL) n_warn(N, __FUNCTION__, "realloc error!!!"); \
 	}
 
-uchar *n_decompose(nes_state *N, uchar *rawtext)
+uchar   *n_decompose(nes_state *N, uchar *srctext, uchar **dsttext, int *dstsize)
 {
 #define __FUNCTION__ __FILE__ ":n_decompose()"
 	cstate state;
@@ -278,15 +290,23 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 	unsigned short op;
 
 	settrace();
-	if ((rawtext[0]==0x0D)&&((rawtext[1]==0xAC))) {
+
+	*dsttext=NULL;
+	*dstsize=0;
+
+	if ((srctext[0]==0x0D)&&((srctext[1]==0xAC))) {
 		n_warn(N, __FUNCTION__, "already chewed on this");
-		return rawtext;
+/*
+		*dsttext=srctext;
+		*dstsize=nc_strlen(srctext);
+*/
+		return srctext;
 	}
 	nc_memset((char *)&state, 0, sizeof(state));
 	state.lineno=1;
 	state.destmax=1024;
-	state.destbuf=malloc(state.destmax);
-	N->readptr=rawtext;
+	state.destbuf=(uchar *)n_alloc(N, state.destmax, 0);
+	N->readptr=srctext;
 	tobj=nes_settable(N, &N->g, "decomped_script");
 	nes_freetable(N, tobj);
 	state.tobj1=nes_settable(N, tobj, "code");
@@ -360,6 +380,10 @@ uchar *n_decompose(nes_state *N, uchar *rawtext)
 	state.offset+=4;
 	/* n_dumpvars(N, &N->g, 0); */
 	nes_freetable(N, tobj);
-	return state.destbuf;
+
+	*dsttext=state.destbuf;
+	*dstsize=state.destmax;
+
+	return *dsttext;
 #undef __FUNCTION__
 }

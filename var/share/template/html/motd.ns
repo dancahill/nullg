@@ -1,4 +1,5 @@
-print(
+if (_USER!=null) {
+	print(
 	"<BR />\r\n<CENTER>\r\n",
 	"<TABLE WIDTH=90% BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n",
 	"<TR><TD COLSPAN=2>",
@@ -7,25 +8,25 @@ print(
 	"<TR><TH STYLE='border-style:solid'><TABLE WIDTH=100% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>",
 	"<TH WIDTH=100% NOWRAP ALIGN=left>Welcome, ",str2html(_USER.uid),".&nbsp;</TH>",
 	"<TH WIDTH=100% NOWRAP ALIGN=right>&nbsp;",_TEMP.showtime,"</TH>",
-	"</TR></TABLE></TD></TR>\r\n",
+	"</TR></TABLE></TH></TR>\r\n",
 	"<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>",
-"
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-And Jesus said unto them, \"And whom do you say that I am?\"
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-They replied, \"You are the eschatological manifestation of the ground of our being, the ontological foundation of the context of our very selfhood revealed.\"
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-And Jesus replied, \"What?\"
-<BR />
-",
+	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
+	"And Jesus said unto them, \"And whom do you say that I am?\"\r\n",
+	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
+	"They replied, \"You are the eschatological manifestation of the ground of our being, the ontological foundation of the context of our very selfhood revealed.\"\r\n",
+	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
+	"And Jesus replied, \"What?\"\r\n",
+	"<BR />\r\n",
 	"<BR /></TD></TR>\r\n",
 	"</TABLE>",
 
 	"</TD></TR>\r\n",
 	"</TABLE>",
 	"</CENTER>"
-);
-
+	);
+} else {
+	print("Shouldn't you be logged in or something?<BR>");
+}
 /*
 
 	if ((auth_priv(sid, "calendar")&A_READ)<1) {

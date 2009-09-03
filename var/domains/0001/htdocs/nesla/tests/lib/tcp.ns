@@ -41,7 +41,7 @@ function testtcp() {
 			i=tcp.read(sock);
 			if (i=="") break;
 		}
-//		printvar(tcp.info(sock));
+//		print(exportvar(tcp.info(sock)));
 		tcp.close(sock);
 		io.flush();
 		return;
@@ -70,7 +70,7 @@ function testtcp() {
 			if (sizeof(i)==0) break;
 			i=string.join(string.split(i, "<"), "&lt;");
 		}
-//		printvar(tcp.info(sock));
+//		print(exportvar(tcp.info(sock)));
 		tcp.close(sock);
 		io.flush();
 		return;
@@ -113,7 +113,7 @@ function testtcp() {
 		addr=string.split(y[0], ",");
 		if (sizeof(addr)!=6) {
 			print("couldn't parse the host address\n");
-			printvar(addr);
+			print(exportvar(addr));
 			print(sizeof(addr));
 		} else {
 			o=tcp.write(sock, "LIST\r\n");
@@ -199,42 +199,29 @@ function testtcp() {
 		return;
 	}
 
-	if (typeof(http)!='table') {
+	if (typeof(net)!='table') {
 		print("SKIPPING TCP TESTS\n");
 		return;
 	}
-	print("\tsucking http://nesla.sourceforge.net/nesla/\n");
-	io.flush();
-	ht=http.get(0, "nesla.sourceforge.net", 80, "/nesla/");
-//	expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
-	if (typeof(ht)!='table') {
-		print("\t[", ht, "]\n");
-	} else {
+	if (tcp.have_ssl) print("        tcp.ssl_type = '",tcp.ssl_type,"'\n");
+	print("        sucking http://www.nulllogic.ca/nesla/version.php\n");
+	hconn=new net.http.client();
+	hconn.host="www.nulllogic.ca";
+	hconn.uri="/nesla/version.php";
+	ht=hconn.send();
+	expect("ht.status", "HTTP/1.1 200 OK", ht.status);
+	if (typeof(ht)=='table') {
 		status=string.split(ht.status, " ");
-		expect("status",     "200",   status[1]);
 		if (tonumber(status[1])==200) {
-			X=xml.read(ht.body);
-//			expect("xml.read(...)", "NullLogic - NESLA", X['HTML'][0]['HEAD'][0]['TITLE'][0]['value']);
-			expect("xml.read(...)", "NullLogic - NESLA", X.HTML.HEAD.TITLE.value);
-		}
-		print("\tsucking http://nesla.sourceforge.net/nesla/version.php\n");
-		ht=http.get(0, "nesla.sourceforge.net", 80, "/nesla/version.php");
-//		expect("ht.status",     "HTTP/1.1 200 OK",   ht.status);
-		if (typeof(ht)!='table') {
-			print("\t[", ht, "]\n");
-		} else {
-			status=string.split(ht.status, " ");
-			expect("status",     "200",   status[1]);
-			if (tonumber(status[1])==200) {
-				X=xml.read(ht.body);
-//				expect("Latest Version", _version_, X['version'][0]['major'][0]['value']+'.'+X['version'][0]['minor'][0]['value']+'.'+X['version'][0]['point'][0]['value']);
-				expect("Latest Version", _version_, X.version.major.value+'.'+X.version.minor.value+'.'+X.version.point.value);
-			}
+			X=data.xml.read(ht.body);
+//			expect("Latest Version", _version_, X['version'][0]['major'][0]['value']+'.'+X['version'][0]['minor'][0]['value']+'.'+X['version'][0]['point'][0]['value']);
+			expect("Latest Version", _version_, X.version.major.value+'.'+X.version.minor.value+'.'+X.version.point.value);
+//			print("",ht.body,exportvar(X),"\r\n");
 		}
 	}
 //	print("[[[", ht.head, "]]]\n");
 //	print("[[[", ht.body, "]]]\n");
-//	printvar(ht);
+//	print(exportvar(ht));
 	if (typeof(tcp.open)=='function') {
 		print("\truntime = ", runtime(), " seconds\n");
 //		test_tcpserv();

@@ -18,10 +18,12 @@
 */
 
 #ifdef WIN32
+/*
 struct timezone {
 	int tz_minuteswest;
 	int tz_dsttime;
 };
+*/
 /* pthread_ typedefs */
 typedef HANDLE pthread_t;
 typedef struct thread_attr {

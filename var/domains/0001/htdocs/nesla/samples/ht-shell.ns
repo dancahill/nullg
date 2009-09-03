@@ -53,6 +53,6 @@ print(
 print("<A HREF=javascript:showdebug()>DEBUG</A>\n");
 print("</CENTER>\n");
 print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");
-printvar(_GLOBALS);
+print(exportvar(_GLOBALS));
 print("</FONT></PRE></DIV>\n");
 print("</BODY>\n</HTML>\n");

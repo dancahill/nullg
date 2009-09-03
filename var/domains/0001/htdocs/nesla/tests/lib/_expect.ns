@@ -6,7 +6,20 @@ function expect(msg, a, b) {
 	var lm=string.len(msg);
 	var lb=string.len(b);
 
-	if (_ENV['TERM']==null) {
+	if (_SERVER) {
+		msg=string.join(string.split(msg, '&'), '&amp;');
+	}
+	if (_SERVER) {
+		print("        ", msg, string.sub(sp, lm, 20-lm));
+		print(" = <FONT COLOR='BLUE'>", b, "</FONT> ", string.sub(sp, lb, 27-lb));
+		if (a==b) {
+			print("[<FONT COLOR='GREEN'>  OK  </FONT>]\n");
+		} else {
+			print("[<FONT COLOR='RED'>FAILED</FONT>] expected [ ", a, " ]\n");
+			global numerrors++;
+			io.flush();
+		}
+	} else if (_ENV['TERM']==null) {
 		print("        ", msg, string.sub(sp, lm, 20-lm));
 		print(" = ", b, " ", string.sub(sp, lb, 27-lb));
 		if (a==b) {

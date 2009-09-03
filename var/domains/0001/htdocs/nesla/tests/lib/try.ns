@@ -8,28 +8,33 @@ function testtry() {
 		try {
 			x=string.split();
 			print("\tx=[",x,"]\n");
-		} catch (e) {
+		}
+		catch (e) {
 			print("\t[",e.errno,"][",e.errtext,"]\n");
 		}
 		try {
 			x=void();
 			print("\tx=[",x,"]\n");
-		} catch (e) {
+		}
+		catch (e) {
 			print("\t[",e.errno,"][",e.errtext,"]\n");
 		}
 		try {
 //			x=regex.replace("\\((.*), (.*)\\)", "(\\2, \\1)", "(a, b)");
 			x=regex.replace("\\((*), (*)\\)", "(\\2, \\1)", "(a, b)");
 			print("\tx=[",x,"]\n");
-		} catch (e) {
+		}
+		catch (e) {
 			print("\t[",e.errno,"][",e.errtext,"]\n");
 		}
 		try {
 			x=void();
 			print("\t[",x,"]\n");
-		} catch (e) {
+		}
+		catch (e) {
 			print("\t[",e.errno,"][",e.errtext,"]\n");
-		} finally {
+		}
+		finally {
 			print("\tfinally...\n");
 		}
 		print("\n");
@@ -38,22 +43,48 @@ function testtry() {
 			try {
 				print("\tIn inner try block...\n");
 				throw "Error 325 from inner try block";
-			} catch (e) {
+			}
+			catch (e) {
 				print("\tInner catch block caught "+e.errtext+"\n");
 				throw e.errtext + " re-thrown from inner catch block";
-			} finally {
+			}
+			finally {
 				print("\tIn inner finally block...\n");
 			}
-		} catch (e) {
+		}
+		catch (e) {
 			print("\tOuter catch block caught "+e.errtext+"\n");
-		} finally {
+		}
+		finally {
 			print("\tIn outer finally block...\n");
 		}
 		print("\n");
+	}
+	catch (e) {
+		print("\t[",e.errno,"][",e.errtext,"]\n");
+	}
+	finally {
+		print("\tfinally...\n");
+	}
+	try {
+		a={};x=a.b[1+1].c();
 	} catch (e) {
 		print("\t[",e.errno,"][",e.errtext,"]\n");
-	} finally {
-		print("\tfinally...\n");
+	}
+	try {
+		a();
+	} catch (e) {
+		print("\t[",e.errno,"][",e.errtext,"]\n");
+	}
+	try {
+		a.b();
+	} catch (e) {
+		print("\t[",e.errno,"][",e.errtext,"]\n");
+	}
+	try {
+		a.b.c();
+	} catch (e) {
+		print("\t[",e.errno,"][",e.errtext,"]\n");
 	}
 	io.flush();
 	return;

@@ -283,7 +283,7 @@ int mod_import()
 	if (_get_func((void *)&domain_getid,		"domain_getid"		)!=0) return -1;
 	if (_get_func((void *)&language_gets,		"language_gets"		)!=0) return -1;
 	if (_get_func((void *)&lib_open,		"lib_open"		)!=0) return -1;
-	if (_get_func((void *)&lib_sym,			"lib_sym"		)!=0) return -1;
+	if (_get_func((void *)&lib_sym,		"lib_sym"		)!=0) return -1;
 	if (_get_func((void *)&lib_error,		"lib_error"		)!=0) return -1;
 	if (_get_func((void *)&lib_close,		"lib_close"		)!=0) return -1;
 	if (_get_func((void *)&md5_init,		"md5_init"		)!=0) return -1;
@@ -329,9 +329,9 @@ int mod_import()
 	if (_get_func((void *)&time_sql2unix,		"time_sql2unix"		)!=0) return -1;
 	if (_get_func((void *)&time_unix2sql,		"time_unix2sql"		)!=0) return -1;
 	if (_get_func((void *)&strncatf,		"strncatf"		)!=0) return -1;
-	if (_get_func((void *)&striprn,			"striprn"		)!=0) return -1;
+	if (_get_func((void *)&striprn,		"striprn"		)!=0) return -1;
 	if (_get_func((void *)&fixslashes,		"fixslashes"		)!=0) return -1;
-	if (_get_func((void *)&str2sql,			"str2sql"		)!=0) return -1;
+	if (_get_func((void *)&str2sql,		"str2sql"		)!=0) return -1;
 	if (_get_func((void *)&p_strcasestr,		"p_strcasestr"		)!=0) return -1;
 	if (_get_func((void *)&ssl_accept,		"ssl_accept"		)!=0) return -1;
 	if (_get_func((void *)&ssl_close,		"ssl_close"		)!=0) return -1;

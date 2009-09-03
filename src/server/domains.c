@@ -36,7 +36,7 @@ int domain_getid(char *domainname)
 	int domainid=-1;
 	obj_t *qobj=NULL;
 
-	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullgs_entries WHERE class = 'associatedDomain' AND name = '%s'", domainname)<0) return -1;
+	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullgs_entries WHERE class = 'associateddomain' AND name = '%s'", domainname)<0) return -1;
 	if (sql_numtuples(proc.N, &qobj)>0) domainid=atoi(sql_getvalue(proc.N, &qobj, 0, 0));
 	sql_freeresult(proc.N, &qobj);
 	return domainid;

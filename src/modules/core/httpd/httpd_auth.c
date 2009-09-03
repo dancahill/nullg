@@ -297,6 +297,10 @@ int auth_setcookie(CONN *sid)
 		sql_freeresult(proc->N, &qobj);
 		sql_updatef(proc->N, "INSERT INTO nullgs_sessions (ctime, mtime, uid, did, token, remoteaddr, data) VALUES ('%s', '%s', %d, %d, '%s', '%s', '')", timebuffer, timebuffer, sid->dat->uid, sid->dat->did, sid->dat->token, sid->socket.RemoteAddr);
 		return auth_renewcookie(sid, 1);
+	} else {
+		ptemp=nes_getstr(sid->N, nes_getobj(sid->N, &sid->N->g, "_SERVER"), "SERVER_NAME");
+		sid->dat->did=domain_getid(ptemp);
+//		prints(sid, "[%s][%d]\r\n", ptemp, sid->dat->did);
 	}
 	return -1;
 }

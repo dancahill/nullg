@@ -72,9 +72,9 @@ all:
 	@rem @ECHO  mod_contacts
 	@rem @CD ..\..\..\MODULES\HTTPD\MOD_CONTACTS
 	@rem NMAKE /C /S /F MAKEFILE.VC
-	@ECHO  mod_email
-	@CD ..\..\..\MODULES\HTTPD\MOD_EMAIL
-	@NMAKE /C /S /F MAKEFILE.VC
+	@rem ECHO  mod_email
+	@rem CD ..\..\..\MODULES\HTTPD\MOD_EMAIL
+	@rem NMAKE /C /S /F MAKEFILE.VC
 	@rem @ECHO  mod_files
 	@rem @CD ..\..\..\MODULES\HTTPD\MOD_FILES
 	@rem NMAKE /C /S /F MAKEFILE.VC

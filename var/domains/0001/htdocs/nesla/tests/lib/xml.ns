@@ -1,7 +1,7 @@
 #!/usr/bin/nesla
 if (typeof(expect)!='function') include("_expect.ns");
 function testxml() {
-	if (typeof(xml)!='table') {
+	if (typeof(data.xml)!='table') {
 		print("SKIPPING XML TESTS\n");
 		return;
 	}
@@ -91,18 +91,18 @@ function testxml() {
 </DoDirectPaymentResponse>"
 };
 
-	X=xml.read(xstr[0], true);
-//	expect("xml.read(...)", "Lysine", X['moldb'][0]['molecule'][1]['name'][0]['value']);
-	expect("xml.read(...)", "Lysine", X['moldb']['molecule'][1]['name']['value']);
-	X=xml.read(xstr[1], true);
-//	expect("xml.read(...)", "a1", X['chapter'][0]['para'][0]['informaltable'][0]['tgroup'][0]['tbody'][0]['row'][0]['entry'][0]['value']);
-	expect("xml.read(...)", "a1", X['chapter']['para']['informaltable']['tgroup']['tbody']['row'][0]['entry'][0]['value']);
-	X=xml.read(xstr[2], true);
-//	expect("xml.read(...)", "local", X['FileZilla'][0]['Sites'][0]['Folder'][0]['!attributes']['Name']);
-	expect("xml.read(...)", "local", X['FileZilla']['Sites']['Folder']['@attributes']['Name']);
-	X=xml.read(xstr[3], true);
-//	expect("xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse'][0]['TransactionID'][0]['value']);
-	expect("xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse']['TransactionID']['value']);
+	X=data.xml.read(xstr[0], true);
+//	expect("data.xml.read(...)", "Lysine", X['moldb'][0]['molecule'][1]['name'][0]['value']);
+	expect("data.xml.read(...)", "Lysine", X['moldb']['molecule'][1]['name']['value']);
+	X=data.xml.read(xstr[1], true);
+//	expect("data.xml.read(...)", "a1", X['chapter'][0]['para'][0]['informaltable'][0]['tgroup'][0]['tbody'][0]['row'][0]['entry'][0]['value']);
+	expect("data.xml.read(...)", "a1", X['chapter']['para']['informaltable']['tgroup']['tbody']['row'][0]['entry'][0]['value']);
+	X=data.xml.read(xstr[2], true);
+//	expect("data.xml.read(...)", "local", X['FileZilla'][0]['Sites'][0]['Folder'][0]['!attributes']['Name']);
+	expect("data.xml.read(...)", "local", X['FileZilla']['Sites']['Folder']['@attributes']['Name']);
+	X=data.xml.read(xstr[3], true);
+//	expect("data.xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse'][0]['TransactionID'][0]['value']);
+	expect("data.xml.read(...)", "33638616GW718753G", X['DoDirectPaymentResponse']['TransactionID']['value']);
 	return;
 }
 testxml();

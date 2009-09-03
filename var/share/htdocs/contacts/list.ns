@@ -105,8 +105,8 @@ function search_contacts() {
 		"<TD ALIGN=CENTER NOWRAP><B>Found ",Q._tuples," matching contacts</B></TD>\r\n",
 		"<TD ALIGN=RIGHT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
 		"</TR>\r\n<TR><TD ALIGN=CENTER COLSPAN=3>\r\n",
+		"<FORM METHOD=GET ACTION=\"#\" NAME=mailform STYLE=\"display:inline;\">\r\n",
 		"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n",
-		"<FORM METHOD=GET NAME=mailform>\r\n",
 		"<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Contact Name&nbsp;</TH>",
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Company Name&nbsp;</TH>",
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Work Number&nbsp;</TH>",
@@ -139,9 +139,10 @@ function search_contacts() {
 				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"/mail/write?to=",addr,"\">",str2html(addr),"</A>&nbsp;</TD>");
 			}
 		}
+		print("<TD NOWRAP STYLE='padding:0px; border-style:solid'>");
 		print("<INPUT TYPE=hidden NAME=addr",i-offset," VALUE=\"",addr,"\">");
-		print("<TD NOWRAP STYLE='padding:0px; border-style:solid'><SELECT NAME=option",i-offset," onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>");
-		print("<OPTION VALUE=''>");
+		print("<SELECT NAME=option",i-offset," onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>");
+		print("<OPTION VALUE=''></OPTION>");
 		if (string.str(addr, '@')==true) {
 			print("<OPTION VALUE='TO'>TO\n");
 			print("<OPTION VALUE='CC'>CC\n");
@@ -149,8 +150,9 @@ function search_contacts() {
 		}
 		print("</SELECT></TD></TR>\r\n");
 	}
+	print("</TABLE>\r\n");
 	print("</FORM>\r\n");
-	print("</TABLE>\r\n</TD></TR>\r\n");
+	print("</TD></TR>\r\n");
 	print("<TR>\r\n<TD ALIGN=LEFT NOWRAP WIDTH=150>&nbsp;</TD>\r\n");
 	print("<TD ALIGN=CENTER NOWRAP>");
 	if (Q._tuples>maxlist) {
@@ -176,11 +178,10 @@ function search_contacts() {
 	print("</TD>\r\n<TD ALIGN=RIGHT NOWRAP><A HREF=\"mailto:list\" onClick=\"MailUpdate()\">Send E-Mail</A></TD>\r\n</TR>");
 	print("</TABLE>\r\n");
 	print(
+		"</CENTER>\r\n",
 		"<SCRIPT TYPE=\"text/javascript\" LANGUAGE=\"JavaScript\"><!--\r\n",
 		"var mailtoLink2 = findMailtoLink('mailto:list');\r\n",
-		"//--></SCRIPT>\r\n",
-		"</TABLE>\r\n",
-		"</CENTER>\r\n"
+		"//--></SCRIPT>\r\n"
 	);
 	Q=null;
 	return;

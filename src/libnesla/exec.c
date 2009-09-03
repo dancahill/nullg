@@ -16,7 +16,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#ifndef _LIBNESLA_H
 #include "nesla/libnesla.h"
+#endif
 #include "opcodes.h"
 
 #include <fcntl.h>
@@ -90,7 +92,7 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 	n_expect(N, __FUNCTION__, OP_POPAREN);
 	listobj.val=n_newval(N, NT_TABLE);
 	/* set this */
-	cobj=listobj.val->d.table.f=n_alloc(N, sizeof(obj_t), 0);
+	cobj=listobj.val->d.table.f=(obj_t *)n_alloc(N, sizeof(obj_t), 0);
 	cobj->prev=NULL;
 	cobj->next=NULL;
 	cobj->val=NULL;
@@ -100,8 +102,9 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 	} else if (pobj) {
 		nes_linkval(N, cobj, pobj);
 	}
+	if (cobj->val) cobj->val->attr|=NST_HIDDEN;
 	/* set fn name */
-	cobj->next=n_alloc(N, sizeof(obj_t), 0);
+	cobj->next=(obj_t *)n_alloc(N, sizeof(obj_t), 0);
 	cobj->next->prev=cobj;
 	cobj->next->next=NULL;
 	cobj=cobj->next;
@@ -112,7 +115,7 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 	for (i=1;;i++) {
 		N->readptr++;
 		if (*N->readptr==OP_PCPAREN) break;
-		cobj->next=n_alloc(N, sizeof(obj_t), 0);
+		cobj->next=(obj_t *)n_alloc(N, sizeof(obj_t), 0);
 		cobj->next->prev=cobj;
 		cobj->next->next=NULL;
 		cobj=cobj->next;
@@ -133,11 +136,11 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 	nes_unlinkval(N, &N->r);
 	if (ftype==NT_CFUNC) {
 		savjmp=N->savjmp;
-		N->savjmp=n_alloc(N, sizeof(jmp_buf), 0);
+		N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
 		if ((e=setjmp(*N->savjmp))==0) {
 			fobj->val->d.cfunc(N);
 		}
-		n_free(N, (void *)&N->savjmp);
+		n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 		N->savjmp=savjmp;
 	} else {
 		N->blockptr=(uchar *)fobj->val->d.str;
@@ -155,21 +158,23 @@ obj_t *n_execfunction(nes_state *N, obj_t *fobj, obj_t *pobj, uchar isclass)
 		}
 		n_expect(N, __FUNCTION__, OP_POBRACE);
 		savjmp=N->savjmp;
-		N->savjmp=n_alloc(N, sizeof(jmp_buf), 0);
+		N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
 		if ((e=setjmp(*N->savjmp))==0) {
 			nes_exec(N, (char *)N->readptr);
 		}
-		n_free(N, (void *)&N->savjmp);
+		n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 		N->savjmp=savjmp;
 	}
 	if (isclass) {
 		/* forced decrementing is an ugly hack, but an effective fix */
+/*
 //		obj_t *cobj=nes_getobj(N, &N->l, "this");
 //		n_warn(N, __FUNCTION__, "2]%d", cobj->val->refs);
 //		cobj->val->refs--;
 //		cobj->val=NULL;
 
 //		n_warn(N, __FUNCTION__, "2]%d", N->l.val->refs);
+*/
 		N->l.val->refs--;
 		nes_linkval(N, &N->r, &N->l);
 	}
@@ -197,6 +202,7 @@ obj_t *nes_exec(nes_state *N, const char *string)
 	uchar block, ctype, op;
 	uchar jmp=N->savjmp?1:0, single=(uchar)N->single;
 	uchar *p;
+	int psize;
 
 	DEBUG_IN();
 	settrace();
@@ -204,15 +210,11 @@ obj_t *nes_exec(nes_state *N, const char *string)
 	if (jmp==0) {
 		nes_unlinkval(N, &N->r);
 		if (string==NULL||string[0]==0) goto end;
-		p=n_decompose(N, (uchar *)string);
-		if (p!=N->blockptr) {
-			N->blockptr=p;
-		} else {
-			p=NULL;
-		}
+		n_decompose(N, (uchar *)string, &p, &psize);
+		if (p) N->blockptr=p;
 		N->blockend=N->blockptr+readi4((N->blockptr+8));
 		N->readptr=N->blockptr+readi4((N->blockptr+12));
-		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+		N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 1);
 		if (setjmp(*N->savjmp)!=0) goto end;
 	} else {
 		N->readptr=(uchar *)string;
@@ -277,30 +279,47 @@ obj_t *nes_exec(nes_state *N, const char *string)
 			case OP_KEXIT:
 				N->err=(short)(*N->readptr==OP_NUMDATA?n_getnumber(N):0);
 				n_error(N, N->err, __FUNCTION__, "exiting normally");
-			case OP_KELSE:  n_error(N, NE_SYNTAX, __FUNCTION__, "stray else");
+			case OP_KELSE:
+				n_error(N, NE_SYNTAX, __FUNCTION__, "stray else");
+			case OP_KDELETE:
+				n_expect(N, __FUNCTION__, OP_LABEL);
+				n_getlabel(N, namebuf);
+				cobj=nes_getobj(N, NULL, namebuf);
+				nes_linkval(N, cobj, NULL);
+				goto endstmt;
+			default:
+				n_warn(N, __FUNCTION__, "? %d %s", op, n_getsym(N, op));
 			}
 		} else {
 			obj_t *pobj=NULL;
+			unsigned short z;
+			uchar *p=N->readptr;
+			uchar *e;
 
 			if (*N->readptr!=OP_LABEL) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a label [%d][%s]", *N->readptr, n_getsym(N, *N->readptr));
 			tobj=&N->l;
 			n_getlabel(N, namebuf);
 			cobj=nes_getobj(N, NULL, namebuf);
-			while (cobj->val->type==NT_TABLE) {
-				tobj=cobj;
-				if (*N->readptr!=OP_POBRACKET&&*N->readptr!=OP_PDOT) break;
-				pobj=tobj;
-				cobj=n_readindex(N, tobj, namebuf);
-				if (nes_isnull(cobj)&&(namebuf[0]!=0)) {
+			while (*N->readptr==OP_POBRACKET||*N->readptr==OP_PDOT) {
+				pobj=tobj=cobj;
+				cobj=n_readindex(N, tobj, namebuf, &z);
+				if (namebuf[0]&&(*N->readptr!=OP_POPAREN)&&(z||nes_isnull(cobj))) {
 					cobj=nes_setnum(N, tobj, namebuf, 0);
 				}
 			}
 			ctype=nes_typeof(cobj);
-			if ((ctype==NT_NFUNC||ctype==NT_CFUNC)&&(*N->readptr==OP_POPAREN)) {
-				n_execfunction(N, cobj, pobj, 0);
-				if (*N->readptr==OP_PSEMICOL) N->readptr++;
-				if (single) break;
-				continue;
+			if (*N->readptr==OP_POPAREN) {
+				if (ctype==NT_NFUNC||ctype==NT_CFUNC) {
+					n_execfunction(N, cobj, pobj, 0);
+					goto endstmt;
+				} else {
+					char errbuf[80];
+
+					e=N->readptr-1;
+					nc_memset(errbuf, 0, sizeof(errbuf));
+					n_decompile(N, p, e, errbuf, sizeof(errbuf)-1);
+					n_error(N, NE_SYNTAX, __FUNCTION__, "'%s' is not a function", errbuf);
+				}
 			}
 			if (ctype==NT_NULL) {
 				if (namebuf[0]==0) n_error(N, NE_SYNTAX, __FUNCTION__, "expected a label");
@@ -314,8 +333,8 @@ endstmt:
 	}
 end:
 	if (jmp==0) {
-		n_free(N, (void *)&N->savjmp);
-		if (p) n_free(N, (void *)&p);
+		n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
+		if (p) n_free(N, (void *)&p, psize);
 		N->blockend=NULL;
 		N->readptr=NULL;
 	}
@@ -354,6 +373,7 @@ int nes_execfile(nes_state *N, char *file)
 	char *pfile;
 	struct stat sb;
 	uchar *p;
+	int psize;
 	uchar *oldbptr=N->blockptr;
 	uchar *oldbend=N->blockend;
 	uchar *oldrptr=N->readptr;
@@ -366,7 +386,7 @@ int nes_execfile(nes_state *N, char *file)
 
 	settrace();
 	if (jmp==0) {
-		N->savjmp=n_alloc(N, sizeof(jmp_buf), 1);
+		N->savjmp=(jmp_buf *)n_alloc(N, sizeof(jmp_buf), 1);
 		if (setjmp(*N->savjmp)==0) {
 		} else {
 			rc=0;
@@ -381,7 +401,7 @@ int nes_execfile(nes_state *N, char *file)
 		pfile=buf;
 	}
 	if ((fd=open(pfile, O_RDONLY|O_BINARY))==-1) { rc=-1; goto end2; }
-	N->blockptr=n_alloc(N, sb.st_size+2, 0);
+	N->blockptr=(uchar *)n_alloc(N, sb.st_size+2, 0);
 	p=N->blockptr;
 	bl=sb.st_size;
 	for (;;) {
@@ -393,11 +413,12 @@ int nes_execfile(nes_state *N, char *file)
 	close(fd);
 	rc=sb.st_size;
 	N->blockptr[sb.st_size]='\0';
-	p=n_decompose(N, N->blockptr);
-	if (p!=N->blockptr) {
-//		nes_writefile(N, o, p);
-		n_free(N, (void *)&N->blockptr);
+	n_decompose(N, N->blockptr, &p, &psize);
+	if (p) {
+		/* nes_writefile(N, o, p); */
+		n_free(N, (void *)&N->blockptr, sb.st_size+2);
 		N->blockptr=p;
+		p=NULL;
 	}
 	N->blockend=N->blockptr+readi4((N->blockptr+8));
 	N->readptr=N->blockptr+readi4((N->blockptr+12));
@@ -405,13 +426,13 @@ int nes_execfile(nes_state *N, char *file)
 	if (N->outbuflen) nl_flush(N);
 	rc=0;
 end1:
-	n_free(N, (void *)&N->blockptr);
+	n_free(N, (void *)&N->blockptr, psize);
 	N->blockptr=oldbptr;
 	N->blockend=oldbend;
 	N->readptr=oldrptr;
 end2:
 	if (jmp==0) {
-		n_free(N, (void *)&N->savjmp);
+		n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 	}
 	return rc;
 #undef __FUNCTION__
@@ -425,13 +446,14 @@ typedef struct {
 nes_state *nes_newstate()
 {
 	FUNCTION list[]={
+		{ "copy",	(NES_CFUNC)nl_copy	},
 		{ "eval",	(NES_CFUNC)nl_eval	},
 		{ "exec",	(NES_CFUNC)nl_exec	},
 		{ "iname",	(NES_CFUNC)nl_iname	},
-		{ "ival",	(NES_CFUNC)nl_ival	},
 		{ "include",	(NES_CFUNC)nl_include	},
+		{ "ival",	(NES_CFUNC)nl_ival	},
 		{ "print",	(NES_CFUNC)nl_print	},
-		{ "printvar",	(NES_CFUNC)nl_printvar	},
+		{ "exportvar",	(NES_CFUNC)nl_exportvar	},
 		{ "runtime",	(NES_CFUNC)nl_runtime	},
 		{ "sizeof",	(NES_CFUNC)nl_sizeof	},
 		{ "sleep",	(NES_CFUNC)nl_sleep	},
@@ -440,14 +462,14 @@ nes_state *nes_newstate()
 		{ "tostring",	(NES_CFUNC)nl_tostring	},
 		{ "typeof",	(NES_CFUNC)nl_typeof	},
 		{ "write",	(NES_CFUNC)nl_write	},
-
-		{ "copy",	(NES_CFUNC)nl_copy	},
+		{ "zlink",	(NES_CFUNC)nl_zlink	},
 		{ NULL, NULL }
 	};
 	FUNCTION list_file[]={
 		{ "append",	(NES_CFUNC)nl_filewrite	},
 		{ "mkdir",	(NES_CFUNC)nl_filemkdir	},
 		{ "read",	(NES_CFUNC)nl_fileread	},
+		{ "rename",	(NES_CFUNC)nl_filerename},
 		{ "stat",	(NES_CFUNC)nl_filestat  },
 		{ "unlink",	(NES_CFUNC)nl_fileunlink},
 		{ "write",	(NES_CFUNC)nl_filewrite	},
@@ -476,6 +498,7 @@ nes_state *nes_newstate()
 		{ "nicmp",	(NES_CFUNC)nl_strcmp	},
 		{ "join",	(NES_CFUNC)nl_strjoin	},
 		{ "len",	(NES_CFUNC)nl_strlen	},
+		{ "replace",	(NES_CFUNC)nl_strrep	},
 		{ "split",	(NES_CFUNC)nl_strsplit	},
 		{ "str",	(NES_CFUNC)nl_strstr	},
 		{ "istr",	(NES_CFUNC)nl_strstr	},
@@ -496,7 +519,7 @@ nes_state *nes_newstate()
 	obj_t *cobj;
 	short i;
 
-	new_N=n_alloc(NULL, sizeof(nes_state), 1);
+	new_N=(nes_state *)n_alloc(NULL, sizeof(nes_state), 1);
 	nc_gettimeofday(&new_N->ttime, NULL);
 	srand(new_N->ttime.tv_usec);
 
@@ -561,10 +584,10 @@ nes_state *nes_endstate(nes_state *N)
 		nes_freetable(N, &N->g);
 		nes_freetable(N, &N->l);
 		n_freeval(N, &N->r);
-		if (N->g.val) n_free(N, (void *)&N->g.val);
-		if (N->l.val) n_free(N, (void *)&N->l.val);
-		if (N->r.val) n_free(N, (void *)&N->r.val);
-		n_free(N, (void *)&N);
+		if (N->g.val) n_free(N, (void *)&N->g.val, sizeof(val_t));
+		if (N->l.val) n_free(N, (void *)&N->l.val, sizeof(val_t));
+		if (N->r.val) n_free(N, (void *)&N->r.val, sizeof(val_t));
+		n_free(N, (void *)&N, sizeof(nes_t));
 	}
 	return NULL;
 #undef __FUNCTION__

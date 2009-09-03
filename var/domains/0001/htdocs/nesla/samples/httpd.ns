@@ -70,7 +70,7 @@ function serve_page(sock) {
 		_SERVER[string.toupper(p)]=c;
 	}
 	sort.byname(_SERVER, 0, +1);
-	// print("_SERVER = ");printvar(_SERVER);print(";\n");
+	// print("_SERVER = ",exportvar(_SERVER),";\n");
 page="<HTML>
 <HEAD><TITLE>NESLA *COUGH* HTTPD</TITLE></HEAD>
 <BODY>

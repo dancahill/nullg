@@ -1,3 +1,4 @@
+if (_USER!=null) {
 	var mailcurrent = tonumber(_USER['pref']['mailcurrent']);
 	var maildefault = tonumber(_USER['pref']['maildefault']);
 	var maxlist     = tonumber(_USER['pref']['maxlist']);
@@ -118,6 +119,9 @@
 
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=/admin/printdb.nsp>DB DUMP</A>");
+
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		print("<A CLASS='TBAR' HREF=/admin/printdb-tree.nsp>DB TREE</A>");
 
 //		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(sid, "httpd", "menu_adm_logs"));
 //		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(sid, "httpd", "menu_adm_check"));
@@ -281,3 +285,4 @@
 	}
 	print("&nbsp;</TD><TD ALIGN=right NOWRAP>&nbsp;</TD></TR>\r\n");
 	print("</TABLE>\r\n</TD></TR></TABLE>\r\n</CENTER>\r\n");
+}

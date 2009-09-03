@@ -6,7 +6,7 @@
 <?nsp
 //global Q=sqlquery("SELECT * FROM nullgs_entries");
 global Q=ldir.getlist("", 0);
-//print("<pre>");printvar(Q);print("</pre>");
+//print("<pre>",exportvar(Q),"</pre>");
 ?>
 <table border=1>
 <tr bgcolor=gray>
@@ -45,7 +45,7 @@ for (i=0;i<sizeof(Q._rows);i++) {
 
 	print("<tr>");
 	print("<td nowrap colspan=1>&nbsp;</td>");
-	print("<td nowrap colspan=7 bgcolor=silver><pre>");printvar(row._data);print("</pre></td>");
+	print("<td nowrap colspan=7 bgcolor=silver><pre>",exportvar(row._data),"</pre></td>");
 	print("</tr>");
 }
 ?>

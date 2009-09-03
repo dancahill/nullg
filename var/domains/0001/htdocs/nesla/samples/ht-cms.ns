@@ -28,9 +28,10 @@ function dologin() {
 	var user="nobody";
 	var pass=MASTERPASSWORD;
 
+print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n");
 print("<HTML>
-<TITLE>Nesla - Crappy Management system</TITLE>
 <HEAD>
+<TITLE>Nesla - Crappy Management system</TITLE>
 <STYLE TYPE=text/css>
 A        { color: #0000FF; text-decoration: none; }
 A:HOVER  { background-color: #E0E0FF; }
@@ -175,9 +176,7 @@ if (_SERVER['REQUEST_METHOD']=='POST') {
 		}
 	} else {
 		print("INVALID REQUEST");
-		print("<pre>");
-		printvar(_GLOBALS);
-		print("</pre>");
+		print("<pre>",exportvar(_GLOBALS),"</pre>");
 	}
 	exit;
 }
@@ -305,10 +304,11 @@ if (string.cmp(_SERVER['REQUEST_METHOD'], "POST")==0) {
 	var path=_filepath;
 	var command="ps auxw";
 }
+print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n");
 print("
 <HTML>
-<TITLE>Nesla - Crappy Management system</TITLE>
 <HEAD>
+<TITLE>Nesla - Crappy Management system</TITLE>
 <STYLE TYPE=text/css>
 A        { color: #0000FF; text-decoration: none; }
 A:HOVER  { background-color: #E0E0FF; }
@@ -356,9 +356,9 @@ print("
 
 
 <DIV ID=page3 STYLE='display: block'>
-<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>
 <FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='editor' ENCTYPE='multipart/form-data'>
 <!--FORM ACTION='", _SERVER['PATH_INFO'], "' METHOD='POST' NAME='editor'-->
+<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>
 <INPUT TYPE=hidden NAME=path VALUE='", path, "'>
 <INPUT TYPE=hidden NAME=opt VALUE='save'>
 <TR><TD COLSPAN=2><B>&nbsp;Editor window&nbsp;</B></TD></TR>
@@ -370,8 +370,8 @@ print("
 <TR><TD><B>Upload File</B></TD><TD ALIGN=RIGHT><INPUT SIZE=100 NAME=ATTACHMENT1 TYPE=FILE></TD></TR>
 <TR><TD ALIGN=CENTER COLSPAN=2><input type='submit' value='Save' name='submit'></TD></TR>
 </TD></TR>
-</FORM>
 </TABLE>
+</FORM>
 
 </DIV>
 <HR>
@@ -390,6 +390,6 @@ nexthand('browse');
 print("<A HREF='javascript:showdebug();'>DEBUG</A>\n");
 print("</CENTER>\n");
 print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");
-printvar(_GLOBALS);
+print(exportvar(_GLOBALS));
 print("</FONT></PRE></DIV>\n");
 print("</BODY>\n</HTML>\n");

@@ -6,20 +6,21 @@ print("<CENTER>\r\n");
 if (_SERVER['REQUEST_METHOD']=="POST") {
 	print("<FONT COLOR=RED><B>Incorrect username or password</B></FONT>\r\n");
 }
-print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\r\n");
-print("<FORM METHOD=POST ACTION=\"", _SERVER['SCRIPT_NAME'], "/\" AUTOCOMPLETE=OFF NAME=login>\r\n");
+print("<FORM METHOD=POST ACTION=\"", _SERVER['SCRIPT_NAME'], "/\" AUTOCOMPLETE=OFF NAME=login STYLE=\"display:inline;\">\r\n");
 print("<INPUT TYPE=hidden NAME=pageuri VALUE=\"", _TEMP['pageuri'], "\">\r\n");
+if (_TEMP['domains']<2) {
+	print("<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
+}
+print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>\r\n");
 print("<TR><TH COLSPAN=2 STYLE='padding:1px'>", _TEMP['software'], " Login</TH></TR>\r\n");
 print("<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Username&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=username SIZE=25 MAXLENGTH=50 VALUE='", _TEMP['username'], "'></TD></TR>\r\n");
 print("<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Password&nbsp;</B></TD><TD><INPUT TYPE=PASSWORD NAME=password SIZE=25 MAXLENGTH=50 VALUE=''></TD></TR>\r\n");
 if (_TEMP['domains']>1) {
 	if (string.len(_TEMP['domainname'])!=0) { domain=_TEMP['domainname']); } else { domain=_SERVER['HTTP_HOST']; }
 	print("<TR CLASS=\"EDITFORM\"><TD><B>&nbsp;Domain&nbsp;</B></TD><TD><INPUT TYPE=TEXT NAME=domain SIZE=25 MAXLENGTH=50 VALUE='", domain, "'></TD></TR>\r\n");
-} else {
-	print("<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
 }
 print("<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Login'></TD></TR>\r\n");
-print("</FORM>\r\n</TABLE>\r\n");
+print("</TABLE>\r\n</FORM>\r\n");
 print("</CENTER>\r\n<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
 if (string.len(_TEMP['username'])>0) {
 	print("document.login.password.focus();\r\n");

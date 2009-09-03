@@ -12,6 +12,11 @@ function testloop() {
 	local x=""; for (n=5;n>0;n-=1) { x=x+tostring(n); }  expect("for (n=5;n>0;n-=1)", "54321",   x);
 	array = { a=1, b=2, c=3, d=4, e=5 };
 	local x=""; foreach (n in array) { x=x+tostring(n); } expect("foreach (n in array)", "12345",   x);
+	local x=""; foreach (i,n in array) { n=array[i]=6-n; x=x+tostring(n); } expect("foreach (n in array)", "54321",   x);
+	/* resetting array inside foreach used to segfault */
+	local x=""; foreach (n in array) { x=x+tostring(n); array=0; } expect("foreach (n in array)", "54321",   x);
+	expect("foreach...array=null", '0',   tostring(array));
+//	foreach (name, val in _ENV) print(name, " = ", val, "\r\n");
 	return;
 }
 testloop();
