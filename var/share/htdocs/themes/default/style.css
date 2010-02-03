@@ -142,11 +142,11 @@ SELECT {
 }
 .MAINBACK {
 	BACKGROUND-COLOR: #FFFFFF;
-	BACKGROUND-IMAGE: url(bg_main.png);
+//	BACKGROUND-IMAGE: url(bg_main.png);
 }
 .MENUBACK {
 	BACKGROUND-COLOR: #000050;
-	BACKGROUND-IMAGE: url(bg_menu.png);
+//	BACKGROUND-IMAGE: url(bg_menu.png);
 }
 .MENULINK {
 	COLOR: #FFFFFF;

@@ -9,7 +9,7 @@ CFLAGS  = $(LIB_CFLAGS)
 OBJECTS = $(INTDIR)/smtpd_auth.obj $(INTDIR)/smtpd_bounce.obj $(INTDIR)/smtpd_client.obj $(INTDIR)/smtpd_conf.obj $(INTDIR)/smtpd_dns.obj $(INTDIR)/smtpd_filter.obj $(INTDIR)/smtpd_lang.obj $(INTDIR)/smtpd_main.obj $(INTDIR)/smtpd_server.obj
 TARGET  = $(LIB_TARGETDIR)/core/smtpd.dll
 
-all: _dirs _nullgs
+all: _dirs _nullsd
 
 _dirs:
 	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
@@ -19,7 +19,7 @@ _dirs:
 	@if not exist "$(OBJDIR)/modules/core" mkdir "$(OBJDIR)/modules/core"
 	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 
-_nullgs: $(OBJECTS)
+_nullsd: $(OBJECTS)
 	$(LINK) $(LIB_LDFLAGS) /out:$(TARGET) /implib:$(INTDIR)/smtpd.lib $(OBJECTS)
 
 clean:

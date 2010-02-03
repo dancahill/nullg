@@ -158,18 +158,18 @@ function search_contacts() {
 	if (Q._tuples>maxlist) {
 		if (offset>0) {
 			print("[<A HREF=/search/contacts.ns?column=");
-//			printhex(sid, "%s", column);
+//			printhex(conn, "%s", column);
 			print("&string=");
-//			printhex(sid, "%s", string);
+//			printhex(conn, "%s", string);
 			print("&offset=",offset-maxlist,">Previous Page</A>]");
 		} else {
 			print("[Previous Page]");
 		}
 		if (offset+maxlist<Q._tuples) {
 			print("[<A HREF=/search/contacts.ns?column=");
-//			printhex(sid, "%s", column);
+//			printhex(conn, "%s", column);
 			print("&string=");
-//			printhex(sid, "%s", string);
+//			printhex(conn, "%s", string);
 			print("&offset=",offset+maxlist,">Next Page</A>]");
 		} else {
 			print("[Next Page]");

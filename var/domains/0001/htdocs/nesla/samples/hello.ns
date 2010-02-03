@@ -1,9 +1,0 @@
-#!/usr/bin/nesla
-var greeting=")gnikrow s'ti( .alseN morf olleH";
-var i=0;
-
-print("\n")
-if (_ENV['TERM']!=null) print("\e[01;37;40m");
-for (i=string.len(greeting);i>=0;i--) print(string.sub(greeting, i, 1));
-if (_ENV['TERM']!=null) print("\e[00m");
-print("\n\n");

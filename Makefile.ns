@@ -1,4 +1,4 @@
-#!/usr/bin/nesla
+#!/usr/bin/nsp
 print("ostype="+_ostype_+"\n");
 if (_ostype_=="Windows/msvc") {
 	cmd="nmake -f Makefile.vc";

@@ -17,7 +17,7 @@ print(
 	"<H1>", _TEMP['title'], "</H1>\n",
 	"<P>", _TEMP['text'], "</P>\n",
 	"<HR>\n<ADDRESS><A HREF=\"http://nullgroupware.sourceforge.net/\">", _SERVER['SERVER_SOFTWARE'], "</A> at ", _SERVER['SERVER_NAME']," Port ", _SERVER['SERVER_PORT'],
-	" - Powered by <A HREF=\"http://nesla.sourceforge.net/\">Nesla ", _SERVER['NESLA_VERSION'], "</A></ADDRESS>\n",
+	" - Powered by <A HREF=\"http://nesla.sourceforge.net/\">Nesla ", _SERVER['NSP_VERSION'], "</A></ADDRESS>\n",
 	"</BODY></HTML>\n"
 );
 include("footer.ns");

@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#include "nullgs/core_mod.h"
+#include "nullsd/core_mod.h"
 
 #define MODSHORTNAME "smtpd"
 
@@ -38,12 +38,12 @@ typedef struct {
 	short int state;
 	TCP_SOCKET socket;
 	CONNDATA *dat;
-	nes_state *N;
+	nsp_state *N;
 	char *extradata;
 } CONN;
 
 /* auth.c functions */
-int auth_login(CONN *sid, char *username, char *password, int mbox);
+int auth_login(CONN *conn, char *username, char *password, int mbox);
 /* bounce.c functions */
 int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason);
 /* conf.c functions */
@@ -51,9 +51,9 @@ int conf_read(void);
 /* dns.c */
 char *dns_getmxbyname(char *dest, int destlen, char *domain);
 /* filter.c functions */
-int filter_scan(CONN *sid, char *msgfilename);
+int filter_scan(CONN *conn, char *msgfilename);
 /* smtp.c functions */
-void smtp_dorequest(CONN *sid);
+void smtp_dorequest(CONN *conn);
 
 #ifdef WIN32
 unsigned _stdcall smtp_spool(void *x);

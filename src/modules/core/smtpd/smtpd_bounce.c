@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 	FILE *fp;
 	FILE *fp2;
 	struct stat sb;
@@ -58,7 +58,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 		}
 		memset(tmpname1, 0, sizeof(tmpname1));
 		memset(tmpname2, 0, sizeof(tmpname2));
-		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s", nes_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
+		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
 		if (stat(tmpname1, &sb)!=0) {
 #ifdef WIN32
 			if (mkdir(tmpname1)!=0) {
@@ -73,7 +73,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 retry1:
 		gettimeofday(&ttime, &tzone);
 		memset(tmpname1, 0, sizeof(tmpname1));
-		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nes_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 		fixslashes(tmpname1);
 		if (stat(tmpname1, &sb)==0) goto retry1;
 		log_access(proc->N, "smtpd", "local delivery from: MAILER-DAEMON, to: '%s'", from);
@@ -83,8 +83,8 @@ retry2:
 		gettimeofday(&ttime, &tzone);
 		memset(tmpname1, 0, sizeof(tmpname1));
 		memset(tmpname2, 0, sizeof(tmpname2));
-		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/spool/mqueue/%d%03d.msg", nes_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
-		snprintf(tmpname2, sizeof(tmpname2)-1, "%s/spool/mqinfo/%d%03d.dat", nes_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+		snprintf(tmpname1, sizeof(tmpname1)-1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+		snprintf(tmpname2, sizeof(tmpname2)-1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 		fixslashes(tmpname1);
 		fixslashes(tmpname2);
 		if (stat(tmpname1, &sb)==0) goto retry2;
@@ -94,7 +94,7 @@ retry2:
 	if ((fp=fopen(tmpname1, "wb"))!=NULL) {
 		strftime(curdate, sizeof(curdate), "%a, %d %b %Y %H:%M:%S", gmtime(&t));
 		fprintf(fp, "Date: %s\r\n", curdate);
-		fprintf(fp, "From: MAILER-DAEMON <mailer-daemon@%s>\r\n", nes_getstr(proc->N, confobj, "host_name"));
+		fprintf(fp, "From: MAILER-DAEMON <mailer-daemon@%s>\r\n", nsp_getstr(proc->N, confobj, "host_name"));
 		memset(curdate, 0, sizeof(curdate));
 		fprintf(fp, "Subject: failure notice\r\n");
 		fprintf(fp, "To: <%s>\r\n", from);

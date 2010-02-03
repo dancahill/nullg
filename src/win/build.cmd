@@ -5,10 +5,10 @@ mkdir ..\..\obj
 COPY \NullLogic\gw\libs\libsqlite3.dll ..\..\lib
 COPY \NullLogic\gw\libs\libeay32.dll ..\..\lib
 COPY \NullLogic\gw\libs\ssleay32.dll ..\..\lib
-@ECHO libnesla
-CD ..\LIBNESLA
+@ECHO libnsp
+CD ..\LIBNSP
 NMAKE /C /S /F MAKEFILE.VC
-@ECHO libngs
+@ECHO libnsd
 CD ..\LIBNGS
 NMAKE /C /S /F MAKEFILE.VC
 @ECHO confutil

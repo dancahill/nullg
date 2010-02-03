@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ char *domain_getname(char *outstring, int outlen, int domainid)
 {
 	obj_t *qobj=NULL;
 
-	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullgs_entries WHERE class = 'organization' AND did = %d", domainid)<0) return NULL;
+	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullsd_entries WHERE class = 'organization' AND did = %d", domainid)<0) return NULL;
 	if (sql_numtuples(proc.N, &qobj)>0) {
 		strncpy(outstring, sql_getvalue(proc.N, &qobj, 0, 0), outlen-1);
 		sql_freeresult(proc.N, &qobj);
@@ -36,7 +36,7 @@ int domain_getid(char *domainname)
 	int domainid=-1;
 	obj_t *qobj=NULL;
 
-	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullgs_entries WHERE class = 'associateddomain' AND name = '%s'", domainname)<0) return -1;
+	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullsd_entries WHERE class = 'associateddomain' AND name = '%s'", domainname)<0) return -1;
 	if (sql_numtuples(proc.N, &qobj)>0) domainid=atoi(sql_getvalue(proc.N, &qobj, 0, 0));
 	sql_freeresult(proc.N, &qobj);
 	return domainid;

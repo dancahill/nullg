@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ static void striprn(char *string)
 	};
 }
 
-static int wmprintf(CONN *sid, const char *format, ...)
+static int wmprintf(CONN *conn, const char *format, ...)
 {
 	char buffer[16384];
 	va_list ap;
@@ -59,16 +59,16 @@ static int wmprintf(CONN *sid, const char *format, ...)
 	vsnprintf(buffer, sizeof(buffer)-1, format, ap);
 	va_end(ap);
 #ifdef HAVE_SSL
-	SSL_write(sid->ssl, buffer, strlen(buffer));
+	SSL_write(conn->ssl, buffer, strlen(buffer));
 #else
-	send(sid->socket, buffer, strlen(buffer), 0);
+	send(conn->socket, buffer, strlen(buffer), 0);
 #endif
 	len=strlen(buffer);
 //printf("%s", buffer);
 	return len;
 }
 
-static int wmfgets(CONN *sid, char *buffer, int max, int fd)
+static int wmfgets(CONN *conn, char *buffer, int max, int fd)
 {
 	char *pbuffer=buffer;
 	char *obuffer;
@@ -79,11 +79,11 @@ static int wmfgets(CONN *sid, char *buffer, int max, int fd)
 	short int retries=10;
 
 retry:
-	if (!sid->recvbufsize) {
-		x=sizeof(sid->recvbuf)-sid->recvbufoffset-sid->recvbufsize-2;
-		obuffer=sid->recvbuf+sid->recvbufoffset+sid->recvbufsize;
+	if (!conn->recvbufsize) {
+		x=sizeof(conn->recvbuf)-conn->recvbufoffset-conn->recvbufsize-2;
+		obuffer=conn->recvbuf+conn->recvbufoffset+conn->recvbufsize;
 #ifdef HAVE_SSL
-		rc=SSL_read(sid->ssl, obuffer, x);
+		rc=SSL_read(conn->ssl, obuffer, x);
 #else
 		rc=recv(fd, obuffer, x, 0);
 #endif
@@ -93,12 +93,12 @@ retry:
 			msleep(1);
 			if (retries-->0) goto retry;
 		}
-		sid->recvbufsize+=rc;
+		conn->recvbufsize+=rc;
 	}
-	obuffer=sid->recvbuf+sid->recvbufoffset;
-	while ((n<max)&&(sid->recvbufsize>0)) {
-		sid->recvbufoffset++;
-		sid->recvbufsize--;
+	obuffer=conn->recvbuf+conn->recvbufoffset;
+	while ((n<max)&&(conn->recvbufsize>0)) {
+		conn->recvbufoffset++;
+		conn->recvbufsize--;
 		n++;
 		if (*obuffer=='\n') lf=1;
 		*pbuffer++=*obuffer++;
@@ -107,14 +107,14 @@ retry:
 	*pbuffer='\0';
 	if (n>max-1) return n;
 	if (!lf) {
-		if (sid->recvbufsize>0) {
-			memmove(sid->recvbuf, sid->recvbuf+sid->recvbufoffset, sid->recvbufsize);
-			memset(sid->recvbuf+sid->recvbufsize, 0, sizeof(conn[0].recvbuf)-sid->recvbufsize);
-			sid->recvbufoffset=0;
+		if (conn->recvbufsize>0) {
+			memmove(conn->recvbuf, conn->recvbuf+conn->recvbufoffset, conn->recvbufsize);
+			memset(conn->recvbuf+conn->recvbufsize, 0, sizeof(conn[0].recvbuf)-conn->recvbufsize);
+			conn->recvbufoffset=0;
 		} else {
-			memset(sid->recvbuf, 0, sizeof(conn[0].recvbuf));
-			sid->recvbufoffset=0;
-			sid->recvbufsize=0;
+			memset(conn->recvbuf, 0, sizeof(conn[0].recvbuf));
+			conn->recvbufoffset=0;
+			conn->recvbufsize=0;
 		}
 		if (retries>0) goto retry;
 	}
@@ -123,7 +123,7 @@ retry:
 	return n;
 }
 
-static int http_connect(CONN *sid, char *host, short int port)
+static int http_connect(CONN *conn, char *host, short int port)
 {
 	struct hostent *hp;
 	struct sockaddr_in server;
@@ -139,21 +139,21 @@ static int http_connect(CONN *sid, char *host, short int port)
 	memmove((char *)&server.sin_addr, hp->h_addr, hp->h_length);
 	server.sin_family=hp->h_addrtype;
 	server.sin_port=htons(port);
-	if ((sid->socket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
-	if (connect(sid->socket, (struct sockaddr *)&server, sizeof(server))<0) {
+	if ((conn->socket=socket(AF_INET, SOCK_STREAM, 0))<0) return -1;
+	if (connect(conn->socket, (struct sockaddr *)&server, sizeof(server))<0) {
 		printf("Connect error for %s:%d\r\n", host, port);
 		return -1;
 	}
-	sid->recvbufsize=0;
-	sid->recvbufoffset=0;
-	memset(sid->recvbuf, 0, sizeof(conn[0].recvbuf));
+	conn->recvbufsize=0;
+	conn->recvbufoffset=0;
+	memset(conn->recvbuf, 0, sizeof(conn[0].recvbuf));
 #ifdef HAVE_SSL
-	sid->ssl=SSL_new(sid->ctx);
-	SSL_set_fd(sid->ssl, sid->socket);
-	if (SSL_connect(sid->ssl)==-1) { perror("socket: "); exit -1; }
+	conn->ssl=SSL_new(conn->ctx);
+	SSL_set_fd(conn->ssl, conn->socket);
+	if (SSL_connect(conn->ssl)==-1) { perror("socket: "); exit -1; }
 	/* the rest is optional */
-//	printf("SSL connection using %s\r\n", SSL_get_cipher(sid->ssl));
-	if ((server_cert=SSL_get_peer_certificate(sid->ssl))==NULL) exit-1;
+//	printf("SSL connection using %s\r\n", SSL_get_cipher(conn->ssl));
+	if ((server_cert=SSL_get_peer_certificate(conn->ssl))==NULL) exit-1;
 //	printf("Server certificate:\r\n");
 	X509_free(server_cert);
 #endif

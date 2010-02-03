@@ -5,13 +5,13 @@ function search_contacts() {
 	var menustyle   = tonumber(_USER['pref']['menustyle']);
 	var offset=0;
 /*
-	if (!(auth_priv(sid, "contacts")&A_READ)) {
-		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+	if (!(auth_priv(conn, "contacts")&A_READ)) {
+		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 		return;
 	}
-	if ((ptemp=getgetenv(sid, "COLUMN"))!=NULL) snprintf(column, sizeof(column)-1, "%s", ptemp);
-	if ((ptemp=getgetenv(sid, "STRING"))!=NULL) snprintf(string, sizeof(string)-1, "%s", ptemp);
-	if ((ptemp=getgetenv(sid, "OFFSET"))!=NULL) offset=atoi(ptemp);
+	if ((ptemp=getgetenv(conn, "COLUMN"))!=NULL) snprintf(column, sizeof(column)-1, "%s", ptemp);
+	if ((ptemp=getgetenv(conn, "STRING"))!=NULL) snprintf(string, sizeof(string)-1, "%s", ptemp);
+	if ((ptemp=getgetenv(conn, "OFFSET"))!=NULL) offset=atoi(ptemp);
 	if (offset<0) offset=0;
 	snprintf(string2, sizeof(string2)-1, "%%%s%%", string);
 	ptemp=string2;
@@ -31,23 +31,23 @@ function search_contacts() {
 			if (strcmp(sql_getname(proc->N, &qobj, i), "obj_gperm")==0) continue;
 			if (strcmp(sql_getname(proc->N, &qobj, i), "obj_operm")==0) continue;
 			if (strcmp(nes_getstr(proc->N, tobj, "sql_server_type"), "ODBC")==0) {
-				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(proc->N, &qobj, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s' or ", sql_getname(proc->N, &qobj, i), str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, string2));
 			} else {
-				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(proc->N, &qobj, i), str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+				strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s') or ", sql_getname(proc->N, &qobj, i), str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, string2));
 			}
 		}
-		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+		strncatf(query, sizeof(query)-strlen(query)-1, "contactid like '%s'", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, string2));
 	} else {
 		if (strcmp(nes_getstr(proc->N, tobj, "sql_server_type"), "ODBC")==0) {
-			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "%s like '%s'", column, str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, string2));
 		} else {
-			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, string2));
+			strncatf(query, sizeof(query)-strlen(query)-1, "lower(%s) like lower('%s')", column, str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, string2));
 		}
 	}
-	if (auth_priv(sid, "contacts")&A_ADMIN) {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->did);
+	if (auth_priv(conn, "contacts")&A_ADMIN) {
+		strncatf(query, sizeof(query)-strlen(query)-1, ") AND obj_did = %d ORDER BY surname, givenname ASC", conn->dat->did);
 	} else {
-		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", sid->dat->uid, sid->dat->gid, sid->dat->did);
+		strncatf(query, sizeof(query)-strlen(query)-1, ") and (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY surname, givenname ASC", conn->dat->uid, conn->dat->gid, conn->dat->did);
 	}
 	sql_freeresult(proc->N, &qobj);
 */
@@ -211,18 +211,18 @@ function search_contacts() {
 	if (Q._tuples>maxlist) {
 		if (offset>0) {
 			print("[<A HREF=/search/contacts.ns?column=");
-//			printhex(sid, "%s", column);
+//			printhex(conn, "%s", column);
 			print("&string=");
-//			printhex(sid, "%s", string);
+//			printhex(conn, "%s", string);
 			print("&offset=",offset-maxlist,">Previous Page</A>]");
 		} else {
 			print("[Previous Page]");
 		}
 		if (offset+maxlist<Q._tuples) {
 			print("[<A HREF=/search/contacts.ns?column=");
-//			printhex(sid, "%s", column);
+//			printhex(conn, "%s", column);
 			print("&string=");
-//			printhex(sid, "%s", string);
+//			printhex(conn, "%s", string);
 			print("&offset=",offset+maxlist,">Next Page</A>]");
 		} else {
 			print("[Next Page]");

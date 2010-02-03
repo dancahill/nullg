@@ -16,14 +16,14 @@ InfoAfterFile=..\Documentation\README
 [Files]
 Source: "..\distrib\*.*"; Flags: ignoreversion recursesubdirs; DestDir: "{app}"
 [Icons]
-Name: "{group}\GroupServer Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\nullgs-config.exe"
+Name: "{group}\GroupServer Configuration"; Workingdir: "{app}\bin"; Filename: "{app}\bin\nullsd-config.exe"
 Name: "{group}\GroupServer Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
-Name: "{group}\GroupServer Help"; Filename: "{app}\var\share\htdocs\nullgs\help\en\index.html"
+Name: "{group}\GroupServer Help"; Filename: "{app}\var\share\htdocs\nullsd\help\en\index.html"
 Name: "{group}\GroupServer Online"; Filename: "http://nullgroupware.sourceforge.net/"
 Name: "{commonstartup}\GroupServer Monitor"; Workingdir: "{app}\bin"; Filename: "{app}\bin\gwmon.exe"
 [Run]
-Filename: "{app}\bin\nullgs-config.exe"; Workingdir: "{app}\bin"; Description: "Edit GroupServer Configuration"; Flags: postinstall skipifsilent unchecked
+Filename: "{app}\bin\nullsd-config.exe"; Workingdir: "{app}\bin"; Description: "Edit GroupServer Configuration"; Flags: postinstall skipifsilent unchecked
 Filename: "{app}\bin\gwmon.exe"; Workingdir: "{app}\bin"; Description: "Launch GroupServer Monitor"; Flags: nowait postinstall skipifsilent
 [UninstallRun]
-Filename: "net.exe"; Parameters: "stop nullgs"; Flags: runminimized
-Filename: "{app}\bin\nullgs.exe"; Parameters: "remove"; Workingdir: "{app}\bin"; Flags: runminimized
+Filename: "net.exe"; Parameters: "stop nullsd"; Flags: runminimized
+Filename: "{app}\bin\nullsd.exe"; Parameters: "remove"; Workingdir: "{app}\bin"; Flags: runminimized

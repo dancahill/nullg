@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullgs/config-nt.h"
+#include "nullsd/config-nt.h"
 #else
-#include "nullgs/config.h"
+#include "nullsd/config.h"
 #endif
 /* #includes */
 #include <ctype.h>
@@ -34,7 +34,7 @@
 	#define WIN32_LEAN_AND_MEAN
 	#define _MT 1
 	#define PATH_MAX 512 /* from limits.h, but _POSIX_ breaks stuff */
-	#pragma comment(lib, "libcmt.lib")
+//	#pragma comment(lib, "libcmt.lib")
 	#pragma comment(lib, "ws2_32.lib")
 	#include <winsock2.h>
 	#include <windows.h>
@@ -71,12 +71,12 @@
 	#include <sys/wait.h>
 	#define closesocket close
 #endif
-#include "nullgs/ssl.h"
+#include "nullsd/ssl.h"
 
-#include "nullgs/defines.h"
-#include "nesla/nesla.h"
-#include "ngs.h"
-#include "nullgs/typedefs.h"
+#include "nullsd/defines.h"
+#include "nsp/nsp.h"
+#include "nsd.h"
+#include "nullsd/typedefs.h"
 
 #ifdef MAIN_GLOBALS
 	LOCKS   Lock;
@@ -98,7 +98,7 @@
 #endif
 
 /* config.c functions */
-int     conf_read(nes_state *N);
+int     conf_read(nsp_state *N);
 /* domains.c functions */
 char   *domain_getname(char *outstring, int outlen, int domainid);
 int     domain_getid(char *domainname);
@@ -111,14 +111,14 @@ char   *str2sql(char *outstring, int outlen, char *instring);
 time_t  time_sql2unix(char *sqldate);
 char   *time_unix2sql(char *outstring, int outlen, time_t unixdate);
 /* language.c functions */
-char   *language_gets(nes_state *N, char *lang, char *sect, char *label);
+char   *language_gets(nsp_state *N, char *lang, char *sect, char *label);
 /* modctl.c functions */
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x);
 #else
 void *cronloop(void *x);
 #endif
-int     modules_init(nes_state *N);
+int     modules_init(nsp_state *N);
 int     modules_exec(void);
 int     modules_exit(void);
 int     modules_cron(void);
@@ -129,16 +129,16 @@ int     sanity_checkdirs(void);
 /* server.c functions */
 /* void    server_restart(void); */
 void    server_shutdown(void);
-void    init(nes_state *N);
+void    init(nsp_state *N);
 int     addlistener(char *modname, TCP_SOCKET *sock, void *fn_getconn, void *fn_doreq, int use_ssl);
 int     startlisteners(void);
 /* sql.c functions */
-void    sql_disconnect(nes_state *N);
-void    sql_freeresult(nes_state *N, obj_t **qobj);
-int     sql_update(nes_state *N, char *sqlquery);
-int     sql_query(nes_state *N, obj_t **qobj, char *query);
-int     sql_updatef(nes_state *N, char *format, ...);
-int     sql_queryf(nes_state *N, obj_t **qobj, char *format, ...);
+void    sql_disconnect(nsp_state *N);
+void    sql_freeresult(nsp_state *N, obj_t **qobj);
+int     sql_update(nsp_state *N, char *sqlquery);
+int     sql_query(nsp_state *N, obj_t **qobj, char *query);
+int     sql_updatef(nsp_state *N, char *format, ...);
+int     sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...);
 /* ssl.c functions */
 #ifdef HAVE_SSL
 int     ssl_init();

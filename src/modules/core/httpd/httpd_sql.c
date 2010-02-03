@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "httpd_main.h"
 
-int sql_permprune(CONN *sid, obj_t **qobj, char *permtype)
+int sql_permprune(CONN *conn, obj_t **qobj, char *permtype)
 {
 /*	obj_t *qobj2=NULL;
 	unsigned int field;
@@ -33,7 +33,7 @@ int sql_permprune(CONN *sid, obj_t **qobj, char *permtype)
 	int obj_operm;
 
 //	if (sqr->NumFields<8) return -1;
-	if (sql_queryf(sid->N, &qobj2, "SELECT groupid FROM gw_groups_members where userid = %d AND obj_did = %d", sid->dat->uid, sid->dat->did)<0) return -1;
+	if (sql_queryf(conn->N, &qobj2, "SELECT groupid FROM gw_groups_members where userid = %d AND obj_did = %d", conn->dat->uid, conn->dat->did)<0) return -1;
 	numtuples=sqr->NumTuples;
 	for (tuple1=0,tuple2=0;tuple1<numtuples;tuple1++) {
 		obj_uid  =atoi(sqr->row[tuple1].field[3]);
@@ -41,13 +41,13 @@ int sql_permprune(CONN *sid, obj_t **qobj, char *permtype)
 		obj_did  =atoi(sqr->row[tuple1].field[5]);
 		obj_gperm=atoi(sqr->row[tuple1].field[6]);
 		obj_operm=atoi(sqr->row[tuple1].field[7]);
-		if (obj_did!=sid->dat->did) goto nomatch;
+		if (obj_did!=conn->dat->did) goto nomatch;
 		if (permtype!=NULL) {
-			authlevel=auth_priv(sid, permtype);
+			authlevel=auth_priv(conn, permtype);
 			if (authlevel<1) goto nomatch;
 			if (authlevel&A_ADMIN) goto match;
 		}
-		if (obj_uid==sid->dat->uid) goto match;*/
+		if (obj_uid==conn->dat->uid) goto match;*/
 		/*
 		 * if there's a group match, we don't check "other".
 		 * this lets us explicitly block access to specific groups.

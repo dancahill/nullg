@@ -101,7 +101,7 @@ if (_USER!=null) {
 			print("<A CLASS='TBAR' HREF=\"/profile/\" onClick=\"return GoTo('/profile/');\">PROFILE</A>&nbsp;&middot;&nbsp;");
 		}
 //	}
-//	print("<A CLASS='TBAR' HREF=/logout TARGET=_top>%s</A>", lang_gets(sid, "httpd", "menu_top_logout"));
+//	print("<A CLASS='TBAR' HREF=/logout TARGET=_top>%s</A>", lang_gets(conn, "httpd", "menu_top_logout"));
 	print("<A CLASS='TBAR' HREF=/logout TARGET=_top>","LOG OUT","</A>");
 	print("&nbsp;&nbsp;</TD>\r\n");
 	print("</TR></TABLE>\r\n</TD></TR>\r\n");
@@ -109,10 +109,10 @@ if (_USER!=null) {
 	print("<TD ALIGN=left NOWRAP>&nbsp;&nbsp;");
 	var cnt=0;
 	if (menu=='admin') {
-//		if (auth_priv(sid, "domainadmin")&A_ADMIN) {
-//			print("<A CLASS='TBAR' HREF=/admin/configedit>%s</A>", lang_gets(sid, "httpd", "menu_adm_config"));
+//		if (auth_priv(conn, "domainadmin")&A_ADMIN) {
+//			print("<A CLASS='TBAR' HREF=/admin/configedit>%s</A>", lang_gets(conn, "httpd", "menu_adm_config"));
 //		}
-//		if (auth_priv(sid, "domainadmin")&A_ADMIN) {
+//		if (auth_priv(conn, "domainadmin")&A_ADMIN) {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
 			print("<A CLASS='TBAR' HREF=/admin/domainlist>DOMAINS</A>");
 //		}
@@ -123,18 +123,18 @@ if (_USER!=null) {
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=/admin/printdb-tree.nsp>DB TREE</A>");
 
-//		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(sid, "httpd", "menu_adm_logs"));
-//		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(sid, "httpd", "menu_adm_check"));
-//		print("<A CLASS='TBAR' HREF=/admin/userlist>%s</A>", lang_gets(sid, "httpd", "menu_adm_users"));
-//		print("<A CLASS='TBAR' HREF=/admin/grouplist>%s</A>", lang_gets(sid, "httpd", "menu_adm_groups"));
-//		print("<A CLASS='TBAR' HREF=/admin/zonelist>%s</A>", lang_gets(sid, "httpd", "menu_adm_zones"));
+//		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(conn, "httpd", "menu_adm_logs"));
+//		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(conn, "httpd", "menu_adm_check"));
+//		print("<A CLASS='TBAR' HREF=/admin/userlist>%s</A>", lang_gets(conn, "httpd", "menu_adm_users"));
+//		print("<A CLASS='TBAR' HREF=/admin/grouplist>%s</A>", lang_gets(conn, "httpd", "menu_adm_groups"));
+//		print("<A CLASS='TBAR' HREF=/admin/zonelist>%s</A>", lang_gets(conn, "httpd", "menu_adm_zones"));
 	} else if (menu=='bookmarks') {
 		if (typeof(_GET['PID'])!='null') folderid=tonumber(_GET['PID']); else folderid=0;
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=\"/bookmarks/list\" onClick=\"return GoTo('/bookmarks/list');\">LIST BOOKMARKS</A>");
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=\"/bookmarks/editnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/editnew?pid=",folderid,"');\">NEW BOOKMARK</A>");
-//		if (auth_priv(sid, "bookmarks")&A_ADMIN) {
+//		if (auth_priv(conn, "bookmarks")&A_ADMIN) {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
 			print("<A CLASS='TBAR' HREF=\"/bookmarks/foldereditnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/foldereditnew?pid=",folderid,"');\">NEW FOLDER</A>");
 //		}
@@ -225,14 +225,14 @@ if (_USER!=null) {
 		}
 	} else if (menu=='files') {
 /*
-		if ((ptemp=getgetenv(sid, "LOCATION"))==NULL) ptemp=RequestURI;
+		if ((ptemp=getgetenv(conn, "LOCATION"))==NULL) ptemp=RequestURI;
 		print("<A CLASS='TBAR' HREF=%s", ScriptName);
-		printhex(sid, "%s", ptemp);
+		printhex(conn, "%s", ptemp);
 		print(">REFRESH</A>");
-		if (auth_priv(sid, "files")&A_MODIFY) {
+		if (auth_priv(conn, "files")&A_MODIFY) {
 			print("<A CLASS='TBAR' HREF=javascript:FileUpload()>UPLOAD FILE</A>", RequestURI);
 			print("<A CLASS='TBAR' HREF=%s/filemkdir?location=", ScriptName);
-			printhex(sid, "%s", ptemp);
+			printhex(conn, "%s", ptemp);
 			print(">NEW FOLDER</A>");
 		}
 */
@@ -248,7 +248,7 @@ if (_USER!=null) {
 	} else if (menu=='forums') {
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=/forums/list>LIST FORUMS</A>");
-//		if (auth_priv(sid, "forums")&A_ADMIN) {
+//		if (auth_priv(conn, "forums")&A_ADMIN) {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
 			print("<A CLASS='TBAR' HREF=/forums/grouplist>GROUPS</A>");
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
@@ -273,7 +273,7 @@ if (_USER!=null) {
 	} else if (menu=='searches') {
 		if (cnt++) print("&nbsp;&middot;&nbsp;");
 		print("<A CLASS='TBAR' HREF=\"/search/\" onClick=\"return GoTo('/search/');\">SEARCHES</A>");
-//		if ((auth_priv(sid, "domainadmin")&A_ADMIN)&&(auth_priv(sid, "query")&A_ADMIN)) {
+//		if ((auth_priv(conn, "domainadmin")&A_ADMIN)&&(auth_priv(conn, "query")&A_ADMIN)) {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
 			print("<A CLASS='TBAR' HREF=\"/search/sql/\" onClick=\"return GoTo('/search/sql/');\">SQL QUERIES</A>");
 //		}

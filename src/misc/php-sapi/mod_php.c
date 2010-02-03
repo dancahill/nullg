@@ -26,15 +26,15 @@
 #include <main/php_ini.h>
 #include <zend_ini.h>
 
-static CONN *get_sid()
+static CONN *get_conn()
 {
 	int sid;
 
 	if (htproc->conn==NULL) return NULL;
-	for (sid=0;sid<htproc->config.http_maxconn;sid++) {
+	for (conn=0;sid<htproc->config.http_maxconn;sid++) {
 		if (htproc->conn[sid].id==pthread_self()) break;
 	}
-	if ((sid<0)||(sid>=htproc->config.http_maxconn)) return NULL;
+	if ((conn<0)||(conn>=htproc->config.http_maxconn)) return NULL;
 	return &htproc->conn[sid];
 }
 
@@ -48,21 +48,21 @@ static int mod_php_startup(sapi_module_struct *sapi_module)
 
 static int mod_php_deactivate(TSRMLS_D)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 
-	if (sid==NULL) return SUCCESS;
-	flushbuffer(sid);
+	if (conn==NULL) return SUCCESS;
+	flushbuffer(conn);
 	return SUCCESS;
 }
 
 static inline size_t mod_php_single_write(const char *str, uint str_length)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 	int ret;
 
-	if (sid==NULL) return 0;
-	flushbuffer(sid);
-	ret=tcp_send(&sid->socket, str, str_length, 0);
+	if (conn==NULL) return 0;
+	flushbuffer(conn);
+	ret=tcp_send(&conn->socket, str, str_length, 0);
 	if (ret<=0) return 0;
 	return ret;
 }
@@ -86,10 +86,10 @@ static int mod_php_ub_write(const char *str, uint str_length TSRMLS_DC)
 
 static void mod_php_flush(void *server_context)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 
-	if (sid==NULL) return;
-	flushbuffer(sid);
+	if (conn==NULL) return;
+	flushbuffer(conn);
 	return;
 }
 
@@ -99,50 +99,50 @@ static void mod_php_send_header(sapi_header_struct *sapi_header, void *server_co
 
 static int mod_php_read_post(char *buffer, uint count_bytes TSRMLS_DC)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 	unsigned int i;
 
-	if (sid==NULL) return 0;
-	for (i=0;(i<(unsigned int)sid->dat->in_ContentLength)&&(i<count_bytes);i++) {
-		buffer[i]=sid->PostData[i];
+	if (conn==NULL) return 0;
+	for (i=0;(i<(unsigned int)conn->dat->in_ContentLength)&&(i<count_bytes);i++) {
+		buffer[i]=conn->PostData[i];
 	}
 	return i;
 }
 
 static char *mod_php_read_cookies(TSRMLS_D)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 
-	if (sid==NULL) return NULL;
-	return sid->dat->in_Cookie;
+	if (conn==NULL) return NULL;
+	return conn->dat->in_Cookie;
 }
 
 static void mod_php_register_variables(zval *track_vars_array TSRMLS_DC)
 {
-	CONN *sid=get_sid();
+	CONN *conn=get_conn();
 	char tmpbuf[80];
 
-	if (sid==NULL) return;
-	snprintf(tmpbuf, sizeof(tmpbuf)-1, "%d", sid->dat->in_ContentLength);
+	if (conn==NULL) return;
+	snprintf(tmpbuf, sizeof(tmpbuf)-1, "%d", conn->dat->in_ContentLength);
 	php_register_variable("CONTENT_LENGTH", tmpbuf, track_vars_array TSRMLS_CC);
-	if (!strlen(sid->dat->in_ContentType)) {
+	if (!strlen(conn->dat->in_ContentType)) {
 		php_register_variable("CONTENT_TYPE", "application/x-www-form-urlencoded", track_vars_array TSRMLS_CC);
 	} else {
-		php_register_variable("CONTENT_TYPE", sid->dat->in_ContentType, track_vars_array TSRMLS_CC);
+		php_register_variable("CONTENT_TYPE", conn->dat->in_ContentType, track_vars_array TSRMLS_CC);
 	}
 	php_register_variable("GATEWAY_INTERFACE", "CGI/1.1", track_vars_array TSRMLS_CC);
-	php_register_variable("HTTP_COOKIE",       sid->dat->in_Cookie, track_vars_array TSRMLS_CC);
-	php_register_variable("HTTP_USER_AGENT",   sid->dat->in_UserAgent, track_vars_array TSRMLS_CC);
+	php_register_variable("HTTP_COOKIE",       conn->dat->in_Cookie, track_vars_array TSRMLS_CC);
+	php_register_variable("HTTP_USER_AGENT",   conn->dat->in_UserAgent, track_vars_array TSRMLS_CC);
 /*	php_register_variable("PATH_TRANSLATED",   "/home/null/www/tools/n-shell.php", track_vars_array TSRMLS_CC); */
-	php_register_variable("PHP_SELF",          sid->dat->in_CGIScriptName, track_vars_array TSRMLS_CC);
-	php_register_variable("QUERY_STRING",      sid->dat->in_QueryString, track_vars_array TSRMLS_CC);
-	php_register_variable("REMOTE_ADDR",       sid->dat->in_RemoteAddr, track_vars_array TSRMLS_CC);
-	snprintf(tmpbuf, sizeof(tmpbuf)-1, "%d", sid->dat->in_RemotePort);
+	php_register_variable("PHP_SELF",          conn->dat->in_CGIScriptName, track_vars_array TSRMLS_CC);
+	php_register_variable("QUERY_STRING",      conn->dat->in_QueryString, track_vars_array TSRMLS_CC);
+	php_register_variable("REMOTE_ADDR",       conn->dat->in_RemoteAddr, track_vars_array TSRMLS_CC);
+	snprintf(tmpbuf, sizeof(tmpbuf)-1, "%d", conn->dat->in_RemotePort);
 	php_register_variable("REMOTE_PORT",       tmpbuf, track_vars_array TSRMLS_CC);
-	php_register_variable("REMOTE_USER",       sid->dat->user_username, track_vars_array TSRMLS_CC);
-	php_register_variable("REQUEST_METHOD",    sid->dat->in_RequestMethod, track_vars_array TSRMLS_CC);
-	php_register_variable("REQUEST_URI",       sid->dat->in_RequestURI, track_vars_array TSRMLS_CC);
-	php_register_variable("SCRIPT_NAME",       sid->dat->in_CGIScriptName, track_vars_array TSRMLS_CC);
+	php_register_variable("REMOTE_USER",       conn->dat->user_username, track_vars_array TSRMLS_CC);
+	php_register_variable("REQUEST_METHOD",    conn->dat->in_RequestMethod, track_vars_array TSRMLS_CC);
+	php_register_variable("REQUEST_URI",       conn->dat->in_RequestURI, track_vars_array TSRMLS_CC);
+	php_register_variable("SCRIPT_NAME",       conn->dat->in_CGIScriptName, track_vars_array TSRMLS_CC);
 	php_register_variable("SERVER_PROTOCOL",   "HTTP/1.1", track_vars_array TSRMLS_CC);
 	php_register_variable("SERVER_SOFTWARE",   PACKAGE_NAME, track_vars_array TSRMLS_CC);
 /*	php_import_environment_variables(track_vars_array TSRMLS_CC); */
@@ -226,33 +226,33 @@ void mod_php_shutdown(TSRMLS_D)
 	return;
 }
 
-DllExport int mod_main(CONN *sid)
+DllExport int mod_main(CONN *conn)
 {
 	zend_file_handle file_handle;
 	struct stat sb;
 	char filename[512];
 	char *ptemp;
 
-	if (strncmp(sid->dat->in_CGIScriptName, "/php/", 5)!=0) { return -1; }
+	if (strncmp(conn->dat->in_CGIScriptName, "/php/", 5)!=0) { return -1; }
 	memset(filename, 0, sizeof(filename));
-	ptemp=sid->dat->in_CGIScriptName;
-	snprintf(filename, sizeof(filename)-1, "%s/%04d/htdocs%s", config->dir_var_domains, sid->dat->user_did, ptemp);
+	ptemp=conn->dat->in_CGIScriptName;
+	snprintf(filename, sizeof(filename)-1, "%s/%04d/htdocs%s", config->dir_var_domains, conn->dat->user_did, ptemp);
 	fixslashes(filename);
 	if ((stat(filename, &sb)!=0)||(sb.st_mode&S_IFDIR)) { return -1; }
-	SG(request_info).request_method       = sid->dat->in_RequestMethod;
-	SG(request_info).query_string         = sid->dat->in_QueryString;
-/*	SG(request_info).post_data            = sid->PostData; */
-/*	SG(request_info).raw_post_data        = sid->PostData; */
-	SG(request_info).cookie_data          = sid->dat->in_Cookie;
-/*	SG(request_info).content_length       = sid->dat->in_ContentLength; */
+	SG(request_info).request_method       = conn->dat->in_RequestMethod;
+	SG(request_info).query_string         = conn->dat->in_QueryString;
+/*	SG(request_info).post_data            = conn->PostData; */
+/*	SG(request_info).raw_post_data        = conn->PostData; */
+	SG(request_info).cookie_data          = conn->dat->in_Cookie;
+/*	SG(request_info).content_length       = conn->dat->in_ContentLength; */
 /*	SG(request_info).post_data_length     = 0; */
 /*	SG(request_info).raw_post_data_length = 0; */
 	SG(request_info).path_translated      = filename;
-	SG(request_info).request_uri          = sid->dat->in_RequestURI;
-	if (!strlen(sid->dat->in_ContentType)) {
+	SG(request_info).request_uri          = conn->dat->in_RequestURI;
+	if (!strlen(conn->dat->in_ContentType)) {
 		SG(request_info).content_type = "application/x-www-form-urlencoded";
 	} else {
-		SG(request_info).content_type = sid->dat->in_ContentType;
+		SG(request_info).content_type = conn->dat->in_ContentType;
 	}
 	SG(request_info).no_headers           = 0;
 	SG(headers_sent)                      = 0;
@@ -262,7 +262,7 @@ DllExport int mod_main(CONN *sid)
 	file_handle.opened_path = NULL;
 	file_handle.handle.fd = 0;
 	file_handle.free_filename = 0;
-	send_header(sid, 0, 200, "1", "text/html", -1, -1);
+	send_header(conn, 0, 200, "1", "text/html", -1, -1);
 	if (php_request_startup(TSRMLS_C)==SUCCESS) {
 		php_execute_script(&file_handle TSRMLS_CC);
 /*		zend_eval_string("foreach ($HTTP_SERVER_VARS as $x => $a) { echo \"<font color=green>[$x][$a]</font><br />\"; }", NULL, "nullgroupare-sapi"); */

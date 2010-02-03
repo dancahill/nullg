@@ -8,13 +8,13 @@ DEST_LIB="@libdir@"
 DEST_VAR="@localstatedir@"
 
 set_permissions() {
-	SERVER_UID="`./nullgs-confutil show CONFIG.uid`"
-	SERVER_GID="`./nullgs-confutil show CONFIG.gid`"
+	SERVER_UID="`./nullsd-confutil show CONFIG.uid`"
+	SERVER_GID="`./nullsd-confutil show CONFIG.gid`"
 	if [ -z $SERVER_UID ]; then
-		SERVER_UID="nullgs"
+		SERVER_UID="nullsd"
 	fi
 	if [ -z $SERVER_GID ]; then
-		SERVER_GID="nullgs"
+		SERVER_GID="nullsd"
 	fi
 	if [ -x "/usr/sbin/useradd" ]; then
 		/usr/sbin/groupadd $SERVER_GID 1>/dev/null 2>&1
@@ -25,7 +25,7 @@ set_permissions() {
 	fi
 	chown -R $SERVER_UID:$SERVER_GID $DEST_ETC 1>/dev/null 2>/dev/null
 	chown -R $SERVER_UID:$SERVER_GID $DEST_VAR 1>/dev/null 2>/dev/null
-	chmod 0600 $DEST_ETC/nullgs.conf
+	chmod 0600 $DEST_ETC/nullsd.conf
 	chmod 0600 $DEST_VAR/log/*.log
 }
 
@@ -46,7 +46,7 @@ do_copying() {
 	cp -pR etc/* $DEST_ETC
 	cp -pR lib/* $DEST_LIB
 	cp -pR var/* $DEST_VAR
-	touch $DEST_VAR/db/nullgs.db3
+	touch $DEST_VAR/db/nullsd.db3
 	touch $DEST_VAR/log/core-access.log
 	touch $DEST_VAR/log/core-error.log
 	touch $DEST_VAR/log/httpd-access.log
@@ -66,15 +66,15 @@ do_copying() {
 }
 
 do_dbinit() {
-	if [ ! -s $DEST_VAR/db/nullgs.db3 ]; then
+	if [ ! -s $DEST_VAR/db/nullsd.db3 ]; then
 		OLDDIR=`pwd`
 		echo -n "Password for the new administrator account: "
 		read TMP
 		cd $DEST_BIN
 		if [ ! -z $TMP ]; then
-			./nullgs-dbutil init $TMP
+			./nullsd-dbutil init $TMP
 		else
-			./nullgs-dbutil init
+			./nullsd-dbutil init
 		fi
 		cd $OLDDIR
 	fi
@@ -110,19 +110,19 @@ case "$1" in
 upgrade)
 	setup_console
 	echo
-	if [ -x /etc/init.d/nullgs ]; then
-		/etc/init.d/nullgs stop
+	if [ -x /etc/init.d/null-sd ]; then
+		/etc/init.d/null-sd stop
 	fi
 	# Copy files to destination
 	echo ""
 	echo -n "Copying files  ... "
 	do_copying
 	echo "done."
-	cd $DEST_BIN ; ./nullgs-confutil upgrade
+	cd $DEST_BIN ; ./nullsd-confutil upgrade
 	set_permissions
 	echo
-	if [ -x /etc/init.d/nullgs ]; then
-		/etc/init.d/nullgs start
+	if [ -x /etc/init.d/null-sd ]; then
+		/etc/init.d/null-sd start
 	fi
 	echo
 	;;
@@ -138,17 +138,17 @@ upgrade)
 	do_copying
 	echo "done."
 	echo
-	if [ -x /etc/init.d/nullgs ]; then
-		/etc/init.d/nullgs stop
+	if [ -x /etc/init.d/null-sd ]; then
+		/etc/init.d/null-sd stop
 	fi
 	echo
-	cd $DEST_BIN ; ./nullgs-confutil
+	cd $DEST_BIN ; ./nullsd-confutil
 	set_permissions
 	echo
 	do_dbinit
 	echo
-	echo "To reconfigure the server, run 'nullgs-confutil'."
-	echo "To start the server, run 'nullgs-init.sh start'."
+	echo "To reconfigure the server, run 'nullsd-confutil'."
+	echo "To start the server, run 'nullsd-init.sh start'."
 	echo
 esac
 exit

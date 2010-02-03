@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullgs/config-nt.h"
+#include "nullsd/config-nt.h"
 #else
-#include "nullgs/config.h"
+#include "nullsd/config.h"
 #endif
 #ifdef WIN32
 #include <winsock2.h>
@@ -32,8 +32,8 @@
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
 
-#include "nullgs/defines.h"
-#include "nesla/nesla.h"
+#include "nullsd/defines.h"
+#include "nsp/nsp.h"
 
 #define OS_WIN9X 1
 #define OS_WINNT 2
@@ -72,9 +72,9 @@ int config_read(CONFIG *config)
 	config->http_port=80;
 	/* try to open the config file */
 	/* try the current directory first, then ../etc/ */
-	fp=fopen("nullgs.conf", "r");
+	fp=fopen("nullsd.conf", "r");
 	if (fp==NULL) {
-		fp=fopen("../etc/nullgs.conf", "r");
+		fp=fopen("../etc/nullsd.conf", "r");
 	}
 	/* if config file couldn't be opened, abort */
 	if (fp==NULL) return 0;
@@ -155,12 +155,12 @@ short installService(short int service)
 	SC_HANDLE scHndl;
 	SC_HANDLE scServ;
 	char cCurDir[256];
-	char *svcname="nullgs";
+	char *svcname="nullsd";
 	char *svctitle="NullLogic GroupServer";
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgsd.exe":"\\nullgsd.exe");
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullsd.exe":"\\nullsd.exe");
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) return 1;
 	scServ=CreateService(scHndl,
@@ -261,7 +261,7 @@ BOOL APIENTRY HandlePopupMenu(POINT point)
 	bRet=AppendMenu(hMenu, MF_SEPARATOR, 0, "");
 	if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 		if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-		schService=OpenService(schSCManager, "nullgs", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+		schService=OpenService(schSCManager, "nullsd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 		if (schService==NULL) {
 			AppendMenu(hMenu, MF_STRING, MYWM_NOTIFYICON+10+4, "Install GroupServer");
 		} else {
@@ -313,11 +313,11 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		nNewMode=GET_WM_COMMAND_ID(wParam, lParam)-(MYWM_NOTIFYICON+10);
 		switch (nNewMode) {
 		case 0:
-			snprintf(commandline, sizeof(commandline)-1, "../var/htdocs/nullgs/help/en/index.html");
+			snprintf(commandline, sizeof(commandline)-1, "../var/htdocs/nullsd/help/en/index.html");
 			ShellExecute(NULL, "open", commandline, NULL, NULL, SW_SHOWMAXIMIZED);
 			break;
 		case 1:
-			winsystem(SW_SHOW, ".\\nullgs-confutil.exe");
+			winsystem(SW_SHOW, ".\\nullsd-confutil.exe");
 			break;
 		case 2:
 			snprintf(commandline, sizeof(commandline)-1, "http://%s:%d/", cfg.http_hostname, cfg.http_port);
@@ -326,23 +326,23 @@ BOOL CALLBACK NullDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case 3:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgs", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullsd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				StartService(schService, 0, NULL);
 			} else {
-				winsystem(SW_HIDE, ".\\nullgsd.exe");
+				winsystem(SW_HIDE, ".\\nullsd.exe");
 			}
 			break;
 		case 4:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgs", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullsd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				installService(SVC_HTTPD);
 			}
 			break;
 		case 5:
 			if ((g_dwOSVersion==OS_WINNT)||(g_dwOSVersion==OS_WIN2K)) {
 				if (!(schSCManager=OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT))) return FALSE;
-				schService=OpenService(schSCManager, "nullgs", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
+				schService=OpenService(schSCManager, "nullsd", SERVICE_QUERY_STATUS|SERVICE_START|SERVICE_STOP|SERVICE_USER_DEFINED_CONTROL);
 				ControlService(schService, SERVICE_CONTROL_STOP, &schSStatus);
 			}
 			break;
@@ -388,7 +388,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (!os_version(&g_dwOSVersion)) return 0;
 	memset((char *)&cfg, 0, sizeof(cfg));
 	config_read(&cfg);
-	hMutex=CreateMutex(NULL, FALSE, "NULLGSMON_MUTEX");
+	hMutex=CreateMutex(NULL, FALSE, "NULLSDMON_MUTEX");
 	if ((hMutex==NULL)||(GetLastError()==ERROR_ALREADY_EXISTS)) {
 		if (hMutex) CloseHandle(hMutex);
 		return 0;

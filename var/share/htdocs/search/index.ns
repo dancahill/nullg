@@ -99,7 +99,7 @@ form_inet_script();
 print("<CENTER>\r\n");
 print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
 form_inet();
-//if (auth_priv(sid, "contacts")&A_READ) {
+//if (auth_priv(conn, "contacts")&A_READ) {
 	form_contacts();
 //}
 print("</TABLE>\r\n</CENTER>\r\n");

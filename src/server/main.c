@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ short installService(void)
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullgsd.exe":"\\nullgsd.exe");
+	strcat(cCurDir, cCurDir[strlen(cCurDir)-1]==92?"nullsd.exe":"\\nullsd.exe");
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) {
 		printf("Error in installService-OpenSCManager!\r\n");
@@ -190,7 +190,7 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 		printf("Error in RegisterServiceCtrlHandler!\r\n");
 		DebugBreak();
 	}
-	ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullgsRunEvent");
+	ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
 	memset(&gStatus, 0x00, sizeof(gStatus));
 	gStatus.dwServiceType              = SERVICE_WIN32;
 	gStatus.dwCurrentState             = SERVICE_RUNNING;
@@ -233,15 +233,16 @@ int main(int argc, char *argv[], char *envp[])
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 	memset((char *)&proc, 0, sizeof(proc));
+//	proc.debug=1;
 	if (getenv("REQUEST_METHOD")!=NULL) return 0;
-	if ((proc.N=nes_newstate())==NULL) {
-		printf("nes_newstate() error\r\n");
+	if ((proc.N=nsp_newstate())==NULL) {
+		printf("nsp_newstate() error\r\n");
 		return -1;
 	}
 
 	_snprintf(pathbuf, sizeof(pathbuf)-1, "%s", GetCommandLine());
-	printf("GetCommandLine() = %s\r\n", pathbuf);
-	nes_setstr(proc.N, &proc.N->g, "GetCommandLine", pathbuf, -1);
+	if (proc.debug) printf("GetCommandLine() = %s\r\n", pathbuf);
+	nsp_setstr(proc.N, &proc.N->g, "GetCommandLine", pathbuf, -1);
 	if (isalpha(pathbuf[0]) && pathbuf[1]==':') {
 		p=strrchr(pathbuf, '\\');
 		if (*p!='\0') {
@@ -250,18 +251,18 @@ int main(int argc, char *argv[], char *envp[])
 		}
 	}
 	GetCurrentDirectory(sizeof(pathbuf)-1, pathbuf);
-	printf("GetCurrentDirectory() = %s\r\n", pathbuf);
-	nes_setstr(proc.N, &proc.N->g, "GetCurrentDirectory", pathbuf, -1);
+	if (proc.debug) printf("GetCurrentDirectory() = %s\r\n", pathbuf);
+	nsp_setstr(proc.N, &proc.N->g, "GetCurrentDirectory", pathbuf, -1);
 
 	/* add args */
-	tobj=nes_settable(proc.N, &proc.N->g, "_ARGS");
+	tobj=nsp_settable(proc.N, &proc.N->g, "_ARGS");
 	tobj->val->attr|=NST_AUTOSORT;
 	for (i=0;i<argc;i++) {
 		sprintf(tmpbuf, "%d", i);
-		nes_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
+		nsp_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
 	}
 	/* add env */
-	tobj=nes_settable(proc.N, &proc.N->g, "_ENV");
+	tobj=nsp_settable(proc.N, &proc.N->g, "_ENV");
 	tobj->val->attr|=NST_AUTOSORT;
 	for (i=0;envp[i]!=NULL;i++) {
 		strncpy(tmpbuf, envp[i], MAX_OBJNAMELEN);
@@ -269,10 +270,10 @@ int main(int argc, char *argv[], char *envp[])
 		if (!p) continue;
 		*p='\0';
 		p=strchr(envp[i], '=')+1;
-		nes_setstr(proc.N, tobj, tmpbuf, p, -1);
+		nsp_setstr(proc.N, tobj, tmpbuf, p, -1);
 	}
 	proc.stats.starttime=time(NULL);
-	cobj=nes_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), -1);
+	cobj=nsp_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), -1);
 	ptemp=cobj->val->d.str;
 	if (p_strcasestr(ptemp, ".exe")!=NULL) {
 		ptemp=p_strcasestr(ptemp, ".exe");
@@ -308,18 +309,18 @@ int main(int argc, char *argv[], char *envp[])
 		if (modules_exec()!=0) exit(-2);
 		if (startlisteners()!=0) exit(-2);
 		if (modules_cron()!=0) exit(-2);
-		if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullgsRunEvent"))!=0) {
+		if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent"))!=0) {
 			printf("NullLogic GroupServer is already running.\r\n");
 			CloseHandle(ghevDoForever);
 			exit(-2);
 		}
-		ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullgsRunEvent");
+		ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
 		WaitForSingleObject(ghevDoForever, INFINITE);
 		exit(-2);
 	}
 /*	memset(&gStatus, 0x00, sizeof(gStatus)); */
 	ghevDoForever=NULL;
-	if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullgsRunEvent"))!=0) {
+	if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent"))!=0) {
 		printf("NullLogic GroupServer is already running.\r\n");
 		CloseHandle(ghevDoForever);
 		exit(-2);
@@ -361,7 +362,7 @@ int main(int argc, char *argv[], char *envp[])
 	if (proc.N->err) {
 		printf("errno=%d :: \"%s\"\r\n", proc.N->err, proc.N->errbuf);
 	}
-	proc.N=nes_endstate(proc.N);
+	proc.N=nsp_endstate(proc.N);
 	return 0;
 }
 #else
@@ -377,19 +378,19 @@ int main(int argc, char *argv[], char *envp[])
 	setvbuf(stdout, NULL, _IONBF, 0);
 	memset((char *)&proc, 0, sizeof(proc));
 	if (getenv("REQUEST_METHOD")!=NULL) return 0;
-	if ((proc.N=nes_newstate())==NULL) {
-		printf("nes_newstate() error\r\n");
+	if ((proc.N=nsp_newstate())==NULL) {
+		printf("nsp_newstate() error\r\n");
 		return -1;
 	}
 	/* add args */
-	tobj=nes_settable(proc.N, &proc.N->g, "_ARGS");
+	tobj=nsp_settable(proc.N, &proc.N->g, "_ARGS");
 	tobj->val->attr|=NST_AUTOSORT;
 	for (i=0;i<argc;i++) {
 		sprintf(tmpbuf, "%d", i);
-		nes_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
+		nsp_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
 	}
 	/* add env */
-	tobj=nes_settable(proc.N, &proc.N->g, "_ENV");
+	tobj=nsp_settable(proc.N, &proc.N->g, "_ENV");
 	tobj->val->attr|=NST_AUTOSORT;
 	for (i=0;envp[i]!=NULL;i++) {
 		strncpy(tmpbuf, envp[i], MAX_OBJNAMELEN);
@@ -397,10 +398,10 @@ int main(int argc, char *argv[], char *envp[])
 		if (!p) continue;
 		*p='\0';
 		p=strchr(envp[i], '=')+1;
-		nes_setstr(proc.N, tobj, tmpbuf, p, strlen(p));
+		nsp_setstr(proc.N, tobj, tmpbuf, p, strlen(p));
 	}
 	proc.stats.starttime=time(NULL);
-	nes_setstr(proc.N, &proc.N->g, "program_name", argv[0], strlen(argv[0]));
+	nsp_setstr(proc.N, &proc.N->g, "program_name", argv[0], strlen(argv[0]));
 	init(proc.N);
 	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
 	if (argc<2) {
@@ -410,15 +411,15 @@ int main(int argc, char *argv[], char *envp[])
 			module_load(argv[i]);
 		}
 	}
-	tobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
+	tobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
 	if (getuid()==0) {
-		if (!(pw=getpwnam(nes_getstr(proc.N, tobj, "uid")))) {
-			printf("\r\nCannot find user '%s'.  Exiting.\r\n", nes_getstr(proc.N, tobj, "uid"));
+		if (!(pw=getpwnam(nsp_getstr(proc.N, tobj, "uid")))) {
+			printf("\r\nCannot find user '%s'.  Exiting.\r\n", nsp_getstr(proc.N, tobj, "uid"));
 			exit(-2);
 		}
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 		endpwent();
-		if ((fp=fopen("/var/run/nullgsd.pid", "w"))!=NULL) {
+		if ((fp=fopen("/var/run/nullsd.pid", "w"))!=NULL) {
 			fprintf(fp, "%d\n", getpid());
 			fclose(fp);
 		}
@@ -434,7 +435,7 @@ int main(int argc, char *argv[], char *envp[])
 	if (proc.N->err) {
 		printf("errno=%d :: \"%s\"\r\n", proc.N->err, proc.N->errbuf);
 	}
-	proc.N=nes_endstate(proc.N);
+	proc.N=nsp_endstate(proc.N);
 	return 0;
 }
 #endif

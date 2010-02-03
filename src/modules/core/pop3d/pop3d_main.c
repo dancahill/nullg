@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,20 +81,20 @@ int pthread_kill(pthread_t handle, int sig)
 }
 #endif
 
-int closeconnect(CONN *sid)
+int closeconnect(CONN *conn)
 {
-	if (sid!=NULL) {
-		tcp_close(&sid->socket, 1);
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", sid->socket.RemoteAddr, sid->socket.RemotePort);
-		if (sid->dat!=NULL) {
-			free(sid->dat);
-			sid->dat=NULL;
+	if (conn!=NULL) {
+		tcp_close(&conn->socket, 1);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
+		if (conn->dat!=NULL) {
+			free(conn->dat);
+			conn->dat=NULL;
 		}
 #ifdef WIN32
-		CloseHandle(sid->handle);
+		CloseHandle(conn->handle);
 #endif
-		memset(sid, 0, sizeof(conn[0]));
-		sid->socket.socket=-1;
+		memset(conn, 0, sizeof(conn[0]));
+		conn->socket.socket=-1;
 #ifdef WIN32
 		_endthread();
 #else
@@ -110,27 +110,27 @@ unsigned _stdcall poploop(void *x)
 void *poploop(void *x)
 #endif
 {
-	CONN *sid=x;
+	CONN *conn=x;
 
 	log_error(proc->N, "core", __FILE__, __LINE__, 2, "Starting poploop() thread");
-	sid->id=pthread_self();
+	conn->id=pthread_self();
 #ifndef WIN32
-	pthread_detach(sid->id);
+	pthread_detach(conn->id);
 #endif
-	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Opening connection [%s:%d]", sid->socket.RemoteAddr, sid->socket.RemotePort);
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Opening connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	proc->stats.pop3_conns++;
-	if (sid->dat!=NULL) free(sid->dat);
-	sid->dat=calloc(1, sizeof(CONNDATA));
-	sid->socket.atime=time(NULL);
-	sid->socket.ctime=time(NULL);
-	strncpy(sid->dat->RemoteAddr, sid->socket.RemoteAddr, sizeof(sid->dat->RemoteAddr)-1);
-	sid->dat->RemotePort=sid->socket.RemotePort;
-	pop3_dorequest(sid);
-	sid->state=0;
-	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", sid->socket.RemoteAddr, sid->socket.RemotePort);
+	if (conn->dat!=NULL) free(conn->dat);
+	conn->dat=calloc(1, sizeof(CONNDATA));
+	conn->socket.atime=time(NULL);
+	conn->socket.ctime=time(NULL);
+	strncpy(conn->dat->RemoteAddr, conn->socket.RemoteAddr, sizeof(conn->dat->RemoteAddr)-1);
+	conn->dat->RemotePort=conn->socket.RemotePort;
+	pop3_dorequest(conn);
+	conn->state=0;
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	/* closeconnect() cleans up our mess for us */
-	closeconnect(sid);
-	sid->socket.socket=-1;
+	closeconnect(conn);
+	conn->socket.socket=-1;
 	pthread_exit(0);
 	return 0;
 }

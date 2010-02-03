@@ -1,1 +1,0 @@
-nullgs-scanfile.sh

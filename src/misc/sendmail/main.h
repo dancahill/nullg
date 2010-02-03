@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #ifdef WIN32
 #define DEFAULT_BASE_DIR "C:\\Program Files\\NullLogic GroupServer"
 #else
-#define DEFAULT_BASE_DIR "/usr/local/nullgs"
+#define DEFAULT_BASE_DIR "/usr/local/nullsd"
 #endif
 
 #ifdef WIN32

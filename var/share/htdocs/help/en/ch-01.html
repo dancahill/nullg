@@ -37,8 +37,8 @@ in your SQL server.  This can be done as follows:
 <UL>
 <TABLE BORDER=1>
 <TR><TD><B>SQL Server</B></TD><TD><B>Command</B></TD></TR>
-<TR><TD>MySQL</TD><TD><I>mysqladmin create nullgs</I></TD></TR>
-<TR><TD>PostgreSQL</TD><TD><I>createdb nullgs</I></TD></TR>
+<TR><TD>MySQL</TD><TD><I>mysqladmin create nullsd</I></TD></TR>
+<TR><TD>PostgreSQL</TD><TD><I>createdb nullsd</I></TD></TR>
 </TABLE>
 </UL>
 </P>
@@ -85,25 +85,25 @@ with Apache, IIS, or almost any other web server.
 If you intend to run NullLogic GroupServer as a standalone server, you may want to put
 NullLogic GroupServer in your startup.  As an additional security precaution, on
 Unix/Linux systems, you may want to run NullLogic GroupServer as a non-root user.  It is
-assumed that the server will be run as the user 'nullgs'.  If the server will be run
+assumed that the server will be run as the user 'nullsd'.  If the server will be run
 as another user, care should be taken to ensure adequeate permission is given, especially
 the etc and filed directories.
 </P>
 <P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 This functionality no longer exists.
 If you intend to run NullLogic GroupServer as a CGI, simply copy the main NullLogic GroupServer
-executable (<I>NULLGS.EXE</I> on Windows, <I>nullgs</I> on Linux) to a directory which
-your web server recognizes as being a CGI directory, and copy the file <I>nullgs.cfg</I>
-to the same directory.  You will also need to copy the directory called <I>nullgs</I>
+executable (<I>NULLSD.EXE</I> on Windows, <I>nullsd</I> on Linux) to a directory which
+your web server recognizes as being a CGI directory, and copy the file <I>nullsd.cfg</I>
+to the same directory.  You will also need to copy the directory called <I>nullsd</I>
 from your htdocs directory to your web server's base htdocs directory.
 </P>
 <P CLASS=JUSTIFY>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 In either case, you can run multiple installations of NullLogic GroupServer on the same server
-by creating a different <I>nullgs.conf</I> file for each installation.  By default,
+by creating a different <I>nullsd.conf</I> file for each installation.  By default,
 NullLogic GroupServer looks in the current directory first for the configuration file.
-If it doesn't find one here, it checks <I>../etc/nullgs.conf</I>, and finally, it looks in
-the default location (<I>/usr/local/nullgs/etc/nullgs.conf</I> on Linux, and
-<I>C:\Program Files\NullLogic GroupServer\etc\nullgs.conf</I> on Windows).
+If it doesn't find one here, it checks <I>../etc/nullsd.conf</I>, and finally, it looks in
+the default location (<I>/usr/local/nullsd/etc/nullsd.conf</I> on Linux, and
+<I>C:\Program Files\NullLogic GroupServer\etc\nullsd.conf</I> on Windows).
 </P>
 </UL>
 

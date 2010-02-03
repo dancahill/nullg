@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SRVMOD_MAIN 1
-#include "nullgs/httpd_mod.h"
+#include "nullsd/httpd_mod.h"
 #ifndef WIN32
 #include <sys/wait.h>
 #endif
@@ -28,22 +28,22 @@ typedef struct {
 	int out;
 } pipe_fd;
 
-void cgi_makeargs(CONN *sid, char *args[])
+void cgi_makeargs(CONN *conn, char *args[])
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
-//	obj_t *hrobj=nes_settable(sid->N, &sid->N->g, "_HEADER");
-	obj_t *htobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
+//	obj_t *hrobj=nsp_settable(conn->N, &conn->N->g, "_HEADER");
+	obj_t *htobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
 	obj_t *cobj;
-	char *RequestURI=nes_getstr(sid->N, htobj, "REQUEST_URI");
+	char *RequestURI=nsp_getstr(conn->N, htobj, "REQUEST_URI");
 	char *ptemp;
 	char progname[255];
 
 	if (strncmp(RequestURI, "/cgi-bin/", 9)!=0) return;
 	args[0]=calloc(255, sizeof(char));
-//	snprintf(progname, sizeof(progname)-1, "%s", sid->dat->in_CGIScriptName+9);
-	cobj=nes_getobj(sid->N, htobj, "SCRIPT_NAME");
-	if (nes_isstr(cobj)) {
-		snprintf(progname, sizeof(progname)-1, "%s", nes_tostr(sid->N, cobj)+9);
+//	snprintf(progname, sizeof(progname)-1, "%s", conn->dat->in_CGIScriptName+9);
+	cobj=nsp_getobj(conn->N, htobj, "SCRIPT_NAME");
+	if (nsp_isstr(cobj)) {
+		snprintf(progname, sizeof(progname)-1, "%s", nsp_tostr(conn->N, cobj)+9);
 	}
 	if ((ptemp=strchr(progname, '?'))!=NULL) {
 		args[1]=calloc(255, sizeof(char));
@@ -55,29 +55,29 @@ void cgi_makeargs(CONN *sid, char *args[])
 //		snprintf(args[2], 254, "%s", ptemp);
 //		*ptemp='\0';
 //	}
-	snprintf(args[0], 254, "%s/cgi-bin/%s", nes_getstr(proc->N, confobj, "var_path"), progname);
+	snprintf(args[0], 254, "%s/cgi-bin/%s", nsp_getstr(proc->N, confobj, "var_path"), progname);
 	fixslashes(args[0]);
-	cobj=nes_getobj(sid->N, htobj, "QUERY_STRING");
-	if (nes_isstr(cobj)) {
-//	if (strlen(sid->dat->in_QueryString)) {
+	cobj=nsp_getobj(conn->N, htobj, "QUERY_STRING");
+	if (nsp_isstr(cobj)) {
+//	if (strlen(conn->dat->in_QueryString)) {
 		args[1]=calloc(255, sizeof(char));
-		snprintf(args[1], 254, "%s", nes_tostr(sid->N, cobj));
+		snprintf(args[1], 254, "%s", nsp_tostr(conn->N, cobj));
 	}
-	cobj=nes_getobj(sid->N, htobj, "PATH_INFO");
-	if (nes_isstr(cobj)) {
-//	if (strlen(sid->dat->in_PathInfo)) {
+	cobj=nsp_getobj(conn->N, htobj, "PATH_INFO");
+	if (nsp_isstr(cobj)) {
+//	if (strlen(conn->dat->in_PathInfo)) {
 		args[2]=calloc(255, sizeof(char));
-		snprintf(args[2], 254, "%s", nes_tostr(sid->N, cobj));
+		snprintf(args[2], 254, "%s", nsp_tostr(conn->N, cobj));
 	}
 }
 
-void cgi_makeenv(CONN *sid, char *env[], char *args[])
+void cgi_makeenv(CONN *conn, char *env[], char *args[])
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
-	obj_t *hrobj=nes_settable(sid->N, &sid->N->g, "_HEADER");
-	obj_t *htobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *hrobj=nsp_settable(conn->N, &conn->N->g, "_HEADER");
+	obj_t *htobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
 	obj_t *cobj;
-	char *RequestURI=nes_getstr(sid->N, htobj, "REQUEST_URI");
+	char *RequestURI=nsp_getstr(conn->N, htobj, "REQUEST_URI");
 	char *ptemp;
 	int n=0;
 
@@ -88,30 +88,30 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 		snprintf(env[n++], MAX_PATH-1, "COMSPEC=%s", ptemp);
 	}
 #endif
-	if (strcasecmp(nes_getstr(sid->N, htobj, "REQUEST_METHOD"), "POST")==0) {
+	if (strcasecmp(nsp_getstr(conn->N, htobj, "REQUEST_METHOD"), "POST")==0) {
 		env[n]=calloc(1024, sizeof(char));
-		snprintf(env[n++], 1023, "CONTENT_LENGTH=%d", atoi(nes_getstr(sid->N, htobj, "CONTENT_LENGTH")));
+		snprintf(env[n++], 1023, "CONTENT_LENGTH=%d", atoi(nsp_getstr(conn->N, htobj, "CONTENT_LENGTH")));
 		env[n]=calloc(1024, sizeof(char));
-		cobj=nes_getobj(sid->N, htobj, "CONTENT_TYPE");
-		if (nes_isstr(cobj)) {
-			snprintf(env[n++], 1023, "CONTENT_TYPE=%s", nes_tostr(sid->N, cobj));
+		cobj=nsp_getobj(conn->N, htobj, "CONTENT_TYPE");
+		if (nsp_isstr(cobj)) {
+			snprintf(env[n++], 1023, "CONTENT_TYPE=%s", nsp_tostr(conn->N, cobj));
 		} else {
 			snprintf(env[n++], 1023, "CONTENT_TYPE=application/x-www-form-urlencoded");
 		}
 	}
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s/htdocs", nes_getstr(proc->N, confobj, "var_path"));
+	snprintf(env[n++], 1023, "DOCUMENT_ROOT=%s/htdocs", nsp_getstr(proc->N, confobj, "var_path"));
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "GATEWAY_INTERFACE=CGI/1.1");
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "HTTP_CONNECTION=%s", nes_getstr(sid->N, hrobj, "CONNECTION"));
+	snprintf(env[n++], 1023, "HTTP_CONNECTION=%s", nsp_getstr(conn->N, hrobj, "CONNECTION"));
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "HTTP_COOKIE=%s", nes_getstr(sid->N, htobj, "HTTP_COOKIE"));
+	snprintf(env[n++], 1023, "HTTP_COOKIE=%s", nsp_getstr(conn->N, htobj, "HTTP_COOKIE"));
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "HTTP_HOST=%s", nes_getstr(sid->N, htobj, "HTTP_HOST"));
+	snprintf(env[n++], 1023, "HTTP_HOST=%s", nsp_getstr(conn->N, htobj, "HTTP_HOST"));
 	if ((ptemp=strchr(env[n-1], ':'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "HTTP_USER_AGENT=%s", nes_getstr(sid->N, htobj, "HTTP_USER_AGENT"));
+	snprintf(env[n++], 1023, "HTTP_USER_AGENT=%s", nsp_getstr(conn->N, htobj, "HTTP_USER_AGENT"));
 	if ((ptemp=getenv("PATH"))!=NULL) {
 		env[n]=calloc(1024, sizeof(char));
 		snprintf(env[n++], 1023, "PATH=%s", ptemp);
@@ -127,24 +127,24 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 		snprintf(env[n++], 1023, "QUERY_STRING=");
 	}
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "REMOTE_ADDR=%s", nes_getstr(sid->N, htobj, "REMOTE_ADDR"));
+	snprintf(env[n++], 1023, "REMOTE_ADDR=%s", nsp_getstr(conn->N, htobj, "REMOTE_ADDR"));
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "REMOTE_PORT=%d", atoi(nes_getstr(sid->N, htobj, "REMOTE_PORT")));
+	snprintf(env[n++], 1023, "REMOTE_PORT=%d", atoi(nsp_getstr(conn->N, htobj, "REMOTE_PORT")));
 	env[n]=calloc(1024, sizeof(char));
-//	snprintf(env[n++], 1023, "REMOTE_USER=%s", sid->dat->user_username);
+//	snprintf(env[n++], 1023, "REMOTE_USER=%s", conn->dat->user_username);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "REQUEST_METHOD=%s", nes_getstr(sid->N, htobj, "REQUEST_METHOD"));
+	snprintf(env[n++], 1023, "REQUEST_METHOD=%s", nsp_getstr(conn->N, htobj, "REQUEST_METHOD"));
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "REQUEST_URI=%s", nes_getstr(sid->N, htobj, "REQUEST_URI"));
+	snprintf(env[n++], 1023, "REQUEST_URI=%s", nsp_getstr(conn->N, htobj, "REQUEST_URI"));
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SCRIPT_FILENAME=%s", args[0]);
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
+	snprintf(env[n++], 1023, "SCRIPT_NAME=%s", nsp_getstr(conn->N, htobj, "SCRIPT_NAME"));
 	if ((ptemp=strchr(env[n-1], '?'))!=NULL) *ptemp='\0';
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_NAME=%s", nes_getstr(sid->N, htobj, "HTTP_HOST"));
+	snprintf(env[n++], 1023, "SERVER_NAME=%s", nsp_getstr(conn->N, htobj, "HTTP_HOST"));
 	env[n]=calloc(1024, sizeof(char));
-	snprintf(env[n++], 1023, "SERVER_PORT=%d", atoi(nes_getstr(sid->N, htobj, "SERVER_PORT")));
+	snprintf(env[n++], 1023, "SERVER_PORT=%d", atoi(nsp_getstr(conn->N, htobj, "SERVER_PORT")));
 	env[n]=calloc(1024, sizeof(char));
 	snprintf(env[n++], 1023, "SERVER_PROTOCOL=HTTP/1.1");
 	env[n]=calloc(1024, sizeof(char));
@@ -167,10 +167,10 @@ void cgi_makeenv(CONN *sid, char *env[], char *args[])
 	args[2]=NULL;
 }
 
-DllExport int mod_main(CONN *sid)
+DllExport int mod_main(CONN *conn)
 {
-	obj_t *hrobj=nes_settable(sid->N, &sid->N->g, "_HEADER");
-	obj_t *htobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
+	obj_t *hrobj=nsp_settable(conn->N, &conn->N->g, "_HEADER");
+	obj_t *htobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
 	obj_t *cobj;
 #ifdef WIN32
 	char *cgi_types[3][2]={
@@ -211,9 +211,9 @@ DllExport int mod_main(CONN *sid)
 	int bytesleft;
 
 	memset(args, 0, sizeof(args));
-	cgi_makeargs(sid, args);
+	cgi_makeargs(conn, args);
 	memset(env, 0, sizeof(env));
-	cgi_makeenv(sid, env, args);
+	cgi_makeenv(conn, env, args);
 	snprintf(cgifilename, sizeof(cgifilename)-1, "%s", args[0]);
 	for (i=0;i<10;i++) free(args[i]);
 	n=0;
@@ -252,7 +252,7 @@ DllExport int mod_main(CONN *sid)
 	if (!CreatePipe((HANDLE)&remote.in, (HANDLE)&local.out, &saAttr, BUFF_SIZE)) {
 		for (i=0;i<10;i++) free(args[i]);
 		for (i=0;i<50;i++) free(env[i]);
-		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
+		send_error(conn, 500, "Internal Server Error", "Unable to create pipe.");
 		return 0;
 	}
 	if (!CreatePipe((HANDLE)&local.in, (HANDLE)&remote.out, &saAttr, BUFF_SIZE)) {
@@ -260,7 +260,7 @@ DllExport int mod_main(CONN *sid)
 		for (i=0;i<50;i++) free(env[i]);
 		CloseHandle((HANDLE)remote.in);
 		CloseHandle((HANDLE)local.out);
-		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
+		send_error(conn, 500, "Internal Server Error", "Unable to create pipe.");
 		return 0;
 	}
 	si.cb=sizeof(si);
@@ -277,7 +277,7 @@ DllExport int mod_main(CONN *sid)
 		CloseHandle((HANDLE)remote.in);
 		CloseHandle((HANDLE)remote.out);
 		log_error(proc->N, "mod_cgi", __FILE__, __LINE__, 1, "CGI failed. [%s]", Command);
-		send_error(sid, 500, "Internal Server Error", "There was a problem running the requested CGI.");
+		send_error(conn, 500, "Internal Server Error", "There was a problem running the requested CGI.");
 		return 0;
 	}
 	pid=pi.dwProcessId;
@@ -290,7 +290,7 @@ DllExport int mod_main(CONN *sid)
 		close(pset1[0]);
 		close(pset1[1]);
 		log_error(proc->N, "mod_cgi", __FILE__, __LINE__, 1, "pipe() error");
-		send_error(sid, 500, "Internal Server Error", "Unable to create pipe.");
+		send_error(conn, 500, "Internal Server Error", "Unable to create pipe.");
 		return 0;
 	}
 	local.in=pset1[0]; remote.out=pset1[1];
@@ -317,11 +317,11 @@ DllExport int mod_main(CONN *sid)
 		close(remote.out);
 	}
 #endif
-	if (atoi(nes_getstr(sid->N, htobj, "CONTENT_LENGTH"))>0) {
-		bytesleft=atoi(nes_getstr(sid->N, htobj, "CONTENT_LENGTH"));
+	if (atoi(nsp_getstr(conn->N, htobj, "CONTENT_LENGTH"))>0) {
+		bytesleft=atoi(nsp_getstr(conn->N, htobj, "CONTENT_LENGTH"));
 
-		cobj=nes_getobj(sid->N, &sid->N->g, "POSTRAWDATA");
-//		ptemp=sid->PostData;
+		cobj=nsp_getobj(conn->N, &conn->N->g, "POSTRAWDATA");
+//		ptemp=conn->PostData;
 		ptemp=cobj->val->d.str;
 //		log_error(proc->N, "mod_cgi", __FILE__, __LINE__, 1, "--[%d][%s]", bytesleft, ptemp);
 		while (bytesleft>0) {
@@ -338,23 +338,23 @@ DllExport int mod_main(CONN *sid)
 			}
 		}
 	}
-	sid->dat->out_headdone=1;
-	sid->dat->out_status=200;
-	if (p_strcasestr(nes_getstr(sid->N, hrobj, "PROTOCOL"), "HTTP/1.1")!=NULL) {
-//		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.1");
+	conn->dat->out_headdone=1;
+	conn->dat->out_status=200;
+	if (p_strcasestr(nsp_getstr(conn->N, hrobj, "PROTOCOL"), "HTTP/1.1")!=NULL) {
+//		snprintf(conn->dat->out_Protocol, sizeof(conn->dat->out_Protocol)-1, "HTTP/1.1");
 //	} else {
-//		snprintf(sid->dat->out_Protocol, sizeof(sid->dat->out_Protocol)-1, "HTTP/1.0");
+//		snprintf(conn->dat->out_Protocol, sizeof(conn->dat->out_Protocol)-1, "HTTP/1.0");
 //	}
 //	if (p_strcasestr(Protocol, "HTTP/1.1")!=NULL) {
-		nes_setstr(sid->N, hrobj, "PROTOCOL", "HTTP/1.1", strlen("HTTP/1.1"));
+		nsp_setstr(conn->N, hrobj, "PROTOCOL", "HTTP/1.1", strlen("HTTP/1.1"));
 	} else {
-		nes_setstr(sid->N, hrobj, "PROTOCOL", "HTTP/1.0", strlen("HTTP/1.0"));
+		nsp_setstr(conn->N, hrobj, "PROTOCOL", "HTTP/1.0", strlen("HTTP/1.0"));
 	}
-	nes_setstr(sid->N, hrobj, "CONNECTION", "Close", strlen("Close"));
-//	snprintf(sid->dat->out_Connection, sizeof(sid->dat->out_Connection)-1, "Close");
-	prints(sid, "%s %d OK\r\n", nes_getstr(sid->N, hrobj, "PROTOCOL"), sid->dat->out_status);
-	prints(sid, "Connection: %s\r\n", nes_getstr(sid->N, hrobj, "CONNECTION"));
-	flushbuffer(sid);
+	nsp_setstr(conn->N, hrobj, "CONNECTION", "Close", strlen("Close"));
+//	snprintf(conn->dat->out_Connection, sizeof(conn->dat->out_Connection)-1, "Close");
+	prints(conn, "%s %d OK\r\n", nsp_getstr(conn->N, hrobj, "PROTOCOL"), conn->dat->out_status);
+	prints(conn, "Connection: %s\r\n", nsp_getstr(conn->N, hrobj, "CONNECTION"));
+	flushbuffer(conn);
 	do {
 		memset(szBuffer, 0, sizeof(szBuffer));
 #ifdef WIN32
@@ -363,11 +363,11 @@ DllExport int mod_main(CONN *sid)
 		nOutRead=read(local.in, szBuffer, BUFF_SIZE-1);
 #endif
 		if (nOutRead>0) {
-			tcp_send(&sid->socket, szBuffer, nOutRead, 0);
-			sid->dat->out_bytecount+=nOutRead;
+			tcp_send(&conn->socket, szBuffer, nOutRead, 0);
+			conn->dat->out_bytecount+=nOutRead;
 		};
 	} while (nOutRead>0);
-	flushbuffer(sid);
+	flushbuffer(conn);
 	/* cleanup */
 	for (i=0;i<10;i++) free(args[i]);
 	for (i=0;i<50;i++) free(env[i]);
@@ -383,9 +383,9 @@ DllExport int mod_main(CONN *sid)
 	close(local.out);
 	wait(&status);
 #endif
-	sid->dat->out_bodydone=1;
-	flushbuffer(sid);
-	closeconnect(sid, 1);
+	conn->dat->out_bodydone=1;
+	flushbuffer(conn);
+	closeconnect(conn, 1);
 	return 0;
 }
 
@@ -400,10 +400,10 @@ DllExport int mod_init(_PROC *_proc)
 
 	proc=_proc;
 	if (mod_import()!=0) return -1;
-	tobj=nes_settable(proc->N, nes_settable(proc->N, &proc->N->g, "GWMODULES"), "cgi");
-	nes_exec(proc->N, "GWMODULES.cgi={fn_name='mod_main',fn_uri='/cgi-bin/'};");
-	nes_setcfunc(proc->N, tobj, "mod_init", (void *)mod_init);
-	nes_setcfunc(proc->N, tobj, "mod_main", (void *)mod_main);
-	nes_setcfunc(proc->N, tobj, "mod_exit", (void *)mod_exit);
+	tobj=nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "GWMODULES"), "cgi");
+	nsp_exec(proc->N, "GWMODULES.cgi={fn_name='mod_main',fn_uri='/cgi-bin/'};");
+	nsp_setcfunc(proc->N, tobj, "mod_init", (void *)mod_init);
+	nsp_setcfunc(proc->N, tobj, "mod_main", (void *)mod_main);
+	nsp_setcfunc(proc->N, tobj, "mod_exit", (void *)mod_exit);
 	return 0;
 }

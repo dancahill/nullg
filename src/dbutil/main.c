@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullgs/config-nt.h"
+#include "nullsd/config-nt.h"
 #else
-#include "nullgs/config.h"
+#include "nullsd/config.h"
 #endif
 #include <stdio.h>
 #include <time.h>
@@ -37,9 +37,9 @@
 	#include <unistd.h>
 	#include <sys/stat.h>
 #endif
-#include "nullgs/defines.h"
-#include "nesla/nesla.h"
-#include "ngs.h"
+#include "nullsd/defines.h"
+#include "nsp/nsp.h"
+#include "nsd.h"
 #include "schema.h"
 
 #define SQLBUFSIZE 32768
@@ -48,7 +48,7 @@ char sql_type[32];
 char rootpass[40];
 int loglevel;
 
-int sqlfprintf(nes_state *N, FILE *fp, const char *format, ...)
+int sqlfprintf(nsp_state *N, FILE *fp, const char *format, ...)
 {
 	char *buffer=calloc(SQLBUFSIZE, sizeof(char));
 	int offset=0;
@@ -77,7 +77,7 @@ int sqlfprintf(nes_state *N, FILE *fp, const char *format, ...)
 	return 0;
 }
 
-int init_table(nes_state *N, char *query, char *tablename)
+int init_table(nsp_state *N, char *query, char *tablename)
 {
 	if (strcasecmp(sql_type, "MYSQL")==0) {
 		_sql_updatef(N, "DROP TABLE IF EXISTS %s;", tablename);
@@ -98,7 +98,7 @@ int init_table(nes_state *N, char *query, char *tablename)
 	return 0;
 }
 
-int pgsql_sequence_sync(nes_state *N)
+int pgsql_sequence_sync(nsp_state *N)
 {
 	int max;
 	int seq;
@@ -132,7 +132,7 @@ int pgsql_sequence_sync(nes_state *N)
 	return 0;
 }
 
-int table_check(nes_state *N)
+int table_check(nsp_state *N)
 {
 	int i;
 
@@ -142,7 +142,7 @@ int table_check(nes_state *N)
 	return 0;
 }
 
-int dump_db_ldif(nes_state *N, char *filename)
+int dump_db_ldif(nsp_state *N, char *filename)
 {
 	obj_t *qobj1=NULL;
 	obj_t *qobj2=NULL;
@@ -158,13 +158,13 @@ int dump_db_ldif(nes_state *N, char *filename)
 		printf("\r\nCould not create output file.\r\n");
 		return -1;
 	}
-	if (_sql_query(N, &qobj1, "SELECT * FROM nullgs_entries ORDER BY id ASC")<0) {
-		printf("\r\nError dumping nullgs_entries\r\n");
+	if (_sql_query(N, &qobj1, "SELECT * FROM nullsd_entries ORDER BY id ASC")<0) {
+		printf("\r\nError dumping nullsd_entries\r\n");
 		return -1;
 	}
 	for (i=0;i<sql_numtuples(N, &qobj1);i++) {
-		if (_sql_queryf(N, &qobj2, "SELECT * FROM nullgs_attributes WHERE pid = %d ORDER BY id ASC", atoi(sql_getvalue(N, &qobj1, i, 0)))<0) {
-			printf("\r\nError dumping nullgs_attributes\r\n");
+		if (_sql_queryf(N, &qobj2, "SELECT * FROM nullsd_attributes WHERE pid = %d ORDER BY id ASC", atoi(sql_getvalue(N, &qobj1, i, 0)))<0) {
+			printf("\r\nError dumping nullsd_attributes\r\n");
 			return -1;
 		}
 		fprintf(fp, "dn: %s\n", sql_getvaluebyname(N, &qobj1, i, "name"));
@@ -184,7 +184,7 @@ int dump_db_ldif(nes_state *N, char *filename)
 	return -1;
 }
 
-int dump_table(nes_state *N, FILE *fp, char *table, char *index)
+int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 {
 	char query[100];
 	char *ptemp;
@@ -217,7 +217,7 @@ int dump_table(nes_state *N, FILE *fp, char *table, char *index)
 	return 0;
 }
 
-int dump_db_sql(nes_state *N, char *filename)
+int dump_db_sql(nsp_state *N, char *filename)
 {
 	obj_t *qobj1=NULL;
 	int i, j;
@@ -231,12 +231,12 @@ int dump_db_sql(nes_state *N, char *filename)
 		printf("\r\nCould not create output file.\r\n");
 		return -1;
 	}
-	if (_sql_query(N, &qobj1, "SELECT * FROM nullgs_entries ORDER BY id ASC")<0) {
-		printf("\r\nError dumping nullgs_entries\r\n");
+	if (_sql_query(N, &qobj1, "SELECT * FROM nullsd_entries ORDER BY id ASC")<0) {
+		printf("\r\nError dumping nullsd_entries\r\n");
 		return -1;
 	}
 	for (i=0;i<sql_numtuples(N, &qobj1);i++) {
-		fprintf(fp, "INSERT INTO nullgs_entries (");
+		fprintf(fp, "INSERT INTO nullsd_entries (");
 		for (j=0;j<sql_numfields(N, &qobj1);j++) {
 			fprintf(fp, "%s", sql_getname(N, &qobj1, j));
 			if (j<sql_numfields(N, &qobj1)-1) fprintf(fp, ", ");
@@ -251,14 +251,14 @@ int dump_db_sql(nes_state *N, char *filename)
 		fprintf(fp, ");\n");
 	}
 	_sql_freeresult(N, &qobj1);
-	dump_table(N, fp, "nullgs_sessions", "id");
+	dump_table(N, fp, "nullsd_sessions", "id");
 	fclose(fp);
 	printf("done.\r\n");
 	_sql_disconnect(N);
 	return -1;
 }
 
-int init_db(nes_state *N)
+int init_db(nsp_state *N)
 {
 	int i;
 
@@ -309,7 +309,7 @@ int init_db(nes_state *N)
 	return 0;
 }
 
-int restore_db(nes_state *N, char *filename)
+int restore_db(nsp_state *N, char *filename)
 {
 	char line[32768];
 	char *pTemp;
@@ -400,13 +400,13 @@ void usage(char *arg0)
 	printf("    DUMP     Dumps the data from the current database to a file\r\n");
 	printf("    RESTORE  Restores the current database from a file\r\n");
 	printf("\r\nThe INIT command is used to initialize a new NullLogic GroupServer database\r\n");
-	printf("(as defined in nullgs.conf).  The parameter for this function\r\n");
+	printf("(as defined in nullsd.conf).  The parameter for this function\r\n");
 	printf("is the password for the administrator account.\r\n");
 	printf("\r\nThe DUMP command is used to export the contents of the current database\r\n");
-	printf("(as defined in nullgs.conf) to a text file.  The parameter for this function\r\n");
+	printf("(as defined in nullsd.conf) to a text file.  The parameter for this function\r\n");
 	printf("is the name of the file to which the data is to be saved.\r\n");
 	printf("\r\nThe RESTORE command is used to restore a previous database dump to the current\r\n");
-	printf("database (as defined in nullgs.conf).  The parameter for this function is the\r\n");
+	printf("database (as defined in nullsd.conf).  The parameter for this function is the\r\n");
 	printf("name of the file from which the data is to be restored.\r\n");
 	printf("\r\nNOTE: The INIT and RESTORE commands WILL destroy any current database before\r\n");
 	printf("recreating it.  Be sure to use DUMP to make a backup prior to using the INIT\r\n");
@@ -416,7 +416,7 @@ void usage(char *arg0)
 
 int main(int argc, char *argv[])
 {
-	nes_state *N;
+	nsp_state *N;
 	char itoa64[]="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	char salt[10];
 	char function[16];
@@ -426,8 +426,8 @@ int main(int argc, char *argv[])
 	obj_t *tobj;
 	obj_t *cobj;
 
-	if ((N=nes_newstate())==NULL) {
-		printf("nes_newstate() error\r\n");
+	if ((N=nsp_newstate())==NULL) {
+		printf("nsp_newstate() error\r\n");
 		return -1;
 	}
 	loglevel=1;
@@ -457,9 +457,9 @@ int main(int argc, char *argv[])
 		printf("can't read the config file.\r\n");
 		return 0;
 	}
-	tobj=nes_getobj(N, &N->g, "CONFIG");
+	tobj=nsp_getobj(N, &N->g, "CONFIG");
 	if (tobj->val->type!=NT_TABLE) return 0;
-	cobj=nes_getobj(N, tobj, "sql_server_type");
+	cobj=nsp_getobj(N, tobj, "sql_server_type");
 	if (cobj->val->type==NT_STRING) {
 		snprintf(sql_type, sizeof(sql_type)-1, "%s", cobj->val->d.str);
 	}
@@ -486,6 +486,6 @@ int main(int argc, char *argv[])
 	if (N->err) {
 		printf("errno=%d :: \"%s\"\r\n", N->err, N->errbuf);
 	}
-	N=nes_endstate(N);
+	N=nsp_endstate(N);
 	return 0;
 }

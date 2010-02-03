@@ -16,11 +16,11 @@ all:
 #	@COPY \NullLogic\gw\libs\libsqlite3.dll ..\..\lib
 #	@COPY \NullLogic\gw\libs\libeay32.dll ..\..\lib
 #	@COPY \NullLogic\gw\libs\ssleay32.dll ..\..\lib
-	@ECHO libnesla
-	@CD SRC\LIBNESLA
+	@ECHO libnsp
+	@CD SRC\LIBNSP
 	@NMAKE /C /S /F MAKEFILE.VC
-	@ECHO libngs
-	@CD ..\LIBNGS
+	@ECHO libnsd
+	@CD ..\LIBNSD
 	@NMAKE /C /S /F MAKEFILE.VC
 	@ECHO confutil
 	@CD ..\CONFUTIL

@@ -1,6 +1,6 @@
-void profiletimeedit(CONN *sid)
+void profiletimeedit(CONN *conn)
 {
-	obj_t *htobj=nes_getobj(sid->N, &sid->N->g, "_SERVER");
+	obj_t *htobj=nes_getobj(conn->N, &conn->N->g, "_SERVER");
 	char *dow[7]={ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 	char gavailability[170];
 	char uavailability[170];
@@ -8,13 +8,13 @@ void profiletimeedit(CONN *sid)
 	int j;
 	obj_t *qobj=NULL;
 
-	if (!(auth_priv(sid, "profile")&A_MODIFY)) {
-		prints(sid, "<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+	if (!(auth_priv(conn, "profile")&A_MODIFY)) {
+		prints(conn, "<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 		return;
 	}
-	if (sql_queryf(proc->N, &qobj, "SELECT availability FROM gw_users WHERE userid = %d", sid->dat->uid)<0) return;
+	if (sql_queryf(proc->N, &qobj, "SELECT availability FROM gw_users WHERE userid = %d", conn->dat->uid)<0) return;
 	if (sql_numtuples(proc->N, &qobj)!=1) {
-		prints(sid, "<CENTER>No matching record found for %s</CENTER>\r\n", sid->dat->uid);
+		prints(conn, "<CENTER>No matching record found for %s</CENTER>\r\n", conn->dat->uid);
 		sql_freeresult(proc->N, &qobj);
 		return;
 	}
@@ -26,9 +26,9 @@ void profiletimeedit(CONN *sid)
 			uavailability[i]='0';
 		}
 	}
-	if (sql_queryf(proc->N, &qobj, "SELECT availability FROM gw_groups WHERE groupid = %d", sid->dat->gid)<0) return;
+	if (sql_queryf(proc->N, &qobj, "SELECT availability FROM gw_groups WHERE groupid = %d", conn->dat->gid)<0) return;
 	if (sql_numtuples(proc->N, &qobj)!=1) {
-		prints(sid, "<CENTER>No matching record found for group %d</CENTER>\r\n", sid->dat->gid);
+		prints(conn, "<CENTER>No matching record found for group %d</CENTER>\r\n", conn->dat->gid);
 		sql_freeresult(proc->N, &qobj);
 		return;
 	}
@@ -45,78 +45,78 @@ void profiletimeedit(CONN *sid)
 			uavailability[i]='X';
 		}
 	}
-	prints(sid, "<SCRIPT LANGUAGE=JavaScript>\r\n");
-	prints(sid, "<!--\r\n");
-	prints(sid, "function toggle(b,n)\r\n");
-	prints(sid, "{\r\n");
-	prints(sid, "	if (b == \"t\" ) {\r\n");
-	prints(sid, "		if (document.availability[\"t\" + n].value == 'true') {\r\n");
-	prints(sid, "			document.availability[\"t\" + n].value = 'false'\r\n");
-	prints(sid, "			var bool = true\r\n");
-	prints(sid, "		} else {\r\n");
-	prints(sid, "			document.availability[\"t\" + n].value = 'true'\r\n");
-	prints(sid, "			var bool = false\r\n");
-	prints(sid, "		}\r\n");
-	prints(sid, "		for (x=0;x<7;x++) {\r\n");
-	prints(sid, "			if (document.availability[\"d\" + x + \"t\" + n]) {\r\n");
-	prints(sid, "				document.availability[\"d\" + x + \"t\" + n].checked = bool\r\n");
-	prints(sid, "			}\r\n");
-	prints(sid, "		}\r\n");
-	prints(sid, "	} else {\r\n");
-	prints(sid, "		if (document.availability[\"d\" + n].value == 'true') {\r\n");
-	prints(sid, "			document.availability[\"d\" + n].value = 'false'\r\n");
-	prints(sid, "			var bool = true\r\n");
-	prints(sid, "		} else {\r\n");
-	prints(sid, "			document.availability[\"d\" + n].value = 'true'\r\n");
-	prints(sid, "			var bool = false\r\n");
-	prints(sid, "		}\r\n");
-	prints(sid, "		for (x=0;x<24;x++) {\r\n");
-	prints(sid, "			if (document.availability[\"d\" + n + \"t\" + x]) {\r\n");
-	prints(sid, "				document.availability[\"d\" + n + \"t\" + x].checked = bool\r\n");
-	prints(sid, "			}\r\n");
-	prints(sid, "		}\r\n");
-	prints(sid, "	}\r\n");
-	prints(sid, "}\r\n");
-	prints(sid, "// -->\r\n");
-	prints(sid, "</SCRIPT>\r\n");
-	prints(sid, "<CENTER>\r\n");
-	prints(sid, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
-	prints(sid, "<FORM METHOD=POST ACTION=%s/profile/timesave NAME=availability>\r\n", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
+	prints(conn, "<SCRIPT LANGUAGE=JavaScript>\r\n");
+	prints(conn, "<!--\r\n");
+	prints(conn, "function toggle(b,n)\r\n");
+	prints(conn, "{\r\n");
+	prints(conn, "	if (b == \"t\" ) {\r\n");
+	prints(conn, "		if (document.availability[\"t\" + n].value == 'true') {\r\n");
+	prints(conn, "			document.availability[\"t\" + n].value = 'false'\r\n");
+	prints(conn, "			var bool = true\r\n");
+	prints(conn, "		} else {\r\n");
+	prints(conn, "			document.availability[\"t\" + n].value = 'true'\r\n");
+	prints(conn, "			var bool = false\r\n");
+	prints(conn, "		}\r\n");
+	prints(conn, "		for (x=0;x<7;x++) {\r\n");
+	prints(conn, "			if (document.availability[\"d\" + x + \"t\" + n]) {\r\n");
+	prints(conn, "				document.availability[\"d\" + x + \"t\" + n].checked = bool\r\n");
+	prints(conn, "			}\r\n");
+	prints(conn, "		}\r\n");
+	prints(conn, "	} else {\r\n");
+	prints(conn, "		if (document.availability[\"d\" + n].value == 'true') {\r\n");
+	prints(conn, "			document.availability[\"d\" + n].value = 'false'\r\n");
+	prints(conn, "			var bool = true\r\n");
+	prints(conn, "		} else {\r\n");
+	prints(conn, "			document.availability[\"d\" + n].value = 'true'\r\n");
+	prints(conn, "			var bool = false\r\n");
+	prints(conn, "		}\r\n");
+	prints(conn, "		for (x=0;x<24;x++) {\r\n");
+	prints(conn, "			if (document.availability[\"d\" + n + \"t\" + x]) {\r\n");
+	prints(conn, "				document.availability[\"d\" + n + \"t\" + x].checked = bool\r\n");
+	prints(conn, "			}\r\n");
+	prints(conn, "		}\r\n");
+	prints(conn, "	}\r\n");
+	prints(conn, "}\r\n");
+	prints(conn, "// -->\r\n");
+	prints(conn, "</SCRIPT>\r\n");
+	prints(conn, "<CENTER>\r\n");
+	prints(conn, "<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
+	prints(conn, "<FORM METHOD=POST ACTION=%s/profile/timesave NAME=availability>\r\n", nes_getstr(conn->N, htobj, "SCRIPT_NAME"));
 	for (i=0;i<7;i++) {
-		prints(sid, "<input type='hidden' name='d%d' value='true'>\r\n", i);
+		prints(conn, "<input type='hidden' name='d%d' value='true'>\r\n", i);
 	}
 	for (i=0;i<24;i++) {
-		prints(sid, "<input type='hidden' name='t%d' value='true'>\r\n", i);
+		prints(conn, "<input type='hidden' name='t%d' value='true'>\r\n", i);
 	}
-	prints(sid, "<TR><TH COLSPAN=25 STYLE='border-style:solid'>Availability for %s</TH></TR>\r\n", sid->dat->username);
-	prints(sid, "<TR CLASS=\"FIELDNAME\">\r\n");
-	prints(sid, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\r\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\r\n");
-	prints(sid, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\r\n");
-	prints(sid, "</TR>\r\n");
-	prints(sid, "<TR CLASS=\"FIELDNAME\">\r\n");
+	prints(conn, "<TR><TH COLSPAN=25 STYLE='border-style:solid'>Availability for %s</TH></TR>\r\n", conn->dat->username);
+	prints(conn, "<TR CLASS=\"FIELDNAME\">\r\n");
+	prints(conn, "<TD ALIGN=CENTER ROWSPAN=2 STYLE='border-style:solid'>&nbsp;</TD>\r\n");
+	prints(conn, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>A.M.</B></TD>\r\n");
+	prints(conn, "<TD ALIGN=CENTER COLSPAN=12 STYLE='border-style:solid'><B>P.M.</B></TD>\r\n");
+	prints(conn, "</TR>\r\n");
+	prints(conn, "<TR CLASS=\"FIELDNAME\">\r\n");
 	for (i=0, j=0;i<24;i++, j++) {
 		if (j<1) j=12;
 		if (j>12) j-=12;
-		prints(sid, "<TD ALIGN=CENTER STYLE='border-style:solid'><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\r\n", i, j);
+		prints(conn, "<TD ALIGN=CENTER STYLE='border-style:solid'><A HREF=\"#\" onclick=\"toggle('t','%d')\"><B>%02d</B></A></TD>\r\n", i, j);
 	}
-	prints(sid, "</TR>\r\n");
+	prints(conn, "</TR>\r\n");
 	for (i=0;i<7;i++) {
-		prints(sid, "<TR BGCOLOR=#F0F0F0>\r\n");
-		prints(sid, "<TD ALIGN=LEFT NOWRAP CLASS=\"FIELDNAME\" STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\r\n", i, dow[i]);
+		prints(conn, "<TR BGCOLOR=#F0F0F0>\r\n");
+		prints(conn, "<TD ALIGN=LEFT NOWRAP CLASS=\"FIELDNAME\" STYLE='border-style:solid'><B>&nbsp;<A HREF=\"#\" onclick=\"toggle('d','%d')\">%s</A>&nbsp;</B></TD>\r\n", i, dow[i]);
 		for (j=0;j<24;j++) {
 			if (uavailability[i*24+j]=='X') {
-				prints(sid, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\r\n");
+				prints(conn, "<TD STYLE='border-style:solid'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>\r\n");
 			} else {
-				prints(sid, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\r\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
+				prints(conn, "<TD STYLE='border-style:solid'><INPUT TYPE=checkbox NAME=d%dt%d VALUE='d%dt%d' %s></TD>\r\n", i, j, i, j, uavailability[i*24+j]=='1'?"checked":"");
 			}
 		}
-		prints(sid, "</TR>\r\n");
+		prints(conn, "</TR>\r\n");
 	}
-	prints(sid, "</TABLE>\r\n");
-	prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\r\n");
-	prints(sid, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\r\n");
-	prints(sid, "</FORM>\r\n");
-	prints(sid, "</CENTER>\r\n");
+	prints(conn, "</TABLE>\r\n");
+	prints(conn, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\r\n");
+	prints(conn, "<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\r\n");
+	prints(conn, "</FORM>\r\n");
+	prints(conn, "</CENTER>\r\n");
 	return;
 }

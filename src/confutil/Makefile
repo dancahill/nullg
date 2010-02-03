@@ -4,7 +4,7 @@ include ../Rules.mak
 
 CFLAGS  = $(BIN_CFLAGS)
 OBJECTS = main.o
-TARGET  = $(BIN_TARGETDIR)/nullgs-confutil
+TARGET  = $(BIN_TARGETDIR)/nullsd-confutil
 
 all: confutil
 

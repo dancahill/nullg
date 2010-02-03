@@ -1,7 +1,7 @@
 function sql_save()
 {
 //	if (!(priv&A_ADMIN)) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
 	if (_SERVER['REQUEST_METHOD']!='POST') return;
@@ -16,56 +16,56 @@ function sql_save()
 		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 		return;
 	}
-//	if (dbread_query(sid, 2, id, &qobj)!=0) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//	if (dbread_query(conn, 2, id, &qobj)!=0) {
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
 //	if (priv&A_ADMIN) {
-//		if ((ptemp=getpostenv(sid, "OBJ_UID"))!=NULL) query.obj_uid=atoi(ptemp);
-//		if ((ptemp=getpostenv(sid, "OBJ_GID"))!=NULL) query.obj_gid=atoi(ptemp);
+//		if ((ptemp=getpostenv(conn, "OBJ_UID"))!=NULL) query.obj_uid=atoi(ptemp);
+//		if ((ptemp=getpostenv(conn, "OBJ_GID"))!=NULL) query.obj_gid=atoi(ptemp);
 //	}
-//	if ((priv&A_ADMIN)||(query.obj_uid==sid->dat->uid)) {
-//		if ((ptemp=getpostenv(sid, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
-//		if ((ptemp=getpostenv(sid, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
+//	if ((priv&A_ADMIN)||(query.obj_uid==conn->dat->uid)) {
+//		if ((ptemp=getpostenv(conn, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
+//		if ((ptemp=getpostenv(conn, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
 //	}
 	if (typeof(_POST['QUERYNAME'])!='null') Q['_rows'][0]['_data']['cn']    = _POST['QUERYNAME'];
 	if (typeof(_POST['QUERY'])!='null')     Q['_rows'][0]['_data']['query'] = _POST['QUERY'];
 	if (sizeof(Q['_rows'][0]['_data']['cn'])==0) Q['_rows'][0]['_data']['cn'] = "Unnamed Query";
 	if (_POST['SUBMIT']=="Delete") {
 //		if (!(priv&A_ADMIN)) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //			goto cleanup;
 //		}
 		if (ldir.deleteentry("dbquery", id)<0) {
 			return;
 		}
 		print("<CENTER>Query ",id," deleted successfully</CENTER><BR />\r\n");
-//		db_log_activity(sid, "queries", id, "delete", "%s - %s deleted query %d", sid->socket.RemoteAddr, sid->dat->username, id);
+//		db_log_activity(conn, "queries", id, "delete", "%s - %s deleted query %d", conn->socket.RemoteAddr, conn->dat->username, id);
 	} else if (id==0) {
 //		if (!(priv&A_ADMIN)) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //			goto cleanup;
 //		}
 		if ((id=ldir.saveentry("dbquery", id, Q))<1) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 			return;
 		}
 		print("<CENTER>Query ",id," added successfully</CENTER><BR />\r\n");
-//		db_log_activity(sid, "queries", id, "insert", "%s - %s added query %d", sid->socket.RemoteAddr, sid->dat->username, id);
+//		db_log_activity(conn, "queries", id, "insert", "%s - %s added query %d", conn->socket.RemoteAddr, conn->dat->username, id);
 	} else {
 //		if (!(priv&A_ADMIN)) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //			return;
 //		}
 		if ((id=ldir.saveentry("dbquery", id, Q))<1) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 			return;
 		}
 		print("<CENTER>Query ",id," modified successfully</CENTER><BR />\r\n");
-//		db_log_activity(sid, "queries", id, "modify", "%s - %s modified query %d", sid->socket.RemoteAddr, sid->dat->username, id);
+//		db_log_activity(conn, "queries", id, "modify", "%s - %s modified query %d", conn->socket.RemoteAddr, conn->dat->username, id);
 	}
-//	print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"%s/search/sqlrun\");\r\n// -->\r\n</SCRIPT>\r\n", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
-//	print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/search/sqlrun\"></NOSCRIPT>\r\n", nes_getstr(sid->N, htobj, "SCRIPT_NAME"));
+//	print("<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\nlocation.replace(\"%s/search/sqlrun\");\r\n// -->\r\n</SCRIPT>\r\n", nes_getstr(conn->N, htobj, "SCRIPT_NAME"));
+//	print("<NOSCRIPT><META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=%s/search/sqlrun\"></NOSCRIPT>\r\n", nes_getstr(conn->N, htobj, "SCRIPT_NAME"));
 
 	return;
 }

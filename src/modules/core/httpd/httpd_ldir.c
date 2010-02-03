@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,27 +20,27 @@
 /*
  * this can easily be rehacked (by someone less lazy) to sort by any key depths and combos
  */
-static void sort_bykey(nes_state *N, obj_t *tobj, char *key, char *subtab, int order)
+static void sort_bykey(nsp_state *N, obj_t *tobj, char *key, char *subtab, int order)
 {
 	obj_t *cobj, *nobj, *robj=tobj->val->d.table.f;
 	obj_t *sub1, *sub2;
 	short change, swap;
 
 reloop:
-	if (nes_isnull(robj)) goto end;
+	if (nsp_isnull(robj)) goto end;
 	cobj=robj;
 	change=0;
 	for (;;) {
-		if (nes_isnull(cobj)) break;
+		if (nsp_isnull(cobj)) break;
 		if ((nobj=cobj->next)==NULL) break;
 		if (cobj->val->type!=NT_TABLE) break;
 		if (nobj->val->type!=NT_TABLE) break;
 		if (subtab) {
-			sub1=nes_getobj(N, nes_getobj(N, cobj, subtab), key);
-			sub2=nes_getobj(N, nes_getobj(N, nobj, subtab), key);
+			sub1=nsp_getobj(N, nsp_getobj(N, cobj, subtab), key);
+			sub2=nsp_getobj(N, nsp_getobj(N, nobj, subtab), key);
 		} else {
-			sub1=nes_getobj(N, cobj, key);
-			sub2=nes_getobj(N, nobj, key);
+			sub1=nsp_getobj(N, cobj, key);
+			sub2=nsp_getobj(N, nobj, key);
 		}
 		swap=0;
 		if ((sub1->val->type==NT_NUMBER)&&(sub2->val->type==NT_NUMBER)) {
@@ -51,9 +51,9 @@ reloop:
 			}
 		} else {
 			if (order<0) {
-				if (strcmp(nes_tostr(N, sub1), nes_tostr(N, sub2))<0) swap=1;
+				if (strcmp(nsp_tostr(N, sub1), nsp_tostr(N, sub2))<0) swap=1;
 			} else {
-				if (strcmp(nes_tostr(N, sub1), nes_tostr(N, sub2))>0) swap=1;
+				if (strcmp(nsp_tostr(N, sub1), nsp_tostr(N, sub2))>0) swap=1;
 			}
 		}
 		if (swap) {
@@ -122,11 +122,11 @@ int ldir_deleteentry(char *oc, int id, int did)
 {
 	int rc;
 
-	rc=sql_updatef(proc->N, "DELETE FROM nullgs_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
+	rc=sql_updatef(proc->N, "DELETE FROM nullsd_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
 	return rc;
 }
 
-static int dump_sub(nes_state *N, char *out, int max, obj_t *tobj)
+static int dump_sub(nsp_state *N, char *out, int max, obj_t *tobj)
 {
 	char *p;
 	int ent=0;
@@ -145,13 +145,13 @@ static int dump_sub(nes_state *N, char *out, int max, obj_t *tobj)
 		} else if (tobj->val->type==NT_NUMBER) {
 			strncatf(out+len, max-len-1, "%s=", tobj->name);
 			len+=strlen(out+len);
-			p=nes_tostr(N, tobj);
+			p=nsp_tostr(N, tobj);
 			for (i=0;*p;i++) out[len++]=*p++;
 			ent++;
 		} else {
 			strncatf(out+len, max-len-1, "%s=''", tobj->name);
 			len+=strlen(out+len);
-			p=nes_tostr(N, tobj);
+			p=nsp_tostr(N, tobj);
 			for (i=0;*p;i++) {
 				switch (*p) {
 				case '\\': strncatf(out+len, max-len-1, "\\\\"); break;
@@ -172,7 +172,7 @@ static int dump_sub(nes_state *N, char *out, int max, obj_t *tobj)
 	return len;
 }
 
-int ldir_saveentry(CONN *sid, int id, char *oc, obj_t **qobj)
+int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 {
 	/*
 	 * there is stack corruption in this function when the local vars are initialized in a different order
@@ -190,50 +190,50 @@ int ldir_saveentry(CONN *sid, int id, char *oc, obj_t **qobj)
 	time_t t=time(NULL);
 
 	if ((query=calloc(MAX_TUPLE_SIZE, sizeof(char)))==NULL) return -1;
-	tobj=nes_getobj(proc->N, *qobj, "_rows");
-	if (!nes_istable(tobj)) { free(query); prints(sid, "broken table"); return -1; }
-	tobj=nes_getiobj(proc->N, tobj, 0);
-	if (!nes_istable(tobj)) { free(query); prints(sid, "broken table"); return -1; }
-	pid=(int)nes_getnum(proc->N, tobj, "pid");
-	did=(int)nes_getnum(proc->N, tobj, "did");
-	dobj=nes_settable(proc->N, tobj, "_data");
+	tobj=nsp_getobj(proc->N, *qobj, "_rows");
+	if (!nsp_istable(tobj)) { free(query); prints(conn, "broken table"); return -1; }
+	tobj=nsp_getiobj(proc->N, tobj, 0);
+	if (!nsp_istable(tobj)) { free(query); prints(conn, "broken table"); return -1; }
+	pid=(int)nsp_getnum(proc->N, tobj, "pid");
+	did=(int)nsp_getnum(proc->N, tobj, "did");
+	dobj=nsp_settable(proc->N, tobj, "_data");
 	if (strcmp(oc, "person")==0) {
-		cobj=nes_getobj(sid->N, dobj, "uid");
+		cobj=nsp_getobj(conn->N, dobj, "uid");
 	} else {
-		cobj=nes_getobj(sid->N, dobj, "cn");
-		if (nes_isnull(cobj)) cobj=nes_getobj(sid->N, dobj, "name");
-		if (nes_isnull(cobj)) cobj=nes_getobj(sid->N, tobj, "name");
+		cobj=nsp_getobj(conn->N, dobj, "cn");
+		if (nsp_isnull(cobj)) cobj=nsp_getobj(conn->N, dobj, "name");
+		if (nsp_isnull(cobj)) cobj=nsp_getobj(conn->N, tobj, "name");
 	}
-	name=nes_tostr(sid->N, cobj);
+	name=nsp_tostr(conn->N, cobj);
 //	memset(curdate, 0, sizeof(curdate));
 //	time_unix2sql(curdate, sizeof(curdate)-1, t);
 	strftime(curdate, sizeof(curdate)-1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (id==0) {
 //log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
-		len=snprintf(query, MAX_TUPLE_SIZE-1, "INSERT INTO nullgs_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', '%s', '%s', '{ ", pid, did, curdate, curdate, oc, name);
-		len+=dump_sub(sid->N, query+len, MAX_TUPLE_SIZE-len, dobj);
+		len=snprintf(query, MAX_TUPLE_SIZE-1, "INSERT INTO nullsd_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', '%s', '%s', '{ ", pid, did, curdate, curdate, oc, name);
+		len+=dump_sub(conn->N, query+len, MAX_TUPLE_SIZE-len, dobj);
 		strncatf(query+len, MAX_TUPLE_SIZE-len-1, "}');");
 		len+=strlen(query+len);
 		id=sql_update(proc->N, query);
 		if (id<0) id=-1;
 	} else {
 //log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
-		len=snprintf(query, MAX_TUPLE_SIZE-1, "UPDATE nullgs_entries SET pid=%d, did=%d, mtime='%s', class='%s', name='%s', data='{ ", pid, did, curdate, oc, name);
-		len+=dump_sub(sid->N, query+len, MAX_TUPLE_SIZE-len, dobj);
+		len=snprintf(query, MAX_TUPLE_SIZE-1, "UPDATE nullsd_entries SET pid=%d, did=%d, mtime='%s', class='%s', name='%s', data='{ ", pid, did, curdate, oc, name);
+		len+=dump_sub(conn->N, query+len, MAX_TUPLE_SIZE-len, dobj);
 		strncatf(query+len, MAX_TUPLE_SIZE-len-1, "}' WHERE id=%d;", id);
 		len+=strlen(query+len);
 		rc=sql_update(proc->N, query);
 		if (rc<0) id=-1;
 	}
 //log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
-	prints(sid, "<BR /><B>[id=%d][len=%d]<BR>%s</B>", id, len, query);
+	prints(conn, "<BR /><B>[id=%d][len=%d]<BR>%s</B>", id, len, query);
 //log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
 	free(query);
 //log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
 	return id;
 }
 
-obj_t *ldir_getlist(nes_state *N, char *oc, int pid, int did)
+obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 {
 	obj_t *qobj1=NULL;
 	obj_t *tobj;
@@ -243,25 +243,25 @@ obj_t *ldir_getlist(nes_state *N, char *oc, int pid, int did)
 
 	if (oc==NULL) oc="";
 //	if ((priv&A_ADMIN)) {
-//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND obj_did = %d ORDER BY bookmarkname ASC", pid, sid->dat->did)<0) return;
-//		if (sql_queryf(proc->N, &qobj, "SELECT id, name, data FROM nullgs_entries WHERE class = 'bookmark' AND pid = %d AND did = %d ORDER BY name ASC", pid, sid->dat->did)<0) return;
+//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND obj_did = %d ORDER BY bookmarkname ASC", pid, conn->dat->did)<0) return;
+//		if (sql_queryf(proc->N, &qobj, "SELECT id, name, data FROM nullsd_entries WHERE class = 'bookmark' AND pid = %d AND did = %d ORDER BY name ASC", pid, conn->dat->did)<0) return;
 //	} else {
-//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", pid, sid->dat->uid, sid->dat->gid, sid->dat->did)<0) return;
+//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", pid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 		if (pid) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC", oc, pid, did);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC", oc, pid, did);
 		} else if (strlen(oc)>0) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
 		} else {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE did = %d ORDER BY did, id ASC", did);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE did = %d ORDER BY did, id ASC", did);
 		}
 //	}
 	if (rc<0) return NULL;
 	for (i=0;i<sql_numtuples(proc->N, &qobj1);i++) {
-		tobj=nes_getobj(proc->N, qobj1, "_rows");
-		tobj=nes_getiobj(proc->N, tobj, i);
-		tobj=nes_settable(proc->N, tobj, "_data");
+		tobj=nsp_getobj(proc->N, qobj1, "_rows");
+		tobj=nsp_getiobj(proc->N, tobj, i);
+		tobj=nsp_settable(proc->N, tobj, "_data");
 		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
-		nes_linkval(N, tobj, nes_eval(N, p));
+		nsp_linkval(N, tobj, nsp_eval(N, p));
 		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
 			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
 				unescape(tobj->val->d.str, tobj->val->d.str);
@@ -269,21 +269,21 @@ obj_t *ldir_getlist(nes_state *N, char *oc, int pid, int did)
 		}
 	}
 	if (strcmp(oc, "weblogentry")==0) {
-		nes_linkval(N, nes_settable(N, &N->g, "weblogentryresults"), qobj1);
-		sort_bykey(N, nes_getobj(N, qobj1, "_rows"), "ctime", NULL, 1);
+		nsp_linkval(N, nsp_settable(N, &N->g, "weblogentryresults"), qobj1);
+		sort_bykey(N, nsp_getobj(N, qobj1, "_rows"), "ctime", NULL, 1);
 //	} else if (strcmp(oc, "person")==0) {
 //		ldir_sortlist(N, qobj1, "sn", "_data", 1);
 	}
 	return qobj1;
 }
 
-void ldir_sortlist(nes_state *N, obj_t *qobj, char *key, char *subtab, int order)
+void ldir_sortlist(nsp_state *N, obj_t *qobj, char *key, char *subtab, int order)
 {
 	obj_t *tobj;
 	unsigned int i;
 
-	tobj=nes_getobj(N, qobj, "_rows");
-	if (!nes_istable(tobj)) return;
+	tobj=nsp_getobj(N, qobj, "_rows");
+	if (!nsp_istable(tobj)) return;
 	sort_bykey(N, tobj, "sn", "_data", order);
 	for (i=0,tobj=tobj->val->d.table.f;tobj;i++,tobj=tobj->next) {
 		sprintf(tobj->name, "%d", i);
@@ -291,7 +291,7 @@ void ldir_sortlist(nes_state *N, obj_t *qobj, char *key, char *subtab, int order
 	return;
 }
 
-obj_t *ldir_getentry(nes_state *N, char *oc, char *name, int id, int did)
+obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 {
 	obj_t *qobj1=NULL;
 	obj_t *tobj;
@@ -301,33 +301,33 @@ obj_t *ldir_getentry(nes_state *N, char *oc, char *name, int id, int did)
 
 	if (strcmp(oc, "person")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	} else if (strcmp(oc, "dbquery")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	} else if (strcmp(oc, "bookmarkfolder")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	} else if (strcmp(oc, "bookmark")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	} else {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullgs_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	}
 	if (sql_numtuples(proc->N, &qobj1)!=1) {
@@ -336,11 +336,11 @@ obj_t *ldir_getentry(nes_state *N, char *oc, char *name, int id, int did)
 	}
 	if (rc<0) return NULL;
 	for (i=0;i<sql_numtuples(proc->N, &qobj1);i++) {
-		tobj=nes_getobj(proc->N, qobj1, "_rows");
-		tobj=nes_getiobj(proc->N, tobj, i);
-		tobj=nes_settable(proc->N, tobj, "_data");
+		tobj=nsp_getobj(proc->N, qobj1, "_rows");
+		tobj=nsp_getiobj(proc->N, tobj, i);
+		tobj=nsp_settable(proc->N, tobj, "_data");
 		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
-		nes_linkval(N, tobj, nes_eval(N, p));
+		nsp_linkval(N, tobj, nsp_eval(N, p));
 		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
 			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
 				unescape(tobj->val->d.str, tobj->val->d.str);
@@ -360,20 +360,20 @@ char *ldir_getval(obj_t **qobj, int rowset, char *name)
 	obj_t *tobj, *tobj2;
 	obj_t *cobj;
 
-	tobj=nes_getobj(proc->N, *qobj, "_rows");
+	tobj=nsp_getobj(proc->N, *qobj, "_rows");
 	if (tobj->val->type!=NT_TABLE) return "";
-	tobj=nes_getiobj(proc->N, tobj, rowset);
+	tobj=nsp_getiobj(proc->N, tobj, rowset);
 	if (tobj->val->type!=NT_TABLE) return "";
-	tobj2=nes_getobj(proc->N, tobj, "_data");
+	tobj2=nsp_getobj(proc->N, tobj, "_data");
 	if (tobj2->val->type==NT_TABLE) {
 		for (cobj=tobj2->val->d.table.f; cobj; cobj=cobj->next) {
 			if (strcasecmp(cobj->name, name)!=0) continue;
-			return nes_tostr(proc->N, cobj);
+			return nsp_tostr(proc->N, cobj);
 		}
 	}
 	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (strcasecmp(cobj->name, name)!=0) continue;
-		return nes_tostr(proc->N, cobj);
+		return nsp_tostr(proc->N, cobj);
 	}
 	return "";
 }

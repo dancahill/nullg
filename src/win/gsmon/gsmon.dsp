@@ -80,12 +80,12 @@ SOURCE=.\gsmon.rc
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\misc\icons\nullgs.ico
+SOURCE=..\..\misc\icons\nullsd.ico
 # End Source File
 # End Group
 # Begin Source File
 
-SOURCE=..\..\..\lib\libnesla.lib
+SOURCE=..\..\..\lib\libnsp.lib
 # End Source File
 # End Target
 # End Project

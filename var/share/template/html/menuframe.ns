@@ -77,7 +77,7 @@
 	print("<BODY BGCOLOR=#808080 TEXT=#000000 LINK=#FFFFFF ALINK=#FFFFFF VLINK=#FFFFFF CLASS=\"MENUBACK\" onLoad=reminders(); onContextMenu='return false'>\r\n");
 	print("<CENTER>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 HEIGHT=100%% WIDTH=100%%>\r\n");
-	print("<TR><TD><A HREF=/frames/motd target='gwmain' onclick=\"window.open('/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/images/nullgs.png HEIGHT=50 WIDTH=125 ALT='%s logged in'></A></TD></TR>\r\n");
+	print("<TR><TD><A HREF=/frames/motd target='gwmain' onclick=\"window.open('/frames/menu','gwmenu')\"><IMG BORDER=0 SRC=/images/nullsd.png HEIGHT=50 WIDTH=125 ALT='%s logged in'></A></TD></TR>\r\n");
 	print("<TR><TD><BR />");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=7 WIDTH=100%%>\r\n");
 /*
@@ -85,7 +85,7 @@
 		if (strlen(htproc.mod_menuitems[i].mod_name)==0) break;
 		if (strlen(htproc.mod_menuitems[i].mod_menuname)==0) continue;
 		if (strlen(htproc.mod_menuitems[i].mod_menuperm)!=0) {
-			if (!auth_priv(sid, htproc.mod_menuitems[i].mod_menuperm)) continue;
+			if (!auth_priv(conn, htproc.mod_menuitems[i].mod_menuperm)) continue;
 		}
 		// Mozilla treats this as double click.  Bad gecko.
 		print("<TR><TD style=\"cursor:hand\"");

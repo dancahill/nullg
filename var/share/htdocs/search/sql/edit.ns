@@ -1,12 +1,12 @@
 
 function sql_edit() {
 //	print("<CENTER>\r\n");
-//	query="select * from nullgs_entries where class = 'sqlquery'";
+//	query="select * from nullsd_entries where class = 'sqlquery'";
 //	global Q=sqlquery(query);
 //	print("</CENTER>\r\n");
 
 //	if (!(priv&A_ADMIN)) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
 	if (_GET['ID']!=null) {
@@ -21,7 +21,7 @@ function sql_edit() {
 		global Q={_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Query',query=''}}}};
 	}
 //	if (qobj==NULL) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
 	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
@@ -42,15 +42,15 @@ function sql_edit() {
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>",str2html(Q['_rows'][0]['_data']['query']),"</TEXTAREA></TD></TR>\r\n");
 /*
-	if ((query.obj_uid==sid->dat->uid)||(priv&A_ADMIN)) {
+	if ((query.obj_uid==conn->dat->uid)||(priv&A_ADMIN)) {
 		print("<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\r\n");
 		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:182px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
-		htselect_user(sid, query.obj_uid, sid->dat->did);
+		htselect_user(conn, query.obj_uid, conn->dat->did);
 		print("</SELECT></TD></TR>\r\n");
 		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
 		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:182px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
-		htselect_group(sid, priv, query.obj_gid, sid->dat->did);
+		htselect_group(conn, priv, query.obj_gid, conn->dat->did);
 		print("</SELECT></TD></TR>\r\n");
 		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
 		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s>None\r\n", query.obj_gperm==0?" CHECKED":"");

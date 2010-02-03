@@ -4,8 +4,13 @@
  */
 
 /* this needs to be replaced by a c api function */
-function urlencode(in) {
-	return in;
+function urlencode(s) {
+	s=string.replace(s, "\"", "&quot;");
+	s=string.replace(s, "&",  "&amp;");
+	s=string.replace(s, " ",  "&nbsp;");
+	s=string.replace(s, "<",  "&lt;");
+	s=string.replace(s, ">",  "&gt;");
+	return s;
 }
 
 function contact_view() {
@@ -23,10 +28,12 @@ function contact_view() {
 	if ((sizeof(CONTACT['homeaddress'])>0)&&(sizeof(CONTACT['homelocality'])>0)&&(sizeof(CONTACT['homeregion'])>0)&&(sizeof(CONTACT['homecountry'])>0)) {
 //		haddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['homecountry']+"&address="+CONTACT['homeaddress']+"&city="+CONTACT['homelocality']+"&state="+CONTACT['homeregion'];
 		haddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
+		haddr=urlencode(haddr);
 	}
 	if ((sizeof(CONTACT['workaddress'])>0)&&(sizeof(CONTACT['worklocality'])>0)&&(sizeof(CONTACT['workregion'])>0)&&(sizeof(CONTACT['workcountry'])>0)) {
 //		waddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['workcountry']+"&address="+CONTACT['workaddress']+"&city="+CONTACT['worklocality']+"&state="+CONTACT['workregion'];
 		waddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['workaddress']+", "+CONTACT['worklocality']+", "+CONTACT['workregion']+", "+CONTACT['workcountry'];
+		waddr=urlencode(waddr);
 	}
 	disabled=" DISABLED";
 	is_editable=0;
@@ -38,17 +45,17 @@ function contact_view() {
 //		disabled="";
 //		is_editable=1;
 //	}
-//	tz1=time_tzoffset(sid, time(NULL));
-//	tz2=time_tzoffsetcon(sid, time(NULL), id);
+//	tz1=time_tzoffset(conn, time(NULL));
+//	tz2=time_tzoffsetcon(conn, time(NULL), id);
 //	if (id<1) tz2=tz1;
-	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
+	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
 	print("function ConfirmDelete() {\r\n");
 	print("	return confirm(\"Are you sure you want to delete this record?\");\r\n");
 	print("}\r\n");
 	print("function vcardImport() {\r\n");
 	print("	window.open('/contacts/vcardimport?id=",id,"','vcardimport','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=150');\r\n");
 	print("}\r\n");
-//	htscript_showpage(sid, 7);
+//	htscript_showpage(conn, 7);
 	global pages=7;
 	include_template("html/tabs.ns");
 //	showtabs(7);
@@ -61,11 +68,11 @@ function contact_view() {
 	} else {
 		print("<B>New Contact</B>\r\n");
 	}
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\r\n");
 	print("<FORM METHOD=POST ACTION=/contacts/save NAME=contactedit>\r\n");
 	print("<INPUT TYPE=hidden NAME=id VALUE='",id,"'>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\r\n");
 /*
-	if (strncmp(nes_getstr(sid->N, htobj, "REQUEST_URI"), "/contacts/viewnew2", 18)==0) {
+	if (strncmp(nes_getstr(conn->N, htobj, "REQUEST_URI"), "/contacts/viewnew2", 18)==0) {
 		print("<INPUT TYPE=hidden NAME=callset VALUE='1'>\r\n");
 	}
 */
@@ -115,12 +122,12 @@ function contact_view() {
 	}
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['hometelephonenumber']),"&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['mobiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
-	if (haddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",haddr,"\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\r\n");
+	if (haddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",haddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Organization&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['organization']),"&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['title']),"&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['worknumber']),"&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;FAX Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['facsimiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
-	if (waddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",waddr,"\" TARGET=_blank>Map Available</A>&nbsp;</TD></TR>\r\n");
+	if (waddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",waddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
 //	if (tz1!=tz2) {
 		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\r\n");
 //	}
@@ -171,32 +178,32 @@ function contact_view() {
 	print("<DIV ID=page5 STYLE='display: block'>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
 //	if (module_exists("mod_xmlrpc")) {
-//		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(sid, ldir_getval(&qobj, 0, "uid")), disabled);
-//		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(sid, ldir_getval(&qobj, 0, "userpassword")), disabled);
+//		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(conn, ldir_getval(&qobj, 0, "uid")), disabled);
+//		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(conn, ldir_getval(&qobj, 0, "userpassword")), disabled);
 //		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Allow Login       &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=enabled style='width:255px'",disabled,">\r\n", disabled);
 //		print("<OPTION VALUE=0%s>No\r\n", atoi(ldir_getval(&qobj, 0, "enabled"))?"":" SELECTED");
 //		print("<OPTION VALUE=1%s>Yes\r\n", atoi(ldir_getval(&qobj, 0, "enabled"))?" SELECTED":"");
 //		print("</SELECT></TD></TR>\r\n");
 //	}
 	print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Geographic Zone&nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=geozone style='width:255px'",disabled,">\r\n");
-//	htselect_zone(sid, atoi(ldir_getval(&qobj, 0, "geozone")), sid->dat->did);
+//	htselect_zone(conn, atoi(ldir_getval(&qobj, 0, "geozone")), conn->dat->did);
 	print("</SELECT></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Time Zone      &nbsp;</B></TD><TD ALIGN=RIGHT><SELECT NAME=timezone style='width:255px'",disabled,">\r\n");
-//	htselect_timezone(sid, atoi(ldir_getval(&qobj, 0, "timezone")));
+//	htselect_timezone(conn, atoi(ldir_getval(&qobj, 0, "timezone")));
 	print("</SELECT></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Billing Method &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=prefbilling    value=\"",str2html(CONTACT['prefbilling']),"\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n");
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 	print("<DIV ID=page6 STYLE='display: block'>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
-/*	if ((contact->obj_uid==sid->dat->uid)||(priv&A_ADMIN)) editperms=1;
+/*	if ((contact->obj_uid==conn->dat->uid)||(priv&A_ADMIN)) editperms=1;
 	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
-	htselect_user(sid, contact->obj_uid, sid->dat->did);
+	htselect_user(conn, contact->obj_uid, conn->dat->did);
 	print("</SELECT></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
-	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\r\n", ((priv&A_ADMIN)||(contact->obj_uid==sid->dat->did))?"":" DISABLED");
-	htselect_group(sid, priv, contact->obj_gid, sid->dat->did);
+	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\r\n", ((priv&A_ADMIN)||(contact->obj_uid==conn->dat->did))?"":" DISABLED");
+	htselect_group(conn, priv, contact->obj_gid, conn->dat->did);
 	print("</SELECT></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
 	print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\r\n", contact->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
@@ -215,8 +222,8 @@ function contact_view() {
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
 	if (id>0) {
 /*
-		if (module_exists("mod_calls")&&(auth_priv(sid, "calls")&A_READ)) {
-			if (sql_queryf(&sqr, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, sid->dat->uid, sid->dat->uid, sid->dat->gid, sid->dat->did)<0) return;
+		if (module_exists("mod_calls")&&(auth_priv(conn, "calls")&A_READ)) {
+			if (sql_queryf(&sqr, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
 			print("<TD NOWRAP WIDTH=100%>%d Calls</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
@@ -228,8 +235,8 @@ function contact_view() {
 			print("</TR>\r\n");
 			sql_freeresult(&sqr);
 		}
-		if (module_exists("mod_calendar")&&(auth_priv(sid, "calendar")&A_READ)) {
-			if (sql_queryf(&sqr, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, sid->dat->uid, sid->dat->uid, sid->dat->gid, sid->dat->did)<0) return;
+		if (module_exists("mod_calendar")&&(auth_priv(conn, "calendar")&A_READ)) {
+			if (sql_queryf(&sqr, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
 			print("<TD NOWRAP WIDTH=100%>%d Events</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
@@ -241,8 +248,8 @@ function contact_view() {
 			print("</TR>\r\n");
 			sql_freeresult(&sqr);
 		}
-		if (module_exists("mod_finance")&&(auth_priv(sid, "finance")&A_READ)) {
-			if (sql_queryf(&sqr, "SELECT count(invoiceid) FROM gw_finance_invoices WHERE contactid = %d AND obj_did = %d", id, sid->dat->did)<0) return;
+		if (module_exists("mod_finance")&&(auth_priv(conn, "finance")&A_READ)) {
+			if (sql_queryf(&sqr, "SELECT count(invoiceid) FROM gw_finance_invoices WHERE contactid = %d AND obj_did = %d", id, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
 			print("<TD NOWRAP WIDTH=100%>%d Invoices</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
@@ -257,13 +264,13 @@ function contact_view() {
 */
 	}
 /*
-	if (module_exists("mod_email")&&(auth_priv(sid, "email")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
-		if (sql_queryf(&sqr, "SELECT count(mailheaderid) FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", sid->dat->uid, contact->email, contact->email, contact->email)<0) return;
+	if (module_exists("mod_email")&&(auth_priv(conn, "email")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
+		if (sql_queryf(&sqr, "SELECT count(mailheaderid) FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", conn->dat->uid, contact->email, contact->email, contact->email)<0) return;
 		print("<TR CLASS=\"EDITFORM\">");
 		print("<TD NOWRAP WIDTH=100%>%d E-Mails</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 		print("<TD>");
 		if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
-			if (sid->dat->menustyle>0) {
+			if (conn->dat->menustyle>0) {
 				print("<A HREF=%s/mail/main?c=addr&text=%s TARGET=gwmain>list</A>", ScriptName, contact->email);
 			} else {
 				print("<A HREF=%s/mail/main?c=addr&text=%s>list</A>", ScriptName, contact->email);
@@ -272,12 +279,12 @@ function contact_view() {
 		print("&nbsp;</TD>\r\n");
 		if (strlen(contact->email)==0) {
 			print("<TD>&nbsp;</TD></TR>\r\n");
-		} else if (sid->dat->maildefault==0) {
+		} else if (conn->dat->maildefault==0) {
 			print("<TD><A HREF=\"mailto:%s\">new</A></TD>\r\n", contact->email);
 		} else {
-			if (sid->dat->menustyle>0) {
+			if (conn->dat->menustyle>0) {
 				print("<TD><A HREF=\"javascript:MsgTo('");
-				print("&quot;%s%s%s&quot;", str2html(sid, contact->givenname), strlen(contact->givenname)?" ":"", str2html(sid, contact->surname));
+				print("&quot;%s%s%s&quot;", str2html(conn, contact->givenname), strlen(contact->givenname)?" ":"", str2html(conn, contact->surname));
 				print(" <%s>')\">new</A></TD>\r\n", contact->email);
 			} else {
 				print("<TD><A HREF=\"mailwrite?to=%s\">new</A></TD>\r\n", contact->email);
@@ -287,7 +294,7 @@ function contact_view() {
 		sql_freeresult(&sqr);
 	}
 */
-	print("<TD COLSPAN=3><BR /></TD>\r\n");
+	print("<TR><TD COLSPAN=3><BR /></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=3><A HREF=javascript:vcardImport();>Import vCard</A></TD></TR>\r\n");
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
@@ -299,8 +306,8 @@ function contact_view() {
 			print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100% STYLE='border-style:solid'>\r\n");
 			print("<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
 			print(" [<A HREF=/notes/editnew?table=contacts&index=",id,">new</A>]");
-			print("</FONT></TH></TR>\r\n");
-//			mod_notes_sublist(sid, "contacts", id, 1);
+			print("</TH></TR>\r\n");
+//			mod_notes_sublist(conn, "contacts", id, 1);
 			print("</TABLE>\r\n");
 			print("</TD></TR>\r\n");
 //		}
@@ -318,10 +325,10 @@ function contact_view() {
 		print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
 		print("</TD></TR>\r\n");
 	}
-	print("</FORM>\r\n");
 	print("</TABLE>\r\n");
+	print("</FORM>\r\n");
 	print("</CENTER>\r\n");
-	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
+	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
 	if ((id<1)||(is_recycled)) {
 		print("showpage(2);\r\n");
 		print("document.contactedit.surname.focus();\r\n");
@@ -330,7 +337,7 @@ function contact_view() {
 	}
 //	if (tz1!=tz2) {
 		t=time.now();
-//		t+=time_tzoffset(sid, t);
+//		t+=time_tzoffset(conn, t);
 //		t+=(tz2-tz1);
 		print(
 			"var t=",t,";\r\n",

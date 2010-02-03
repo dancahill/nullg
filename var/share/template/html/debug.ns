@@ -14,8 +14,8 @@ function showdebug() {
 print("<A HREF=javascript:showdebug()>SHOW DEBUG</A>\n");
 /*
 if (typeof(sqlquery)=='function') {
-	sqlquery('_q1', "SELECT * FROM nullgs_sessions");
-	sqlquery('_q2', "SELECT * FROM nullgs_entries");
+	sqlquery('_q1', "SELECT * FROM nullsd_sessions");
+	sqlquery('_q2', "SELECT * FROM nullsd_entries");
 }
 */
 print("<DIV ID=debug STYLE='display:none'><PRE><FONT SIZE=2>\n");

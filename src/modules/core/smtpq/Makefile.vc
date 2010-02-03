@@ -9,7 +9,7 @@ CFLAGS  = $(LIB_CFLAGS)
 OBJECTS = $(INTDIR)/smtpq_bounce.obj $(INTDIR)/smtpq_client.obj $(INTDIR)/smtpq_conf.obj $(INTDIR)/smtpq_dns.obj $(INTDIR)/smtpq_lang.obj $(INTDIR)/smtpq_main.obj $(INTDIR)/smtpq_queue.obj
 TARGET  = $(LIB_TARGETDIR)/core/smtpq.dll
 
-all: _dirs _nullgs
+all: _dirs _nullsd
 
 _dirs:
 	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
@@ -19,7 +19,7 @@ _dirs:
 	@if not exist "$(OBJDIR)/modules/core" mkdir "$(OBJDIR)/modules/core"
 	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 
-_nullgs: $(OBJECTS)
+_nullsd: $(OBJECTS)
 	$(LINK) $(LIB_LDFLAGS) /out:$(TARGET) /implib:$(INTDIR)/smtpq.lib $(OBJECTS)
 
 clean:

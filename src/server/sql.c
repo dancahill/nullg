@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-void sql_disconnect(nes_state *N)
+void sql_disconnect(nsp_state *N)
 {
 	pthread_mutex_lock(&Lock.SQL);
 	_sql_disconnect(proc.N);
@@ -25,13 +25,13 @@ void sql_disconnect(nes_state *N)
 	return;
 }
 
-void sql_freeresult(nes_state *N, obj_t **qobj)
+void sql_freeresult(nsp_state *N, obj_t **qobj)
 {
 	_sql_freeresult(N, qobj);
 	return;
 }
 
-int sql_update(nes_state *N, char *sqlquery)
+int sql_update(nsp_state *N, char *sqlquery)
 {
 	int rc=-1;
 
@@ -41,7 +41,7 @@ int sql_update(nes_state *N, char *sqlquery)
 	return rc;
 }
 
-int sql_query(nes_state *N, obj_t **qobj, char *query)
+int sql_query(nsp_state *N, obj_t **qobj, char *query)
 {
 	int rc=-1;
 
@@ -51,7 +51,7 @@ int sql_query(nes_state *N, obj_t **qobj, char *query)
 	return rc;
 }
 
-int sql_updatef(nes_state *N, char *format, ...)
+int sql_updatef(nsp_state *N, char *format, ...)
 {
 	char *sqlquery;
 	va_list ap;
@@ -69,7 +69,7 @@ int sql_updatef(nes_state *N, char *format, ...)
 	return rc;
 }
 
-int sql_queryf(nes_state *N, obj_t **qobj, char *format, ...)
+int sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 {
 	char *sqlquery;
 	va_list ap;

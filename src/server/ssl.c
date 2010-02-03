@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ static struct {
 
 int ssl_dl_init()
 {
-	obj_t *tobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *tobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
 #ifdef HAVE_SSL
 	static int isloaded=0;
 #ifdef WIN32
@@ -76,16 +76,16 @@ int ssl_dl_init()
 	char libname[255];
 
 	if (isloaded) return 0;
-	if ((strlen(nes_getstr(proc.N, tobj, "ssl_cert"))==0)||(strlen(nes_getstr(proc.N, tobj, "ssl_key"))==0)) return -1;
+	if ((strlen(nsp_getstr(proc.N, tobj, "ssl_cert"))==0)||(strlen(nsp_getstr(proc.N, tobj, "ssl_key"))==0)) return -1;
 	memset(libname, 0, sizeof(libname));
 	/*
 	 * Look for a local copy or symlink first before hunting.
 	 */
 #ifdef WIN32
-	snprintf(libname, sizeof(libname)-1, "%s/libeay32.%s", nes_getstr(proc.N, tobj, "lib_path"), libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libeay32.%s", nsp_getstr(proc.N, tobj, "lib_path"), libext);
 	fixslashes(libname);
 	if ((hinstLib=lib_open(libname))!=NULL) {
-		snprintf(libname, sizeof(libname)-1, "%s/ssleay32.%s", nes_getstr(proc.N, tobj, "lib_path"), libext);
+		snprintf(libname, sizeof(libname)-1, "%s/ssleay32.%s", nsp_getstr(proc.N, tobj, "lib_path"), libext);
 		fixslashes(libname);
 		if ((hinstLib=lib_open(libname))!=NULL) goto found;
 	} else {
@@ -103,10 +103,10 @@ int ssl_dl_init()
 #else
 
 	/* openbsd might like this more */
-	snprintf(libname, sizeof(libname)-1, "%s/libcrypto.%s", nes_getstr(proc.N, tobj, "lib_path"), libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libcrypto.%s", nsp_getstr(proc.N, tobj, "lib_path"), libext);
 	fixslashes(libname);
 	if ((hinstLib=lib_open(libname))!=NULL) {
-		snprintf(libname, sizeof(libname)-1, "%s./libssl.%s", nes_getstr(proc.N, tobj, "lib_path"), libext);
+		snprintf(libname, sizeof(libname)-1, "%s./libssl.%s", nsp_getstr(proc.N, tobj, "lib_path"), libext);
 		fixslashes(libname);
 		if ((hinstLib=lib_open(libname))!=NULL) {
 			goto found;
@@ -114,7 +114,7 @@ int ssl_dl_init()
 			goto fail;
 		}
 	}
-	snprintf(libname, sizeof(libname)-1, "%s/libssl.%s", nes_getstr(proc.N, tobj, "lib_path"), libext);
+	snprintf(libname, sizeof(libname)-1, "%s/libssl.%s", nsp_getstr(proc.N, tobj, "lib_path"), libext);
 	fixslashes(libname);
 	if ((hinstLib=lib_open(libname))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libssl.%s", libext);
@@ -164,9 +164,9 @@ fail:
 
 int ssl_init()
 {
-	obj_t *tobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
-	obj_t *cobj1=nes_getobj(proc.N, tobj, "ssl_cert_file");
-	obj_t *cobj2=nes_getobj(proc.N, tobj, "ssl_key_file");
+	obj_t *tobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *cobj1=nsp_getobj(proc.N, tobj, "ssl_cert_file");
+	obj_t *cobj2=nsp_getobj(proc.N, tobj, "ssl_key_file");
 
 	if (proc.ssl_is_loaded) return 0;
 	if ((cobj1->val->type!=NT_STRING)||(cobj2->val->type!=NT_STRING)) return 0;
@@ -179,12 +179,12 @@ int ssl_init()
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SSL Error");
 		return -1;
 	}
-	if (libssl.SSL_CTX_use_certificate_file(proc.ssl_ctx, nes_tostr(proc.N, cobj1), SSL_FILETYPE_PEM)<=0) {
-		log_error(proc.N, "core",  __FILE__, __LINE__, 0, "SSL Error loading certificate '%s'", nes_tostr(proc.N, cobj1));
+	if (libssl.SSL_CTX_use_certificate_file(proc.ssl_ctx, nsp_tostr(proc.N, cobj1), SSL_FILETYPE_PEM)<=0) {
+		log_error(proc.N, "core",  __FILE__, __LINE__, 0, "SSL Error loading certificate '%s'", nsp_tostr(proc.N, cobj1));
 		return -1;
 	}
-	if (libssl.SSL_CTX_use_PrivateKey_file(proc.ssl_ctx, nes_tostr(proc.N, cobj2), SSL_FILETYPE_PEM)<=0) {
-		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SSL Error loading private key '%s'", nes_tostr(proc.N, cobj2));
+	if (libssl.SSL_CTX_use_PrivateKey_file(proc.ssl_ctx, nsp_tostr(proc.N, cobj2), SSL_FILETYPE_PEM)<=0) {
+		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SSL Error loading private key '%s'", nsp_tostr(proc.N, cobj2));
 		return -1;
 	}
 	if (!libssl.SSL_CTX_check_private_key(proc.ssl_ctx)) {
@@ -232,12 +232,12 @@ int ssl_connect(TCP_SOCKET *sock)
 		return -1;
 	}
 /*
-	sid->ssl=SSL_new(sid->ctx);
-	SSL_set_fd(sid->ssl, sid->socket);
-	if (SSL_connect(sid->ssl)==-1) { perror("socket: "); exit -1; }
+	conn->ssl=SSL_new(conn->ctx);
+	SSL_set_fd(conn->ssl, conn->socket);
+	if (SSL_connect(conn->ssl)==-1) { perror("socket: "); exit -1; }
 /	* the rest is optional *
-/	printf("SSL connection using %s\r\n", SSL_get_cipher(sid->ssl));
-	if ((server_cert=SSL_get_peer_certificate(sid->ssl))==NULL) exit-1;
+/	printf("SSL connection using %s\r\n", SSL_get_cipher(conn->ssl));
+	if ((server_cert=SSL_get_peer_certificate(conn->ssl))==NULL) exit-1;
 /	printf("Server certificate:\r\n");
 	X509_free(server_cert);
 */

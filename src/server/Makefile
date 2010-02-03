@@ -4,11 +4,11 @@ include ../Rules.mak
 
 CFLAGS  = $(BIN_CFLAGS)
 OBJECTS = config.o domains.o format.o language.o main.o modctl.o sanity.o server.o sql.o ssl.o tcp.o
-TARGET  = $(BIN_TARGETDIR)/nullgsd
+TARGET  = $(BIN_TARGETDIR)/nullsd
 
-all: _nullgsd
+all: _nullsd
 
-_nullgsd: $(OBJECTS)
+_nullsd: $(OBJECTS)
 	$(CC) -o $(TARGET) $(OBJECTS) $(BIN_LDFLAGS_T)
 
 clean:

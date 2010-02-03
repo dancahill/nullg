@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,12 +17,12 @@
 */
 #include "httpd_main.h"
 
-char *getbuffer(CONN *sid)
+char *getbuffer(CONN *conn)
 {
-	sid->dat->lastbuf++;
-	if (sid->dat->lastbuf>3) sid->dat->lastbuf=0;
-	memset(sid->dat->smallbuf[sid->dat->lastbuf], 0, sizeof(sid->dat->smallbuf[sid->dat->lastbuf]));
-	return sid->dat->smallbuf[sid->dat->lastbuf];
+	conn->dat->lastbuf++;
+	if (conn->dat->lastbuf>3) conn->dat->lastbuf=0;
+	memset(conn->dat->smallbuf[conn->dat->lastbuf], 0, sizeof(conn->dat->smallbuf[conn->dat->lastbuf]));
+	return conn->dat->smallbuf[conn->dat->lastbuf];
 }
 
 int hex2int(char *pChars)
@@ -81,9 +81,9 @@ void decodeurl(char *src)
 	return;
 }
 
-char *encodeurl(CONN *sid, char *src)
+char *encodeurl(CONN *conn, char *src)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	char *dest=buffer;
 	/* char *unsafe="`'!@#$%^&*(){}<>~|\\\";? ,/"; */
 	char *unsafe="`'!@#$^&*(){}<>~|\\\";?,";
@@ -91,7 +91,7 @@ char *encodeurl(CONN *sid, char *src)
 	unsigned int dstlen=0;
 
 	while (*src) {
-		if (dstlen+4>sizeof(sid->dat->smallbuf[0])) break;
+		if (dstlen+4>sizeof(conn->dat->smallbuf[0])) break;
 /*		if ((*src>32)&&(*src<128)&&(!strchr(unsafe, *src))) { */
 		if ((*src>32)&&(!strchr(unsafe, *src))) {
 			*dest++=*src++;
@@ -119,12 +119,12 @@ static _htmltags htmltags[]={
 	{  '>', "&gt;" }
 };
 
-char *str2html(CONN *sid, char *instring)
+char *str2html(CONN *conn, char *instring)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	char *inptr=instring;
 	char *outptr=buffer;
-	short int destleft=sizeof(sid->dat->smallbuf[0])-1;
+	short int destleft=sizeof(conn->dat->smallbuf[0])-1;
 	short int i;
 	short int match;
 	short int str_len;
@@ -151,35 +151,35 @@ char *str2html(CONN *sid, char *instring)
 	}
 done:
 	*outptr='\0';
-	buffer[sizeof(sid->dat->smallbuf[0])-1]='\0';
+	buffer[sizeof(conn->dat->smallbuf[0])-1]='\0';
 	return buffer;
 }
 
-int printhex(CONN *sid, const char *format, ...)
+int printhex(CONN *conn, const char *format, ...)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	va_list ap;
 
 	va_start(ap, format);
-	vsnprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, format, ap);
+	vsnprintf(buffer, sizeof(conn->dat->smallbuf[0])-1, format, ap);
 	va_end(ap);
-	buffer[sizeof(sid->dat->smallbuf[0])-1]='\0';
-	return prints(sid, "%s", encodeurl(sid, buffer));
+	buffer[sizeof(conn->dat->smallbuf[0])-1]='\0';
+	return prints(conn, "%s", encodeurl(conn, buffer));
 }
 
-int printht(CONN *sid, const char *format, ...)
+int printht(CONN *conn, const char *format, ...)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	va_list ap;
 
 	va_start(ap, format);
-	vsnprintf(buffer, sizeof(sid->dat->smallbuf[0])-1, format, ap);
+	vsnprintf(buffer, sizeof(conn->dat->smallbuf[0])-1, format, ap);
 	va_end(ap);
-	buffer[sizeof(sid->dat->smallbuf[0])-1]='\0';
-	return prints(sid, "%s", str2html(sid, buffer));
+	buffer[sizeof(conn->dat->smallbuf[0])-1]='\0';
+	return prints(conn, "%s", str2html(conn, buffer));
 }
 
-void printline(CONN *sid, short int reply, char *msgtext)
+void printline(CONN *conn, short int reply, char *msgtext)
 {
 	char *pmsgbody;
 	char *ptemp;
@@ -192,28 +192,28 @@ void printline(CONN *sid, short int reply, char *msgtext)
 		memset(line, 0, sizeof(line));
 		snprintf(line, width+1, "%s", pmsgbody);
 		line[width]='\0';
-		if (reply) prints(sid, "> ");
+		if (reply) prints(conn, "> ");
 		if (strchr(line, '\r')||strchr(line, '\n')) {
 			if ((ptemp=strchr(line, '\r'))!=NULL) *ptemp='\0';
 			if ((ptemp=strchr(line, '\n'))!=NULL) *ptemp='\0';
-			printht(sid, "%s\r\n", line);
+			printht(conn, "%s\r\n", line);
 			pmsgbody+=strlen(line);
 			if (*pmsgbody=='\r') pmsgbody++;
 			if (*pmsgbody=='\n') pmsgbody++;
 		} else if ((ptemp=strrchr(line, ' '))!=NULL) {
 			*ptemp='\0';
-			printht(sid, "%s\r\n", line);
+			printht(conn, "%s\r\n", line);
 			pmsgbody+=strlen(line)+1;
 		} else {
-			printht(sid, "%s", line);
+			printht(conn, "%s", line);
 			pmsgbody+=strlen(line);
 		}
 	}
-	if (reply) prints(sid, "> ");
-	printht(sid, "%s\r\n", pmsgbody);
+	if (reply) prints(conn, "> ");
+	printht(conn, "%s\r\n", pmsgbody);
 }
 
-void printline2(CONN *sid, int dowrap, char *msgtext)
+void printline2(CONN *conn, int dowrap, char *msgtext)
 {
 	char buffer[1024];
 	char lastchar='\0';
@@ -277,63 +277,63 @@ void printline2(CONN *sid, int dowrap, char *msgtext)
 			lastchar=*ptemp1;
 			ptemp1++;
 		}
-		prints(sid, "%s", buffer);
+		prints(conn, "%s", buffer);
 	}
 	return;
 }
 
-void htselect_timezone(CONN *sid, short int selected)
+void htselect_timezone(CONN *conn, short int selected)
 {
 	obj_t *cobj, *tobj;
 	int i=0, n;
 
-	if ((sid==NULL)||(sid->N==NULL)) return;
-	tobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	cobj=nes_getobj(sid->N, tobj, "TIMEZONES");
+	if ((conn==NULL)||(conn->N==NULL)) return;
+	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	cobj=nsp_getobj(conn->N, tobj, "TIMEZONES");
 	if (cobj->val->type!=NT_TABLE) {
-		cobj=nes_settable(sid->N, tobj, "TIMEZONES");
+		cobj=nsp_settable(conn->N, tobj, "TIMEZONES");
 		cobj->val->attr|=NST_HIDDEN;
-		htnes_dotemplate(sid, "", "tzones.ns");
+		htnsp_dotemplate(conn, "", "tzones.ns");
 	}
 	for (tobj=cobj->val->d.table.f;tobj;tobj=tobj->next) {
 		if (tobj->val->type!=NT_TABLE) continue;
-		n=(int)nes_getnum(sid->N, tobj, "o");
-		prints(sid, "<OPTION VALUE='%d'%s>%s\r\n", i, (i==selected)?" SELECTED":"", nes_getstr(sid->N, tobj, "n"));
+		n=(int)nsp_getnum(conn->N, tobj, "o");
+		prints(conn, "<OPTION VALUE='%d'%s>%s\r\n", i, (i==selected)?" SELECTED":"", nsp_getstr(conn->N, tobj, "n"));
 		i++;
 	}
 	return;
 }
 
-char *time_sql2text(CONN *sid, char *sqldate)
+char *time_sql2text(CONN *conn, char *sqldate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	time_t unixdate=time_sql2unix(sqldate);
 
 	strftime(buffer, 30, "%b %d, %Y %I:%M %p", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_sql2datetext(CONN *sid, char *sqldate)
+char *time_sql2datetext(CONN *conn, char *sqldate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	time_t unixdate=time_sql2unix(sqldate);
 
 	strftime(buffer, 30, "%b %d, %Y", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_sql2timetext(CONN *sid, char *sqldate)
+char *time_sql2timetext(CONN *conn, char *sqldate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	time_t unixdate=time_sql2unix(sqldate);
 
 	strftime(buffer, 30, "%I:%M %p", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_sql2lotimetext(CONN *sid, char *sqldate)
+char *time_sql2lotimetext(CONN *conn, char *sqldate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	char *ptemp=buffer;
 	time_t unixdate=time_sql2unix(sqldate);
 
@@ -342,49 +342,49 @@ char *time_sql2lotimetext(CONN *sid, char *sqldate)
 	return buffer;
 }
 
-char *time_unix2sqldate(CONN *sid, time_t unixdate)
+char *time_unix2sqldate(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 
 	strftime(buffer, 30, "%Y-%m-%d", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_unix2sqltime(CONN *sid, time_t unixdate)
+char *time_unix2sqltime(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 
 	strftime(buffer, 30, "%H:%M:%S", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_unix2text(CONN *sid, time_t unixdate)
+char *time_unix2text(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 
 	strftime(buffer, 50, "%b %d, %Y %I:%M %p", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_unix2datetext(CONN *sid, time_t unixdate)
+char *time_unix2datetext(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 
 	strftime(buffer, 30, "%b %d, %Y", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_unix2timetext(CONN *sid, time_t unixdate)
+char *time_unix2timetext(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 
 	strftime(buffer, 30, "%I:%M %p", gmtime(&unixdate));
 	return buffer;
 }
 
-char *time_unix2lotimetext(CONN *sid, time_t unixdate)
+char *time_unix2lotimetext(CONN *conn, time_t unixdate)
 {
-	char *buffer=getbuffer(sid);
+	char *buffer=getbuffer(conn);
 	char *ptemp=buffer;
 
 	strftime(buffer, 30, "%I:%M%p", gmtime(&unixdate));
@@ -392,31 +392,31 @@ char *time_unix2lotimetext(CONN *sid, time_t unixdate)
 	return buffer;
 }
 
-int time_tzoffset(CONN *sid, time_t unixdate)
+int time_tzoffset(CONN *conn, time_t unixdate)
 {
 	obj_t *cobj, *tobj;
 	struct tm *today;
 	time_t tzoffset;
 
-	if ((sid==NULL)||(sid->N==NULL)) return 0;
-	tobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	cobj=nes_getobj(sid->N, tobj, "TIMEZONES");
+	if ((conn==NULL)||(conn->N==NULL)) return 0;
+	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	cobj=nsp_getobj(conn->N, tobj, "TIMEZONES");
 	if (cobj->val->type!=NT_TABLE) {
-		cobj=nes_settable(sid->N, tobj, "TIMEZONES");
+		cobj=nsp_settable(conn->N, tobj, "TIMEZONES");
 		cobj->val->attr|=NST_HIDDEN;
-		htnes_dotemplate(sid, "", "tzones.ns");
+		htnsp_dotemplate(conn, "", "tzones.ns");
 	}
-	tobj=nes_getiobj(sid->N, cobj, sid->dat->timezone);
+	tobj=nsp_getiobj(conn->N, cobj, conn->dat->timezone);
 	if (tobj->val->type!=NT_NUMBER) return 0;
-	tzoffset=(int)nes_getnum(sid->N, tobj, "o")*60;
+	tzoffset=(int)nsp_getnum(conn->N, tobj, "o")*60;
 	today=localtime(&unixdate);
-	if (((int)nes_getnum(sid->N, tobj, "d"))&&(today->tm_isdst)) {
+	if (((int)nsp_getnum(conn->N, tobj, "d"))&&(today->tm_isdst)) {
 		tzoffset+=3600;
 	}
 	return tzoffset;
 }
 
-int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
+int time_tzoffset2(CONN *conn, time_t unixdate, int userid)
 {
 	obj_t *cobj, *tobj;
 	obj_t *qobj=NULL;
@@ -427,24 +427,24 @@ int time_tzoffset2(CONN *sid, time_t unixdate, int userid)
 	if (sql_queryf(proc->N, &qobj, "SELECT preftimezone FROM gw_users where userid = %d", userid)<0) return 0;
 	if (sql_numtuples(proc->N, &qobj)==1) tz=atoi(sql_getvalue(proc->N, &qobj, 0, 0));
 	sql_freeresult(proc->N, &qobj);
-	tobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	cobj=nes_getobj(sid->N, tobj, "TIMEZONES");
+	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	cobj=nsp_getobj(conn->N, tobj, "TIMEZONES");
 	if (cobj->val->type!=NT_TABLE) {
-		cobj=nes_settable(sid->N, tobj, "TIMEZONES");
+		cobj=nsp_settable(conn->N, tobj, "TIMEZONES");
 		cobj->val->attr|=NST_HIDDEN;
-		htnes_dotemplate(sid, "", "tzones.ns");
+		htnsp_dotemplate(conn, "", "tzones.ns");
 	}
-	tobj=nes_getiobj(sid->N, cobj, tz);
+	tobj=nsp_getiobj(conn->N, cobj, tz);
 	if (tobj->val->type!=NT_NUMBER) return 0;
-	tzoffset=(int)nes_getnum(sid->N, tobj, "o")*60;
+	tzoffset=(int)nsp_getnum(conn->N, tobj, "o")*60;
 	today=localtime(&unixdate);
-	if (((int)nes_getnum(sid->N, tobj, "d"))&&(today->tm_isdst)) {
+	if (((int)nsp_getnum(conn->N, tobj, "d"))&&(today->tm_isdst)) {
 		tzoffset+=3600;
 	}
 	return tzoffset;
 }
 
-int time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid)
+int time_tzoffsetcon(CONN *conn, time_t unixdate, int contactid)
 {
 	obj_t *cobj, *tobj;
 	obj_t *qobj=NULL;
@@ -455,18 +455,18 @@ int time_tzoffsetcon(CONN *sid, time_t unixdate, int contactid)
 	if (sql_queryf(proc->N, &qobj, "SELECT timezone FROM gw_contacts where contactid = %d", contactid)<0) return 0;
 	if (sql_numtuples(proc->N, &qobj)==1) tz=atoi(sql_getvalue(proc->N, &qobj, 0, 0));
 	sql_freeresult(proc->N, &qobj);
-	tobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	cobj=nes_getobj(sid->N, tobj, "TIMEZONES");
+	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	cobj=nsp_getobj(conn->N, tobj, "TIMEZONES");
 	if (cobj->val->type!=NT_TABLE) {
-		cobj=nes_settable(sid->N, tobj, "TIMEZONES");
+		cobj=nsp_settable(conn->N, tobj, "TIMEZONES");
 		cobj->val->attr|=NST_HIDDEN;
-		htnes_dotemplate(sid, "", "tzones.ns");
+		htnsp_dotemplate(conn, "", "tzones.ns");
 	}
-	tobj=nes_getiobj(sid->N, cobj, tz);
+	tobj=nsp_getiobj(conn->N, cobj, tz);
 	if (tobj->val->type!=NT_NUMBER) return 0;
-	tzoffset=(int)nes_getnum(sid->N, tobj, "o")*60;
+	tzoffset=(int)nsp_getnum(conn->N, tobj, "o")*60;
 	today=localtime(&unixdate);
-	if (((int)nes_getnum(sid->N, tobj, "d"))&&(today->tm_isdst)) {
+	if (((int)nsp_getnum(conn->N, tobj, "d"))&&(today->tm_isdst)) {
 		tzoffset+=3600;
 	}
 	return tzoffset;

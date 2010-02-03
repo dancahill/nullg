@@ -4,13 +4,13 @@ function encodeurl(in) {
 }
 
 function search_sql() {
-//	if (!(auth_priv(sid, "query")&A_READ)) {
-//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//	if (!(auth_priv(conn, "query")&A_READ)) {
+//		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
 	if (_GET['QUERYSTRING']!=null) {
-//		if (!(auth_priv(sid, "query")&A_ADMIN)) {
-//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(sid, "common", "err_noaccess"));
+//		if (!(auth_priv(conn, "query")&A_ADMIN)) {
+//			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //			return;
 //		}
 		id=-1;
@@ -61,10 +61,10 @@ function search_sql() {
 		print("<CENTER>SQL query failed.</CENTER>\r\n");
 		goto cleanup;
 	}
-	if ((ptemp=getgetenv(sid, "FORMAT"))!=NULL) {
-		nes_setstr(sid->N, rtobj, "CONTENT_DISPOSITION", "attachment; filename=query.csv", strlen("attachment; filename=query.csv"));
-		send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
-		flushbuffer(sid);
+	if ((ptemp=getgetenv(conn, "FORMAT"))!=NULL) {
+		nes_setstr(conn->N, rtobj, "CONTENT_DISPOSITION", "attachment; filename=query.csv", strlen("attachment; filename=query.csv"));
+		send_header(conn, 1, 200, "1", "application/octet-stream", -1, -1);
+		flushbuffer(conn);
 		for (i=0;i<sql_numfields(proc->N, &qobj2);i++) {
 			print("\"%s\"", sql_getname(proc->N, &qobj2, i));
 			if (i<sql_numfields(proc->N, &qobj2)-1) {
@@ -75,7 +75,7 @@ function search_sql() {
 		}
 		for (i=0;i<sql_numtuples(proc->N, &qobj2);i++) {
 			for (j=0;j<sql_numfields(proc->N, &qobj2);j++) {
-				print("\"%s\"", str2html(sid, sql_getvalue(proc->N, &qobj2, i, j)));
+				print("\"%s\"", str2html(conn, sql_getvalue(proc->N, &qobj2, i, j)));
 				if (j<sql_numfields(proc->N, &qobj2)-1) {
 					print(",");
 				} else {

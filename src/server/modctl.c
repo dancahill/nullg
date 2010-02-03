@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,12 @@
 */
 #include "main.h"
 
+#ifdef WIN32
+#define LIBEXT "dll"
+#else
+#define LIBEXT "so"
+#endif
+
 SRVMOD_EXEC mod_cron;
 SRVMOD_EXEC mod_exec;
 SRVMOD_EXEC mod_exit;
@@ -33,92 +39,140 @@ static int regfunctions()
 
 	if (loaded) return 0;
 	loaded=1;
-	tobj=nes_settable(proc.N, &proc.N->g, "_exports");
+	tobj=nsp_settable(proc.N, &proc.N->g, "_exports");
 	tobj->val->attr|=NST_HIDDEN;
-	tobj=nes_settable(proc.N, tobj, "core");
+	tobj=nsp_settable(proc.N, tobj, "core");
 	tobj->val->attr|=NST_HIDDEN;
-	nes_setcfunc(proc.N, tobj, "config_read",		(void *)config_read);
-	nes_setcfunc(proc.N, tobj, "config_write",		(void *)config_write);
-	nes_setcfunc(proc.N, tobj, "decode_base64",		(void *)decode_base64);
-	nes_setcfunc(proc.N, tobj, "dir_list",			(void *)dir_list);
-	nes_setcfunc(proc.N, tobj, "domain_getname",		(void *)domain_getname);
-	nes_setcfunc(proc.N, tobj, "domain_getid",		(void *)domain_getid);
-	nes_setcfunc(proc.N, tobj, "language_gets",		(void *)language_gets);
-	nes_setcfunc(proc.N, tobj, "lib_open",			(void *)lib_open);
-	nes_setcfunc(proc.N, tobj, "lib_sym",			(void *)lib_sym);
-	nes_setcfunc(proc.N, tobj, "lib_error",			(void *)lib_error);
-	nes_setcfunc(proc.N, tobj, "lib_close",			(void *)lib_close);
-	nes_setcfunc(proc.N, tobj, "log_access",		(void *)log_access);
-	nes_setcfunc(proc.N, tobj, "log_error",			(void *)log_error);
-	nes_setcfunc(proc.N, tobj, "md5_init",			(void *)md5_init);
-	nes_setcfunc(proc.N, tobj, "md5_update",		(void *)md5_update);
-	nes_setcfunc(proc.N, tobj, "md5_final",			(void *)md5_final);
-	nes_setcfunc(proc.N, tobj, "md5_crypt",			(void *)md5_crypt);
+	nsp_setcfunc(proc.N, tobj, "config_read",		(void *)config_read);
+	nsp_setcfunc(proc.N, tobj, "config_write",		(void *)config_write);
+	nsp_setcfunc(proc.N, tobj, "decode_base64",		(void *)decode_base64);
+	nsp_setcfunc(proc.N, tobj, "dir_list",			(void *)dir_list);
+	nsp_setcfunc(proc.N, tobj, "domain_getname",		(void *)domain_getname);
+	nsp_setcfunc(proc.N, tobj, "domain_getid",		(void *)domain_getid);
+	nsp_setcfunc(proc.N, tobj, "language_gets",		(void *)language_gets);
+	nsp_setcfunc(proc.N, tobj, "lib_open",			(void *)lib_open);
+	nsp_setcfunc(proc.N, tobj, "lib_sym",			(void *)lib_sym);
+	nsp_setcfunc(proc.N, tobj, "lib_error",			(void *)lib_error);
+	nsp_setcfunc(proc.N, tobj, "lib_close",			(void *)lib_close);
+	nsp_setcfunc(proc.N, tobj, "log_access",		(void *)log_access);
+	nsp_setcfunc(proc.N, tobj, "log_error",			(void *)log_error);
+	nsp_setcfunc(proc.N, tobj, "md5_init",			(void *)md5_init);
+	nsp_setcfunc(proc.N, tobj, "md5_update",		(void *)md5_update);
+	nsp_setcfunc(proc.N, tobj, "md5_final",			(void *)md5_final);
+	nsp_setcfunc(proc.N, tobj, "md5_crypt",			(void *)md5_crypt);
 
-	nes_setcfunc(proc.N, tobj, "nes_newstate",		(void *)nes_newstate);
-	nes_setcfunc(proc.N, tobj, "nes_endstate",		(void *)nes_endstate);
-	nes_setcfunc(proc.N, tobj, "nes_exec",			(void *)nes_exec);
-	nes_setcfunc(proc.N, tobj, "nes_execfile",		(void *)nes_execfile);
-	nes_setcfunc(proc.N, tobj, "nes_linkval",		(void *)nes_linkval);
-	nes_setcfunc(proc.N, tobj, "nes_unlinkval",		(void *)nes_unlinkval);
-	nes_setcfunc(proc.N, tobj, "nes_freetable",		(void *)nes_freetable);
-	nes_setcfunc(proc.N, tobj, "nes_getobj",		(void *)nes_getobj);
-	nes_setcfunc(proc.N, tobj, "nes_getiobj",		(void *)nes_getiobj);
-	nes_setcfunc(proc.N, tobj, "nes_setobj",		(void *)nes_setobj);
-	nes_setcfunc(proc.N, tobj, "nes_strcat",		(void *)nes_strcat);
-	nes_setcfunc(proc.N, tobj, "nes_tonum",			(void *)nes_tonum);
-	nes_setcfunc(proc.N, tobj, "nes_tostr",			(void *)nes_tostr);
-	nes_setcfunc(proc.N, tobj, "nes_eval",			(void *)nes_eval);
-	nes_setcfunc(proc.N, tobj, "nes_evalf",			(void *)nes_evalf);
+	nsp_setcfunc(proc.N, tobj, "nsp_newstate",		(void *)nsp_newstate);
+	nsp_setcfunc(proc.N, tobj, "nsp_endstate",		(void *)nsp_endstate);
+	nsp_setcfunc(proc.N, tobj, "nsp_exec",			(void *)nsp_exec);
+	nsp_setcfunc(proc.N, tobj, "nsp_execfile",		(void *)nsp_execfile);
 
-	nes_setcfunc(proc.N, tobj, "sql_freeresult",		(void *)sql_freeresult);
-	nes_setcfunc(proc.N, tobj, "sql_update",		(void *)sql_update);
-	nes_setcfunc(proc.N, tobj, "sql_updatef",		(void *)sql_updatef);
-	nes_setcfunc(proc.N, tobj, "sql_query",			(void *)sql_query);
-	nes_setcfunc(proc.N, tobj, "sql_queryf",		(void *)sql_queryf);
-	nes_setcfunc(proc.N, tobj, "sql_getname",		(void *)sql_getname);
-	nes_setcfunc(proc.N, tobj, "sql_getvalue",		(void *)sql_getvalue);
-	nes_setcfunc(proc.N, tobj, "sql_getvaluebyname",	(void *)sql_getvaluebyname);
-	nes_setcfunc(proc.N, tobj, "sql_numfields",		(void *)sql_numfields);
-	nes_setcfunc(proc.N, tobj, "sql_numtuples",		(void *)sql_numtuples);
-	nes_setcfunc(proc.N, tobj, "sys_system",		(void *)sys_system);
-	nes_setcfunc(proc.N, tobj, "tcp_bind",			(void *)tcp_bind);
-	nes_setcfunc(proc.N, tobj, "tcp_accept",		(void *)tcp_accept);
-	nes_setcfunc(proc.N, tobj, "tcp_connect",		(void *)tcp_connect);
-	nes_setcfunc(proc.N, tobj, "tcp_fgets",			(void *)tcp_fgets);
-	nes_setcfunc(proc.N, tobj, "tcp_fprintf",		(void *)tcp_fprintf);
-	nes_setcfunc(proc.N, tobj, "tcp_recv",			(void *)tcp_recv);
-	nes_setcfunc(proc.N, tobj, "tcp_send",			(void *)tcp_send);
-	nes_setcfunc(proc.N, tobj, "tcp_close",			(void *)tcp_close);
-	nes_setcfunc(proc.N, tobj, "time_sql2unix",		(void *)time_sql2unix);
-	nes_setcfunc(proc.N, tobj, "time_unix2sql",		(void *)time_unix2sql);
-	nes_setcfunc(proc.N, tobj, "strncatf",			(void *)strncatf);
-	nes_setcfunc(proc.N, tobj, "striprn",			(void *)striprn);
-	nes_setcfunc(proc.N, tobj, "fixslashes",		(void *)fixslashes);
-	nes_setcfunc(proc.N, tobj, "str2sql",			(void *)str2sql);
-	nes_setcfunc(proc.N, tobj, "p_strcasestr",		(void *)p_strcasestr);
-	nes_setcfunc(proc.N, tobj, "addlistener",		(void *)addlistener);
+	nsp_setcfunc(proc.N, tobj, "nsp_setvaltype",		(void *)nsp_setvaltype);
+	nsp_setcfunc(proc.N, tobj, "nsp_linkval",		(void *)nsp_linkval);
+	nsp_setcfunc(proc.N, tobj, "nsp_unlinkval",		(void *)nsp_unlinkval);
+	nsp_setcfunc(proc.N, tobj, "nsp_freetable",		(void *)nsp_freetable);
+	nsp_setcfunc(proc.N, tobj, "nsp_getobj",		(void *)nsp_getobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_getiobj",		(void *)nsp_getiobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_setobj",		(void *)nsp_setobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_strcat",		(void *)nsp_strcat);
+	nsp_setcfunc(proc.N, tobj, "nsp_strmul",		(void *)nsp_strmul);
+	nsp_setcfunc(proc.N, tobj, "nsp_tobool",		(void *)nsp_tobool);
+	nsp_setcfunc(proc.N, tobj, "nsp_tonum",			(void *)nsp_tonum);
+	nsp_setcfunc(proc.N, tobj, "nsp_tostr",			(void *)nsp_tostr);
+	nsp_setcfunc(proc.N, tobj, "nsp_eval",			(void *)nsp_eval);
+	nsp_setcfunc(proc.N, tobj, "nsp_evalf",			(void *)nsp_evalf);
+
+	nsp_setcfunc(proc.N, tobj, "sql_freeresult",		(void *)sql_freeresult);
+	nsp_setcfunc(proc.N, tobj, "sql_update",		(void *)sql_update);
+	nsp_setcfunc(proc.N, tobj, "sql_updatef",		(void *)sql_updatef);
+	nsp_setcfunc(proc.N, tobj, "sql_query",			(void *)sql_query);
+	nsp_setcfunc(proc.N, tobj, "sql_queryf",		(void *)sql_queryf);
+	nsp_setcfunc(proc.N, tobj, "sql_getname",		(void *)sql_getname);
+	nsp_setcfunc(proc.N, tobj, "sql_getvalue",		(void *)sql_getvalue);
+	nsp_setcfunc(proc.N, tobj, "sql_getvaluebyname",	(void *)sql_getvaluebyname);
+	nsp_setcfunc(proc.N, tobj, "sql_numfields",		(void *)sql_numfields);
+	nsp_setcfunc(proc.N, tobj, "sql_numtuples",		(void *)sql_numtuples);
+	nsp_setcfunc(proc.N, tobj, "sys_system",		(void *)sys_system);
+	nsp_setcfunc(proc.N, tobj, "tcp_bind",			(void *)tcp_bind);
+	nsp_setcfunc(proc.N, tobj, "tcp_accept",		(void *)tcp_accept);
+	nsp_setcfunc(proc.N, tobj, "tcp_connect",		(void *)tcp_connect);
+	nsp_setcfunc(proc.N, tobj, "tcp_fgets",			(void *)tcp_fgets);
+	nsp_setcfunc(proc.N, tobj, "tcp_fprintf",		(void *)tcp_fprintf);
+	nsp_setcfunc(proc.N, tobj, "tcp_recv",			(void *)tcp_recv);
+	nsp_setcfunc(proc.N, tobj, "tcp_send",			(void *)tcp_send);
+	nsp_setcfunc(proc.N, tobj, "tcp_close",			(void *)tcp_close);
+	nsp_setcfunc(proc.N, tobj, "time_sql2unix",		(void *)time_sql2unix);
+	nsp_setcfunc(proc.N, tobj, "time_unix2sql",		(void *)time_unix2sql);
+	nsp_setcfunc(proc.N, tobj, "strncatf",			(void *)strncatf);
+	nsp_setcfunc(proc.N, tobj, "striprn",			(void *)striprn);
+	nsp_setcfunc(proc.N, tobj, "fixslashes",		(void *)fixslashes);
+	nsp_setcfunc(proc.N, tobj, "str2sql",			(void *)str2sql);
+	nsp_setcfunc(proc.N, tobj, "p_strcasestr",		(void *)p_strcasestr);
+	nsp_setcfunc(proc.N, tobj, "addlistener",		(void *)addlistener);
 #ifdef HAVE_SSL
-	nes_setcfunc(proc.N, tobj, "ssl_accept",		(void *)ssl_accept);
-	nes_setcfunc(proc.N, tobj, "ssl_close",			(void *)ssl_close);
-	nes_setcfunc(proc.N, tobj, "ssl_shutdown",		(void *)ssl_shutdown);
+	nsp_setcfunc(proc.N, tobj, "ssl_accept",		(void *)ssl_accept);
+	nsp_setcfunc(proc.N, tobj, "ssl_close",			(void *)ssl_close);
+	nsp_setcfunc(proc.N, tobj, "ssl_shutdown",		(void *)ssl_shutdown);
 #endif
 #ifdef WIN32
-	nes_setcfunc(proc.N, tobj, "gettimeofday",		(void *)gettimeofday);
+	nsp_setcfunc(proc.N, tobj, "gettimeofday",		(void *)gettimeofday);
 #endif
 	return 0;
 }
 
-static NES_FUNCTION(nesladl_loadlib)
+
+static NSP_FUNCTION(libnsp_dl_loadlib)
 {
-//	CONN *sid=get_sid();
-	obj_t *cobj1=nes_getobj(N, &N->l, "1");
+#define __FN__ __FILE__ ":libnsp_dl_loadlib()"
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	obj_t *cobj, *tobj;
+	NSP_CFUNC cfunc;
 #ifdef WIN32
 	HINSTANCE l;
 #else
 	void *l;
 #endif
-	NES_CFUNC cfunc;
+	char namebuf[512];
+
+	if (!nsp_isstr(cobj1)||cobj1->val->size<1) {
+		nsp_setnum(N, &N->r, "", -1);
+		return 0;
+	}
+	tobj=nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
+	if (!nsp_istable(tobj)) {
+		log_error(proc.N, "core", __FILE__, __LINE__, 1, "dl.path not found");
+		return -1;
+	}
+	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
+		if (!nsp_isstr(cobj)) continue;
+		memset(namebuf, 0, sizeof(namebuf));
+		snprintf(namebuf, sizeof(namebuf)-1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, LIBEXT);
+		if ((l=lib_open(namebuf))!=NULL) {
+			if ((cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init"))!=NULL) {
+				nsp_setnum(N, &N->r, "", cfunc(N));
+				return 0;
+			} else {
+				nsp_setstr(N, &N->r, "", lib_error(), -1);
+				lib_close(l);
+				return 0;
+			}
+		}
+	}
+	log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
+	nsp_setnum(N, &N->r, "", -1);
+	return 0;
+#undef __FN__
+}
+/*
+static NSP_FUNCTION(libnsp_dl_loadlib)
+{
+//	CONN *conn=get_conn();
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+#ifdef WIN32
+	HINSTANCE l;
+#else
+	void *l;
+#endif
+	NSP_CFUNC cfunc;
 	int rc=0;
 
 	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->size>0)) {
@@ -129,7 +183,7 @@ static NES_FUNCTION(nesladl_loadlib)
 			rc=-1;
 		} else {
 			lib_error();
-			cfunc=(NES_CFUNC)lib_sym(l, "neslalib_init");
+			cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init");
 			if (cfunc==NULL) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't find entry point for lib");
 				if (l!=NULL) lib_close(l);
@@ -141,10 +195,10 @@ static NES_FUNCTION(nesladl_loadlib)
 	} else {
 		rc=-1;
 	}
-	nes_setnum(N, &N->r, "", rc);
+	nsp_setnum(N, &N->r, "", rc);
 	return 0;
 }
-
+*/
 
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x)
@@ -152,7 +206,7 @@ unsigned _stdcall cronloop(void *x)
 void *cronloop(void *x)
 #endif
 {
-	nes_state *N;
+	nsp_state *N;
 	obj_t *tobj, *tobj2;
 	time_t oldt, newt;
 	int i;
@@ -162,24 +216,39 @@ void *cronloop(void *x)
 	for (;;) {
 		newt=(time(NULL)/60)*60;
 		if (newt>oldt) {
+#ifdef WIN32
+			char libbuf[80];
+#endif
+
 			oldt=newt;
-			tobj=nes_getobj(proc.N, nes_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
-			if (nes_typeof(tobj)!=NT_STRING || tobj->val->size<1) {
+			tobj=nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
+			if (nsp_typeof(tobj)!=NT_STRING || tobj->val->size<1) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "config.cron_script undefined");
 				goto endrun;
 			}
-			if ((N=nes_newstate())==NULL) {
-				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nes_newstate() failed");
+			if ((N=nsp_newstate())==NULL) {
+				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nsp_newstate() failed");
 				goto endrun;
 			}
-			tobj2=nes_settable(N, &N->g, "dl");
+			tobj2=nsp_settable(N, &N->g, "dl");
 			tobj2->val->attr|=NST_HIDDEN;
-			nes_setcfunc(N, tobj2, "loadlib", (NES_CFUNC)nesladl_loadlib);
-			nes_execfile(N, tobj->val->d.str);
+			nsp_setcfunc(N, tobj2, "loadlib", (NSP_CFUNC)libnsp_dl_loadlib);
+			tobj2=nsp_settable(N, tobj2, "path");
+#ifdef WIN32
+//			nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
+//			GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
+//			GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
+			GetWindowsDirectory(libbuf, sizeof(libbuf));
+			_snprintf(libbuf+strlen(libbuf), sizeof(libbuf)-strlen(libbuf)-1, "\\NSP");
+			nsp_setstr(N, tobj2, "0", libbuf, -1);
+#else
+			nsp_setstr(N, tobj2, "0", "/usr/lib/nsp", -1);
+#endif
+			nsp_execfile(N, tobj->val->d.str);
 			if (N->err) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
 			}
-			N=nes_endstate(N);
+			N=nsp_endstate(N);
 		}
 endrun:
 		sleep(1);
@@ -236,7 +305,7 @@ int modules_exit()
 
 int module_load(char *modname)
 {
-	obj_t *confobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *confobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
 #ifdef WIN32
 	HINSTANCE hinstLib=NULL;
 	char *ext="dll";
@@ -258,7 +327,7 @@ int module_load(char *modname)
 	}
 	if (i==MAX_MOD_FUNCTIONS) return -1;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/core/%s.%s", nes_getstr(proc.N, confobj, "lib_path"), modname, ext);
+	snprintf(libname, sizeof(libname)-1, "%s/core/%s.%s", nsp_getstr(proc.N, confobj, "lib_path"), modname, ext);
 	fixslashes(libname);
 	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name)-1, "%s", modname);
 	if ((hinstLib=lib_open(libname))==NULL) goto fail;
@@ -281,13 +350,13 @@ fail:
 	return -1;
 }
 
-int modules_init(nes_state *N)
+int modules_init(nsp_state *N)
 {
 	obj_t *cobj, *tobj;
 
-	tobj=nes_getobj(N, &N->g, "CONFIG");
+	tobj=nsp_getobj(N, &N->g, "CONFIG");
 	if (tobj->val->type!=NT_TABLE) return 0;
-	tobj=nes_getobj(N, tobj, "modules");
+	tobj=nsp_getobj(N, tobj, "modules");
 	if (tobj->val->type!=NT_TABLE) return 0;
 	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (cobj->name[0]=='_') continue;

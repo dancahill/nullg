@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "httpd_main.h"
 
-int db_log_activity(CONN *sid, char *category, int indexid, char *action, const char *format, ...)
+int db_log_activity(CONN *conn, char *category, int indexid, char *action, const char *format, ...)
 {
 	char curdate[32];
 	char details[2048];
@@ -33,28 +33,28 @@ return 0;
 	vsnprintf(details, sizeof(details)-1, format, ap);
 	va_end(ap);
 	strcpy(query, "INSERT INTO gw_activity (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, userid, clientip, category, indexid, action, details) values (");
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '0', '%d', '0', '0', ", curdate, curdate, sid->dat->did);
-	if (sid!=NULL) {
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", sid->dat->uid);
-		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", sid->socket.RemoteAddr);
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', '%s', '0', '0', '%d', '0', '0', ", curdate, curdate, conn->dat->did);
+	if (conn!=NULL) {
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", conn->dat->uid);
+		strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", conn->socket.RemoteAddr);
 	} else {
 		strncatf(query, sizeof(query)-strlen(query)-1, "'', ");
 		strncatf(query, sizeof(query)-strlen(query)-1, "'', ");
 	}
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, category));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, category));
 	strncatf(query, sizeof(query)-strlen(query)-1, "'%d', ", indexid);
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, action));
-	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(sid), sizeof(sid->dat->smallbuf[0])-1, details));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s', ", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, action));
+	strncatf(query, sizeof(query)-strlen(query)-1, "'%s')", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0])-1, details));
 	return sql_update(proc->N, query);
 }
 
-void log_htaccess(CONN *sid)
+void log_htaccess(CONN *conn)
 {
-	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
-	obj_t *htobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	char *RequestMethod=nes_getstr(sid->N, htobj, "REQUEST_METHOD");
-	char *RequestURI=nes_getstr(sid->N, htobj, "REQUEST_URI");
-	char *Protocol=nes_getstr(sid->N, htobj, "SERVER_PROTOCOL");
+	obj_t *confobj=nsp_getobj(proc->N, &proc->N->g, "CONFIG");
+	obj_t *htobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	char *RequestMethod=nsp_getstr(conn->N, htobj, "REQUEST_METHOD");
+	char *RequestURI=nsp_getstr(conn->N, htobj, "REQUEST_URI");
+	char *Protocol=nsp_getstr(conn->N, htobj, "SERVER_PROTOCOL");
 #ifndef WIN32
 	static pthread_mutex_t *LogLock=NULL;
 #endif
@@ -68,8 +68,8 @@ void log_htaccess(CONN *sid)
 #ifndef WIN32
 	if (!LogLock) { LogLock=calloc(1, sizeof(pthread_mutex_t)); pthread_mutex_init(LogLock, NULL); }
 #endif
-	if (sid->dat==NULL) return;
-	snprintf(file, sizeof(file)-1, "%s/" MODSHORTNAME "-access.log", nes_getstr(proc->N, confobj, "var_log_path"));
+	if (conn->dat==NULL) return;
+	snprintf(file, sizeof(file)-1, "%s/" MODSHORTNAME "-access.log", nsp_getstr(proc->N, confobj, "var_log_path"));
 	fixslashes(file);
 	memset(logbuffer, 0, sizeof(logbuffer));
 	memset(timebuffer, 0, sizeof(timebuffer));
@@ -77,15 +77,15 @@ void log_htaccess(CONN *sid)
 	strftime(timebuffer, sizeof(timebuffer)-1, "%d/%b/%Y:%H:%M:%S", localtime((time_t *)&ttime.tv_sec));
 /*
 	snprintf(logbuffer, sizeof(logbuffer)-1, "%s - %s [%s] \"%s %s %s\" %d %d \"-\" \"%s\""
-		, sid->socket.RemoteAddr, strlen(sid->dat->username)?sid->dat->username:"-"
-		, timebuffer, sid->dat->in_RequestMethod, sid->dat->in_RequestURI, sid->dat->in_Protocol
-		, sid->dat->out_status, sid->dat->out_bytecount, sid->dat->in_UserAgent
+		, conn->socket.RemoteAddr, strlen(conn->dat->username)?conn->dat->username:"-"
+		, timebuffer, conn->dat->in_RequestMethod, conn->dat->in_RequestURI, conn->dat->in_Protocol
+		, conn->dat->out_status, conn->dat->out_bytecount, conn->dat->in_UserAgent
 	);
 */
 	snprintf(logbuffer, sizeof(logbuffer)-1, "%s - %s [%s] \"%s %s %s\" %d %d"
-		, sid->socket.RemoteAddr, strlen(sid->dat->username)?sid->dat->username:"-"
+		, conn->socket.RemoteAddr, strlen(conn->dat->username)?conn->dat->username:"-"
 		, timebuffer, RequestMethod, RequestURI, Protocol
-		, sid->dat->out_status, sid->dat->out_bytecount
+		, conn->dat->out_status, conn->dat->out_bytecount
 	);
 	/*
 	 * This crashes frequently and violently on openbsd without the mutex.

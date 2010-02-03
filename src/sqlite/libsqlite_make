@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION="3.6.17"
+VERSION="3.6.22"
 
 do_configure() {
 	if [ ! -r "sqlite-amalgamation-$VERSION.tar.gz" ]; then

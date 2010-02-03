@@ -4,7 +4,7 @@ include ../Rules.mak
 
 CFLAGS  = $(BIN_CFLAGS)
 OBJECTS = main.o
-TARGET  = $(BIN_TARGETDIR)/nullgs-dbutil
+TARGET  = $(BIN_TARGETDIR)/nullsd-dbutil
 
 all: dbutil
 

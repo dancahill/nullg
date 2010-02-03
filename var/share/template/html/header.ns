@@ -5,12 +5,12 @@ if (typeof(_TEMP)=='null') _TEMP={};
 if (typeof(_TEMP['title'])=='null') _TEMP['title']="NullLogic GroupServer";
 if (typeof(_TEMP['theme'])=='null') _TEMP['theme']=_USER.pref.theme;
 print(
-	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\r\n",
+	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\r\n",
 	"<HTML>\r\n",
 	"<HEAD>\r\n",
 	"<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n",
 	"<TITLE>", _TEMP['title'], "</TITLE>\r\n",
-	"<STYLE TYPE=text/css>\r\n",
+	"<STYLE TYPE=\"text/css\">\r\n",
 	".JUSTIFY { text-align: justify; }\r\n",
 	".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial, Verdana; font-size: 8pt; }\r\n",
 	"A        { color: #0000FF; text-decoration: none; }\r\n",

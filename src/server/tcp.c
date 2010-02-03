@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -263,6 +263,10 @@ int tcp_fgets(char *buffer, int max, TCP_SOCKET *socket)
 	short int x;
 
 retry:
+	if (socket->want_close) {
+		tcp_close(socket, 1);
+		return -1;
+	}
 	if (!socket->recvbufsize) {
 		x=sizeof(socket->recvbuf)-socket->recvbufoffset-socket->recvbufsize-2;
 		if (x<1) {

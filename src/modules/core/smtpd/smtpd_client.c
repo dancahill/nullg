@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ static void smtp_disconnect(TCP_SOCKET *smtp_sock)
 
 int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt)
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 	char inbuffer[1024];
 	char mxhost[128];
 	char *ptemp1;
@@ -85,7 +85,7 @@ int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt)
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (tcp_fgets(inbuffer, sizeof(inbuffer)-1, &smtp_sock)<0) return -1;
 	} while ((inbuffer[3]!=' ')&&(inbuffer[3]!='\0'));
-	tcp_fprintf(&smtp_sock, "HELO %s\r\n", nes_getstr(proc->N, confobj, "host_name"));
+	tcp_fprintf(&smtp_sock, "HELO %s\r\n", nsp_getstr(proc->N, confobj, "host_name"));
 	do {
 		memset(inbuffer, 0, sizeof(inbuffer));
 		if (tcp_fgets(inbuffer, sizeof(inbuffer)-1, &smtp_sock)<0) return -1;

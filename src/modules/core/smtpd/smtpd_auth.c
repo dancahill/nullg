@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ static int auth_checkpass(char *rpassword, char *cpassword)
 	return 0;
 }
 
-int auth_login(CONN *sid, char *username, char *password, int mbox)
+int auth_login(CONN *conn, char *username, char *password, int mbox)
 {
 	int i;
 	obj_t *qptr=NULL;
@@ -61,15 +61,15 @@ int auth_login(CONN *sid, char *username, char *password, int mbox)
 		sql_freeresult(proc->N, &qptr);
 		return -1;
 	}
-	sid->dat->uid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "userid"));
-	sid->dat->gid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "groupid"));
+	conn->dat->uid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "userid"));
+	conn->dat->gid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "groupid"));
 	sql_freeresult(proc->N, &qptr);
 	if (mbox==0) {
-		snprintf(sid->dat->username, sizeof(sid->dat->username)-1, "%s", username);
-		sid->dat->mailcurrent=0;
+		snprintf(conn->dat->username, sizeof(conn->dat->username)-1, "%s", username);
+		conn->dat->mailcurrent=0;
 		return 0;
 	}
-	if (sql_queryf(proc->N, &qptr, "SELECT mailaccountid, accountname FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d order by mailaccountid ASC", mbox, sid->dat->uid)<0) {
+	if (sql_queryf(proc->N, &qptr, "SELECT mailaccountid, accountname FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d order by mailaccountid ASC", mbox, conn->dat->uid)<0) {
 		return -1;
 	}
 	i=sql_numtuples(proc->N, &qptr);
@@ -77,6 +77,6 @@ int auth_login(CONN *sid, char *username, char *password, int mbox)
 	if (i!=1) {
 		return -1;
 	}
-	sid->dat->mailcurrent=mbox;
+	conn->dat->mailcurrent=mbox;
 	return 0;
 }

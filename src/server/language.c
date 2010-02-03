@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ typedef	void (*LANG_CALLBACK)(char *, char *);
 
 int language_read(char *langcode, char *section, void *callback)
 {
-	obj_t *tobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
-	obj_t *cobj=nes_getobj(proc.N, tobj, "var_path");
+	obj_t *tobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *cobj=nsp_getobj(proc.N, tobj, "var_path");
 	LANG_CALLBACK language_callback=(LANG_CALLBACK)callback;
 	FILE *fp=NULL;
 	char file[256];
@@ -93,7 +93,7 @@ int lang_read()
 	return 0;
 }
 
-char *language_gets(nes_state *N, char *lang, char *sect, char *label)
+char *language_gets(nsp_state *N, char *lang, char *sect, char *label)
 {
 	return "[empty string]";
 }

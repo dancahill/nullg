@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ unsigned _stdcall smtp_spool(void *x)
 void *smtp_spool(void *x)
 #endif
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 #ifdef WIN32
 	struct	direct *dentry;
 #else
@@ -52,8 +52,8 @@ void *smtp_spool(void *x)
 	memset(dirname2, 0, sizeof(dirname2));
 	memset(from, 0, sizeof(from));
 	memset(rcpt, 0, sizeof(rcpt));
-	snprintf(dirname1, sizeof(dirname1)-1, "%s/spool/mqinfo", nes_getstr(proc->N, confobj, "var_path"));
-	snprintf(dirname2, sizeof(dirname2)-1, "%s/spool/mqueue", nes_getstr(proc->N, confobj, "var_path"));
+	snprintf(dirname1, sizeof(dirname1)-1, "%s/spool/mqinfo", nsp_getstr(proc->N, confobj, "var_path"));
+	snprintf(dirname2, sizeof(dirname2)-1, "%s/spool/mqueue", nsp_getstr(proc->N, confobj, "var_path"));
 	fixslashes(dirname1);
 	fixslashes(dirname2);
 	while (1) {

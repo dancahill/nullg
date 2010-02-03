@@ -2,12 +2,12 @@
 function sql_list()
 {
 /*
-	if (auth_priv(sid, "query")&A_ADMIN) {
+	if (auth_priv(conn, "query")&A_ADMIN) {
 //		if (sql_queryf(proc->N, &qobj, "SELECT queryid, queryname, query FROM gw_queries ORDER BY queryname ASC")<0) return;
-		rc=sql_queryf(proc->N, &qobj, "SELECT * FROM nullgs_entries WHERE class = 'dbquery' AND did = %d", sid->dat->did);
+		rc=sql_queryf(proc->N, &qobj, "SELECT * FROM nullsd_entries WHERE class = 'dbquery' AND did = %d", conn->dat->did);
 		if (rc<0) return;
 	} else {
-//		if (sql_queryf(proc->N, &qobj, "SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", sid->dat->uid, sid->dat->gid)<0) return;
+//		if (sql_queryf(proc->N, &qobj, "SELECT queryid, queryname, query FROM gw_queries where (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) ORDER BY queryname ASC", conn->dat->uid, conn->dat->gid)<0) return;
 	}
 */
 	global Q=ldir.getlist("dbquery", 0);
@@ -15,11 +15,11 @@ function sql_list()
 	if (Q._tuples>0) {
 		print("Saved queries<BR />\r\n");
 		print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>\r\n");
-//		if (auth_priv(sid, "query")&A_ADMIN) {
+//		if (auth_priv(conn, "query")&A_ADMIN) {
 			print("<TH ALIGN=LEFT STYLE='border-style:solid'>&nbsp;</TH>");
 //		}
 		print("<TH ALIGN=LEFT COLSPAN=2 WIDTH=200 NOWRAP STYLE='border-style:solid'>Query Name</TH></TR>\r\n");
-//		if (auth_priv(sid, "query")&A_ADMIN) {
+//		if (auth_priv(conn, "query")&A_ADMIN) {
 			print("<TR CLASS=\"FIELDVAL\">");
 			print("<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"/search/sql/run.ns?querystring=");
@@ -35,7 +35,7 @@ function sql_list()
 		for (i=0;i<Q._tuples;i++) {
 			id=tonumber(Q['_rows'][i]['id']);
 			print("<TR CLASS=\"FIELDVAL\">");
-//			if (auth_priv(sid, "query")&A_ADMIN) {
+//			if (auth_priv(conn, "query")&A_ADMIN) {
 				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/edit.ns?id=",id,">edit</A></TD>");
 //			}
 			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/run.ns?id=",id,">");
@@ -51,7 +51,7 @@ function sql_list()
 	} else {
 		print("There are no saved queries<BR />\r\n");
 	}
-//	if (auth_priv(sid, "query")&A_ADMIN) {
+//	if (auth_priv(conn, "query")&A_ADMIN) {
 		print("<A HREF=/search/sql/edit.ns>New Query</A>\r\n");
 //	}
 	print("</CENTER>\r\n");

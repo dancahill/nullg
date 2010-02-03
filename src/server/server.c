@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -136,27 +136,27 @@ void setsigs()
 #endif
 }
 
-void init(nes_state *N)
+void init(nsp_state *N)
 {
-	obj_t *tobj;
 	unsigned int mask;
 
-	umask(007);
-	if (conf_read(N)!=0) {
-		printf("\r\nError reading configuration file\r\n");
-		exit(-2);
-	}
-	tobj=nes_getobj(proc.N, &proc.N->g, "CONFIG");
-	sscanf(nes_getstr(proc.N, tobj, "umask"), "%o", &mask);
-	mask=mask&0777;
-	umask(mask);
 #ifdef WIN32
 	if (WSAStartup(0x202, &proc.wsaData)) {
-		printf("\r\nWinsock 2 initialization failed.\r\n");
+		printf("\r\nWSAStartup failed.\r\n");
 		WSACleanup();
 		exit(0);
 	}
 #endif
+	umask(007);
+	if (proc.debug) printf("Reading config\r\n");
+	if (conf_read(N)!=0) {
+		printf("\r\nError reading configuration file\r\n");
+		exit(-2);
+	}
+	if (proc.debug) printf("Done reading config\r\n");
+	sscanf(nsp_getstr(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "umask"), "%o", &mask);
+	mask=mask&0777;
+	umask(mask);
 /*
  * calling daemon() here is necessary for freebsd.
  * they don't seem to carry binds across daemon()
@@ -170,12 +170,15 @@ void init(nes_state *N)
 	setsigs();
 #endif
 	pthread_mutex_init(&Lock.SQL, NULL);
+	if (proc.debug) printf("Checking DB\r\n");
 	if (sanity_checkdb()==-1) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SQL subsystem failed sanity check");
 		printf("\r\nSQL subsystem failed sanity check.\r\n");
 		exit(-2);
 	}
+	if (proc.debug) printf("Done checking DB\r\n");
 #ifdef HAVE_SSL
+	if (proc.debug) printf("Initing SSL\r\n");
 	ssl_init();
 #endif
 	return;
@@ -224,7 +227,7 @@ typedef struct {
 #endif
 	short int state;
 	TCP_SOCKET socket;
-	nes_state *N;
+	nsp_state *N;
 	void *dat;
 } COMMCONN;
 typedef	void *(*GET_CONN)(void);
@@ -268,7 +271,7 @@ void *accept_loop(void *x)
 	}
 	for (;;) {
 		for (i=0;i<numfd;i++) {
-			FD_SET(proc.srvlistener[i].socket->socket, &fdset);
+			FD_SET((unsigned int)proc.srvlistener[i].socket->socket, &fdset);
 		}
 		tv.tv_sec=1;
 		tv.tv_usec=0;

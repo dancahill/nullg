@@ -1,6 +1,6 @@
 #!/bin/sh
 FILEDATE="`date +%Y-%m-%d` 01:03"
-OUTFILE=nullgs-1.3.30-x86
+OUTFILE=nullsd-1.3.30-x86
 if [ "`uname`" = "FreeBSD" ]; then
 	OUTFILE=$OUTFILE-freebsd
 elif [ "`uname`" = "OpenBSD" ]; then
@@ -33,8 +33,8 @@ build_pack() {
 	touch --date="$FILEDATE" ${OUTFILE}.tar.gz
 	md5sum ${OUTFILE}.tar.gz > ${OUTFILE}.txt
 	echo "" >> ${OUTFILE}.txt
-	file bin/nullgs >> ${OUTFILE}.txt
-	ldd bin/nullgs >> ${OUTFILE}.txt
+	file bin/nullsd >> ${OUTFILE}.txt
+	ldd bin/nullsd >> ${OUTFILE}.txt
 }
 
 build_slackpack() {
@@ -44,14 +44,14 @@ build_slackpack() {
 	cd etc;touch --date="$FILEDATE" `find -name "*"`;cd ..
 	cd lib;touch --date="$FILEDATE" `find -name "*"`;cd ..
 	cd var;touch --date="$FILEDATE" `find -name "*"`;cd ..
-	mkdir -p slackroot/usr/local/nullgs
+	mkdir -p slackroot/usr/local/nullsd
 	mkdir -p slackroot/install
-	cp -pR bin slackroot/usr/local/nullgs
-	cp -pR etc slackroot/usr/local/nullgs
-	cp -pR lib slackroot/usr/local/nullgs
-	cp -pR var slackroot/usr/local/nullgs
+	cp -pR bin slackroot/usr/local/nullsd
+	cp -pR etc slackroot/usr/local/nullsd
+	cp -pR lib slackroot/usr/local/nullsd
+	cp -pR var slackroot/usr/local/nullsd
 	cat << EOF > slackroot/install/doinst.sh
-( cd /usr/local/nullgs/bin ; ./nullgs-confutil )
+( cd /usr/local/nullsd/bin ; ./nullsd-confutil )
 EOF
 	cat << EOF > slackroot/install/slack-desc
 # HOW TO EDIT THIS FILE:
@@ -63,17 +63,17 @@ EOF
 
 
 |-----handy-ruler------------------------------------------------------|
-nullgs: nullgs
-nullgs:
-nullgs: NullLogic GroupServer
-nullgs:
-nullgs: This is the NullLogic GroupServer Suite written and maintained
-nullgs: by Dan Cahill.
-nullgs:
-nullgs:
-nullgs:
-nullgs:
-nullgs:
+nullsd: nullsd
+nullsd:
+nullsd: NullLogic GroupServer
+nullsd:
+nullsd: This is the NullLogic GroupServer Suite written and maintained
+nullsd: by Dan Cahill.
+nullsd:
+nullsd:
+nullsd:
+nullsd:
+nullsd:
 EOF
 	chmod 755 slackroot/install/doinst.sh
 	chmod 644 slackroot/install/slack-desc
@@ -84,8 +84,8 @@ EOF
 	touch --date="$FILEDATE" ${OUTFILE}.tgz
 	md5sum ${OUTFILE}.tar.gz > ${OUTFILE}.txt
 	echo "" >> ${OUTFILE}.txt
-	file bin/nullgs >> ${OUTFILE}.txt
-	ldd bin/nullgs >> ${OUTFILE}.txt
+	file bin/nullsd >> ${OUTFILE}.txt
+	ldd bin/nullsd >> ${OUTFILE}.txt
 }
 
 case "$1" in

@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ typedef struct {
 
 #define RFC1123FMT "%a, %d %b %Y %H:%M:%S GMT"
 
-static int allow_relay(CONN *sid)
+static int allow_relay(CONN *conn)
 {
 	char curdate[32];
 	obj_t *qptr=NULL;
@@ -67,18 +67,18 @@ static int allow_relay(CONN *sid)
 	memset(curdate, 0, sizeof(curdate));
 	time_unix2sql(curdate, sizeof(curdate)-1, time(NULL)-mod_config.popauth_window);
 	sql_updatef(proc->N, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND obj_mtime < '%s'", curdate);
-	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_smtp_relayrules WHERE ipaddress = '%s' GROUP BY ipaddress", sid->dat->RemoteAddr)<0) return 0;
+	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_smtp_relayrules WHERE ipaddress = '%s' GROUP BY ipaddress", conn->dat->RemoteAddr)<0) return 0;
 	if (sql_numtuples(proc->N, &qptr)>0) {
 		allowed=1;
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 2, "%s is allowed to relay", sid->dat->RemoteAddr);
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 2, "%s is allowed to relay", conn->dat->RemoteAddr);
 	}
 	sql_freeresult(proc->N, &qptr);
 	return allowed;
 }
 
-static int smtp_accept(CONN *sid, MAILCONN *mconn)
+static int smtp_accept(CONN *conn, MAILCONN *mconn)
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 	FILE *fp;
 	struct stat sb;
 	char tmpname1[256];
@@ -122,10 +122,10 @@ static int smtp_accept(CONN *sid, MAILCONN *mconn)
 			sql_freeresult(proc->N, &qptr);
 			if (userid<1) {
 				bounce_send(mconn->from, mconn->rcpt[i], NULL, "554 no such mailbox");
-				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - no such mailbox: '%s', sent from '%s'", sid->dat->RemoteAddr, mconn->rcpt[i], mconn->from);
+				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - no such mailbox: '%s', sent from '%s'", conn->dat->RemoteAddr, mconn->rcpt[i], mconn->from);
 				continue;
 			}
-			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s", nes_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
+			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
 			if (stat(tmpname1, &sb)!=0) {
 #ifdef WIN32
 				if (mkdir(tmpname1)!=0) {
@@ -141,32 +141,32 @@ retry1:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));
-			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nes_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
 			fixslashes(tmpname1);
 			if (stat(tmpname1, &sb)==0) goto retry1;
-			log_access(proc->N, "smtpd", "%s - local delivery from:'%s', for:'%s'", sid->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
+			log_access(proc->N, "smtpd", "%s - local delivery from:'%s', for:'%s'", conn->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
 		} else if (mconn->sender_can_relay) {
 			is_remote=1;
 retry2:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));
-			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/spool/mqueue/%d%03d.msg", nes_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
- 			snprintf(tmpname2, sizeof(tmpname2)-1, "%s/spool/mqinfo/%d%03d.dat", nes_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+			snprintf(tmpname1, sizeof(tmpname1)-1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
+ 			snprintf(tmpname2, sizeof(tmpname2)-1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec/1000));
  			fixslashes(tmpname1);
  			fixslashes(tmpname2);
 			if (stat(tmpname1, &sb)==0) goto retry2;
 			if (stat(tmpname2, &sb)==0) goto retry2;
-			log_access(proc->N, "smtpd", "%s - queued mail from:'%s', for:'%s'", sid->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
+			log_access(proc->N, "smtpd", "%s - queued mail from:'%s', for:'%s'", conn->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
 		} else {
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - relaying denied from:'%s', for:'%s'", sid->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - relaying denied from:'%s', for:'%s'", conn->dat->RemoteAddr, mconn->from, mconn->rcpt[i]);
 			continue;
 		}
 		if ((fp=fopen(tmpname1, "wb"))!=NULL) {
-			fprintf(fp, "Received: from %s ([%s])\r\n", mconn->helo, sid->dat->RemoteAddr);
-			fprintf(fp, "	by %s for %s;\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn->rcpt[i]);
+			fprintf(fp, "Received: from %s ([%s])\r\n", mconn->helo, conn->dat->RemoteAddr);
+			fprintf(fp, "	by %s for %s;\r\n", nsp_getstr(proc->N, confobj, "host_name"), mconn->rcpt[i]);
 			fprintf(fp, "	%s\r\n", curdate1);
 			buf_ptr=mconn->msgbody;
 			blocksize=mconn->msgbodysize;
@@ -176,7 +176,7 @@ retry2:
 				buf_ptr+=bytes;
 			} while (blocksize>0);
 			fclose(fp);
-			err=filter_scan(sid, tmpname1);
+			err=filter_scan(conn, tmpname1);
 			if (err>0) {
 				unlink(tmpname1);
 				return err;
@@ -200,9 +200,9 @@ retry2:
 	return 0;
 }
 
-static void smtp_data(CONN *sid, MAILCONN *mconn)
+static void smtp_data(CONN *conn, MAILCONN *mconn)
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 	MSGHEADER header;
 	char curdate[40];
 	char line[1024];
@@ -214,14 +214,14 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	time_t t=time(NULL);
 
 	if ((strlen(mconn->from)==0)&&(mconn->sender_is_blank==0)) {
-		tcp_fprintf(&sid->socket, "503 No sender\r\n");
+		tcp_fprintf(&conn->socket, "503 No sender\r\n");
 		return;
 	}
 	if (mconn->num_rcpts==0) {
-		tcp_fprintf(&sid->socket, "503 No recipient\r\n");
+		tcp_fprintf(&conn->socket, "503 No recipient\r\n");
 		return;
 	}
-	tcp_fprintf(&sid->socket, "354 Send the mail data, end with .\r\n");
+	tcp_fprintf(&conn->socket, "354 Send the mail data, end with .\r\n");
 	if (mconn->msgbody) { free(mconn->msgbody); mconn->msgbody=NULL; }
 	buf_alloc=65536;
 	mconn->msgbody=calloc(buf_alloc, sizeof(char));
@@ -231,7 +231,7 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 	memset((char *)&header, 0, sizeof(header));
 	do {
 		memset(line, 0, sizeof(line));
-		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
+		if (tcp_fgets(line, sizeof(line)-1, &conn->socket)<0) return;
 		if (!header_done) {
 			memset(outbuf, 0, sizeof(outbuf));
 			if (strncasecmp(line, "From: ", 6)==0) {
@@ -251,17 +251,17 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 				if (!strlen(header.Date)) {
 					strftime(curdate, sizeof(curdate), RFC1123FMT, gmtime(&t));
 					strncatf(outbuf, sizeof(outbuf), "Date: %s\r\n", curdate);
-					strncatf(outbuf, sizeof(outbuf), "Date-warning: Date header was inserted by %s\r\n", nes_getstr(proc->N, confobj, "host_name"));
+					strncatf(outbuf, sizeof(outbuf), "Date-warning: Date header was inserted by %s\r\n", nsp_getstr(proc->N, confobj, "host_name"));
 				}
 				if (!strlen(header.MessageID)) {
-					strncatf(outbuf, sizeof(outbuf), "Message-id: <%d@%s>\r\n", t, nes_getstr(proc->N, confobj, "host_name"));
+					strncatf(outbuf, sizeof(outbuf), "Message-id: <%d@%s>\r\n", t, nsp_getstr(proc->N, confobj, "host_name"));
 				}
 				if (strlen(outbuf)) {
 					if ((mconn->msgbodysize+strlen(outbuf)+2)>buf_alloc) {
 						buf_alloc+=131072;
 						mconn->msgbody=realloc(mconn->msgbody, buf_alloc*sizeof(char));
 						if (mconn->msgbody==NULL) {
-							tcp_fprintf(&sid->socket, "451 Temporary failure - try again later\r\n");
+							tcp_fprintf(&conn->socket, "451 Temporary failure - try again later\r\n");
 							return;
 						}
 					}
@@ -278,7 +278,7 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 			buf_alloc+=131072;
 			mconn->msgbody=realloc(mconn->msgbody, buf_alloc*sizeof(char));
 			if (mconn->msgbody==NULL) {
-				tcp_fprintf(&sid->socket, "451 Temporary failure - try again later\r\n");
+				tcp_fprintf(&conn->socket, "451 Temporary failure - try again later\r\n");
 				return;
 			}
 		}
@@ -286,27 +286,27 @@ static void smtp_data(CONN *sid, MAILCONN *mconn)
 		strcat(buf_ptr, line);
 		mconn->msgbodysize+=strlen(line);
 	} while (1);
-	rc=smtp_accept(sid, mconn);
+	rc=smtp_accept(conn, mconn);
 	if (mconn->msgbody) { free(mconn->msgbody); mconn->msgbody=NULL; }
 	switch (rc) {
 	case 0:
-		tcp_fprintf(&sid->socket, "250 Message accepted for delivery\r\n");
+		tcp_fprintf(&conn->socket, "250 Message accepted for delivery\r\n");
 		break;
 	case 1:
-		tcp_fprintf(&sid->socket, "554 Message is permanently rejected (spam)\r\n");
+		tcp_fprintf(&conn->socket, "554 Message is permanently rejected (spam)\r\n");
 		break;
 	case 2:
 	case 3:
-		tcp_fprintf(&sid->socket, "554 Message is permanently rejected (virus)\r\n");
+		tcp_fprintf(&conn->socket, "554 Message is permanently rejected (virus)\r\n");
 		break;
 	default:
-		tcp_fprintf(&sid->socket, "451 Temporary failure - try again later\r\n");
+		tcp_fprintf(&conn->socket, "451 Temporary failure - try again later\r\n");
 		break;
 	}
 	return;
 }
 
-static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
+static void smtp_from(CONN *conn, MAILCONN *mconn, char *line)
 {
 	char address[120];
 	char *ptemp;
@@ -334,15 +334,15 @@ static void smtp_from(CONN *sid, MAILCONN *mconn, char *line)
 		host="localhost";
 	}
 	if (strlen(mconn->from)) {
-		tcp_fprintf(&sid->socket, "250 Sender '%s' OK\r\n", mconn->from);
+		tcp_fprintf(&conn->socket, "250 Sender '%s' OK\r\n", mconn->from);
 	} else {
 		mconn->sender_is_blank=1;
-		tcp_fprintf(&sid->socket, "250 Sender 'NULL' OK\r\n");
+		tcp_fprintf(&conn->socket, "250 Sender 'NULL' OK\r\n");
 	}
 	return;
 }
 
-static void smtp_rcpt(CONN *sid, MAILCONN *mconn, char *line)
+static void smtp_rcpt(CONN *conn, MAILCONN *mconn, char *line)
 {
 	char address[120];
 	char *ptemp1;
@@ -350,7 +350,7 @@ static void smtp_rcpt(CONN *sid, MAILCONN *mconn, char *line)
 	int domainid;
 
 	if ((strlen(mconn->from)==0)&&(mconn->sender_is_blank==0)) {
-		tcp_fprintf(&sid->socket, "503 No sender\r\n");
+		tcp_fprintf(&conn->socket, "503 No sender\r\n");
 		return;
 	}
 	ptemp1=line;
@@ -364,8 +364,8 @@ static void smtp_rcpt(CONN *sid, MAILCONN *mconn, char *line)
 	}
 	ptemp2=strchr(ptemp1, '@');
 	if (ptemp2==NULL) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - recipient invalid from:'%s', to:'%s'", sid->dat->RemoteAddr, mconn->from, ptemp1);
-		tcp_fprintf(&sid->socket, "553 Recipient Invalid\r\n");
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - recipient invalid from:'%s', to:'%s'", conn->dat->RemoteAddr, mconn->from, ptemp1);
+		tcp_fprintf(&conn->socket, "553 Recipient Invalid\r\n");
 		return;
 	}
 	ptemp2++;
@@ -373,20 +373,20 @@ static void smtp_rcpt(CONN *sid, MAILCONN *mconn, char *line)
 	if (domainid<1) {
 		/* rcpt domain is not local.  can sender relay? */
 		if (!mconn->sender_can_relay) {
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - relaying denied from:'%s', to:'%s'", sid->dat->RemoteAddr, mconn->from, ptemp1);
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - sender is not local, and neither is the recipient domain '%s'", sid->dat->RemoteAddr, ptemp2);
-			tcp_fprintf(&sid->socket, "553 Relaying denied\r\n");
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - relaying denied from:'%s', to:'%s'", conn->dat->RemoteAddr, mconn->from, ptemp1);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s - sender is not local, and neither is the recipient domain '%s'", conn->dat->RemoteAddr, ptemp2);
+			tcp_fprintf(&conn->socket, "553 Relaying denied\r\n");
 			return;
 		}
 	}
 	mconn->rcpt[mconn->num_rcpts]=calloc(128, sizeof(char));
 	snprintf(mconn->rcpt[mconn->num_rcpts], 127, "%s", ptemp1);
 	mconn->num_rcpts++;
-	tcp_fprintf(&sid->socket, "250 Recipient '%s' OK\r\n", mconn->rcpt[mconn->num_rcpts-1]);
+	tcp_fprintf(&conn->socket, "250 Recipient '%s' OK\r\n", mconn->rcpt[mconn->num_rcpts-1]);
 	return;
 }
 
-static void smtp_rset(CONN *sid, MAILCONN *mconn)
+static void smtp_rset(CONN *conn, MAILCONN *mconn)
 {
 	int i;
 
@@ -394,110 +394,110 @@ static void smtp_rset(CONN *sid, MAILCONN *mconn)
 		if (mconn->rcpt[i]!=NULL) { free(mconn->rcpt[i]); mconn->rcpt[i]=NULL; }
 	}
 	memset(mconn->from, 0, sizeof(mconn->from));
-	mconn->sender_can_relay=allow_relay(sid);
+	mconn->sender_can_relay=allow_relay(conn);
 	mconn->sender_is_blank=0;
 	mconn->num_rcpts=0;
-	tcp_fprintf(&sid->socket, "250 Reset OK\r\n");
+	tcp_fprintf(&conn->socket, "250 Reset OK\r\n");
 	return;
 }
 
-static void smtp_noop(CONN *sid)
+static void smtp_noop(CONN *conn)
 {
-	tcp_fprintf(&sid->socket, "220 OK\r\n");
+	tcp_fprintf(&conn->socket, "220 OK\r\n");
 	return;
 }
 
-static void smtp_turn(CONN *sid)
+static void smtp_turn(CONN *conn)
 {
-	tcp_fprintf(&sid->socket, "502 No\r\n");
+	tcp_fprintf(&conn->socket, "502 No\r\n");
 	return;
 }
 
-void smtp_dorequest(CONN *sid)
+void smtp_dorequest(CONN *conn)
 {
-	obj_t *confobj=nes_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 	MAILCONN mconn;
 	char line[128];
 	char *ptemp;
 	int i;
 
 	memset((char *)&mconn, 0, sizeof(mconn));
-	mconn.sender_can_relay=allow_relay(sid);
-	log_access(proc->N, MODSHORTNAME, "%s:%d - NEW CONNECTION", sid->dat->RemoteAddr, sid->dat->RemotePort);
+	mconn.sender_can_relay=allow_relay(conn);
+	log_access(proc->N, MODSHORTNAME, "%s:%d - NEW CONNECTION", conn->dat->RemoteAddr, conn->dat->RemotePort);
 /*
-	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_can_relay?" - relaying allowed":" - relaying denied");
+	tcp_fprintf(&conn->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_can_relay?" - relaying allowed":" - relaying denied");
 */
-	tcp_fprintf(&sid->socket, "220 %s - %s SMTPd\r\n", nes_getstr(proc->N, confobj, "host_name"), SERVER_NAME);
+	tcp_fprintf(&conn->socket, "220 %s - %s SMTPd\r\n", nsp_getstr(proc->N, confobj, "host_name"), SERVER_NAME);
 	do {
 		memset(line, 0, sizeof(line));
-		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) return;
+		if (tcp_fgets(line, sizeof(line)-1, &conn->socket)<0) return;
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
-			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");
+			tcp_fprintf(&conn->socket, "221 Goodbye\r\n");
 			return;
 		} else if ((strncasecmp(line, "helo", 4)==0)||(strncasecmp(line, "ehlo", 4)==0)) {
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(mconn.helo, sizeof(mconn.helo)-1, "%s", ptemp);
-			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.helo, sid->dat->RemoteAddr);
-			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.helo);
+			tcp_fprintf(&conn->socket, "250 %s Hello, %s [%s]\r\n", nsp_getstr(proc->N, confobj, "host_name"), mconn.helo, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, mconn.helo);
 			if (strlen(mconn.helo)) {
-				sid->state=1;
+				conn->state=1;
 				break;
 			}
 		} else if (strncasecmp(line, "ehlo", 4)==0) {
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(mconn.ehlo, sizeof(mconn.ehlo)-1, "%s", ptemp);
-			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.ehlo, sid->dat->RemoteAddr);
-			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.ehlo);
+			tcp_fprintf(&conn->socket, "250 %s Hello, %s [%s]\r\n", nsp_getstr(proc->N, confobj, "host_name"), mconn.ehlo, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, mconn.ehlo);
 			if (strlen(mconn.ehlo)) {
-				sid->state=1;
+				conn->state=1;
 				break;
 			}
 		} else {
-			tcp_fprintf(&sid->socket, "500 Some people still say hello\r\n");
+			tcp_fprintf(&conn->socket, "500 Some people still say hello\r\n");
 		}
 	} while (1);
-	log_access(proc->N, "smtpd", "%s - HELO '%s'", sid->dat->RemoteAddr, mconn.helo);
+	log_access(proc->N, "smtpd", "%s - HELO '%s'", conn->dat->RemoteAddr, mconn.helo);
 	mconn.rcptalloc=50;
 	if ((mconn.rcpt=(char **)calloc(mconn.rcptalloc, sizeof(char *)))==NULL) return;
 	do {
 		memset(line, 0, sizeof(line));
-		if (tcp_fgets(line, sizeof(line)-1, &sid->socket)<0) goto cleanup;
+		if (tcp_fgets(line, sizeof(line)-1, &conn->socket)<0) goto cleanup;
 		striprn(line);
 		if (strcasecmp(line, "quit")==0) {
-			tcp_fprintf(&sid->socket, "221 Goodbye\r\n");
+			tcp_fprintf(&conn->socket, "221 Goodbye\r\n");
 			break;
 
 		} else if (strncasecmp(line, "helo", 4)==0) {
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(mconn.helo, sizeof(mconn.helo)-1, "%s", ptemp);
-			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.helo, sid->dat->RemoteAddr);
-			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.helo);
+			tcp_fprintf(&conn->socket, "250 %s Hello, %s [%s]\r\n", nsp_getstr(proc->N, confobj, "host_name"), mconn.helo, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - HELO '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, mconn.helo);
 		} else if (strncasecmp(line, "ehlo", 4)==0) {
 			ptemp=line+4;
 			while ((*ptemp==' ')||(*ptemp=='\t')) ptemp++;
 			snprintf(mconn.ehlo, sizeof(mconn.ehlo)-1, "%s", ptemp);
-			tcp_fprintf(&sid->socket, "250 %s Hello, %s [%s]\r\n", nes_getstr(proc->N, confobj, "host_name"), mconn.ehlo, sid->dat->RemoteAddr);
-			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", sid->dat->RemoteAddr, sid->dat->RemotePort, mconn.ehlo);
+			tcp_fprintf(&conn->socket, "250 %s Hello, %s [%s]\r\n", nsp_getstr(proc->N, confobj, "host_name"), mconn.ehlo, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d - EHLO '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, mconn.ehlo);
 
 		} else if (strncasecmp(line, "mail from:", 10)==0) {
-			smtp_from(sid, &mconn, line+10);
+			smtp_from(conn, &mconn, line+10);
 		} else if (strncasecmp(line, "rcpt to:", 8)==0) {
-			smtp_rcpt(sid, &mconn, line+8);
+			smtp_rcpt(conn, &mconn, line+8);
 		} else if (strcasecmp(line, "data")==0) {
-			smtp_data(sid, &mconn);
+			smtp_data(conn, &mconn);
 		} else if (strcasecmp(line, "rset")==0) {
-			smtp_rset(sid, &mconn);
+			smtp_rset(conn, &mconn);
 		} else if (strcasecmp(line, "turn")==0) {
-			smtp_turn(sid);
+			smtp_turn(conn);
 		} else if (strcasecmp(line, "noop")==0) {
-			smtp_noop(sid);
+			smtp_noop(conn);
 		} else {
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "UNKNOWN COMMAND: '%s'", line);
-			tcp_fprintf(&sid->socket, "502 Unknown Command\r\n");
+			tcp_fprintf(&conn->socket, "502 Unknown Command\r\n");
 		}
 	} while (1);
 cleanup:

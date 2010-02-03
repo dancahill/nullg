@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 */
 #include "smtpd_main.h"
 
-int filter_scan(CONN *sid, char *msgfilename)
+int filter_scan(CONN *conn, char *msgfilename)
 {
 	short int err;
 
@@ -26,11 +26,11 @@ int filter_scan(CONN *sid, char *msgfilename)
 	if (err>255) err=err>>8;
 	if ((err==1)||(err==2)||(err==3)) {
 		if (err==1) {
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][SPAM]", sid->dat->RemoteAddr);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][SPAM]", conn->dat->RemoteAddr);
 		} else if (err==2) {
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS]", sid->dat->RemoteAddr);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS]", conn->dat->RemoteAddr);
 		} else if (err==3) {
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS+SPAM]", sid->dat->RemoteAddr);
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS+SPAM]", conn->dat->RemoteAddr);
 		}
 		return err;
 	}

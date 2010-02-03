@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,42 +17,42 @@
 */
 #include "httpd_main.h"
 
-char *lang_gets(CONN *sid, char *sect, char *label)
+char *lang_gets(CONN *conn, char *sect, char *label)
 {
-	obj_t *confobj=nes_getobj(proc->N, &proc->N->g, "CONFIG");
+	obj_t *confobj=nsp_getobj(proc->N, &proc->N->g, "CONFIG");
 	obj_t *cobj, *tobj;
 	struct stat sb;
 	char fname[512];
 //	jmp_buf *savjmp;
 
-	if ((sid==NULL)||(sid->N==NULL)) return "";
-	if (strlen(sid->dat->language)==0) return "";
+	if ((conn==NULL)||(conn->N==NULL)) return "";
+	if (strlen(conn->dat->language)==0) return "";
 	if (strlen(sect)==0) return "";
-	tobj=nes_settable(sid->N, &sid->N->g, "_SERVER");
-	tobj=nes_settable(sid->N, tobj, "LANGUAGE");
+	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
+	tobj=nsp_settable(conn->N, tobj, "LANGUAGE");
 	tobj->val->attr|=NST_HIDDEN;
 	/*
 	 * it's hidden because it's ugly.  not because knowing the
 	 * french word for 'inbox' would be a security issue.
 	 */
-	tobj=nes_settable(sid->N, tobj, sid->dat->language);
-	tobj=nes_settable(sid->N, tobj, sect);
-	cobj=nes_getobj(sid->N, tobj, label);
-	if (cobj->val->type!=NT_NULL) return nes_tostr(sid->N, cobj);
+	tobj=nsp_settable(conn->N, tobj, conn->dat->language);
+	tobj=nsp_settable(conn->N, tobj, sect);
+	cobj=nsp_getobj(conn->N, tobj, label);
+	if (cobj->val->type!=NT_NULL) return nsp_tostr(conn->N, cobj);
 	/* sym not found, so let's go hunting */
-	snprintf(fname, sizeof(fname)-1, "%s/share/locale/%s/%s.ns", nes_getstr(proc->N, confobj, "var_path"), sid->dat->language, sect);
+	snprintf(fname, sizeof(fname)-1, "%s/share/locale/%s/%s.ns", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->language, sect);
 	fixslashes(fname);
 	if (stat(fname, &sb)==0) {
-//		savjmp=sid->N->savjmp;
-//		sid->N->savjmp=calloc(1, sizeof(jmp_buf));
-//		if (setjmp(*sid->N->savjmp)==0) {
-//			sid->N->jmpset=1;
-			nes_execfile(sid->N, fname);
+//		savjmp=conn->N->savjmp;
+//		conn->N->savjmp=calloc(1, sizeof(jmp_buf));
+//		if (setjmp(*conn->N->savjmp)==0) {
+//			conn->N->jmpset=1;
+			nsp_execfile(conn->N, fname);
 //		}
-//		sid->N->jmpset=0;
-//		free(sid->N->savjmp);
-//		sid->N->savjmp=savjmp;
+//		conn->N->jmpset=0;
+//		free(conn->N->savjmp);
+//		conn->N->savjmp=savjmp;
 	}
-	cobj=nes_getobj(sid->N, tobj, label);
-	return nes_tostr(sid->N, cobj);
+	cobj=nsp_getobj(conn->N, tobj, label);
+	return nsp_tostr(conn->N, cobj);
 }

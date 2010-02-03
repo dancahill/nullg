@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2008 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -90,54 +90,54 @@ unsigned _stdcall htloop(void *x)
 void *htloop(void *x)
 #endif
 {
-	CONN *sid=x;
+	CONN *conn=x;
 	obj_t *cobj;
 	short k;
 
 	log_error(proc->N, "core", __FILE__, __LINE__, 2, "Starting htloop() thread");
-	if (sid==NULL) {
+	if (conn==NULL) {
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "missing sid");
 		return 0;
 	}
-	sid->id=pthread_self();
+	conn->id=pthread_self();
 #ifndef WIN32
-	pthread_detach(sid->id);
+	pthread_detach(conn->id);
 #endif
-	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Opening connection [%s:%d]", sid->socket.RemoteAddr, sid->socket.RemotePort);
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Opening connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	proc->stats.http_conns++;
 	for (;;) {
-		if (sid->dat!=NULL) { free(sid->dat); sid->dat=NULL; }
-		sid->dat=calloc(1, sizeof(CONNDATA));
-		sid->dat->out_ContentLength=-1;
-		sid->socket.atime=time(NULL);
-		sid->socket.ctime=time(NULL);
-		http_dorequest(sid);
+		if (conn->dat!=NULL) { free(conn->dat); conn->dat=NULL; }
+		conn->dat=calloc(1, sizeof(CONNDATA));
+		conn->dat->out_ContentLength=-1;
+		conn->socket.atime=time(NULL);
+		conn->socket.ctime=time(NULL);
+		http_dorequest(conn);
 		k=0;
-		cobj=nes_getobj(sid->N, &sid->N->g, "_HEADER");
+		cobj=nsp_getobj(conn->N, &conn->N->g, "_HEADER");
 		if (cobj->val->type==NT_TABLE) {
-			if (strcasecmp("Keep-Alive", nes_getstr(sid->N, cobj, "CONNECTION"))==0) k=1;
+			if (strcasecmp("Keep-Alive", nsp_getstr(conn->N, cobj, "CONNECTION"))==0) k=1;
 		}
-		sid->N=nes_endstate(sid->N);
-		sid->state=0;
-		/* memset(sid->dat, 0, sizeof(CONNDATA)); */
+		conn->N=nsp_endstate(conn->N);
+		conn->state=0;
+		/* memset(conn->dat, 0, sizeof(CONNDATA)); */
 		if (!k) break;
 	}
-	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", sid->socket.RemoteAddr, sid->socket.RemotePort);
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	/* closeconnect() cleans up our mess for us */
-	closeconnect(sid, 2);
-	sid->socket.socket=-1;
+	closeconnect(conn, 2);
+	conn->socket.socket=-1;
 	pthread_exit(0);
 	return 0;
 }
 
 void *get_conn()
 {
-	obj_t *hobj=nes_settable(proc->N, nes_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj=nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
 	int i;
 	int maxconn;
 
 	pthread_mutex_lock(&ListenerMutex);
-	maxconn=(int)nes_getnum(proc->N, hobj, "max_connections");
+	maxconn=(int)nsp_getnum(proc->N, hobj, "max_connections");
 	for (i=0;;i++) {
 		if (i>maxconn-1) { msleep(5); i=0; }
 		if (htproc.conn[i].id==0) break;
@@ -165,35 +165,35 @@ DllExport int mod_init(_PROC *_proc)
 	pthread_mutex_init(&ListenerMutex, NULL);
 	proc=_proc;
 	if (mod_import()!=0) return -1;
-	htproc.N=nes_newstate();
-	hobj=nes_settable(proc->N, nes_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
-	cobj=nes_getobj(proc->N, hobj, "interface");
-	if (cobj->val->type!=NT_STRING) cobj=nes_setstr(proc->N, hobj, "interface", "INADDR_ANY", strlen("INADDR_ANY"));
-	cobj=nes_getobj(proc->N, hobj, "port");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "port", 4110);
-	cobj=nes_getobj(proc->N, hobj, "ssl_port");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "ssl_port", 4112);
-	cobj=nes_getobj(proc->N, hobj, "max_connections");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "max_connections", 50);
-	maxconn=(int)nes_getnum(proc->N, hobj, "max_connections");
-	cobj=nes_getobj(proc->N, hobj, "max_keepalive");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "max_keepalive", 15);
-	cobj=nes_getobj(proc->N, hobj, "max_idle");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "max_idle", 120);
-	cobj=nes_getobj(proc->N, hobj, "max_post_size");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "max_post_size", 32*1024*1024);
-	cobj=nes_getobj(proc->N, hobj, "session_limit");
-	if (cobj->val->type!=NT_NUMBER) cobj=nes_setnum(proc->N, hobj, "session_limit", 1);
+	htproc.N=nsp_newstate();
+	hobj=nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	cobj=nsp_getobj(proc->N, hobj, "interface");
+	if (cobj->val->type!=NT_STRING) cobj=nsp_setstr(proc->N, hobj, "interface", "INADDR_ANY", strlen("INADDR_ANY"));
+	cobj=nsp_getobj(proc->N, hobj, "port");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "port", 4110);
+	cobj=nsp_getobj(proc->N, hobj, "ssl_port");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "ssl_port", 4112);
+	cobj=nsp_getobj(proc->N, hobj, "max_connections");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "max_connections", 50);
+	maxconn=(int)nsp_getnum(proc->N, hobj, "max_connections");
+	cobj=nsp_getobj(proc->N, hobj, "max_keepalive");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "max_keepalive", 15);
+	cobj=nsp_getobj(proc->N, hobj, "max_idle");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "max_idle", 120);
+	cobj=nsp_getobj(proc->N, hobj, "max_post_size");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "max_post_size", 32*1024*1024);
+	cobj=nsp_getobj(proc->N, hobj, "session_limit");
+	if (cobj->val->type!=NT_NUMBER) cobj=nsp_setnum(proc->N, hobj, "session_limit", 1);
 	log_error(proc->N, "core", __FILE__, __LINE__, 1, "Starting %s " MODSHORTNAME " %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	port=(int)nes_getnum(proc->N, hobj, "port");
+	port=(int)nsp_getnum(proc->N, hobj, "port");
 	if (port) {
-		if ((htproc.ListenSocketSTD.socket=tcp_bind(nes_getstr(proc->N, hobj, "interface"), port))!=-1) loaded=1;
+		if ((htproc.ListenSocketSTD.socket=tcp_bind(nsp_getstr(proc->N, hobj, "interface"), port))!=-1) loaded=1;
 	} else {
 		htproc.ListenSocketSTD.socket=-1;
 	}
-	port=(int)nes_getnum(proc->N, hobj, "ssl_port");
+	port=(int)nsp_getnum(proc->N, hobj, "ssl_port");
 	if ((proc->ssl_is_loaded)&&(port)) {
-		if ((htproc.ListenSocketSSL.socket=tcp_bind(nes_getstr(proc->N, hobj, "interface"), port))!=-1) loaded=1;
+		if ((htproc.ListenSocketSSL.socket=tcp_bind(nsp_getstr(proc->N, hobj, "interface"), port))!=-1) loaded=1;
 	} else {
 		htproc.ListenSocketSSL.socket=-1;
 	}
@@ -211,12 +211,12 @@ DllExport int mod_init(_PROC *_proc)
 
 DllExport int mod_exec()
 {
-	obj_t *hobj=nes_settable(proc->N, nes_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj=nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
 
-	if (nes_getnum(proc->N, hobj, "port")&&(htproc.ListenSocketSTD.socket!=-1)) {
+	if (nsp_getnum(proc->N, hobj, "port")&&(htproc.ListenSocketSTD.socket!=-1)) {
 		addlistener(MODSHORTNAME, &htproc.ListenSocketSTD, (void *)get_conn, (void *)htloop, 0);
 	}
-	if (nes_getnum(proc->N, hobj, "ssl_port")&&(htproc.ListenSocketSSL.socket!=-1)&&(proc->ssl_is_loaded)) {
+	if (nsp_getnum(proc->N, hobj, "ssl_port")&&(htproc.ListenSocketSSL.socket!=-1)&&(proc->ssl_is_loaded)) {
 		addlistener(MODSHORTNAME, &htproc.ListenSocketSSL, (void *)get_conn, (void *)htloop, 1);
 	}
 	return 0;
@@ -224,11 +224,11 @@ DllExport int mod_exec()
 
 DllExport int mod_cron()
 {
-	obj_t *hobj=nes_settable(proc->N, nes_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj=nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
 
-	int maxconn=(int)nes_getnum(proc->N, hobj, "max_connections");
-	int maxkeepalive=(int)nes_getnum(proc->N, hobj, "max_keepalive");
-	int maxidle=(int)nes_getnum(proc->N, hobj, "max_idle");
+	int maxconn=(int)nsp_getnum(proc->N, hobj, "max_connections");
+	int maxkeepalive=(int)nsp_getnum(proc->N, hobj, "max_keepalive");
+	int maxidle=(int)nsp_getnum(proc->N, hobj, "max_idle");
 	time_t ctime=time(NULL);
 	short int connections=0;
 	short int i;
@@ -260,7 +260,7 @@ DllExport int mod_cron()
 DllExport int mod_exit()
 {
 	log_error(proc->N, "core", __FILE__, __LINE__, 1, "Stopping %s " MODSHORTNAME " %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
-	htproc.N=nes_endstate(htproc.N);
+	htproc.N=nsp_endstate(htproc.N);
 	if (htproc.ListenSocketSTD.socket>0) {
 /*		shutdown(ListenSocket, 2);
 		closesocket(ListenSocket);
