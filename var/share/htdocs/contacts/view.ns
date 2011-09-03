@@ -16,7 +16,7 @@ function urlencode(s) {
 function contact_view() {
 	id=tonumber(_GET['ID']);
 	if (id!=0) {
-		global Q=ldir.getentry("person", id);
+		global Q=ldir.getentry("contact", id);
 		if (Q==null) {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
@@ -24,7 +24,11 @@ function contact_view() {
 	} else {
 		global Q={_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
 	}
-	CONTACT=Q['_rows'][0]['_data'];
+//	CONTACT=Q['_rows'][0]['_data'];
+	CONTACT=Q['_rows'][0];
+
+//	print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(CONTACT),"</PRE></TD></TR>");
+
 	if ((sizeof(CONTACT['homeaddress'])>0)&&(sizeof(CONTACT['homelocality'])>0)&&(sizeof(CONTACT['homeregion'])>0)&&(sizeof(CONTACT['homecountry'])>0)) {
 //		haddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['homecountry']+"&address="+CONTACT['homeaddress']+"&city="+CONTACT['homelocality']+"&state="+CONTACT['homeregion'];
 		haddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
@@ -63,12 +67,12 @@ function contact_view() {
 	print("// -->\r\n</SCRIPT>\r\n");
 	print("<CENTER>\r\n");
 	if (id>0) {
-		print("<B>",str2html(CONTACT['gn'])); if (sizeof(CONTACT['gn'])>0) print(" ");
-		print(str2html(CONTACT['sn']),"</B>");
+		print("<B>",str2html(CONTACT['givenname'])); if (sizeof(CONTACT['givenname'])>0) print(" ");
+		print(str2html(CONTACT['surname']),"</B>");
 	} else {
 		print("<B>New Contact</B>\r\n");
 	}
-	print("<FORM METHOD=POST ACTION=/contacts/save NAME=contactedit>\r\n");
+	print("<FORM METHOD=POST ACTION=\"/contacts/save\" NAME=contactedit>\r\n");
 	print("<INPUT TYPE=hidden NAME=id VALUE='",id,"'>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\r\n");
 /*
@@ -78,66 +82,66 @@ function contact_view() {
 */
 	print("<TR><TD ALIGN=LEFT>");
 	print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">\r\n");
-	print("<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=javascript:showpage(1)>SUMMARY</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=javascript:showpage(2)>NAME</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=javascript:showpage(3)>HOME</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=javascript:showpage(4)>WORK</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=javascript:showpage(5)>USER</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=javascript:showpage(6)>PERMISSIONS</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page7tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=7 HREF=javascript:showpage(7)>OTHER</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=\"javascript:showpage(1)\">SUMMARY</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=\"javascript:showpage(2)\">NAME</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=\"javascript:showpage(3)\">HOME</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=\"javascript:showpage(4)\">WORK</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=\"javascript:showpage(5)\">USER</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=\"javascript:showpage(6)\">PERMISSIONS</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page7tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=7 HREF=\"javascript:showpage(7)\">OTHER</A>&nbsp;</TD>\r\n");
 	print("</TR></TABLE>");
 	print("</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
 	print("<HR>\r\n");
 	print("<DIV ID=page1 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=100%>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=100%>");
+	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">");
 	print(str2html(CONTACT['personaltitle'])); if (sizeof(CONTACT['personaltitle'])>0) print(" ");
-	print(str2html(CONTACT['gn'])); if (sizeof(CONTACT['gn'])>0) print(" ");
-	print(str2html(CONTACT['sn'])); if (sizeof(CONTACT['sn'])>0) print(" ");
+	print(str2html(CONTACT['givenname'])); if (sizeof(CONTACT['givenname'])>0) print(" ");
+	print(str2html(CONTACT['surname'])); if (sizeof(CONTACT['surname'])>0) print(" ");
 	if (sizeof(CONTACT['uid'])>0) print(" (",str2html(CONTACT['uid']),")");
 	print("</TD>\r\n");
 	print("<TD ALIGN=right>");
-	if (id>0) print("<A HREF=/contacts/vcardexport?id=",id,">vCard</A>"); else print("&nbsp;");
+	if (id>0) print("<A HREF=\"/contacts/vcardexport?id=",id,"\">vCard</A>"); else print("&nbsp;");
 	print("</TD>\r\n");
 	print("</TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%>");
-	if (sizeof(CONTACT['mail'])<1) {
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">");
+	if (sizeof(CONTACT['email'])<1) {
 		print("&nbsp;</TD></TR>\r\n");
 	} else if (_USER['pref']['maildefault']==0) {
-		print("<A HREF=\"mailto:",CONTACT['mail'],"\">",str2html(CONTACT['mail']),"</A>&nbsp;</TD></TR>\r\n");
+		print("<A HREF=\"mailto:",CONTACT['email'],"\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
 	} else {
 		if (_USER['pref']['menustyle']==0) {
 			print("<A HREF=\"javascript:MsgTo('&quot;");
-			print(str2html(CONTACT['gn']));
-			if (sizeof(CONTACT['gn'])>0&&sizeof(CONTACT['sn'])>0) print(" ");
-			print(str2html(CONTACT['sn']));
-			print("&quot; <",CONTACT['mail'],">')\">",str2html(CONTACT['mail']),"</A>&nbsp;</TD></TR>\r\n");
+			print(str2html(CONTACT['givenname']));
+			if (sizeof(CONTACT['givenname'])>0&&sizeof(CONTACT['surname'])>0) print(" ");
+			print(str2html(CONTACT['surname']));
+			print("&quot; <",CONTACT['email'],">')\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
 		} else {
-			print("<A HREF=\"/mail/write?to=",CONTACT['mail'],"\">",str2html(CONTACT['mail']),"</A>&nbsp;</TD></TR>\r\n");
+			print("<A HREF=\"/mail/write?to=",CONTACT['email'],"\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
 		}
 	}
 	if (sizeof(CONTACT['labeleduri'])) {
-		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Web Site&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",CONTACT['labeleduri'],"\" TARGET=_blank>",str2html(CONTACT['labeleduri']),"</A>&nbsp;</TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Web Site&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><A HREF=\"",CONTACT['labeleduri'],"\" TARGET=_blank>",str2html(CONTACT['labeleduri']),"</A>&nbsp;</TD></TR>\r\n");
 	}
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['hometelephonenumber']),"&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['mobiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
-	if (haddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",haddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Organization&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['organization']),"&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['title']),"&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['worknumber']),"&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;FAX Number&nbsp;</B></TD><TD NOWRAP WIDTH=100%>",str2html(CONTACT['facsimiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
-	if (waddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=100%><A HREF=\"",waddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['hometelephonenumber']),"&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['mobiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
+	if (haddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Address&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><A HREF=\"",haddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Organization&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['organization']),"&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Job Title&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['title']),"&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['worknumber']),"&nbsp;</TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;FAX Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['facsimiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
+	if (waddr!=null) print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Work Address&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><A HREF=\"",waddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
 //	if (tz1!=tz2) {
-		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=100%><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Time&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\r\n");
 //	}
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 	print(
 		"<DIV ID=page2 STYLE='display: block'>\r\n",
-		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n",
-		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Surname           &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=sn           value=\"",str2html(CONTACT['sn']),            "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
-		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Given Name        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=gn           value=\"",str2html(CONTACT['gn']),            "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
+		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Surname           &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=surname       value=\"",str2html(CONTACT['surname']),             "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Given Name        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=givenname     value=\"",str2html(CONTACT['givenname']),      "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Title             &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=personaltitle value=\"",str2html(CONTACT['personaltitle']), "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Contact Type      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=contacttype  value=\"",str2html(CONTACT['contacttype']),   "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Referred By       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=referredby   value=\"",str2html(CONTACT['referredby']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
@@ -147,10 +151,10 @@ function contact_view() {
 	);
 	print(
 		"<DIV ID=page3 STYLE='display: block'>\r\n",
-		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n",
+		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=hometelephonenumber     value=\"",str2html(CONTACT['hometelephonenumber']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Mobile Number   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mobiletelephonenumber   value=\"",str2html(CONTACT['mobiletelephonenumber']),  "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
-		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mail           value=\"",str2html(CONTACT['mail']),          "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mail           value=\"",str2html(CONTACT['email']),         "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Web Site        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=labeleduri     value=\"",str2html(CONTACT['labeleduri']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeaddress    value=\"",str2html(CONTACT['homeaddress']),   "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homelocality   value=\"",str2html(CONTACT['homelocality']),  "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
@@ -162,7 +166,7 @@ function contact_view() {
 	);
 	print(
 		"<DIV ID=page4 STYLE='display: block'>\r\n",
-		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n",
+		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Organization    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=organization   value=\"",str2html(CONTACT['organization']),  "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Job Title       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=title          value=\"",str2html(CONTACT['title']),         "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Work Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=worktelephonenumber value=\"",str2html(CONTACT['worktelephonenumber']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
@@ -176,7 +180,7 @@ function contact_view() {
 		"</DIV>\r\n"
 	);
 	print("<DIV ID=page5 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
 //	if (module_exists("mod_xmlrpc")) {
 //		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Username          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=username value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(conn, ldir_getval(&qobj, 0, "uid")), disabled);
 //		print("<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Password          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=PASSWORD NAME=password value=\"%s\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n", str2html(conn, ldir_getval(&qobj, 0, "userpassword")), disabled);
@@ -195,7 +199,7 @@ function contact_view() {
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 	print("<DIV ID=page6 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
 /*	if ((contact->obj_uid==conn->dat->uid)||(priv&A_ADMIN)) editperms=1;
 	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
 	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
@@ -219,13 +223,13 @@ function contact_view() {
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 	print("<DIV ID=page7 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=100%>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
 	if (id>0) {
 /*
 		if (module_exists("mod_calls")&&(auth_priv(conn, "calls")&A_READ)) {
 			if (sql_queryf(&sqr, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
-			print("<TD NOWRAP WIDTH=100%>%d Calls</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+			print("<TD NOWRAP WIDTH=\"100%\">%d Calls</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
 			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				print("<A HREF=%s/contacts/callslist?contactid=%d>list</A>", ScriptName, id);
@@ -238,7 +242,7 @@ function contact_view() {
 		if (module_exists("mod_calendar")&&(auth_priv(conn, "calendar")&A_READ)) {
 			if (sql_queryf(&sqr, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
-			print("<TD NOWRAP WIDTH=100%>%d Events</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+			print("<TD NOWRAP WIDTH=\"100%\">%d Events</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
 			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				print("<A HREF=%s/contacts/eventlist?contactid=%d>list</A>", ScriptName, id);
@@ -251,7 +255,7 @@ function contact_view() {
 		if (module_exists("mod_finance")&&(auth_priv(conn, "finance")&A_READ)) {
 			if (sql_queryf(&sqr, "SELECT count(invoiceid) FROM gw_finance_invoices WHERE contactid = %d AND obj_did = %d", id, conn->dat->did)<0) return;
 			print("<TR CLASS=\"EDITFORM\">");
-			print("<TD NOWRAP WIDTH=100%>%d Invoices</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+			print("<TD NOWRAP WIDTH=\"100%\">%d Invoices</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 			print("<TD>");
 			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 				print("<A HREF=%s/contacts/orderlist?contactid=%d>list</A>", ScriptName, id);
@@ -267,7 +271,7 @@ function contact_view() {
 	if (module_exists("mod_email")&&(auth_priv(conn, "email")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
 		if (sql_queryf(&sqr, "SELECT count(mailheaderid) FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", conn->dat->uid, contact->email, contact->email, contact->email)<0) return;
 		print("<TR CLASS=\"EDITFORM\">");
-		print("<TD NOWRAP WIDTH=100%>%d E-Mails</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+		print("<TD NOWRAP WIDTH=\"100%\">%d E-Mails</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
 		print("<TD>");
 		if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
 			if (conn->dat->menustyle>0) {
@@ -294,8 +298,8 @@ function contact_view() {
 		sql_freeresult(&sqr);
 	}
 */
-	print("<TR><TD COLSPAN=3><BR /></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=3><A HREF=javascript:vcardImport();>Import vCard</A></TD></TR>\r\n");
+	print("<TR><TD COLSPAN=3><BR></TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=3><A HREF=\"javascript:vcardImport();\">Import vCard</A></TD></TR>\r\n");
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 	print("<HR>\r\n");
@@ -303,9 +307,9 @@ function contact_view() {
 	if (id>0) {
 //		if ((mod_notes_sublist=module_call("mod_notes_sublist"))!=NULL) {
 			print("<TR><TD NOWRAP>");
-			print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100% STYLE='border-style:solid'>\r\n");
+			print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\" STYLE='border-style:solid'>\r\n");
 			print("<TR><TH NOWRAP STYLE='border-style:solid'>Notes");
-			print(" [<A HREF=/notes/editnew?table=contacts&index=",id,">new</A>]");
+			print(" [<A HREF=\"/notes/editnew?table=contacts&amp;index=",id,"\">new</A>]");
 			print("</TH></TR>\r\n");
 //			mod_notes_sublist(conn, "contacts", id, 1);
 			print("</TABLE>\r\n");
@@ -360,6 +364,9 @@ function contact_view() {
 		);
 //	}
 	print("// -->\r\n</SCRIPT>\r\n");
+
+//	print("</CENTER><PRE>",serialize(Q),"</PRE>");
+
 	Q=null;
 	return;
 }

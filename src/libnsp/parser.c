@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,12 +33,13 @@ void n_getfunction(nsp_state *N, obj_t *cobj)
 	settrace();
 	/* if (N->debug) n_warn(N, __FN__, "snorting lines from %s()", cobj->name); */
 	n_expect(N, __FN__, OP_POPAREN);
-	as=N->readptr++;
-	n_skipto(N, __FN__, OP_PCPAREN);
+	as=N->readptr;
+	N->readptr+=readi2((N->readptr+1))+3;
+	n_expect(N, __FN__, OP_PCPAREN);
 	N->readptr++;
 	/* bs=N->readptr; */
 	n_expect(N, __FN__, OP_POBRACE);
-	N->readptr++;
+	N->readptr=n_seekop(N, N->readptr, 0);
 	n_skipto(N, __FN__, OP_PCBRACE);
 	be=++N->readptr;
 	nsp_setnfunc(N, cobj, NULL, (char *)as, be-as);
@@ -98,6 +99,95 @@ void n_getstring(nsp_state *N, obj_t *cobj)
 #undef __FN__
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+#include <fcntl.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#include <direct.h>
+#include <io.h>
+#elif !defined( __TURBOC__)
+#include <unistd.h>
+#endif
+
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+/ * read a string val from N->readptr * /
+void n_getexstring(nsp_state *N, obj_t *cobj)
+{
+#define __FN__ __FILE__ ":n_getstring()"
+	int size=readi4((N->readptr+1));
+	char *p;
+	char *o="asdf.txt";
+
+	struct stat sb;
+	int bl;
+	int fd;
+	int r;
+	int offset=0;
+
+	settrace();
+
+	p=n_alloc(N, size+3+nc_strlen(o)+1, 0);
+	nc_memcpy(p, (char *)N->readptr+5, size);
+	nc_memcpy(p+size, " > ", 3);
+	nc_memcpy(p+size+3, o, nc_strlen(o));
+	p[size+3+nc_strlen(o)]='\0';
+	//n_warn(N, __FN__, "'%s'", p);
+
+	N->readptr+=6+size;
+	system(p);
+	n_free(N, (void *)&p, size+3+nc_strlen(o)+1);
+
+	if (stat(o, &sb)!=0) {
+		nsp_setbool(N, cobj, "", 0);
+		return;
+	}
+	if ((fd=open(o, O_RDONLY|O_BINARY))==-1) {
+		nsp_setbool(N, cobj, "", 0);
+		return;
+	}
+	nsp_setstr(N, cobj, "", NULL, 0);
+	bl=sb.st_size-offset;
+	cobj->val->d.str=(char *)n_alloc(N, bl+2, 0);
+	cobj->val->size=bl;
+	p=(char *)cobj->val->d.str;
+	while (bl>0) {
+		if ((r=read(fd, p, bl))<0) break;
+		p+=r;
+		bl-=r;
+	}
+	close(fd);
+	unlink(o);
+	cobj->val->d.str[sb.st_size]='\0';
+
+	return;
+#undef __FN__
+}
+*/
 /* return the next table index */
 obj_t *n_readindex(nsp_state *N, obj_t *tobj, char *lastname, unsigned short *z)
 {
@@ -110,11 +200,11 @@ obj_t *n_readindex(nsp_state *N, obj_t *tobj, char *lastname, unsigned short *z)
 	sanetest();
 	if (z) *z=0;
 	if (lastname) lastname[0]=0;
-	if (*N->readptr==OP_PDOT) {
+	if (n_peekop(N)==OP_PDOT) {
 		N->readptr++;
 		n_expect(N, __FN__, OP_LABEL);
 		p=n_getlabel(N, NULL);
-	} else if (*N->readptr==OP_POBRACKET) {
+	} else if (n_peekop(N)==OP_POBRACKET) {
 		N->readptr++;
 		cobj=nsp_eval(N, (char *)N->readptr);
 		n_expect(N, __FN__, OP_PCBRACKET);
@@ -145,31 +235,31 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 	settrace();
 	sanetest();
 	n_expect(N, __FN__, OP_POBRACE);
-	N->readptr++;
+	N->readptr=n_seekop(N, N->readptr, 0);
 	i=0;
 	while (*N->readptr) {
 		namebuf[0]=0;
 		/* first get a name */
-		if (*N->readptr==OP_POBRACE) goto data;
-		if (*N->readptr==OP_LABEL) {
+		if (n_peekop(N)==OP_POBRACE) goto data;
+		if (n_peekop(N)==OP_LABEL) {
 			/* either a label to use, or a function to run... */
 			uchar *p=N->readptr;
 
 			n_getlabel(N, namebuf);
 			/* if it's a function, do something useful... */
-			if (*N->readptr==OP_POPAREN||*N->readptr==OP_POBRACKET||*N->readptr==OP_PDOT) {
+			if (n_peekop(N)==OP_POPAREN||n_peekop(N)==OP_POBRACKET||n_peekop(N)==OP_PDOT) {
 				/* either a function or some kind of reference - NOT an lval */
 				namebuf[0]=0;
 				N->readptr=p;
 			}
-		} else if (*N->readptr==OP_POBRACKET) {
+		} else if (n_peekop(N)==OP_POBRACKET) {
 			/* [ ] */
 			N->readptr++;
-			if (*N->readptr==OP_LABEL) {
+			if (n_peekop(N)==OP_LABEL) {
 				n_getlabel(N, namebuf);
-			} else if (*N->readptr==OP_NUMDATA) {
+			} else if (n_peekop(N)==OP_NUMDATA) {
 				n_ntoa(N, namebuf, n_getnumber(N), 10, 0);
-			} else if (*N->readptr==OP_STRDATA) {
+			} else if (n_peekop(N)==OP_STRDATA) {
 				obj_t sobj;
 
 				sobj.val=NULL;
@@ -179,21 +269,21 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 			}
 			n_expect(N, __FN__, OP_PCBRACKET);
 			N->readptr++;
-		} else if (*N->readptr==OP_PCBRACE) {
+		} else if (n_peekop(N)==OP_PCBRACE) {
 			goto end;
-		} else if (*N->readptr==OP_NUMDATA||*N->readptr==OP_STRDATA||*N->readptr==OP_KFUNC) {
+		} else if (n_peekop(N)==OP_NUMDATA||n_peekop(N)==OP_STRDATA||n_peekop(N)==OP_KFUNC) {
 			goto data;
-		} else if ((*N->readptr==OP_MSUB||*N->readptr==OP_MADD)&&N->readptr[1]==OP_NUMDATA) {
+		} else if ((n_peekop(N)==OP_MSUB||n_peekop(N)==OP_MADD)&&N->readptr[1]==OP_NUMDATA) {
 			goto data;
 		} else {
 			n_warn(N, __FN__, "unhandled data.  probably an error [%d]", *N->readptr);
 		}
-		if (*N->readptr==OP_MEQ) N->readptr++;
+		if (n_peekop(N)==OP_MEQ) N->readptr++;
 data:
 		if (namebuf[0]==0) n_ntoa(N, namebuf, i++, 10, 0);
 		/* one way or another, we have a name.  now figure out what the val is. */
 		/* if (N->debug) n_warn(N, __FN__, "[%s][%s]%d", namebuf, n_getsym(N, *N->readptr), *N->readptr); */
-		if (*N->readptr==OP_POBRACE) {
+		if (n_peekop(N)==OP_POBRACE) {
 			cobj=nsp_getobj(N, tobj, namebuf);
 			if (cobj->val->type!=NT_TABLE) {
 				cobj=nsp_settable(N, tobj, namebuf);
@@ -208,7 +298,7 @@ data:
 			if (nsp_isnull(cobj)) cobj=nsp_setnum(N, tobj, namebuf, 0);
 			n_storeval(N, cobj);
 		}
-		if (*N->readptr==OP_PCOMMA||*N->readptr==OP_PSEMICOL) {
+		if (n_peekop(N)==OP_PCOMMA||n_peekop(N)==OP_PSEMICOL) {
 			N->readptr++;
 			continue;
 		}
@@ -236,16 +326,16 @@ obj_t *n_readvar(nsp_state *N, obj_t *tobj, obj_t *cobj)
 	sanetest();
 	if (op==OP_KCLASS || op==OP_KFUNC) {
 		N->readptr++;
-		n_expect(N, __FN__, OP_LABEL);
+		n_expect(N, __FN__ "1", OP_LABEL);
 		cobj=nsp_setnfunc(N, tobj, n_getlabel(N, NULL), NULL, 0);
 		n_getfunction(N, cobj);
 		DEBUG_OUT();
 		return cobj;
 	}
 	if (cobj==NULL) {
-		if (*N->readptr=='\0') { DEBUG_OUT(); return NULL; }
-		if (*N->readptr==OP_MADDADD||*N->readptr==OP_MSUBSUB) preop=*N->readptr++;
-		n_expect(N, __FN__, OP_LABEL);
+		if (n_peekop(N)=='\0') { DEBUG_OUT(); return NULL; }
+		if (n_peekop(N)==OP_MADDADD||n_peekop(N)==OP_MSUBSUB) preop=*N->readptr++;
+		n_expect(N, __FN__ "2", OP_LABEL);
 		nameptr=n_getlabel(N, NULL);
 		cobj=nsp_getobj(N, tobj, nameptr);
 	}
@@ -277,7 +367,7 @@ void n_storeval(nsp_state *N, obj_t *cobj)
 	uchar op;
 
 	settrace();
-	switch (*N->readptr) {
+	switch (n_peekop(N)) {
 	case OP_MADDADD:
 		N->readptr++;
 		if (!nsp_isnum(cobj)) n_error(N, NE_SYNTAX, __FN__, "object is not a number");
@@ -323,16 +413,16 @@ void n_storeval(nsp_state *N, obj_t *cobj)
 		break;
 	case OP_MEQ :
 		op=*N->readptr++;
-		if (*N->readptr==OP_KNEW) {
+		if (n_peekop(N)==OP_KNEW) {
 			N->readptr++;
 			n_evalobj(N, cobj, 1);
 			return;
-		} else if (*N->readptr==OP_MAND) {
+		} else if (n_peekop(N)==OP_MAND) {
 			N->readptr++;
 			n_expect(N, __FN__, OP_LABEL);
 			nsp_linkval(N, cobj, nsp_getobj(N, NULL, n_getlabel(N, NULL)));
 			return;
-		} else if (*N->readptr==OP_MMUL) {
+		} else if (n_peekop(N)==OP_MMUL) {
 			N->readptr++;
 			n_expect(N, __FN__, OP_LABEL);
 			nsp_linkval(N, cobj, nsp_eval(N, (char *)N->readptr));
@@ -346,14 +436,16 @@ void n_storeval(nsp_state *N, obj_t *cobj)
 	case OP_MADD:
 	case OP_MSUB:
 	case OP_POBRACE:
+	case OP_POPAREN:
+	case OP_KFUNC:
 		break;
 	default:
 		n_warn(N, __FN__, "confusing op '%s'", n_getsym(N, *N->readptr));
 	}
-	if (*N->readptr==OP_KFUNC) {
+	if (n_peekop(N)==OP_KFUNC) {
 		N->readptr++;
 		n_getfunction(N, cobj);
-		if (*N->readptr==OP_POPAREN) {
+		if (n_peekop(N)==OP_POPAREN) {
 			n_execfunction(N, cobj, NULL, 0);
 			n_moveval(N, cobj, &N->r);
 		}
@@ -378,54 +470,39 @@ static void n_evalobj(nsp_state *N, obj_t *cobj, uchar isclass)
 	short preop;
 
 	settrace();
-	if (*N->readptr==OP_POBRACE) {
+	if (n_peekop(N)==OP_POBRACE) {
 		nsp_setvaltype(N, cobj, NT_TABLE);
 		n_readtable(N, cobj);
 		n_expect(N, __FN__, OP_PCBRACE);
 		N->readptr++;
 		return;
-	} else if (*N->readptr==OP_POPAREN) {
-		N->readptr++;
-
-#if 1
-#if !defined(_MSC_VER)
-#warning "nsp_linkval(N, cobj, nsp_eval(N, (char *)N->readptr));"
-#endif
-//		n_warn(N, __FN__, "'%s' %d", n_gettype(N, (short)nsp_typeof(cobj)), cobj->val->refs);
+	} else if (n_peekop(N)==OP_POPAREN) {
+		N->readptr=n_seekop(N, N->readptr, 0);
 		nsp_linkval(N, cobj, nsp_eval(N, (char *)N->readptr));
-//		n_warn(N, __FN__, "'%s' %d", n_gettype(N, (short)nsp_typeof(cobj)), cobj->val->refs);
-#else
-//		n_warn(N, __FN__, "'%s' %d", n_gettype(N, (short)nsp_typeof(cobj)), cobj->val->refs);
-		n_moveval(N, cobj, nsp_eval(N, (char *)N->readptr));
-//		n_warn(N, __FN__, "'%08x' %08x", &cobj->val, &N->r);
-#endif
-
-//		n_moveval(N, cobj, nsp_eval(N, (char *)N->readptr));
-//if (!nsp_istable((&N->r))) {
-//		nsp_linkval(N, cobj, nsp_eval(N, (char *)N->readptr));
-//} else {
-//		n_moveval(N, cobj, nsp_eval(N, (char *)N->readptr));
-//}
-
+		/* n_moveval(N, cobj, nsp_eval(N, (char *)N->readptr)); */
 		n_expect(N, __FN__, OP_PCPAREN);
 		N->readptr++;
 		return;
 	}
 	preop=OP_ISMATH(*N->readptr)?*N->readptr++:0;
-	if (*N->readptr==OP_STRDATA) {
+	if (n_peekop(N)==OP_STRDATA) {
 		n_getstring(N, cobj);
 		return;
-	} else if (*N->readptr==OP_NUMDATA) {
+	} else if (n_peekop(N)==OP_ESTRDATA) {
+//		n_getexstring(N, cobj);
+		n_getstring(N, cobj);
+		return;
+	} else if (n_peekop(N)==OP_NUMDATA) {
 		nsp_setnum(N, cobj, NULL, (preop!=OP_MSUB)?+n_getnumber(N):-n_getnumber(N));
 		return;
-	} else if (*N->readptr==OP_LABEL) {
+	} else if (n_peekop(N)==OP_LABEL) {
 		uchar *p=N->readptr;
 		uchar *e;
 		char *l=n_getlabel(N, NULL);
 		obj_t *nobj=nsp_getobj(N, NULL, l);
 		obj_t *pobj=NULL;
 
-		while (*N->readptr==OP_POBRACKET||*N->readptr==OP_PDOT) {
+		while (n_peekop(N)==OP_POBRACKET||n_peekop(N)==OP_PDOT) {
 			pobj=nobj;
 			nobj=n_readindex(N, (nobj->val->type==NT_TABLE)?nobj:NULL, NULL, NULL);
 		}
@@ -492,23 +569,9 @@ static void n_evalop(nsp_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		}
 	}
 	if (nsp_isnull(nobj)) {
-//int zzz=0;
 		n=nsp_isnull(cobj);
 		t=nsp_istrue(cobj);
-
-#if 1
-#if !defined(_MSC_VER)
-#warning "if (nsp_istable(cobj)) nsp_unlinkval(N, cobj);"
-#endif
-if (nsp_istable(cobj)) nsp_unlinkval(N, cobj);
-#endif
-
-//if (nsp_istable(cobj)) {
-//	zzz=1;
-//	n_warn(N, __FN__, "comparing '%s' %s '%s' %d", n_gettype(N, (short)nsp_typeof(cobj)), n_getsym(N, op), n_gettype(N, (short)nsp_typeof(nobj)), cobj->val->refs);
-//	nsp_unlinkval(N, cobj);
-//	n_warn(N, __FN__, "comparing2 '%s' %s '%s'", n_gettype(N, (short)nsp_typeof(cobj)), n_getsym(N, op), n_gettype(N, (short)nsp_typeof(nobj)));
-//}
+		if (nsp_istable(cobj)) nsp_unlinkval(N, cobj);
 		nsp_setvaltype(N, cobj, NT_BOOLEAN);
 		switch (op) {
 		case OP_MCEEQ  :
@@ -518,9 +581,6 @@ if (nsp_istable(cobj)) nsp_unlinkval(N, cobj);
 		case OP_MLOR   : cobj->val->d.num=n?0:t; break;
 		default        : nsp_unlinkval(N, cobj); goto unhandled;
 		}
-//if (zzz) {
-//	n_warn(N, __FN__, "comparing3 '%s' %s '%s'", n_gettype(N, (short)nsp_typeof(cobj)), n_getsym(N, op), n_gettype(N, (short)nsp_typeof(nobj)));
-//}
 		return;
 	}
 	switch (nsp_typeof(cobj)) {
@@ -601,6 +661,8 @@ if (nsp_istable(cobj)) nsp_unlinkval(N, cobj);
 			case OP_MAND   : cobj->val->d.num=(int)cobj->val->d.num & (int)nobj->val->d.num; break;
 			case OP_MOR    : cobj->val->d.num=(int)cobj->val->d.num | (int)nobj->val->d.num; break;
 			case OP_MXOR   : cobj->val->d.num=(int)cobj->val->d.num ^ (int)nobj->val->d.num; break;
+			case OP_MSHIFTL: cobj->val->d.num=(int)cobj->val->d.num << (int)nobj->val->d.num; break;
+			case OP_MSHIFTR: cobj->val->d.num=(int)cobj->val->d.num >> (int)nobj->val->d.num; break;
 			default: goto unhandled;
 			}
 			return;
@@ -692,8 +754,21 @@ static void n_evalsub(nsp_state *N, uchar op1, obj_t *obj1)
 
 	settrace();
 	obj2.val=&val2;
-	while (OP_ISMATH(*N->readptr)) {
+	while (OP_ISMATH(n_peekop(N))) {
 		op2=*N->readptr++;
+
+
+		/* short circuiting done easy (and wrong)
+		 * this assumes an oparen began the block and that a cparen is the proper termination mark.
+		 * this is likely true, but must be checked...
+		 */
+		if (op2==OP_MLAND && !nsp_tobool(N, obj1)) {
+			//n_warn(N, __FN__, "(op2==OP_MLAND && !nsp_tobool(N, obj1))");
+			n_skipto(N, __FN__, OP_PCPAREN);
+			continue;
+		}
+
+
 		if (op2==OP_MQUESTION) {
 			if (nsp_tobool(N, obj1)) {
 				n_evalobj(N, &obj2, 0);
@@ -701,8 +776,8 @@ static void n_evalsub(nsp_state *N, uchar op1, obj_t *obj1)
 				n_expect(N, __FN__, OP_MCOLON);
 				N->readptr++;
 				while (*N->readptr) {
-					if (*N->readptr==OP_PCPAREN || *N->readptr==OP_PCOMMA || *N->readptr==OP_PSEMICOL) break;
-					N->readptr=n_seekop(N, N->readptr, 1, 1);
+					if (n_peekop(N)==OP_PCPAREN || n_peekop(N)==OP_PCOMMA || n_peekop(N)==OP_PSEMICOL) break;
+					N->readptr=n_seekop(N, N->readptr, 1);
 				}
 			} else {
 				n_skipto(N, __FN__, OP_MCOLON);

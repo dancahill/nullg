@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,12 +36,13 @@ void dumpsyms(nsp_state *N, char *file, long line, uchar *ptr, long count)
 		case OP_LABEL   : n_warn(N, __FN__, " %d = 0x%08x [%d][label][%s]", i, ptr, *ptr, ptr+2); break;
 		case OP_NUMDATA : n_warn(N, __FN__, " %d = 0x%08x [%d][num  ][%s]", i, ptr, *ptr, ptr+2); break;
 		case OP_STRDATA : n_warn(N, __FN__, " %d = 0x%08x [%d][str  ][%s]", i, ptr, *ptr, ptr+5); break;
+		case OP_ESTRDATA: n_warn(N, __FN__, " %d = 0x%08x [%d][estr ][%s]", i, ptr, *ptr, ptr+5); break;
 		default         : n_warn(N, __FN__, " %d = 0x%08x [%d][op   ][%s]", i, ptr, *ptr, n_getsym(N, *ptr));
 		}
 		N->warnings--;
 		count--;
 		i++;
-		ptr=n_seekop(N, ptr, 1, 0);
+		ptr=n_seekop(N, ptr, 0);
 	} while (count);
 #undef __FN__
 }
@@ -94,6 +95,7 @@ void n_decompile(nsp_state *N, uchar *start, uchar *end, char *errbuf, unsigned 
 		}
 		switch (*p) {
 		case OP_STRDATA:
+		case OP_ESTRDATA:
 			len=readi4((p+1));
 			p+=5;
 			if (errbuf) nc_snprintf(N, errbuf+nc_strlen(errbuf), errmax-nc_strlen(errbuf), "\"%s\"", p);

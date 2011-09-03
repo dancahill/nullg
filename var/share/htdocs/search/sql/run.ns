@@ -24,8 +24,8 @@ function search_sql() {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
-		qname=Q['_rows'][0]['_data']['cn'];
-		query=Q['_rows'][0]['_data']['query'];
+		qname=Q['_rows'][0]['queryname'];
+		query=Q['_rows'][0]['query'];
 	} else {
 		print("missing something?");
 		return;

@@ -1,7 +1,7 @@
 <?nsp
 if (_USER==null) {
 ?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd">
 <HTML>
 <HEAD>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=iso-8859-1">
@@ -17,7 +17,7 @@ A:HOVER  { text-decoration: underline; }
 <BODY BGCOLOR="#F0F0F0" TEXT="#000000" LINK="#0000FF" ALINK="#0000FF" VLINK="#0000FF"  STYLE="margin:0" CLASS="MAINBACK" onLoad="init();">
 <BR />
 <CENTER>
-<FORM NAME="login" METHOD="POST" ACTION="/" STYLE="display:inline;" AUTOCOMPLETE="OFF">
+<FORM NAME="login" METHOD="POST" ACTION="/" STYLE="display:inline;">
 <INPUT TYPE="hidden" NAME=pageuri VALUE="/">
 <INPUT TYPE="hidden" NAME=domain  VALUE="NULL">
 <TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0>
@@ -31,6 +31,7 @@ A:HOVER  { text-decoration: underline; }
 <SCRIPT LANGUAGE="JavaScript" TYPE="text/javascript">
 <!--
 if (self!=parent) open('/','_top');
+document.login.setAttribute('autocomplete','off');
 document.login.username.focus();
 // -->
 </SCRIPT>

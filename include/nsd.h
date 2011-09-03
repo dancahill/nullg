@@ -43,11 +43,13 @@ typedef CRITICAL_SECTION pthread_mutex_t;
 #endif
 
 /* MD5 */
+/*
 #ifdef __alpha
 typedef unsigned int uint32;
 #else
 typedef unsigned long uint32;
 #endif
+*/
 struct MD5Context {
 	uint32 buf[4];
 	uint32 bits[2];

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,8 +68,11 @@ static long n_unescape(nsp_state *N, char *src, char *dst, long len, cstate *sta
 			case 'n'  : dst[n++]='\n'; break;
 			case '\'' : dst[n++]='\''; break;
 			case '\"' : dst[n++]='\"'; break;
+			case '`'  : dst[n++]='`';  break;
 			case '\\' : dst[n++]='\\'; break;
-			default   : break;
+			default   :
+				n_warn(N, __FN__, "bad escape %d", src[i]);
+				break;
 		}
 		e=0;
 	}
@@ -105,14 +108,24 @@ static void n_skipblank(nsp_state *N, cstate *state)
 		if (p[0]=='#') {
 			p++;
 			while (*p) {
-				if (*p=='\n') { state->lineno++; break; }
+				if (*p=='\n') {
+					n_newobj(N, state);
+					nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
+					state->lobj1->val->attr=OP_LINENUM;
+					break;
+				}
 				else if (*p=='\r') break;
 				p++;
 			}
 		} else if (p[0]=='/'&&p[1]=='/') {
 			p+=2;
 			while (*p) {
-				if (*p=='\n') { state->lineno++; break; }
+				if (*p=='\n') {
+					n_newobj(N, state);
+					nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
+					state->lobj1->val->attr=OP_LINENUM;
+					break;
+				}
 				else if (*p=='\r') break;
 				p++;
 			}
@@ -122,13 +135,21 @@ static void n_skipblank(nsp_state *N, cstate *state)
 				if (*p=='\n') state->lineno++;
 				else if (p[0]=='*'&&p[1]=='/') {
 					p+=2;
-					if (*p=='\n') state->lineno++;
+					if (*p=='\n') {
+						n_newobj(N, state);
+						nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
+						state->lobj1->val->attr=OP_LINENUM;
+					}
 					break;
 				}
 				p++;
 			}
 		} else {
-			if (*p=='\n') state->lineno++;
+			if (*p=='\n') {
+				n_newobj(N, state);
+				nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
+				state->lobj1->val->attr=OP_LINENUM;
+			}
 		}
 		if (!nc_isspace(*p)) break;
 		p++;
@@ -139,16 +160,18 @@ static void n_skipblank(nsp_state *N, cstate *state)
 }
 
 /* Advance readptr to next matching quote */
-static void n_skipquote(nsp_state *N, unsigned short c)
+static void n_skipquote(nsp_state *N, unsigned short c, cstate *state, unsigned short verbatim)
 {
 #define __FN__ __FILE__ ":n_skipquote()"
 	settrace();
 	while (*N->readptr) {
-		if (*N->readptr=='\\') {
+		if (*N->readptr=='\\' && !verbatim) {
 			N->readptr++;
 		} else if (*N->readptr==c) {
 			N->readptr++;
 			break;
+		} else if (*N->readptr=='\n') {
+			++state->lineno;
 		}
 		N->readptr++;
 		if (!*N->readptr) n_error(N, NE_SYNTAX, __FN__, "unterminated string");
@@ -158,7 +181,7 @@ static void n_skipquote(nsp_state *N, unsigned short c)
 }
 
 /* return the next quoted block */
-static obj_t *n_extractquote(nsp_state *N, cstate *state)
+static obj_t *n_extractquote(nsp_state *N, cstate *state, unsigned short verbatim)
 {
 #define __FN__ __FILE__ ":n_extractquote()"
 	obj_t *cobj;
@@ -170,20 +193,24 @@ static obj_t *n_extractquote(nsp_state *N, cstate *state)
 	DEBUG_IN();
 	settrace();
 	sanetest();
-	if ((q!='\'')&&(q!='\"')) {
+	if ((q!='\'')&&(q!='\"')&&(q!='`')) {
 		DEBUG_OUT();
 		return NULL;
 	}
 	N->readptr++;
 	qs=(char *)N->readptr;
-	n_skipquote(N, q);
+	n_skipquote(N, q, state, verbatim);
 	qe=(char *)N->readptr;
 
-	nc_memset((void *)&tobj, 0, sizeof(obj_t));
-	nsp_setstr(N, &tobj, "", NULL, qe-qs-1);
-	n=n_unescape(N, qs, tobj.val->d.str, qe-qs-1, state);
-	cobj=nsp_setstr(N, &N->r, "", tobj.val->d.str, n);
-	nsp_unlinkval(N, &tobj);
+	if (verbatim) {
+		cobj=nsp_setstr(N, &N->r, "", qs, qe-qs-1);
+	} else {
+		nc_memset((void *)&tobj, 0, sizeof(obj_t));
+		nsp_setstr(N, &tobj, "", NULL, qe-qs-1);
+		n=n_unescape(N, qs, tobj.val->d.str, qe-qs-1, state);
+		cobj=nsp_setstr(N, &N->r, "", tobj.val->d.str, n);
+		nsp_unlinkval(N, &tobj);
+	}
 /*
 	cobj=nsp_setstr(N, &N->r, "", NULL, qe-qs-1);
 	cobj->val->size=n_unescape(N, qs, cobj->val->d.str, qe-qs-1, state);
@@ -255,10 +282,17 @@ static void n_decompose_sub(nsp_state *N, cstate *state)
 				}
 			}
 */
-		} else if ((*N->readptr=='\"')||(*N->readptr=='\'')) {
+		} else if (N->readptr[0]=='\"' || N->readptr[0]=='\'' || N->readptr[0]=='`') {
+			op=N->readptr[0];
 			n_newobj(N, state);
-			nsp_linkval(N, state->lobj1, n_extractquote(N, state));
-			state->lobj1->val->attr=OP_STRDATA;
+			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 0));
+			state->lobj1->val->attr=op=='`'?OP_ESTRDATA:OP_STRDATA;
+		} else if (N->readptr[0]=='@' && (N->readptr[1]=='\"' || N->readptr[1]=='\'' || N->readptr[1]=='`')) {
+			op=N->readptr[1];
+			N->readptr++;
+			n_newobj(N, state);
+			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 1));
+			state->lobj1->val->attr=op=='`'?OP_ESTRDATA:OP_STRDATA;
 		} else if (nc_isdigit(*N->readptr)) {
 			p=(char *)N->readptr;
 			while (nc_isdigit(*N->readptr)||*N->readptr=='.') N->readptr++;
@@ -288,6 +322,7 @@ uchar   *n_decompose(nsp_state *N, uchar *srctext, uchar **dsttext, int *dstsize
 	cstate state;
 	obj_t *cobj, *tobj;
 	unsigned short op;
+	uchar *p, *p2;
 
 	settrace();
 
@@ -339,12 +374,38 @@ uchar   *n_decompose(nsp_state *N, uchar *srctext, uchar **dsttext, int *dstsize
 	/* now write the ops */
 	/* optab offset */
 	writei4(state.offset, (state.destbuf+12));
+
+	/* set line number to 1 */
+	testgrow((long)(5));
+	state.destbuf[state.offset++]=OP_LINENUM;
+	writei4(1, (state.destbuf+state.offset));
+	state.offset+=4;
+
 	for (cobj=state.tobj1->val->d.table.f;cobj;cobj=cobj->next) {
 		op=(unsigned short)cobj->val->attr;
 		cobj->val->attr=0;
+		if (op==OP_LINENUM) {
+			testgrow((long)(5));
+			state.destbuf[state.offset++]=op&255;
+			writei4((int)cobj->val->d.num, (state.destbuf+state.offset));
+			state.offset+=4;
+			continue;
+		}
 		if (!nsp_isstr(cobj)) break;
 		if (op==OP_UNDEFINED) break;
-		if (op==OP_STRDATA) {
+		if (op==OP_POBRACE) {
+			testgrow((long)(5));
+			state.destbuf[state.offset++]=op&255;
+			writei4(0, (state.destbuf+state.offset));
+			state.offset+=4;
+			continue;
+		} else if (op==OP_POPAREN) {
+			testgrow((long)(3));
+			state.destbuf[state.offset++]=op&255;
+			writei2(0, (state.destbuf+state.offset));
+			state.offset+=2;
+			continue;
+		} else if (op==OP_STRDATA || op==OP_ESTRDATA) {
 			testgrow((long)(6+cobj->val->size));
 			state.destbuf[state.offset++]=op&255;
 			writei4(cobj->val->size, (state.destbuf+state.offset));
@@ -383,6 +444,48 @@ uchar   *n_decompose(nsp_state *N, uchar *srctext, uchar **dsttext, int *dstsize
 
 	*dsttext=state.destbuf;
 	*dstsize=state.destmax;
+
+	for (p=*dsttext+12;p<*dsttext+state.offset-4;) {
+		if (*p==OP_LINENUM) { p+=5; continue; }
+		if (*p==OP_POBRACE) {
+			p2=n_seekop(N, p, 1);
+			if (p2<=p) {
+				n_warn(N, __FN__, "pointer did not progress");
+				break;
+			}
+			--p2;
+//			if (*p2!=OP_PCBRACE) n_warn(N, __FN__, "no OP_PCBRACE? %d", (p+(p2-p)+5)[0]);
+			if (*p2!=OP_PCBRACE) {
+/*				int i;
+				for (i=0;i<state.offset;i++) {
+					if (i==p2-*dsttext) {
+						printf("-----------------------\r\n[%d]\r\n-------------------", state.destbuf[i]);
+					} else {
+						if (state.destbuf[i]>=32 && state.destbuf[i]<128) {
+							printf("'%c' %d\r\n", state.destbuf[i], state.destbuf[i]);
+						} else {
+							printf("%d\r\n", state.destbuf[i]);
+						}
+					}
+				}
+*/				n_warn(N, __FN__, "no OP_PCBRACE? %d .. %d %d %d %d [%d] %d %d", OP_PCBRACE, p2[-4], p2[-3], p2[-2], p2[-1], p2[0], p2[1], p2[2]);
+				//n_decompile(N, *dsttext+12, *dsttext+state.offset-4, NULL, 0);
+			}
+			writei4((p2-p-5), (p+1));
+		} else if (*p==OP_POPAREN) {
+			p2=n_seekop(N, p, 1);
+			if (p2<=p) {
+				n_warn(N, __FN__, "pointer did not progress");
+				break;
+			}
+			--p2;
+			if (*p2!=OP_PCPAREN) {
+				n_warn(N, __FN__, "no OP_PCPAREN? %d .. %d %d %d %d [%d] %d %d", OP_PCPAREN, p2[-4], p2[-3], p2[-2], p2[-1], p2[0], p2[1], p2[2]);
+			}
+			writei2((p2-p-3), (p+1));
+		}
+		p=n_seekop(N, p, 0);
+	}
 
 	return *dsttext;
 #undef __FN__

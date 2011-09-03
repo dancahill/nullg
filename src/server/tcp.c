@@ -205,15 +205,27 @@ int tcp_send_nolog(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 	rc=send(socket->socket, buffer, len, flags);
 #endif
 	if (rc<0) {
+		msleep(1);
 #ifdef WIN32
 		return rc;
 #else
-		if (errno==EWOULDBLOCK) {
+		switch (errno) {
+		case EWOULDBLOCK:
 			errno=0;
-			msleep(1);
-		} else if (errno) {
-			log_error(proc.N, "tcp", __FILE__, __LINE__, 5, "[%s:%d] tcp_send: %d%.100s", socket->RemoteAddr, socket->RemotePort, errno, strerror(errno));
+			break;
+		case EPIPE:
+			log_error(proc.N, "tcp", __FILE__, __LINE__, 2, "[%s:%d] tcp_send: EPIPE %.100s %d", socket->RemoteAddr, socket->RemotePort, strerror(errno), rc);
 			errno=0;
+			break;
+		case ECONNRESET:
+			log_error(proc.N, "tcp", __FILE__, __LINE__, 2, "[%s:%d] tcp_send: ECONNRESET %.100s", socket->RemoteAddr, socket->RemotePort, strerror(errno));
+			errno=0;
+			break;
+		default:
+			if (errno) {
+				log_error(proc.N, "tcp", __FILE__, __LINE__, 2, "[%s:%d] tcp_send: %d %.100s", socket->RemoteAddr, socket->RemotePort, errno, strerror(errno));
+				errno=0;
+			}
 		}
 #endif
 	} else if (rc==0) {
@@ -230,6 +242,7 @@ int tcp_send(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 	int rc;
 
 	rc=tcp_send_nolog(socket, buffer, len, flags);
+	//if (rc<0) log_error(proc.N, "tcp", __FILE__, __LINE__, 1, "rc<0 [%s:%d]", socket->RemoteAddr, socket->RemotePort);
 	log_error(proc.N, "tcp", __FILE__, __LINE__, 5, "[%s:%d] tcp_send: %d bytes of binary data", socket->RemoteAddr, socket->RemotePort, rc);
 	return rc;
 }

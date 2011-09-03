@@ -27,7 +27,7 @@ local function load_libs() {
 		"regex";
 	}
 	foreach (lib in libs) {
-		dl.loadlib(lib);
+		if (!dl.loadlib(lib)) throw "failed to load "+lib+"";
 	}
 }
 

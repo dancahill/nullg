@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -162,7 +162,9 @@ NSP_FUNCTION(nl_flush)
 flush:
 	if (N->outbuflen==0) return 0;
 	N->outbuf[N->outbuflen]='\0';
-	write(STDOUT_FILENO, N->outbuf, N->outbuflen);
+	if (write(STDOUT_FILENO, N->outbuf, N->outbuflen)!=N->outbuflen) {
+		n_warn(N, __FN__, "write() wrote less bytes than expected");
+	}
 	N->outbuflen=0;
 	/* do NOT touch &N->r */
 	return 0;
@@ -226,6 +228,20 @@ NSP_FUNCTION(nl_write)
 /*
  * file functions
  */
+NSP_FUNCTION(nl_filechdir)
+{
+#define __FN__ __FILE__ ":nl_filechdir()"
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	int rc;
+
+	settrace();
+	if (cobj1->val->type!=NT_STRING||cobj1->val->size<1) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	rc=chdir(cobj1->val->d.str);
+	nsp_setnum(N, &N->r, "", rc);
+	return rc;
+#undef __FN__
+}
+
 NSP_FUNCTION(nl_filemkdir)
 {
 #define __FN__ __FILE__ ":nl_filemkdir()"
@@ -248,7 +264,6 @@ NSP_FUNCTION(nl_filemkdir)
 	return rc;
 #undef __FN__
 }
-
 
 NSP_FUNCTION(nl_fileread)
 {
@@ -288,7 +303,7 @@ NSP_FUNCTION(nl_fileread)
 		bl-=r;
 	}
 	close(fd);
-	robj->val->d.str[sb.st_size]='\0';
+	robj->val->d.str[sb.st_size-offset]='\0';
 	return 0;
 #undef __FN__
 }
@@ -840,11 +855,11 @@ NSP_FUNCTION(nl_sqltime)
 	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
 	char *fname=nsp_getstr(N, &N->l, "0");
 	struct timeval ttime;
-	char timebuf[16];
+	char timebuf[32];
 
 	settrace();
 	if (cobj1->val->type==NT_NUMBER) {
-		ttime.tv_sec=(time_t)cobj1->val->d.num;
+		ttime.tv_sec=(long)cobj1->val->d.num;
 	} else {
 		nc_gettimeofday(&ttime, NULL);
 	}
@@ -852,8 +867,75 @@ NSP_FUNCTION(nl_sqltime)
 		strftime(timebuf, sizeof(timebuf)-1, "%Y-%m-%d", localtime((time_t *)&ttime.tv_sec));
 	} else if (nc_strcmp(fname, "sqltime")==0) {
 		strftime(timebuf, sizeof(timebuf)-1, "%H:%M:%S", localtime((time_t *)&ttime.tv_sec));
+	} else if (nc_strcmp(fname, "sqldatetime")==0) {
+		strftime(timebuf, sizeof(timebuf)-1, "%Y-%m-%d %H:%M:%S", localtime((time_t *)&ttime.tv_sec));
 	}
 	nsp_setstr(N, &N->r, "", timebuf, -1);
+	return 0;	
+#undef __FN__
+}
+
+NSP_FUNCTION(nl_sqltounix)
+{
+#define __FN__ __FILE__ ":nl_sqltounix()"
+	int dim[12]={ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	char *pdate;
+	int unixdate=0;
+	int year;
+	int month;
+	int day;
+	int i;
+
+	settrace();
+	if (cobj1->val->type!=NT_STRING || cobj1->val->d.str==NULL) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	pdate=cobj1->val->d.str;
+
+	if (atoi(pdate)>=1970) {
+		year=atoi(pdate);
+		while ((*pdate)&&(*pdate!='-')) pdate++;
+		while ((*pdate)&&(!nc_isdigit(*pdate))) pdate++;
+		month=atoi(pdate)-1;
+		while ((*pdate)&&(*pdate!='-')) pdate++;
+		while ((*pdate)&&(!nc_isdigit(*pdate))) pdate++;
+		day=atoi(pdate)-1;
+		for (i=1970;i<year;i++) {
+			unixdate+=365;
+			if ((i/4.0f)==(int)(i/4)) {
+				if ((i/400.0f)==(int)(i/400)) {
+					unixdate++;
+				} else if ((i/100.0f)!=(int)(i/100)) {
+					unixdate++;
+				}
+			}
+		}
+		for (i=0;i<month;i++) {
+			unixdate+=dim[i];
+			if (i!=1) continue;
+			if ((year/4.0f)==(int)(year/4)) {
+				if ((year/400.0f)==(int)(year/400)) {
+					unixdate++;
+				} else if ((year/100.0f)!=(int)(year/100)) {
+					unixdate++;
+				}
+			}
+		}
+		unixdate+=day;
+		unixdate*=86400;
+		while ((*pdate)&&(*pdate!=' ')) pdate++;
+	}
+	if (unixdate<0) unixdate=0;
+	while ((*pdate)&&(!nc_isdigit(*pdate))) pdate++;
+	if (*pdate=='0') pdate++;
+	unixdate+=atoi(pdate)*3600;
+	while ((*pdate)&&(*pdate!=':')) pdate++;
+	while ((*pdate)&&(!nc_isdigit(*pdate))) pdate++;
+	unixdate+=atoi(pdate)*60;
+	while ((*pdate)&&(*pdate!=':')) pdate++;
+	while ((*pdate)&&(!nc_isdigit(*pdate))) pdate++;
+	unixdate+=atoi(pdate);
+
+	nsp_setnum(N, &N->r, "", (num_t)unixdate);
 	return 0;	
 #undef __FN__
 }
@@ -1107,9 +1189,9 @@ NSP_FUNCTION(nl_include)
 #undef __FN__
 }
 
-NSP_FUNCTION(nl_exportvar)
+NSP_FUNCTION(nl_serialize)
 {
-#define __FN__ __FILE__ ":nl_exportvar()"
+#define __FN__ __FILE__ ":nl_serialize()"
 	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
 
 	settrace();
@@ -1197,6 +1279,64 @@ NSP_FUNCTION(nl_copy)
 #define __FN__ __FILE__ ":nl_copy()"
 	settrace();
 	n_copyval(N, &N->r, nsp_getobj(N, &N->l, "1"));
+	return 0;
+#undef __FN__
+}
+
+NSP_FUNCTION(nl_printf)
+{
+#define __FN__ __FILE__ ":nl_printf()"
+	char *fname=nsp_getstr(N, &N->l, "0");
+	obj_t *fobj=nsp_getobj(N, &N->l, "1");
+	obj_t *cobj, *robj;
+	char tmp[80];
+	char *ss, *s, *p;
+	char esc=0;
+
+	settrace();
+	if (!nsp_isstr(fobj)||fobj->val->d.str==NULL) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	cobj=fobj->next;
+	robj=nsp_setstr(N, &N->r, "", NULL, 0);
+	for (s=ss=(char *)fobj->val->d.str;*s!='\0';s++) {
+		if (!esc) {
+			if (*s=='%') {
+				esc=1;
+				nsp_strcat(N, &N->r, ss, s-ss);
+				ss=s;
+			}
+			continue;
+		}
+		/* flags */
+		if (*s=='-') s++;
+		/* width */
+		if (nc_isdigit(*s)) { while (nc_isdigit(*s)) s++; }
+		/* precision */
+		if (*s=='.') {
+			s++;
+			if (nc_isdigit(*s)) { while (nc_isdigit(*s)) s++; }
+		}
+		switch (*s) {
+//		case 'c': tmp[0]=(char)va_arg(ap, int); tmp[1]=0; goto end;
+		case 'd': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),       -10, 0); break;
+		case 'i': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),       -10, 0); break;
+		case 'o': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),         8, 0); break;
+		case 'u': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),        10, 0); break;
+		case 'x': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),        16, 0); break;
+		case 'f': p=n_ntoa(N, tmp, nsp_tonum(N, cobj),       -10, 6); break;
+		case 's': p=nsp_tostr(N, cobj); break;
+		default : p="orphan %"; break;
+		}
+		if (cobj) cobj=cobj->next;
+		nsp_strcat(N, robj, p, -1);
+		ss=s+1;
+		esc=0;
+	}
+	nsp_strcat(N, &N->r, ss, s-ss);
+	if (nc_strcmp(fname, "printf")==0) {
+		writestr(N, robj);
+		nsp_setnum(N, robj, "", robj->val->size);
+		
+	}
 	return 0;
 #undef __FN__
 }

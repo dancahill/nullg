@@ -35,7 +35,7 @@ static CONN *get_conn()
 
 NSP_FUNCTION(htnsp_dl_loadlib)
 {
-	CONN *conn=get_conn();
+	/* CONN *conn=get_conn(); */
 	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
 	obj_t *cobj, *tobj;
 	NSP_CFUNC cfunc;
@@ -49,13 +49,13 @@ NSP_FUNCTION(htnsp_dl_loadlib)
 	char namebuf[512];
 
 	if (!nsp_isstr(cobj1)||cobj1->val->size<1) {
-		nsp_setnum(N, &N->r, "", -1);
+		nsp_setbool(N, &N->r, "", 0);
 		return 0;
 	}
 	tobj=nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
 	if (!nsp_istable(tobj)) {
-		prints(conn, "<B>dl.path not found</B>\n");
-		nsp_setnum(N, &N->r, "", -1);
+		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "dl.path not found", -1);
+		nsp_setbool(N, &N->r, "", 0);
 		return 0;
 	}
 	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
@@ -66,17 +66,19 @@ NSP_FUNCTION(htnsp_dl_loadlib)
 		if ((l=lib_open(namebuf))!=NULL) {
 			lib_error();
 			if ((cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init"))!=NULL) {
-				nsp_setnum(N, &N->r, "", cfunc(N));
+				cfunc(N);
+				nsp_setbool(N, &N->r, "", 1);
 				return 0;
 			} else {
-				nsp_setstr(N, &N->r, "", lib_error(), -1);
+				nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
+				nsp_setbool(N, &N->r, "", 0);
 				lib_close(l);
 				return 0;
 			}
 		}
 	}
-	prints(conn, "can't open lib '%s'<BR>%s<BR>\n", cobj1->val->d.str, lib_error());
-	nsp_setnum(N, &N->r, "", -1);
+	nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
+	nsp_setbool(N, &N->r, "", 0);
 	return 0;
 }
 
@@ -546,13 +548,16 @@ int htnsp_runinit(CONN *conn)
 //	nsp_execf(conn->N, "if (typeof(x=file.read(\"%s\"))=='string') exec(x);", file);
 	snprintf(hackbuf, sizeof(hackbuf)-1, "if (typeof(x=file.read(\"%s\"))=='string') exec(x);", filename);
 	nsp_exec(conn->N, hackbuf);
+	if (conn->N->err) {
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "htnsp_runinit exception: [%s]", conn->N->errbuf);
+	}
 	return conn->N->err;
 }
 
 static int htnsp_runscript(CONN *conn, char *file)
 {
 //	jmp_buf *savjmp;
-	char *p;
+	char *p, *p2;
 
 	htnsp_initenv(conn);
 	preppath(conn->N, file);
@@ -560,6 +565,11 @@ static int htnsp_runscript(CONN *conn, char *file)
 //	conn->N->savjmp=calloc(1, sizeof(jmp_buf));
 //	if (setjmp(*conn->N->savjmp)==0) {
 //		conn->N->jmpset=1;
+
+	p=file;
+	if ((p2=strrchr(file, '/'))!=NULL) p=p2+1;
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "htnsp_runscript [%s]", p);
+
 	p=strrchr(file, '.');
 	if (p!=NULL&&strcmp(p, ".nsp")==0) {
 		char hackbuf[512];
@@ -578,10 +588,16 @@ static int htnsp_runscript(CONN *conn, char *file)
 //	free(conn->N->savjmp);
 //	conn->N->savjmp=savjmp;
 	if (conn->N->err) {
+		p=file;
+		if ((p2=strrchr(file, '/'))!=NULL) p=p2+1;
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "htnsp_runscript exception: [%s][%s]", p, conn->N->errbuf);
+	}
+	if (conn->N->err) {
 		prints(conn, "<HR><B>[errno=%d :: %s]</B>\r\n", conn->N->err, conn->N->errbuf);
 		conn->N->err=0;
 		htnsp_dotemplate(conn, "html", "debug.ns");
 	}
+//	flushbuffer(conn);
 	return 0;
 }
 

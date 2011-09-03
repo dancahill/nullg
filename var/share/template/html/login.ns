@@ -6,7 +6,8 @@ print("<CENTER>\r\n");
 if (_SERVER['REQUEST_METHOD']=="POST") {
 	print("<FONT COLOR=RED><B>Incorrect username or password</B></FONT>\r\n");
 }
-print("<FORM METHOD=POST ACTION=\"", _SERVER['SCRIPT_NAME'], "/\" AUTOCOMPLETE=OFF NAME=login STYLE=\"display:inline;\">\r\n");
+//print("<FORM METHOD=POST ACTION=\"", _SERVER['SCRIPT_NAME'], "/\" AUTOCOMPLETE=OFF NAME=login STYLE=\"display:inline;\">\r\n");
+print("<FORM METHOD=POST ACTION=\"", _SERVER['SCRIPT_NAME'], "/\" NAME=login STYLE=\"display:inline;\">\r\n");
 print("<INPUT TYPE=hidden NAME=pageuri VALUE=\"", _TEMP['pageuri'], "\">\r\n");
 if (_TEMP['domains']<2) {
 	print("<INPUT TYPE=hidden NAME=domain VALUE=\"NULL\">\r\n");
@@ -22,6 +23,10 @@ if (_TEMP['domains']>1) {
 print("<TR CLASS=\"EDITFORM\"><TD ALIGN=CENTER COLSPAN=2><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Login'></TD></TR>\r\n");
 print("</TABLE>\r\n</FORM>\r\n");
 print("</CENTER>\r\n<SCRIPT LANGUAGE=JavaScript TYPE=\"text/javascript\">\r\n<!--\r\n");
+
+print("document.login.username.setAttribute('autocomplete','off');\r\n");
+print("document.login.password.setAttribute('autocomplete','off');\r\n");
+
 if (string.len(_TEMP['username'])>0) {
 	print("document.login.password.focus();\r\n");
 } else {

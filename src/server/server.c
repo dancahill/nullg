@@ -57,8 +57,12 @@ void server_restart()
 	return;
 }
 
+#ifdef linux
+#define SIGCONTEXT
+#endif
+
 #ifdef SIGCONTEXT
-void sig_catchint(int sig, struct sigcontext info)
+void sig_catchint(int sig, struct sigcontext context)
 #else
 void sig_catchint(int sig)
 #endif
@@ -79,9 +83,22 @@ void sig_catchint(int sig)
 		break;
 	case 11:
 		/*printf("[%s:%d %d]\r\n", __FILE__, __LINE__, pthread_self());*/
-		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV [%d] Segmentation Violation", sig);
 #ifdef SIGCONTEXT
-		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV EIP=0x%08X, PID=%d", info.eip, getpid());
+//		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV EIP=0x%08X, PID=%d", context.eip, getpid());
+		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV [%d] Segmentation Violation\n"
+			"\t  gs: 0x%04X      fs: 0x%04X       es: 0x%04X      ds: 0x%04X\n"
+			"\t edi: 0x%08X esi: 0x%08X  ebp: 0x%04X esp: 0x%04X\n"
+			"\t ebx: 0x%08X edx: 0x%08X  ecx: 0x%08X eax: 0x%08X\n"
+			"\t eip: 0x%08X  cs: 0x%04X     trap: %-8d   err: %d\n"
+			"\tflag: 0x%08X  SP: 0x%08X   ss: 0x%04X     cr2: 0x%08X\n",
+			sig,
+			context.gs, context.fs, context.es, context.ds,
+			context.edi, context.esi, context.ebp, context.esp,
+			context.ebx, context.edx, context.ecx, context.eax,
+			context.eip, context.cs, context.trapno, context.err,
+			context.eflags, context.esp_at_signal, context.ss, context.cr2);
+#else
+		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV [%d] Segmentation Violation", sig);
 #endif
 		exit(-1);
 	case 13: /* SIGPIPE */
@@ -171,11 +188,11 @@ void init(nsp_state *N)
 #endif
 	pthread_mutex_init(&Lock.SQL, NULL);
 	if (proc.debug) printf("Checking DB\r\n");
-	if (sanity_checkdb()==-1) {
-		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SQL subsystem failed sanity check");
-		printf("\r\nSQL subsystem failed sanity check.\r\n");
-		exit(-2);
-	}
+//	if (sanity_checkdb()==-1) {
+//		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SQL subsystem failed sanity check");
+//		printf("\r\nSQL subsystem failed sanity check.\r\n");
+//		exit(-2);
+//	}
 	if (proc.debug) printf("Done checking DB\r\n");
 #ifdef HAVE_SSL
 	if (proc.debug) printf("Initing SSL\r\n");

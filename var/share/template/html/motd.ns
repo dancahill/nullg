@@ -1,13 +1,13 @@
 if (_USER!=null) {
 	print(
 	"<BR />\r\n<CENTER>\r\n",
-	"<TABLE WIDTH=90% BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n",
+	"<TABLE WIDTH='90%' BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n",
 	"<TR><TD COLSPAN=2>",
 
-	"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH=100% STYLE='border-style:solid'>\r\n",
-	"<TR><TH STYLE='border-style:solid'><TABLE WIDTH=100% BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>",
-	"<TH WIDTH=100% NOWRAP ALIGN=left>Welcome, ",str2html(_USER.uid),".&nbsp;</TH>",
-	"<TH WIDTH=100% NOWRAP ALIGN=right>&nbsp;",_TEMP.showtime,"</TH>",
+	"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH='100%' STYLE='border-style:solid'>\r\n",
+	"<TR><TH STYLE='border-style:solid'><TABLE WIDTH='100%' BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>",
+	"<TH WIDTH='100%' NOWRAP ALIGN=left>Welcome, ",str2html(_USER.uid),".&nbsp;</TH>",
+	"<TH WIDTH='100%' NOWRAP ALIGN=right>&nbsp;",_TEMP.showtime,"</TH>",
 	"</TR></TABLE></TH></TR>\r\n",
 	"<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>",
 	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",

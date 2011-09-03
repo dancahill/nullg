@@ -154,7 +154,8 @@ void htpage_login(CONN *conn)
 	}
 	send_header(conn, 0, 200, "1", "text/html", -1, -1);
 	htpage_header(conn, "NullLogic GroupServer Login");
-	if (sql_query(proc->N, &qobj, "SELECT COUNT(*) FROM nullsd_entries WHERE class = 'organization'")<0) return;
+//	if (sql_query(proc->N, &qobj, "SELECT COUNT(*) FROM nullsd_entries WHERE class = 'organization'")<0) return;
+	if (sql_query(proc->N, &qobj, "SELECT COUNT(*) FROM gw_domains")<0) return;
 	numdomains=atoi(sql_getvalue(proc->N, &qobj, 0, 0));
 	sql_freeresult(proc->N, &qobj);
 	tobj=nsp_settable(conn->N, &conn->N->g, "_TEMP");

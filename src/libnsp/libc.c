@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ int nc_gettimeofday(struct timeval *tv, struct timezone *tz)
 
 	if (tv==NULL) return -1;
 	ftime(&tb);
-	tv->tv_sec=tb.time;
+	tv->tv_sec=(long)tb.time;
 	tv->tv_usec=tb.millitm*1000;
 	if (tz) tz->tz_minuteswest=tb.timezone;
 #else
@@ -171,13 +171,9 @@ int _nc_strcmp(const char *s1, const char *s2)
 	uchar *a, *b;
 
 	if (s1==s2) return 0;
-	else if (!s1) return -(uchar)*s2;
-	else if (!s2) return +(uchar)*s1;
-	a=(uchar *)s1;
-	b=(uchar *)s2;
-	while (*a==*b&&*a!='\0') {
-		a++; b++;
-	}
+	if (!s1) return -(uchar)*s2;
+	if (!s2) return +(uchar)*s1;
+	for (a=(uchar *)s1,b=(uchar *)s2;*a&&*a==*b;a++,b++);
 	return *a-*b;
 }
 
@@ -212,9 +208,9 @@ void n_error(nsp_state *N, short int err, const char *fname, const char *format,
 	N->err=err;
 	if (fname) {
 		if (N->func) {
-			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : in %s(), ", fname, N->func);
+			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : %s() line %d, ", fname, N->func, N->line_num);
 		} else {
-			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : ", fname);
+			len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : line %d, ", fname, N->line_num);
 		}
 	} else {
 		N->errbuf[0]='\0';
@@ -233,7 +229,7 @@ void n_error(nsp_state *N, short int err, const char *fname, const char *format,
 #undef __FN__
 }
 
-void n_expect(nsp_state *N, const char *fname, uchar op)
+void _n_expect(nsp_state *N, const char *fname, uchar op)
 {
 #define __FN__ __FILE__ ":n_expect()"
 	settrace();
@@ -250,11 +246,11 @@ void n_warn(nsp_state *N, const char *fname, const char *format, ...)
 	if (++N->warnings>N->maxwarnings) n_error(N, NE_SYNTAX, __FN__, "too many warnings (%d)\n", N->warnings);
 	if (N->outbuflen>OUTBUFLOWAT) nl_flush(N);
 	if (N->warnformat=='a') {
-		nc_printf(N, "\r\n[01;33;40m%s : ", fname);
+		nc_printf(N, "\r\n[01;33;40m%s : line %d, ", fname, N->line_num);
 	} else if (N->warnformat=='h') {
-		nc_printf(N, "<BR /><B>%s : ", fname);
+		nc_printf(N, "<BR /><B>%s : line %d, ", fname, N->line_num);
 	} else {
-		nc_printf(N, "\r\n%s : ", fname);
+		nc_printf(N, "\r\n%s : line %d, ", fname, N->line_num);
 	}
 	va_start(ap, format);
 	N->outbuflen+=nc_vsnprintf(N, N->outbuf+N->outbuflen, MAX_OUTBUFLEN-N->outbuflen, format, ap);
@@ -298,37 +294,7 @@ num_t n_aton(nsp_state *N, const char *str)
 	return rval;
 #undef __FN__
 }
-/*
-char *n_itoa(nsp_state *N, char *str, int num, short base)
-{
-#define __FN__ __FILE__ ":n_itoa()"
-	int n=num;
-	char c, sign='+';
-	char *p, *q;
 
-	settrace();
-	if (base<0) {
-		if (num<0) {
-			sign='-';
-			n*=-1;
-		}
-		base=-base;
-	}
-	p=q=str;
-	do {
-		*p++=nchars[n%base];
-	} while ((n/=base)>0);
-	if (sign=='-') *p++='-';
-	*p='\0';
-	while (q<--p) {
-		c=*q;
-		*q++=*p;
-		*p=c;
-	}
-	return str;
-#undef __FN__
-}
-*/
 char *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec)
 {
 #define __FN__ __FILE__ ":n_ntoa()"

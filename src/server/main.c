@@ -134,7 +134,7 @@ short isServiceInstalled(void)
 
 	scHndl=OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl==NULL) {
-		printf("Error in isServiceInstalled-OpenSCManager!\r\n");
+		printf("Error (%d) in isServiceInstalled-OpenSCManager!\r\n", GetLastError());
 		exit(-2);
 	}
 	scServ=OpenService(scHndl, svcname, SERVICE_ALL_ACCESS);
@@ -181,41 +181,68 @@ void WINAPI XControlHandler(DWORD dwControl)
 	}
 }
 
+DWORD do_filter(EXCEPTION_POINTERS *eps)
+{
+	EXCEPTION_RECORD er = *eps->ExceptionRecord;
+	char errbuf[255];
+
+	memset(errbuf, 0, sizeof(errbuf));
+	switch (er.ExceptionCode) {
+	case 0xE06D7363: // C++ exception
+		_snprintf(errbuf, sizeof(errbuf)-1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
+		break;
+	case EXCEPTION_ACCESS_VIOLATION:
+		_snprintf(errbuf, sizeof(errbuf)-1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	case EXCEPTION_STACK_OVERFLOW:
+		_snprintf(errbuf, sizeof(errbuf)-1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	default:
+		_snprintf(errbuf, sizeof(errbuf)-1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	}
+	printf("SEH Exception: %s", errbuf);
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 {
 	DWORD rc;
 
-	ghCtrlStatus=RegisterServiceCtrlHandler(SERVICE_NAME, (LPHANDLER_FUNCTION)XControlHandler);
-	if (ghCtrlStatus==(SERVICE_STATUS_HANDLE)NULL) {
-		printf("Error in RegisterServiceCtrlHandler!\r\n");
-		DebugBreak();
+	__try {
+		ghCtrlStatus=RegisterServiceCtrlHandler(SERVICE_NAME, (LPHANDLER_FUNCTION)XControlHandler);
+		if (ghCtrlStatus==(SERVICE_STATUS_HANDLE)NULL) {
+			printf("Error in RegisterServiceCtrlHandler!\r\n");
+			DebugBreak();
+		}
+		ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
+		memset(&gStatus, 0x00, sizeof(gStatus));
+		gStatus.dwServiceType              = SERVICE_WIN32;
+		gStatus.dwCurrentState             = SERVICE_RUNNING;
+		gStatus.dwControlsAccepted         = SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_SHUTDOWN;
+		gStatus.dwWin32ExitCode            = NO_ERROR;
+		gStatus.dwServiceSpecificExitCode  = NO_ERROR;
+		gStatus.dwCheckPoint               = 0;
+		gStatus.dwWaitHint                 = 0;
+		rc=SetServiceStatus(ghCtrlStatus, &gStatus);
+		if (!rc) {
+			printf("Error in SetServiceStatus!\r\n");
+			DebugBreak();
+		}
+		/* LET THE GROUPWARE BEGIN */
+		init(proc.N);
+		memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
+		if (modules_init(proc.N)!=0) exit(-2);
+		sanity_checkdirs();
+		if (modules_exec()!=0) exit(-2);
+		if (startlisteners()!=0) exit(-2);
+		if (modules_cron()!=0) exit(-2);
+		/* NOW BACK TO THE SERVICE CRAP */
+		WaitForSingleObject(ghevDoForever, INFINITE);
+		gStatus.dwCurrentState = SERVICE_STOPPED;
+		SetServiceStatus(ghCtrlStatus, &gStatus);
+	} __except (do_filter(GetExceptionInformation())) {
 	}
-	ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
-	memset(&gStatus, 0x00, sizeof(gStatus));
-	gStatus.dwServiceType              = SERVICE_WIN32;
-	gStatus.dwCurrentState             = SERVICE_RUNNING;
-	gStatus.dwControlsAccepted         = SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_SHUTDOWN;
-	gStatus.dwWin32ExitCode            = NO_ERROR;
-	gStatus.dwServiceSpecificExitCode  = NO_ERROR;
-	gStatus.dwCheckPoint               = 0;
-	gStatus.dwWaitHint                 = 0;
-	rc=SetServiceStatus(ghCtrlStatus, &gStatus);
-	if (!rc) {
-		printf("Error in SetServiceStatus!\r\n");
-		DebugBreak();
-	}
-	/* LET THE GROUPWARE BEGIN */
-	init(proc.N);
-	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
-	if (modules_init(proc.N)!=0) exit(-2);
-	sanity_checkdirs();
-	if (modules_exec()!=0) exit(-2);
-	if (startlisteners()!=0) exit(-2);
-	if (modules_cron()!=0) exit(-2);
-	/* NOW BACK TO THE SERVICE CRAP */
-	WaitForSingleObject(ghevDoForever, INFINITE);
-	gStatus.dwCurrentState = SERVICE_STOPPED;
-	SetServiceStatus(ghCtrlStatus, &gStatus);
 	return;
 }
 
@@ -231,138 +258,141 @@ int main(int argc, char *argv[], char *envp[])
 	char *ptemp, *p;
 	char pathbuf[MAX_PATH];
 
-	setvbuf(stdout, NULL, _IONBF, 0);
-	memset((char *)&proc, 0, sizeof(proc));
-//	proc.debug=1;
-	if (getenv("REQUEST_METHOD")!=NULL) return 0;
-	if ((proc.N=nsp_newstate())==NULL) {
-		printf("nsp_newstate() error\r\n");
-		return -1;
-	}
-
-	_snprintf(pathbuf, sizeof(pathbuf)-1, "%s", GetCommandLine());
-	if (proc.debug) printf("GetCommandLine() = %s\r\n", pathbuf);
-	nsp_setstr(proc.N, &proc.N->g, "GetCommandLine", pathbuf, -1);
-	if (isalpha(pathbuf[0]) && pathbuf[1]==':') {
-		p=strrchr(pathbuf, '\\');
-		if (*p!='\0') {
-			*++p='\0';
-			SetCurrentDirectory(pathbuf);
+	__try {
+		setvbuf(stdout, NULL, _IONBF, 0);
+		memset((char *)&proc, 0, sizeof(proc));
+	//	proc.debug=1;
+		if (getenv("REQUEST_METHOD")!=NULL) return 0;
+		if ((proc.N=nsp_newstate())==NULL) {
+			printf("nsp_newstate() error\r\n");
+			return -1;
 		}
-	}
-	GetCurrentDirectory(sizeof(pathbuf)-1, pathbuf);
-	if (proc.debug) printf("GetCurrentDirectory() = %s\r\n", pathbuf);
-	nsp_setstr(proc.N, &proc.N->g, "GetCurrentDirectory", pathbuf, -1);
 
-	/* add args */
-	tobj=nsp_settable(proc.N, &proc.N->g, "_ARGS");
-	tobj->val->attr|=NST_AUTOSORT;
-	for (i=0;i<argc;i++) {
-		sprintf(tmpbuf, "%d", i);
-		nsp_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
-	}
-	/* add env */
-	tobj=nsp_settable(proc.N, &proc.N->g, "_ENV");
-	tobj->val->attr|=NST_AUTOSORT;
-	for (i=0;envp[i]!=NULL;i++) {
-		strncpy(tmpbuf, envp[i], MAX_OBJNAMELEN);
-		p=strchr(tmpbuf, '=');
-		if (!p) continue;
-		*p='\0';
-		p=strchr(envp[i], '=')+1;
-		nsp_setstr(proc.N, tobj, tmpbuf, p, -1);
-	}
-	proc.stats.starttime=time(NULL);
-	cobj=nsp_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), -1);
-	ptemp=cobj->val->d.str;
-	if (p_strcasestr(ptemp, ".exe")!=NULL) {
-		ptemp=p_strcasestr(ptemp, ".exe");
-	}
-	while (*ptemp && *ptemp!=' ') ptemp++;
-	while (*ptemp==' ') ptemp++;
-	if (!os_version(&g_dwOSVersion)) return 0;
-	if ((g_dwOSVersion!=OS_WINNT)&&(g_dwOSVersion!=OS_WIN2K)) {
-		if (!strcmp(ptemp, "install")) {
-			printf("Services not supported on Win9x.\r\n");
-			exit(-2);
-		} else if (!strcmp(ptemp, "remove")) {
-			printf("Services not supported on Win9x.\r\n");
-			exit(-2);
-		}
-		forcerun=1;
-	}
-	if (!strcmp(ptemp, "forcerun")) {
-		printf("NullLogic GroupServer is bypassing service stuff.\r\n");
-		forcerun=1;
-	}
-	if (forcerun) {
-		init(proc.N);
-		memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
-		if (argc<3) {
-			if (modules_init(proc.N)!=0) exit(-2);
-		} else {
-			for (i=2;i<argc;i++) {
-				module_load(argv[i]);
+		_snprintf(pathbuf, sizeof(pathbuf)-1, "%s", GetCommandLine());
+		if (proc.debug) printf("GetCommandLine() = %s\r\n", pathbuf);
+		nsp_setstr(proc.N, &proc.N->g, "GetCommandLine", pathbuf, -1);
+		if (isalpha(pathbuf[0]) && pathbuf[1]==':') {
+			p=strrchr(pathbuf, '\\');
+			if (*p!='\0') {
+				*++p='\0';
+				SetCurrentDirectory(pathbuf);
 			}
 		}
-		sanity_checkdirs();
-		if (modules_exec()!=0) exit(-2);
-		if (startlisteners()!=0) exit(-2);
-		if (modules_cron()!=0) exit(-2);
+		GetCurrentDirectory(sizeof(pathbuf)-1, pathbuf);
+		if (proc.debug) printf("GetCurrentDirectory() = %s\r\n", pathbuf);
+		nsp_setstr(proc.N, &proc.N->g, "GetCurrentDirectory", pathbuf, -1);
+
+		/* add args */
+		tobj=nsp_settable(proc.N, &proc.N->g, "_ARGS");
+		tobj->val->attr|=NST_AUTOSORT;
+		for (i=0;i<argc;i++) {
+			sprintf(tmpbuf, "%d", i);
+			nsp_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
+		}
+		/* add env */
+		tobj=nsp_settable(proc.N, &proc.N->g, "_ENV");
+		tobj->val->attr|=NST_AUTOSORT;
+		for (i=0;envp[i]!=NULL;i++) {
+			strncpy(tmpbuf, envp[i], MAX_OBJNAMELEN);
+			p=strchr(tmpbuf, '=');
+			if (!p) continue;
+			*p='\0';
+			p=strchr(envp[i], '=')+1;
+			nsp_setstr(proc.N, tobj, tmpbuf, p, -1);
+		}
+		proc.stats.starttime=time(NULL);
+		cobj=nsp_setstr(proc.N, &proc.N->g, "program_name", GetCommandLine(), -1);
+		ptemp=cobj->val->d.str;
+		if (p_strcasestr(ptemp, ".exe")!=NULL) {
+			ptemp=p_strcasestr(ptemp, ".exe");
+		}
+		while (*ptemp && *ptemp!=' ') ptemp++;
+		while (*ptemp==' ') ptemp++;
+		if (!os_version(&g_dwOSVersion)) return 0;
+		if ((g_dwOSVersion!=OS_WINNT)&&(g_dwOSVersion!=OS_WIN2K)) {
+			if (!strcmp(ptemp, "install")) {
+				printf("Services not supported on Win9x.\r\n");
+				exit(-2);
+			} else if (!strcmp(ptemp, "remove")) {
+				printf("Services not supported on Win9x.\r\n");
+				exit(-2);
+			}
+			forcerun=1;
+		}
+		if (!strcmp(ptemp, "forcerun")) {
+			printf("NullLogic GroupServer is bypassing service stuff.\r\n");
+			forcerun=1;
+		}
+		if (forcerun) {
+			init(proc.N);
+			memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
+			if (argc<3) {
+				if (modules_init(proc.N)!=0) exit(-2);
+			} else {
+				for (i=2;i<argc;i++) {
+					module_load(argv[i]);
+				}
+			}
+			sanity_checkdirs();
+			if (modules_exec()!=0) exit(-2);
+			if (startlisteners()!=0) exit(-2);
+			if (modules_cron()!=0) exit(-2);
+			if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent"))!=0) {
+				printf("NullLogic GroupServer is already running.\r\n");
+				CloseHandle(ghevDoForever);
+				exit(-2);
+			}
+			ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
+			WaitForSingleObject(ghevDoForever, INFINITE);
+			exit(-2);
+		}
+	/*	memset(&gStatus, 0x00, sizeof(gStatus)); */
+		ghevDoForever=NULL;
 		if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent"))!=0) {
 			printf("NullLogic GroupServer is already running.\r\n");
 			CloseHandle(ghevDoForever);
 			exit(-2);
 		}
-		ghevDoForever=CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
-		WaitForSingleObject(ghevDoForever, INFINITE);
-		exit(-2);
-	}
-/*	memset(&gStatus, 0x00, sizeof(gStatus)); */
-	ghevDoForever=NULL;
-	if ((ghevDoForever=OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent"))!=0) {
-		printf("NullLogic GroupServer is already running.\r\n");
-		CloseHandle(ghevDoForever);
-		exit(-2);
-	}
-	if (isServiceInstalled()==1) {
-		if (!strcmp(ptemp, "install")) {
-			printf("NullLogic GroupServer is already installed.\r\n");
-			exit(-2);
-		} else if (!strcmp(ptemp, "remove")) {
-			if (uninstallService()) {
-				printf("NullLogic GroupServer could not be uninstalled.\r\n");
+		if (isServiceInstalled()==1) {
+			if (!strcmp(ptemp, "install")) {
+				printf("NullLogic GroupServer is already installed.\r\n");
 				exit(-2);
-			}
-			exit(0);
-		}
-	} else {
-		if (!strcmp(ptemp, "install")) {
-			if (installService()==0) {
-				printf("NullLogic GroupServer was installed successfully.\r\n");
+			} else if (!strcmp(ptemp, "remove")) {
+				if (uninstallService()) {
+					printf("NullLogic GroupServer could not be uninstalled.\r\n");
+					exit(-2);
+				}
 				exit(0);
-			} else {
-				printf("NullLogic GroupServer could not be installed.\r\n");
+			}
+		} else {
+			if (!strcmp(ptemp, "install")) {
+				if (installService()==0) {
+					printf("NullLogic GroupServer was installed successfully.\r\n");
+					exit(0);
+				} else {
+					printf("NullLogic GroupServer could not be installed.\r\n");
+					exit(-2);
+				}
+				exit(0);
+			} else if (!strcmp(ptemp, "remove")) {
+				printf("NullLogic GroupServer is not installed.\r\n");
 				exit(-2);
 			}
-			exit(0);
-		} else if (!strcmp(ptemp, "remove")) {
-			printf("NullLogic GroupServer is not installed.\r\n");
+		}
+		SrvTable[0].lpServiceName = SERVICE_NAME;
+		SrvTable[0].lpServiceProc = ServiceMain;
+		SrvTable[1].lpServiceName = NULL;
+		SrvTable[1].lpServiceProc = NULL;
+		if (!StartServiceCtrlDispatcher(SrvTable)) {
+			printf("Service Start Error!\r\n");
 			exit(-2);
 		}
+		if (proc.N->err) {
+			printf("errno=%d :: \"%s\"\r\n", proc.N->err, proc.N->errbuf);
+		}
+		proc.N=nsp_endstate(proc.N);
+	} __except (do_filter(GetExceptionInformation())) {
 	}
-	SrvTable[0].lpServiceName = SERVICE_NAME;
-	SrvTable[0].lpServiceProc = ServiceMain;
-	SrvTable[1].lpServiceName = NULL;
-	SrvTable[1].lpServiceProc = NULL;
-	if (!StartServiceCtrlDispatcher(SrvTable)) {
-		printf("Service Start Error!\r\n");
-		exit(-2);
-	}
-	if (proc.N->err) {
-		printf("errno=%d :: \"%s\"\r\n", proc.N->err, proc.N->errbuf);
-	}
-	proc.N=nsp_endstate(proc.N);
 	return 0;
 }
 #else

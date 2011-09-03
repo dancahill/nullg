@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,41 +84,27 @@ int      _nc_strcmp     (const char *s1, const char *s2);
 int      _nc_strncmp    (const char *s1, const char *s2, int n);
 void    *_nc_memset     (void *s, int c, int n);
 
-#define nc_memcpy  _nc_memcpy
-#define nc_strlen  _nc_strlen
-#define nc_strchr  _nc_strchr
-#define nc_strncpy _nc_strncpy
-#define nc_strcmp  _nc_strcmp
-#define nc_strncmp _nc_strncmp
-#define nc_memset  _nc_memset
-
-/*
-#include <string.h>
-#define nc_memcpy  _nc_memcpy
-#define nc_strlen  strlen
-#define nc_strchr  strchr
-#define nc_strncpy strncpy
-#define nc_strcmp  strcmp
-#define nc_strncmp strncmp
-#define nc_memset  memset
-*/
+#define nc_memcpy  _nc_memcpy  // native is unsafe
+#define nc_strlen  _nc_strlen  // slower?
+#define nc_strchr  _nc_strchr  // same
+#define nc_strncpy _nc_strncpy // same
+#define nc_strcmp  _nc_strcmp  // native is unsafe
+#define nc_strncmp _nc_strncmp // same
+#define nc_memset  _nc_memset  // same
 
 void     n_error        (nsp_state *N, short int err, const char *fname, const char *format, ...);
-void     n_expect       (nsp_state *N, const char *fname, uchar op);
+void     _n_expect      (nsp_state *N, const char *fname, uchar op);
 /* #define  n_expect(N,fn,op)	{ if (*N->readptr!=op) n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, op)); } */
-
 void     n_warn         (nsp_state *N, const char *fname, const char *format, ...);
-
 num_t    n_aton         (nsp_state *N, const char *str);
-
 /* char    *n_itoa         (nsp_state *N, char *str, int num, short base); */
-
 char    *n_ntoa         (nsp_state *N, char *str, num_t num, short base, unsigned short dec);
 /* libn.c */
 NSP_FUNCTION(nl_flush);
 NSP_FUNCTION(nl_print);
 NSP_FUNCTION(nl_write);
 NSP_FUNCTION(nl_filemkdir);
+NSP_FUNCTION(nl_filechdir);
 NSP_FUNCTION(nl_fileread);
 NSP_FUNCTION(nl_filerename);
 NSP_FUNCTION(nl_filestat);
@@ -139,6 +125,7 @@ NSP_FUNCTION(nl_strstr);
 NSP_FUNCTION(nl_strsub);
 NSP_FUNCTION(nl_strtolower);
 NSP_FUNCTION(nl_sqltime);
+NSP_FUNCTION(nl_sqltounix);
 NSP_FUNCTION(nl_time);
 NSP_FUNCTION(nl_gmtime);
 NSP_FUNCTION(nl_gettimeofday);
@@ -149,13 +136,14 @@ NSP_FUNCTION(nl_exec);
 NSP_FUNCTION(nl_iname);
 NSP_FUNCTION(nl_ival);
 NSP_FUNCTION(nl_include);
-NSP_FUNCTION(nl_exportvar);
+NSP_FUNCTION(nl_serialize);
 NSP_FUNCTION(nl_sizeof);
 NSP_FUNCTION(nl_sort_name);
 NSP_FUNCTION(nl_sort_key);
 NSP_FUNCTION(nl_typeof);
 NSP_FUNCTION(nl_system);
 NSP_FUNCTION(nl_copy);
+NSP_FUNCTION(nl_printf);
 NSP_FUNCTION(nl_zlink);
 /* objects.c */
 void    *n_alloc        (nsp_state *N, int size, short zero);
@@ -172,7 +160,8 @@ obj_t   *n_setnamei     (nsp_state *N, obj_t *cobj, unsigned long i);
 short    n_getop        (nsp_state *N, char *name);
 char    *n_getsym       (nsp_state *N, short op);
 char    *n_gettype      (nsp_state *N, short type);
-uchar   *n_seekop       (nsp_state *N, uchar *readptr, int ops, int sb);
+uchar   *n_seekop       (nsp_state *N, uchar *readptr, unsigned short sb);
+uchar    n_skip_ws      (nsp_state *N);
 /* parser.c */
 void     n_getfunction  (nsp_state *N, obj_t *cobj);
 char    *n_getlabel     (nsp_state *N, char *buf);
@@ -183,13 +172,16 @@ void     n_readtable    (nsp_state *N, obj_t *tobj);
 obj_t   *n_readvar      (nsp_state *N, obj_t *tobj, obj_t *cobj);
 void     n_storeval     (nsp_state *N, obj_t *cobj);
 
-#define  readi4(ptr)    (int)(ptr[0]+ptr[1]*256+ptr[2]*65536+ptr[3]*16777216)
-#define  readi2(ptr)    (int)(ptr[0]+ptr[1]*256)
+#define  readi4(ptr)     (int)(ptr[0]+(ptr[1]<<8)+(ptr[2]<<16)+(ptr[3]<<24))
+#define  readi2(ptr)     (int)(ptr[0]+(ptr[1]>>8))
 
-#define  writei4(n,ptr) ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255); ptr[2]=(uchar)((n>>16)&255); ptr[3]=(uchar)((n>>24)&255);
-#define  writei2(n,ptr) ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255);
+#define  writei4(n,ptr)  ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255); ptr[2]=(uchar)((n>>16)&255); ptr[3]=(uchar)((n>>24)&255);
+#define  writei2(n,ptr)  ptr[0]=(uchar)(n&255); ptr[1]=(uchar)((n>>8)&255);
 
-#define striprn(s) { int n=nc_strlen(s)-1; while (n>-1&&(s[n]=='\r'||s[n]=='\n')) s[n--]='\0'; }
+#define  striprn(s)      { int n=nc_strlen(s)-1; while (n>-1&&(s[n]=='\r'||s[n]=='\n')) s[n--]='\0'; }
+
+#define  n_peekop(N)     (*N->readptr!=OP_LINENUM?*N->readptr:n_skip_ws(N))
+#define  n_expect(N,f,o) if (n_peekop(N)!=o) _n_expect(N, f, o);
 
 #ifdef __cplusplus
 }

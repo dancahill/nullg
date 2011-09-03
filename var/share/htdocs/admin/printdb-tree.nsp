@@ -27,22 +27,22 @@ function changevis(t) {
 <?nsp
 
 function show_subtree(Q, depth, did, pid) {
-//	print("<pre>",exportvar(Q),"</pre>");
+//	print("<pre>",serialize(Q),"</pre>");
 	for (i=0;i<Q._tuples;i++) {
 		row=Q['_rows'][i];
 		Q2=sqlquery("SELECT id, pid, did, ctime, mtime, class, name FROM nullsd_entries WHERE pid = "+row['id']+" AND did = "+did+" AND class <> 'emailheader' AND class <> 'organization'");
 		print("<tr><td>"+("&nbsp;"*10)+"</td>");
 		if (Q2._tuples<1) {
-			print("<td nowrap width=100%>",row['id']," - ",row['name']," (",row['class'],")");
+			print("<td nowrap width='100%'>",row['id']," - ",row['name']," (",row['class'],")");
 		} else {
-			print("<td nowrap width=100%><a href=javascript:changevis('tlist"+row['id']+"');>",row['id']," - ",row['name']," (",row['class'],")</a>");
+			print("<td nowrap width='100%'><a href=\"javascript:changevis('tlist"+row['id']+"');\">",row['id']," - ",row['name']," (",row['class'],")</a>");
 		}
 		if (row['class']=='person') {
 			print(" - [<a href='/contacts/view?id="+row['id']+"' target='_blank'>edit</a>]");
 		}
 		if (Q2._tuples>0) {
 			print("<DIV ID='tlist"+row['id']+"' STYLE='display:none'>");
-			print("<table border=1 width=100%><tr><td>");
+			print("<table border=1 width='100%'><tr><td>");
 			show_subtree(Q2, depth+1, did, row['id']);
 			print("</td></tr></table>");
 			print("</DIV>");
@@ -65,7 +65,7 @@ function show_org(row) {
 <?nsp
 
 Q=sqlquery("SELECT id, pid, did, ctime, mtime, class, name FROM nullsd_entries WHERE class = 'organization'");
-//print("<pre>",exportvar(Q),"</pre>");
+//print("<pre>",serialize(Q),"</pre>");
 for (i=0;i<sizeof(Q._rows);i++) {
 	show_org(Q['_rows'][i]);
 }

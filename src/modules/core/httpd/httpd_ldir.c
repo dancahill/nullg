@@ -250,9 +250,21 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 		if (pid) {
 			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC", oc, pid, did);
 		} else if (strlen(oc)>0) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
+			if (strcmp(oc, "person")==0) {
+				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC", did);
+			} else if (strcmp(oc, "dbquery")==0) {
+				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d ORDER BY obj_did, queryid ASC", did);
+			} else {
+				log_error(proc->N, "shit", __FILE__, __LINE__, 1, "oc '%s' missing", oc);
+			}
 		} else {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE did = %d ORDER BY did, id ASC", did);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE did = %d ORDER BY did, id ASC", did);
+			if (strcmp(oc, "person")==0) {
+				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC", did);
+			} else {
+				log_error(proc->N, "shit", __FILE__, __LINE__, 1, "oc '%s' missing", oc);
+			}
 		}
 //	}
 	if (rc<0) return NULL;
@@ -297,17 +309,26 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 	obj_t *tobj;
 	int rc=-1;
 	int i;
-	char *p;
+//	char *p;
 
 	if (strcmp(oc, "person")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND userid = %d;", did, id);
 		} else if (name) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND username = '%s';", did, name);
+		}
+	} else if (strcmp(oc, "contact")==0) {
+		if (id) {
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d AND contactid = %d;", did, id);
+		} else if (name) {
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d AND username = '%s';", did, name);
 		}
 	} else if (strcmp(oc, "dbquery")==0) {
 		if (id) {
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d AND queryid = %d;", did, id);
 		} else if (name) {
 			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
@@ -339,13 +360,13 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 		tobj=nsp_getobj(proc->N, qobj1, "_rows");
 		tobj=nsp_getiobj(proc->N, tobj, i);
 		tobj=nsp_settable(proc->N, tobj, "_data");
-		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
-		nsp_linkval(N, tobj, nsp_eval(N, p));
-		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
-			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
-				unescape(tobj->val->d.str, tobj->val->d.str);
-			}
-		}
+//		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
+//		nsp_linkval(N, tobj, nsp_eval(N, p));
+//		for (tobj=tobj->val->d.table.f;tobj;tobj=tobj->next) {
+//			if ((tobj->val->type==NT_STRING)&&(tobj->val->d.str)) {
+//				unescape(tobj->val->d.str, tobj->val->d.str);
+//			}
+//		}
 	}
 	return qobj1;
 }

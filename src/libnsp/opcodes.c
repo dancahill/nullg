@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 #define IS_MATHOP(c) (c=='='||c=='+'||c=='-'||c=='*'||c=='/'||c=='%'||c=='&'||c=='|'||c=='^'||c=='!'||c=='<'||c=='>'||c==':'||c=='?')
 #define IS_PUNCOP(c) (c=='('||c==')'||c==','||c=='{'||c=='}'||c==';'||c=='.'||c=='['||c==']')
-#define IS_DATA(c)   (c=='\''||c=='\"'||nc_isdigit(c))
+#define IS_DATA(c)   (c=='@'||c=='\''||c=='\"'||c=='`'||nc_isdigit(c))
 #define IS_LABEL(c)  (c=='_'||c=='$'||nc_isalpha(c))
 
 const optab oplist[] = {
@@ -215,67 +215,67 @@ const optab oplist[] = {
 	{ NULL,       OP_UNDEFINED, -1 }, /* 185 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 186 */
 	{ NULL,       OP_UNDEFINED, -1 }, /* 187 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 188 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 189 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 190 */
-	{ NULL,       OP_UNDEFINED, -1 }, /* 191 */
 	/* KEYWORDS */
-	{ "exit",     OP_KEXIT    , -1 }, /* 192 */
-	{ "throw",    OP_KTHROW   , -1 }, /* 193 */
-	{ "finally",  OP_KFINALLY , -1 }, /* 194 */
-	{ "catch",    OP_KCATCH   , -1 }, /* 195 */
-	{ "try",      OP_KTRY     , -1 }, /* 196 */
-	{ "default",  OP_KDEFAULT , -1 }, /* 197 */
-	{ "case",     OP_KCASE    , -1 }, /* 198 */
-	{ "switch",   OP_KSWITCH  , -1 }, /* 199 */
-	{ "while",    OP_KWHILE   , -1 }, /* 200 */
-	{ "do",       OP_KDO      , -1 }, /* 201 */
-	{ "foreach",  OP_KFOREACH , -1 }, /* 202 */
-	{ "for",      OP_KFOR     , -1 }, /* 203 */
-	{ "else",     OP_KELSE    , -1 }, /* 204 */
-	{ "if",       OP_KIF      , -1 }, /* 205 */
-	{ "var",      OP_KVAR     , -1 }, /* 206 */
-	{ "local",    OP_KLOCAL   , -1 }, /* 207 */
-	{ "global",   OP_KGLOB    , -1 }, /* 208 */
-	{ "function", OP_KFUNC    , -1 }, /* 209 */
-	{ "class",    OP_KCLASS   , -1 }, /* 210 */
-	{ "new",      OP_KNEW     , -1 }, /* 211 */
-	{ "delete",   OP_KDELETE  , -1 }, /* 212 */
-	{ "return",   OP_KRET     , -1 }, /* 213 */
-	{ "continue", OP_KCONT    , -1 }, /* 214 */
-	{ "break",    OP_KBREAK   , -1 }, /* 215 */
+	{ "exit",     OP_KEXIT    , -1 }, /* 188 */
+	{ "throw",    OP_KTHROW   , -1 }, /* 189 */
+	{ "finally",  OP_KFINALLY , -1 }, /* 190 */
+	{ "catch",    OP_KCATCH   , -1 }, /* 191 */
+	{ "try",      OP_KTRY     , -1 }, /* 192 */
+	{ "default",  OP_KDEFAULT , -1 }, /* 193 */
+	{ "case",     OP_KCASE    , -1 }, /* 194 */
+	{ "switch",   OP_KSWITCH  , -1 }, /* 195 */
+	{ "while",    OP_KWHILE   , -1 }, /* 196 */
+	{ "do",       OP_KDO      , -1 }, /* 197 */
+	{ "foreach",  OP_KFOREACH , -1 }, /* 198 */
+	{ "for",      OP_KFOR     , -1 }, /* 199 */
+	{ "else",     OP_KELSE    , -1 }, /* 200 */
+	{ "if",       OP_KIF      , -1 }, /* 201 */
+	{ "var",      OP_KVAR     , -1 }, /* 202 */
+	{ "local",    OP_KLOCAL   , -1 }, /* 203 */
+	{ "global",   OP_KGLOB    , -1 }, /* 204 */
+	{ "function", OP_KFUNC    , -1 }, /* 205 */
+	{ "class",    OP_KCLASS   , -1 }, /* 206 */
+	{ "new",      OP_KNEW     , -1 }, /* 207 */
+	{ "delete",   OP_KDELETE  , -1 }, /* 208 */
+	{ "return",   OP_KRET     , -1 }, /* 209 */
+	{ "continue", OP_KCONT    , -1 }, /* 210 */
+	{ "break",    OP_KBREAK   , -1 }, /* 211 */
 	/* MATH */
-	{ "?",        OP_MQUESTION, 1  }, /* 216 */
-	{ ":",        OP_MCOLON   , 1  }, /* 217 */
-	{ ">",        OP_MCGT     , 2  }, /* 218 */
-	{ "<",        OP_MCLT     , 2  }, /* 219 */
-	{ ">=",       OP_MCGE     , 2  }, /* 220 */
-	{ "<=",       OP_MCLE     , 2  }, /* 221 */
-	{ "!=",       OP_MCNE     , 2  }, /* 222 */
-	{ "===",      OP_MCEEQ    , 2  }, /* 223 */
-	{ "==",       OP_MCEQ     , 2  }, /* 224 */
-	{ "!",        OP_MLNOT    , 1  }, /* 225 */
-	{ "||",       OP_MLOR     , 1  }, /* 226 */
-	{ "&&",       OP_MLAND    , 1  }, /* 227 */
-	{ "^",        OP_MXOR     , 5  }, /* 228 */
-	{ "|",        OP_MOR      , 5  }, /* 229 */
-	{ "&",        OP_MAND     , 5  }, /* 230 */
-	{ "%",        OP_MMOD     , 4  }, /* 231 */
-	{ "--",       OP_MSUBSUB  , 3  }, /* 232 */
-	{ "++",       OP_MADDADD  , 3  }, /* 233 */
-	{ "/=",       OP_MDIVEQ   , 0  }, /* 234 */
-	{ "*=",       OP_MMULEQ   , 0  }, /* 235 */
-	{ "-=",       OP_MSUBEQ   , 0  }, /* 236 */
-	{ "+=",       OP_MADDEQ   , 0  }, /* 237 */
-	{ "/",        OP_MDIV     , 4  }, /* 238 */
-	{ "*",        OP_MMUL     , 4  }, /* 239 */
-	{ "-",        OP_MSUB     , 3  }, /* 240 */
-	{ "+",        OP_MADD     , 3  }, /* 241 */
-	{ "=",        OP_MEQ      , 0  }, /* 242 */
+	{ "?",        OP_MQUESTION, 1  }, /* 212 */
+	{ ":",        OP_MCOLON   , 1  }, /* 213 */
+	{ "<<",       OP_MSHIFTL  , 3  }, /* 214 */
+	{ ">>",       OP_MSHIFTR  , 3  }, /* 215 */
+	{ ">",        OP_MCGT     , 2  }, /* 216 */
+	{ "<",        OP_MCLT     , 2  }, /* 217 */
+	{ ">=",       OP_MCGE     , 2  }, /* 218 */
+	{ "<=",       OP_MCLE     , 2  }, /* 219 */
+	{ "!=",       OP_MCNE     , 2  }, /* 220 */
+	{ "===",      OP_MCEEQ    , 2  }, /* 221 */
+	{ "==",       OP_MCEQ     , 2  }, /* 222 */
+	{ "!",        OP_MLNOT    , 1  }, /* 223 */
+	{ "||",       OP_MLOR     , 1  }, /* 224 */
+	{ "&&",       OP_MLAND    , 1  }, /* 225 */
+	{ "^",        OP_MXOR     , 5  }, /* 226 */
+	{ "|",        OP_MOR      , 5  }, /* 227 */
+	{ "&",        OP_MAND     , 5  }, /* 228 */
+	{ "%",        OP_MMOD     , 4  }, /* 229 */
+	{ "--",       OP_MSUBSUB  , 3  }, /* 230 */
+	{ "++",       OP_MADDADD  , 3  }, /* 231 */
+	{ "/=",       OP_MDIVEQ   , 0  }, /* 232 */
+	{ "*=",       OP_MMULEQ   , 0  }, /* 233 */
+	{ "-=",       OP_MSUBEQ   , 0  }, /* 234 */
+	{ "+=",       OP_MADDEQ   , 0  }, /* 235 */
+	{ "/",        OP_MDIV     , 4  }, /* 236 */
+	{ "*",        OP_MMUL     , 4  }, /* 237 */
+	{ "-",        OP_MSUB     , 3  }, /* 238 */
+	{ "+",        OP_MADD     , 3  }, /* 239 */
+	{ "=",        OP_MEQ      , 0  }, /* 240 */
 	/* PUNCTUATION */
-	{ "#",        OP_PHASH    , -1 }, /* 243 */
-	{ "\"",       OP_PDQUOTE  , -1 }, /* 244 */
-	{ "\'",       OP_PSQUOTE  , -1 }, /* 245 */
+	{ "#",        OP_PHASH    , -1 }, /* 241 */
+	{ "@",        OP_PAT      , -1 }, /* 242 */
+	{ "\"",       OP_PDQUOTE  , -1 }, /* 243 */
+	{ "\'",       OP_PSQUOTE  , -1 }, /* 244 */
+	{ "`",        OP_PLQUOTE  , -1 }, /* 245 */
 	{ ".",        OP_PDOT     , -1 }, /* 246 */
 	{ ";",        OP_PSEMICOL , -1 }, /* 247 */
 	{ ",",        OP_PCOMMA   , -1 }, /* 248 */
@@ -301,8 +301,16 @@ short n_getop(nsp_state *N, char *name)
 		return *N->readptr++;
 	} else if (IS_DATA(*N->readptr)) {
 		name[0]=0;
-		if (*N->readptr=='\''||*N->readptr=='\"') 
+		if (*N->readptr=='\''||*N->readptr=='\"')
 			return OP_STRDATA;
+		else if (*N->readptr=='`')
+			return OP_ESTRDATA;
+		else if (N->readptr[0]=='@') {
+			if (N->readptr[1]=='\'' || N->readptr[1]=='\"')
+				return OP_STRDATA;
+			else if (N->readptr[1]=='`')
+				return OP_ESTRDATA;
+		}
 		else if (nc_isdigit(*N->readptr))
 			return OP_NUMDATA;
 	} else if (IS_LABEL(*N->readptr)) {
@@ -352,6 +360,7 @@ char *n_getsym(nsp_state *N, short op)
 	settrace();
 	switch (op) {
 	case OP_STRDATA : return "string";
+	case OP_ESTRDATA : return "estring";
 	case OP_NUMDATA : return "number";
 	case OP_LABEL   : return "label";
 	default         : if (op>OP_LABEL&&op<OP_UNDEFINED) return oplist[op].name;
@@ -378,23 +387,31 @@ char *n_gettype(nsp_state *N, short type)
 #undef __FN__
 }
 
-#define skipblock(op) { while (*p) { if (*p==op) return p+1; else p=n_seekop(N, p, 1, 1); } }
+#define skipblock(op) { while (*p) { if (*p==op) return p+1; else p=n_seekop(N, p, 1); } }
 
-uchar *n_seekop(nsp_state *N, uchar *p, int ops, int sb)
+uchar *n_seekop(nsp_state *N, uchar *p, unsigned short sb)
 {
 #define __FN__ __FILE__ ":n_seekop()"
 	settrace();
-	while (ops-->0) {
-		switch (*p) {
-		case '\0'       : return p;
-		case OP_STRDATA : p+=6+readi4((p+1)); break;
-		case OP_NUMDATA : p+=3+(int)(p[1]); break;
-		case OP_LABEL   : p+=3+(int)(p[1]); break;
-		case OP_POBRACE : p+=1; if (sb) skipblock(OP_PCBRACE); break;
-		case OP_POPAREN : p+=1; if (sb) skipblock(OP_PCPAREN); break;
-		default: p+=1; break;
-		}
+	switch (*p) {
+	case OP_STRDATA : return p+6+readi4((p+1));
+	case OP_ESTRDATA: return p+6+readi4((p+1));
+	case OP_NUMDATA : return p+3+(int)(p[1]);
+	case OP_LABEL   : return p+3+(int)(p[1]);
+	case OP_LINENUM : return p+5;
+	case OP_POBRACE : p+=5; if (sb) skipblock(OP_PCBRACE); return p;
+	case OP_POPAREN : p+=3; if (sb) skipblock(OP_PCPAREN); return p;
+	default: return p+1;
 	}
 	return p;
+#undef __FN__
+}
+
+uchar n_skip_ws(nsp_state *N)
+{
+#define __FN__ __FILE__ ":n_skip_ws()"
+	settrace();
+	while (*N->readptr==OP_LINENUM) { N->line_num=readi4((N->readptr+1)); N->readptr+=5; }
+	return *N->readptr;
 #undef __FN__
 }

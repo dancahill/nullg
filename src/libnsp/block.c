@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ void n_skipto(nsp_state *N, const char *fn, unsigned short c)
 	settrace();
 	while (*N->readptr) {
 		if (*N->readptr==c) return;
-		N->readptr=n_seekop(N, N->readptr, 1, 1);
+		N->readptr=n_seekop(N, N->readptr, 1);
 	}
 	n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, c));
 	return;
@@ -39,53 +39,49 @@ void n_if(nsp_state *N)
 {
 #define __FN__ __FILE__ ":n_if()"
 	char done=0, t=0;
+	uchar *ce;
 
 	DEBUG_IN();
 	settrace();
 l1:
-	if (*N->readptr==OP_POPAREN) {
-		N->readptr++;
+	if (n_peekop(N)==OP_POPAREN) {
+		ce=N->readptr+readi2((N->readptr+1))+3;
+		N->readptr=n_seekop(N, N->readptr, 0);
 		if (!done) {
 			t=(char)nsp_tobool(N, nsp_eval(N, (char *)N->readptr));
-#if 1
-#if !defined(_MSC_VER)
-#warning "final speed hack is here"
-#warning "if (N->r.val->refs>1) nsp_unlinkval(N, &N->r);"
-#endif
-//	n_warn(N, __FN__, "'%s' %d", n_gettype(N, (short)nsp_typeof((&N->r))), N->r.val->refs);
-	if (N->r.val->refs>1) nsp_unlinkval(N, &N->r);
-//	n_warn(N, __FN__, "'%s' %d", n_gettype(N, (short)nsp_typeof((&N->r))), N->r.val->refs);
-#endif
+			if (N->r.val->refs>1) nsp_unlinkval(N, &N->r);
 		}
-		n_skipto(N, __FN__, OP_PCPAREN);
+		N->readptr=ce;
+		n_expect(N, __FN__, OP_PCPAREN);
 		N->readptr++;
 	}
 l2:
 	if (!t||done) {
-		if (*N->readptr==OP_POBRACE) {
-			N->readptr++;
-			n_skipto(N, __FN__, OP_PCBRACE);
+		if (n_peekop(N)==OP_POBRACE) {
+			N->readptr+=5+readi4((N->readptr+1));
+			n_expect(N, __FN__, OP_PCBRACE);
 			N->readptr++;
 		} else {
 			n_skipto(N, __FN__, OP_PSEMICOL);
-			if (*N->readptr==OP_PSEMICOL) N->readptr++;
+			if (n_peekop(N)==OP_PSEMICOL) N->readptr++;
 		}
 	} else {
 		done=1;
-		if (*N->readptr==OP_POBRACE) {
+		if (n_peekop(N)==OP_POBRACE) {
+			uchar *be=N->readptr+5+readi4((N->readptr+1));
 			nsp_exec(N, (char *)N->readptr);
-			n_skipto(N, __FN__, OP_PCBRACE);
+			N->readptr=be;
+			n_expect(N, __FN__, OP_PCBRACE);
 			N->readptr++;
 		} else {
 			N->single=1;
 			nsp_exec(N, (char *)N->readptr);
-			if (*N->readptr==OP_PSEMICOL) N->readptr++;
+			if (n_peekop(N)==OP_PSEMICOL) N->readptr++;
 		}
 	}
-	if (N->ret) { DEBUG_OUT(); return; }
-	if (*N->readptr==OP_KELSE) {
+	if (!N->ret && n_peekop(N)==OP_KELSE) {
 		N->readptr++;
-		if (*N->readptr==OP_KIF) {
+		if (n_peekop(N)==OP_KIF) {
 			N->readptr++;
 			goto l1;
 		}
@@ -108,16 +104,16 @@ void n_for(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	arginit=++N->readptr;
+	arginit=N->readptr=n_seekop(N, N->readptr, 0);
 	n_skipto(N, __FN__, OP_PSEMICOL);
 	argcomp=++N->readptr;
 	n_skipto(N, __FN__, OP_PSEMICOL);
 	argexec=++N->readptr;
 	n_skipto(N, __FN__, OP_PCPAREN);
 	bs=++N->readptr;
-	if (*N->readptr==OP_POBRACE) {
-		N->readptr++;
-		n_skipto(N, __FN__, OP_PCBRACE);
+	if (n_peekop(N)==OP_POBRACE) {
+		N->readptr+=5+readi4((N->readptr+1));
+		n_expect(N, __FN__, OP_PCBRACE);
 		single=0;
 	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
@@ -152,8 +148,8 @@ void n_for(nsp_state *N)
 void n_foreach(nsp_state *N)
 {
 #define __FN__ __FILE__ ":n_foreach()"
-	char itemnamebuf1[MAX_OBJNAMELEN+1];
-	char itemnamebuf2[MAX_OBJNAMELEN+1];
+//	char itemnamebuf1[MAX_OBJNAMELEN+1];
+//	char itemnamebuf2[MAX_OBJNAMELEN+1];
 	obj_t *iobj, *sobj, *xobj;
 	obj_t tobj;
 	obj_t *tsobj;
@@ -165,18 +161,23 @@ void n_foreach(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	++N->readptr;
+	N->readptr=n_seekop(N, N->readptr, 0);
+//	++N->readptr;
 	n_expect(N, __FN__, OP_LABEL);
-	n_getlabel(N, itemnamebuf1);
-	if (*N->readptr==OP_PCOMMA) {
+//	n_getlabel(N, itemnamebuf1);
+	namep=NULL;
+	valp=n_getlabel(N, NULL);
+	if (n_peekop(N)==OP_PCOMMA) {
 		++N->readptr;
 		n_expect(N, __FN__, OP_LABEL);
-		n_getlabel(N, itemnamebuf2);
-		namep=itemnamebuf1;
-		valp=itemnamebuf2;
-	} else {
-		namep=NULL;
-		valp=itemnamebuf1;
+//		n_getlabel(N, itemnamebuf2);
+		namep=valp;
+		valp=n_getlabel(N, NULL);
+//		namep=itemnamebuf1;
+//		valp=itemnamebuf2;
+//	} else {
+//		namep=NULL;
+//		valp=itemnamebuf1;
 	}
 	n_expect(N, __FN__, OP_LABEL);
 	if (nc_strcmp(n_getlabel(N, NULL), "in")!=0) {
@@ -192,8 +193,8 @@ void n_foreach(nsp_state *N)
 
 	n_expect(N, __FN__, OP_PCPAREN);
 	bs=++N->readptr;
-	if (*N->readptr==OP_POBRACE) {
-		N->readptr++;
+	if (n_peekop(N)==OP_POBRACE) {
+		N->readptr=n_seekop(N, N->readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single=0;
 	} else {
@@ -240,14 +241,15 @@ void n_switch(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	N->readptr++;
+	N->readptr=n_seekop(N, N->readptr, 0);
+//	N->readptr++;
 	nc_memset((void *)&cobj, 0, sizeof(obj_t));
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	nsp_linkval(N, &tobj, nsp_eval(N, (char *)N->readptr));
 	n_expect(N, __FN__, OP_PCPAREN);
 	N->readptr++;
 	n_expect(N, __FN__, OP_POBRACE);
-	bs=++N->readptr;
+	bs=N->readptr=n_seekop(N, N->readptr, 0);
 	n_skipto(N, __FN__, OP_PCBRACE);
 	be=++N->readptr;
 	N->readptr=bs;
@@ -282,7 +284,7 @@ void n_switch(nsp_state *N)
 			}
 			if (!match) {
 				while (*N->readptr!=OP_KCASE && *N->readptr!=OP_KDEFAULT && *N->readptr!=OP_PCBRACE) {
-					N->readptr=n_seekop(N, N->readptr, 1, 1);
+					N->readptr=n_seekop(N, N->readptr, 1);
 				}
 				continue;
 			}
@@ -332,8 +334,8 @@ void n_do(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	bs=N->readptr;
-	if (*N->readptr==OP_POBRACE) {
-		N->readptr++;
+	if (n_peekop(N)==OP_POBRACE) {
+		N->readptr=n_seekop(N, N->readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		N->readptr++;
 		single=0;
@@ -354,7 +356,8 @@ void n_do(nsp_state *N)
 		n_expect(N, __FN__, OP_KWHILE);
 		N->readptr++;
 		n_expect(N, __FN__, OP_POPAREN);
-		N->readptr++;
+		N->readptr=n_seekop(N, N->readptr, 0);
+//		N->readptr++;
 		argcomp=N->readptr;
 		cobj=nsp_eval(N, (char *)argcomp);
 		n_expect(N, __FN__, OP_PCPAREN);
@@ -384,11 +387,12 @@ void n_while(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	argcomp=++N->readptr;
+	N->readptr=n_seekop(N, N->readptr, 0);
+	argcomp=N->readptr;
 	n_skipto(N, __FN__, OP_PCPAREN);
 	bs=++N->readptr;
-	if (*N->readptr==OP_POBRACE) {
-		N->readptr++;
+	if (n_peekop(N)==OP_POBRACE) {
+		N->readptr=n_seekop(N, N->readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		N->readptr++;
 		single=0;
@@ -403,12 +407,6 @@ void n_while(nsp_state *N)
 		n_expect(N, __FN__, OP_PCPAREN);
 		N->readptr++;
 		if (nsp_tonum(N, cobj)==0) break;
-#if 0
-#if !defined(_MSC_VER)
-#warning "nsp_unlinkval(N, &N->r);"
-#endif
-nsp_unlinkval(N, &N->r);
-#endif
 		N->readptr=bs;
 		N->single=single;
 		nsp_exec(N, (char *)N->readptr);
@@ -435,8 +433,8 @@ void n_try(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	bs=N->readptr;
-	if (*N->readptr==OP_POBRACE) {
-		N->readptr++;
+	if (n_peekop(N)==OP_POBRACE) {
+		N->readptr=n_seekop(N, N->readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single=0;
 	} else {
@@ -457,16 +455,17 @@ void n_try(nsp_state *N)
 	n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
 	N->savjmp=savjmp;
 	N->readptr=be;
-	if (*N->readptr==OP_KCATCH) {
+	if (n_peekop(N)==OP_KCATCH) {
 		++N->readptr;
 		n_expect(N, __FN__, OP_POPAREN);
-		++N->readptr;
+		N->readptr=n_seekop(N, N->readptr, 0);
+//		++N->readptr;
 		n_expect(N, __FN__, OP_LABEL);
 		n_getlabel(N, exnamebuf);
 		n_expect(N, __FN__, OP_PCPAREN);
 		bs=++N->readptr;
-		if (*N->readptr==OP_POBRACE) {
-			N->readptr++;
+		if (n_peekop(N)==OP_POBRACE) {
+			N->readptr=n_seekop(N, N->readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single=0;
 		} else {
@@ -496,10 +495,10 @@ void n_try(nsp_state *N)
 		}
 		N->readptr=be;
 	}
-	if (*N->readptr==OP_KFINALLY) {
+	if (n_peekop(N)==OP_KFINALLY) {
 		bs=++N->readptr;
-		if (*N->readptr==OP_POBRACE) {
-			N->readptr++;
+		if (n_peekop(N)==OP_POBRACE) {
+			N->readptr=n_seekop(N, N->readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single=0;
 		} else {

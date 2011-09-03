@@ -260,11 +260,12 @@ static void pop3_local(CONN *conn)
 {
 	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 #ifdef WIN32
-	struct	direct *dentry;
+	struct  _finddata_t dentry;
+	long handle;
 #else
-	struct	dirent *dentry;
+	struct dirent *dentry;
+	DIR *handle;
 #endif
-	DIR  *handle;
 	struct stat sb;
 	MDIR mdir;
 	char line[128];
@@ -288,13 +289,24 @@ static void pop3_local(CONN *conn)
 			return;
 		}
 	}
+#ifdef WIN32
+	snprintf(dirname, sizeof(dirname)-1, "%s/domains/%04d/mailspool/%s/*.*", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
+#endif
 	if ((mdir.msg=calloc(mboxalloc, sizeof(MDIRENT *)))==NULL) return;
+
+#ifdef WIN32
+	if ((handle=_findfirst(dirname, &dentry))<0) return;
+	do {
+		char *name=dentry.name;
+#else
 	handle=opendir(dirname);
 	while ((dentry=readdir(handle))!=NULL) {
-		if (strcmp(".", dentry->d_name)==0) continue;
-		if (strcmp("..", dentry->d_name)==0) continue;
+		char *name=dentry->d_name;
+#endif
+		if (strcmp(".", name)==0) continue;
+		if (strcmp("..", name)==0) continue;
 		memset(tmpname, 0, sizeof(tmpname));
-		snprintf(tmpname, sizeof(tmpname)-1, "%s/%s", dirname, dentry->d_name);
+		snprintf(tmpname, sizeof(tmpname)-1, "%s/%s", dirname, name);
 		fixslashes(tmpname);
 		if (stat(tmpname, &sb)!=0) continue;
 		if (sb.st_mode&S_IFDIR) continue;
@@ -309,10 +321,17 @@ static void pop3_local(CONN *conn)
 		memset(mdir.msg[mdir.mboxtotal]->filename, 0, sizeof(mdir.msg[mdir.mboxtotal]->filename));
 		snprintf(mdir.msg[mdir.mboxtotal]->filename, sizeof(mdir.msg[mdir.mboxtotal]->filename)-1, "%s", tmpname);
 		memset(mdir.msg[mdir.mboxtotal]->uidl, 0, sizeof(mdir.msg[mdir.mboxtotal]->uidl));
-		snprintf(mdir.msg[mdir.mboxtotal]->uidl, sizeof(mdir.msg[mdir.mboxtotal]->uidl)-1, "%s", dentry->d_name);
+		snprintf(mdir.msg[mdir.mboxtotal]->uidl, sizeof(mdir.msg[mdir.mboxtotal]->uidl)-1, "%s", name);
 		mdir.mboxtotal++;
+#ifdef WIN32
+	} while (_findnext(handle, &dentry)==0);
+	_findclose(handle);
+#else
 	}
 	closedir(handle);
+#endif
+
+
 	mdir.mboxcount=mdir.mboxtotal;
 	mdir.lastmsg=0;
 	do {

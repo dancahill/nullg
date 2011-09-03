@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2011 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ struct timezone { int tz_minuteswest; int tz_dsttime; };
 #endif
 #if defined(_MSC_VER)
 struct timezone { int tz_minuteswest; int tz_dsttime; };
-#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable:4996)
 #define WIN32_LEAN_AND_MEAN
 /* always include winsock2 before windows */
 #include <winsock2.h>
@@ -42,6 +42,20 @@ struct timezone { int tz_minuteswest; int tz_dsttime; };
 #include <sys/time.h>
 #endif
 #include <setjmp.h>
+
+/* need to add size sanity here */
+#if defined(__TURBOC__)
+typedef signed long int   int32;
+typedef unsigned long int uint32;
+#elif defined(_LP64)
+typedef signed int        int32;
+typedef unsigned int      uint32;
+#else
+typedef signed int        int32;
+typedef unsigned int      uint32;
+#endif
+typedef signed char       int8;
+typedef unsigned char     uint8;
 
 #define MAX_OBJNAMELEN  64
 #define MAX_OUTBUFLEN   4096
@@ -101,7 +115,7 @@ typedef struct nsp_valrec {
 	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
 	unsigned short refs; /* number of references to this node */
 	unsigned long  size; /* storage size of string, nfunc or cdata */
-	obj_t *ztable;        /* 'z' table for hierarchical lookups */
+	obj_t *ztable;       /* 'z' table for hierarchical lookups */
 	union {
 		num_t  num;
 		char  *str;
@@ -114,7 +128,8 @@ typedef struct nsp_objrec {
 	obj_t *prev;
 	obj_t *next;
 	val_t *val;
-	unsigned long hash;
+	uint32 hash;
+	signed long nval;
 	char name[MAX_OBJNAMELEN+1];
 } nsp_objrec;
 typedef struct nsp_state {
@@ -144,6 +159,7 @@ typedef struct nsp_state {
 	char *func;
 	char *tracefn;
 	/* debug info */
+	long int line_num;
 	long int allocs;
 	long int allocmem;
 	long int frees;
@@ -155,6 +171,7 @@ typedef struct nsp_state {
 #ifndef NSP_NOFUNCTIONS
 /* exec */
 nsp_state *nsp_newstate   (void);
+void       nsp_freestate  (nsp_state *N);
 nsp_state *nsp_endstate   (nsp_state *N);
 obj_t     *nsp_exec       (nsp_state *N, const char *string);
 int        nsp_execfile   (nsp_state *N, char *file);

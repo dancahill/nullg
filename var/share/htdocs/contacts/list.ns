@@ -7,6 +7,9 @@ function search_contacts() {
 
 	print("<CENTER>\r\n");
 	global Q=ldir.getlist("person", 0);
+//print("</CENTER><PRE>",serialize(Q),"</PRE>");
+
+
 //	ldir_sortlist(N, qobj1, "sn", "_data", 1);
 	print("ldir.sortlist(Q, \"sn\", \"_data\", 1); is broken");
 //	ldir.sortlist(Q, "sn", "_data", 1);
@@ -112,18 +115,21 @@ function search_contacts() {
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Work Number&nbsp;</TH>",
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid' COLSPAN=2>&nbsp;E-Mail&nbsp;</TH></TR>\r\n"
 	);
-	for (i=offset;(i<Q._tuples)&&(i<offset+maxlist);i++) {
-		id=tonumber(Q['_rows'][i]['id']);
-		sn=Q['_rows'][i]['_data']['sn'];
-		gn=Q['_rows'][i]['_data']['gn'];
+//	for (i=offset;(i<Q._tuples)&&(i<offset+maxlist);i++) {
+	i=0;
+	foreach (rec in Q['_rows']) {
+//print("</CENTER><PRE>",serialize(rec),"</PRE>");
+		id=tonumber(rec['contactid']);
+		sn=rec['surname'];
+		gn=rec['givenname'];
 		print("<TR CLASS=\"FIELDVAL\">");
 		print("<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='/contacts/view?id="+id+"'\">");
-		print("<A HREF=/contacts/view?id="+id+">",str2html(sn));
+		print("<A HREF=\"/contacts/view?id="+id+"\">",str2html(sn));
 		if ((sizeof(sn)>0)&&(sizeof(gn)>0)) print(", "); else if (sizeof(sn)==0&&sizeof(gn)==0) print("&nbsp;");
 		print(str2html(gn),"</A>&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i]['_data']['organization']),"&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i]['_data']['worktelephonenumber']),"&nbsp;</TD>");
-		addr=Q['_rows'][i]['_data']['mail'];
+		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(rec['organization']),"&nbsp;</TD>");
+		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(rec['worknumber']),"&nbsp;</TD>");
+		addr=rec['email'];
 		if (sizeof(addr)==0) {
 			print("<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		} else if (maildefault==0) {
@@ -141,7 +147,7 @@ function search_contacts() {
 		}
 		print("<TD NOWRAP STYLE='padding:0px; border-style:solid'>");
 		print("<INPUT TYPE=hidden NAME=addr",i-offset," VALUE=\"",addr,"\">");
-		print("<SELECT NAME=option",i-offset," onchange=MailUpdate(); STYLE='font-size:11px; width:44px'>");
+		print("<SELECT NAME=option",i-offset," onchange=\"MailUpdate();\" STYLE='font-size:11px; width:44px'>");
 		print("<OPTION VALUE=''></OPTION>");
 		if (string.str(addr, '@')==true) {
 			print("<OPTION VALUE='TO'>TO\n");
@@ -149,6 +155,8 @@ function search_contacts() {
 			print("<OPTION VALUE='BCC'>BCC\n");
 		}
 		print("</SELECT></TD></TR>\r\n");
+		lastrec=rec;
+		i++;
 	}
 	print("</TABLE>\r\n");
 	print("</FORM>\r\n");
@@ -157,25 +165,26 @@ function search_contacts() {
 	print("<TD ALIGN=CENTER NOWRAP>");
 	if (Q._tuples>maxlist) {
 		if (offset>0) {
-			print("[<A HREF=/search/contacts.ns?column=");
+			print("[<A HREF=\"/search/contacts.ns?column=");
 //			printhex(conn, "%s", column);
 			print("&string=");
 //			printhex(conn, "%s", string);
-			print("&offset=",offset-maxlist,">Previous Page</A>]");
+			print("&offset=",offset-maxlist,"\">Previous Page</A>]");
 		} else {
 			print("[Previous Page]");
 		}
 		if (offset+maxlist<Q._tuples) {
-			print("[<A HREF=/search/contacts.ns?column=");
+			print("[<A HREF=\"/search/contacts.ns?column=");
 //			printhex(conn, "%s", column);
 			print("&string=");
 //			printhex(conn, "%s", string);
-			print("&offset=",offset+maxlist,">Next Page</A>]");
+			print("&offset=",offset+maxlist,"\">Next Page</A>]");
 		} else {
 			print("[Next Page]");
 		}
 	}
 	print("</TD>\r\n<TD ALIGN=RIGHT NOWRAP><A HREF=\"mailto:list\" onClick=\"MailUpdate()\">Send E-Mail</A></TD>\r\n</TR>");
+	//print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(lastrec),"</PRE></TD></TR>");
 	print("</TABLE>\r\n");
 	print(
 		"</CENTER>\r\n",

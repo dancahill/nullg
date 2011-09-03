@@ -134,8 +134,9 @@ int sanity_checkdirs()
 	if (sanity_dircheck("%s/mqueue", nsp_getstr(proc.N, tobj, "var_spool_path"))!=0) exit(-2);
 	if (sanity_dircheck("%s/mqinfo", nsp_getstr(proc.N, tobj, "var_spool_path"))!=0) exit(-2);
 	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_tmp_path"))!=0) exit(-2);
+return 0;
 	if (sql_query(proc.N, &qobj, "SELECT id, name FROM nullsd_entries WHERE class = 'organization'")<0) {
-		log_error(proc.N, "core", __FILE__, __LINE__, 0, "Could not read retrieve domain list");
+		log_error(proc.N, "core", __FILE__, __LINE__, 0, "Could not retrieve domain list");
 		exit(-1);
 	}
 	if (sql_numtuples(proc.N, &qobj)<1) {

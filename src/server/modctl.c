@@ -119,7 +119,6 @@ static int regfunctions()
 	return 0;
 }
 
-
 static NSP_FUNCTION(libnsp_dl_loadlib)
 {
 #define __FN__ __FILE__ ":libnsp_dl_loadlib()"
@@ -134,71 +133,40 @@ static NSP_FUNCTION(libnsp_dl_loadlib)
 	char namebuf[512];
 
 	if (!nsp_isstr(cobj1)||cobj1->val->size<1) {
-		nsp_setnum(N, &N->r, "", -1);
+		nsp_setbool(N, &N->r, "", 0);
 		return 0;
 	}
 	tobj=nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
 	if (!nsp_istable(tobj)) {
-		log_error(proc.N, "core", __FILE__, __LINE__, 1, "dl.path not found");
-		return -1;
+		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "dl.path not found", -1);
+		nsp_setbool(N, &N->r, "", 0);
+		return 0;
 	}
 	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
 		if (!nsp_isstr(cobj)) continue;
 		memset(namebuf, 0, sizeof(namebuf));
 		snprintf(namebuf, sizeof(namebuf)-1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, LIBEXT);
+		lib_error();
 		if ((l=lib_open(namebuf))!=NULL) {
+			lib_error();
 			if ((cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init"))!=NULL) {
-				nsp_setnum(N, &N->r, "", cfunc(N));
+				cfunc(N);
+				nsp_setbool(N, &N->r, "", 1);
 				return 0;
 			} else {
-				nsp_setstr(N, &N->r, "", lib_error(), -1);
+				nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
+				nsp_setbool(N, &N->r, "", 0);
 				lib_close(l);
 				return 0;
 			}
 		}
 	}
-	log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
-	nsp_setnum(N, &N->r, "", -1);
+	//log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
+	nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
+	nsp_setbool(N, &N->r, "", 0);
 	return 0;
 #undef __FN__
 }
-/*
-static NSP_FUNCTION(libnsp_dl_loadlib)
-{
-//	CONN *conn=get_conn();
-	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
-#ifdef WIN32
-	HINSTANCE l;
-#else
-	void *l;
-#endif
-	NSP_CFUNC cfunc;
-	int rc=0;
-
-	if ((cobj1->val->type==NT_STRING)&&(cobj1->val->size>0)) {
-		lib_error();
-		l=lib_open(cobj1->val->d.str);
-		if (l==NULL) {
-			log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
-			rc=-1;
-		} else {
-			lib_error();
-			cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init");
-			if (cfunc==NULL) {
-				log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't find entry point for lib");
-				if (l!=NULL) lib_close(l);
-				rc=-1;
-			} else {
-				rc=cfunc(N);
-			}
-		}
-	} else {
-		rc=-1;
-	}
-	nsp_setnum(N, &N->r, "", rc);
-	return 0;
-}
-*/
 
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x)
@@ -206,6 +174,7 @@ unsigned _stdcall cronloop(void *x)
 void *cronloop(void *x)
 #endif
 {
+	char libbuf[80];
 	nsp_state *N;
 	obj_t *tobj, *tobj2;
 	time_t oldt, newt;
@@ -216,10 +185,6 @@ void *cronloop(void *x)
 	for (;;) {
 		newt=(time(NULL)/60)*60;
 		if (newt>oldt) {
-#ifdef WIN32
-			char libbuf[80];
-#endif
-
 			oldt=newt;
 			tobj=nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
 			if (nsp_typeof(tobj)!=NT_STRING || tobj->val->size<1) {
@@ -230,25 +195,54 @@ void *cronloop(void *x)
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nsp_newstate() failed");
 				goto endrun;
 			}
+#ifdef WIN32
+/*
+			nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
+			GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
+			GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
+*/
+			GetWindowsDirectory(libbuf, sizeof(libbuf));
+			_snprintf(libbuf+strlen(libbuf), sizeof(libbuf)-strlen(libbuf)-1, "\\NSP");
+#else
+			snprintf(libbuf, sizeof(libbuf)-1, "/usr/lib/nsp");
+#endif
 			tobj2=nsp_settable(N, &N->g, "dl");
 			tobj2->val->attr|=NST_HIDDEN;
 			nsp_setcfunc(N, tobj2, "loadlib", (NSP_CFUNC)libnsp_dl_loadlib);
 			tobj2=nsp_settable(N, tobj2, "path");
-#ifdef WIN32
-//			nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
-//			GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
-//			GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
-			GetWindowsDirectory(libbuf, sizeof(libbuf));
-			_snprintf(libbuf+strlen(libbuf), sizeof(libbuf)-strlen(libbuf)-1, "\\NSP");
 			nsp_setstr(N, tobj2, "0", libbuf, -1);
-#else
-			nsp_setstr(N, tobj2, "0", "/usr/lib/nsp", -1);
-#endif
+
+//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
 			nsp_execfile(N, tobj->val->d.str);
+//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
 			if (N->err) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
 			}
+/*
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d %d", __LINE__, N->g.val->refs);
+	nsp_freetable(N, &N->g);
+//	N->g.val->refs--;
+//	nsp_unlinkval(N, nsp_getobj(N, &N->g, "_GLOBALS"));
+//	n_freeval(N, &N->g);
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+//	nsp_freestate(N);
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+	nsp_freetable(N, &N->l);
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+	n_freeval(N, &N->r);
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+	/ * WHY THE F?*# IS IT THAT THIS IS NOT PORTABLE C / C++, * /
+	if (N->g.val) n_free(N, (void *)&N->g.val, sizeof(val_t));
+	/ * AND THIS IS? * /
+log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+	if (N->g.val) { void *x=N->g.val; n_free(N, &x, sizeof(val_t)); }
+	if (N->l.val) n_free(N, (void *)&N->l.val, sizeof(val_t));
+	if (N->r.val) n_free(N, (void *)&N->r.val, sizeof(val_t));
+*/
+
 			N=nsp_endstate(N);
+//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
 		}
 endrun:
 		sleep(1);
@@ -330,7 +324,12 @@ int module_load(char *modname)
 	snprintf(libname, sizeof(libname)-1, "%s/core/%s.%s", nsp_getstr(proc.N, confobj, "lib_path"), modname, ext);
 	fixslashes(libname);
 	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name)-1, "%s", modname);
-	if ((hinstLib=lib_open(libname))==NULL) goto fail;
+	if ((hinstLib=lib_open(libname))==NULL) {
+#ifdef WIN32
+		printf("%s(%d)(%d) [%s]\r\n", __FILE__, __LINE__, GetLastError(), libname);
+#endif
+		goto fail;
+	}
 	if ((srv_init=(void *)lib_sym(hinstLib, "mod_init"))==NULL) goto fail;
 	if ((srv_exec=(void *)lib_sym(hinstLib, "mod_exec"))==NULL) goto fail;
 	if ((srv_exit=(void *)lib_sym(hinstLib, "mod_exit"))==NULL) goto fail;

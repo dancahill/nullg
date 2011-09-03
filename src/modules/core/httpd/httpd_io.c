@@ -101,8 +101,8 @@ err:
 void flushbuffer(CONN *conn)
 {
 	char *pTemp=conn->dat->replybuf;
-	unsigned long dcount;
-	unsigned long str_len;
+	signed long str_len;
+	signed long dcount;
 
 	flushheader(conn);
 	str_len=conn->dat->replybuflen;
@@ -174,6 +174,7 @@ int filesend(CONN *conn, char *file)
 	int blocksize;
 	char timebuf[100];
 	char fileblock[8192];
+	int bs;
 
 	decodeurl(file);
 	fixslashes(file);
@@ -207,8 +208,9 @@ int filesend(CONN *conn, char *file)
 		blocksize=read(fp, fileblock, blocksize);
 		if (blocksize<1) break;
 		bytesleft-=blocksize;
-		if (tcp_send(&conn->socket, fileblock, blocksize, 0)<0) break;
-		conn->socket.atime=time(NULL);
+		bs=tcp_send(&conn->socket, fileblock, blocksize, 0);
+		if (bs<0) break;
+		if (bs>0) conn->socket.atime=time(NULL);
 	}
 	close(fp);
 //fileend:
