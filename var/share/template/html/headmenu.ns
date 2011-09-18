@@ -126,6 +126,10 @@ if (_USER!=null) {
 //		print("<A CLASS='TBAR' HREF=/admin/activitylist>%s</A>", lang_gets(conn, "httpd", "menu_adm_logs"));
 //		print("<A CLASS='TBAR' HREF=/admin/syscheck>%s</A>", lang_gets(conn, "httpd", "menu_adm_check"));
 //		print("<A CLASS='TBAR' HREF=/admin/userlist>%s</A>", lang_gets(conn, "httpd", "menu_adm_users"));
+
+		if (cnt++) print("&nbsp;&middot;&nbsp;");
+		printf("<A CLASS='TBAR' HREF=/admin/users/list>%s</A>", "USERS");
+
 //		print("<A CLASS='TBAR' HREF=/admin/grouplist>%s</A>", lang_gets(conn, "httpd", "menu_adm_groups"));
 //		print("<A CLASS='TBAR' HREF=/admin/zonelist>%s</A>", lang_gets(conn, "httpd", "menu_adm_zones"));
 	} else if (menu=='bookmarks') {

@@ -416,6 +416,7 @@ static void smtp_turn(CONN *conn)
 void smtp_dorequest(CONN *conn)
 {
 	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
+	obj_t *hostnameobj;
 	MAILCONN mconn;
 	char line[128];
 	char *ptemp;
@@ -424,10 +425,15 @@ void smtp_dorequest(CONN *conn)
 	memset((char *)&mconn, 0, sizeof(mconn));
 	mconn.sender_can_relay=allow_relay(conn);
 	log_access(proc->N, MODSHORTNAME, "%s:%d - NEW CONNECTION", conn->dat->RemoteAddr, conn->dat->RemotePort);
+
+	hostnameobj=nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "smtpd"), "host_name");
+	if (nsp_isnull(hostnameobj)) {
+		hostnameobj=nsp_getobj(proc->N, confobj, "host_name");
+	}
 /*
 	tcp_fprintf(&conn->socket, "220 %s - %s SMTPd%s\r\n", proc->config.hostname, SERVER_NAME, mconn.sender_can_relay?" - relaying allowed":" - relaying denied");
 */
-	tcp_fprintf(&conn->socket, "220 %s - %s SMTPd\r\n", nsp_getstr(proc->N, confobj, "host_name"), SERVER_NAME);
+	tcp_fprintf(&conn->socket, "220 %s - %s SMTPd\r\n", nsp_tostr(proc->N, hostnameobj), SERVER_NAME);
 	do {
 		memset(line, 0, sizeof(line));
 		if (tcp_fgets(line, sizeof(line)-1, &conn->socket)<0) return;

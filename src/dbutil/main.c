@@ -40,7 +40,12 @@
 #include "nullsd/defines.h"
 #include "nsp/nsp.h"
 #include "nsd.h"
-#include "schema.h"
+//#include "schema.h"
+#include "nullsd/schema/data.h"
+#include "nullsd/schema/mysql.h"
+#include "nullsd/schema/odbc.h"
+#include "nullsd/schema/pgsql.h"
+#include "nullsd/schema/sqlite.h"
 
 #define SQLBUFSIZE 32768
 
@@ -134,16 +139,89 @@ int pgsql_sequence_sync(nsp_state *N)
 
 int table_check(nsp_state *N)
 {
+/*
 	int i;
 
 	for (i=0;sqldata_new[i]!=NULL;i++) {
 		if (_sql_update(N, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
 	}
+*/
+	obj_t *qobj=NULL;
+//	SQLRES sqr;
+	int i;
+	int x;
+
+	/* CHECK gw_dbinfo TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_dbinfo")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+		for (i=0;sqldata_new[i]!=NULL;i++) {
+			if (_sql_update(N, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
+		}
+	}
+	/* CHECK gw_calls_actions TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_calls_actions")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+		for (i=0;sqldata_callactions[i]!=NULL;i++) {
+			if (_sql_update(N, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
+		}
+	}
+	/* CHECK gw_domains TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_domains")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+		for (i=0;sqldata_domains[i]!=NULL;i++) {
+			if (_sql_update(N, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
+		}
+	}
+	/* CHECK gw_eventclosings TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_closings")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+		for (i=0;sqldata_eventclosings[i]!=NULL;i++) {
+			if (_sql_update(N, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
+		}
+	}
+	/* CHECK gw_eventtypes TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_types")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+		for (i=0;sqldata_eventtypes[i]!=NULL;i++) {
+			if (_sql_update(N, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
+		}
+	}
+	/* Assign all orphaned records to domain 1 */
+	_sql_updatef(N, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
+	_sql_updatef(N, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_bookmarks_folders SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_email_accounts SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_email_folders SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_email_headers SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_finance_invoices SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
+	_sql_updatef(N, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
+	/* Update the db version */
+	_sql_updatef(N, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
+	return 0;
+
 	return 0;
 }
 
 int dump_db_ldif(nsp_state *N, char *filename)
 {
+/*
 	obj_t *qobj1=NULL;
 	obj_t *qobj2=NULL;
 	int i;
@@ -181,6 +259,7 @@ int dump_db_ldif(nsp_state *N, char *filename)
 	fclose(fp);
 	printf("done.\r\n");
 	_sql_disconnect(N);
+*/
 	return -1;
 }
 
@@ -219,6 +298,7 @@ int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 
 int dump_db_sql(nsp_state *N, char *filename)
 {
+/*
 	obj_t *qobj1=NULL;
 	int i, j;
 	FILE *fp;
@@ -252,6 +332,63 @@ int dump_db_sql(nsp_state *N, char *filename)
 	}
 	_sql_freeresult(N, &qobj1);
 	dump_table(N, fp, "nullsd_sessions", "id");
+	fclose(fp);
+	printf("done.\r\n");
+	_sql_disconnect(N);
+	return -1;
+*/
+	FILE *fp;
+
+	printf("Dumping %s database to %s...", sql_type, filename);
+#ifndef WIN32
+	umask(077);
+#endif
+	fp=fopen(filename, "wa");
+	if (fp==NULL) {
+		printf("\r\nCould not create output file.\r\n");
+		return -1;
+	}
+	dump_table(N, fp, "gw_dbinfo",                 "dbversion");
+	dump_table(N, fp, "gw_users",                  "userid");
+	dump_table(N, fp, "gw_users_sessions",         "sessionid");
+	dump_table(N, fp, "gw_activity",               "activityid");
+	dump_table(N, fp, "gw_bookmarks",              "bookmarkid");
+	dump_table(N, fp, "gw_bookmarks_folders",      "folderid");
+	dump_table(N, fp, "gw_calls",                  "callid");
+	dump_table(N, fp, "gw_calls_actions",          "actionid");
+	dump_table(N, fp, "gw_contacts",               "contactid");
+	dump_table(N, fp, "gw_contacts_folders",       "folderid");
+	dump_table(N, fp, "gw_contacts_sessions",      "sessionid");
+	dump_table(N, fp, "gw_domains",                "domainid");
+	dump_table(N, fp, "gw_domains_aliases",        "domainaliasid");
+	dump_table(N, fp, "gw_email_accounts",         "mailaccountid");
+	dump_table(N, fp, "gw_email_filters",          "mailfilterid");
+	dump_table(N, fp, "gw_email_folders",          "mailfolderid");
+	dump_table(N, fp, "gw_email_headers",          "mailheaderid");
+	dump_table(N, fp, "gw_events",                 "eventid");
+	dump_table(N, fp, "gw_events_closings",        "eventclosingid");
+	dump_table(N, fp, "gw_events_types",           "eventtypeid");
+	dump_table(N, fp, "gw_files",                  "fileid");
+	dump_table(N, fp, "gw_finance_accounts",       "accountid");
+	dump_table(N, fp, "gw_finance_inventory",      "inventoryid");
+	dump_table(N, fp, "gw_finance_invoices",       "invoiceid");
+	dump_table(N, fp, "gw_finance_invoices_items", "invoiceitemid");
+	dump_table(N, fp, "gw_finance_journal",        "entryid");
+	dump_table(N, fp, "gw_forums",                 "forumid");
+	dump_table(N, fp, "gw_forums_groups",          "forumgroupid");
+	dump_table(N, fp, "gw_forums_posts",           "messageid");
+	dump_table(N, fp, "gw_groups",                 "groupid");
+	dump_table(N, fp, "gw_groups_members",         "groupmemberid");
+	dump_table(N, fp, "gw_messages",               "messageid");
+	dump_table(N, fp, "gw_notes",                  "noteid");
+	dump_table(N, fp, "gw_projects",               "projectid");
+	dump_table(N, fp, "gw_queries",                "queryid");
+	dump_table(N, fp, "gw_smtp_relayrules",        "relayruleid");
+	dump_table(N, fp, "gw_tasks",                  "taskid");
+	dump_table(N, fp, "gw_weblog_comments",        "commentid");
+	dump_table(N, fp, "gw_weblog_entries",         "entryid");
+	dump_table(N, fp, "gw_weblog_groups",          "groupid");
+	dump_table(N, fp, "gw_zones",                  "zoneid");
 	fclose(fp);
 	printf("done.\r\n");
 	_sql_disconnect(N);

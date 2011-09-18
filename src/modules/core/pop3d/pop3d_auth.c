@@ -50,7 +50,7 @@ int auth_login(CONN *conn, char *username, char *domain, char *password, int mbo
 	if (domainid<0) domainid=1;
 	conn->dat->did=domainid;
 
-	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE username = '%s' AND domainid = %d", username, domainid)<0) {
+	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE UPPER(username) = UPPER('%s') AND domainid = %d", username, domainid)<0) {
 		return -1;
 	}
 	if (sql_numtuples(proc->N, &qptr)!=1) {
@@ -63,10 +63,12 @@ int auth_login(CONN *conn, char *username, char *domain, char *password, int mbo
 	}
 	conn->dat->uid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "userid"));
 	conn->dat->gid = atoi(sql_getvaluebyname(proc->N, &qptr, 0, "groupid"));
+	if (mbox==0) {
+		snprintf(conn->dat->username, sizeof(conn->dat->username)-1, "%s", sql_getvaluebyname(proc->N, &qptr, 0, "username"));
+		conn->dat->mailcurrent=0;
+	}
 	sql_freeresult(proc->N, &qptr);
 	if (mbox==0) {
-		snprintf(conn->dat->username, sizeof(conn->dat->username)-1, "%s", username);
-		conn->dat->mailcurrent=0;
 		return 0;
 	}
 	if (sql_queryf(proc->N, &qptr, "SELECT mailaccountid, accountname FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d AND obj_did = %d ORDER BY mailaccountid ASC", mbox, conn->dat->uid, conn->dat->did)<0) {

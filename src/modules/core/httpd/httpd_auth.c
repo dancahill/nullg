@@ -163,12 +163,12 @@ blah:
 	if (cobj->val->type==NT_TABLE) {
 		cobj=nsp_getiobj(conn->N, cobj, 0);
 		if (cobj->val->type==NT_TABLE) {
-			cobj=nsp_getobj(conn->N, cobj, "_data");
-			if (cobj->val->type==NT_TABLE) {
+//			cobj=nsp_getobj(conn->N, cobj, "_data");
+//			if (cobj->val->type==NT_TABLE) {
 				tobj=nsp_settable(conn->N, &conn->N->g, "_USER");
 				tobj->val->d.table.f=cobj->val->d.table.f;
 				cobj->val->d.table.f=NULL;
-			}
+//			}
 		}
 	}
 	ldir_freeresult(&qobj);

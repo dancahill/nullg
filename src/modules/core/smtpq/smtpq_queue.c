@@ -29,13 +29,14 @@ void *smtp_spool(void *x)
 {
 	obj_t *confobj=nsp_settable(proc->N, &proc->N->g, "CONFIG");
 #ifdef WIN32
-	struct	direct *dentry;
+	struct  _finddata_t dentry;
+	long handle;
 #else
-	struct	dirent *dentry;
+	struct dirent *dentry;
+	DIR *handle;
 #endif
 	struct stat sb;
 	char *ptemp1;
-	DIR  *handle;
 	FILE *fp=NULL;
 	char dirname1[256];
 	char dirname2[256];
@@ -57,14 +58,27 @@ void *smtp_spool(void *x)
 	fixslashes(dirname1);
 	fixslashes(dirname2);
 	while (1) {
+//		handle=opendir(dirname1);
+//		while ((dentry=readdir(handle))!=NULL) {
+#ifdef WIN32
+		if ((handle=_findfirst(dirname1, &dentry))<0) {
+			sleep(mod_config.smtp_retrydelay);
+			continue;
+			//return;
+		}
+		do {
+			char *name=dentry.name;
+#else
 		handle=opendir(dirname1);
 		while ((dentry=readdir(handle))!=NULL) {
-			if (strcmp(".", dentry->d_name)==0) continue;
-			if (strcmp("..", dentry->d_name)==0) continue;
+			char *name=dentry->d_name;
+#endif
+			if (strcmp(".", name)==0) continue;
+			if (strcmp("..", name)==0) continue;
 			memset(filename1, 0, sizeof(filename1));
 			memset(filename2, 0, sizeof(filename2));
-			snprintf(filename1, sizeof(filename1)-1, "%s/%s", dirname1, dentry->d_name);
-			snprintf(filename2, sizeof(filename2)-1, "%s/%s", dirname2, dentry->d_name);
+			snprintf(filename1, sizeof(filename1)-1, "%s/%s", dirname1, name);
+			snprintf(filename2, sizeof(filename2)-1, "%s/%s", dirname2, name);
 			fixslashes(filename1);
 			fixslashes(filename2);
 			if ((ptemp1=strrchr(filename2, '.'))==NULL) continue;
@@ -106,8 +120,16 @@ void *smtp_spool(void *x)
 				unlink(filename1);
 				unlink(filename2);
 			}
+//		}
+//		closedir(handle);
+#ifdef WIN32
+		} while (_findnext(handle, &dentry)==0);
+		_findclose(handle);
+#else
 		}
 		closedir(handle);
+#endif
+
 		sleep(mod_config.smtp_retrydelay);
 	}
 	return 0;

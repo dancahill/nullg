@@ -64,6 +64,7 @@ void *smtp_spool(void *x);
 typedef struct {
 	char      smtp_interface[128];
 	char      smtp_relayhost[128];
+	char      smtp_hostname[128];
 	short int smtp_port;
 	short int smtp_sslport;
 	short int smtp_maxconn;

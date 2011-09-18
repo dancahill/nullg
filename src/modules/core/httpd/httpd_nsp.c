@@ -197,6 +197,29 @@ static NSP_FUNCTION(htnsp_ldir_getentry)
 	return 0;
 }
 
+
+static NSP_FUNCTION(htnsp_auth_md5pass)
+{
+//	CONN *conn=get_conn();
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	char itoa64[]="./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	char salt[10];
+	char pass[40];
+	int i;
+
+	if (!nsp_isstr(cobj1)||cobj1->val->size<1) {
+		nsp_setbool(N, &N->r, "", 0);
+		return 0;
+	}
+	memset(salt, 0, sizeof(salt));
+	memset(pass, 0, sizeof(pass));
+	srand(time(NULL));
+	for (i=0;i<8;i++) salt[i]=itoa64[(rand()%64)];
+	md5_crypt(pass, cobj1->val->d.str, salt);
+	nsp_setstr(N, &N->r, "", pass, -1);
+	return 0;
+}
+
 static NSP_FUNCTION(htnsp_sqlquery)
 {
 	CONN *conn=get_conn();
@@ -513,6 +536,9 @@ static int htnsp_initenv(CONN *conn)
 	tobj->val->attr|=NST_HIDDEN;
 	nsp_setcfunc(conn->N, tobj,       "loadlib",          (NSP_CFUNC)htnsp_dl_loadlib);
 	tobj2=nsp_settable(conn->N, tobj, "path");
+
+	nsp_setcfunc(conn->N, &conn->N->g, "auth_md5pass",    (NSP_CFUNC)htnsp_auth_md5pass);
+
 #ifdef WIN32
 //	nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
 //	GetSystemWindowsDirectory(libbuf, sizeof(libbuf));

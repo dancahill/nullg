@@ -23,6 +23,8 @@ static void conf_callback(char *var, char *val)
 		strncpy(mod_config.smtp_interface, val, sizeof(mod_config.smtp_interface)-1);
 	} else if (strcmp(var, "relay_host")==0) {
 		strncpy(mod_config.smtp_relayhost, val, sizeof(mod_config.smtp_relayhost)-1);
+	} else if (strcmp(var, "host_name")==0) {
+		strncpy(mod_config.smtp_hostname, val, sizeof(mod_config.smtp_hostname)-1);
 	} else if (strcmp(var, "port")==0) {
 		mod_config.smtp_port=atoi(val);
 	} else if (strcmp(var, "ssl_port")==0) {
