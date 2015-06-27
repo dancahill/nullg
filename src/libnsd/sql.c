@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,64 @@
 */
 #include "libnsd.h"
 
+#ifdef HAVE_FBSQL
+	#ifdef HAVE_FBSQL_FBSQL_H
+	#include "<ibase.h>"
+	#else
+	#include "stubs/fbsql_ibase.h"
+	#endif
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_ATTACH_DATABASE)(ISC_STATUS*, short, const ISC_SCHAR*, isc_db_handle*, short, const ISC_SCHAR*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_ALLOCATE_STATEMENT)(ISC_STATUS *, isc_db_handle *, isc_stmt_handle *);
+	typedef ISC_STATUS ISC_EXPORT_VARARG (*LIBFBSQL_ISC_START_TRANSACTION)(ISC_STATUS*, isc_tr_handle*, short, ...);
+	typedef ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_PREPARE)(ISC_STATUS*, isc_tr_handle*, isc_stmt_handle*, unsigned short, const ISC_SCHAR*, unsigned short, XSQLDA*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_SQL_INFO)(ISC_STATUS*, isc_stmt_handle*, short, const ISC_SCHAR*, short, ISC_SCHAR*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_EXECUTE)(ISC_STATUS*, isc_tr_handle*, isc_stmt_handle*, unsigned short, const XSQLDA*);
+	typedef	ISC_LONG   ISC_EXPORT (*LIBFBSQL_ISC_VAX_INTEGER)(const ISC_SCHAR*, short);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_DESCRIBE)(ISC_STATUS *, isc_stmt_handle *, unsigned short, XSQLDA *);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_COMMIT_TRANSACTION)(ISC_STATUS *, isc_tr_handle *);
+	typedef	ISC_LONG   ISC_EXPORT (*LIBFBSQL_FB_INTERPRET)(ISC_SCHAR*, unsigned int, const ISC_STATUS**);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_FREE_STATEMENT)(ISC_STATUS *, isc_stmt_handle *, unsigned short);
+
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DSQL_FETCH)(ISC_STATUS *, isc_stmt_handle *, unsigned short, const XSQLDA *);
+	typedef	void       ISC_EXPORT (*LIBFBSQL_ISC_DECODE_SQL_TIME)(const ISC_TIME*, void*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_OPEN_BLOB)(ISC_STATUS*, isc_db_handle*, isc_tr_handle*, isc_blob_handle*, ISC_QUAD*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_GET_SEGMENT)(ISC_STATUS *, isc_blob_handle *, unsigned short *, unsigned short, ISC_SCHAR *);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_CLOSE_BLOB)(ISC_STATUS *, isc_blob_handle *);
+	typedef	void       ISC_EXPORT (*LIBFBSQL_ISC_DECODE_TIMESTAMP)(const ISC_TIMESTAMP*, void*);
+	typedef	void       ISC_EXPORT (*LIBFBSQL_ISC_DECODE_SQL_DATE)(const ISC_DATE*, void*);
+	typedef	ISC_STATUS ISC_EXPORT (*LIBFBSQL_ISC_DETACH_DATABASE)(ISC_STATUS *, isc_db_handle *);
+	struct {
+		LIBFBSQL_ISC_ATTACH_DATABASE isc_attach_database;
+		LIBFBSQL_ISC_DSQL_ALLOCATE_STATEMENT isc_dsql_allocate_statement;
+		LIBFBSQL_ISC_START_TRANSACTION isc_start_transaction;
+		LIBFBSQL_ISC_DSQL_PREPARE isc_dsql_prepare;
+		LIBFBSQL_ISC_DSQL_SQL_INFO isc_dsql_sql_info;
+		LIBFBSQL_ISC_DSQL_EXECUTE isc_dsql_execute;
+		LIBFBSQL_ISC_VAX_INTEGER isc_vax_integer;
+		LIBFBSQL_ISC_DSQL_DESCRIBE isc_dsql_describe;
+		LIBFBSQL_ISC_COMMIT_TRANSACTION isc_commit_transaction;
+		LIBFBSQL_FB_INTERPRET fb_interpret;
+		LIBFBSQL_ISC_DSQL_FREE_STATEMENT isc_dsql_free_statement;
+		LIBFBSQL_ISC_DSQL_FETCH isc_dsql_fetch;
+		LIBFBSQL_ISC_DECODE_SQL_TIME isc_decode_sql_time;
+		LIBFBSQL_ISC_OPEN_BLOB isc_open_blob;
+		LIBFBSQL_ISC_GET_SEGMENT isc_get_segment;
+		LIBFBSQL_ISC_CLOSE_BLOB isc_close_blob;
+		LIBFBSQL_ISC_DECODE_TIMESTAMP isc_decode_timestamp;
+		LIBFBSQL_ISC_DECODE_SQL_DATE isc_decode_sql_date;
+		LIBFBSQL_ISC_DETACH_DATABASE isc_detach_database;
+	} libfbsql;
+	static isc_db_handle isc_db;
+	static isc_tr_handle trans;
+	static isc_stmt_handle stmt;
+	static XSQLDA ISC_FAR *sqlda;
+	static long fetch_stat;
+	static short trans_block;
+	static int numfields;
+	static int numtuples;
+	#define    MAXLEN    8192
+	static long buffer[MAXLEN];
+#endif
 #ifdef HAVE_MYSQL
 	#ifdef HAVE_MYSQL_MYSQL_H
 	#include "mysql/mysql.h"
@@ -133,6 +191,592 @@ static HINSTANCE hinstLib=NULL;
 #define LIBEXT "so"
 static void *hinstLib=NULL;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifdef HAVE_FBSQL
+
+#ifndef FB_ALIGN
+
+//#include "align.h"
+#ifdef VMS
+#define FB_ALIGN(n,b)              (n)
+#endif
+
+#ifdef sun
+#ifdef sparc
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+#endif
+
+#ifdef hpux
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+#ifdef ultrix
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+#ifdef sgi
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+#ifdef _AIX
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+ 
+#ifdef __m88k__
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+ 
+#if (defined __osf__ && defined __alpha)
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+#ifdef mpexl
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+#if (defined(_MSC_VER) && defined(WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
+#define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
+#endif
+
+//#ifndef ALIGN
+#ifndef FB_ALIGN
+#define FB_ALIGN(n,b)          ((n+1) & ~1)
+#endif
+
+#endif /* FB_ALIGN */
+
+typedef struct vary {
+    short          vary_length;
+    char           vary_string [1];
+} VARY;
+
+/* Define a format string for printf.  Printing of 64-bit integers
+   is not standard between platforms */
+#ifndef ISC_INT64_FORMAT
+#if (defined(_MSC_VER) && defined(WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
+#define	ISC_INT64_FORMAT	"I64"
+#else
+#define	ISC_INT64_FORMAT	"ll"
+#endif
+#endif
+
+static int fbsqlDLLInit(nsp_state *N)
+{
+	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
+	char *libpath=nsp_getstr(N, confobj, "lib_path");
+	char libname[255];
+
+	if (hinstLib!=NULL) return 0;
+	memset(libname, 0, sizeof(libname));
+	snprintf(libname, sizeof(libname)-1, "%s/libfbclient.%s", libpath, LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=lib_open(libname))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libfbclient.%s", LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib=lib_open(libname))!=NULL) goto found;
+	goto fail;
+found:
+	if ((libfbsql.isc_attach_database=(LIBFBSQL_ISC_ATTACH_DATABASE)lib_sym(hinstLib, "isc_attach_database"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_allocate_statement=(LIBFBSQL_ISC_DSQL_ALLOCATE_STATEMENT)lib_sym(hinstLib, "isc_dsql_allocate_statement"))==NULL) goto fail;
+	if ((libfbsql.isc_start_transaction=(LIBFBSQL_ISC_START_TRANSACTION)lib_sym(hinstLib, "isc_start_transaction"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_prepare=(LIBFBSQL_ISC_DSQL_PREPARE)lib_sym(hinstLib, "isc_dsql_prepare"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_sql_info=(LIBFBSQL_ISC_DSQL_SQL_INFO)lib_sym(hinstLib, "isc_dsql_sql_info"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_execute=(LIBFBSQL_ISC_DSQL_EXECUTE)lib_sym(hinstLib, "isc_dsql_execute"))==NULL) goto fail;
+	if ((libfbsql.isc_vax_integer=(LIBFBSQL_ISC_VAX_INTEGER)lib_sym(hinstLib, "isc_vax_integer"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_describe=(LIBFBSQL_ISC_DSQL_DESCRIBE)lib_sym(hinstLib, "isc_dsql_describe"))==NULL) goto fail;
+	if ((libfbsql.isc_commit_transaction=(LIBFBSQL_ISC_COMMIT_TRANSACTION)lib_sym(hinstLib, "isc_commit_transaction"))==NULL) goto fail;
+	if ((libfbsql.fb_interpret=(LIBFBSQL_FB_INTERPRET)lib_sym(hinstLib, "fb_interpret"))==NULL) goto fail;
+	if ((libfbsql.isc_dsql_free_statement=(LIBFBSQL_ISC_DSQL_FREE_STATEMENT)lib_sym(hinstLib, "isc_dsql_free_statement"))==NULL) goto fail;
+
+	if ((libfbsql.isc_dsql_fetch=(LIBFBSQL_ISC_DSQL_FETCH)lib_sym(hinstLib, "isc_dsql_fetch"))==NULL) goto fail;
+	if ((libfbsql.isc_decode_sql_time=(LIBFBSQL_ISC_DECODE_SQL_TIME)lib_sym(hinstLib, "isc_decode_sql_time"))==NULL) goto fail;
+	if ((libfbsql.isc_open_blob=(LIBFBSQL_ISC_OPEN_BLOB)lib_sym(hinstLib, "isc_open_blob"))==NULL) goto fail;
+	if ((libfbsql.isc_get_segment=(LIBFBSQL_ISC_GET_SEGMENT)lib_sym(hinstLib, "isc_get_segment"))==NULL) goto fail;
+	if ((libfbsql.isc_close_blob=(LIBFBSQL_ISC_CLOSE_BLOB)lib_sym(hinstLib, "isc_close_blob"))==NULL) goto fail;
+	if ((libfbsql.isc_decode_timestamp=(LIBFBSQL_ISC_DECODE_TIMESTAMP)lib_sym(hinstLib, "isc_decode_timestamp"))==NULL) goto fail;
+	if ((libfbsql.isc_decode_sql_date=(LIBFBSQL_ISC_DECODE_SQL_DATE)lib_sym(hinstLib, "isc_decode_sql_date"))==NULL) goto fail;
+	if ((libfbsql.isc_detach_database=(LIBFBSQL_ISC_DETACH_DATABASE)lib_sym(hinstLib, "isc_detach_database"))==NULL) goto fail;
+
+	return 0;
+fail:
+	printf("ERROR: Failed to load %s\r\n", libname);
+	memset((char *)&libfbsql, 0, sizeof(libfbsql));
+	if (hinstLib!=NULL) lib_close(hinstLib);
+	hinstLib=NULL;
+	return -1;
+}
+
+static void print_warning(nsp_state *N, const ISC_STATUS *pvector, const char *__FN__, const char *errstr)
+{
+	char errbuf[1024];
+	int rc;
+	int line=0;
+
+	while ((rc=libfbsql.fb_interpret(errbuf, sizeof(errbuf), &pvector))>0) {
+		log_error(N, "sql", __FILE__, __LINE__, 1, "%s: %s\r\n", line++==0?"Firebird exception":"                  ", errbuf);
+	}
+	return;
+}
+
+static void fbsqlDisconnect(nsp_state *N)
+{
+	if (isc_db) {
+		ISC_STATUS isc_status[20];
+
+		if (libfbsql.isc_detach_database(isc_status, &isc_db)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_detach_database");
+		}
+		if (isc_db!=0) {
+			isc_db=0;
+		}
+	}
+	sql_is_connected=0;
+	return;
+}
+
+static int fbsqlConnect(nsp_state *N)
+{
+	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
+	char *host, *user, *pass, *db;
+	ISC_STATUS isc_status[20];
+	char buf[1024];
+	char buf2[1024];
+	short len=0;
+	long rc;
+
+	if(fbsqlDLLInit(N)!=0) return -1;
+	if (sql_is_connected) return 0;
+	host=nsp_getstr(N, confobj, "sql_hostname");
+	user=nsp_getstr(N, confobj, "sql_username");
+	pass=nsp_getstr(N, confobj, "sql_password");
+	db=nsp_getstr(N, confobj, "sql_dbname");
+	if (strlen(user)&&strlen(pass)) {
+		len=snprintf(buf, sizeof(buf), "%c%c%c%s%c%c%s", isc_dpb_version1, isc_dpb_user_name, (int)strlen(user), user, isc_dpb_password, (int)strlen(pass), pass);
+		snprintf(buf2, sizeof(buf2), "%s:%s", host, db);
+		rc=libfbsql.isc_attach_database(isc_status, 0, buf2, &isc_db, len, buf);
+	} else {
+		snprintf(buf2, sizeof(buf2), "%s:%s", host, db);
+		rc=libfbsql.isc_attach_database(isc_status, 0, buf2, &isc_db, 0, NULL);
+	}
+	if (rc) {
+		log_error(N, "sql", __FILE__, __LINE__, 1, "connection error %s - %s\r\n", db, (char *)isc_status);
+		return -1;
+	}
+
+	sql_is_connected=1;
+	return 0;
+}
+
+static int fbsql_startquery(nsp_state *N, char *sqlquery)
+{
+	ISC_STATUS isc_status[20];
+	XSQLVAR ISC_FAR *var;
+	unsigned short  i;
+	short           length, alignment, type, offset;
+	char            stmt_info[] = { isc_info_sql_stmt_type };
+	char            info_buffer[20];
+	short           l;
+	long            statement_type=0;
+
+	/* Allocate a global statement */
+	if (libfbsql.isc_dsql_allocate_statement(isc_status, &isc_db, &stmt)) {
+		print_warning(N, isc_status, __FUNCTION__, "isc_dsql_allocate_statement");
+		//printf("isc_dsql_allocate_statement\r\n");
+		return 1;
+	}
+
+	/* 
+	 *    Allocate enough space for 20 fields.  
+	 *    If more fields get selected, re-allocate SQLDA later.
+	 */
+	sqlda = (XSQLDA ISC_FAR *) malloc(XSQLDA_LENGTH (20));
+	sqlda->sqln = 20;
+	sqlda->version = 1;
+	if (!trans) {
+		if (libfbsql.isc_start_transaction(isc_status, &trans, 1, &isc_db, 0, NULL)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_start_transaction");
+			return 1;
+		}
+		trans_block=0;
+	}
+	if (libfbsql.isc_dsql_prepare(isc_status, &trans, &stmt, 0, sqlquery, SQL_DIALECT_V6, sqlda)) {
+		print_warning(N, isc_status, __FUNCTION__, "isc_dsql_prepare");
+		return 2;
+	}
+	/* What is the statement type of this statement? 
+	**
+	** stmt_info is a 1 byte info request.  info_buffer is a buffer
+	** large enough to hold the returned info packet
+	** The info_buffer returned contains a isc_info_sql_stmt_type in the first byte, 
+	** two bytes of length, and a statement_type token.
+	*/
+	if (!libfbsql.isc_dsql_sql_info(isc_status, &stmt, sizeof (stmt_info), stmt_info, sizeof (info_buffer), info_buffer)) {
+		l = (short) libfbsql.isc_vax_integer((char ISC_FAR *) info_buffer + 1, 2);
+		statement_type = libfbsql.isc_vax_integer((char ISC_FAR *) info_buffer + 3, l);
+	}
+	/*
+	 *    Execute a non-select statement.
+	 */
+	if (!sqlda->sqld) {
+		if (libfbsql.isc_dsql_execute(isc_status, &trans, &stmt, SQL_DIALECT_V6, NULL)) {
+			printf("isc_dsql_execute [%s]\r\n", sqlquery);
+			print_warning(N, isc_status, __FUNCTION__, "isc_dsql_execute");
+			return 2;
+		}
+		/* Commit DDL statements if that is what sql_info says */
+		if (trans && trans_block==0 && (statement_type == isc_info_sql_stmt_ddl)) {
+			if (libfbsql.isc_commit_transaction(isc_status, &trans)) {
+				print_warning(N, isc_status, __FUNCTION__, "isc_commit_transaction");
+				return 2;
+			}
+		}
+		fetch_stat=100L;
+		return 0;
+	}
+	/*
+	 *    Process select statements.
+	 */
+	numfields = sqlda->sqld;
+	/* Need more room. */
+	if (sqlda->sqln < numfields) {
+		sqlda = (XSQLDA ISC_FAR *) realloc(sqlda, XSQLDA_LENGTH (numfields));
+		sqlda->sqln = numfields;
+		sqlda->version = 1;
+		if (libfbsql.isc_dsql_describe(isc_status, &stmt, SQL_DIALECT_V6, sqlda)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_dsql_describe");
+			return 2;
+		}
+		numfields=sqlda->sqld;
+	}
+	numtuples=0;
+//	cobj=nsp_settable(N, thisobj, "last_query");
+//	nsp_setstr(N, cobj, "_query", sqlquery, -1);
+//	nsp_setnum(N, cobj, "_fields", conn->numfields);
+//	nsp_setstr(N, cobj, "_tuples", "firebird does not support this", -1);
+	/*
+	 *     Set up SQLDA.
+	 */
+	for (var = sqlda->sqlvar, offset = 0, i = 0; i < numfields; var++, i++) {
+		length = alignment = var->sqllen;
+		type = var->sqltype & ~1;
+		if (type == SQL_TEXT) {
+			alignment = 1;
+		} else if (type == SQL_VARYING) {   
+			length += sizeof (short) + 1;
+			alignment = sizeof (short);
+		}
+		/*  RISC machines are finicky about word alignment
+		**  So the output buffer values must be placed on
+		**  word boundaries where appropriate
+		*/
+		offset = FB_ALIGN(offset, alignment);
+		var->sqldata = (char ISC_FAR *) buffer + offset;
+		offset += length;
+		offset = FB_ALIGN(offset, sizeof (short));
+		var->sqlind = (short*) ((char ISC_FAR *) buffer + offset);
+		offset += sizeof  (short);
+	}
+	if (libfbsql.isc_dsql_execute(isc_status, &trans, &stmt, SQL_DIALECT_V6, NULL)) {
+		print_warning(N, isc_status, __FUNCTION__, "isc_dsql_execute");
+		return 2;
+	}
+	//nsp_setnum  (N, &N->r, "", 0);
+	return 0;
+}
+
+static int fbsql_endquery(nsp_state *N)
+{
+	ISC_STATUS isc_status[20];
+
+	if (stmt) {
+		if (libfbsql.isc_dsql_free_statement(isc_status, &stmt, DSQL_drop)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_dsql_free_statement");
+		}
+	}
+	if (fetch_stat != 100L) {
+		/* print_warning(N, N, conn->status, __FUNCTION__, "conn->fetch_stat != 100L (are there unfetched rows?)"); */
+	}
+	fetch_stat=0;
+	if (sqlda) {
+		free(sqlda);
+		sqlda=NULL;
+	}
+	if (trans && trans_block==0) {
+		if (libfbsql.isc_commit_transaction(isc_status, &trans)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_commit_transaction");
+			return 0;
+		}
+		trans=0;
+	}
+	stmt=0;
+	return 0;
+}
+
+static void fbsql_store_field(nsp_state *N, XSQLVAR ISC_FAR *var, obj_t *tobj)
+{
+	ISC_STATUS isc_status[20];
+
+	char  buf[1024];
+	char  blob_s[20];
+	char  date_s[25];
+	short dtype;
+	struct tm times;
+
+	char fieldname[64];
+	char *ptemp=fieldname;
+
+	strncpy(fieldname, var->aliasname, sizeof(fieldname)-1);
+	while (*ptemp) { *ptemp=tolower(*ptemp); ptemp++; }
+
+	dtype=var->sqltype&~1;
+	/* Null handling.  If the column is nullable and null */
+	if ((var->sqltype&1)&&(*var->sqlind<0)) {
+		nsp_setstr(N, tobj, fieldname, NULL, 0);
+		return;
+	}
+	buf[0]='\0';
+	switch (dtype) {
+	case SQL_TEXT:
+		nsp_setstr(N, tobj, fieldname, var->sqldata, var->sqllen);
+		return;
+	case SQL_VARYING: {
+		VARY *vary=(VARY *)var->sqldata;
+
+		nsp_setstr(N, tobj, fieldname, vary->vary_string, vary->vary_length);
+		return;
+	}
+	case SQL_SHORT:
+	case SQL_LONG:
+	case SQL_INT64: {
+		ISC_INT64 value=0;
+		short     field_width=0;
+		short     dscale;
+
+		switch (dtype) {
+		case SQL_SHORT:
+			value = (ISC_INT64) *(short ISC_FAR *) var->sqldata;
+			field_width = 6;
+			break;
+		case SQL_LONG:
+			// breaks on Linux x86_64 due to wrong assumption about size of long
+			//value = (ISC_INT64) *(long ISC_FAR *) var->sqldata;
+			value = (ISC_INT64) *(int ISC_FAR *) var->sqldata;
+			field_width = 11;
+			break;
+		case SQL_INT64:
+			value = (ISC_INT64) *(ISC_INT64 ISC_FAR *) var->sqldata;
+			field_width = 21;
+			break;
+		}
+		dscale = var->sqlscale;
+		if (dscale < 0) {
+			ISC_INT64 tens;
+			short i;
+
+			tens = 1;
+			for (i = 0; i > dscale; i--)
+				tens *= 10;
+			if (value >= 0)
+				sprintf (buf, "%*" ISC_INT64_FORMAT "d.%0*" ISC_INT64_FORMAT "d", field_width - 1 + dscale, (ISC_INT64) value / tens, -dscale, (ISC_INT64) value % tens);
+			else if ((value / tens) != 0)
+				sprintf (buf, "%*" ISC_INT64_FORMAT "d.%0*" ISC_INT64_FORMAT "d", field_width - 1 + dscale, (ISC_INT64) (value / tens), -dscale, (ISC_INT64) -(value % tens));
+			else
+				sprintf (buf, "%*s.%0*" ISC_INT64_FORMAT "d", field_width - 1 + dscale, "-0", -dscale, (ISC_INT64) -(value % tens));
+		} else if (dscale) {
+			sprintf (buf, "%*" ISC_INT64_FORMAT "d%0*d", field_width, (ISC_INT64) value, dscale, 0);
+		} else {
+			sprintf (buf, "%" ISC_INT64_FORMAT "d", (ISC_INT64) value);
+		}
+		nsp_setstr(N, tobj, fieldname, buf, -1);
+		return;
+	}
+	case SQL_FLOAT:
+		sprintf(buf, "%15g", *(float ISC_FAR *) (var->sqldata));
+		nsp_setstr(N, tobj, fieldname, buf, -1);
+		return;
+	case SQL_DOUBLE:
+		sprintf(buf, "%24f", *(double ISC_FAR *) (var->sqldata));
+		nsp_setstr(N, tobj, fieldname, buf, -1);
+		return;
+	case SQL_TIMESTAMP:
+		libfbsql.isc_decode_timestamp((ISC_TIMESTAMP ISC_FAR *)var->sqldata, &times);
+		sprintf(date_s, "%04d-%02d-%02d %02d:%02d:%02d",
+			times.tm_year + 1900,
+			times.tm_mon+1,
+			times.tm_mday,
+			times.tm_hour,
+			times.tm_min,
+			times.tm_sec
+		);
+		nsp_setstr(N, tobj, fieldname, date_s, -1);
+		return;
+	case SQL_TYPE_DATE:
+		libfbsql.isc_decode_sql_date((ISC_DATE ISC_FAR *)var->sqldata, &times);
+		sprintf(date_s, "%04d-%02d-%02d",
+			times.tm_year + 1900,
+			times.tm_mon+1,
+			times.tm_mday);
+		nsp_setstr(N, tobj, fieldname, date_s, -1);
+		return;
+	case SQL_TYPE_TIME:
+		libfbsql.isc_decode_sql_time((ISC_TIME ISC_FAR *)var->sqldata, &times);
+		sprintf(date_s, "%02d:%02d:%02d",
+			times.tm_hour,
+			times.tm_min,
+			times.tm_sec
+		);
+		nsp_setstr(N, tobj, fieldname, date_s, -1);
+		return;
+	case SQL_BLOB: {
+		//int bloblen=0;
+		ISC_QUAD        blob_id=*(ISC_QUAD ISC_FAR *)var->sqldata;
+		isc_blob_handle blob_handle = NULL;
+		short           blob_seg_len;
+		char            blob_segment[256];
+		long            blob_stat;
+		obj_t *cobj;
+
+		cobj=nsp_setstr(N, tobj, fieldname, "NULL", 0);
+		/* Open the blob with the fetched blob_id. */
+		if (libfbsql.isc_open_blob(isc_status, &isc_db, &trans, &blob_handle, &blob_id)) {
+			print_warning(N, isc_status, __FUNCTION__, "isc_open_blob");
+		}
+		/* Get blob segments and their lengths and print each segment. */
+		blob_stat = libfbsql.isc_get_segment(isc_status, &blob_handle, (unsigned short *)&blob_seg_len, sizeof(blob_segment), blob_segment);
+		while (blob_stat == 0 || isc_status[1] == isc_segment) {
+			nsp_strcat(N, cobj, blob_segment, blob_seg_len);
+			blob_stat = libfbsql.isc_get_segment(isc_status, &blob_handle, (unsigned short *)&blob_seg_len, sizeof(blob_segment), blob_segment);
+		}
+		/* Close the blob.  Should be blob_stat to check */
+		if (isc_status[1] == isc_segstr_eof) {
+			if (libfbsql.isc_close_blob(isc_status, &blob_handle)) {
+				print_warning(N, isc_status, __FUNCTION__, "isc_close_blob");
+			}
+		}
+		log_error(N, "sql", __FILE__, __LINE__, 6, "blob");
+		return;
+	}
+	case SQL_ARRAY: {
+		/* Print the blob id on blobs or arrays */
+		ISC_QUAD  bid=*(ISC_QUAD ISC_FAR *)var->sqldata;
+
+		sprintf(blob_s, "%08x:%08x", (unsigned int)bid.isc_quad_high, (unsigned int)bid.isc_quad_low);
+		sprintf(buf, "%17s", blob_s);
+		break;
+	}
+	default:
+		printf("Unhandled type!");
+		break;
+	}
+	nsp_setstr(N, tobj, fieldname, buf, -1);
+	return;
+}
+
+static int fbsqlUpdate(nsp_state *N, char *sqlquery)
+{
+	fbsql_startquery(N, sqlquery);
+	fbsql_endquery(N);
+	return 0;
+}
+
+static int fbsqlQuery(nsp_state *N, obj_t *qobj, char *sqlquery)
+{
+	ISC_STATUS isc_status[20];
+	obj_t *cobj, *robj, *tobj;
+	unsigned int field, numtuples;
+	char name[8];
+
+	fbsql_startquery(N, sqlquery);
+	numtuples=0;
+	nsp_setstr(NULL, qobj, "_query", sqlquery, strlen(sqlquery));
+	nsp_setnum(NULL, qobj, "_fields", numfields);
+	nsp_setnum(NULL, qobj, "_tuples", numtuples);
+	robj=nsp_settable(NULL, qobj, "_rows");
+	/* now to populate the cursor */
+	for (numtuples=0;;numtuples++) {
+		if ((fetch_stat=libfbsql.isc_dsql_fetch(isc_status, &stmt, SQL_DIALECT_V6, sqlda))!=0) break;
+		memset(name, 0, sizeof(name));
+		sprintf(name, "%d", numtuples);
+		tobj=nsp_settable(NULL, robj, name);
+		tobj->val->attr&=~NST_AUTOSORT;
+		for (field=0;field<numfields;field++) {
+			fbsql_store_field(N, (XSQLVAR ISC_FAR *)&sqlda->sqlvar[field], tobj);
+		}
+	}
+	fbsql_endquery(N);
+	nsp_setnum(NULL, qobj, "_tuples", numtuples);
+	return 0;
+}
+#endif /* HAVE_FBSQL */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #ifdef HAVE_MYSQL
 static int mysqlDLLInit(nsp_state *N, char *libdir)
@@ -661,7 +1305,7 @@ static int sqlite2Update(nsp_state *N, char *sqlquery)
 	int rc;
 	short int retries=10;
 
-retry:
+//retry:
 	rc=libsqlite2.exec(db2, sqlquery, NULL, 0, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
@@ -669,11 +1313,11 @@ retry:
 		return rc;
 	case SQLITE_BUSY:
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite busy error?: %s", zErrMsg);
-		if (retries>0) { retries--; msleep(5); goto retry; }
+		//if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	case SQLITE_CORRUPT:
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite corrupt error?: %s", zErrMsg);
-		if (retries>0) { retries--; msleep(5); goto retry; }
+		//if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	default:
 		break;
@@ -725,7 +1369,7 @@ static int sqlite2Query(nsp_state *N, obj_t *qobj, char *sqlquery)
 	if (tobj->val->type!=NT_TABLE) return -1;
 	nsp_setnum(NULL, qobj, "_fields", 0);
 	nsp_setnum(NULL, qobj, "_tuples", 0);
-retry:
+//retry:
 	rc=libsqlite2.exec(db2, sqlquery, sqlite2Callback, qobj, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
@@ -733,7 +1377,7 @@ retry:
 	case SQLITE_BUSY:
 	case SQLITE_CORRUPT:
 		log_error(N, "sql", __FILE__, __LINE__, 2, "SQLite: busy or corrupt %d %s", rc, zErrMsg);
-		if (retries>0) { retries--; msleep(5); goto retry; }
+		//if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	default:
 		log_error(N, "sql", __FILE__, __LINE__, 2, "SQLite: unknown error %d %s", rc, zErrMsg);
@@ -887,7 +1531,7 @@ static int sqlite3Query(nsp_state *N, obj_t *qobj, char *sqlquery)
 	if (tobj->val->type!=NT_TABLE) return -1;
 	nsp_setnum(NULL, qobj, "_fields", 0);
 	nsp_setnum(NULL, qobj, "_tuples", 0);
-retry:
+//retry:
 	rc=libsqlite3.exec(db3, sqlquery, sqlite3Callback, qobj, &zErrMsg);
 	switch (rc) {
 	case SQLITE_OK:
@@ -896,7 +1540,7 @@ retry:
 	case SQLITE_CORRUPT:
 		cobj=nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 2, "SQLite: busy or corrupt %d %s", rc, nsp_tostr(NULL, cobj));
-		if (retries>0) { retries--; msleep(5); goto retry; }
+		//if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	default:
 		cobj=nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
@@ -912,6 +1556,9 @@ retry:
 
 static int _sql_dll_unload()
 {
+#ifdef HAVE_FBSQL
+	memset((char *)&libfbsql, 0, sizeof(libfbsql));
+#endif
 #ifdef HAVE_MYSQL
 	memset((char *)&libmysql, 0, sizeof(libmysql));
 #endif
@@ -940,7 +1587,11 @@ void _sql_disconnect(nsp_state *N)
 	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
 
 	log_error(N, "sql", __FILE__, __LINE__, 4, "SQL Disconnection");
-	if (strcmp(sqltype, "MYSQL")==0) {
+	if (strcmp(sqltype, "FBSQL")==0) {
+#ifdef HAVE_FBSQL
+		fbsqlDisconnect(N);
+#endif
+	} else if (strcmp(sqltype, "MYSQL")==0) {
 #ifdef HAVE_MYSQL
 		mysqlDisconnect();
 #endif
@@ -984,7 +1635,12 @@ int _sql_update(nsp_state *N, char *sqlquery)
 	int rc=-1;
 
 	log_error(N, "sql", __FILE__, __LINE__, 2, "SQL update: %s", sqlquery);
-	if (strcmp(sqltype, "MYSQL")==0) {
+	if (strcmp(sqltype, "FBSQL")==0) {
+#ifdef HAVE_FBSQL
+		if (fbsqlConnect(N)<0) return -1;
+		rc=fbsqlUpdate(N, sqlquery);
+#endif
+	} else if (strcmp(sqltype, "MYSQL")==0) {
 #ifdef HAVE_MYSQL
 		if (mysqlConnect(N)<0) return -1;
 		rc=mysqlUpdate(N, sqlquery);
@@ -1027,7 +1683,12 @@ int _sql_query(nsp_state *N, obj_t **qobj, char *query)
 		tobj->val->attr&=~NST_AUTOSORT;
 	}
 	log_error(N, "sql", __FILE__, __LINE__, 3, "SQL query: [0x%08X] %s", *qobj, query);
-	if (strcmp(sqltype, "MYSQL")==0) {
+	if (strcmp(sqltype, "FBSQL")==0) {
+#ifdef HAVE_FBSQL
+		if (fbsqlConnect(N)<0) 	return -1;
+		if ((rc=fbsqlQuery(N, *qobj, query))<0) fbsqlDisconnect(N);
+#endif
+	} else if (strcmp(sqltype, "MYSQL")==0) {
 #ifdef HAVE_MYSQL
 		if (mysqlConnect(N)<0) 	return -1;
 		if ((rc=mysqlQuery(N, *qobj, query))<0) mysqlDisconnect();
@@ -1090,6 +1751,26 @@ int _sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 	va_end(ap);
 	rc=_sql_query(N, qobj, sqlquery);
 	free(sqlquery);
+	return rc;
+}
+
+int _sql_getsequence(nsp_state *N, char *table)
+{
+	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
+	obj_t *qobj=NULL;
+	int rc=-1;
+
+	if (strcmp(sqltype, "FBSQL")==0) {
+//		if (_sql_queryf(N, &qobj, "SELECT GEN_ID(gen_%s, 1) FROM RDB$DATABASE;", table)<0) return -1;
+		if (_sql_queryf(N, &qobj, "SELECT NEXT VALUE FOR gen_%s FROM RDB$DATABASE;", table)<0) return -1;
+		if (sql_numtuples(N, &qobj)>0) rc=atoi(sql_getvalue(N, &qobj, 0, 0));
+		_sql_freeresult(N, &qobj);
+	} else if (strcmp(sqltype, "MYSQL")==0) {
+	} else if (strcmp(sqltype, "ODBC")==0) {
+	} else if (strcmp(sqltype, "PGSQL")==0) {
+	} else if (strcmp(sqltype, "SQLITE2")==0) {
+	} else if ((strcmp(sqltype, "SQLITE3")==0)||(strcmp(sqltype, "SQLITE")==0)) {
+	}
 	return rc;
 }
 

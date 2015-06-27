@@ -1,4 +1,53 @@
 #!/usr/bin/nsp
+
+function win_make(vcver, private_inc, private_lib) {
+	switch (vcver) {
+	case 6:
+		print("Visual Studio 6 (98)\r\n");
+		env="@SET INCLUDE="+private_inc+""+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\atl\\include;"
+			+""+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\mfc\\include;"+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\include\r\n"
+		+"@SET LIB="+private_lib+""+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\mfc\\lib;"+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\lib\r\n"
+		+"@SET MSDevDir="+ProgramFiles+"\\Microsoft Visual Studio\\Common\\MSDev98\r\n"
+		+"@SET PATH="+ProgramFiles+"\\Microsoft Visual Studio\\Common\\Tools\\WinNT;"+ProgramFiles+"\\Microsoft Visual Studio\\Common\\MSDev98\\Bin;"
+			+""+ProgramFiles+"\\Microsoft Visual Studio\\Common\\Tools;"+ProgramFiles+"\\Microsoft Visual Studio\\VC98\\bin;%PATH%\r\n";
+		env_set=true;
+		break;
+	case 8:
+		print("Visual Studio 8 (2005)\r\n");
+		env="@SET INCLUDE="+private_inc+""+ProgramFiles+"\\Microsoft Visual Studio 8\\VC\\include;"+ProgramFiles+"\\Microsoft Visual Studio 8\\VC\\PlatformSDK\\Include\r\n"
+		+"@SET LIB="+private_lib+""+ProgramFiles+"\\Microsoft Visual Studio 8\\VC\\lib;"+ProgramFiles+"\\Microsoft Visual Studio 8\\VC\\PlatformSDK\\Lib\r\n"
+		+"@SET PATH="+ProgramFiles+"\\Microsoft Visual Studio 8\\VC\\bin;"+ProgramFiles+"\\Microsoft Visual Studio 8\\Common7\\IDE;%PATH%\r\n";
+		env_set=true;
+		break;
+	case 9:
+		print("Visual Studio 9 (2008)\r\n");
+		env="@SET INCLUDE="+private_inc+""+ProgramFiles+"\\Microsoft Visual Studio 9.0\\VC\\include;"+ProgramFiles+"\\Microsoft SDKs\\Windows\\v6.0A\\Include\r\n"
+		+"@SET LIB="+private_lib+""+ProgramFiles+"\\Microsoft Visual Studio 9.0\\VC\\lib;"+ProgramFiles+"\\Microsoft SDKs\\Windows\\v6.0A\\Lib\r\n"
+		+"@SET PATH="+ProgramFiles+"\\Microsoft Visual Studio 9.0\\VC\\bin;"+ProgramFiles+"\\Microsoft Visual Studio 9.0\\Common7\\IDE;"+ProgramFiles+"\\Microsoft SDKs\\Windows\\v6.0A\\bin;%PATH%\r\n";
+		env_set=true;
+		break;
+	default:
+		print("fail\r\n");
+	}
+	if (env_set) {
+		cmd="@nmake -f Makefile.vc";
+		batchfile=_ENV['TEMP']+"\\win_make.cmd";
+		file.write(batchfile, env+cmd+"\r\n");
+		system(batchfile);
+		//inno_build();
+	}
+	print("\ndone - press enter\n");
+	io.gets();
+	exit;
+}
+global ProgramFiles="C:\\Program Files (x86)";
+if (_ostype_=="Windows/msvc") {
+	win_make(6, @"C:\null\VC6\include;", @"C:\null\VC6\lib;");
+//	win_make(9, "C:\\NullLogic\\utils\\VC6\\include;", "C:\\NullLogic\\utils\\VC6\\lib;");
+//	win_make(9, "C:\\null\\VC6\\include;", "C:\\null\\VC6\\lib;");
+}
+
+
 print("ostype="+_ostype_+"\n");
 if (_ostype_=="Windows/msvc") {
 	cmd="nmake -f Makefile.vc";

@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +59,7 @@ short installService(void)
 {
 	SC_HANDLE scHndl;
 	SC_HANDLE scServ;
+	SERVICE_DESCRIPTION sd;
 	char cCurDir[256];
 	char *svcname=SERVICE_NAME;
 	char *svctitle=SERVER_NAME;
@@ -89,6 +90,10 @@ short installService(void)
 		CloseHandle(scHndl);
 		return 1;
 	}
+
+	sd.lpDescription = TEXT("This service does stuff.");
+	ChangeServiceConfig2(scServ, SERVICE_CONFIG_DESCRIPTION, &sd);
+
 	CloseHandle(scServ);
 	CloseHandle(scHndl);
 	return 0;

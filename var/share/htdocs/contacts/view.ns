@@ -30,13 +30,13 @@ function contact_view() {
 //	print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(CONTACT),"</PRE></TD></TR>");
 
 	if ((sizeof(CONTACT['homeaddress'])>0)&&(sizeof(CONTACT['homelocality'])>0)&&(sizeof(CONTACT['homeregion'])>0)&&(sizeof(CONTACT['homecountry'])>0)) {
-//		haddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['homecountry']+"&address="+CONTACT['homeaddress']+"&city="+CONTACT['homelocality']+"&state="+CONTACT['homeregion'];
-		haddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
+		haddr="https://www.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
+		haddr=string.replace(haddr, ' ', '+');
 		haddr=urlencode(haddr);
 	}
 	if ((sizeof(CONTACT['workaddress'])>0)&&(sizeof(CONTACT['worklocality'])>0)&&(sizeof(CONTACT['workregion'])>0)&&(sizeof(CONTACT['workcountry'])>0)) {
-//		waddr="http://www.mapquest.com/maps/map.adp?country="+CONTACT['workcountry']+"&address="+CONTACT['workaddress']+"&city="+CONTACT['worklocality']+"&state="+CONTACT['workregion'];
-		waddr="http://maps.google.com/maps?iwloc=A&hl=en&q="+CONTACT['workaddress']+", "+CONTACT['worklocality']+", "+CONTACT['workregion']+", "+CONTACT['workcountry'];
+		waddr="https://www.google.com/maps?iwloc=A&hl=en&q="+CONTACT['workaddress']+", "+CONTACT['worklocality']+", "+CONTACT['workregion']+", "+CONTACT['workcountry'];
+		waddr=string.replace(waddr, ' ', '+');
 		waddr=urlencode(waddr);
 	}
 	disabled=" DISABLED";
@@ -74,7 +74,7 @@ function contact_view() {
 	}
 	print("<FORM METHOD=POST ACTION=\"/contacts/save\" NAME=contactedit>\r\n");
 	print("<INPUT TYPE=hidden NAME=id VALUE='",id,"'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\r\n");
+	print("<TABLE class=\"contentform\" BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=425>\r\n");
 /*
 	if (strncmp(nes_getstr(conn->N, htobj, "REQUEST_URI"), "/contacts/viewnew2", 18)==0) {
 		print("<INPUT TYPE=hidden NAME=callset VALUE='1'>\r\n");
@@ -102,7 +102,7 @@ function contact_view() {
 	if (sizeof(CONTACT['uid'])>0) print(" (",str2html(CONTACT['uid']),")");
 	print("</TD>\r\n");
 	print("<TD ALIGN=right>");
-	if (id>0) print("<A HREF=\"/contacts/vcardexport?id=",id,"\">vCard</A>"); else print("&nbsp;");
+	if (id>0) print("<A HREF=\"/contacts/vcard?id=",id,"\">vCard</A>"); else print("&nbsp;");
 	print("</TD>\r\n");
 	print("</TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;E-Mail Address&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">");
@@ -121,8 +121,8 @@ function contact_view() {
 			print("<A HREF=\"/mail/write?to=",CONTACT['email'],"\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
 		}
 	}
-	if (sizeof(CONTACT['labeleduri'])) {
-		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Web Site&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><A HREF=\"",CONTACT['labeleduri'],"\" TARGET=_blank>",str2html(CONTACT['labeleduri']),"</A>&nbsp;</TD></TR>\r\n");
+	if (sizeof(CONTACT['website'])) {
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Web Site&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\"><A HREF=\"",CONTACT['website'],"\" TARGET=_blank>",str2html(CONTACT['website']),"</A>&nbsp;</TD></TR>\r\n");
 	}
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Home Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['hometelephonenumber']),"&nbsp;</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Mobile Number&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",str2html(CONTACT['mobiletelephonenumber']),"&nbsp;</TD></TR>\r\n");
@@ -155,7 +155,7 @@ function contact_view() {
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Phone      &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=hometelephonenumber     value=\"",str2html(CONTACT['hometelephonenumber']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Mobile Number   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mobiletelephonenumber   value=\"",str2html(CONTACT['mobiletelephonenumber']),  "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-mail          &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=mail           value=\"",str2html(CONTACT['email']),         "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
-		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Web Site        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=labeleduri     value=\"",str2html(CONTACT['labeleduri']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Web Site        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=website        value=\"",str2html(CONTACT['website']),       "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Address    &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeaddress    value=\"",str2html(CONTACT['homeaddress']),   "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home City       &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homelocality   value=\"",str2html(CONTACT['homelocality']),  "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Home Province   &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT TYPE=TEXT NAME=homeregion     value=\"",str2html(CONTACT['homeregion']),    "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
@@ -371,12 +371,16 @@ function contact_view() {
 	return;
 }
 
-include_template("html/header.ns");
 global _TEMP={ modname="contacts" };
-include_template("html/headmenu.ns");
-print("<BR>\r\n");
+if (_GET['METHOD']!='ajax') {
+	include_template("html/header.ns");
+	include_template("html/headmenu.ns");
+	print("<BR>\r\n");
+}
 
 contact_view();
 
-include_template("html/debug.ns");
-include_template("html/footer.ns");
+if (_GET['METHOD']!='ajax') {
+	include_template("html/debug.ns");
+	include_template("html/footer.ns");
+}

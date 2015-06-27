@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 */
 #ifdef WIN32
 #include "nullsd/config-nt.h"
+#define _USE_32BIT_TIME_T
 #else
 #include "nullsd/config.h"
 #endif
@@ -139,6 +140,7 @@ int     sql_update(nsp_state *N, char *sqlquery);
 int     sql_query(nsp_state *N, obj_t **qobj, char *query);
 int     sql_updatef(nsp_state *N, char *format, ...);
 int     sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...);
+int     sql_getsequence(nsp_state *N, char *table);
 /* ssl.c functions */
 #ifdef HAVE_SSL
 int     ssl_init();

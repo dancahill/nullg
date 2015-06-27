@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ static int auth_checkpass(CONN *conn, char *password)
 	if ((strlen(conn->dat->username)==0)||(strlen(password)==0)) {
 		return -1;
 	}
-	if ((qobj=ldir_getentry(conn->N, "person", conn->dat->username, 0, conn->dat->did))==NULL) {
+	if ((qobj=ldir_getentry(conn->N, "user", conn->dat->username, 0, conn->dat->did))==NULL) {
 		return -1;
 	}
 	if (ldir_numentries(&qobj)!=1) {
@@ -143,7 +143,7 @@ blah:
 	if ((userid==0)||(domainid==0)) {
 		return -1;
 	}
-	if ((qobj=ldir_getentry(conn->N, "person", NULL, userid, domainid))==NULL) {
+	if ((qobj=ldir_getentry(conn->N, "user", NULL, userid, domainid))==NULL) {
 		return -1;
 	}
 	if (ldir_numentries(&qobj)!=1) {
@@ -177,6 +177,12 @@ blah:
 	uobj=nsp_settable(conn->N, &conn->N->g, "_USER");
 	tobj=nsp_settable(conn->N, uobj, "pref");
 	if (tobj->val->type==NT_TABLE) {
+		/* mailcurrent */
+		cobj=nsp_getobj(conn->N, uobj, "prefmailcurrent");
+		nsp_setnum(conn->N, tobj, "mailcurrent", nsp_tonum(conn->N, cobj));
+		/* maildefault */
+		cobj=nsp_getobj(conn->N, uobj, "prefmaildefault");
+		nsp_setnum(conn->N, tobj, "maildefault", nsp_tonum(conn->N, cobj));
 		/* maxlist */
 		cobj=nsp_getobj(conn->N, tobj, "maxlist");
 		if (cobj->val->type!=NT_NUMBER) {

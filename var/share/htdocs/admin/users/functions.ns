@@ -1,63 +1,70 @@
-global default_user = { _tuples=1, _rows = { [0] = {
-	userid          = "0",
-	obj_ctime       = "2001-01-01 00:00:00",
-	obj_mtime       = "2001-01-01 00:00:00",
-	obj_uid         = "0",
-	obj_gid         = _USER['obj_gid'],
-	obj_did         = _USER['obj_did'],
-	obj_gperm       = "0",
-	obj_operm       = "0",
-	username        = "",
-	password        = "",
-	groupid         = _USER['groupid'],
-	domainid        = _USER['domainid'],
-	enabled         = "1",
-	authdomainadmin = "31",
-	authadmin       = "31",
-	authbookmarks   = "31",
-	authcalendar    = "31",
-	authcalls       = "31",
-	authcontacts    = "31",
-	authemail       = "15",
-	authfiles       = "31",
-	authfinance     = "31",
-	authforums      = "31",
-	authmessages    = "13",
-	authprofile     = "3",
-	authprojects    = "31",
-	authquery       = "17",
-	prefdaystart    = "9",
-	prefdaylength   = "8",
-	prefmailcurrent = "0",
-	prefmaildefault = "0",
-	prefmaxlist     = "100",
-	prefmenustyle   = "1",
-	preftimezone    = "10",
-	prefgeozone     = "1",
-	preflanguage    = "en",
-	preftheme       = "lite",
-	availability    = "",
-	surname         = "",
-	givenname       = "",
-	jobtitle        = "",
-	division        = "",
-	supervisor      = "",
-	address         = "",
-	locality        = "",
-	region          = "",
-	country         = "",
-	postalcode      = "",
-	homenumber      = "",
-	worknumber      = "",
-	faxnumber       = "",
-	cellnumber      = "",
-	pagernumber     = "",
-	email           = "",
-	birthdate       = "",
-	hiredate        = "",
-	sin             = "",
-	isactive        = "",
-}; }; };
+function default_user() {
+	return {
+		_tuples=1,
+		_rows = {
+			[0] = {
+				userid          = "0",
+				obj_ctime       = "2001-01-01 00:00:00",
+				obj_mtime       = "2001-01-01 00:00:00",
+				obj_uid         = "0",
+				obj_gid         = _USER['obj_gid'],
+				obj_did         = _USER['obj_did'],
+				obj_gperm       = "0",
+				obj_operm       = "0",
+				username        = "",
+				password        = "",
+				groupid         = _USER['groupid'],
+				domainid        = _USER['domainid'],
+				enabled         = "1",
+				authdomainadmin = "31",
+				authadmin       = "31",
+				authbookmarks   = "31",
+				authcalendar    = "31",
+				authcalls       = "31",
+				authcontacts    = "31",
+				authemail       = "15",
+				authfiles       = "31",
+				authfinance     = "31",
+				authforums      = "31",
+				authmessages    = "13",
+				authprofile     = "3",
+				authprojects    = "31",
+				authquery       = "17",
+				prefdaystart    = "9",
+				prefdaylength   = "8",
+				prefmailcurrent = "0",
+				prefmaildefault = "0",
+				prefmaxlist     = "100",
+				prefmenustyle   = "1",
+				preftimezone    = "10",
+				prefgeozone     = "1",
+				preflanguage    = "en",
+				preftheme       = "lite",
+				availability    = "",
+				surname         = "",
+				givenname       = "",
+				jobtitle        = "",
+				division        = "",
+				supervisor      = "",
+				address         = "",
+				locality        = "",
+				region          = "",
+				country         = "",
+				postalcode      = "",
+				homenumber      = "",
+				worknumber      = "",
+				faxnumber       = "",
+				cellnumber      = "",
+				pagernumber     = "",
+				email           = "",
+				birthdate       = "",
+				hiredate        = "",
+				sin             = "",
+				isactive        = "",
+			};
+		};
+	};
+}
 
 /* this needs to be replaced by a c api function */
 function urlencode(s) {
@@ -75,19 +82,13 @@ function str2sql(s) {
 }
 
 function user_list() {
-	global Q=ldir.getlist("person", 0);
+	global Q=ldir.getlist("domain", 0);
 	print("<CENTER>");
 	if (Q._tuples<1) {
 		print("<B>Found 0 matching users</B></CENTER>\r\n");
 		return;
 	}
 	print(
-		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=400><TR>\r\n",
-		"<TD ALIGN=LEFT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
-		"<TD ALIGN=CENTER NOWRAP><B>Found ",Q._tuples," matching users</B></TD>\r\n",
-		"<TD ALIGN=RIGHT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
-		"</TR>\r\n<TR><TD ALIGN=CENTER COLSPAN=3>\r\n",
-		"<FORM METHOD=GET ACTION=\"#\" NAME=mailform STYLE=\"display:inline;\">\r\n",
 		"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid' WIDTH=400>\r\n",
 		"<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;User Name&nbsp;</TH>",
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Real Name&nbsp;</TH>",
@@ -97,24 +98,28 @@ function user_list() {
 	);
 	i=0;
 	foreach (rec in Q['_rows']) {
-		id=tonumber(rec['userid']);
-		sn=rec['surname'];
-		gn=rec['givenname'];
-		if ((sizeof(sn)>0)&&(sizeof(gn)>0)) sep=", "; else if (sizeof(sn)==0&&sizeof(gn)==0) sep="&nbsp;"; else sep="";
-		vn=sn+sep+gn;
+		printf("<TR CLASS=\"FIELDNAME\"><TD ALIGN=LEFT COLSPAN=5 NOWRAP STYLE='border-style:solid'><B>%s</B></TD></TR>", str2html(rec['domainname']));
+		sqr=sqlquery(sprintf("SELECT * FROM gw_users WHERE domainid = %d ORDER BY username ASC", tonumber(rec['domainid'])));
+		foreach (userrec in sqr['_rows']) {
+			id=tonumber(userrec['userid']);
+			sn=userrec['surname'];
+			gn=userrec['givenname'];
+			if ((sizeof(sn)>0)&&(sizeof(gn)>0)) sep=", "; else if (sizeof(sn)==0&&sizeof(gn)==0) sep="&nbsp;"; else sep="";
+			vn=sn+sep+gn;
 
-		printf("<TR CLASS=\"FIELDVAL\">");
-		printf("<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='view?id=%d'\">", id);
-		printf("<A HREF=\"view?id=%d\">%s</A></TD>", id, str2html(rec['username']));
-		printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s</A>&nbsp;</TD>", str2html(vn));
-		printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s&nbsp;</TD>\r\n", str2html(rec['prefgeozone']));
-		printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s&nbsp;</TD>\r\n", str2html(rec['groupid']));
-		printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>&nbsp;</TD></TR>\r\n");
-		lastrec=rec;
-		i++;
+			printf("<TR CLASS=\"FIELDVAL\">");
+			printf("<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='view?id=%d'\">", id);
+			printf("<A HREF=\"view?id=%d\">%s</A></TD>", id, str2html(userrec['username']));
+			printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s&nbsp;</TD>\r\n", str2html(vn));
+			printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s&nbsp;</TD>\r\n", str2html(userrec['prefgeozone']));
+			printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>%s&nbsp;</TD>\r\n", str2html(userrec['groupid']));
+			printf("<TD NOWRAP STYLE='padding:0px; border-style:solid'>&nbsp;</TD></TR>\r\n");
+			lastrec=userrec;
+			i++;
+		}
 	}
 	print("</TABLE>\r\n");
-	printf("<A HREF=view?id=0>New User</A>");
+	printf("<A HREF=\"view?id=0\">New User</A>");
 	print("</CENTER><BR>");
 //	print("</CENTER><PRE>",serialize(Q),"</PRE>");
 	Q=null;
@@ -124,14 +129,14 @@ function user_list() {
 function user_view() {
 	id=tonumber(_GET['ID']);
 	if (id!=0) {
-		global Q=ldir.getentry("person", id);
+		global Q=ldir.getentry("user", id);
 		if (Q==null) {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
 	} else {
 //		global Q={_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New User'}}}};
-		global Q=default_user;
+		global Q=default_user();
 	}
 //	USER=Q['_rows'][0]['_data'];
 	USER=Q['_rows'][0];
@@ -216,23 +221,27 @@ function user_view() {
 	print(
 		"<DIV ID=page3 STYLE='display: block'>\r\n",
 		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;First Name        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT NAME=givenname TYPE=TEXT   value=\"",str2html(USER['givenname']), "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;Last Name         &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT NAME=surname TYPE=TEXT     value=\"",str2html(USER['surname']), "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"</TABLE>\r\n",
 		"</DIV>\r\n"
 	);
 	print(
 		"<DIV ID=page4 STYLE='display: block'>\r\n",
 		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n",
+		"<TR CLASS=\"EDITFORM\"><TD NOWRAP><B>&nbsp;E-Mail        &nbsp;</B></TD><TD ALIGN=RIGHT><INPUT NAME=email TYPE=TEXT     value=\"",str2html(USER['email']), "\" SIZE=45 STYLE='width:255px'",disabled,"></TD></TR>\r\n",
 		"</TABLE>\r\n",
 		"</DIV>\r\n"
 	);
 	print("<DIV ID=page5 STYLE='display: block'>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
+	print("<TR><TD></TD></TR>\r\n");
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 
 	print("<DIV ID=page6 STYLE='display: block'>\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
-
+	print("<TR><TD></TD></TR>\r\n");
 	print("</TABLE>\r\n");
 	print("</DIV>\r\n");
 
@@ -284,6 +293,9 @@ function user_save() {
 	local fields = {
 		'username';
 		'password';
+		'givenname';
+		'surname';
+		'email';
 	}
 /*
 	if (!(priv&A_ADMIN)) {
@@ -296,11 +308,12 @@ function user_save() {
 	if (_POST['ID']==null) return;
 	id=tonumber(_POST['ID']);
 	domainid=tonumber(_USER['domainid']);
+	obj_did =tonumber(_USER['domainid']);
 	if (id>0) {
-		global Q=ldir.getentry("person", id);
+		global Q=ldir.getentry("user", id);
 	} else {
 		//global Q={_tuples=1,_rows={[0]={id=0,pid=domainid,did=domainid,_data={cn='New User'}}}};
-		global Q=default_user;
+		global Q=default_user();
 	}
 	if (typeof(Q)=='null') {
 		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
@@ -320,16 +333,18 @@ function user_save() {
 		if ((ptemp=getpostenv(conn, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
 	}
 */
+	user=Q['_rows'][0];
 	foreach (field in fields) {
+		if (field=='password') continue;
 		local F=string.toupper(field);
 
 		if (typeof(_POST[F])=='null') {
 			print("Form is missing "+F+" = "+tostring(_POST[F])+"<BR>");
 			continue;
 		}
-		Q['_rows'][0]['_data'][string.tolower(field)] = _POST[F];
+//		Q['_rows'][0]['_data'][string.tolower(field)] = _POST[F];
+		user[string.tolower(field)] = _POST[F];
 	}
-	user=Q['_rows'][0];
 	if (string.len(_POST['PASSWORD'])>0) {
 		newpass=auth_md5pass(_POST['PASSWORD']);
 		passchanged=true;
@@ -337,8 +352,11 @@ function user_save() {
 		newpass=user['password'];
 		passchanged=false;
 	}
-	user.username=_POST['USERNAME'];
+//	user.username=_POST['USERNAME'];
+	user.obj_did=domainid;
+	user.domainid=domainid;
 	user.password=newpass;
+//	user.email=_POST['EMAIL'];
 
 //	printf("[%s][%s][%s]", _POST['PASSWORD'], user['password'], newpass);
 //	print("</CENTER><PRE>",serialize(user),"</PRE>");

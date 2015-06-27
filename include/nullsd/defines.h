@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+
 #define SERVER_NAME	"NullLogic GroupServer"
 #define SERVER_BASENAME	"nullsd"
 #define SERVICE_NAME	"nullsd"
@@ -80,6 +81,7 @@
 #define SMTP_PORT		25
 #define SMTPS_PORT		465
 
+#define HAVE_FBSQL
 #define HAVE_MYSQL
 #ifdef WIN32
 /* #define HAVE_ODBC */

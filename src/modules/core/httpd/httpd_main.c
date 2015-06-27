@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -85,6 +85,38 @@ HTTP_PROC htproc;
 static pthread_mutex_t ListenerMutex;
 
 #ifdef WIN32
+DWORD do_filter(EXCEPTION_POINTERS *eps, CONN *conn)
+{
+	EXCEPTION_RECORD er = *eps->ExceptionRecord;
+	char errbuf[255];
+
+	memset(errbuf, 0, sizeof(errbuf));
+	switch (er.ExceptionCode) {
+	case 0xE06D7363: // C++ exception
+		_snprintf(errbuf, sizeof(errbuf)-1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
+		break;
+	case EXCEPTION_ACCESS_VIOLATION:
+		_snprintf(errbuf, sizeof(errbuf)-1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	case EXCEPTION_STACK_OVERFLOW:
+		_snprintf(errbuf, sizeof(errbuf)-1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	default:
+		_snprintf(errbuf, sizeof(errbuf)-1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		break;
+	}
+	{
+		log_error(proc->N, "core", __FILE__, __LINE__, 0, "SEH Exception (htloop): %s", errbuf);
+		log_error(proc->N, "core", __FILE__, __LINE__, 0, "SEH Exception (htloop):\r\n\t"
+			"RemoteAddr=%s", conn->socket.RemoteAddr);
+		system("crash.ns");
+	}
+	//printf("SEH Exception (htloop): %s", errbuf);
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
+
+#ifdef WIN32
 unsigned _stdcall htloop(void *x)
 #else
 void *htloop(void *x)
@@ -105,23 +137,30 @@ void *htloop(void *x)
 #endif
 	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Opening connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	proc->stats.http_conns++;
-	for (;;) {
-		if (conn->dat!=NULL) { free(conn->dat); conn->dat=NULL; }
-		conn->dat=calloc(1, sizeof(CONNDATA));
-		conn->dat->out_ContentLength=-1;
-		conn->socket.atime=time(NULL);
-		conn->socket.ctime=time(NULL);
-		http_dorequest(conn);
-		k=0;
-		cobj=nsp_getobj(conn->N, &conn->N->g, "_HEADER");
-		if (cobj->val->type==NT_TABLE) {
-			if (strcasecmp("Keep-Alive", nsp_getstr(conn->N, cobj, "CONNECTION"))==0) k=1;
+#ifdef WIN32
+	__try {
+#endif
+		for (;;) {
+			if (conn->dat!=NULL) { free(conn->dat); conn->dat=NULL; }
+			conn->dat=calloc(1, sizeof(CONNDATA));
+			conn->dat->out_ContentLength=-1;
+			conn->socket.atime=time(NULL);
+			conn->socket.ctime=time(NULL);
+			http_dorequest(conn);
+			k=0;
+			cobj=nsp_getobj(conn->N, &conn->N->g, "_HEADER");
+			if (cobj->val->type==NT_TABLE) {
+				if (strcasecmp("Keep-Alive", nsp_getstr(conn->N, cobj, "CONNECTION"))==0) k=1;
+			}
+			conn->N=nsp_endstate(conn->N);
+			conn->state=0;
+			/* memset(conn->dat, 0, sizeof(CONNDATA)); */
+			if (!k) break;
 		}
-		conn->N=nsp_endstate(conn->N);
-		conn->state=0;
-		/* memset(conn->dat, 0, sizeof(CONNDATA)); */
-		if (!k) break;
+#ifdef WIN32
+	} __except (do_filter(GetExceptionInformation(), conn)) {
 	}
+#endif
 	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Closing connection [%s:%d]", conn->socket.RemoteAddr, conn->socket.RemotePort);
 	/* closeconnect() cleans up our mess for us */
 	closeconnect(conn, 2);
@@ -199,7 +238,7 @@ DllExport int mod_init(_PROC *_proc)
 	}
 	if (loaded) {
 		if ((htproc.conn=calloc(maxconn, sizeof(CONN)))==NULL) {
-			printf("\r\nconn calloc(%d, %d) failed\r\n", maxconn, sizeof(CONN));
+			printf("\r\nconn calloc(%d, %d) failed\r\n", maxconn, (int)sizeof(CONN));
 			return -1;
 		}
 		for (i=0;i<maxconn;i++) htproc.conn[i].socket.socket=-1;

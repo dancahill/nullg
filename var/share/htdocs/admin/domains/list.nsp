@@ -1,0 +1,12 @@
+<?nsp
+include_template("html/header.ns");
+global _TEMP={ modname="admin" };
+include_template("html/headmenu.ns");
+print("<BR>\r\n");
+
+include("functions.ns");
+domain_list();
+
+include_template("html/debug.ns");
+include_template("html/footer.ns");
+?>

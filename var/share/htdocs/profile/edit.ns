@@ -5,7 +5,7 @@ function profile_edit() {
 //		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
-	global Q=ldir.getentry("person", tonumber(_USER.uidnumber));
+	global Q=ldir.getentry("user", tonumber(_USER.userid));
 	if (typeof(Q)=='null') {
 		print("<CENTER>Profile information not found</CENTER>\r\n");
 		return;

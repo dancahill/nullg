@@ -1,7 +1,7 @@
 #!/bin/sh
-#VERSION="3.7.3"
+#VERSION="3.8.9"
 BASENAME="sqlite-autoconf"
-VERSION="3070500"
+VERSION="3080900"
 
 do_configure() {
 	if [ ! -r "${BASENAME}-${VERSION}.tar.gz" ]; then

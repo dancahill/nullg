@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ int auth_login(CONN *conn, char *username, char *domain, char *password, int mbo
 	if (domainid<0) domainid=1;
 	conn->dat->did=domainid;
 
-	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE UPPER(username) = UPPER('%s') AND domainid = %d", username, domainid)<0) {
+	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE LOWER(username) = LOWER('%s') AND domainid = %d", username, domainid)<0) {
 		return -1;
 	}
 	if (sql_numtuples(proc->N, &qptr)!=1) {

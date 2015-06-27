@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -91,17 +91,23 @@ char *encodeurl(CONN *conn, char *src)
 	unsigned int dstlen=0;
 
 	while (*src) {
-		if (dstlen+4>sizeof(conn->dat->smallbuf[0])) break;
-/*		if ((*src>32)&&(*src<128)&&(!strchr(unsafe, *src))) { */
-		if ((*src>32)&&(!strchr(unsafe, *src))) {
+		if (dstlen+1>sizeof(conn->dat->smallbuf[0])) break;
+		if (isalnum(*src)||*src == '~'||*src == '-'||*src == '.'||*src == '_') {
 			*dest++=*src++;
 			dstlen++;
-		} else {
+			continue;
+		}
+		if (dstlen+4>sizeof(conn->dat->smallbuf[0])) break;
+/*		if ((*src>32)&&(*src<128)&&(!strchr(unsafe, *src))) { */
+//		if ((*src>32)&&(!strchr(unsafe, *src))) {
+//			*dest++=*src++;
+//			dstlen++;
+//		} else {
 			*dest++='%';
 			*dest++=hex[(short int)*src/16];
 			*dest++=hex[(short int)*src++&15];
 			dstlen+=3;
-		}
+//		}
 	}
 	*dest='\0';
 	return buffer;
@@ -285,7 +291,7 @@ void printline2(CONN *conn, int dowrap, char *msgtext)
 void htselect_timezone(CONN *conn, short int selected)
 {
 	obj_t *cobj, *tobj;
-	int i=0, n;
+	int i=0;//, n;
 
 	if ((conn==NULL)||(conn->N==NULL)) return;
 	tobj=nsp_settable(conn->N, &conn->N->g, "_SERVER");
@@ -297,7 +303,7 @@ void htselect_timezone(CONN *conn, short int selected)
 	}
 	for (tobj=cobj->val->d.table.f;tobj;tobj=tobj->next) {
 		if (tobj->val->type!=NT_TABLE) continue;
-		n=(int)nsp_getnum(conn->N, tobj, "o");
+		//n=(int)nsp_getnum(conn->N, tobj, "o");
 		prints(conn, "<OPTION VALUE='%d'%s>%s\r\n", i, (i==selected)?" SELECTED":"", nsp_getstr(conn->N, tobj, "n"));
 		i++;
 	}

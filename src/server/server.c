@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "main.h"
+#if defined(linux)
+#include <execinfo.h>
+#endif
 
 #ifndef WIN32
 #include <errno.h>
@@ -58,7 +61,9 @@ void server_restart()
 }
 
 #ifdef linux
+#if __WORDSIZE == 32
 #define SIGCONTEXT
+#endif
 #endif
 
 #ifdef SIGCONTEXT
@@ -99,6 +104,24 @@ void sig_catchint(int sig)
 			context.eflags, context.esp_at_signal, context.ss, context.cr2);
 #else
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV [%d] Segmentation Violation", sig);
+#if defined(linux)
+		{
+			#define SIZE 100
+			void *buffer[SIZE];
+			char **strings;
+			int j, nptrs;
+
+			nptrs = backtrace(buffer, SIZE);
+			log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV backtrace() returned %d addresses\n", nptrs);
+			strings = backtrace_symbols(buffer, nptrs);
+			if (strings!=NULL) {
+				for (j = 0; j < nptrs; j++) {
+					log_error(proc.N, "core", __FILE__, __LINE__, 0, "SIGSEGV [%s]", strings[j]);
+				}
+				free(strings);
+			}
+		}
+#endif
 #endif
 		exit(-1);
 	case 13: /* SIGPIPE */

@@ -1,3 +1,2 @@
-include("debug.ns");
-print("runtime=", runtime(), " seconds\n");
-print("</BODY>\n</HTML>\n");
+//include("debug.ns");
+print("</body>\n</html>\n");

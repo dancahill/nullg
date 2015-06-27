@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ DllExport int mod_init(_PROC *_proc)
 	conf_read();
 	log_error(proc->N, "core", __FILE__, __LINE__, 1, "Starting %s smtpq %s (%s)", SERVER_NAME, PACKAGE_VERSION, __DATE__);
 	if ((conn=calloc(mod_config.smtp_maxconn, sizeof(CONN)))==NULL) {
-		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.smtp_maxconn, sizeof(CONN));
+		printf("\r\nconn calloc(%d, %d) failed\r\n", mod_config.smtp_maxconn, (int)sizeof(CONN));
 		return -1;
 	}
 	for (i=0;i<mod_config.smtp_maxconn;i++) conn[i].socket.socket=-1;

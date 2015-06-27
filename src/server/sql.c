@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,5 +84,12 @@ int sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 	va_end(ap);
 	rc=sql_query(N, qobj, sqlquery);
 	free(sqlquery);
+	return rc;
+}
+
+
+int sql_getsequence(nsp_state *N, char *table)
+{
+	int rc=_sql_getsequence(N, table);
 	return rc;
 }

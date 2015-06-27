@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2010 Dan Cahill
+    Copyright (C) 2007-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -88,6 +88,7 @@ void  _sql_disconnect(nsp_state *N);
 void  _sql_freeresult(nsp_state *N, obj_t **qptr);
 int   _sql_update(nsp_state *N, char *sqlquery);
 int   _sql_query(nsp_state *N, obj_t **qptr, char *query);
+int   _sql_getsequence(nsp_state *N, char *table);
 int   _sql_updatef(nsp_state *N, char *format, ...);
 int   _sql_queryf(nsp_state *N, obj_t **qptr, char *format, ...);
 char *sql_getname(nsp_state *N, obj_t **qptr, int fieldnumber);

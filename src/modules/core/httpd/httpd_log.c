@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,8 +69,6 @@ void log_htaccess(CONN *conn)
 	if (!LogLock) { LogLock=calloc(1, sizeof(pthread_mutex_t)); pthread_mutex_init(LogLock, NULL); }
 #endif
 	if (conn->dat==NULL) return;
-	snprintf(file, sizeof(file)-1, "%s/" MODSHORTNAME "-access.log", nsp_getstr(proc->N, confobj, "var_log_path"));
-	fixslashes(file);
 	memset(logbuffer, 0, sizeof(logbuffer));
 	memset(timebuffer, 0, sizeof(timebuffer));
 	gettimeofday(&ttime, &tzone);
@@ -94,6 +92,8 @@ void log_htaccess(CONN *conn)
 #ifndef WIN32
 	pthread_mutex_lock(LogLock);
 #endif
+	snprintf(file, sizeof(file)-1, "%s/" MODSHORTNAME "-access.log", nsp_getstr(proc->N, confobj, "var_log_path"));
+	fixslashes(file);
 	if ((fp=fopen(file, "a"))==NULL) {
 #ifndef WIN32
 		pthread_mutex_unlock(LogLock);

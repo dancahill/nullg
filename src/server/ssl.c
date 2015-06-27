@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -118,6 +118,9 @@ int ssl_dl_init()
 	fixslashes(libname);
 	if ((hinstLib=lib_open(libname))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libssl.%s", libext);
+	fixslashes(libname);
+	if ((hinstLib=lib_open(libname))!=NULL) goto found;
+	snprintf(libname, sizeof(libname)-1, "libssl.%s.1.0.0", libext);
 	fixslashes(libname);
 	if ((hinstLib=lib_open(libname))!=NULL) goto found;
 	snprintf(libname, sizeof(libname)-1, "libssl.%s.0.9.8", libext);

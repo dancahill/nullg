@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,15 +40,11 @@
 #include "nullsd/defines.h"
 #include "nsp/nsp.h"
 #include "nsd.h"
-//#include "schema.h"
-#include "nullsd/schema/data.h"
-#include "nullsd/schema/mysql.h"
-#include "nullsd/schema/odbc.h"
-#include "nullsd/schema/pgsql.h"
-#include "nullsd/schema/sqlite.h"
 
 #define SQLBUFSIZE 32768
 
+obj_t *sql_schema=NULL;
+obj_t *sql_default_data=NULL;
 char sql_type[32];
 char rootpass[40];
 int loglevel;
@@ -82,14 +78,225 @@ int sqlfprintf(nsp_state *N, FILE *fp, const char *format, ...)
 	return 0;
 }
 
-int init_table(nsp_state *N, char *query, char *tablename)
+int sequence_sync(nsp_state *N)
 {
-	if (strcasecmp(sql_type, "MYSQL")==0) {
+	obj_t *qobj=NULL;
+	obj_t *table_schema;
+	int max;
+
+	if (strcasecmp(sql_type, "FBSQL")==0) {
+		//printf("fbsql_generator_sync started;\r\n");
+		for (table_schema=sql_schema->val->d.table.f;table_schema;table_schema=table_schema->next) {
+			char *tablename=nsp_getstr(N, table_schema, "name");
+			char *indexname=nsp_getstr(N, table_schema, "index");
+			char *sequencename=nsp_getstr(N, table_schema, "sequencename");
+
+			if (!nsp_istable(table_schema)) continue;
+			if (strcmp(sequencename, "null")==0) continue;
+			if (_sql_queryf(N, &qobj, "SELECT MAX(%s) FROM %s", indexname, tablename)<0) return -1;
+			if (sql_numtuples(N, &qobj)!=1) {
+				_sql_freeresult(N, &qobj);
+				printf("sql error;\r\n");
+				return -1;
+			}
+			max=atoi(sql_getvalue(N, &qobj, 0, 0));
+			_sql_freeresult(N, &qobj);
+			_sql_updatef(N, "SET GENERATOR gen_%s TO %d;", tablename, max);
+		}
+		//printf("fbsql_generator_sync done;\r\n");
+	} else if (strcasecmp(sql_type, "PGSQL")==0) {
+		//for (i=0;;i++) {
+		//	if (pgsqldb_tables[i].seqname==NULL) break;
+		//	if (_sql_queryf(N, &qobj, "SELECT max(%s) FROM %s", pgsqldb_tables[i].index, pgsqldb_tables[i].name)<0) return -1;
+		//	if (sql_numtuples(N, &qobj)!=1) {
+		//		_sql_freeresult(N, &qobj);
+		//		return -1;
+		//	}
+		//	max=atoi(sql_getvalue(N, &qobj, 0, 0))+1;
+		//	_sql_freeresult(N, &qobj);
+		//	if (_sql_queryf(N, &qobj, "SELECT last_value FROM %s", pgsqldb_tables[i].seqname)<0) return -1;
+		//	if (sql_numtuples(N, &qobj)!=1) {
+		//		_sql_freeresult(N, &qobj);
+		//		return -1;
+		//	}
+		//	seq=atoi(sql_getvalue(N, &qobj, 0, 0));
+		//	_sql_freeresult(N, &qobj);
+		//	if (seq<max) seq=max;
+		//	if (_sql_queryf(N, &qobj, "SELECT setval ('\"%s\"', %d, false);", pgsqldb_tables[i].seqname, seq)<0) return -1;
+		//	if (sql_numtuples(N, &qobj)!=1) {
+		//		_sql_freeresult(N, &qobj);
+		//		return -1;
+		//	}
+		//	_sql_freeresult(N, &qobj);
+		//}
+	}
+	return 0;
+}
+
+int table_check(nsp_state *N)
+{
+	obj_t *qobj=NULL;
+	//int i;
+	int x;
+
+	/* CHECK gw_dbinfo TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_dbinfo")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+//		for (i=0;sqldata_new[i]!=NULL;i++) {
+//			if (_sql_update(N, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
+//		}
+	}
+	/* CHECK gw_calls_actions TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_calls_actions")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+//		for (i=0;sqldata_callactions[i]!=NULL;i++) {
+//			if (_sql_update(N, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
+//		}
+	}
+	/* CHECK gw_domains TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_domains")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+//		for (i=0;sqldata_domains[i]!=NULL;i++) {
+//			if (_sql_update(N, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
+//		}
+	}
+	/* CHECK gw_eventclosings TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_closings")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+//		for (i=0;sqldata_eventclosings[i]!=NULL;i++) {
+//			if (_sql_update(N, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
+//		}
+	}
+	/* CHECK gw_eventtypes TABLE */
+	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_types")<0) return -1;
+	x=atoi(sql_getvalue(N, &qobj, 0, 0));
+	_sql_freeresult(N, &qobj);
+	if (x==0) {
+//		for (i=0;sqldata_eventtypes[i]!=NULL;i++) {
+//			if (_sql_update(N, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
+//		}
+	}
+	/* Assign all orphaned records to domain 1 */
+	//_sql_updatef(N, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
+	//_sql_updatef(N, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_bookmarks_folders SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_email_accounts SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_email_folders SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_email_headers SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_finance_invoices SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
+	//_sql_updatef(N, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
+	/* Update the db version */
+	_sql_updatef(N, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
+	return 0;
+}
+
+int table_init(nsp_state *N, obj_t *table_schema)
+{
+	char query[8192];
+	char *tablename=nsp_getstr(N, table_schema, "name");
+	char *indexname=nsp_getstr(N, table_schema, "index");
+	char *sequencename=nsp_getstr(N, table_schema, "sequencename");
+	char *primarykey=nsp_getstr(N, table_schema, "primarykey");
+	int line=0;
+	obj_t *field;
+	char *qo=query;
+	int bl=sizeof(query)-1;
+	int l;
+
+//	printf("\r\nname=[%s]\r\n", tablename);
+//	printf("indexname=[%s]\r\n", indexname);
+//	printf("sequencename=[%s]\r\n", sequencename);
+//	printf("primarykey=[%s]\r\n", primarykey);
+	l=snprintf(qo, bl, "CREATE TABLE %s (\r\n\t", tablename);
+	qo+=l;
+	bl-=l;
+	for (field=nsp_getobj(N, table_schema, "fields")->val->d.table.f;field;field=field->next) {
+		//obj_t *attribute;
+		if (!nsp_istable(field)) continue;
+		char *name=nsp_getstr(N, field, "0");
+		char *type=nsp_getstr(N, field, "1");
+		char *null=nsp_getstr(N, field, "2");
+		char *dflt=nsp_getstr(N, field, "3");
+
+		if (strcasecmp(sql_type, "FBSQL")==0) {
+			if (strcasecmp(type, "TEXT")==0) {
+				type="blob sub_type 1";
+			}
+		}
+
+		if (line>0) {
+			l=snprintf(qo, bl, ",\r\n\t");
+			qo+=l;
+			bl-=l;
+		}
+		line++;
+		//for (attribute=field->val->d.table.f;attribute;attribute=attribute->next) {
+		//	if (!nsp_isstr(attribute)||attribute->val->d.str==NULL) {
+		//		printf("	%s=[ N U L L ]\r\n", attribute->name);
+		//	} else {
+		//		printf("	%s=[%s]\r\n", attribute->name, attribute->val->d.str);
+		//	}
+		//}
+		l=snprintf(qo, bl, "%-20s %-20s", name, type);
+		qo+=l;
+		bl-=l;
+		if (strcmp(dflt, "null")) {
+			l=snprintf(qo, bl, "DEFAULT %s", dflt);
+			qo+=l;
+			bl-=l;
+		}
+		if (strcmp(dflt, "NOT NULL")!=0) {
+			if (strcmp(dflt, "null")!=0) {
+				l=snprintf(qo, bl, " ");
+				qo+=l;
+				bl-=l;
+			}
+			l=snprintf(qo, bl, "%s", null);
+			qo+=l;
+			bl-=l;
+		}
+	}
+	if (strcmp(primarykey, "null")!=0) {
+		l=snprintf(qo, bl, ",\r\n\tPRIMARY KEY(%s)", primarykey);
+		qo+=l;
+		bl-=l;
+	}
+	l=snprintf(qo, bl, "\r\n)\r\n");
+	qo+=l;
+	bl-=l;
+//	printf("%s", query);
+
+	if (strcasecmp(sql_type, "FBSQL")==0) {
+		/* drop any old triggers and generators, and then the table */
+		if (strcmp(sequencename, "null")!=0) {
+			_sql_updatef(N, "DROP TRIGGER %s_bi;", tablename);
+			_sql_updatef(N, "DROP GENERATOR gen_%s;", tablename);
+		}
+		_sql_updatef(N, "DROP TABLE %s;", tablename);
+	} else if (strcasecmp(sql_type, "MYSQL")==0) {
 		_sql_updatef(N, "DROP TABLE IF EXISTS %s;", tablename);
 #ifdef WIN32
 	} else if (strcasecmp(sql_type, "ODBC")==0) {
 #endif
 	} else if (strcasecmp(sql_type, "PGSQL")==0) {
+		/* drop and create sequence before creating the table */
+		_sql_updatef(N, "DROP SEQUENCE %s;", sequencename);
+		_sql_updatef(N, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", sequencename);
 		_sql_updatef(N, "DROP TABLE %s;", tablename);
 	} else if (strcasecmp(sql_type, "SQLITE2")==0) {
 		_sql_updatef(N, "DROP TABLE %s;", tablename);
@@ -100,167 +307,95 @@ int init_table(nsp_state *N, char *query, char *tablename)
 		printf("\r\nError inserting %s\r\n", tablename);
 		return -1;
 	}
-	return 0;
-}
-
-int pgsql_sequence_sync(nsp_state *N)
-{
-	int max;
-	int seq;
-	obj_t *qobj=NULL;
-	int i;
-
-	for (i=0;;i++) {
-		if (pgsqldb_tables[i].seqname==NULL) break;
-		if (_sql_queryf(N, &qobj, "SELECT max(%s) FROM %s", pgsqldb_tables[i].index, pgsqldb_tables[i].name)<0) return -1;
-		if (sql_numtuples(N, &qobj)!=1) {
-			_sql_freeresult(N, &qobj);
-			return -1;
+	if (strcasecmp(sql_type, "FBSQL")==0) {
+		/* create generators and triggers for this table */
+		if (strcmp(sequencename, "null")!=0) {
+			_sql_updatef(N, "CREATE GENERATOR gen_%s;", tablename);
+			_sql_updatef(N, "SET GENERATOR gen_%s TO 0;", tablename);
+			_sql_updatef(N, "CREATE TRIGGER %s_bi FOR %s\n"
+				"ACTIVE BEFORE INSERT POSITION 0\n"
+				"AS\n"
+				"BEGIN\n"
+				"IF (NEW.%s IS NULL OR NEW.%s=0) THEN NEW.%s = GEN_ID(gen_%s, 1);\n"
+				"END\n"
+				, tablename, tablename, indexname, indexname, indexname, tablename
+			);
 		}
-		max=atoi(sql_getvalue(N, &qobj, 0, 0))+1;
-		_sql_freeresult(N, &qobj);
-		if (_sql_queryf(N, &qobj, "SELECT last_value FROM %s", pgsqldb_tables[i].seqname)<0) return -1;
-		if (sql_numtuples(N, &qobj)!=1) {
-			_sql_freeresult(N, &qobj);
-			return -1;
-		}
-		seq=atoi(sql_getvalue(N, &qobj, 0, 0));
-		_sql_freeresult(N, &qobj);
-		if (seq<max) seq=max;
-		if (_sql_queryf(N, &qobj, "SELECT setval ('\"%s\"', %d, false);", pgsqldb_tables[i].seqname, seq)<0) return -1;
-		if (sql_numtuples(N, &qobj)!=1) {
-			_sql_freeresult(N, &qobj);
-			return -1;
-		}
-		_sql_freeresult(N, &qobj);
 	}
 	return 0;
 }
 
-int table_check(nsp_state *N)
+int init_db(nsp_state *N)
 {
-/*
-	int i;
+	obj_t *table_schema;
 
-	for (i=0;sqldata_new[i]!=NULL;i++) {
-		if (_sql_update(N, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
+	printf("Initialising %s database tables...", sql_type);
+#if defined(linux)
+	printf("\r\n");
+	for (table_schema=sql_schema->val->d.table.f;table_schema;table_schema=table_schema->next) {
+		if (!nsp_istable(sql_schema)) continue;
+		printf("-");
 	}
-*/
-	obj_t *qobj=NULL;
-//	SQLRES sqr;
-	int i;
-	int x;
-
-	/* CHECK gw_dbinfo TABLE */
-	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_dbinfo")<0) return -1;
-	x=atoi(sql_getvalue(N, &qobj, 0, 0));
-	_sql_freeresult(N, &qobj);
-	if (x==0) {
-		for (i=0;sqldata_new[i]!=NULL;i++) {
-			if (_sql_update(N, sqldata_new[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_new[i]); return -1; }
-		}
-	}
-	/* CHECK gw_calls_actions TABLE */
-	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_calls_actions")<0) return -1;
-	x=atoi(sql_getvalue(N, &qobj, 0, 0));
-	_sql_freeresult(N, &qobj);
-	if (x==0) {
-		for (i=0;sqldata_callactions[i]!=NULL;i++) {
-			if (_sql_update(N, sqldata_callactions[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_callactions[i]); return -1; }
-		}
-	}
-	/* CHECK gw_domains TABLE */
-	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_domains")<0) return -1;
-	x=atoi(sql_getvalue(N, &qobj, 0, 0));
-	_sql_freeresult(N, &qobj);
-	if (x==0) {
-		for (i=0;sqldata_domains[i]!=NULL;i++) {
-			if (_sql_update(N, sqldata_domains[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_domains[i]); return -1; }
-		}
-	}
-	/* CHECK gw_eventclosings TABLE */
-	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_closings")<0) return -1;
-	x=atoi(sql_getvalue(N, &qobj, 0, 0));
-	_sql_freeresult(N, &qobj);
-	if (x==0) {
-		for (i=0;sqldata_eventclosings[i]!=NULL;i++) {
-			if (_sql_update(N, sqldata_eventclosings[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventclosings[i]); return -1; }
-		}
-	}
-	/* CHECK gw_eventtypes TABLE */
-	if (_sql_query(N, &qobj, "SELECT count(*) FROM gw_events_types")<0) return -1;
-	x=atoi(sql_getvalue(N, &qobj, 0, 0));
-	_sql_freeresult(N, &qobj);
-	if (x==0) {
-		for (i=0;sqldata_eventtypes[i]!=NULL;i++) {
-			if (_sql_update(N, sqldata_eventtypes[i])<0) { printf("\r\nError inserting '%s'\r\n", sqldata_eventtypes[i]); return -1; }
-		}
-	}
-	/* Assign all orphaned records to domain 1 */
-	_sql_updatef(N, "UPDATE gw_users SET obj_did = 1, domainid = 1 WHERE domainid = 0");
-	_sql_updatef(N, "UPDATE gw_groups SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_contacts SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_activity SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_bookmarks SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_bookmarks_folders SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_calls SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_email_accounts SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_email_folders SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_email_headers SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_events SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_files SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_finance_invoices SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
-	_sql_updatef(N, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
-	/* Update the db version */
-	_sql_updatef(N, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
-	return 0;
-
-	return 0;
-}
-
-int dump_db_ldif(nsp_state *N, char *filename)
-{
-/*
-	obj_t *qobj1=NULL;
-	obj_t *qobj2=NULL;
-	int i;
-	int j;
-	FILE *fp;
-
-	printf("Dumping %s database to %s...", sql_type, filename);
-#ifndef WIN32
-	umask(077);
+	printf("\r");
 #endif
-	if ((fp=fopen(filename, "wa"))==NULL) {
-		printf("\r\nCould not create output file.\r\n");
-		return -1;
+	for (table_schema=sql_schema->val->d.table.f;table_schema;table_schema=table_schema->next) {
+		if (!nsp_istable(sql_schema)) continue;
+		table_init(N, table_schema);
+#if defined(linux)
+		printf("=");
+#endif
 	}
-	if (_sql_query(N, &qobj1, "SELECT * FROM nullsd_entries ORDER BY id ASC")<0) {
-		printf("\r\nError dumping nullsd_entries\r\n");
-		return -1;
-	}
-	for (i=0;i<sql_numtuples(N, &qobj1);i++) {
-		if (_sql_queryf(N, &qobj2, "SELECT * FROM nullsd_attributes WHERE pid = %d ORDER BY id ASC", atoi(sql_getvalue(N, &qobj1, i, 0)))<0) {
-			printf("\r\nError dumping nullsd_attributes\r\n");
+#if defined(linux)
+		printf("\r\n");
+#endif
+	table_check(N);
+	sequence_sync(N);
+	if (strlen(rootpass)>0) {
+		if (_sql_updatef(N, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass)<0) {
+			printf("\r\nError setting root password\r\n");
 			return -1;
 		}
-		fprintf(fp, "dn: %s\n", sql_getvaluebyname(N, &qobj1, i, "name"));
-		fprintf(fp, "objectClass: %s\n", sql_getvaluebyname(N, &qobj1, i, "class"));
-		for (j=0;j<sql_numtuples(N, &qobj2);j++) {
-			fprintf(fp, "%s: ", sql_getvaluebyname(N, &qobj2, j, "name"));
-			sqlfprintf(N, fp, "%s", sql_getvaluebyname(N, &qobj2, j, "value"));
-			fprintf(fp, "\n");
-		}
-		fprintf(fp, "\n");
-		_sql_freeresult(N, &qobj2);
 	}
-	_sql_freeresult(N, &qobj1);
-	fclose(fp);
 	printf("done.\r\n");
 	_sql_disconnect(N);
-*/
-	return -1;
+	return 0;
+}
+
+int restore_db(nsp_state *N, char *filename)
+{
+	char line[32768];
+	char *pTemp;
+	FILE *fp;
+
+	fp=fopen(filename, "r");
+	if (fp==NULL) {
+		printf("Could not open source file.\r\n");
+		return -1;
+	}
+	init_db(N);
+	printf("Restoring data...\r\n");
+	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
+		while ((line[strlen(line)-1]=='\n')||(line[strlen(line)-1]=='\r')) {
+			line[strlen(line)-1]='\0';
+		}
+		if (strncasecmp(line, "INSERT", 6)==0) {
+			pTemp=line;
+			while (*pTemp) {
+				if ((pTemp[0]=='\\')&&(pTemp[1]=='n')) {
+					pTemp[0]=13;
+					pTemp[1]=10;
+				}
+				pTemp++;
+			}
+			if (_sql_update(N, line)<0) return -1;
+		}
+	}
+	sequence_sync(N);
+	fclose(fp);
+	table_check(N);
+	printf("done.\r\n");
+	_sql_disconnect(N);
+	return 0;
 }
 
 int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
@@ -271,7 +406,11 @@ int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 	int j;
 	obj_t *qobj=NULL;
 
-	snprintf(query, sizeof(query)-1, "SELECT * FROM %s ORDER BY %s ASC", table, index);
+	if (strcmp(table, "gw_dbinfo")==0) {
+		snprintf(query, sizeof(query)-1, "SELECT * FROM %s ORDER BY %s ASC", table, index);
+	} else {
+		snprintf(query, sizeof(query)-1, "SELECT * FROM %s ORDER BY obj_did ASC, %s ASC", table, index);
+	}
 	if (_sql_query(N, &qobj, query)<0) {
 		printf("\r\nError dumping %s\r\n", table);
 		return -1;
@@ -280,11 +419,22 @@ int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 		fprintf(fp, "INSERT INTO %s (", table);
 		for (j=0;j<sql_numfields(N, &qobj);j++) {
 			ptemp=sql_getname(N, &qobj, j);
+			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
+				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
+					continue;
+				}
+			}
 			fprintf(fp, "%s", sql_getname(N, &qobj, j));
 			if (j<sql_numfields(N, &qobj)-1) fprintf(fp, ", ");
 		}
 		fprintf(fp, ") VALUES (");
 		for (j=0;j<sql_numfields(N, &qobj);j++) {
+			ptemp=sql_getname(N, &qobj, j);
+			if ((strcmp(table, "gw_contacts")==0)||(strcmp(table, "gw_users")==0)) {
+				if ((strcmp(ptemp, "loginip")==0)||(strcmp(ptemp, "logintime")==0)||(strcmp(ptemp, "logintoken")==0)) {
+					continue;
+				}
+			}
 			if (j>0) fprintf(fp, ", ");
 			fprintf(fp, "'");
 			sqlfprintf(N, fp, "%s", sql_getvalue(N, &qobj, i, j));
@@ -298,45 +448,6 @@ int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 
 int dump_db_sql(nsp_state *N, char *filename)
 {
-/*
-	obj_t *qobj1=NULL;
-	int i, j;
-	FILE *fp;
-
-	printf("Dumping %s database to %s...", sql_type, filename);
-#ifndef WIN32
-	umask(077);
-#endif
-	if ((fp=fopen(filename, "wa"))==NULL) {
-		printf("\r\nCould not create output file.\r\n");
-		return -1;
-	}
-	if (_sql_query(N, &qobj1, "SELECT * FROM nullsd_entries ORDER BY id ASC")<0) {
-		printf("\r\nError dumping nullsd_entries\r\n");
-		return -1;
-	}
-	for (i=0;i<sql_numtuples(N, &qobj1);i++) {
-		fprintf(fp, "INSERT INTO nullsd_entries (");
-		for (j=0;j<sql_numfields(N, &qobj1);j++) {
-			fprintf(fp, "%s", sql_getname(N, &qobj1, j));
-			if (j<sql_numfields(N, &qobj1)-1) fprintf(fp, ", ");
-		}
-		fprintf(fp, ") VALUES (");
-		for (j=0;j<sql_numfields(N, &qobj1);j++) {
-			fprintf(fp, "'");
-			sqlfprintf(N, fp, "%s", sql_getvalue(N, &qobj1, i, j));
-			fprintf(fp, "'");
-			if (j<sql_numfields(N, &qobj1)-1) fprintf(fp, ", ");
-		}
-		fprintf(fp, ");\n");
-	}
-	_sql_freeresult(N, &qobj1);
-	dump_table(N, fp, "nullsd_sessions", "id");
-	fclose(fp);
-	printf("done.\r\n");
-	_sql_disconnect(N);
-	return -1;
-*/
 	FILE *fp;
 
 	printf("Dumping %s database to %s...", sql_type, filename);
@@ -395,127 +506,6 @@ int dump_db_sql(nsp_state *N, char *filename)
 	return -1;
 }
 
-int init_db(nsp_state *N)
-{
-	int i;
-
-	if (strcasecmp(sql_type, "MYSQL")==0) {
-		printf("Initialising MySQL database...");
-		for (i=0;;i++) {
-			if (mysqldb_tables[i].name==NULL) break;
-			if (init_table(N, mysqldb_tables[i].schema, mysqldb_tables[i].name)!=0) return -1;
-		}
-#ifdef WIN32
-	} else if (strcasecmp(sql_type, "ODBC")==0) {
-		printf("Initialising ODBC *.mdb database...");
-		for (i=0;;i++) {
-			if (mdb_tables[i].name==NULL) break;
-			if (init_table(N, mdb_tables[i].schema, mdb_tables[i].name)!=0) return -1;
-		}
-#endif
-	} else if (strcasecmp(sql_type, "PGSQL")==0) {
-		printf("Initialising PostgreSQL database...");
-		for (i=0;;i++) {
-			if (pgsqldb_tables[i].seqname==NULL) break;
-			_sql_updatef(N, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
-			_sql_updatef(N, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
-		}
-		for (i=0;;i++) {
-			if (pgsqldb_tables[i].name==NULL) break;
-			if (init_table(N, pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
-		}
-	} else if (strncasecmp(sql_type, "SQLITE", 6)==0) {
-		printf("Initialising SQLite database...");
-		for (i=0;;i++) {
-			if (sqlitedb_tables[i].name==NULL) break;
-			if (init_table(N, sqlitedb_tables[i].schema, sqlitedb_tables[i].name)!=0) return -1;
-		}
-	}
-	table_check(N);
-	if (strcasecmp(sql_type, "PGSQL")==0) {
-		pgsql_sequence_sync(N);
-	}
-	if (strlen(rootpass)>0) {
-		if (_sql_updatef(N, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass)<0) {
-			printf("\r\nError setting root password\r\n");
-			return -1;
-		}
-	}
-	printf("done.\r\n");
-	_sql_disconnect(N);
-	return 0;
-}
-
-int restore_db(nsp_state *N, char *filename)
-{
-	char line[32768];
-	char *pTemp;
-	FILE *fp;
-	int i;
-
-	fp=fopen(filename, "r");
-	if (fp==NULL) {
-		printf("Could not open source file.\r\n");
-		return -1;
-	}
-	if (strcasecmp(sql_type, "MYSQL")==0) {
-		printf("Restoring MySQL database from %s...", filename);
-		for (i=0;;i++) {
-			if (mysqldb_tables[i].name==NULL) break;
-			if (init_table(N, mysqldb_tables[i].schema, mysqldb_tables[i].name)!=0) return -1;
-		}
-#ifdef WIN32
-	} else if (strcasecmp(sql_type, "ODBC")==0) {
-		printf("Restoring ODBC database from %s...", filename);
-		for (i=0;;i++) {
-			if (mdb_tables[i].name==NULL) break;
-			if (init_table(N, mdb_tables[i].schema, mdb_tables[i].name)!=0) return -1;
-		}
-#endif
-	} else if (strcasecmp(sql_type, "PGSQL")==0) {
-		printf("Restoring PostgreSQL database from %s...", filename);
-		for (i=0;;i++) {
-			if (pgsqldb_tables[i].seqname==NULL) break;
-			_sql_updatef(N, "DROP SEQUENCE %s;", pgsqldb_tables[i].seqname);
-			_sql_updatef(N, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", pgsqldb_tables[i].seqname);
-		}
-		for (i=0;;i++) {
-			if (pgsqldb_tables[i].name==NULL) break;
-			if (init_table(N, pgsqldb_tables[i].schema, pgsqldb_tables[i].name)!=0) return -1;
-		}
-	} else if (strncasecmp(sql_type, "SQLITE", 6)==0) {
-		printf("Restoring SQLite database from %s...", filename);
-		for (i=0;;i++) {
-			if (sqlitedb_tables[i].name==NULL) break;
-			if (init_table(N, sqlitedb_tables[i].schema, sqlitedb_tables[i].name)!=0) return -1;
-		}
-	}
-	while (fgets(line, sizeof(line)-1, fp)!=NULL) {
-		while ((line[strlen(line)-1]=='\n')||(line[strlen(line)-1]=='\r')) {
-			line[strlen(line)-1]='\0';
-		}
-		if (strncasecmp(line, "INSERT", 6)==0) {
-			pTemp=line;
-			while (*pTemp) {
-				if ((pTemp[0]=='\\')&&(pTemp[1]=='n')) {
-					pTemp[0]=13;
-					pTemp[1]=10;
-				}
-				pTemp++;
-			}
-			if (_sql_update(N, line)<0) return -1;
-		}
-	}
-	if (strcasecmp(sql_type, "PGSQL")==0) {
-		pgsql_sequence_sync(N);
-	}
-	fclose(fp);
-/*	table_check(N); */
-	printf("done.\r\n");
-	_sql_disconnect(N);
-	return 0;
-}
-
 void usage(char *arg0)
 {
 	char *progname;
@@ -562,7 +552,9 @@ int main(int argc, char *argv[])
 	int i;
 	obj_t *tobj;
 	obj_t *cobj;
+	char filename[255];
 
+	setvbuf(stdout, NULL, _IONBF, 0);
 	if ((N=nsp_newstate())==NULL) {
 		printf("nsp_newstate() error\r\n");
 		return -1;
@@ -600,6 +592,17 @@ int main(int argc, char *argv[])
 	if (cobj->val->type==NT_STRING) {
 		snprintf(sql_type, sizeof(sql_type)-1, "%s", cobj->val->d.str);
 	}
+
+	snprintf(filename, sizeof(filename)-1, "%s/var/share/scripts/dbinit.ns", "..");
+	if (strlen(filename)>0) {
+		if (nsp_execfile(N, filename)==0);
+	}
+	sql_schema=nsp_getobj(N, &N->g, "sql_schema");
+	if (!nsp_istable(sql_schema)) {
+		printf("table 'sql_schema' not found\r\n");
+		return 0;
+	}
+
 	if (strcmp(function, "init")==0) {
 		if (argc<3) {
 			printf("Failing to provide a new password for the administrator account may leave\r\n");
@@ -613,9 +616,6 @@ int main(int argc, char *argv[])
 	}
 	if (strcmp(function, "dump")==0) {
 		return dump_db_sql(N, parameter);
-	}
-	if (strcmp(function, "ldump")==0) {
-		return dump_db_ldif(N, parameter);
 	}
 	if (strcmp(function, "restore")==0) {
 		return restore_db(N, parameter);

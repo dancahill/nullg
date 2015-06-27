@@ -1,0 +1,43 @@
+
+//	snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=\"%s%s%s.vcf\"", contact.givenname, strlen(contact.givenname)?" ":"", contact.surname);
+//	send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
+
+filename="test.vcf";
+//_HEADER['CONTENT-DISPOSITION']=sprintf("attachment; filename=\"%s\";", filename);
+_HEADER['CONTENT-DISPOSITION']=sprintf("inline; filename=\"%s\";", filename);
+_HEADER['CONTENT_TYPE']='text/vcard';
+
+print("BEGIN:VCARD
+VERSION:2.1
+N:Cahill;Dan;;Mr.
+FN:Dan Cahill
+NICKNAME:nulllogic
+ORG:NullLogic
+TITLE:Programmer
+TEL;WORK;VOICE:1-514-433-4041
+TEL;HOME;VOICE:1-514-433-4041
+TEL;CELL;VOICE:1-514-433-4041
+ADR;HOME:;;16-3417 Melrose Ave.;Montreal;Quebec;H4A 2R9;Canada
+ADR;WORK:;;;;;;
+EMAIL;PREF;INTERNET:nulllogic@gmail.com
+REV:20150512T200742Z
+END:VCARD
+");
+/*
+	prints(sid, "BEGIN:VCARD\r\n");
+	prints(sid, "VERSION:2.1\r\n");
+	prints(sid, "N:%s;%s;;%s\r\n", contact.surname, contact.givenname, contact.salutation);
+	prints(sid, "FN:%s%s%s\r\n", str2html(sid, contact.givenname), strlen(contact.givenname)?" ":"", str2html(sid, contact.surname));
+	if (strlen(contact.username))     prints(sid, "NICKNAME:%s\r\n", contact.username);
+	if (strlen(contact.organization)) prints(sid, "ORG:%s\r\n", contact.organization);
+	if (strlen(contact.jobtitle))     prints(sid, "TITLE:%s\r\n", contact.jobtitle);
+	if (strlen(contact.worknumber))   prints(sid, "TEL;WORK;VOICE:%s\r\n", contact.worknumber);
+	if (strlen(contact.homenumber))   prints(sid, "TEL;HOME;VOICE:%s\r\n", contact.homenumber);
+	if (strlen(contact.mobilenumber)) prints(sid, "TEL;CELL;VOICE:%s\r\n", contact.mobilenumber);
+	if (strlen(contact.faxnumber))    prints(sid, "TEL;WORK;FAX:%s\r\n", contact.faxnumber);
+	prints(sid, "ADR;HOME:;;%s;%s;%s;%s;%s\r\n", contact.homeaddress, contact.homelocality, contact.homeregion, contact.homepostalcode, contact.homecountry);
+	prints(sid, "ADR;WORK:;;%s;%s;%s;%s;%s\r\n", contact.workaddress, contact.worklocality, contact.workregion, contact.workpostalcode, contact.workcountry);
+	if (strlen(contact.email))        prints(sid, "EMAIL;PREF;INTERNET:%s\r\n", contact.email);
+	prints(sid, "REV:%s\r\n", mtime);
+	prints(sid, "END:VCARD\r\n");
+*/

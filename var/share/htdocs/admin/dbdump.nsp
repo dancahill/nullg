@@ -1,0 +1,67 @@
+<?nsp
+include_template("html/header.ns");
+global _TEMP={ modname="admin" };
+include_template("html/headmenu.ns");
+print("<BR>\r\n");
+
+function urlencode(s) {
+	s=tostring(s);
+	s=string.replace(s, "\"", "&quot;");
+	s=string.replace(s, "&",  "&amp;");
+	s=string.replace(s, " ",  "&nbsp;");
+	s=string.replace(s, "<",  "&lt;");
+	s=string.replace(s, ">",  "&gt;");
+	return s;
+}
+
+function print_table(sqr) {
+	if (sqr._rows[0]!=null) {
+		print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH='100%' STYLE='border-style:solid'>");
+		print("<TR>");
+		foreach (n,v in sqr._rows[0]) {
+			printf("<TH>%s</TH>", n);
+		}
+		print("</TR>");
+		foreach (row in sqr._rows) {
+			print("<TR>");
+			foreach (field in row) {
+				printf("<TD NOWRAP>%s</TD>", urlencode(field));
+			}
+			print("</TR>");
+		}
+		print("</TABLE>");
+	}
+}
+
+try {
+	if (MASTERGLOBAL['CONFIG']['sql_server_type']=='MYSQL') {
+		sqr=sqlquery("SHOW TABLES");//MySQL
+	} else {
+		sqr=sqlquery("SELECT tbl_name AS name FROM sqlite_master WHERE type = 'table'");//SQLITE
+	}
+	print_table(sqr);
+	foreach (n,tablerec in sqr['_rows']) {
+		if (MASTERGLOBAL['CONFIG']['sql_server_type']=='MYSQL') {
+			tablename=tablerec['Tables_in_nullgroupware'];
+		} else {
+			tablename=tablerec['name'];
+		}
+		print("<HR>");
+		printf("[%s]<BR>", tablename);
+		if (tablename=='gw_activity') continue;
+		if (tablename=='gw_bookmarks') continue;
+		if (tablename=='gw_email_headers') continue;
+		if (tablename=='gw_notes') continue;
+		if (tablename=='gw_smtp_relayrules') continue;
+		if (tablename=='gw_weblog_entries') continue;
+		sqr2=sqlquery(sprintf("SELECT * FROM %s", tablename));
+		print_table(sqr2);
+	}
+	print("<HR>");
+} catch (ex) {
+	print(serialize(ex));
+}
+
+include_template("html/debug.ns");
+include_template("html/footer.ns");
+?>

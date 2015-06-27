@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 	pid=(int)nsp_getnum(proc->N, tobj, "pid");
 	did=(int)nsp_getnum(proc->N, tobj, "did");
 	dobj=nsp_settable(proc->N, tobj, "_data");
-	if (strcmp(oc, "person")==0) {
+	if (strcmp(oc, "user")==0) {
 		cobj=nsp_getobj(conn->N, dobj, "uid");
 	} else {
 		cobj=nsp_getobj(conn->N, dobj, "cn");
@@ -251,7 +251,9 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC", oc, pid, did);
 		} else if (strlen(oc)>0) {
 //			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
-			if (strcmp(oc, "person")==0) {
+			if (strcmp(oc, "domain")==0) {
+				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_domains order by domainname ASC", did);
+			} else if (strcmp(oc, "user")==0) {
 				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d ORDER BY obj_did, userid ASC", did);
 			} else if (strcmp(oc, "contact")==0) {
 				rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC", did);
@@ -285,7 +287,7 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 	if (strcmp(oc, "weblogentry")==0) {
 		nsp_linkval(N, nsp_settable(N, &N->g, "weblogentryresults"), qobj1);
 		sort_bykey(N, nsp_getobj(N, qobj1, "_rows"), "ctime", NULL, 1);
-//	} else if (strcmp(oc, "person")==0) {
+//	} else if (strcmp(oc, "user")==0) {
 //		ldir_sortlist(N, qobj1, "sn", "_data", 1);
 	}
 	return qobj1;
@@ -313,13 +315,15 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 	int i;
 //	char *p;
 
-	if (strcmp(oc, "person")==0) {
+	if (strcmp(oc, "user")==0) {
 		if (id) {
 //			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND userid = %d;", did, id);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND userid = %d;", did, id);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE userid = %d;", id);
 		} else if (name) {
 //			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
-			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND username = '%s';", did, name);
+//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND username = '%s';", did, name);
+			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE username = '%s';", name);
 		}
 	} else if (strcmp(oc, "contact")==0) {
 		if (id) {

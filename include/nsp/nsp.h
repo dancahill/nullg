@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2011 Dan Cahill
+    Copyright (C) 2007-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+    */
 #ifndef _NSP_H
 #define _NSP_H 1
 
@@ -27,41 +27,42 @@ extern "C" {
 #define NSP_VERSION   "0.9.3"
 
 #if defined(TINYCC)||defined(__TURBOC__)
-struct timeval { long tv_sec; long tv_usec; };
-struct timezone { int tz_minuteswest; int tz_dsttime; };
+	struct timeval { long tv_sec; long tv_usec; };
+	struct timezone { int tz_minuteswest; int tz_dsttime; };
 #endif
 #if defined(_MSC_VER)
-struct timezone { int tz_minuteswest; int tz_dsttime; };
+	struct timezone { int tz_minuteswest; int tz_dsttime; };
 #pragma warning(disable:4996)
 #define WIN32_LEAN_AND_MEAN
-/* always include winsock2 before windows */
+	/* always include winsock2 before windows */
 #include <winsock2.h>
 #include <windows.h>
 #include <time.h>
 #elif !defined(__TURBOC__)
 #include <sys/time.h>
+#include <stddef.h>
 #endif
 #include <setjmp.h>
 
-/* need to add size sanity here */
+	/* need to add size sanity here */
 #if defined(__TURBOC__)
-typedef signed long int   int32;
-typedef unsigned long int uint32;
+	typedef signed long int   int32;
+	typedef unsigned long int uint32;
 #elif defined(_LP64)
-typedef signed int        int32;
-typedef unsigned int      uint32;
+	typedef signed int        int32;
+	typedef unsigned int      uint32;
 #else
-typedef signed int        int32;
-typedef unsigned int      uint32;
+	typedef signed int        int32;
+	typedef unsigned int      uint32;
 #endif
-typedef signed char       int8;
-typedef unsigned char     uint8;
+	typedef signed char       int8;
+	typedef unsigned char     uint8;
 
 #define MAX_OBJNAMELEN  64
 #define MAX_OUTBUFLEN   4096
 #define OUTBUFLOWAT	2048
 
-/* object types */
+	/* object types */
 #define NT_NULL         0
 #define NT_BOOLEAN      1
 #define NT_NUMBER       2
@@ -71,7 +72,7 @@ typedef unsigned char     uint8;
 #define NT_TABLE        6
 #define NT_CDATA        7
 
-/* object status flags */
+	/* object status flags */
 #define NST_HIDDEN	0x01
 #define NST_READONLY	0x02
 #define NST_SYSTEM	0x04
@@ -86,114 +87,117 @@ typedef unsigned char     uint8;
 #define val_t struct nsp_valrec
 #define nsp_t struct nsp_state
 
-/* should be typedef int(*NSP_CFUNC)(nsp_state *); */
-typedef int(*NSP_CFUNC)(void *);
+	/* should be typedef int(*NSP_CFUNC)(nsp_state *); */
+	typedef int(*NSP_CFUNC)(void *);
 #define NSP_FUNCTION(name)    int name(nsp_state *N)
 #define NSP_CLASS(name)       int name(nsp_state *N)
 #define NSP_CLASSMETHOD(name) int name(nsp_state *N)
 
-/*
- * define a callback function type so CDATA objects
- * can choose the terms of their own death.
- */
-/* should be typedef void(*NSP_CFREE)(nsp_state *, obj_t *); */
-typedef void(*NSP_CFREE)(void *, void *);
+	/*
+	 * define a callback function type so CDATA objects
+	 * can choose the terms of their own death.
+	 */
+	/* should be typedef void(*NSP_CFREE)(nsp_state *, obj_t *); */
+	typedef void(*NSP_CFREE)(void *, void *);
 
-typedef struct NSP_CDATA {
-	/* standard header info for CDATA object */
-	char      obj_type[16]; /* tell us all about yourself in 15 characters or less */
-	NSP_CFREE obj_term;     /* now tell us how to kill you */
-	/* now begin the stuff that's type-specific */
-} NSP_CDATA;
-typedef struct nsp_tablerec {
-	obj_t *f;
-	obj_t *i;
-	obj_t *l;
-} nsp_tablerec;
-typedef struct nsp_valrec {
-	unsigned short type; /* val type */
-	unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
-	unsigned short refs; /* number of references to this node */
-	unsigned long  size; /* storage size of string, nfunc or cdata */
-	obj_t *ztable;       /* 'z' table for hierarchical lookups */
-	union {
-		num_t  num;
-		char  *str;
-		NSP_CFUNC cfunc;
-		NSP_CDATA *cdata;
-		tab_t table;
-	} d;
-} nsp_valrec;
-typedef struct nsp_objrec {
-	obj_t *prev;
-	obj_t *next;
-	val_t *val;
-	uint32 hash;
-	signed long nval;
-	char name[MAX_OBJNAMELEN+1];
-} nsp_objrec;
-typedef struct nsp_state {
-	uchar *blockptr;
-	uchar *blockend;
-	uchar *readptr;
-	obj_t g;
-	obj_t l;
-	obj_t r;
-	short brk;
-	short cnt;
-	short ret;
-	short err;
-	short signal; /* intended for external signals to the parser.  for now, non-zero just means to shut down */
-	short debug;
-	short single;
-	short strict;
-	short warnings;
-	short maxwarnings;
-	char warnformat;
-	jmp_buf *savjmp;
-	struct timeval ttime;
-	unsigned short outbuflen;
-	char numbuf[128];
-	char outbuf[MAX_OUTBUFLEN+1];
-	char errbuf[256];
-	char *func;
-	char *tracefn;
-	/* debug info */
-	long int line_num;
-	long int allocs;
-	long int allocmem;
-	long int frees;
-	long int freemem;
-	long int peakmem;
-	long int counter1;
-} nsp_state;
+	typedef struct NSP_CDATA {
+		/* standard header info for CDATA object */
+		char      obj_type[16]; /* tell us all about yourself in 15 characters or less */
+		NSP_CFREE obj_term;     /* now tell us how to kill you */
+		/* now begin the stuff that's type-specific */
+	} NSP_CDATA;
+	typedef struct nsp_tablerec {
+		obj_t *f;
+		obj_t *i;
+		obj_t *l;
+	} nsp_tablerec;
+	typedef struct nsp_valrec {
+		unsigned short type; /* val type */
+		unsigned short attr; /* status flags (hidden, readonly, system, autosort, etc...) */
+		unsigned short refs; /* number of references to this node */
+		unsigned long  size; /* storage size of string, nfunc or cdata */
+		obj_t *ztable;       /* 'z' table for hierarchical lookups */
+		union {
+			num_t  num;
+			char  *str;
+			NSP_CFUNC cfunc;
+			NSP_CDATA *cdata;
+			tab_t table;
+		} d;
+	} nsp_valrec;
+	typedef struct nsp_objrec {
+		obj_t *prev;
+		obj_t *next;
+		val_t *val;
+		uint32 hash;
+		signed long nval;
+		char name[MAX_OBJNAMELEN + 1];
+	} nsp_objrec;
+	typedef struct nsp_state {
+		uchar *blockptr;
+		uchar *blockend;
+		uchar *readptr;
+		obj_t g;
+		obj_t l;
+		obj_t r;
+		short brk;
+		short cnt;
+		short ret;
+		short err;
+		short signal; /* intended for external signals to the parser.  for now, non-zero just means to shut down */
+		short debug;
+		short single;
+		short strict;
+		short warnings;
+		short maxwarnings;
+		char warnformat;
+		jmp_buf *savjmp;
+		struct timeval ttime;
+		unsigned short outbuflen;
+		char numbuf[128];
+		char outbuf[MAX_OUTBUFLEN + 1];
+		char errbuf[256];
+		char *func;
+		char *file;
+		char *tracefn;
+		/* debug info */
+		long int line_num;
+		long int allocs;
+		long int allocmem;
+		long int frees;
+		long int freemem;
+		long int peakmem;
+		long int counter1;
+	} nsp_state;
 
 #ifndef NSP_NOFUNCTIONS
-/* exec */
-nsp_state *nsp_newstate   (void);
-void       nsp_freestate  (nsp_state *N);
-nsp_state *nsp_endstate   (nsp_state *N);
-obj_t     *nsp_exec       (nsp_state *N, const char *string);
-int        nsp_execfile   (nsp_state *N, char *file);
-/* objects */
-void       nsp_setvaltype (nsp_state *N, obj_t *cobj, unsigned short type);
-void       nsp_linkval    (nsp_state *N, obj_t *cobj1, obj_t *cobj2);
-void       nsp_unlinkval  (nsp_state *N, obj_t *cobj);
-void       nsp_freetable  (nsp_state *N, obj_t *tobj);
-obj_t     *nsp_getobj_ex  (nsp_state *N, obj_t *tobj, char *oname, unsigned short followz, unsigned short *foundz);
-obj_t     *nsp_getobj     (nsp_state *N, obj_t *tobj, char *oname);
-obj_t     *nsp_getiobj    (nsp_state *N, obj_t *tobj, unsigned long oindex);
-obj_t     *nsp_setobj     (nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, NSP_CFUNC _fptr, num_t _num, char *_str, long _slen);
-void       nsp_strcat     (nsp_state *N, obj_t *cobj, char *str, long len);
-void       nsp_strmul     (nsp_state *N, obj_t *cobj, unsigned long n);
-short      nsp_tobool     (nsp_state *N, obj_t *cobj);
-num_t      nsp_tonum      (nsp_state *N, obj_t *cobj);
-char      *nsp_tostr      (nsp_state *N, obj_t *cobj);
-/* parser */
-obj_t     *nsp_eval       (nsp_state *N, const char *string);
-obj_t     *nsp_evalf      (nsp_state *N, const char *fmt, ...);
+	/* exec */
+	nsp_state *nsp_newstate(void);
+	void       nsp_freestate(nsp_state *N);
+	nsp_state *nsp_endstate(nsp_state *N);
+	obj_t     *nsp_exec(nsp_state *N, const char *string);
+	int        nsp_execfile(nsp_state *N, char *file);
+	/* objects */
+	void       nsp_setvaltype(nsp_state *N, obj_t *cobj, unsigned short type);
+	void       nsp_linkval(nsp_state *N, obj_t *cobj1, obj_t *cobj2);
+	void       nsp_unlinkval(nsp_state *N, obj_t *cobj);
+	void       nsp_freetable(nsp_state *N, obj_t *tobj);
+	obj_t     *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short followz, unsigned short *foundz);
+	obj_t     *nsp_getobj(nsp_state *N, obj_t *tobj, char *oname);
+	obj_t     *nsp_getiobj(nsp_state *N, obj_t *tobj, unsigned long oindex);
+	obj_t     *nsp_setobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, NSP_CFUNC _fptr, num_t _num, char *_str, size_t _slen);
+	void       nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len);
+	void       nsp_strmul(nsp_state *N, obj_t *cobj, unsigned long n);
+	short      nsp_tobool(nsp_state *N, obj_t *cobj);
+	num_t      nsp_tonum(nsp_state *N, obj_t *cobj);
+	char      *nsp_tostr(nsp_state *N, obj_t *cobj);
+	char      *nsp_zlink(nsp_state *N, obj_t *cobj1, obj_t *cobj2);
+	/* parser */
+	obj_t     *nsp_eval(nsp_state *N, const char *string);
+	obj_t     *nsp_evalf(nsp_state *N, const char *fmt, ...);
 #endif
 
+	//#define    nsp_isnull(o)            (o==NULL||o->val==NULL||o->val->type==NT_NULL)
 #define    nsp_isnull(o)            (o==NULL||o->val==NULL||o->val->type==NT_NULL)
 #define    nsp_isbool(o)            (o!=NULL&&o->val!=NULL&&o->val->type==NT_BOOLEAN)
 #define    nsp_isnum(o)             (o!=NULL&&o->val!=NULL&&o->val->type==NT_NUMBER)
@@ -247,6 +251,8 @@ private:
 };
 
 class NesState {
+private:
+	nsp_state *N;
 public:
 	NesState()
 	{
@@ -268,12 +274,12 @@ public:
 	{
 		return nsp_eval(this->N, string);
 	}
-/*
-	obj_t *evalf(const char *fmt, ...)
-	{
+	/*
+		obj_t *evalf(const char *fmt, ...)
+		{
 		return nsp_evalf(this->N, fmt, ...);
-	}
-*/
+		}
+		*/
 	obj_t *getG()
 	{
 		return &this->N->g;
@@ -302,8 +308,6 @@ public:
 	{
 		return this->N->errbuf;
 	}
-private:
-	nsp_state *N;
 };
 #endif
 

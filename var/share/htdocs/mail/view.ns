@@ -1,0 +1,142 @@
+
+function strtohtml(s) {
+	s=typeof(s)=='string'?s:"";
+	s=string.replace(s, "&", "&amp;");
+	s=string.replace(s, "\"", "&quot;");
+	s=string.replace(s, "<", "&lt;");
+	return s;
+}
+
+function message_decode(body, header) {
+	if (header['content-transfer-encoding']=='quoted-printable') {
+		body=""+net.mime.decode_qp(body)+"";
+	} else if (header['content-transfer-encoding']=='base64') {
+		body=""+base64.decode(body)+"";
+	}
+	return body;
+}
+
+function print_header() {
+	var userid   = tonumber(_USER['userid']);
+	var headerid = tonumber(_GET['ID']);
+
+	if (userid==0) {
+		printf("<br><b>userid is 0?  are you sure you logged in?</b>\r\n");
+		return;
+	}
+	query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d", userid, headerid);
+	sqr=sqlquery(query);
+	if (sqr._tuples<1) {
+		printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
+		sqr=null;
+		return;
+	} else if (sqr._tuples>1) {
+		printf("<br><b>found duplicate mail headers for id %d</b>\r\n", headerid);
+		sqr=null;
+		return;
+	}
+	row=sqr['_rows'][0];
+	if (_GET['PART']=='header') {
+//		print("[Previous] ");
+//		print("[<A HREF=\"write?replyto=",msg,"\">Reply</A>] ");
+//		print("[Reply All] [Forward] [Print] [Delete] [Next]");
+		print("<table id='msgread' class='contenttable' style='height:100%;width:100%;'>\r\n");
+		print("<tr><th style='text-align:left'>From:</th><td>&nbsp;",strtohtml(row['hdr_from']),"</td></tr>\r\n");
+		print("<tr><th style='text-align:left'>To:</th><td>&nbsp;",strtohtml(row['hdr_to']),"</td></tr>\r\n");
+//		subject=strtohtml(net.mime.decode_rfc2047(typeof(message['head']['subject'])=='string'?message['head']['subject']:"no subject"));
+		print("<tr><th style='text-align:left'>Subject:</th><td width=\"100%\">&nbsp;",strtohtml(row['hdr_subject']),"</td></tr>\r\n");
+		print("<tr><th style='text-align:left'>Date:</th><td>&nbsp;",strtohtml(row['hdr_date']),"</td></tr>\r\n");
+//		print("<tr><td colspan=2>[<a href=\"viewraw?msg=",msg,"\" target=\"_BLANK\">View Source</a>]</td></tr>\r\n");
+		print("<tr><td colspan=2 height=100%><iframe id='contentiframe' width=100% height=100% srcdoc=\"<p>Loading...</p>\" sandbox=\"allow-same-origin\"></iframe></td></tr>\r\n");
+		print("</table>\r\n");
+		print("<script>\r\n");
+		print(
+			"function loadbody() {\r\n",
+			"	$.ajax({\r\n",
+			"		url: \"/mail/view?id="+headerid+"&part=body&method=ajax\",\r\n",
+			"		context: document.body\r\n",
+			"	}).done(function(msg) {\r\n",
+			"		$('#contentiframe').contents().find('html').html(msg);\r\n",
+			"	});\r\n",
+			"};\r\n",
+//			"loadbody();\r\n",
+			"$('#contentiframe').load(function(e){ loadbody(); })\r\n",
+		);
+		print("</script>");
+	//	print("<br><a href=\"javascript:x();\">blah</a>");
+	} else if (_GET['PART']=='body') {
+		local function findtextorhtml(parent) {
+			foreach (n,v in parent['body']) {
+				ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+				if (string.istr(ctype, 'text/html')==null) continue;
+				messagebody=message_decode(v['body'], v['head']);
+				return messagebody;
+			}
+			foreach (n,v in parent['body']) {
+				ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+				if (string.istr(ctype, 'text/plain')==null) continue;
+				messagebody=message_decode(v['body'], v['head']);
+				messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+				return messagebody;
+			}
+			return null;
+		}
+		local function pad(s, p) {
+			s='0'*p+tostring(s);
+			return string.sub(s, string.len(s)-p, p);
+		}
+		// /var/lib/nullgw/domains/0001/mail/0001/0001/000434.msg
+		//printf("MASTERGLOBAL['CONFIG']['var_domains_path']=[%s]", MASTERGLOBAL['CONFIG']['var_domains_path']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		path=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(row['obj_did'], 4), pad(row['accountid'], 4), pad(row['folder'], 4), pad(row['mailheaderid'], 6));
+		msgbody=file.read(path);
+		if (typeof(msgbody)!='string') {
+			printf("cannot read file '%s'", path);
+			return;
+		}
+		message=net.mime.read(msgbody);
+		body_found=false;
+		if (typeof(message['body'])=='string') {
+			messagebody=message_decode(message['body'], message['head']);
+			ctype=message['head']['content-type']!=null?message['head']['content-type']:"";
+			if (string.istr(ctype, 'text/html')==null) {
+				messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+			}
+			body_found=true;
+		}
+		if (!body_found) {
+			res=findtextorhtml(message);
+			if (res!=null) {
+				messagebody=res;
+				body_found=true;
+			} else {
+				/* it might be in an alternative part */
+				foreach (n,v in message['body']) {
+					ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+					if (string.istr(ctype, 'multipart/alternative')==null && string.istr(ctype, 'multipart/related')==null) continue;
+					//subbody=message_decode(v['body'], v['head']);
+					//return messagebody;
+					res=findtextorhtml(v);
+					if (res!=null) {
+						messagebody=res;
+						body_found=true;
+					}
+				}
+			}
+		}
+		if (!body_found) {
+			print("<b>message is not parseable!!!</B><br/>");
+			print("Raw body: <pre>"+strtohtml(serialize(message))+"</pre>");
+		} else {
+			print(messagebody);
+		}
+		//print("Raw body: <pre>"+strtohtml(serialize(message))+"</pre>");
+	}
+	return;
+}
+
+try {
+	print_header();
+} catch (ex) {
+	print(serialize(ex));
+}

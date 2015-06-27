@@ -6,4 +6,7 @@ all:
 redhat:
 	./configure --bindir=/usr/bin --sysconfdir=/etc/nullsd --libdir=/usr/lib/nullsd --localstatedir=/var/lib/nullsd
 
+local:
+	./configure --bindir=/usr/local/nullsd/bin --sysconfdir=/usr/local/nullsd/etc --libdir=/usr/local/nullsd/lib --localstatedir=/usr/local/nullsd/var
+
 distclean: all

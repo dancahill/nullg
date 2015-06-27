@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -238,6 +238,36 @@ static NSP_FUNCTION(htnsp_sqlquery)
 	return rc;
 }
 
+static NSP_FUNCTION(htnsp_sqlupdate)
+{
+	CONN *conn=get_conn();
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	int rc;
+
+	if (cobj1->val->type!=NT_STRING) {
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		return 0;
+	}
+	rc=sql_update(proc->N, cobj1->val->d.str);
+	return rc;
+}
+
+static NSP_FUNCTION(htnsp_sqlgetsequence)
+{
+	CONN *conn=get_conn();
+	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+	int rc=-1;
+
+	if (cobj1->val->type!=NT_STRING) {
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		nsp_setnum(N, &N->r, "", rc);
+		return 0;
+	}
+	rc=sql_getsequence(proc->N, cobj1->val->d.str);
+	nsp_setnum(N, &N->r, "", rc);
+	return rc;
+}
+
 static NSP_FUNCTION(htnsp_dirlist)
 {
 	CONN *conn=get_conn();
@@ -411,7 +441,7 @@ static int htnsp_system(nsp_state *N)
 	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
 	char tempname[255];
 	char line[512];
-	short int err;
+	//short int err;
 	FILE *fp;
 
 	if (cobj1->val->type!=NT_STRING) {
@@ -427,7 +457,8 @@ static int htnsp_system(nsp_state *N)
 #endif
 	htnsp_flush(conn->N);
 	flushbuffer(conn);
-	err=sys_system(line);
+	//err=
+	sys_system(line);
 	if ((fp=fopen(tempname, "r"))!=NULL) {
 		while (fgets(line, sizeof(line)-1, fp)!=NULL) {
 			prints(conn, "%s", line);
@@ -474,7 +505,7 @@ NSP_FUNCTION(htnsp_convertnsp)
 			nsp_strcat(N, &N->r, ss, se-ss);
 			nsp_strcat(N, &N->r, "\");", 3);
 			ss=se+=5;
-			while (se[0]!='?' || se[1]!='>') ++se;
+			while (*se && (se[0]!='?' || se[1]!='>')) ++se;
 			if (*se) { --se; continue; }
 			break;
 		}
@@ -529,6 +560,8 @@ static int htnsp_initenv(CONN *conn)
 	nsp_setcfunc(conn->N, &conn->N->g, "lang_gets",        (NSP_CFUNC)htnsp_lang_gets);
 	nsp_setcfunc(conn->N, &conn->N->g, "str2html",         (NSP_CFUNC)htnsp_str2html);
 	nsp_setcfunc(conn->N, &conn->N->g, "sqlquery",         (NSP_CFUNC)htnsp_sqlquery);
+	nsp_setcfunc(conn->N, &conn->N->g, "sqlupdate",        (NSP_CFUNC)htnsp_sqlupdate);
+	nsp_setcfunc(conn->N, &conn->N->g, "sqlgetsequence",   (NSP_CFUNC)htnsp_sqlgetsequence);
 	nsp_setcfunc(conn->N, &conn->N->g, "system",           (NSP_CFUNC)htnsp_system);
 	tobj=nsp_settable(conn->N, &conn->N->g, "io");
 	nsp_setcfunc(conn->N, tobj,       "flush",            (NSP_CFUNC)htnsp_flush);
@@ -594,7 +627,7 @@ static int htnsp_runscript(CONN *conn, char *file)
 
 	p=file;
 	if ((p2=strrchr(file, '/'))!=NULL) p=p2+1;
-	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "htnsp_runscript [%s]", p);
+	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 2, "htnsp_runscript [%s]", p);
 
 	p=strrchr(file, '.');
 	if (p!=NULL&&strcmp(p, ".nsp")==0) {

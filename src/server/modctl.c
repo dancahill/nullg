@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -86,6 +86,7 @@ static int regfunctions()
 	nsp_setcfunc(proc.N, tobj, "sql_updatef",		(void *)sql_updatef);
 	nsp_setcfunc(proc.N, tobj, "sql_query",			(void *)sql_query);
 	nsp_setcfunc(proc.N, tobj, "sql_queryf",		(void *)sql_queryf);
+	nsp_setcfunc(proc.N, tobj, "sql_getsequence",		(void *)sql_getsequence);
 	nsp_setcfunc(proc.N, tobj, "sql_getname",		(void *)sql_getname);
 	nsp_setcfunc(proc.N, tobj, "sql_getvalue",		(void *)sql_getvalue);
 	nsp_setcfunc(proc.N, tobj, "sql_getvaluebyname",	(void *)sql_getvaluebyname);

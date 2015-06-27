@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #ifdef WIN32
 #include "nullsd/config-nt.h"
+#define _USE_32BIT_TIME_T
 #define WIN32_LEAN_AND_MEAN
 #define _MT 1
 #include <winsock2.h>
@@ -120,6 +121,7 @@ typedef	int        (*MAIN_SQL_UPDATE)(nsp_state *, char *);
 typedef	int        (*MAIN_SQL_UPDATEF)(nsp_state *, const char *, ...);
 typedef	int        (*MAIN_SQL_QUERY)(nsp_state *, obj_t **, char *);
 typedef	int        (*MAIN_SQL_QUERYF)(nsp_state *, obj_t **, char *, ...);
+typedef	int        (*MAIN_SQL_GETSEQUENCE)(nsp_state *, char *);
 typedef	char      *(*MAIN_SQL_GETNAME)(nsp_state *, obj_t **, int);
 typedef	char      *(*MAIN_SQL_GETVALUE)(nsp_state *, obj_t **, int, int);
 typedef	char      *(*MAIN_SQL_GETVALUEBYNAME)(nsp_state *, obj_t **, int, char *);
@@ -187,6 +189,7 @@ EXTERN MAIN_SQL_UPDATE			sql_update;
 EXTERN MAIN_SQL_UPDATEF			sql_updatef;
 EXTERN MAIN_SQL_QUERY			sql_query;
 EXTERN MAIN_SQL_QUERYF			sql_queryf;
+EXTERN MAIN_SQL_GETSEQUENCE		sql_getsequence;
 EXTERN MAIN_SQL_GETNAME			sql_getname;
 EXTERN MAIN_SQL_GETVALUE		sql_getvalue;
 EXTERN MAIN_SQL_GETVALUEBYNAME		sql_getvaluebyname;
@@ -312,6 +315,7 @@ int mod_import()
 	if (_get_func((void *)&sql_updatef,		"sql_updatef"		)!=0) return -1;
 	if (_get_func((void *)&sql_query,		"sql_query"		)!=0) return -1;
 	if (_get_func((void *)&sql_queryf,		"sql_queryf"		)!=0) return -1;
+	if (_get_func((void *)&sql_getsequence,		"sql_getsequence"	)!=0) return -1;
 	if (_get_func((void *)&sql_getname,		"sql_getname"		)!=0) return -1;
 	if (_get_func((void *)&sql_getvalue,		"sql_getvalue"		)!=0) return -1;
 	if (_get_func((void *)&sql_getvaluebyname,	"sql_getvaluebyname"	)!=0) return -1;

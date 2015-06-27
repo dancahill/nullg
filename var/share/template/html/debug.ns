@@ -18,5 +18,7 @@ if (typeof(sqlquery)=='function') {
 	sqlquery('_q2', "SELECT * FROM nullsd_entries");
 }
 */
-print("<DIV ID=debug STYLE='display:none'><PRE STYLE=\"font-size:'50%'\">\n");
-print("global _GLOBALS = ",serialize(_GLOBALS),"</PRE></DIV>\n");
+print("<DIV ID=debug STYLE='align:left;display:none'><PRE STYLE=\"font-size:'50%'\">\n");
+print("global _GLOBALS = ",serialize(_GLOBALS),"</PRE>");
+print("runtime=", runtime(), " seconds\n");
+print("</DIV>\n");

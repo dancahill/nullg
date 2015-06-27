@@ -1,28 +1,17 @@
 if (_USER!=null) {
 	print(
-	"<BR />\r\n<CENTER>\r\n",
-	"<TABLE WIDTH='90%' BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n",
-	"<TR><TD COLSPAN=2>",
-
-	"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 WIDTH='100%' STYLE='border-style:solid'>\r\n",
-	"<TR><TH STYLE='border-style:solid'><TABLE WIDTH='100%' BORDER=0 CELLPADDING=2 CELLSPACING=0><TR>",
-	"<TH WIDTH='100%' NOWRAP ALIGN=left>Welcome, ",str2html(_USER.uid),".&nbsp;</TH>",
-	"<TH WIDTH='100%' NOWRAP ALIGN=right>&nbsp;",_TEMP.showtime,"</TH>",
-	"</TR></TABLE></TH></TR>\r\n",
-	"<TR CLASS=\"FIELDVAL\"><TD STYLE='border-style:solid'>",
-	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
-	"And Jesus said unto them, \"And whom do you say that I am?\"\r\n",
-	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
-	"They replied, \"You are the eschatological manifestation of the ground of our being, the ontological foundation of the context of our very selfhood revealed.\"\r\n",
-	"<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
-	"And Jesus replied, \"What?\"\r\n",
-	"<BR />\r\n",
-	"<BR /></TD></TR>\r\n",
-	"</TABLE>",
-
-	"</TD></TR>\r\n",
-	"</TABLE>",
-	"</CENTER>"
+	"<br />\r\n",
+	"<table class=\"contenttable\" style=\"width:90%\">\r\n",
+	"<tr><th>",
+	"<span style='float:left'>Welcome, ",str2html(_USER.username),".&nbsp;</span>",
+	"<span style='float:right'>&nbsp;",_TEMP.showtime,"</span>",
+	"</th></tr>\r\n",
+	"<tr class=\"fieldval\"><td style='border-style:solid' contenteditable=true>",
+	"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\r\n",
+	"Insert MOTD here...\r\n",
+	"<br />\r\n",
+	"<br /></td></tr>\r\n",
+	"</table>"
 	);
 } else {
 	print("Shouldn't you be logged in or something?<BR>");

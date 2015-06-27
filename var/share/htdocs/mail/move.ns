@@ -1,0 +1,83 @@
+
+function sql_escape(s) {
+	s=tostring(s);
+	s=string.replace(s, "'", "\"");
+	return s;
+}
+
+function stuff() {
+	local function movefile(accountid, headerid, srcfolder, dstfolder) {
+		local function pad(s, p) {
+			s='0'*p+tostring(s);
+			return string.sub(s, string.len(s)-p, p);
+		}
+		if (srcfolder==dstfolder) {
+			printf("srcfolder==dstfolder");
+			return false;
+		}
+		var domainid = tonumber(_USER['domainid']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		var srcname=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(srcfolder, 4), pad(headerid, 6));
+		var x=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(dstfolder, 4));
+		if (typeof(file.stat(x))!='table') file.mkdir(x);
+		var dstname=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(dstfolder, 4), pad(headerid, 6));
+		if (typeof(file.stat(srcname))!='table') {
+			printf("src %s doesn't exist", srcname);
+			return false;
+		}
+		if (typeof(file.stat(dstname))=='table') {
+			printf("dst %s already exists", dstname);
+			return false;
+		}
+		file.rename(srcname, dstname);
+		if (typeof(file.stat(dstname))!='table') {
+			printf("failed to move file %s!", dstname);
+			return false;
+		}
+		return true;
+	}
+
+	var userid   = tonumber(_USER['userid']);
+	var domainid = tonumber(_USER['domainid']);
+	if (userid==0) {
+		printf("userid is 0?  are you sure you logged in?");
+		return false;
+	}
+	if (_SERVER['REQUEST_METHOD']!='POST') {
+		print("not a post?");
+	}
+	//print("_POST=",serialize(_POST));
+	foreach (id,uidl in _POST) {
+		if (id!==tostring(tonumber(id))) continue;
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d and uidl = '%s'", userid, id, uidl);
+		sqr=sqlquery(query);
+		if (sqr._tuples!=1) {
+			printf("could not find mail header for id %d.", id);
+			sqr=null;
+			return false;
+		}
+		row=sqr['_rows'][0];
+		accountid=tonumber(row['accountid']);
+		srcfolder=tonumber(row['folder']);
+		action=_POST['SUBMITACTION'];
+		//print(serialize(row));
+		if (action=='move') {
+			dstfolder=tonumber(_POST['DEST1']);
+//			printf("%s, %s should be moved to %s.", id, uidl, folder);
+		} else if (action=='delete') {
+			dstfolder=4;
+//			printf("%s, %s should be deleted (moved to 4).", id, uidl);
+		} else {
+			printf("%s, %s is broken.  invalid submit action?", id, uidl);
+			return false;
+		}
+		if (movefile(accountid, id, srcfolder, dstfolder)==true) {
+			query=sprintf("UPDATE gw_email_headers SET folder = %d WHERE obj_uid = %d AND mailheaderid = %d AND uidl = '%s';", dstfolder, userid, id, sql_escape(uidl));
+			sqlupdate(query);
+		}
+	}
+	return true;
+}
+if (stuff()==true) {
+	print("success");
+}

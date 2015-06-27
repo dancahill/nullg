@@ -136,6 +136,7 @@ clean:
 	@rm -f bin/* lib/*.so lib/*.lib lib/core/* lib/httpd/* *~
 	@rm -f etc/ssl-cert.pem etc/ssl-priv.pem
 	@rm -rf obj
+	@rm -f nsd.ncb nsd.suo
 
 distclean: clean
 	@cd src/sqlite && ./libsqlite_make clean && cd ../..

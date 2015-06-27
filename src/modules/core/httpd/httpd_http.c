@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -710,7 +710,8 @@ void send_error(CONN *conn, int status, char* title, char* text)
 	nsp_setstr(conn->N, tobj, "theme", conn->dat->theme, strlen(conn->dat->theme));
 	p=str2html(conn, text);
 	nsp_setstr(conn->N, tobj, "text", p, strlen(p));
-	send_header(conn, 0, 200, "1", "text/html", -1, -1);
+	//send_header(conn, 0, 200, "1", "text/html", -1, -1);
+	send_header(conn, 0, status, "1", "text/html", -1, -1);
 	if (htnsp_dotemplate(conn, "html", "error.ns")!=0) {
 		prints(conn, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">\r\n");
 		prints(conn, "<HTML>\r\n<HEAD>\r\n");

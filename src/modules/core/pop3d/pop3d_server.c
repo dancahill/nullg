@@ -1,5 +1,5 @@
 /*
-    NullLogic GroupServer - Copyright (C) 2000-2010 Dan Cahill
+    NullLogic GroupServer - Copyright (C) 2000-2015 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -270,6 +270,9 @@ static void pop3_local(CONN *conn)
 	MDIR mdir;
 	char line[128];
 	char dirname[256];
+#ifdef WIN32
+	char dirname2[256];
+#endif
 	char tmpname[256];
 	int i;
 	int mboxalloc;
@@ -278,6 +281,7 @@ static void pop3_local(CONN *conn)
 	mboxalloc=50;
 	memset(dirname, 0, sizeof(dirname));
 	snprintf(dirname, sizeof(dirname)-1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
+//	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "%s - dirname='%s'", conn->dat->RemoteAddr, dirname);
 	if (stat(dirname, &sb)!=0) {
 #ifdef WIN32
 		if (mkdir(dirname)!=0) {
@@ -289,13 +293,10 @@ static void pop3_local(CONN *conn)
 			return;
 		}
 	}
-#ifdef WIN32
-	snprintf(dirname, sizeof(dirname)-1, "%s/domains/%04d/mailspool/%s/*.*", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
-#endif
 	if ((mdir.msg=calloc(mboxalloc, sizeof(MDIRENT *)))==NULL) return;
-
 #ifdef WIN32
-	if ((handle=_findfirst(dirname, &dentry))<0) return;
+	snprintf(dirname2, sizeof(dirname2)-1, "%s/domains/%04d/mailspool/%s/*.*", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
+	if ((handle=_findfirst(dirname2, &dentry))<0) return;
 	do {
 		char *name=dentry.name;
 #else

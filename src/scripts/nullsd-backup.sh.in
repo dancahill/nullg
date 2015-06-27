@@ -22,7 +22,8 @@ ${DEST_BIN}/nullsd-dbutil dump ${DEST_VAR}/backup-${CURDATE}.sql
 gzip ${DEST_VAR}/backup-${CURDATE}.sql
 echo -n "Archiving backup tarball..."
 cd ${DEST_VAR}
-tar zchf backup/backup-${CURDATE}.tgz --directory . --exclude=backup ${DEST_ETC} ${DEST_VAR}
+#tar zchf backup/backup-${CURDATE}.tgz --directory . --exclude=backup ${DEST_ETC} ${DEST_VAR}
+tar zcf backup/backup-${CURDATE}.tgz --directory . --exclude=backup ${DEST_ETC} ${DEST_VAR}
 rm -f ${DEST_VAR}/backup-${CURDATE}.sql ${DEST_VAR}/backup-${CURDATE}.sql.gz
 chmod 600 ${DEST_VAR}/backup/backup-${CURDATE}.tgz
 echo "done."

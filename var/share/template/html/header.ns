@@ -8,23 +8,24 @@ if (typeof(_TEMP['title'])=='null') _TEMP['title']="NullLogic GroupServer";
 if (typeof(_TEMP['theme'])=='null') _TEMP['theme']=_USER.pref.theme;
 print(
 //	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\r\n",
-	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\" \"http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd\">\r\n",
-	"<HTML>\r\n",
-	"<HEAD>\r\n",
-	"<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; CHARSET=iso-8859-1\">\r\n",
-	"<TITLE>", _TEMP['title'], "</TITLE>\r\n",
-	"<STYLE TYPE=\"text/css\">\r\n",
-	".JUSTIFY { text-align: justify; }\r\n",
-	".TBAR    { color: #505050; text-decoration: none; font-family: Geneva, Arial, Verdana; font-size: 8pt; }\r\n",
-	"A        { color: #0000FF; text-decoration: none; }\r\n",
-	"A:HOVER  { text-decoration: underline; }\r\n",
-	"</STYLE>\r\n",
-	"<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"/themes/", _TEMP['theme'], "/style.css\">\r\n"
+//	"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\" \"http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd\">\r\n",
+	"<!DOCTYPE html>\r\n",
+	"<html>\r\n",
+	"<head>\r\n",
+	"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\r\n",
+	"<meta name=\"viewport\" content=\"width=600\">\r\n",
+	"<title>", _TEMP['title'], "</title>\r\n",
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/themes/", _TEMP['theme'], "/style.css\">\r\n",
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/scripts/jquery-ui.css\">\r\n"
 );
+print("<script type=\"text/javascript\" src=\"/scripts/nullsd.js\"></script>\r\n");
+print("<script type=\"text/javascript\" src=\"/scripts/jquery.js\"></script>\r\n");
+print("<script type=\"text/javascript\" src=\"/scripts/jquery-ui.js\"></script>\r\n");
+print("<script type=\"text/javascript\" src=\"/scripts/jquery.tablesorter.js\"></script>\r\n");
 if (string.nicmp(_SERVER['REQUEST_URI'], "/mail/write", 11)==0) {
-	print("<SCRIPT LANGUAGE=\"JavaScript\" SRC=\"/scripts/wmedit.js\" TYPE=\"text/javascript\"></SCRIPT>\r\n");
+	print("<script type=\"text/javascript\" src=\"/scripts/wmedit.js\"></script>\r\n");
 }
-print("</HEAD>\r\n<BODY BGCOLOR=\"#F0F0F0\" TEXT=\"#000000\" LINK=\"#0000FF\" ALINK=\"#0000FF\" VLINK=\"#0000FF\"  STYLE=\"margin:0\" CLASS=\"MAINBACK\"");
+print("</head>\r\n<body");
 if (string.nicmp(_SERVER['REQUEST_URI'], "/mail/write", 11)==0) {
 	print(" onLoad=\"init();\"");
 }
