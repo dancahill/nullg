@@ -1,0 +1,10 @@
+include_template("db.ns");
+
+try {
+	print("<BR>\r\n");
+	var userinfo = db.getuserinfo();
+	include("edit.ns");
+	//include_template("html/debug.ns");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

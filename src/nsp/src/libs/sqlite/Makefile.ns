@@ -1,0 +1,21 @@
+#!../../../bin/nsp -b
+include("../../config.ns");
+include("../makelib.ns");
+CFLAGS  = CFLAGS+" -I../../../include ";
+if (CC=='cl.exe') CFLAGS=CFLAGS+"/c /Fo";
+else if (CC=='tcc.exe') CFLAGS=CFLAGS+"-c -o";
+else CFLAGS=CFLAGS+"-c -o ";
+OBJECTS = "sqlite.o";
+TNAME   = "libnsp_sqlite";
+if (cmd==null) if (_ARGS[2]=='clean') cmd='clean'; else cmd='build';
+if (cmd=='build') {
+	t=newer2(OBJECTS, _LINKAGE_, TNAME);
+	if ((t>0)&&(config.have_sqlite==true)) {
+		print("building ",_LINKAGE_," lib sqlite\n");
+		if (CC=='cl.exe') file.writeall("dlldefs.def", "LIBRARY\t\tlibnsp_sqlite\r\nVERSION\t\t"+_version_+"\r\nEXPORTS\r\n\tnspsqlite_register_all\r\n\tnsplib_init\r\n");
+		build_objs(CC, CFLAGS, OBJECTS, _LINKAGE_, TNAME);
+		build_lib(CC, TNAME, OBJECTS, _LINKAGE_, TNAME);
+	}
+} else if (cmd=='clean') {
+	build_clean(TNAME, OBJECTS);
+}

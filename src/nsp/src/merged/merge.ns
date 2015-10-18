@@ -1,0 +1,49 @@
+#!/usr/bin/nsp
+var src="";
+var srcloc="../../";
+print("splicing...");
+if (typeof(x=file.readall(srcloc+"include/nsp/nsp.h"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"include/nsp/nsplib.h"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/opcodes.h"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/block.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/compile.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/debug.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/exec.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/libc.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/libn.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/objects.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/opcodes.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/libnsp/parser.c"))=='string') src+=x;
+if (typeof(x=file.readall(srcloc+"src/hosts/cli/main.c"))=='string') src+=x;
+src=string.join(string.split(src, "#include \"nsp/nsp.h\""), "");
+src=string.join(string.split(src, "#include \"nsp/nsplib.h\""), "");
+src=string.join(string.split(src, "#include \"opcodes.h\""), "");
+file.writeall("nsp.c", src);
+print("done\n");
+io.flush();
+
+print("compiling...");
+if (_ostype_=="Windows/msvc") {
+	system("cl.exe -nologo /W3 /O2 /MD -DWIN32 nsp.c -Fensp.exe");
+	file.unlink("nsp.obj");
+} else {
+	// best runtime results
+//	system("gcc -O3 -s -static nsp.c -march=pentium2 -o nsp");
+	system("gcc -O3 -s -ldl -lm nsp.c -o nsp");
+	// best overall (w/compile) 30%+ slower runtime, but _much_ faster compiling
+//	system("gcc -O0 -s nsp.c -o nsp");
+}
+print("done\n");
+
+//print("timing...");
+t=runtime();
+if (_ostype_=="Windows/msvc") {
+	system("nsp.exe -e \"for ($i=1;$i<100001;$i++) { if ($i%20000==0) { print($i/20000); } }\"");
+} else {
+	system("./nsp -b -e \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } };print(\\\"\\ntest time = \\\",runtime(),\\\"\\n\\\");\"");
+	system("nsp -b -e \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } };print(\\\"\\ntest time = \\\",runtime(),\\\"\\n\\\");\"");
+//	test("Nesla",  "./nsp  -e \"for (\\$i=1;\\$i<100001;\\$i++) { if (\\$i%20000==0) { print(\\$i/20000); } }\"");
+}
+print("done\n");
+print(" ",runtime()-t,"\n");
+print("total time = ",runtime(),"\n");

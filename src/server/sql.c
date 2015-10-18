@@ -33,20 +33,20 @@ void sql_freeresult(nsp_state *N, obj_t **qobj)
 
 int sql_update(nsp_state *N, char *sqlquery)
 {
-	int rc=-1;
+	int rc = -1;
 
 	pthread_mutex_lock(&Lock.SQL);
-	rc=_sql_update(N, sqlquery);
+	rc = _sql_update(N, sqlquery);
 	pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }
 
 int sql_query(nsp_state *N, obj_t **qobj, char *query)
 {
-	int rc=-1;
+	int rc = -1;
 
 	pthread_mutex_lock(&Lock.SQL);
-	rc=_sql_query(N, qobj, query);
+	rc = _sql_query(N, qobj, query);
 	pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }
@@ -57,14 +57,14 @@ int sql_updatef(nsp_state *N, char *format, ...)
 	va_list ap;
 	int rc;
 
-	if ((sqlquery=calloc(8192, sizeof(char)))==NULL) {
+	if ((sqlquery = calloc(8192, sizeof(char))) == NULL) {
 		log_error(proc.N, "sql", __FILE__, __LINE__, 0, "OUT OF MEMORY");
 		return -1;
 	}
 	va_start(ap, format);
 	vsnprintf(sqlquery, 8191, format, ap);
 	va_end(ap);
-	rc=sql_update(N, sqlquery);
+	rc = sql_update(N, sqlquery);
 	free(sqlquery);
 	return rc;
 }
@@ -75,14 +75,14 @@ int sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 	va_list ap;
 	int rc;
 
-	if ((sqlquery=calloc(8192, sizeof(char)))==NULL) {
+	if ((sqlquery = calloc(8192, sizeof(char))) == NULL) {
 		log_error(proc.N, "sql", __FILE__, __LINE__, 0, "OUT OF MEMORY");
 		return -1;
 	}
 	va_start(ap, format);
 	vsnprintf(sqlquery, 8191, format, ap);
 	va_end(ap);
-	rc=sql_query(N, qobj, sqlquery);
+	rc = sql_query(N, qobj, sqlquery);
 	free(sqlquery);
 	return rc;
 }
@@ -90,6 +90,6 @@ int sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 
 int sql_getsequence(nsp_state *N, char *table)
 {
-	int rc=_sql_getsequence(N, table);
+	int rc = _sql_getsequence(N, table);
 	return rc;
 }

@@ -1,0 +1,12 @@
+global _SERVER['LANGUAGE']['en']['httpd'] = {
+	menu_adm_config  = "CONFIGURATION";
+	menu_adm_logs    = "LOGS";
+	menu_adm_check   = "SYSCHECK";
+	menu_adm_users   = "USERS";
+	menu_adm_groups  = "USER GROUPS";
+	menu_adm_zones   = "ZONES";
+	menu_top_help    = "HELP";
+	menu_top_print   = "PRINT";
+	menu_top_profile = "PROFILE";
+	menu_top_logout  = "LOG OUT";
+};

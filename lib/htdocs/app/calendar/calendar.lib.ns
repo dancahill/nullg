@@ -1,0 +1,101 @@
+include_template("common.ns");
+
+global calendar = {
+	function getdim(m, y) {
+		dim = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+		if (m<0) { m+=12; y-=1; } else if (m>11) { m-=12; y+=1; }
+		if (m==2 && y%4==0) if (y%100!=0 || y%400==0) dim[1]++;
+		return dim[m];
+	};
+
+	// get full month in calendar table format containing a given unix timestamp
+	function getmonth(utime) {
+		utime=utime-(utime%86400);
+		t=time.gmtime(utime);
+		printday=t.tm_mday-t.tm_wday;
+		startday=utime/86400-t.tm_wday;
+		while (printday>1) { printday-=7; startday-=7; }
+		d=startday;
+		mon={};
+		for (w=0;;w++) {
+			mon[w]={};
+			for (wd=0;wd<7;wd++) {
+				dt=time.gmtime(d*86400);
+				mon[w][wd]={
+					t=d*86400;
+					tm_mday=dt.tm_mday;
+					tm_mon=dt.tm_mon;
+					tm_year=dt.tm_year;
+					tm_isdst=dt.tm_isdst;
+					//dt=dt;
+				};
+				d++;
+			}
+			if (dt.tm_mon>t.tm_mon || dt.tm_year>t.tm_year) break;
+		}
+		return mon;
+	};
+/*
+	print_note_text = function (note_text) {
+	//	print(strtohtml(NOTE['notetext']).replace("\n", "\n<br>"));
+		lines=note_text.split('\n');
+		table=false;
+		thead=false;
+		foreach (line in lines) {
+			line=line.replace('\r', '');
+			if (line.toupper()=="[TABLE]") {
+				table=true;
+				thead=true;
+				print("<table class='contenttable'>");
+				continue;
+			} else if (line.toupper()=="[/TABLE]") {
+				table=false;
+				thead=false;
+				print("</tbody>");
+				print("</table>");
+				continue;
+			}
+			if (table) {
+				cells=line.split('|');
+				if (thead) {
+					print("<tr>");
+					print("<thead>");
+					foreach (cell in cells) {
+						cell=strtohtml(cell).replace('\\\\', '\\');
+						cell=cell.replace('\\n', '<br>');
+						printf("<th>%s</th>", cell);
+					}
+					print("</tr>\r\n");
+					thead=false;
+					print("</thead>");
+					print("<tbody>");
+				} else {
+					print("<tr style='vertical-align:top'>");
+					foreach (cell in cells) {
+						cell=strtohtml(cell).replace('\\\\', '\\');
+						cell=cell.replace('\\n', '<br>');
+						printf("<td>%s</td>", cell.replace(" ", "&nbsp;"));
+						//printf("<th>%s</th>", cell);
+					}
+					print("</tr>\r\n");
+				}
+			} else {
+				printf("%s", strtohtml(line).replace(" ", "&nbsp;"));
+				print("<br>\r\n");
+			}
+		}
+	};
+	save = function () {
+		noteid=tonumber(_POST['NOTEID']);
+		notetext=_POST['NOTETEXT'];
+		if (noteid>0) {
+			query=sprintf("update gw_notes set notetext = '%s' where noteid = %d", sql_escape(notetext), noteid);
+			sqlupdate(query);
+			print("success");
+		} else {
+			// new note...
+		}
+		//printf("[[_GLOBALS=%s]]", serialize(_GLOBALS));
+	};
+*/
+};

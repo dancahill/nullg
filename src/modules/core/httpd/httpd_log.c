@@ -92,7 +92,7 @@ void log_htaccess(CONN *conn)
 #ifndef WIN32
 	pthread_mutex_lock(LogLock);
 #endif
-	snprintf(file, sizeof(file)-1, "%s/" MODSHORTNAME "-access.log", nsp_getstr(proc->N, confobj, "var_log_path"));
+	snprintf(file, sizeof(file)-1, "%s/log/" MODSHORTNAME "-access.log", nsp_getstr(proc->N, confobj, "var_path"));
 	fixslashes(file);
 	if ((fp=fopen(file, "a"))==NULL) {
 #ifndef WIN32

@@ -1,0 +1,27 @@
+
+global admin = {
+};
+
+global adminhtml = {
+	function headermenu(folderid) {
+		var menuitems = {
+			{ text="DOMAINS"; href="/app/admin/domains/"; onclick="return GoTo(event);"; };
+			{ text="USERS";   href="/app/admin/users/";   onclick="return GoTo(event);"; };
+		//	{ text="LIST BOOKMARKS"; href="/app/bookmarks/";                                     onclick="return GoTo(event);";                };
+		//	{ text="NEW BOOKMARK";   href="/app/bookmarks/editbookmark?id=0&folderid="+folderid; onclick="return ModalForm(event, 'bookmark', 0);";       };
+		//	{ text="NEW FOLDER";     href="/app/bookmarks/editfolder?id=0&folderid="+folderid;   onclick="return ModalForm(event, 'bookmarkfolder', 0);"; };
+		};
+		html.headersubmenu(menuitems);
+	};
+};
+
+local function checkperms() {
+	authdomainadmin=tonumber(_USER['authdomainadmin']);
+	authadmin=tonumber(_USER['authadmin']);
+	if (!authdomainadmin && !authadmin) throw "admin access required";
+//	printf("authdomainadmin=%d<br>", authdomainadmin);
+//	printf("authadmin=%d<br>", authadmin);
+//	print("<div style='text-align:left'><pre>",serialize(_GLOBALS),"</pre></pre>");
+//	print("<div style='text-align:left'><pre>",serialize(_USER),"</pre></pre>");
+}
+checkperms();

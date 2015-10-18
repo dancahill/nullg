@@ -1,7 +1,0 @@
-// THIS IS AN SMTP FILTER SCRIPT TEMPLATE
-log_file=_CONFIG['var_path']+"/log/zz.log";
-try {
-	file.append(log_file, time.sqldatetime()+sprintf(" [%s]\r\n", serialize(_GLOBALS)));
-} catch (ex) {
-	file.append(log_file, time.sqldatetime()+sprintf(" EXCEPTION: [%s]\r\n", serialize(ex)));
-}

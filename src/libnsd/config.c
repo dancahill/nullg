@@ -139,6 +139,7 @@ _haveconf:
 		if (strcmp(cobj->name, "_retval")==0) continue;
 		if (cobj->val->type==NT_NULL) {
 		} else if (cobj->val->type==NT_BOOLEAN) {
+			conf_callback(cobj->name, nsp_tostr(N, cobj));
 		} else if (cobj->val->type==NT_NUMBER) {
 			conf_callback(cobj->name, nsp_tostr(N, cobj));
 		} else if (cobj->val->type==NT_STRING) {

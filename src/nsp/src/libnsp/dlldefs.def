@@ -1,0 +1,18 @@
+LIBRARY		libnsp
+VERSION		0.9.4
+EXPORTS
+	nsp_newstate
+	nsp_endstate
+	nsp_exec
+	nsp_execfile
+	nsp_linkval
+	nsp_unlinkval
+	nsp_freetable
+	nsp_getobj
+	nsp_getiobj
+	nsp_setobj
+	nsp_strcat
+	nsp_tonum
+	nsp_tostr
+	nsp_eval
+	nsp_evalf

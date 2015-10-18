@@ -1,6 +1,6 @@
 #!/usr/bin/nsp
 
-dl.loadlib("net");
+dl.load("net");
 
 file.append("crash.log", time.sqldatetime()+" stuff happened\r\n");
 system("TASKKILL /F /IM NULLSD.EXE");
@@ -16,10 +16,10 @@ system("NET START NULLSD");
 */
 
 x=new net.smtp.client();
-x.host="192.168.100.5";
-x.from="\"System Monitor\" <service@fsiedi.com>";
+x.host="192.168.2.1";
+x.from="\"System Monitor\" <service@nowhere.com>";
 x.contenttype="text/html";
 x.subject="[STATUS] NULLSD CRASHED";
 x.body="<HR>ASDF<HR>";
-x.rcpt="dcahill@fsiedi.com"; x.send();
+x.rcpt="dcahill@nowhere.com"; x.send();
 delete x;

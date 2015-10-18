@@ -1,0 +1,205 @@
+if (CFLAGS==null) global CFLAGS="";
+if (_LINKAGE_==null) global _LINKAGE_='static';
+if (ostype==null) if (_ENV['OS']=='Windows_NT') global ostype='windows';
+if (DLFLAGS==null) global DLFLAGS="";
+
+global BINDIR="../../../bin";
+global LIBDIR="../../../lib";
+global OBJDIR="../../../int";
+
+if (CC==null) throw "CC not defined";
+
+if (CC=='cl.exe') {
+	global HIDDEN="";
+} else if (CC=='tcc.exe') {
+	global HIDDEN=" 1>nul";
+} else {
+	global HIDDEN=" 1>/dev/null";
+}
+
+function swapslash(OLDSTR) {
+	if (ostype=='posix') return OLDSTR;
+	return string.join(string.split(OLDSTR, "/"), "\\");
+}
+
+function newer(file1, file2) {
+	s1=file.stat(file1);
+	s2=file.stat(file2);
+	if (typeof(s1)!='table') {
+		print("missing source ",file1,"?\n");
+		return -1;
+	}
+	if (typeof(s2)!='table') return 1;
+	if (s1.mtime>=s2.mtime) return 1;
+	return 0;
+}
+
+function newer2(OBJECTS, _LINKAGE_, TNAME) {
+	OLIST=string.split(OBJECTS, " ");
+	if (CC=='tcc.exe') {
+		if (string.sub(TNAME, 0, 7)=='libnsp_') TNAME=string.sub(TNAME, 8);
+		s3=file.stat(swapslash(LIBDIR+"/"+TNAME+".lib"));
+	} else if (CC=='cl.exe') {
+		if (_LINKAGE_=='shared') {
+			s3=file.stat(swapslash(LIBDIR+"/shared/"+TNAME+".dll"));
+		} else {
+			s3=file.stat(swapslash(LIBDIR+"/"+TNAME+".lib"));
+		}
+	} else {
+		if (_LINKAGE_=='shared') {
+			s3=file.stat(swapslash(LIBDIR+"/shared/"+TNAME+".so"));
+		} else {
+			s3=file.stat(swapslash(LIBDIR+"/"+TNAME+".a"));
+		}
+	}
+	if (typeof(s3)!='table') return 1;
+	for (i=0;i<sizeof(OLIST);i++) {
+		ONAME=string.split(OLIST[i], ".");
+		if (ONAME[1]!='o') continue;
+		s1=file.stat(ONAME[0]+".c");
+		s2=file.stat(swapslash(OBJDIR+"/"+TNAME+"/"+_LINKAGE_+"/"+ONAME[0]+".o"));
+		if (typeof(s1)!='table') {
+			print("missing source ",file1,"?\n");
+			return -1;
+		}
+		if (typeof(s2)!='table') return 1;
+		if (s1.mtime>s2.mtime) { /*print(ONAME[0]+".c newer than obj\n");*/ return 1; }
+		if (s1.mtime>s3.mtime) { /*print(ONAME[0]+".c newer than lib\n");*/ return 1; }
+		if (s2.mtime>s3.mtime) { /*print(ONAME[0]+".o newer than lib\n");*/ return 1; }
+	}
+	return 0;
+}
+
+function build_objs(CC, CFLAGS, OBJECTS, OTYPE, INTDIR) {
+	if (CC=='tcc.exe') {
+		if (string.sub(INTDIR, 0, 7)=='libnsp_') INTDIR=string.sub(INTDIR, 8);
+	}
+	OLIST=string.split(OBJECTS, " ");
+//	if (string.sub(_ostype_, 0, 7)=="Windows") 
+	for (i=0;i<sizeof(OLIST);i++) {
+		s1=file.stat(swapslash(OBJDIR+"/"+INTDIR));
+		if (typeof(s1)!='table') file.mkdir(swapslash(OBJDIR+"/"+INTDIR));
+		s1=file.stat(swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE));
+		if (typeof(s1)!='table') file.mkdir(swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE));
+		ONAME=string.split(OLIST[i], ".");
+		if (ONAME[1]!='o') continue;
+		if (newer(ONAME[0]+".c", swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+ONAME[0]+".o"))) {
+			// print("  "+CC+" "+ONAME[0]+".o\n");
+			if (CC!='cl.exe') print ("  CC "+ONAME[0]+".o\n");
+			cmd=sprintf("%s %s%s%s %s.c", CC, (OTYPE=='shared'?DLFLAGS:""), CFLAGS, swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+ONAME[0]+".o"), ONAME[0]);
+			//printf("%s\r\n", cmd);
+			system(cmd+HIDDEN);
+		}
+	}
+	return;
+}
+
+function build_lib(CC, TNAME, OBJECTS, OTYPE, INTDIR) {
+	OLIST=string.split(OBJECTS, " ");
+	if (CC=='tcc.exe') {
+		if (string.sub(TNAME, 0, 7)=='libnsp_') TNAME=string.sub(TNAME, 8);
+		if (string.sub(INTDIR, 0, 7)=='libnsp_') INTDIR=string.sub(INTDIR, 8);
+		file.unlink(TNAME+".lib");
+		for (i=0;i<sizeof(OLIST);i++) {
+//			print("tlib.exe "+swapslash(LIBDIR+"/"+TNAME+".lib +"+OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+OLIST[i])+"\n");
+			system("tlib.exe "+swapslash(LIBDIR+"/"+TNAME+".lib +"+OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+OLIST[i]));
+		}
+		file.unlink(swapslash(LIBDIR+"/"+TNAME+".bak"));
+	} else if (CC=='cl.exe') {
+		liblist="";
+		for (i=0;i<sizeof(OLIST);i++) {
+			liblist+=" "+swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+OLIST[i]);
+		}
+		if (OTYPE=='shared') {
+			LIBS="/libpath:"+LIBDIR+" gdi32.lib shell32.lib user32.lib winmm.lib libnsp.lib";
+//			LIBS=" /libpath:"+LIBDIR+" gdi32.lib shell32.lib user32.lib winmm.lib libnsp.lib";
+			if (TNAME=='libnsp_fbsql') {
+				if (config.have_fbsql==true) LIBS+=" fbclient_ms.lib ib_util_ms.lib";
+			} else if (TNAME=='libnsp_net') {
+				if (config.have_dns==true) LIBS+=" dnsapi.lib";
+				if (config.have_mbedtls==true) LIBS+=" mbedtls.lib";
+			} else if (TNAME=='libnsp_openssl') {
+				if (config.have_openssl==true) LIBS+=" ssleay32MT.lib libeay32MT.lib";
+			} else if (TNAME=='libnsp_sqlite') {
+				if (config.have_sqlite==true) LIBS+=" sqlite3.lib";
+			} else if (TNAME=='libnsp_ssh2') {
+				if (config.have_ssh2==true) LIBS+=" ws2_32.lib libssh2.lib zlib.lib ssleay32MT.lib libeay32MT.lib";
+			}
+//			system("link.exe /nologo /subsystem:console /pdb:none /machine:I386 /dll /incremental:no "+LIBS+" /out:"+swapslash(LIBDIR+"/shared/"+TNAME+".dll "+liblist));
+//			LIBS="/libpath:"+LIBDIR+" gdi32.lib shell32.lib user32.lib winmm.lib libnsp.lib";
+//			if (TNAME=='libnsp_ssh' && config.have_ssh2==true)  LIBS+=" libssh2.lib";
+//			if (TNAME=='libnsp_net' && config.have_mbedtls==true) LIBS+=" mbedtls.lib";
+			system("link.exe /nologo /subsystem:console /pdb:none /machine:I386 /dll /incremental:no "+LIBS+" /def:\"dlldefs.def\" /out:"+swapslash(LIBDIR+"/shared/"+TNAME+".dll "+liblist));
+			file.unlink(swapslash(LIBDIR+"/shared/"+TNAME+".exp"));
+			file.unlink(swapslash(LIBDIR+"/shared/"+TNAME+".lib"));
+		} else {
+			system("link.exe -lib /nologo /out:"+swapslash(LIBDIR+"/"+TNAME+".lib "+liblist));
+		}
+	} else {
+		liblist="";
+		for (i=0;i<sizeof(OLIST);i++) {
+			ONAME=string.split(OLIST[i], ".");
+			if (ONAME[1]=='o') {
+				liblist+=" "+swapslash(OBJDIR+"/"+INTDIR+"/"+OTYPE+"/"+OLIST[i]);
+			} else {
+				liblist+=" "+swapslash(OLIST[i]);
+			}
+		}
+		if (OTYPE=='shared') {
+			if (TNAME=='libnsp_base') {
+				if (config.have_pthread) {
+					liblist+=" -pthread";
+				} else if (config.have_lpthread) {
+					liblist+=" -lpthread";
+				}
+			} else if (TNAME=='libnsp_crypto') {
+				if (config.have_openssl==true) liblist+=" -lcrypto -lssl";
+			} else if (TNAME=='libnsp_fbsql') {
+				if (config.have_fbsql==true) liblist+=" -lfbclient";
+			} else if (TNAME=='libnsp_ldap') {
+				if (config.have_ldap==true) liblist+=" -lldap";
+			} else if (TNAME=='libnsp_mysql') {
+				if (config.have_mysql==true) liblist+=" -L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient";
+			} else if (TNAME=='libnsp_net') {
+				if (config.have_dns==true) liblist+=" -lresolv";
+
+				if (config.have_mbedtls==true) liblist+=" -lmbedtls -lmbedcrypto -lmbedx509";
+				else if (config.have_openssl==true) liblist+=" -lcrypto -lssl";
+
+			} else if (TNAME=='libnsp_odbc') {
+				if (config.have_odbc==true) liblist+=" -lodbc";
+			} else if (TNAME=='libnsp_pgsql') {
+				if (config.have_pgsql==true) liblist+=" -lpq";
+			} else if (TNAME=='libnsp_sqlite') {
+				if (config.have_sqlite==true) liblist+=" -lsqlite3";
+			} else if (TNAME=='libnsp_ssh2') {
+				if (config.have_openssl==true) liblist+=" -lcrypto -lssl";
+				liblist+=" -lssh2";
+			}
+			system("gcc -shared -o "+swapslash(LIBDIR+"/shared/"+TNAME+".so "+liblist));
+		} else {
+			system("ar cru "+swapslash(LIBDIR+"/"+TNAME+".a "+liblist));
+			system("ranlib "+swapslash(LIBDIR+"/"+TNAME+".a"));
+		}
+	}
+}
+
+function build_clean(TNAME, OBJECTS) {
+	file.unlink(swapslash(LIBDIR+"/shared/"+TNAME+".so"));
+	file.unlink(swapslash(LIBDIR+"/shared/"+TNAME+".dll"));
+	file.unlink(swapslash(LIBDIR+"/"+TNAME+".a"));
+	file.unlink(swapslash(LIBDIR+"/"+TNAME+".lib"));
+	OLIST=string.split(OBJECTS, " ");
+	for (i=0;i<sizeof(OLIST);i++) {
+		ONAME=string.split(OLIST[i], ".");
+		file.unlink(swapslash(OBJDIR+"/"+INTDIR+"/shared/"+ONAME[0]+".o"));
+		file.unlink(swapslash(OBJDIR+"/"+INTDIR+"/static/"+ONAME[0]+".o"));
+		file.unlink(swapslash(OBJDIR+"/"+INTDIR+"/shared/"+ONAME[0]+".obj"));
+		file.unlink(swapslash(OBJDIR+"/"+INTDIR+"/static/"+ONAME[0]+".obj"));
+	}
+	if (ostype=='windows') {
+		system("del *.idb *.def *~ 2>nul");
+	} else if (ostype=='posix') {
+		system("rm -f *.idb *.def *~");
+	}
+}

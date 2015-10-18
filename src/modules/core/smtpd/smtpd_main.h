@@ -42,17 +42,21 @@ typedef struct {
 	char *extradata;
 } CONN;
 
-/* auth.c functions */
+/* smtpd_auth.c functions */
 int auth_login(CONN *conn, char *username, char *password, int mbox);
-/* bounce.c functions */
+/* smtpd_bounce.c functions */
 int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason);
-/* conf.c functions */
+/* smtpd_conf.c functions */
 int conf_read(void);
-/* dns.c */
+/* smtpd_dns.c */
 char *dns_getmxbyname(char *dest, int destlen, char *domain);
-/* filter.c functions */
+/* smtpd_filter.c functions */
 int filter_scan(CONN *conn, char *msgfilename);
-/* smtp.c functions */
+/* smtpd_nsp.c */
+int smtp_nsp_init(CONN *conn);
+int smtp_nsp_prefilter(CONN *conn);
+int smtp_nsp_postfilter(CONN *conn);
+/* smtpd_server.c functions */
 void smtp_dorequest(CONN *conn);
 
 #ifdef WIN32
@@ -67,6 +71,8 @@ typedef struct {
 	char      smtp_hostname[128];
 	short int smtp_port;
 	short int smtp_sslport;
+	short int smtp_msaport;
+	short int require_tls;
 	short int smtp_maxconn;
 	short int smtp_maxidle;
 	int       smtp_retrydelay;
@@ -76,10 +82,11 @@ typedef struct {
 
 #ifdef SRVMOD_MAIN
 	CONN *conn;
-	TCP_SOCKET ListenSocketSTD;
-	TCP_SOCKET ListenSocketSSL;
-	pthread_t ListenThreadSTD;
-	pthread_t ListenThreadSSL;
+	TCP_SOCKET ListenSocketSTD; // port 25
+	TCP_SOCKET ListenSocketSSL; // port 465
+	TCP_SOCKET ListenSocketMSA; // port 587
+	//pthread_t ListenThreadSTD;
+	//pthread_t ListenThreadSSL;
 	pthread_t SpoolThread;
 	pthread_mutex_t ListenerMutex;
 	MOD_CONFIG mod_config;
@@ -87,8 +94,9 @@ typedef struct {
 	extern CONN *conn;
 	extern TCP_SOCKET ListenSocketSTD;
 	extern TCP_SOCKET ListenSocketSSL;
-	extern pthread_t ListenThreadSTD;
-	extern pthread_t ListenThreadSSL;
+	extern TCP_SOCKET ListenSocketMSA;
+	//extern pthread_t ListenThreadSTD;
+	//extern pthread_t ListenThreadSSL;
 	extern pthread_t SpoolThread;
 	extern pthread_mutex_t ListenerMutex;
 	extern MOD_CONFIG mod_config;

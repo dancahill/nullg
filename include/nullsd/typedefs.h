@@ -19,6 +19,7 @@
 typedef struct {
 	int socket;
 	SSL *ssl;
+	short int using_tls;
 	char RemoteAddr[16];
 	int  RemotePort;
 	char ServerAddr[16];

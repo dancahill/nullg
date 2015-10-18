@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+    */
 
 #define SERVER_NAME	"NullLogic GroupServer"
 #define SERVER_BASENAME	"nullsd"
@@ -81,7 +81,9 @@
 #define SMTP_PORT		25
 #define SMTPS_PORT		465
 
+#if !defined( WIN32)
 #define HAVE_FBSQL
+#endif
 #define HAVE_MYSQL
 #ifdef WIN32
 /* #define HAVE_ODBC */
@@ -94,16 +96,16 @@
 
 #ifdef WIN32
 #ifndef BCC
-	#define S_IFMT		_S_IFMT   
-	#define S_IFDIR		_S_IFDIR  
-	#define S_IFCHR		_S_IFCHR  
-	#define S_IFIFO		_S_IFIFO  
-	#define S_IFREG		_S_IFREG  
-	#define S_IREAD		_S_IREAD  
-	#define S_IWRITE	_S_IWRITE 
-	#define S_IEXEC		_S_IEXEC 
-	#define S_IFBLK		0000000
-	#define S_ISDIR(x)	(x & _S_IFDIR)
+#define S_IFMT		_S_IFMT   
+#define S_IFDIR		_S_IFDIR  
+#define S_IFCHR		_S_IFCHR  
+#define S_IFIFO		_S_IFIFO  
+#define S_IFREG		_S_IFREG  
+#define S_IREAD		_S_IREAD  
+#define S_IWRITE	_S_IWRITE 
+#define S_IEXEC		_S_IEXEC 
+#define S_IFBLK		0000000
+#define S_ISDIR(x)	(x & _S_IFDIR)
 #endif
 #define S_IFLNK		0000000
 #define S_IFSOCK	0000000

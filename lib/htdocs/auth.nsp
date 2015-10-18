@@ -1,0 +1,36 @@
+<?nsp
+include_template("common.html.ns");
+
+if (_USER==null) {
+?>
+<br />
+<form name='login' id='login' method='post' action='/auth.nsp' onsubmit='return _login.DoSubmit(event);' style='display:inline;'>
+<input type='hidden' name=pageuri value='/auth.nsp'>
+<input type='hidden' name=domain  value='NULL'>
+<table class='contenttable' style='width:275px;margin:0 auto;'>
+<tr><th colspan=2>NullLogic GroupServer Login</th></tr>
+<tr><td><b>&nbsp;Login Name&nbsp;</b></td><td><input type='text' name='username' size='25' maxlength='50' value='' placeholder='Login Name' required='required' autocorrect='off' autocapitalize='off'></td></tr>
+<tr><td><b>&nbsp;Password&nbsp;</b></td><td><input type='password' name='password' size='25' maxlength='50' value='' placeholder='Password' required='required' autocorrect='off' autocapitalize='off'></td></tr>
+<tr><td align='center' colspan='2' style='text-align:center'><input type=submit class=frmbutton name=login value='Log In'></td></tr>
+</table>
+</form>
+<script type='text/javascript'>
+window.onbeforeunload = function() { };
+//if (self!=parent) open('/','_top');
+document.login.setAttribute('autocomplete','off');
+document.login.username.focus();
+if (window.location.protocol != 'https:') {
+	console.log('Warning: This site is not using SSL.');
+}
+</script>
+<?nsp
+} else {
+	print("<script type='text/javascript'>\r\nwindow.onbeforeunload = function() { return 'Leaving the page will cause the application to reload.'; };\r\n</script>\r\n");
+	print("<div id=\"header\">\r\n");
+	html.printmenu();
+	print("</div>\r\n");
+	print("<div id=\"main\">\r\n");
+	html.motd();
+	print("</div>\r\n");
+}
+?>

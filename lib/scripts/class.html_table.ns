@@ -1,0 +1,73 @@
+class html_table {
+	function _constructor() {
+		/* columns to show in table - name and label should exist for each column */
+		this.columns={};
+		/* tablename should be unique so jquery tablesorter can find it */
+		this.tablename="TableName";
+		/* css class name */
+		this.tableclass="";
+		/* autoadd all columns after any defined columns */
+		this.autoaddcolumns=true;
+		/* sql query result */
+		this.datasource=null;
+	};
+	/* function to add column */
+	function addcolumn(name, label, lambda, lambda_td) {
+		columns[sizeof(columns)]={ name=name, label=label, lambda=lambda, lambda_td=lambda_td };
+	};
+	/* function to output complete table */
+	function write() {
+		// these should already be included in header.ns
+		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.js\"></script>\r\n");
+		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.tablesorter.js\"></script>\r\n");
+		printf("<script type=\"text/javascript\">\r\n"+
+			"$(function() {\r\n"+
+			"	$(\"#%s\").tablesorter({sortList:[[0,0]], widgets: ['zebra']});\r\n"+
+			"});\r\n"+
+			"</script>"
+			, tablename
+		);
+		print("<table");
+		if (tablename!="") print(" id='"+tablename+"'");
+		if (tableclass!="") print(" class='"+tableclass+"'");
+		print(">\r\n");
+		print("<thead>");
+		print("<tr>");
+		foreach (column in columns) {
+			printf("<th>%s</th>", strtohtml(column.label));
+		}
+		if (autoaddcolumns==true) {
+			foreach (n,v in datasource._rows[0]) {
+				printf("<th>%s</th>", strtohtml(n));
+			}
+		}
+		print("</tr>\r\n");
+		print("</thead>");
+		print("<tbody>");
+		foreach (record in datasource._rows) {
+			print("<tr>");
+			foreach (column in columns) {
+//				print("<td>");
+				if (column.lambda_td!=null) {
+					print(column.lambda_td(record, column));
+				} else {
+					print("<td>");
+				}
+				if (column.lambda!=null) {
+					print(column.lambda(record, column));
+				} else {
+					print(strtohtml(record[column.name]));
+				}
+				print("</td>");
+			}
+			if (autoaddcolumns==true) {
+				foreach (n,v in record) {
+					printf("<td>%s</td>", strtohtml(v));
+				}
+			}
+			print("</tr>\r\n");
+		}
+		print("</tbody>");
+		print("</table>");
+	};
+}

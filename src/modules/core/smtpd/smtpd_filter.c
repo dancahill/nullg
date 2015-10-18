@@ -21,15 +21,17 @@ int filter_scan(CONN *conn, char *msgfilename)
 {
 	short int err;
 
-	if (strlen(mod_config.filter_program)<1) return 0;
-	err=sys_system("%s %s", mod_config.filter_program, msgfilename);
-	if (err>255) err=err>>8;
-	if ((err==1)||(err==2)||(err==3)) {
-		if (err==1) {
+	if (strlen(mod_config.filter_program) < 1) return 0;
+	err = sys_system("%s %s", mod_config.filter_program, msgfilename);
+	if (err > 255) err = err >> 8;
+	if ((err == 1) || (err == 2) || (err == 3)) {
+		if (err == 1) {
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][SPAM]", conn->dat->RemoteAddr);
-		} else if (err==2) {
+		}
+		else if (err == 2) {
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS]", conn->dat->RemoteAddr);
-		} else if (err==3) {
+		}
+		else if (err == 3) {
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "[%s][VIRUS+SPAM]", conn->dat->RemoteAddr);
 		}
 		return err;

@@ -1,0 +1,50 @@
+
+function search_bookmarks() {
+	local function aa(url) { return sprintf("<a href=\"%s\" onclick='return GoTo(\"%s\");'>", url.replace("\"", "'"), url.replace("\"", "'")); };
+	local function a(url, module, id) { return sprintf("<a href=\"%s\" onclick=\"return ModalForm(event, '%s', %d);\">", url.replace("\"", "'"), module, id); };
+	var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+	bookmarkhtml.headermenu(0);
+	bookmarkhtml.show_searchform();
+	q2=sqlquery("SELECT * FROM gw_bookmarks WHERE LOWER(bookmarkname) LIKE '%"+text+"%' OR LOWER(bookmarkurl) LIKE '%"+text+"%';");
+	//printf("<div style='text-align:left;white-space:pre'>q2=[%s]</div>", serialize(q2));
+	result="";
+	results=0;
+	//result+="<br>\r\n";
+	result+="<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n";
+	result+="<table id='contenttable' class='contenttable' style='width:400px;'>\r\n";
+	result+="<thead>\r\n";
+	result+=sprintf("<tr><th colspan=2 style='text-align:center'>searching for '%s'</th></tr>\r\n", strtohtml(_POST['SEARCHTEXT']));
+	result+="</thead>\r\n";
+	result+="<tbody>\r\n";
+	q1=sqlquery("SELECT * FROM gw_bookmarks_folders WHERE LOWER(foldername) LIKE '%"+text+"%';");
+	foreach (row in q1['_rows']) {
+		result+="<tr><td style='width:1%%'>"+a("/app/bookmarks/editfolder", 'bookmarkfolder', tonumber(row['folderid']))+"edit</a></td>";
+		result+=sprintf("<td style='width:99%%'>"+aa(sprintf("/app/bookmarks/list?folderid=%d", tonumber(row['folderid'])))+"<img align=top border=0 src=/lib/images/file-folder.png height=16 width=16>&nbsp;%s</a></td></tr>\r\n", strtohtml(row['foldername']));
+		results++;
+	}
+	q1=sqlquery("SELECT bookmarkid, bookmarkname, bookmarkurl, gw_bookmarks.folderid, gw_bookmarks_folders.foldername FROM gw_bookmarks LEFT JOIN gw_bookmarks_folders ON gw_bookmarks.folderid = gw_bookmarks_folders.folderid WHERE LOWER(bookmarkname) LIKE '%"+text+"%' OR LOWER(bookmarkurl) LIKE '%"+text+"%';");
+	foreach (row in q1['_rows']) {
+		result+="<tr><td style='width:1%%'>"+a("/app/bookmarks/editbookmark?id="+tonumber(row['bookmarkid']), 'bookmark', tonumber(row['bookmarkid']))+"edit</a></td>";
+		result+=sprintf("<td style='width:99%%'><a href=\"%s\" target=\"_blank\">%s</a>\r\n", row['bookmarkurl'], strtohtml(row['bookmarkname']));
+		result+=sprintf(" in ["+aa(sprintf("/app/bookmarks/list?folderid=%d", tonumber(row['folderid'])))+"%s</a>]</td></tr>\r\n", strtohtml(row['foldername']));
+		results++;
+	}
+	result+="</tbody>\r\n";
+	result+="</table>\r\n";
+	if (results==0) {
+		printf("<br>no matches for '%s'", strtohtml(_POST['SEARCHTEXT']));
+	} else {
+		print(result);
+	}
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("bookmarks.lib.ns");
+	print("<center>\r\n");
+	search_bookmarks();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

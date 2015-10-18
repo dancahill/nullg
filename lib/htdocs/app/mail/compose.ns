@@ -1,0 +1,217 @@
+include("mail.lib.ns");
+
+function message_decode(body, header) {
+	if (header['content-transfer-encoding']=='quoted-printable') {
+		body=""+net.mime.decode_qp(body)+"";
+	} else if (header['content-transfer-encoding']=='base64') {
+		body=""+base64.decode(body)+"";
+	}
+	return body;
+}
+
+function print_header() {
+	var userid   = tonumber(_USER['userid']);
+	var domainid = tonumber(_USER['domainid']);
+	var headerid = tonumber(_GET['ID']);
+
+	if (userid==0) {
+		printf("<br><b>userid is 0?  are you sure you logged in?</b>\r\n");
+		return;
+	}
+	if (headerid!=0) {
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d", userid, headerid);
+		sqr=sqlquery(query);
+		if (sqr._tuples<1) {
+			printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
+			sqr=null;
+			return;
+		} else if (sqr._tuples>1) {
+			printf("<br><b>found duplicate mail headers for id %d</b>\r\n", headerid);
+			sqr=null;
+			return;
+		}
+		row=sqr['_rows'][0];
+	} else {
+		row={};
+	}
+	if (_GET['PART']=='header') {
+//		print("[Previous] ");
+//		print("[<A HREF=\"write?replyto=",msg,"\">Reply</A>] ");
+//		print("[Reply All] [Forward] [Print] [Delete] [Next]");
+		print("<table id='msgread' class='contenttable' style='height:100%;width:100%;'>\r\n");
+		//print("<tr><th width='1%' style='text-align:left'>From</th><td width='99%'><div id='msgfrom' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_to']),"</div></td></tr>\r\n");
+		print("<tr><th width='1%' style='text-align:left'>From</th><td width='99%'>");
+		print("<select id=msgfrom style='width:100%'>");
+		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d", userid));
+		var currentaccountid = tonumber(_USER['pref']['mailcurrent']);
+		foreach (acctrow in sqr['_rows']) {
+			mailaccountid=tonumber(acctrow['mailaccountid']);
+			printf("<option value=%d%s>%s</option>\r\n", mailaccountid, (mailaccountid==currentaccountid)?" SELECTED":"", acctrow['accountname']);
+		}
+		print("</select>");
+		print("</td></tr>\r\n");
+		print("<tr><th style='text-align:left'>To</th><td><div id='msgto' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_replyto']),"</div></td></tr>\r\n");
+		print("<tr><th style='text-align:left'>CC</th><td><div id='msgcc' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_cc']),"</div></td></tr>\r\n");
+		print("<tr><th style='text-align:left'>BCC</th><td><div id='msgbcc' contenteditable=true style='border:0;width:100%'></div></td></tr>\r\n");
+		if (headerid==0) {
+			subject="";
+		} else {
+			subject=strtohtml(row['hdr_subject']);
+			if (subject.sub(0, 3).tolower()!='re:') {
+				subject='Re: '+subject;
+			}
+		}
+		printf("<tr><th style='text-align:left'>Subject</th><td><div id='msgsubject' contenteditable=true style='border:0;width:100%%'>%s</div></td></tr>\r\n", subject);
+		//print("<tr><td colspan=2>[<a href=\"viewraw?msg=",msg,"\" target=\"_BLANK\">View Source</a>]</td></tr>\r\n");
+		print(
+			"<tr><td colspan=2 style='padding:0;spacing:0'>",
+			"<table style='border:0;padding:0;spacing:0'><tr><td style='white-space:nowrap;padding:0px'>\r\n",
+			"	<select onchange=\"SetFont('FontName', this.value)\">\r\n",
+			"	<option value='Arial'>Arial</option>\r\n",
+			"	<option value='Courier'>Courier</option>\r\n",
+			"	<option value='Helvetica'>Helvetica</option>\r\n",
+			"	<option value='Times New Roman' selected>Times New Roman</option>\r\n",
+			"	<option value='Verdana'>Verdana</option>\r\n",
+			"	</select>\r\n",
+			"	<select onchange=\"SetFont('FontSize', this.value)\">\r\n",
+			"	<option value='1'>1</option>\r\n",
+			"	<option value='2'>2</option>\r\n",
+			"	<option value='3' selected>3</option>\r\n",
+			"	<option value='4'>4</option>\r\n",
+			"	<option value='5'>5</option>\r\n",
+			"	<option value='6'>6</option>\r\n",
+			"	<option value='7'>7</option>\r\n",
+			"	</select></td><td bgcolor=#000000 style='padding:1px'></td><td style='white-space:nowrap;padding:0px'><img\r\n",
+			"	alt='Bold'                   src='/lib/images/wmedit/bold.png'      onClick=wmedit.wmformat('Bold')                 border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Italic'                 src='/lib/images/wmedit/italic.png'    onClick=wmedit.wmformat('Italic')               border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Underline'              src='/lib/images/wmedit/underline.png' onClick=wmedit.wmformat('Underline')            border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Font Colour'            src='/lib/images/wmedit/fontcol.png'   onClick=wmedit.SetForeColour()                  border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)></td><td bgcolor=#000000 style='padding:1px'></td><td style='white-space:nowrap;padding:0px'><img\r\n",
+			"	alt='Formatting Numbers'     src='/lib/images/wmedit/numlist.png'   onClick=wmedit.wmformat('InsertOrderedList')    border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Formatting Bullets'     src='/lib/images/wmedit/bullist.png'   onClick=wmedit.wmformat('InsertUnorderedList')  border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Decrease Indentation'   src='/lib/images/wmedit/outdent.png'   onClick=wmedit.wmformat('Outdent')              border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Increase Indentation'   src='/lib/images/wmedit/indent.png'    onClick=wmedit.wmformat('Indent')               border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)></td><td bgcolor=#000000 style='padding:1px'></td><td style='white-space:nowrap;padding:0px'><img\r\n",
+			"	alt='Align Left'             src='/lib/images/wmedit/left.png'      onClick=wmedit.wmformat('JustifyLeft')          border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Center'                 src='/lib/images/wmedit/center.png'    onClick=wmedit.wmformat('JustifyCenter')        border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Align Right'            src='/lib/images/wmedit/right.png'     onClick=wmedit.wmformat('JustifyRight')         border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Justify'                src='/lib/images/wmedit/justify.png'   onClick=wmedit.wmformat('Justify')              border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)></td><td bgcolor=#000000 style='padding:1px'></td><td style='white-space:nowrap;padding:0px' width=100%><img\r\n",
+			"	alt='Insert Horizontal Line' src='/lib/images/wmedit/rule.png'      onClick=wmedit.wmformat('InsertHorizontalRule') border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Create a Hyperlink'     src='/lib/images/wmedit/link.png'      onClick=wmedit.doLink()                         border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)><img\r\n",
+			"	alt='Insert Picture'         src='/lib/images/wmedit/image.png'     onClick=wmedit.doImage()                        border=0 width=22 height=22 class=butClass onMouseOver=wmedit.selOn(this) onMouseOut=wmedit.selOff(this)></td>\r\n",
+			"</tr></table>\r\n",
+			"</td></tr>\r\n"
+		);
+		print("<tr><td colspan=2 height=100%><iframe id='contentiframe' width=100% height=100% srcdoc=\"<p>Loading...</p>\" sandbox=\"allow-same-origin\" frameborder=\"0\"></iframe></td></tr>\r\n");
+		print("<tr><th style='text-align:left'>Attachment</th><td>");
+		print(
+			//"<FORM METHOD=POST ACTION=/mail/save NAME=wmcompose ENCTYPE=multipart/form-data onSubmit='copy_submit()'>",
+			"<form id=wmcompose name=wmcompose method=post action='/app/mail/save' enctype='multipart/form-data'>",
+			"<div style='display:none'>",
+			"<input type=hidden name=inreplyto value=\""+strtohtml(row['hdr_messageid'])+"\">",
+			"from<input type=text name=msgfrom value=''><br>",
+			"to<input type=text name=msgto value=''><br>",
+			"cc<input type=text name=msgcc value=''><br>",
+			"bcc<input type=text name=msgbcc value=''><br>",
+			"subject<input type=text name=msgsubject value=''><br>",
+			"text<br><textarea name=msgbody></textarea><br>",
+			"</div>",
+			"<input type=file name=fattach size=70>\r\n",
+		//	"Attachment:<input type=file name=fattach size=70><br>",
+		//	"<input type=submit class=frmButton value='Send Mail'>",
+		//	"<input type=submit class=frmButton value='Save As Draft'>",
+		//	"<input type=button class=frmButton value='Check Spelling' onClick=openSpellChecker();>",
+			"</form>"
+		);
+		print("</td></tr>\r\n");
+		print("</table>\r\n");
+		print("<script>\r\n");
+		print("$('#contentiframe').load(function(e){ mail.load_compose_body("+headerid+"); })\r\n");
+		print("</script>");
+	//	print("<br><a href=\"javascript:x();\">blah</a>");
+	} else if (_GET['PART']=='body') {
+		if (headerid==0) {
+			print("<div style='color:blue'><br><br></div>");
+			return;
+		}
+		local function findtextorhtml(parent) {
+			foreach (n,v in parent['body']) {
+				ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+				if (string.istr(ctype, 'text/html')==null) continue;
+				messagebody=message_decode(v['body'], v['head']);
+				return messagebody;
+			}
+			foreach (n,v in parent['body']) {
+				ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+				if (string.istr(ctype, 'text/plain')==null) continue;
+				messagebody=message_decode(v['body'], v['head']);
+				messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+				return messagebody;
+			}
+			return null;
+		}
+		local function pad(s, p) {
+			s='0'*p+s.tostring();
+			return string.sub(s, string.len(s)-p, p);
+		}
+		// /var/lib/nullgw/domains/0001/mail/0001/0001/000434.msg
+		//printf("MASTERGLOBAL['CONFIG']['var_domains_path']=[%s]", MASTERGLOBAL['CONFIG']['var_domains_path']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		path=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(row['obj_did'], 4), pad(row['accountid'], 4), pad(row['folder'], 4), pad(row['mailheaderid'], 6));
+		msgbody=file.readall(path);
+		if (typeof(msgbody)!='string') {
+			printf("cannot read file '%s'", path);
+			return;
+		}
+		message=net.mime.read(msgbody);
+		body_found=false;
+		if (typeof(message['body'])=='string') {
+			messagebody=message_decode(message['body'], message['head']);
+			ctype=message['head']['content-type']!=null?message['head']['content-type']:"";
+			if (string.istr(ctype, 'text/html')==null) {
+				messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+			}
+			body_found=true;
+		}
+		if (!body_found) {
+			res=findtextorhtml(message);
+			if (res!=null) {
+				messagebody=res;
+				body_found=true;
+			} else {
+				/* it might be in an alternative part */
+				foreach (n,v in message['body']) {
+					ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+					if (string.istr(ctype, 'multipart/alternative')==null && string.istr(ctype, 'multipart/related')==null) continue;
+					//subbody=message_decode(v['body'], v['head']);
+					//return messagebody;
+					res=findtextorhtml(v);
+					if (res!=null) {
+						messagebody=res;
+						body_found=true;
+					}
+				}
+			}
+		}
+		if (!body_found) {
+			print("<b>message is not parseable!!!</b><br/>");
+			print("Raw body: <pre>"+strtohtml(serialize(message))+"</pre>");
+		} else {
+			//mb=messagebody.replace("<body", "<nobody").replace("</body", "</nobody");
+			/* it looks like stripping the html and head tags is necessary, or the body can't be found in the iframe */
+			mb=messagebody.istr("<body");
+			if (mb==null) mb=messagebody;
+			print(
+				"<div style='color:black'><br><br>"+strtohtml(row['hdr_from'])+" said:</div>\r\n<blockquote class='gw_quote' style='margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex'>",
+				mb,
+				"</blockquote>"
+			);
+		}
+		//print("Raw body: <pre>"+strtohtml(serialize(message))+"</pre>");
+	}
+	return;
+}
+
+try {
+	print_header();
+} catch (ex) {
+	print(serialize(ex));
+}

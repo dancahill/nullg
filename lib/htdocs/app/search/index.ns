@@ -1,0 +1,111 @@
+include_template("db.ns");
+
+function form_inet_script() {
+	print(
+		"<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">\n<!--\n",
+		"function startSearch() {\n",
+		"	searchString = document.searchForm.searchText.value;\n",
+		"	if (searchString=='') return;\n",
+		"	searchEngine = document.searchForm.whichEngine.selectedIndex + 1;\n",
+		"	finalSearchString = '';\n",
+		"	if (searchEngine == 1)\n",
+		"		finalSearchString = 'http://www.altavista.com/cgi-bin/query?pg=q&what=web&fmt=.&q=' + searchString;\n",
+		"	else if (searchEngine == 2)\n",
+		"		finalSearchString = 'http://netfind.aol.com/search.gw?search=' + searchString + '&c=web&lk=excite_netfind_us&src=1';\n",
+		"	else if (searchEngine == 3)\n",
+		"		finalSearchString = 'http://www.excite.com/search.gw?trace=a&search=' + searchString;\n",
+		"	else if (searchEngine == 4)\n",
+		"		finalSearchString = 'http://www.google.com/search?q=' + searchString;\n",
+		"	else if (searchEngine == 5)\n",
+		"		finalSearchString = 'http://www.hotbot.com/?SW=web&SM=MC&MT=' + searchString + '&DC=10&DE=2&RG=NA&_v=2&act.search.x=89&act.search.y=7';\n",
+		"	else if (searchEngine == 6)\n",
+		"		finalSearchString = 'http://www.lycos.com/cgi-bin/pursuit?adv=%%26adv%%3B&cat=lycos&matchmode=and&query=' + searchString + '&x=45&y=11';\n",
+		"	else if (searchEngine == 7)\n",
+		"		finalSearchString = 'http://search.msn.com/results.asp?RS=CHECKED&FORM=MSNH&v=1&q=' + searchString;\n",
+		"	else if (searchEngine == 8)\n",
+		"		finalSearchString = 'http://search.yahoo.com/bin/search?p=' + searchString + '&hc=0&hs=0';\n",
+		"	window.open(finalSearchString, '_blank');\n",
+		"}\n",
+		"// -->\n</SCRIPT>\n"
+	);
+};
+
+function form_inet() {
+	print(
+		"<FORM NAME='searchForm' ACTION=javascript:startSearch()>\n",
+		"<TR><TH COLSPAN=3>Internet Search Form</TH></TR>\n",
+		"<TR CLASS=\"EDITFORM\"><TD>\n",
+		"<SELECT name='whichEngine'>\n",
+		"<OPTION>Altavista\n",
+		"<OPTION>AOL Netfind\n",
+		"<OPTION>Excite\n",
+		"<OPTION SELECTED>Google\n",
+		"<OPTION>Hotbot\n",
+		"<OPTION>Lycos\n",
+		"<OPTION>MSN\n",
+		"<OPTION>Yahoo!\n",
+		"</SELECT></TD>\n",
+		"<TD><INPUT TYPE=TEXT NAME='searchText' SIZE=20></TD>\n",
+		"<TD><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Search'></TD></TR>\n",
+		"</FORM>\n"
+	);
+}
+
+function form_contacts() {
+	print(
+		"<TR><TD COLSPAN=3>&nbsp;</TD></TR>\n",
+		"<FORM METHOD=GET ACTION=\"contacts.ns\" NAME=contactsearch>\n",
+		"<TR><TH COLSPAN=3>Contact Search Form</TH></TR>\n",
+		"<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n",
+		"<OPTION SELECTED>All Columns\n",
+		"<OPTION>contactid\n",
+		"<OPTION>folderid\n",
+		"<OPTION>username\n",
+		"<OPTION>surname\n",
+		"<OPTION>givenname\n",
+		"<OPTION>salutation\n",
+		"<OPTION>contacttype\n",
+		"<OPTION>referredby\n",
+		"<OPTION>altcontact\n",
+		"<OPTION>prefbilling\n",
+		"<OPTION>website\n",
+		"<OPTION>email\n",
+		"<OPTION>homenumber\n",
+		"<OPTION>worknumber\n",
+		"<OPTION>faxnumber\n",
+		"<OPTION>mobilenumber\n",
+		"<OPTION>jobtitle\n",
+		"<OPTION>organization\n",
+		"<OPTION>homeaddress\n",
+		"<OPTION>homelocality\n",
+		"<OPTION>homeregion\n",
+		"<OPTION>homecountry\n",
+		"<OPTION>homepostalcode\n",
+		"<OPTION>workaddress\n",
+		"<OPTION>worklocality\n",
+		"<OPTION>workregion\n",
+		"<OPTION>workcountry\n",
+		"<OPTION>workpostalcode\n",
+		"</SELECT></TD>\n",
+		"<TD><INPUT TYPE=TEXT NAME=string value='' SIZE=20></TD>\n",
+		"<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n",
+		"</FORM>\n"
+	);
+}
+
+
+try {
+	var userinfo = db.getuserinfo();
+	print("<BR>\r\n");
+	form_inet_script();
+	print("<CENTER>\r\n");
+	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
+	form_inet();
+	//if (auth_priv(conn, "contacts")&A_READ) {
+		form_contacts();
+	//}
+	print("</TABLE>\r\n</CENTER>\r\n");
+	//print("<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">\r\n<!--\r\ndocument.searchForm.searchText.focus();\r\n// -->\r\n</SCRIPT>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

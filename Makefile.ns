@@ -32,7 +32,7 @@ function win_make(vcver, private_inc, private_lib) {
 	if (env_set) {
 		cmd="@nmake -f Makefile.vc";
 		batchfile=_ENV['TEMP']+"\\win_make.cmd";
-		file.write(batchfile, env+cmd+"\r\n");
+		file.writeall(batchfile, env+cmd+"\r\n");
 		system(batchfile);
 		//inno_build();
 	}

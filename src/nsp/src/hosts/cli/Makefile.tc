@@ -1,0 +1,29 @@
+# Makefile for NullLogic Embedded Scripting Language
+# To use, do "make -fmakefile.tc"
+
+# large really is the bare minimum to run the test scripts
+# you may even need *cough* huge...
+
+MODEL  = l
+CC     = tcc
+TLIB   = tlib
+TLINK  = tcc
+BINDIR = ..\..\..\bin
+INCDIR = ..\..\..\include
+LIBDIR = ..\..\..\lib
+
+CFLAGS  = -w-par -m$(MODEL) -v- -I$(INCDIR) -DHAVE_CRYPTO -DHAVE_MATH -DHAVE_REGEX
+LDFLAGS = -m$(MODEL) -L$(LIBDIR)
+TARGET  = $(BINDIR)\nsp.exe
+
+all: _nsp
+
+_nsp: main.obj
+	$(TLINK) $(LDFLAGS) -e$(TARGET) main.obj libnsp.lib crypto.lib ext.lib math.lib regex.lib
+
+clean:
+	@del $(TARGET)
+	@del *.obj
+
+.c.obj:
+	$(CC) $(CFLAGS) -c $<

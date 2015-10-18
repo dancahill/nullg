@@ -19,12 +19,11 @@
 
 char *domain_getname(char *outstring, int outlen, int domainid)
 {
-	obj_t *qobj=NULL;
+	obj_t *qobj = NULL;
 
-//	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullsd_entries WHERE class = 'organization' AND did = %d", domainid)<0) return NULL;
-	if (sql_queryf(proc.N, &qobj, "SELECT domainname FROM gw_domains WHERE domainid = %d", domainid)<0) return NULL;
-	if (sql_numtuples(proc.N, &qobj)>0) {
-		strncpy(outstring, sql_getvalue(proc.N, &qobj, 0, 0), outlen-1);
+	if (sql_queryf(proc.N, &qobj, "SELECT domainname FROM gw_domains WHERE domainid = %d", domainid) < 0) return NULL;
+	if (sql_numtuples(proc.N, &qobj) > 0) {
+		strncpy(outstring, sql_getvalue(proc.N, &qobj, 0, 0), outlen - 1);
 		sql_freeresult(proc.N, &qobj);
 		return outstring;
 	}
@@ -34,18 +33,15 @@ char *domain_getname(char *outstring, int outlen, int domainid)
 
 int domain_getid(char *domainname)
 {
-	int domainid=-1;
-	obj_t *qobj=NULL;
+	int domainid = -1;
+	obj_t *qobj = NULL;
 
-//	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullsd_entries WHERE class = 'associateddomain' AND name = '%s'", domainname)<0) return -1;
-	if (sql_queryf(proc.N, &qobj, "SELECT domainid FROM gw_domains WHERE domainname = '%s'", domainname)<0) return -1;
-	if (sql_numtuples(proc.N, &qobj)>0) domainid=atoi(sql_getvalue(proc.N, &qobj, 0, 0));
+	if (sql_queryf(proc.N, &qobj, "SELECT domainid FROM gw_domains WHERE LOWER(domainname) = LOWER('%s')", domainname) < 0) return -1;
+	if (sql_numtuples(proc.N, &qobj) > 0) domainid = atoi(sql_getvalue(proc.N, &qobj, 0, 0));
 	sql_freeresult(proc.N, &qobj);
-	if (domainid>0) return domainid;
-
-//	if (sql_queryf(proc.N, &qobj, "SELECT did FROM nullsd_entries WHERE class = 'associateddomain' AND name = '%s'", domainname)<0) return -1;
-	if (sql_queryf(proc.N, &qobj, "SELECT domainid FROM gw_domains_aliases WHERE domainname = '%s'", domainname)<0) return -1;
-	if (sql_numtuples(proc.N, &qobj)>0) domainid=atoi(sql_getvalue(proc.N, &qobj, 0, 0));
+	if (domainid > 0) return domainid;
+	if (sql_queryf(proc.N, &qobj, "SELECT domainid FROM gw_domains_aliases WHERE LOWER(domainname) = LOWER('%s')", domainname) < 0) return -1;
+	if (sql_numtuples(proc.N, &qobj) > 0) domainid = atoi(sql_getvalue(proc.N, &qobj, 0, 0));
 	sql_freeresult(proc.N, &qobj);
 	return domainid;
 }

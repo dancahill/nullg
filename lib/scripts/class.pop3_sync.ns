@@ -1,0 +1,24 @@
+function pop3_sync(user, pass, host, port, use_ssl) {
+	var dirname=user+"@"+host;
+	pop=new net.pop3.client();
+	pop.username=user;
+	pop.password=pass;
+	pop.server=host;
+	if (pop.open()==true) {
+		stat=pop.stat();
+		count=stat.count;
+		if (count==1) plural=''; else plural='s';
+		print("\nE-mail status for "+user+"@"+host+"\nYou have "+count+" message"+plural+"\n\n");
+		if (typeof(file.stat(dirname))!='table') file.mkdir(dirname);
+		for (i=1;i<=count;i++) {
+			filename=pop.uidl(i);
+			// pop.head(i);
+			// pop.size(i);
+			if (typeof(file.stat(dirname+"/"+filename))!='table') {
+				file.writeall(dirname+"/"+filename, pop.retr(i));
+			}
+		}
+	}
+	pop.close();
+	return;
+}

@@ -56,14 +56,10 @@ int time_tzoffset2(CONN *conn, time_t unixdate, int userid);
 int time_tzoffsetcon(CONN *conn, time_t unixdate, int contactid);
 time_t time_wmgetdate(char *src);
 /* html.c functions */
-void htpage_header(CONN *conn, char *title);
-void htpage_footer(CONN *conn);
+//void htpage_footer(CONN *conn);
 int  htpage_dirlist(CONN *conn);
-void htpage_login(CONN *conn);
-void htpage_logout(CONN *conn);
-void htpage_frameset(CONN *conn);
-void htpage_topmenu(CONN *conn, char *modname);
-void htpage_motd(CONN *conn);
+//void htpage_login(CONN *conn);
+//void htpage_logout(CONN *conn);
 /*
 void htselect_day(CONN *conn, char *selected);
 void htselect_hour(CONN *conn, int selected);
@@ -92,7 +88,7 @@ char *htview_holiday(char *date);
 char *htview_reminder(CONN *conn, int selected);
 char *htview_user(CONN *conn, int selected);
 */
-void htscript_showpage(CONN *conn, short int pages);
+//void htscript_showpage(CONN *conn, short int pages);
 /* http.c functions */
 char *getgetenv(CONN *conn, char *query);
 char *getpostenv(CONN *conn, char *query);

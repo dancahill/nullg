@@ -111,9 +111,7 @@ static int regfunctions()
 	nsp_setcfunc(proc->N, tobj, "auth_setpass",		(void *)auth_setpass);
 	nsp_setcfunc(proc->N, tobj, "auth_priv",		(void *)auth_priv);
 	nsp_setcfunc(proc->N, tobj, "db_log_activity",		(void *)db_log_activity);
-	nsp_setcfunc(proc->N, tobj, "htpage_header",		(void *)htpage_header);
-	nsp_setcfunc(proc->N, tobj, "htpage_footer",		(void *)htpage_footer);
-	nsp_setcfunc(proc->N, tobj, "htpage_topmenu",		(void *)htpage_topmenu);
+//	nsp_setcfunc(proc->N, tobj, "htpage_footer",		(void *)htpage_footer);
 	nsp_setcfunc(proc->N, tobj, "htpage_dirlist",		(void *)htpage_dirlist);
 /*
 	nsp_setcfunc(proc->N, tobj, "htselect_contact",		(void *)htselect_contact);
@@ -144,7 +142,7 @@ static int regfunctions()
 	nsp_setcfunc(proc->N, tobj, "htview_reminder",		(void *)htview_reminder);
 	nsp_setcfunc(proc->N, tobj, "htview_user",		(void *)htview_user);
 */
-	nsp_setcfunc(proc->N, tobj, "htscript_showpage",	(void *)htscript_showpage);
+//	nsp_setcfunc(proc->N, tobj, "htscript_showpage",	(void *)htscript_showpage);
 	nsp_setcfunc(proc->N, tobj, "time_sql2datetext",	(void *)time_sql2datetext);
 	nsp_setcfunc(proc->N, tobj, "time_sql2timetext",	(void *)time_sql2timetext);
 	nsp_setcfunc(proc->N, tobj, "time_tzoffset",		(void *)time_tzoffset);

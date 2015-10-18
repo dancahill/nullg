@@ -110,8 +110,8 @@ case "$1" in
 upgrade)
 	setup_console
 	echo
-	if [ -x /etc/init.d/null-sd ]; then
-		/etc/init.d/null-sd stop
+	if [ -x /etc/init.d/nullsd ]; then
+		/etc/init.d/nullsd stop
 	fi
 	# Copy files to destination
 	echo ""
@@ -121,8 +121,8 @@ upgrade)
 	cd $DEST_BIN ; ./nullsd-confutil upgrade
 	set_permissions
 	echo
-	if [ -x /etc/init.d/null-sd ]; then
-		/etc/init.d/null-sd start
+	if [ -x /etc/init.d/nullsd ]; then
+		/etc/init.d/nullsd start
 	fi
 	echo
 	;;
@@ -138,8 +138,8 @@ upgrade)
 	do_copying
 	echo "done."
 	echo
-	if [ -x /etc/init.d/null-sd ]; then
-		/etc/init.d/null-sd stop
+	if [ -x /etc/init.d/nullsd ]; then
+		/etc/init.d/nullsd stop
 	fi
 	echo
 	cd $DEST_BIN ; ./nullsd-confutil

@@ -30,14 +30,21 @@ LIBDIR="@libdir@"
 VARDIR="@localstatedir@"
 PATH=$BINDIR:$PATH
 LD_LIBRARY_PATH=$LIBDIR:$LD_LIBRARY_PATH
+pidfile="/var/run/nullsd.pid"
 
 check_status() {
-	RC=`ps ax | grep -v grep | grep -c [n]ullsd`
-	if test ${RC} -gt 0; then
-		SERVER_STATUS="running"
+	if [ -f ${pidfile} ]; then
+		if [ -f "/proc/`cat ${pidfile}`/status" ]; then
+			SERVER_STATUS="running"
+		else
+			SERVER_STATUS="not running"
+		fi
 	else
 		SERVER_STATUS="not running"
 	fi
+#	RC=`lsof -t -a -i :8086 -i :8112 -sTCP:LISTEN`
+#	RC=`ps ax | grep -v grep | grep -c [n]ullsd`
+#	if test ${RC} -gt 0; then
 }
 
 nullsd_start() {

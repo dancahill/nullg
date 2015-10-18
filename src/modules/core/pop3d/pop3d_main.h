@@ -53,6 +53,7 @@ typedef struct {
 	char      pop3_interface[128];
 	short int pop3_port;
 	short int pop3_sslport;
+	short int require_tls;
 	short int pop3_maxconn;
 	short int pop3_maxidle;
 } MOD_CONFIG;
@@ -61,16 +62,16 @@ typedef struct {
 	CONN *conn;
 	TCP_SOCKET ListenSocketSTD;
 	TCP_SOCKET ListenSocketSSL;
-	pthread_t ListenThreadSTD;
-	pthread_t ListenThreadSSL;
+	//pthread_t ListenThreadSTD;
+	//pthread_t ListenThreadSSL;
 	pthread_mutex_t ListenerMutex;
 	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
 	extern TCP_SOCKET ListenSocketSTD;
 	extern TCP_SOCKET ListenSocketSSL;
-	extern pthread_t ListenThreadSTD;
-	extern pthread_t ListenThreadSSL;
+	//extern pthread_t ListenThreadSTD;
+	//extern pthread_t ListenThreadSSL;
 	extern pthread_mutex_t ListenerMutex;
 	extern MOD_CONFIG mod_config;
 #endif

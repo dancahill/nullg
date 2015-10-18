@@ -23,9 +23,11 @@ all: _all
 	@echo "Thank you for using NullLogic GroupServer."
 	@echo ""
 
-_all: _misc _sqlite _libnsp _libnsd _confutil _dbutil _server _core_modules _httpd_modules
+_all: _misc _sqlite _nsp _libnsd _confutil _dbutil _server _core_modules _httpd_modules
 
 _misc:
+	@mkdir -p bin
+	@mkdir -p lib
 	@cp -p src/scripts/nullsd-backup.sh   bin/nullsd-backup.sh
 	@cp -p src/scripts/nullsd-init.sh     bin/nullsd-init.sh
 	@cp -p src/scripts/nullsd-scanfile.sh bin/nullsd-scanfile.sh
@@ -46,9 +48,14 @@ _sqlite:
 	@echo "sqlite"
 	@cd src/sqlite && ./libsqlite_make build && cd ../..
 
-_libnsp:
-	@echo "libnsp"
-	@cd src/libnsp && $(MAKE) && cd ../..
+_nsp:
+	@echo "nsp"
+	@cd src/nsp && $(MAKE) shared && cd ../..
+	@rm -rf lib/nsp
+	@mkdir lib/nsp
+	@cp -a src/nsp/lib/libnsp.a lib/
+	@cp -a src/nsp/lib/shared/libnsp_*.so lib/nsp/
+	@echo
 
 _libnsd:
 	@echo "libnsd"
@@ -104,9 +111,11 @@ sslcert:
 clean:
 	@cd src/confutil && $(MAKE) clean && cd ../..
 	@cd src/dbutil   && $(MAKE) clean && cd ../..
-	@cd src/libnsp   && $(MAKE) clean && cd ../..
+#	@cd src/libnsp   && $(MAKE) clean && cd ../..
 	@cd src/libnsd   && $(MAKE) clean && cd ../..
 	@cd src/server   && $(MAKE) clean && cd ../..
+
+	@cd src/nsp      && $(MAKE) distclean && cd ../..
 
 	@cd src/modules/core/httpd && $(MAKE) clean && cd ../../../..
 	@cd src/modules/core/pop3d && $(MAKE) clean && cd ../../../..
@@ -133,23 +142,30 @@ clean:
 #	@cd src/modules/httpd/mod_weblog     && $(MAKE) clean && cd ../../../..
 #	@cd src/modules/httpd/mod_xmlrpc     && $(MAKE) clean && cd ../../../..
 
-	@rm -f bin/* lib/*.so lib/*.lib lib/core/* lib/httpd/* *~
+	@rm -f bin/* lib/*.a lib/*.so lib/*.lib *~
+	@rm -rf lib/core lib/httpd lib/nsp lib/shared
 	@rm -f etc/ssl-cert.pem etc/ssl-priv.pem
-	@rm -rf obj
-	@rm -f nsd.ncb nsd.suo
+#	@rm -rf bin int lib obj
+	@rm -rf bin int obj
 
 distclean: clean
+	@rm -rf .vs
+	@rm -f nsd.ncb nsd.suo nsd.v12.suo
 	@cd src/sqlite && ./libsqlite_make clean && cd ../..
-	@chmod -R 0755 bin
-	@chmod -R 0770 etc
-	@chmod -R 0755 lib
+#	@chmod -R 0755 bin
+#	@chmod -R 0770 etc
+#	@chmod -R 0755 lib
+	@chmod -R 0755 lib/htdocs
+	@chmod -R 0755 lib/locale
+	@chmod -R 0755 lib/scripts
 	@chmod -R 0770 var
 	@chmod -R 0755 var/share/htdocs
-	@chmod -R 0755 var/share/locale
 	@chmod -R 0600 `find etc -name '*' -type f`
 	@chmod -R 0660 `find var -name '*' -type f`
-	@chmod -R 0644 `find var/share/htdocs -name '*' -type f`
-	@chmod -R 0644 `find var/share/locale -name '*' -type f`
+	@chmod -R 0644 `find lib/htdocs -name '*' -type f`
+	@chmod -R 0644 `find lib/locale -name '*' -type f`
+	@chmod -R 0644 `find lib/scripts -name '*' -type f`
+#	@chmod -R 0644 `find var/share/htdocs -name '*' -type f`
 	@chown -R 0:0 *
 	@rm -f bin/nullsd-backup.sh bin/nullsd-init.sh bin/nullsd-scanfile.sh
 	@rm -f build-stamp config.log config.status include/nullsd/config.h Makefile src/Rules.mak src/scripts/setup.sh src/scripts/nullsd-backup.sh src/scripts/nullsd-init.sh src/scripts/nullsd-scanfile.sh

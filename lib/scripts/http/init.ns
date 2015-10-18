@@ -1,0 +1,25 @@
+local function test_access() {
+	local secured_urls = { '/app/'; }
+	if (_USER!=null) return;
+	foreach (x in secured_urls) {
+//		if (string.ncmp(_SERVER['REQUEST_URI'], x, string.len(x))==0) {
+		if (_SERVER['REQUEST_URI'].sub(0, x.length())==x) {
+			throw "authentication required";
+		}
+	}
+}
+
+local function load_libs() {
+	local libs = { "base", "crypto", "data", "net" };
+	foreach (lib in libs) {
+		if (!dl.load(lib)) throw "failed to load "+lib+"";
+	}
+}
+
+try {
+	test_access();
+	load_libs();
+} catch (e) {
+	//print("<BR><CENTER>["+e.description+"]</CENTER>");
+	throw e.description;
+}

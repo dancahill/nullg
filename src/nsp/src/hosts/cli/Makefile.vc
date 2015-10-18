@@ -1,0 +1,42 @@
+# Makefile for NullLogic Embedded Scripting Language
+
+OBJDIR  = ..\..\..\obj
+INTDIR  = $(OBJDIR)\cli
+
+include ..\..\config.mak
+
+CC            = cl.exe /nologo
+LINK          = link.exe /nologo
+MAKE          = nmake.exe /C /S /Y /F
+
+RSC           = rc.exe
+RSC_PROJ      = /l 0x409 /fo"$(INTDIR)\nestray.res" /d "NDEBUG"
+
+BIN_CFLAGS    = /W3 /O2 /MD /I "../../../include" $(CFLAGS) /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /c
+BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 /libpath:../../../lib/ gdi32.lib shell32.lib user32.lib winmm.lib libnsp.lib $(LDFLAGS) \
+	libnsp_dl.lib libnsp_ext.lib libnsp_math.lib
+BIN_TARGETDIR = ..\..\..\bin
+
+#CFLAGS  = $(BIN_CFLAGS)
+OBJECTS = $(INTDIR)\main.obj
+TARGET  = $(BIN_TARGETDIR)\nsp.exe
+
+all: _dirs _nsp
+
+_dirs:
+	@if not exist "$(BIN_TARGETDIR)" mkdir "$(BIN_TARGETDIR)"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_nsp: $(OBJECTS)
+	$(RSC) $(RSC_PROJ) .\nsp.rc
+	$(LINK) $(BIN_LDFLAGS) /out:$(TARGET) "$(INTDIR)\nestray.res" $(OBJECTS)
+
+clean:
+	@-erase "$(TARGET)" 2>nul
+	@-erase "$(INTDIR)\*.obj" 2>nul
+	@-erase "$(INTDIR)\*.idb" 2>nul
+	@if exist "$(INTDIR)" rmdir "$(INTDIR)"
+
+.c{$(INTDIR)}.obj:
+	$(CC) $(BIN_CFLAGS) $<

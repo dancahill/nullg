@@ -40,7 +40,7 @@
 #define MAXPACKET	8192	/* max size of packet */
 #define MAXMXHOSTS	20	/* max num of mx records we want to see */
 #define MAXBUF		512
-enum { MAXMXBUFSIZ=(MAXMXHOSTS*(MAXBUF+1)) };
+enum { MAXMXBUFSIZ = (MAXMXHOSTS*(MAXBUF + 1)) };
 typedef union {
 	HEADER hdr;
 	u_char buf[MAXPACKET];
@@ -54,12 +54,13 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 	DNS_STATUS status;
 	PDNS_RECORD pDnsRecord;
 
-	freetype=DnsFreeRecordListDeep;
-	status=DnsQuery_A(domain, DNS_TYPE_MX, DNS_QUERY_BYPASS_CACHE, NULL, &pDnsRecord, NULL);
+	freetype = DnsFreeRecordListDeep;
+	status = DnsQuery_A(domain, DNS_TYPE_MX, DNS_QUERY_BYPASS_CACHE, NULL, &pDnsRecord, NULL);
 	if (status) {
-		dest[0]='\0';
+		dest[0] = '\0';
 		return NULL;
-	} else {
+	}
+	else {
 		_snprintf(dest, destlen, "%s", (pDnsRecord->Data.MX.pNameExchange));
 		DnsRecordListFree(pDnsRecord, freetype);
 	}
@@ -80,23 +81,23 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 	register int j;
 	register int n;
 
-	dest[0]='\0';
+	dest[0] = '\0';
 	/* Query the nameserver to retrieve mx records for the given domain. */
-	n=res_search(domain, C_IN, T_MX, (u_char *)&answer, sizeof(answer));
-	if (n<0) {
+	n = res_search(domain, C_IN, T_MX, (u_char *)&answer, sizeof(answer));
+	if (n < 0) {
 		if (_res.options&RES_DEBUG) printf("sres_search failed\n");
 		return(0);
 	}
-	if (n<HFIXEDSZ) return(0);
+	if (n < HFIXEDSZ) return(0);
 	/* avoid problems after truncation in tcp packets */
-	if (n>(int)sizeof(answer)) n=(int)sizeof(answer);
+	if (n > (int)sizeof(answer)) n = (int)sizeof(answer);
 	/* Valid answer received. Skip the query record. */
-	hp=(HEADER *)&answer;
-	qdcount=ntohs((u_short)hp->qdcount);
-	ancount=ntohs((u_short)hp->ancount);
-	msg=(u_char *)&answer;
-	eom=(u_char *)&answer+n;
-	cp=(u_char *)&answer+HFIXEDSZ;
+	hp = (HEADER *)&answer;
+	qdcount = ntohs((u_short)hp->qdcount);
+	ancount = ntohs((u_short)hp->ancount);
+	msg = (u_char *)&answer;
+	eom = (u_char *)&answer + n;
+	cp = (u_char *)&answer + HFIXEDSZ;
 	while (qdcount-- > 0 && cp < eom) {
 		n = dn_skipname(cp, eom);
 		if (n < 0) return(0);
@@ -107,7 +108,7 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 	nmx = 0;
 	bp = hostbuf;
 	while (ancount-- > 0 && cp < eom && nmx < MAXMXHOSTS) {
-		n=dn_expand(msg, eom, cp, bp, MAXBUF);
+		n = dn_expand(msg, eom, cp, bp, MAXBUF);
 		if (n < 0) break;
 		cp += n;
 		GETSHORT(type, cp);
@@ -133,11 +134,11 @@ char *dns_getmxbyname(char *dest, int destlen, char *domain)
 		n = strlen(bp) + 1;
 		bp += n;
 	}
-	if (nmx<1) return NULL;
+	if (nmx < 1) return NULL;
 	/* Sort all records by preference. */
-	for (i=0;i<nmx;i++) {
-		for (j=i+1;j<nmx;j++) {
-			if (prefer[i]>prefer[j]) {
+	for (i = 0;i < nmx;i++) {
+		for (j = i + 1;j < nmx;j++) {
+			if (prefer[i] > prefer[j]) {
 				register u_short tmppref;
 				register char *tmphost;
 

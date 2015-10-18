@@ -328,7 +328,10 @@ void auth_logout(CONN *conn)
 		snprintf(CookieToken, sizeof(CookieToken)-1, "gstoken=NULL; path=/");
 		nsp_setstr(conn->N, tobj, "SET_COOKIE", CookieToken, strlen(CookieToken));
 	}
-	htpage_logout(conn);
+	//htpage_logout(conn);
+	db_log_activity(conn, "login", 0, "logout", "%s - Logout: username=%s", conn->socket.RemoteAddr, conn->dat->username);
+	send_header(conn, 0, 200, "1", "text/html", -1, -1);
+	prints(conn, "authentication required");
 }
 
 int auth_priv(CONN *conn, char *service)

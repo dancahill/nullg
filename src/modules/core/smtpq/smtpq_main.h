@@ -48,7 +48,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason);
 int conf_read(void);
 /* dns.c */
 char *dns_getmxbyname(char *dest, int destlen, char *domain);
-/* smtpc.c functions */
+/* smtpq_client.c functions */
 int smtp_client(FILE *fp, char *orig_msg, char *from, char *rcpt);
 /* smtq.c functions */
 #ifdef WIN32
@@ -63,6 +63,8 @@ typedef struct {
 	char      smtp_hostname[128];
 	short int smtp_port;
 	short int smtp_sslport;
+	short int smtp_msaport;
+	short int require_tls;
 	short int smtp_maxconn;
 	short int smtp_maxidle;
 	int       smtp_retrydelay;
@@ -72,15 +74,15 @@ typedef struct {
 
 #ifdef SRVMOD_MAIN
 	CONN *conn;
-	pthread_t ListenThreadSTD;
-	pthread_t ListenThreadSSL;
+	//pthread_t ListenThreadSTD;
+	//pthread_t ListenThreadSSL;
 	pthread_t SpoolThread;
 	pthread_mutex_t ListenerMutex;
 	MOD_CONFIG mod_config;
 #else
 	extern CONN *conn;
-	extern pthread_t ListenThreadSTD;
-	extern pthread_t ListenThreadSSL;
+	//extern pthread_t ListenThreadSTD;
+	//extern pthread_t ListenThreadSSL;
 	extern pthread_t SpoolThread;
 	extern pthread_mutex_t ListenerMutex;
 	extern MOD_CONFIG mod_config;

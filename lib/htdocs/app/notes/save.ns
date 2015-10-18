@@ -1,0 +1,2 @@
+include("notes.lib.ns");
+notes.save();

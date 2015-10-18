@@ -1,0 +1,30 @@
+class sqlcommand {
+	function _constructor(s) {
+		this.command="";
+		this.parameters = {};
+		if (s.gettype()=='string') this.command=s;
+	};
+	function addvalue(name, val) {
+		parameters[parameters.length()] = { name=name; val=val; };
+	};
+	function tostring() {
+		c=command.split('?');
+		q="";
+		clen=c.length();
+		if (clen-1!=this.parameters.length()) {
+			throw sprintf("incorrect parameter count.  found %d, expected %d", this.parameters.length(), clen-1);
+		};
+		for (i=0;i<clen;i++) {
+			q+=c[i];
+			if (i==clen-1) break;
+			x=this.parameters[i].val;
+			if (x.gettype()=='string') {
+				x="'"+x.tostring().replace("'", "''")+"'";
+			} else {
+				x=x.tostring();
+			}
+			q+=x;
+		}
+		return q;
+	};
+}

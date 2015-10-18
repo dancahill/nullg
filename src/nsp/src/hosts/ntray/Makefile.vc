@@ -1,0 +1,97 @@
+# Microsoft Developer Studio Generated NMAKE File, Based on nestray.dsp
+CFG=NesTray - Win32 Release
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+include ..\..\config.mak
+
+OUTDIR=..\..\..\bin
+INTDIR=..\..\..\obj\NesTray
+# Begin Custom Macros
+# End Custom Macros
+
+ALL : "$(OUTDIR)\nestray.exe"
+
+
+CLEAN :
+	-@erase "$(INTDIR)\nestray.obj" 2>nul
+	-@erase "$(INTDIR)\nestray.res" 2>nul
+	-@erase "$(INTDIR)\vc60.idb" 2>nul
+	-@erase "$(OUTDIR)\nestray.exe" 2>nul
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+"$(INTDIR)" :
+    if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
+
+CPP=cl.exe
+CPP_PROJ=/nologo /MD /W3 /EHsc /O2 /I "..\..\..\include" /D "HAVE_ODBC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+MTL=midl.exe
+MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
+RSC=rc.exe
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\nestray.res" /d "NDEBUG" 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\nestray.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=/libpath:../../../lib/ gdi32.lib shell32.lib user32.lib \
+	libnsp.lib libnsp_dl.lib libnsp_ext.lib libnsp_math.lib $(LDFLAGS) \
+	/nologo /subsystem:windows /pdb:none /machine:I386 /out:"$(OUTDIR)\nestray.exe" 
+
+LINK32_OBJS= \
+	"$(INTDIR)\nestray.obj" \
+	"$(INTDIR)\nestray.res" \
+	"..\..\..\lib\libnsp.lib" \
+	"..\..\..\lib\libnsp_dl.lib" \
+	"..\..\..\lib\libnsp_ext.lib" \
+	"..\..\..\lib\libnsp_math.lib" \
+	"..\..\..\lib\libnsp_winapi.lib"
+
+"$(OUTDIR)\nestray.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+SOURCE=.\nestray.c
+"$(INTDIR)\nestray.obj" : $(SOURCE) "$(INTDIR)"
+
+SOURCE=.\nestray.rc
+"$(INTDIR)\nestray.res" : $(SOURCE) "$(INTDIR)"
+	$(RSC) $(RSC_PROJ) $(SOURCE)

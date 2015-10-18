@@ -34,96 +34,99 @@ SRVMOD_INIT mod_init;
  */
 static int regfunctions()
 {
-	static char loaded=0;
+	static char loaded = 0;
 	obj_t *tobj;
 
 	if (loaded) return 0;
-	loaded=1;
-	tobj=nsp_settable(proc.N, &proc.N->g, "_exports");
-	tobj->val->attr|=NST_HIDDEN;
-	tobj=nsp_settable(proc.N, tobj, "core");
-	tobj->val->attr|=NST_HIDDEN;
-	nsp_setcfunc(proc.N, tobj, "config_read",		(void *)config_read);
-	nsp_setcfunc(proc.N, tobj, "config_write",		(void *)config_write);
-	nsp_setcfunc(proc.N, tobj, "decode_base64",		(void *)decode_base64);
-	nsp_setcfunc(proc.N, tobj, "dir_list",			(void *)dir_list);
-	nsp_setcfunc(proc.N, tobj, "domain_getname",		(void *)domain_getname);
-	nsp_setcfunc(proc.N, tobj, "domain_getid",		(void *)domain_getid);
-	nsp_setcfunc(proc.N, tobj, "language_gets",		(void *)language_gets);
-	nsp_setcfunc(proc.N, tobj, "lib_open",			(void *)lib_open);
-	nsp_setcfunc(proc.N, tobj, "lib_sym",			(void *)lib_sym);
-	nsp_setcfunc(proc.N, tobj, "lib_error",			(void *)lib_error);
-	nsp_setcfunc(proc.N, tobj, "lib_close",			(void *)lib_close);
-	nsp_setcfunc(proc.N, tobj, "log_access",		(void *)log_access);
-	nsp_setcfunc(proc.N, tobj, "log_error",			(void *)log_error);
-	nsp_setcfunc(proc.N, tobj, "md5_init",			(void *)md5_init);
-	nsp_setcfunc(proc.N, tobj, "md5_update",		(void *)md5_update);
-	nsp_setcfunc(proc.N, tobj, "md5_final",			(void *)md5_final);
-	nsp_setcfunc(proc.N, tobj, "md5_crypt",			(void *)md5_crypt);
+	loaded = 1;
+	tobj = nsp_settable(proc.N, &proc.N->g, "_exports");
+	tobj->val->attr |= NST_HIDDEN;
+	tobj = nsp_settable(proc.N, tobj, "core");
+	tobj->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(proc.N, tobj, "config_read", (void *)config_read);
+	nsp_setcfunc(proc.N, tobj, "config_write", (void *)config_write);
+	nsp_setcfunc(proc.N, tobj, "decode_base64", (void *)decode_base64);
+	nsp_setcfunc(proc.N, tobj, "dir_list", (void *)dir_list);
+	nsp_setcfunc(proc.N, tobj, "domain_getname", (void *)domain_getname);
+	nsp_setcfunc(proc.N, tobj, "domain_getid", (void *)domain_getid);
+	nsp_setcfunc(proc.N, tobj, "language_gets", (void *)language_gets);
+	nsp_setcfunc(proc.N, tobj, "lib_open", (void *)lib_open);
+	nsp_setcfunc(proc.N, tobj, "lib_sym", (void *)lib_sym);
+	nsp_setcfunc(proc.N, tobj, "lib_error", (void *)lib_error);
+	nsp_setcfunc(proc.N, tobj, "lib_close", (void *)lib_close);
+	nsp_setcfunc(proc.N, tobj, "log_access", (void *)log_access);
+	nsp_setcfunc(proc.N, tobj, "log_error", (void *)log_error);
+	nsp_setcfunc(proc.N, tobj, "md5_init", (void *)md5_init);
+	nsp_setcfunc(proc.N, tobj, "md5_update", (void *)md5_update);
+	nsp_setcfunc(proc.N, tobj, "md5_final", (void *)md5_final);
+	nsp_setcfunc(proc.N, tobj, "md5_crypt", (void *)md5_crypt);
 
-	nsp_setcfunc(proc.N, tobj, "nsp_newstate",		(void *)nsp_newstate);
-	nsp_setcfunc(proc.N, tobj, "nsp_endstate",		(void *)nsp_endstate);
-	nsp_setcfunc(proc.N, tobj, "nsp_exec",			(void *)nsp_exec);
-	nsp_setcfunc(proc.N, tobj, "nsp_execfile",		(void *)nsp_execfile);
+	nsp_setcfunc(proc.N, tobj, "nsp_newstate", (void *)nsp_newstate);
+	nsp_setcfunc(proc.N, tobj, "nsp_endstate", (void *)nsp_endstate);
+	nsp_setcfunc(proc.N, tobj, "nsp_exec", (void *)nsp_exec);
+	nsp_setcfunc(proc.N, tobj, "nsp_execfile", (void *)nsp_execfile);
 
-	nsp_setcfunc(proc.N, tobj, "nsp_setvaltype",		(void *)nsp_setvaltype);
-	nsp_setcfunc(proc.N, tobj, "nsp_linkval",		(void *)nsp_linkval);
-	nsp_setcfunc(proc.N, tobj, "nsp_unlinkval",		(void *)nsp_unlinkval);
-	nsp_setcfunc(proc.N, tobj, "nsp_freetable",		(void *)nsp_freetable);
-	nsp_setcfunc(proc.N, tobj, "nsp_getobj",		(void *)nsp_getobj);
-	nsp_setcfunc(proc.N, tobj, "nsp_getiobj",		(void *)nsp_getiobj);
-	nsp_setcfunc(proc.N, tobj, "nsp_setobj",		(void *)nsp_setobj);
-	nsp_setcfunc(proc.N, tobj, "nsp_strcat",		(void *)nsp_strcat);
-	nsp_setcfunc(proc.N, tobj, "nsp_strmul",		(void *)nsp_strmul);
-	nsp_setcfunc(proc.N, tobj, "nsp_tobool",		(void *)nsp_tobool);
-	nsp_setcfunc(proc.N, tobj, "nsp_tonum",			(void *)nsp_tonum);
-	nsp_setcfunc(proc.N, tobj, "nsp_tostr",			(void *)nsp_tostr);
-	nsp_setcfunc(proc.N, tobj, "nsp_eval",			(void *)nsp_eval);
-	nsp_setcfunc(proc.N, tobj, "nsp_evalf",			(void *)nsp_evalf);
+	nsp_setcfunc(proc.N, tobj, "nsp_setvaltype", (void *)nsp_setvaltype);
+	nsp_setcfunc(proc.N, tobj, "nsp_linkval", (void *)nsp_linkval);
+	nsp_setcfunc(proc.N, tobj, "nsp_unlinkval", (void *)nsp_unlinkval);
+	nsp_setcfunc(proc.N, tobj, "nsp_freetable", (void *)nsp_freetable);
+	nsp_setcfunc(proc.N, tobj, "nsp_getobj", (void *)nsp_getobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_getiobj", (void *)nsp_getiobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_setobj", (void *)nsp_setobj);
+	nsp_setcfunc(proc.N, tobj, "nsp_strcat", (void *)nsp_strcat);
+	nsp_setcfunc(proc.N, tobj, "nsp_strmul", (void *)nsp_strmul);
+	nsp_setcfunc(proc.N, tobj, "nsp_tobool", (void *)nsp_tobool);
+	nsp_setcfunc(proc.N, tobj, "nsp_tonum", (void *)nsp_tonum);
+	nsp_setcfunc(proc.N, tobj, "nsp_tostr", (void *)nsp_tostr);
+	nsp_setcfunc(proc.N, tobj, "nsp_eval", (void *)nsp_eval);
+	nsp_setcfunc(proc.N, tobj, "nsp_evalf", (void *)nsp_evalf);
 
-	nsp_setcfunc(proc.N, tobj, "sql_freeresult",		(void *)sql_freeresult);
-	nsp_setcfunc(proc.N, tobj, "sql_update",		(void *)sql_update);
-	nsp_setcfunc(proc.N, tobj, "sql_updatef",		(void *)sql_updatef);
-	nsp_setcfunc(proc.N, tobj, "sql_query",			(void *)sql_query);
-	nsp_setcfunc(proc.N, tobj, "sql_queryf",		(void *)sql_queryf);
-	nsp_setcfunc(proc.N, tobj, "sql_getsequence",		(void *)sql_getsequence);
-	nsp_setcfunc(proc.N, tobj, "sql_getname",		(void *)sql_getname);
-	nsp_setcfunc(proc.N, tobj, "sql_getvalue",		(void *)sql_getvalue);
-	nsp_setcfunc(proc.N, tobj, "sql_getvaluebyname",	(void *)sql_getvaluebyname);
-	nsp_setcfunc(proc.N, tobj, "sql_numfields",		(void *)sql_numfields);
-	nsp_setcfunc(proc.N, tobj, "sql_numtuples",		(void *)sql_numtuples);
-	nsp_setcfunc(proc.N, tobj, "sys_system",		(void *)sys_system);
-	nsp_setcfunc(proc.N, tobj, "tcp_bind",			(void *)tcp_bind);
-	nsp_setcfunc(proc.N, tobj, "tcp_accept",		(void *)tcp_accept);
-	nsp_setcfunc(proc.N, tobj, "tcp_connect",		(void *)tcp_connect);
-	nsp_setcfunc(proc.N, tobj, "tcp_fgets",			(void *)tcp_fgets);
-	nsp_setcfunc(proc.N, tobj, "tcp_fprintf",		(void *)tcp_fprintf);
-	nsp_setcfunc(proc.N, tobj, "tcp_recv",			(void *)tcp_recv);
-	nsp_setcfunc(proc.N, tobj, "tcp_send",			(void *)tcp_send);
-	nsp_setcfunc(proc.N, tobj, "tcp_close",			(void *)tcp_close);
-	nsp_setcfunc(proc.N, tobj, "time_sql2unix",		(void *)time_sql2unix);
-	nsp_setcfunc(proc.N, tobj, "time_unix2sql",		(void *)time_unix2sql);
-	nsp_setcfunc(proc.N, tobj, "strncatf",			(void *)strncatf);
-	nsp_setcfunc(proc.N, tobj, "striprn",			(void *)striprn);
-	nsp_setcfunc(proc.N, tobj, "fixslashes",		(void *)fixslashes);
-	nsp_setcfunc(proc.N, tobj, "str2sql",			(void *)str2sql);
-	nsp_setcfunc(proc.N, tobj, "p_strcasestr",		(void *)p_strcasestr);
-	nsp_setcfunc(proc.N, tobj, "addlistener",		(void *)addlistener);
+	nsp_setcfunc(proc.N, tobj, "sql_freeresult", (void *)sql_freeresult);
+	nsp_setcfunc(proc.N, tobj, "sql_update", (void *)sql_update);
+	nsp_setcfunc(proc.N, tobj, "sql_updatef", (void *)sql_updatef);
+	nsp_setcfunc(proc.N, tobj, "sql_query", (void *)sql_query);
+	nsp_setcfunc(proc.N, tobj, "sql_queryf", (void *)sql_queryf);
+	nsp_setcfunc(proc.N, tobj, "sql_getsequence", (void *)sql_getsequence);
+	nsp_setcfunc(proc.N, tobj, "sql_getname", (void *)sql_getname);
+	nsp_setcfunc(proc.N, tobj, "sql_getvalue", (void *)sql_getvalue);
+	nsp_setcfunc(proc.N, tobj, "sql_getvaluebyname", (void *)sql_getvaluebyname);
+	nsp_setcfunc(proc.N, tobj, "sql_numfields", (void *)sql_numfields);
+	nsp_setcfunc(proc.N, tobj, "sql_numtuples", (void *)sql_numtuples);
+	nsp_setcfunc(proc.N, tobj, "sys_system", (void *)sys_system);
+
+	nsp_setcfunc(proc.N, tobj, "ssl_connect", (void *)ssl_connect);
+
+	nsp_setcfunc(proc.N, tobj, "tcp_bind", (void *)tcp_bind);
+	nsp_setcfunc(proc.N, tobj, "tcp_accept", (void *)tcp_accept);
+	nsp_setcfunc(proc.N, tobj, "tcp_connect", (void *)tcp_connect);
+	nsp_setcfunc(proc.N, tobj, "tcp_fgets", (void *)tcp_fgets);
+	nsp_setcfunc(proc.N, tobj, "tcp_fprintf", (void *)tcp_fprintf);
+	nsp_setcfunc(proc.N, tobj, "tcp_recv", (void *)tcp_recv);
+	nsp_setcfunc(proc.N, tobj, "tcp_send", (void *)tcp_send);
+	nsp_setcfunc(proc.N, tobj, "tcp_close", (void *)tcp_close);
+	nsp_setcfunc(proc.N, tobj, "time_sql2unix", (void *)time_sql2unix);
+	nsp_setcfunc(proc.N, tobj, "time_unix2sql", (void *)time_unix2sql);
+	nsp_setcfunc(proc.N, tobj, "strncatf", (void *)strncatf);
+	nsp_setcfunc(proc.N, tobj, "striprn", (void *)striprn);
+	nsp_setcfunc(proc.N, tobj, "fixslashes", (void *)fixslashes);
+	nsp_setcfunc(proc.N, tobj, "str2sql", (void *)str2sql);
+	nsp_setcfunc(proc.N, tobj, "p_strcasestr", (void *)p_strcasestr);
+	nsp_setcfunc(proc.N, tobj, "addlistener", (void *)addlistener);
 #ifdef HAVE_SSL
-	nsp_setcfunc(proc.N, tobj, "ssl_accept",		(void *)ssl_accept);
-	nsp_setcfunc(proc.N, tobj, "ssl_close",			(void *)ssl_close);
-	nsp_setcfunc(proc.N, tobj, "ssl_shutdown",		(void *)ssl_shutdown);
+	nsp_setcfunc(proc.N, tobj, "ssl_accept", (void *)ssl_accept);
+	nsp_setcfunc(proc.N, tobj, "ssl_close", (void *)ssl_close);
+	nsp_setcfunc(proc.N, tobj, "ssl_shutdown", (void *)ssl_shutdown);
 #endif
 #ifdef WIN32
-	nsp_setcfunc(proc.N, tobj, "gettimeofday",		(void *)gettimeofday);
+	nsp_setcfunc(proc.N, tobj, "gettimeofday", (void *)gettimeofday);
 #endif
 	return 0;
 }
 
-static NSP_FUNCTION(libnsp_dl_loadlib)
+static NSP_FUNCTION(libnsp_dl_load)
 {
-#define __FN__ __FILE__ ":libnsp_dl_loadlib()"
-	obj_t *cobj1=nsp_getobj(N, &N->l, "1");
+#define __FN__ __FILE__ ":libnsp_dl_load()"
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
 	obj_t *cobj, *tobj;
 	NSP_CFUNC cfunc;
 #ifdef WIN32
@@ -133,28 +136,29 @@ static NSP_FUNCTION(libnsp_dl_loadlib)
 #endif
 	char namebuf[512];
 
-	if (!nsp_isstr(cobj1)||cobj1->val->size<1) {
+	if (!nsp_isstr(cobj1) || cobj1->val->size < 1) {
 		nsp_setbool(N, &N->r, "", 0);
 		return 0;
 	}
-	tobj=nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
+	tobj = nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
 	if (!nsp_istable(tobj)) {
 		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "dl.path not found", -1);
 		nsp_setbool(N, &N->r, "", 0);
 		return 0;
 	}
-	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
+	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
 		if (!nsp_isstr(cobj)) continue;
 		memset(namebuf, 0, sizeof(namebuf));
-		snprintf(namebuf, sizeof(namebuf)-1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, LIBEXT);
+		snprintf(namebuf, sizeof(namebuf) - 1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, LIBEXT);
 		lib_error();
-		if ((l=lib_open(namebuf))!=NULL) {
+		if ((l = lib_open(namebuf)) != NULL) {
 			lib_error();
-			if ((cfunc=(NSP_CFUNC)lib_sym(l, "nsplib_init"))!=NULL) {
+			if ((cfunc = (NSP_CFUNC)lib_sym(l, "nsplib_init")) != NULL) {
 				cfunc(N);
 				nsp_setbool(N, &N->r, "", 1);
 				return 0;
-			} else {
+			}
+			else {
 				nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
 				nsp_setbool(N, &N->r, "", 0);
 				lib_close(l);
@@ -169,6 +173,7 @@ static NSP_FUNCTION(libnsp_dl_loadlib)
 #undef __FN__
 }
 
+
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x)
 #else
@@ -182,76 +187,49 @@ void *cronloop(void *x)
 	int i;
 
 	log_error(proc.N, "core", __FILE__, __LINE__, 2, "Starting cronloop() thread");
-	oldt=(time(NULL)/60-1)*60;
+	oldt = (time(NULL) / 60 - 1) * 60;
 	for (;;) {
-		newt=(time(NULL)/60)*60;
-		if (newt>oldt) {
-			oldt=newt;
-			tobj=nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
-			if (nsp_typeof(tobj)!=NT_STRING || tobj->val->size<1) {
+		newt = (time(NULL) / 60) * 60;
+		if (newt > oldt) {
+			oldt = newt;
+			tobj = nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
+			if (nsp_typeof(tobj) != NT_STRING || tobj->val->size < 1) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "config.cron_script undefined");
 				goto endrun;
 			}
-			if ((N=nsp_newstate())==NULL) {
+			if ((N = nsp_newstate()) == NULL) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nsp_newstate() failed");
 				goto endrun;
 			}
 #ifdef WIN32
-/*
-			nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
-			GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
-			GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
-*/
+			/*
+						nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
+						GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
+						GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
+			*/
 			GetWindowsDirectory(libbuf, sizeof(libbuf));
-			_snprintf(libbuf+strlen(libbuf), sizeof(libbuf)-strlen(libbuf)-1, "\\NSP");
+			_snprintf(libbuf + strlen(libbuf), sizeof(libbuf) - strlen(libbuf) - 1, "\\NSP");
 #else
-			snprintf(libbuf, sizeof(libbuf)-1, "/usr/lib/nsp");
+			snprintf(libbuf, sizeof(libbuf) - 1, "/usr/lib/nsp");
 #endif
-			tobj2=nsp_settable(N, &N->g, "dl");
-			tobj2->val->attr|=NST_HIDDEN;
-			nsp_setcfunc(N, tobj2, "loadlib", (NSP_CFUNC)libnsp_dl_loadlib);
-			tobj2=nsp_settable(N, tobj2, "path");
+			tobj2 = nsp_settable(N, &N->g, "dl");
+			tobj2->val->attr |= NST_HIDDEN;
+			nsp_setcfunc(N, tobj2, "load", (NSP_CFUNC)libnsp_dl_load);
+			tobj2 = nsp_settable(N, tobj2, "path");
 			nsp_setstr(N, tobj2, "0", libbuf, -1);
-
-//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
 			nsp_execfile(N, tobj->val->d.str);
-//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
 			if (N->err) {
 				log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
 			}
-/*
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d %d", __LINE__, N->g.val->refs);
-	nsp_freetable(N, &N->g);
-//	N->g.val->refs--;
-//	nsp_unlinkval(N, nsp_getobj(N, &N->g, "_GLOBALS"));
-//	n_freeval(N, &N->g);
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-//	nsp_freestate(N);
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-	nsp_freetable(N, &N->l);
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-	n_freeval(N, &N->r);
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-	/ * WHY THE F?*# IS IT THAT THIS IS NOT PORTABLE C / C++, * /
-	if (N->g.val) n_free(N, (void *)&N->g.val, sizeof(val_t));
-	/ * AND THIS IS? * /
-log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
-	if (N->g.val) { void *x=N->g.val; n_free(N, &x, sizeof(val_t)); }
-	if (N->l.val) n_free(N, (void *)&N->l.val, sizeof(val_t));
-	if (N->r.val) n_free(N, (void *)&N->r.val, sizeof(val_t));
-*/
-
-			N=nsp_endstate(N);
-//	log_error(proc.N, "core", __FILE__, __LINE__, 1, "%d", __LINE__);
+			N = nsp_endstate(N);
 		}
-endrun:
+	endrun:
 		sleep(1);
-		for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
-			if (strlen(proc.srvmod[i].mod_name)<1) break;
-			if (proc.srvmod[i].mod_cron==NULL) continue;
-			if ((mod_cron=(SRVMOD_EXEC)proc.srvmod[i].mod_cron)==NULL) break;
-			if (mod_cron()!=0) break;
+		for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {
+			if (strlen(proc.srvmod[i].mod_name) < 1) break;
+			if (proc.srvmod[i].mod_cron == NULL) continue;
+			if ((mod_cron = (SRVMOD_EXEC)proc.srvmod[i].mod_cron) == NULL) break;
+			if (mod_cron() != 0) break;
 		}
 	}
 	return 0;
@@ -265,7 +243,7 @@ int modules_cron()
 #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 	if (pthread_attr_setstacksize(&thr_attr, PTHREAD_STACK_SIZE)) return -2;
 #endif
-	if (pthread_create(&CronThread, &thr_attr, cronloop, NULL)==-1) {
+	if (pthread_create(&CronThread, &thr_attr, cronloop, NULL) == -1) {
 		log_error(proc.N, NULL, __FILE__, __LINE__, 0, "cronloop() failed...");
 		return -2;
 	}
@@ -276,11 +254,11 @@ int modules_exec()
 {
 	int i;
 
-	for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
-		if (proc.srvmod[i].mod_exec==NULL) break;
-		if (strlen(proc.srvmod[i].mod_name)<1) break;
-		if ((mod_exec=(SRVMOD_EXEC)proc.srvmod[i].mod_exec)==NULL) return -1;
-		if (mod_exec()!=0) return -1;
+	for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {
+		if (proc.srvmod[i].mod_exec == NULL) break;
+		if (strlen(proc.srvmod[i].mod_name) < 1) break;
+		if ((mod_exec = (SRVMOD_EXEC)proc.srvmod[i].mod_exec) == NULL) return -1;
+		if (mod_exec() != 0) return -1;
 	}
 	return 0;
 }
@@ -289,24 +267,24 @@ int modules_exit()
 {
 	int i;
 
-	for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
-		if (proc.srvmod[i].mod_exit==NULL) break;
-		if (strlen(proc.srvmod[i].mod_name)<1) break;
-		if ((mod_exit=(SRVMOD_EXEC)proc.srvmod[i].mod_exit)==NULL) return -1;
-		if (mod_exit()!=0) return -1;
+	for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {
+		if (proc.srvmod[i].mod_exit == NULL) break;
+		if (strlen(proc.srvmod[i].mod_name) < 1) break;
+		if ((mod_exit = (SRVMOD_EXEC)proc.srvmod[i].mod_exit) == NULL) return -1;
+		if (mod_exit() != 0) return -1;
 	}
 	return 0;
 }
 
 int module_load(char *modname)
 {
-	obj_t *confobj=nsp_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *confobj = nsp_getobj(proc.N, &proc.N->g, "CONFIG");
 #ifdef WIN32
-	HINSTANCE hinstLib=NULL;
-	char *ext="dll";
+	HINSTANCE hinstLib = NULL;
+	char *ext = "dll";
 #else
-	void *hinstLib=NULL;
-	char *ext="so";
+	void *hinstLib = NULL;
+	char *ext = "so";
 #endif
 	char libname[255];
 	int i;
@@ -316,37 +294,37 @@ int module_load(char *modname)
 	void *srv_exit;
 
 	regfunctions();
-	for (i=0;i<MAX_MOD_FUNCTIONS;i++) {
-		if (proc.srvmod[i].mod_exec==NULL) break;
-		if (strlen(proc.srvmod[i].mod_name)<1) continue;
+	for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {
+		if (proc.srvmod[i].mod_exec == NULL) break;
+		if (strlen(proc.srvmod[i].mod_name) < 1) continue;
 	}
-	if (i==MAX_MOD_FUNCTIONS) return -1;
+	if (i == MAX_MOD_FUNCTIONS) return -1;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname)-1, "%s/core/%s.%s", nsp_getstr(proc.N, confobj, "lib_path"), modname, ext);
+	snprintf(libname, sizeof(libname) - 1, "%s/core/%s.%s", nsp_getstr(proc.N, confobj, "lib_path"), modname, ext);
 	fixslashes(libname);
-	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name)-1, "%s", modname);
-	if ((hinstLib=lib_open(libname))==NULL) {
+	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name) - 1, "%s", modname);
+	if ((hinstLib = lib_open(libname)) == NULL) {
 #ifdef WIN32
 		printf("%s(%d)(%d) [%s]\r\n", __FILE__, __LINE__, GetLastError(), libname);
 #endif
 		goto fail;
 	}
-	if ((srv_init=(void *)lib_sym(hinstLib, "mod_init"))==NULL) goto fail;
-	if ((srv_exec=(void *)lib_sym(hinstLib, "mod_exec"))==NULL) goto fail;
-	if ((srv_exit=(void *)lib_sym(hinstLib, "mod_exit"))==NULL) goto fail;
-	srv_cron=(void *)lib_sym(hinstLib, "mod_cron");
-	proc.srvmod[i].mod_init=srv_init;
-	proc.srvmod[i].mod_exec=srv_exec;
-	proc.srvmod[i].mod_exit=srv_exit;
-	proc.srvmod[i].mod_cron=srv_cron;
-	proc.srvmod[i].hinstLib=hinstLib;
-	mod_init=(SRVMOD_INIT)srv_init;
-	if (mod_init(&proc)!=0) return -1;
+	if ((srv_init = (void *)lib_sym(hinstLib, "mod_init")) == NULL) goto fail;
+	if ((srv_exec = (void *)lib_sym(hinstLib, "mod_exec")) == NULL) goto fail;
+	if ((srv_exit = (void *)lib_sym(hinstLib, "mod_exit")) == NULL) goto fail;
+	srv_cron = (void *)lib_sym(hinstLib, "mod_cron");
+	proc.srvmod[i].mod_init = srv_init;
+	proc.srvmod[i].mod_exec = srv_exec;
+	proc.srvmod[i].mod_exit = srv_exit;
+	proc.srvmod[i].mod_cron = srv_cron;
+	proc.srvmod[i].hinstLib = hinstLib;
+	mod_init = (SRVMOD_INIT)srv_init;
+	if (mod_init(&proc) != 0) return -1;
 	return 0;
 fail:
 	log_error(proc.N, "core", __FILE__, __LINE__, 0, "ERROR: Failed to load %s.%s '%s'", modname, ext, lib_error());
-	if (hinstLib!=NULL) lib_close(hinstLib);
-	hinstLib=NULL;
+	if (hinstLib != NULL) lib_close(hinstLib);
+	hinstLib = NULL;
 	return -1;
 }
 
@@ -354,13 +332,13 @@ int modules_init(nsp_state *N)
 {
 	obj_t *cobj, *tobj;
 
-	tobj=nsp_getobj(N, &N->g, "CONFIG");
-	if (tobj->val->type!=NT_TABLE) return 0;
-	tobj=nsp_getobj(N, tobj, "modules");
-	if (tobj->val->type!=NT_TABLE) return 0;
-	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
-		if (cobj->name[0]=='_') continue;
-		if (cobj->val->type==NT_STRING) module_load(cobj->val->d.str);
+	tobj = nsp_getobj(N, &N->g, "CONFIG");
+	if (tobj->val->type != NT_TABLE) return 0;
+	tobj = nsp_getobj(N, tobj, "modules");
+	if (tobj->val->type != NT_TABLE) return 0;
+	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
+		if (cobj->name[0] == '_') continue;
+		if (cobj->val->type == NT_STRING) module_load(cobj->val->d.str);
 	}
 	return 0;
 }

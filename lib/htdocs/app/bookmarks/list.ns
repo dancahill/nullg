@@ -1,0 +1,43 @@
+
+function list_bookmarks() {
+	local function aa(url) { return sprintf("<a href=\"%s\" onclick='return GoTo(\"%s\");'>", url.replace("\"", "'"), url.replace("\"", "'")); };
+	local function a(url, module, id) { return sprintf("<a href=\"%s\" onclick=\"return ModalForm(event, '%s', %d);\">", url.replace("\"", "'"), module, id); };
+	var currentfolder=db.bookmarks.getcurrentfolder();
+	bookmarkhtml.headermenu(currentfolder.id);
+	bookmarkhtml.show_searchform();
+	//print("<br>\r\n");
+	print("<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n");
+	print("<table id='contenttable' class='contenttable' style='width:400px;'>\r\n");
+	printf("<thead>\r\n");
+	printf("<tr><th colspan=2 style='text-align:center'>%s</th></tr>\r\n", currentfolder.name);
+	printf("</thead>\r\n");
+	printf("<tbody>\r\n");
+	if (currentfolder.parentid!=-1) {
+		printf("<tr><td colspan=2>"+aa(sprintf("/app/bookmarks/list?folderid=%d", currentfolder.parentid))+"<img align=top border=0 src=/lib/images/file-foldero.png height=16 width=16>&nbsp;Parent Directory</a></td></tr>\r\n", currentfolder.parentid);
+	}
+	q1=db.bookmarks.getfolderlist(currentfolder.id);
+	foreach (row in q1['_rows']) {
+		//printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/editfolder?id=%d", tonumber(row['folderid'])), tonumber(row['folderid']))+"edit</a></td>");
+		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/editfolder?id="+tonumber(row['folderid']), 'bookmarkfolder', tonumber(row['folderid']))+"edit</a></td>");
+		printf("<td style='width:99%%'>"+aa(sprintf("/app/bookmarks/list?folderid=%d", tonumber(row['folderid'])))+"<img align=top border=0 src=/lib/images/file-folder.png height=16 width=16>&nbsp;%s</a></td></tr>\r\n", strtohtml(row['foldername']));
+	}
+	q1=db.bookmarks.getlist(currentfolder.id);
+	foreach (row in q1['_rows']) {
+//		printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/editbookmark?id=%d", tonumber(row['folderid'])))+"edit</a></td>");
+		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/editbookmark?id="+tonumber(row['bookmarkid']), 'bookmark', tonumber(row['bookmarkid']))+"edit</a></td>");
+		printf("<td style='width:99%%'><a href=\"%s\" target=\"_blank\">%s</a></td></tr>\r\n", row['bookmarkurl'], strtohtml(row['bookmarkname']));
+	}
+	printf("</tbody>\r\n");
+	printf("</table>\r\n");
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("bookmarks.lib.ns");
+	print("<center>\r\n");
+	list_bookmarks();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

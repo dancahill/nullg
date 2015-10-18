@@ -128,6 +128,7 @@ typedef	char      *(*MAIN_SQL_GETVALUEBYNAME)(nsp_state *, obj_t **, int, char *
 typedef	int        (*MAIN_SQL_NUMFIELDS)(nsp_state *, obj_t **);
 typedef	int        (*MAIN_SQL_NUMTUPLES)(nsp_state *, obj_t **);
 typedef	int        (*MAIN_SYS_SYSTEM)(const char *, ...);
+typedef	int        (*MAIN_SSL_CONNECT)(TCP_SOCKET *);
 typedef	int        (*MAIN_TCP_BIND)(char *, unsigned short);
 typedef int        (*MAIN_TCP_ACCEPT)(int, TCP_SOCKET *);
 typedef	int        (*MAIN_TCP_CONNECT)(TCP_SOCKET *, char *, unsigned short, short int);
@@ -196,6 +197,9 @@ EXTERN MAIN_SQL_GETVALUEBYNAME		sql_getvaluebyname;
 EXTERN MAIN_SQL_NUMFIELDS		sql_numfields;
 EXTERN MAIN_SQL_NUMTUPLES		sql_numtuples;
 EXTERN MAIN_SYS_SYSTEM			sys_system;
+
+EXTERN MAIN_SSL_CONNECT			ssl_connect;
+
 EXTERN MAIN_TCP_BIND			tcp_bind;
 EXTERN MAIN_TCP_ACCEPT			tcp_accept;
 EXTERN MAIN_TCP_CONNECT			tcp_connect;
@@ -322,6 +326,7 @@ int mod_import()
 	if (_get_func((void *)&sql_numfields,		"sql_numfields"		)!=0) return -1;
 	if (_get_func((void *)&sql_numtuples,		"sql_numtuples"		)!=0) return -1;
 	if (_get_func((void *)&sys_system,		"sys_system"		)!=0) return -1;
+	if (_get_func((void *)&ssl_connect,		"ssl_connect"		) != 0) return -1;
 	if (_get_func((void *)&tcp_bind,		"tcp_bind"		)!=0) return -1;
 	if (_get_func((void *)&tcp_accept,		"tcp_accept"		)!=0) return -1;
 	if (_get_func((void *)&tcp_connect,		"tcp_connect"		)!=0) return -1;

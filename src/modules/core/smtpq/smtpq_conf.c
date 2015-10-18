@@ -19,27 +19,43 @@
 
 static void conf_callback(char *var, char *val)
 {
-	if (strcmp(var, "interface")==0) {
-		strncpy(mod_config.smtp_interface, val, sizeof(mod_config.smtp_interface)-1);
-	} else if (strcmp(var, "relay_host")==0) {
-		strncpy(mod_config.smtp_relayhost, val, sizeof(mod_config.smtp_relayhost)-1);
-	} else if (strcmp(var, "host_name")==0) {
-		strncpy(mod_config.smtp_hostname, val, sizeof(mod_config.smtp_hostname)-1);
-	} else if (strcmp(var, "port")==0) {
-		mod_config.smtp_port=atoi(val);
-	} else if (strcmp(var, "ssl_port")==0) {
-		mod_config.smtp_sslport=atoi(val);
-	} else if (strcmp(var, "max_connections")==0) {
-		mod_config.smtp_maxconn=atoi(val);
-	} else if (strcmp(var, "max_idle")==0) {
-		mod_config.smtp_maxidle=atoi(val);
-	} else if (strcmp(var, "retry_delay")==0) {
-		mod_config.smtp_retrydelay=atoi(val);
-	} else if (strcmp(var, "pop_auth_window")==0) {
-		mod_config.popauth_window=atoi(val);
-	} else if (strcmp(var, "filter_program")==0) {
-		strncpy(mod_config.filter_program, val, sizeof(mod_config.filter_program)-1);
-	} else {
+	if (strcmp(var, "interface") == 0) {
+		strncpy(mod_config.smtp_interface, val, sizeof(mod_config.smtp_interface) - 1);
+	}
+	else if (strcmp(var, "relay_host") == 0) {
+		strncpy(mod_config.smtp_relayhost, val, sizeof(mod_config.smtp_relayhost) - 1);
+	}
+	else if (strcmp(var, "host_name") == 0) {
+		strncpy(mod_config.smtp_hostname, val, sizeof(mod_config.smtp_hostname) - 1);
+	}
+	else if (strcmp(var, "port") == 0) {
+		mod_config.smtp_port = atoi(val);
+	}
+	else if (strcmp(var, "ssl_port") == 0) {
+		mod_config.smtp_sslport = atoi(val);
+	}
+	else if (strcmp(var, "msa_port") == 0) {
+		mod_config.smtp_msaport = atoi(val);
+	}
+	else if (strcmp(var, "require_tls") == 0) {
+		mod_config.require_tls = strcmp(val, "true") == 0 ? 1 : 0;
+	}
+	else if (strcmp(var, "max_connections") == 0) {
+		mod_config.smtp_maxconn = atoi(val);
+	}
+	else if (strcmp(var, "max_idle") == 0) {
+		mod_config.smtp_maxidle = atoi(val);
+	}
+	else if (strcmp(var, "retry_delay") == 0) {
+		mod_config.smtp_retrydelay = atoi(val);
+	}
+	else if (strcmp(var, "pop_auth_window") == 0) {
+		mod_config.popauth_window = atoi(val);
+	}
+	else if (strcmp(var, "filter_program") == 0) {
+		strncpy(mod_config.filter_program, val, sizeof(mod_config.filter_program) - 1);
+	}
+	else {
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "unknown configuration directive '%s''%s'", var, val);
 	}
 	return;
@@ -48,17 +64,19 @@ static void conf_callback(char *var, char *val)
 int conf_read()
 {
 	memset((char *)&mod_config, 0, sizeof(mod_config));
-	strncpy(mod_config.smtp_interface, "INADDR_ANY", sizeof(mod_config.smtp_interface)-1);
-	strncpy(mod_config.smtp_relayhost, "",           sizeof(mod_config.smtp_relayhost)-1);
-	mod_config.smtp_port       = 25;
-	mod_config.smtp_sslport    = 465;
-	mod_config.smtp_maxconn    = 50;
-	mod_config.smtp_maxidle    = 120;
+	strncpy(mod_config.smtp_interface, "INADDR_ANY", sizeof(mod_config.smtp_interface) - 1);
+	strncpy(mod_config.smtp_relayhost, "", sizeof(mod_config.smtp_relayhost) - 1);
+	mod_config.smtp_port = 25;
+	mod_config.smtp_sslport = 465;
+	mod_config.smtp_msaport = 587;
+	mod_config.require_tls = 0;
+	mod_config.smtp_maxconn = 50;
+	mod_config.smtp_maxidle = 120;
 	mod_config.smtp_retrydelay = 300;
-	mod_config.popauth_window  = 1800;
+	mod_config.popauth_window = 1800;
 	config_read(proc->N, "smtpd", conf_callback);
-	if (mod_config.smtp_retrydelay<60) {
-		mod_config.smtp_retrydelay=60;
+	if (mod_config.smtp_retrydelay < 60) {
+		mod_config.smtp_retrydelay = 60;
 	}
 	return 0;
 }

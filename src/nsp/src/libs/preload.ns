@@ -1,0 +1,1 @@
+foreach (lib in { "base", "crypto", "data", "net" }) dl.load(lib);

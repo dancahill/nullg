@@ -1,0 +1,9 @@
+<?nsp
+try {
+	include_template("common.ns");
+	include("../admin.lib.ns");
+	include("list.ns");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

@@ -1,0 +1,65 @@
+include_template("common.ns");
+
+global notes = {
+	print_note_text = function (note_text) {
+	//	print(strtohtml(NOTE['notetext']).replace("\n", "\n<br>"));
+		lines=note_text.split('\n');
+		table=false;
+		thead=false;
+		foreach (line in lines) {
+			line=line.replace('\r', '');
+			if (line.toupper()=="[TABLE]") {
+				table=true;
+				thead=true;
+				print("<table class='contenttable'>");
+				continue;
+			} else if (line.toupper()=="[/TABLE]") {
+				table=false;
+				thead=false;
+				print("</tbody>");
+				print("</table>");
+				continue;
+			}
+			if (table) {
+				cells=line.split('|');
+				if (thead) {
+					print("<tr>");
+					print("<thead>");
+					foreach (cell in cells) {
+						cell=strtohtml(cell).replace('\\\\', '\\');
+						cell=cell.replace('\\n', '<br>');
+						printf("<th>%s</th>", cell);
+					}
+					print("</tr>\r\n");
+					thead=false;
+					print("</thead>");
+					print("<tbody>");
+				} else {
+					print("<tr style='vertical-align:top'>");
+					foreach (cell in cells) {
+						cell=strtohtml(cell).replace('\\\\', '\\');
+						cell=cell.replace('\\n', '<br>');
+						printf("<td>%s</td>", cell.replace(" ", "&nbsp;"));
+						//printf("<th>%s</th>", cell);
+					}
+					print("</tr>\r\n");
+				}
+			} else {
+				printf("%s", strtohtml(line).replace(" ", "&nbsp;"));
+				print("<br>\r\n");
+			}
+		}
+	};
+	save = function () {
+		noteid=tonumber(_POST['NOTEID']);
+		notetext=_POST['NOTETEXT'];
+		if (noteid>0) {
+			query=sprintf("update gw_notes set notetext = '%s' where noteid = %d", sql_escape(notetext), noteid);
+			sqlupdate(query);
+			print("success");
+		} else {
+			// new note...
+		}
+		//printf("[[_GLOBALS=%s]]", serialize(_GLOBALS));
+	};
+};

@@ -9,7 +9,7 @@ TARGET  = $(BIN_TARGETDIR)/nullsd
 all: _nullsd
 
 _nullsd: $(OBJECTS)
-	$(CC) -o $(TARGET) $(OBJECTS) $(BIN_LDFLAGS_T)
+	$(CC) -o $(TARGET) $(OBJECTS) $(BIN_LDFLAGS_T) -lresolv
 
 clean:
 	rm -f $(TARGET) $(OBJECTS) *~

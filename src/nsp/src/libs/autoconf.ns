@@ -1,0 +1,463 @@
+#!../../bin/nsp -b
+
+function expect(msg, a, b) {
+	print("  ", string.sub(msg+"                      ", 0, 20), " ");
+	if (b==true) print("pass\n"); else print("fail\n");
+	return;
+}
+
+function testsub(title, l, c, showfail) {
+	file.unlink("conftest.c");
+	file.unlink("conftest.exe");
+	file.unlink("conftest.out");
+	file.unlink("conftest.obj");
+	if (ostype=='posix') {
+		file.writeall("conftest.c", c);
+		r1=system(cc+" conftest.c "+l+" -o conftest.out 2>/dev/null");
+		if (r1==0) r2=file.stat("conftest.out");
+	} else if (ostype=='windows') {
+		file.writeall("conftest.c", c);
+//		r1=system(cc+" -nologo conftest.c "+l+" -o conftest.exe > nul");
+		r1=system(cc+" -nologo conftest.c "+l+" /Feconftest.exe > nul");
+		if (r1==0) r2=file.stat("conftest.exe");
+	} else {
+		print("unknown ostype '", ostype, "'[", _ENV['OS'], "][", _ENV['OSTYPE'], "]\n");
+		print(serialize(_GLOBALS));
+		expect("testing "+title, true, false);
+		return 0;
+	}
+	file.unlink("conftest.c");
+	file.unlink("conftest.exe");
+	file.unlink("conftest.out");
+	file.unlink("conftest.obj");
+	if ((r1==0)&&(typeof(r2)=='table')) {
+		expect("testing "+title, true, true);
+		return 1;
+	} else {
+		if (showfail!=false) expect("testing "+title, true, false);
+		return 0;
+	}
+}
+
+function dotests() {
+	//if (_ARGS[2]!=null) global cctype=_ARGS[2];
+	//if (_ARGS[3]!=null) global ostype=_ARGS[3];
+	if (_ARGS[3]!=null) global cctype=_ARGS[3];
+	if (_ARGS[4]!=null) global ostype=_ARGS[4];
+	// print("\t[", cctype, "][", ostype, "]\n");
+	if (ostype==null) {
+		if (_ENV['OS']=='Windows_NT') {
+			if (_ENV['MAKE_MODE']=='unix') {
+				global ostype='posix';
+				global cygwin=true; // probably
+			} else {
+				global ostype='windows';
+			}
+		} else {
+			global ostype='posix';
+		}
+	}
+
+	if (ostype=='windows') {
+		x=file.stat("../config-win.mak");
+		if (typeof(x)=='table') if (x.size>0) return;
+	} else {
+		x=file.stat("../config.mak");
+		if (typeof(x)=='table') if (x.size>0) return;
+	}
+
+	config_mak="";
+	config_nsp="global ostype  = '"+ostype+"';\n";
+	config_ne2="global config  = {\n";
+	config_inc=0;
+	config={};
+	if (ostype=='dos') {
+		if ((x=system("tcc.exe 1>nul 2>nul"))==0) {
+			print("  found TurboC++ on DOS\n");
+			global cc="tcc.exe";
+			memmodel="l";
+			config_mak+="MODEL="+memmodel+"\n";
+			config_mak+="CC = "+cc+"\n";
+			config_mak+="CFLAGS = -w-par -m$(MODEL) -v-\n\n";
+
+			config_nsp+="global CC      = \""+cc+"\";\n";
+			config_nsp+="global CFLAGS  = \"-w-par -m"+memmodel+" -v-\";\n";
+			config_nsp+="global LDFLAGS = \"\";\n\n";
+
+			config_mak+="LDFLAGS += -lm\n\n";
+			config_nsp+="LDFLAGS += \" -lm\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_math=true";
+			config.have_math=true;
+		} else {
+			throw "tcc.exe expected, but not found ["+tostring(x)+"]";
+		}
+	}
+	if (ostype=='windows') {
+		if (system("cl.exe 1>nul 2>nul")==0) {
+			//system("cl.exe");
+			print("  found VC on Win32 OS\n");
+			global cc="cl.exe";
+			config_mak+="CC     = "+cc+"\n";
+			config_mak+="CFLAGS = \n";
+			config_mak+="LDLAGS = \n\n";
+
+			config_nsp+="global CC      = \""+cc+"\";\n";
+			config_nsp+="global CFLAGS  = \"/nologo /W3 /O2 /MD /EHsc /DWIN32 /DNDEBUG /D_MBCS /D_LIB /FD\";\n";
+			config_nsp+="if (_LINKAGE_==='shared') CFLAGS+=\" /DPIC\";\n";
+			config_nsp+="global LDFLAGS = \"\";\n\n";
+		} else if (system("gcc --version > nul")==0) {
+			print("  found GCC on Win32 OS (MinGW?)\n");
+			global cc="gcc";
+			// not a good hack, but i'm lazy
+			global ostype="posix";
+			global ossubtype="mingw";
+		} else {
+			print("\tcan't find your compiler type...\n");
+		}
+	}
+	if (ostype=='posix') {
+		if (system("gcc --version 1>/dev/null 2>/dev/null")==0) {
+			print("  found GCC on posix OS\n");
+			global cc="gcc";
+			config_mak+="CC = "+cc+"\n";
+			config_mak+="CFLAGS = -Wall -g -O2\n\n";
+
+			config_nsp+="global CC      = \""+cc+"\";\n";
+			config_nsp+="global CFLAGS  = \"-Wall -g -O2\";\n";
+			config_nsp+="global LDFLAGS = \"\";\n\n";
+		} else {
+			print("\tcan't find your compiler type...\n");
+		}
+	}
+	if (ostype=='posix') {
+		build_fat=false;
+
+		config_mak+="CFLAGS  += -DHAVE_CRYPTO\n";
+		if (build_fat) config_mak+="LDFLAGS += -lnsp_crypto\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_CRYPTO\";\n";
+		if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_crypto\";\n\n";
+
+		if (build_fat) {
+			config_mak+="CFLAGS  += -DHAVE_DATA\nLDFLAGS += -lnsp_data\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DATA\";\nLDFLAGS += \" -lnsp_data\";\n\n";
+		}
+
+/*
+		if (testsub("-pedantic", "-pedantic", "int main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -pedantic\n\n";
+			config_nsp+="CFLAGS  += \" -pedantic\";\n\n";
+		}
+*/
+		if (testsub("-pipe", "-pipe", "int main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -pipe\n\n";
+			config_nsp+="CFLAGS  += \" -pipe\";\n\n";
+		}
+
+
+		if (testsub("-pthread", "-pthread", "#include <pthread.h>\r\nint main() { return 0; }\n")) {
+		//	config_mak+="CFLAGS  += -pthread\n\n";
+		//	config_nsp+="CFLAGS  += \" -pthread\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_pthread=true";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_threads=true";
+			config.have_pthread=true;
+			config.have_threads=true;
+		} else if (testsub("-lpthread", "-lpthread", "#include <pthread.h>\r\nint main() { return 0; }\n")) {
+		//	config_mak+="CFLAGS  += -lpthread\n\n";
+		//	config_nsp+="CFLAGS  += \" -lpthread\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_lpthread=true";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_threads=true";
+			config.have_lpthread=true;
+			config.have_threads=true;
+		}
+
+
+		if (testsub("-fPIC", "-fPIC", "int main() { return 0; }\n")) {
+			config_mak+="DLFLAGS = -fPIC -DPIC\n\n";
+			config_nsp+="global DLFLAGS = \"-fPIC -DPIC \";\n\n";
+		}
+		if (testsub("-rdynamic", "-rdynamic", "int main() { return 0; }\n")) {
+			config_mak+="LDFLAGS += -rdynamic\n\n";
+			config_nsp+="LDFLAGS += \" -rdynamic\";\n\n";
+		}
+		if (testsub("socklen_t", "", "#include <netdb.h>\nsocklen_t t;\nint main() { return 0; }\n")==0) {
+			config_mak+="CFLAGS  += -DMISSING_SOCKLEN\n\n";
+			config_nsp+="CFLAGS  += \" -DMISSING_SOCKLEN\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\tmissing_socklen=true";
+			config.missing_socklen=true;
+		}
+		/* BSD doesn't like -ldl */
+		if (testsub("DL", "-ldl", "#include <dlfcn.h>\nint main() { return 0; }\n", false)) {
+			config_mak+="CFLAGS  += -DHAVE_DL\nLDFLAGS += -ldl\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DL\";\nLDFLAGS += \" -ldl\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_dl=true";
+			config.have_dl=true;
+		} else if (testsub("DL", "", "#include <dlfcn.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_DL\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DL\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_dl=true";
+			config.have_dl=true;
+		}
+
+		if (testsub("DNS", "-lresolv", "#include <resolv.h>\n#include <arpa/nameser.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_DNS\n";
+			if (build_fat) config_mak+="LDFLAGS += -lresolv\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DNS\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lresolv\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_dns=true";
+			config.have_dns=true;
+		}
+		if (testsub("FBSQL", "-lfbclient", "#include <firebird/ibase.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_FBSQL\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_fbsql -lfbclient\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_FBSQL\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_fbsql -lfbclient\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_fbsql=true";
+			config.have_fbsql=true;
+		}
+		if (testsub("LDAP", "-lldap", "#include <ldap.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_LDAP\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_ldap -lldap\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_LDAP\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_ldap -lldap\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_ldap=true";
+			config.have_ldap=true;
+		}
+		if (testsub("MATH", "-lm", "#include <math.h>\nint main() { return 0; }\n")) {
+			config_mak+="LDFLAGS += -lm\n\n";
+			config_nsp+="LDFLAGS += \" -lm\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_math=true";
+			config.have_math=true;
+		}
+		if (testsub("MBEDTLS", "-lmbedtls -lmbedcrypto -lmbedx509", "#include <mbedtls/net.h>\nint main() { mbedtls_net_context fd;mbedtls_net_init(&fd);return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_MBEDTLS\n";
+			if (build_fat) config_mak+="LDFLAGS += -lmbedtls -lmbedcrypto -lmbedx509\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_MBEDTLS\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lmbedtls -lmbedcrypto -lmbedx509\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_mbedtls=true";
+			config.have_mbedtls=true;
+		}
+		if (testsub("MYSQL", "-lmysqlclient", "#include <mysql/mysql.h>\nint main() { return 0; }\n", false)) {
+			config_mak+="CFLAGS  += -DHAVE_MYSQL\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_mysql -lmysqlclient\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_MYSQL\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_mysql -lmysqlclient\";\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_mysql=true";
+			config.have_mysql=true;
+		// try another location if the first test fails
+		// gcc m.c `mysql_config --libs`
+		} else if (testsub("MYSQL", "-L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient", "#include <mysql/mysql.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_MYSQL\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_mysql -L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_MYSQL\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_mysql -L/usr/lib64/mysql -L/usr/lib/mysql -lmysqlclient\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_mysql=true";
+			config.have_mysql=true;
+		}
+		if (testsub("ODBC", "-lodbc", "#ifdef __CYGWIN__\n#include <windows.h>\n#endif\n#include <sql.h>\n#include <sqlext.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_ODBC\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_odbc -lodbc\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_ODBC\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_odbc -lodbc\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_odbc=true";
+			config.have_odbc=true;
+		}
+		/* OpenSSL doesn't conflict with mbed TLS, but it does override it... */
+		if (testsub("OPENSSL", "-lssl -lcrypto", "#include <openssl/ssl.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_OPENSSL\n";
+			if (build_fat) config_mak+="LDFLAGS += -lcrypto -lssl\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_OPENSSL\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lcrypto -lssl\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_openssl=true";
+			config.have_openssl=true;
+		}
+		if (testsub("PIPE", "", "#include <sys/wait.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_PIPE\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_PIPE\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_pipe=true";
+			config.have_pipe=true;
+		}
+		if (testsub("PGSQL", "-lpq", "#include <libpq-fe.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_PGSQL\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_pgsql -lpq\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_PGSQL\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_pgsql -lpq\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_pgsql=true";
+			config.have_pgsql=true;
+		}
+
+		config_mak+="CFLAGS  += -DHAVE_REGEX\n";
+		if (build_fat) config_mak+="LDFLAGS += -lnsp_regex\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_REGEX\";\n";
+		if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_regex\";\n\n";
+
+		if (testsub("SSH2", "-lssh2", "#include <libssh2.h>\nLIBSSH2_SESSION *session;\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_SSH2\n";
+			if (build_fat) config_mak+="LDFLAGS += -lssh2 -lcrypto -lssl\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_SSH2\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lssh2 -lcrypto -lssl\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_ssh2=true";
+			config.have_ssh2=true;
+		}
+
+		if (testsub("SQLITE", "-lsqlite3", "#include <sqlite3.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_SQLITE\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_sqlite -lsqlite3\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_SQLITE\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_sqlite -lsqlite3\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_sqlite=true";
+			config.have_sqlite=true;
+		}
+		if (testsub("ZLIB", "-lz", "#include <zlib.h>\nint main() { this code is broken; return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_ZLIB\n";
+			if (build_fat) config_mak+="LDFLAGS += -lnsp_zip -lz\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_ZLIB\";\n";
+			if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_zip -lz\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_zlib=true";
+			config.have_zlib=true;
+		}
+	} else if (ostype=='windows') {
+		config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_CRYPTO\nLDFLAGS = $(LDFLAGS) libnsp_crypto.lib\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_CRYPTO\";\nLDFLAGS += \" libnsp_crypto.lib\";\n\n";
+
+		config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_DATA\nLDFLAGS = $(LDFLAGS) libnsp_data.lib\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_DATA\";\nLDFLAGS += \" libnsp_data.lib\";\n\n";
+
+		if (testsub("DL", "", "#include <windows.h>\nint main() { LoadLibrary(\"\"); return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_DL\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DL\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_dl=true";
+			config.have_dl=true;
+		}
+		if (testsub("DNS", "", "#include <winsock2.h>\n#include <windns.h>\n#pragma comment(lib, \"dnsapi.lib\")\nint main() { DnsQuery_A(\"\", 0, 0, NULL, NULL, NULL); return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_DNS\nLDFLAGS = $(LDFLAGS) dnsapi.lib\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_DNS\";\nLDFLAGS += \" dnsapi.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_dns=true";
+			config.have_dns=true;
+		}
+		if (testsub("FBSQL", "", "#include <firebird/ibase.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_FBSQL\nLDFLAGS = $(LDFLAGS) libnsp_fbsql.lib fbclient_ms.lib ib_util_ms.lib\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_FBSQL\";\nLDFLAGS += \" libnsp_fbsql.lib fbclient_ms.lib ib_util_ms.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_fbsql=true";
+			config.have_fbsql=true;
+		}
+		if (testsub("MATH", "", "#include <math.h>\nint main() { return 0; }\n")) {
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_math=true";
+			config.have_math=true;
+		}
+		if (testsub("ODBC", "", "#include <windows.h>\n\n#include <sql.h>\n#include <sqlext.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_ODBC\nLDFLAGS = $(LDFLAGS) libnsp_odbc.lib\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_ODBC\";\nLDFLAGS += \" libnsp_odbc.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_odbc=true";
+			config.have_odbc=true;
+		}
+		/* OpenSSL doesn't conflict with mbed TLS, but it does override it... */
+		if (testsub("OPENSSL", "", "#include <openssl/ssl.h>\n#pragma comment(lib, \"libeay32MD.lib\")\n#pragma comment(lib, \"ssleay32MD.lib\")\nint main() { return 0; }\n")) {
+//			config_mak+="CFLAGS  += -DHAVE_OPENSSL\n";
+//			if (build_fat) config_mak+="LDFLAGS += -lcrypto -lssl\n\n";
+//			config_nsp+="CFLAGS  += \" -DHAVE_OPENSSL\";\n";
+//			if (build_fat) config_nsp+="LDFLAGS += \" -lcrypto -lssl\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_openssl=true";
+			config.have_openssl=true;
+		}
+		config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_PIPE\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_PIPE\";\n\n";
+		if (config_inc++) config_ne2+=",\n";
+		config_ne2+="\thave_pipe=true";
+		config.have_pipe=true;
+		if (testsub("MBEDTLS", "", "#include <mbedtls/ssl.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_MBEDTLS\nLDFLAGS = $(LDFLAGS) mbedtls.lib\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_MBEDTLS\";\nLDFLAGS += \" mbedtls.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_mbedtls=true";
+			config.have_mbedtls=true;
+		}
+		config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_REGEX\nLDFLAGS = $(LDFLAGS) libnsp_regex.lib\n\n";
+		config_nsp+="CFLAGS  += \" -DHAVE_REGEX\";\nLDFLAGS += \" libnsp_regex.lib\";\n\n";
+		if (config_inc++) config_ne2+=",\n";
+		config_ne2+="\thave_regex=true";
+		config.have_regex=true;
+//		if (testsub("SSH2", "", "#include <libssh2.h>\nLIBSSH2_SESSION *session;\nint main() { return 0; }\n")) {
+		if (testsub("SSH2", "", "#include <libssh2.h>\n#pragma comment(lib, \"libssh2.lib\")\n#pragma comment(lib, \"zlib.lib\")\nLIBSSH2_SESSION *session;\nint main() { return 0; }\n")) {
+			/* openssl makes all this rather ugly, but it works... */
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_SSH2\nLDFLAGS = $(LDFLAGS) libssh2.lib ssleay32MT.lib libeay32MT.lib WS2_32.LIB ADVAPI32.LIB GDI32.LIB USER32.LIB\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_SSH2\";\nLDFLAGS += \" libssh2.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_ssh2=true";
+			config.have_ssh2=true;
+		}
+		if (testsub("SQLITE", "", "#include <sqlite3.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  = $(CFLAGS) -DHAVE_SQLITE\nLDFLAGS = $(LDFLAGS) libnsp_sqlite.lib sqlite3.lib\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_SQLITE\";\nLDFLAGS += \" libnsp_sqlite.lib sqlite3.lib\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_sqlite=true";
+			config.have_sqlite=true;
+		}
+
+		if (config_inc++) config_ne2+=",\n";
+		config_ne2+="\thave_threads=true";
+		config.have_threads=true;
+	}
+	config_ne2+=" \n};\n";
+
+	config_h="";
+	config_h+="/* include/config.h.  Generated by autoconf.ns. */\r\n";
+	config_h+="\r\n";
+	config_h+=sprintf("%s#define CONFIG_HAVE_DL 1\r\n",      config.have_dl      ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_DNS 1\r\n",     config.have_dns     ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_FBSQL 1\r\n",   config.have_fbsql   ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_LDAP 1\r\n",    config.have_ldap    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_MATH 1\r\n",    config.have_math    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_MBEDTLS 1\r\n", config.have_mbedtls ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_MYSQL 1\r\n",   config.have_mysql   ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_ODBC 1\r\n",    config.have_odbc    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_OPENSSL 1\r\n", config.have_openssl ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_PGSQL 1\r\n",   config.have_pgsql   ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_PIPE 1\r\n",    config.have_pipe    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_REGEX 1\r\n",   config.have_regex   ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_SQLITE 1\r\n",  config.have_sqlite  ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_SSH2 1\r\n",    config.have_ssh2    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_THREADS 1\r\n", config.have_threads ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_ZLIB 1\r\n",    config.have_zlib    ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_MISSING_SOCKLEN 1\r\n", config.missing_socklen ?"":"// ");
+
+	if (ostype=='windows') {
+		file.writeall(_filepath+"/../config-win.mak", config_mak);
+		file.writeall(_filepath+"/../config-win.ns", config_ne2+config_nsp);
+		file.writeall(_filepath+"/../../include/nsp/config-win.h", config_h);
+	} else {
+		file.writeall(_filepath+"/../config.mak", config_mak);
+		file.writeall(_filepath+"/../config.ns", config_ne2+config_nsp);
+		file.writeall(_filepath+"/../../include/nsp/config.h", config_h);
+	}
+	print("\n");
+	return;
+}
+dotests();

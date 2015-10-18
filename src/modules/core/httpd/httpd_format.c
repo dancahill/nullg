@@ -86,7 +86,7 @@ char *encodeurl(CONN *conn, char *src)
 	char *buffer=getbuffer(conn);
 	char *dest=buffer;
 	/* char *unsafe="`'!@#$%^&*(){}<>~|\\\";? ,/"; */
-	char *unsafe="`'!@#$^&*(){}<>~|\\\";?,";
+	//char *unsafe="`'!@#$^&*(){}<>~|\\\";?,";
 	char *hex="0123456789ABCDEF";
 	unsigned int dstlen=0;
 
@@ -140,7 +140,7 @@ char *str2html(CONN *conn, char *instring)
 		for (i=0;i<4;i++) {
 			if (*inptr==htmltags[i].symbol) {
 				match=1;
-				str_len=strlen(htmltags[i].code);
+				str_len=(short int)strlen(htmltags[i].code);
 				if (destleft<str_len) goto done;
 				strcpy(outptr, htmltags[i].code);
 				destleft-=str_len;

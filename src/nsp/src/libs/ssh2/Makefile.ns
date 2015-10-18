@@ -1,0 +1,30 @@
+#!../../../bin/nsp -b
+include("../../config.ns");
+include("../makelib.ns");
+CFLAGS  = CFLAGS+" -I../../../include ";
+if (CC=='cl.exe') CFLAGS=CFLAGS+"/c /Fo";
+else if (CC=='tcc.exe') CFLAGS=CFLAGS+"-c -o";
+else CFLAGS=CFLAGS+"-c -o ";
+OBJECTS = "ssh2.o";
+TNAME   = "libnsp_ssh2";
+if (cmd==null) if (_ARGS[2]=='clean') cmd='clean'; else cmd='build';
+if (cmd=='build') {
+	t=newer2(OBJECTS, _LINKAGE_, TNAME);
+	if ((t>0)&&(config.have_ssh2==true)) {
+		print("building ",_LINKAGE_," lib ssh2\n");
+		if (CC=='cl.exe') file.writeall("dlldefs.def", "LIBRARY\t\tlibnsp_ssh2\r\nVERSION\t\t"+_version_+"\r\nEXPORTS\r\n\tnspssh2_register_all\r\n\tnsplib_init\r\n");
+		build_objs(CC, CFLAGS, OBJECTS, _LINKAGE_, TNAME);
+		ILIB="";
+		if (config.have_ssh2==true) {
+			/* try to make this shared lib self-sufficient */
+//			if (typeof(file.stat("/usr/local/lib/libssh2.a"))=='table') {
+//				ILIB+=" /usr/local/lib/libssh2.a";
+//			} else if (typeof(file.stat("/usr/lib/libssh2.a"))=='table') {
+//				ILIB+=" /usr/lib/libssh2.a";
+//			}
+		}
+		build_lib(CC, TNAME, OBJECTS+ILIB, _LINKAGE_, TNAME);
+	}
+} else if (cmd=='clean') {
+	build_clean(TNAME, OBJECTS);
+}

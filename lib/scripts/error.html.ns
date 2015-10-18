@@ -1,0 +1,20 @@
+print(
+	"<!DOCTYPE html>\r\n",
+	"<html>\n<head>\n",
+	"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=us-ascii\">\n",
+	"<title>", _TEMP['status'], " ", _TEMP['title'], "</title>\n",
+	"<style type=text/css>\n",
+	".justify { text-align: justify; }\n",
+	".tbar    { color: #505050; text-decoration: none; font-family: Geneva, Arial, Verdana; font-size: 8pt; }\n",
+	"a        { color: #0000ff; text-decoration: none; }\n",
+	"a:hover  { text-decoration: underline; }\n",
+	"</style>\n",
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/themes/", _TEMP['theme'], "/style.css\">\n",
+	"</head>\n",
+	"<body bgcolor=\"#F0F0F0\" text=\"#000000\" link=\"#0000FF\" alink=\"#0000FF\" vlink=\"#0000FF\">\n",
+	"<h1>", _TEMP['title'], "</h1>\n",
+	"<p>", _TEMP['text'], "</p>\n",
+	"<hr>\n<address><a href=\"http://nulllogic.ca/groupware/\">", _SERVER['SERVER_SOFTWARE'], "</a> at ", _SERVER['SERVER_NAME']," Port ", _SERVER['SERVER_PORT'],
+	" - Powered by <a href=\"http://nulllogic.ca/nsp/\">NSP ", _SERVER['NSP_VERSION'], "</a></address>\n",
+	"</body></html>\n"
+);

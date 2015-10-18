@@ -142,7 +142,6 @@ int     sql_updatef(nsp_state *N, char *format, ...);
 int     sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...);
 int     sql_getsequence(nsp_state *N, char *table);
 /* ssl.c functions */
-#ifdef HAVE_SSL
 int     ssl_init();
 int     ssl_accept(TCP_SOCKET *sock);
 int     ssl_connect(TCP_SOCKET *sock);
@@ -150,7 +149,6 @@ int     ssl_read(SSL *ssl, void *buf, int len);
 int     ssl_write(SSL *ssl, const void *buf, int len);
 int     ssl_close(TCP_SOCKET *sock);
 int     ssl_shutdown();
-#endif
 /* tcp.c functions */
 int     tcp_bind(char *ifname, unsigned short port);
 int     tcp_accept(int listensock, TCP_SOCKET *sock);

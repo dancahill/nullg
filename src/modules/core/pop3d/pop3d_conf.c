@@ -19,17 +19,25 @@
 
 static void conf_callback(char *var, char *val)
 {
-	if (strcmp(var, "interface")==0) {
-		strncpy(mod_config.pop3_interface, val, sizeof(mod_config.pop3_interface)-1);
-	} else if (strcmp(var, "port")==0) {
-		mod_config.pop3_port=atoi(val);
-	} else if (strcmp(var, "ssl_port")==0) {
-		mod_config.pop3_sslport=atoi(val);
-	} else if (strcmp(var, "max_connections")==0) {
-		mod_config.pop3_maxconn=atoi(val);
-	} else if (strcmp(var, "max_idle")==0) {
-		mod_config.pop3_maxidle=atoi(val);
-	} else {
+	if (strcmp(var, "interface") == 0) {
+		strncpy(mod_config.pop3_interface, val, sizeof(mod_config.pop3_interface) - 1);
+	}
+	else if (strcmp(var, "port") == 0) {
+		mod_config.pop3_port = atoi(val);
+	}
+	else if (strcmp(var, "ssl_port") == 0) {
+		mod_config.pop3_sslport = atoi(val);
+	}
+	else if (strcmp(var, "require_tls") == 0) {
+		mod_config.require_tls = strcmp(val, "true") == 0 ? 1 : 0;
+	}
+	else if (strcmp(var, "max_connections") == 0) {
+		mod_config.pop3_maxconn = atoi(val);
+	}
+	else if (strcmp(var, "max_idle") == 0) {
+		mod_config.pop3_maxidle = atoi(val);
+	}
+	else {
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "unknown configuration directive '%s''%s'", var, val);
 	}
 	return;
@@ -38,11 +46,12 @@ static void conf_callback(char *var, char *val)
 int conf_read()
 {
 	memset((char *)&mod_config, 0, sizeof(mod_config));
-	strncpy(mod_config.pop3_interface, "INADDR_ANY", sizeof(mod_config.pop3_interface)-1);
-	mod_config.pop3_port         = 110;
-	mod_config.pop3_sslport      = 995;
-	mod_config.pop3_maxconn      = 50;
-	mod_config.pop3_maxidle      = 120;
+	strncpy(mod_config.pop3_interface, "INADDR_ANY", sizeof(mod_config.pop3_interface) - 1);
+	mod_config.pop3_port = 110;
+	mod_config.pop3_sslport = 995;
+	mod_config.require_tls = 0;
+	mod_config.pop3_maxconn = 50;
+	mod_config.pop3_maxidle = 120;
 	config_read(proc->N, "pop3d", conf_callback);
 	return 0;
 }

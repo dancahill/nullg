@@ -727,7 +727,7 @@ static int fbsqlUpdate(nsp_state *N, char *sqlquery)
 static int fbsqlQuery(nsp_state *N, obj_t *qobj, char *sqlquery)
 {
 	ISC_STATUS isc_status[20];
-	obj_t *cobj, *robj, *tobj;
+	obj_t *robj, *tobj;
 	unsigned int field, numtuples;
 	char name[8];
 
@@ -1303,7 +1303,7 @@ static int sqlite2Update(nsp_state *N, char *sqlquery)
 {
 	char *zErrMsg=0;
 	int rc;
-	short int retries=10;
+//	short int retries=10;
 
 //retry:
 	rc=libsqlite2.exec(db2, sqlquery, NULL, 0, &zErrMsg);
@@ -1363,7 +1363,7 @@ static int sqlite2Query(nsp_state *N, obj_t *qobj, char *sqlquery)
 	obj_t *tobj;
 	char *zErrMsg=0;
 	int rc;
-	short int retries=10;
+//	short int retries=10;
 
 	tobj=nsp_settable(NULL, qobj, "_rows");
 	if (tobj->val->type!=NT_TABLE) return -1;
@@ -1524,7 +1524,7 @@ static int sqlite3Query(nsp_state *N, obj_t *qobj, char *sqlquery)
 	obj_t *cobj, *tobj;
 	char *zErrMsg=0;
 	int rc;
-	short int retries=10;
+//	short int retries=10;
 
 	nsp_setstr(NULL, qobj, "_query", sqlquery, strlen(sqlquery));
 	tobj=nsp_settable(NULL, qobj, "_rows");
