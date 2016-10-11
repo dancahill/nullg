@@ -324,7 +324,7 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 		}
 		else {
 			//sprintf(buf, "%" ISC_INT64_FORMAT "d", (ISC_INT64)value);
-			nsp_setnum(N, tobj, var->aliasname, (ISC_INT64)value);
+			nsp_setnum(N, tobj, var->aliasname, (double)value);
 			return;
 		}
 		nsp_setstr(N, tobj, var->aliasname, buf, -1);

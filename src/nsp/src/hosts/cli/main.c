@@ -55,11 +55,11 @@ extern char **environ;
 static int flush(nsp_state *N)
 {
 	if (N == NULL || N->outbuflen == 0) return 0;
-	N->outbuf[N->outbuflen] = '\0';
+	N->outbuffer[N->outbuflen] = '\0';
 #if defined(WIN32) && defined(_DEBUG)
-	OutputDebugStringA(N->outbuf);
+	OutputDebugStringA(N->outbuffer);
 #endif
-	if (write(STDOUT_FILENO, N->outbuf, N->outbuflen) != N->outbuflen) {
+	if (write(STDOUT_FILENO, N->outbuffer, N->outbuflen) != N->outbuflen) {
 		printf("flush() error\r\n");
 	}
 	N->outbuflen = 0;
@@ -209,6 +209,9 @@ static void preppath(nsp_state *N, char *name)
 	}
 	nsp_setstr(N, &N->g, "_filename", p, -1);
 	nsp_setstr(N, &N->g, "_filepath", buf, -1);
+#if defined(WIN32) && defined(_DEBUG)
+	nsp_setbool(N, &N->g, "_debug", 1);
+#endif
 	return;
 }
 

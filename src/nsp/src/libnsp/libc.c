@@ -103,7 +103,7 @@ int nc_printf(nsp_state *N, const char *format, ...)
 	settrace();
 	if (N->outbuflen > OUTBUFLOWAT) nl_flush(N);
 	va_start(ap, format);
-	len = nc_vsnprintf(N, N->outbuf + N->outbuflen, MAX_OUTBUFLEN - N->outbuflen, format, ap);
+	len = nc_vsnprintf(N, N->outbuffer + N->outbuflen, N->outbufmax - N->outbuflen, format, ap);
 	N->outbuflen += len;
 	va_end(ap);
 	return len;
@@ -261,19 +261,19 @@ void _n_expect(nsp_state *N, const char *fname, uchar op)
 #undef __FN__
 }
 
-int n_expect_argtype(nsp_state *N, unsigned short type, unsigned short argn, obj_t *obj, unsigned short allow_blank)
+int n_expect_argtype(nsp_state *N, unsigned short type, unsigned short argnum, obj_t *obj, unsigned short allow_blank)
 {
 #define __FN__ __FILE__ ":_n_expect_argtype()"
 	settrace();
-	char *p = argn == NT_NULL ? "null" : argn == NT_BOOLEAN ? "boolean" : argn == NT_NUMBER ? "number" : argn == NT_STRING ? "string" :
-		(argn == NT_NFUNC || argn == NT_CFUNC) ? "function" : argn == NT_TABLE ? "table" : argn == NT_CDATA ? "cdata" : "UNKNOWN TYPE";
+	char *p = type == NT_NULL ? "null" : type == NT_BOOLEAN ? "boolean" : type == NT_NUMBER ? "number" : type == NT_STRING ? "string" :
+		(type == NT_NFUNC || type == NT_CFUNC) ? "function" : type == NT_TABLE ? "table" : type == NT_CDATA ? "cdata" : "UNKNOWN TYPE";
 
 	if (obj == NULL) return type == NT_NULL ? 1 : 0;
 	if (obj->val == NULL) return type == NT_NULL ? 1 : 0;
-	if (obj->val->type != type) n_error(N, NE_SYNTAX, __FN__, "expected a %s for arg%d", p, argn);
-	if (argn != NT_STRING) return 1;
+	if (obj->val->type != type) n_error(N, NE_SYNTAX, __FN__, "expected a %s for arg%d", p, argnum);
+	if (type != NT_STRING) return 1;
 	if (obj->val->size > 0 || allow_blank) return 1;
-	n_error(N, NE_SYNTAX, __FN__, "arg%d cannot be blank", argn);
+	n_error(N, NE_SYNTAX, __FN__, "arg%d cannot be blank", argnum);
 	return 0;
 #undef __FN__
 }
@@ -305,11 +305,11 @@ void n_warn(nsp_state *N, const char *fname, const char *format, ...)
 		nc_printf(N, "\r\n%s : line %d, ", p, N->line_num);
 	}
 	va_start(ap, format);
-	len = nc_vsnprintf(N, N->outbuf + N->outbuflen, MAX_OUTBUFLEN - N->outbuflen, format, ap);
+	len = nc_vsnprintf(N, N->outbuffer + N->outbuflen, N->outbufmax - N->outbuflen, format, ap);
 	va_end(ap);
 
 #if defined(WIN32) && defined(_DEBUG)
-	_RPT1(_CRT_WARN, "NSP Warning: %s : line %d, [%s]\r\n", p, N->line_num, N->outbuf + N->outbuflen);
+	_RPT1(_CRT_WARN, "NSP Warning: %s : line %d, [%s]\r\n", p, N->line_num, N->outbuffer + N->outbuflen);
 #endif
 	N->outbuflen += len;
 

@@ -39,6 +39,10 @@ do_copying() {
 	mkdir -p $DEST_VAR/db
 	mkdir -p $DEST_VAR/domains
 	mkdir -p $DEST_VAR/share/htdocs
+	mkdir -p $DEST_VAR/share/scripts
+	mkdir -p $DEST_VAR/share/scripts/core
+	mkdir -p $DEST_VAR/share/scripts/http
+	mkdir -p $DEST_VAR/share/scripts/smtp
 	mkdir -p $DEST_VAR/log
 	mkdir -p $DEST_VAR/spool
 	mkdir -p $DEST_VAR/tmp
@@ -46,16 +50,16 @@ do_copying() {
 	cp -pR etc/* $DEST_ETC
 	cp -pR lib/* $DEST_LIB
 	cp -pR var/* $DEST_VAR
-	touch $DEST_VAR/db/nullsd.db3
-	touch $DEST_VAR/log/core-access.log
-	touch $DEST_VAR/log/core-error.log
-	touch $DEST_VAR/log/httpd-access.log
-	touch $DEST_VAR/log/httpd-error.log
-	touch $DEST_VAR/log/pop3d-access.log
-	touch $DEST_VAR/log/pop3d-error.log
-	touch $DEST_VAR/log/smtpd-access.log
-	touch $DEST_VAR/log/smtpd-error.log
-	touch $DEST_VAR/log/sql-error.log
+	#touch $DEST_VAR/db/nullsd.db3
+	#touch $DEST_VAR/log/core-access.log
+	#touch $DEST_VAR/log/core-error.log
+	#touch $DEST_VAR/log/httpd-access.log
+	#touch $DEST_VAR/log/httpd-error.log
+	#touch $DEST_VAR/log/pop3d-access.log
+	#touch $DEST_VAR/log/pop3d-error.log
+	#touch $DEST_VAR/log/smtpd-access.log
+	#touch $DEST_VAR/log/smtpd-error.log
+	#touch $DEST_VAR/log/sql-error.log
 	if [ "`whoami`" = "root" ]; then
 		chmod 0755 $DEST_BIN
 		chmod 0770 $DEST_ETC
@@ -84,6 +88,9 @@ setup_console() {
 	clear 2>/dev/null
 	echo "NullLogic GroupServer Installation"
 	echo "=================================="
+	if [ ! -r "lib/libsqlite3.so" ]; then
+		echo "Warning: sqlite library not found"
+	fi
 	echo -n "Install to what BIN directory? [$DEST_BIN]: "
 	read TMP
 	if [ ! -z $TMP ]; then

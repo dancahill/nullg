@@ -40,7 +40,7 @@ static void addpath(nsp_state *N, obj_t *tobj, char *name, const char *format, .
 
 int conf_read(nsp_state *N)
 {
-	obj_t *tobj;
+	obj_t *tobj, *tobj2;
 	obj_t *cobj;
 	char basepath[255];
 	char tmpbuf[255];
@@ -77,27 +77,34 @@ int conf_read(nsp_state *N)
 		log_error(N, "core", __FILE__, __LINE__, 1, "can't chdir(\"%s\")", tmpbuf);
 		return -1;
 	}
+
+	tobj2 = nsp_settable(N, tobj, "paths");
+
 	memset(basepath, 0, sizeof(basepath));
 	snprintf(basepath, sizeof(basepath) - 1, "%s", tmpbuf);
 	if ((ptemp = strrchr(basepath, '/')) != NULL) *ptemp = '\0';
-	addpath(N, tobj, "bin_path", "%s/bin", basepath);
-	addpath(N, tobj, "etc_path", "%s/etc", basepath);
-	addpath(N, tobj, "lib_path", "%s/lib", basepath);
-	addpath(N, tobj, "var_path", "%s/var", basepath);
-	cobj = nsp_getobj(N, tobj, "sql_server_type");
-	if (cobj->val->type == NT_NULL) nsp_setstr(N, tobj, "sql_server_type", "SQLITE", 6);
+	addpath(N, tobj2, "bin", "%s/bin", basepath);
+	addpath(N, tobj2, "etc", "%s/etc", basepath);
+	addpath(N, tobj2, "lib", "%s/lib", basepath);
+	addpath(N, tobj2, "var", "%s/var", basepath);
+	strncpy(basepath, nsp_getstr(N, tobj2, "var"), sizeof(basepath) - 1);
+	addpath(N, tobj2, "var_backup", "%s/backup", basepath);
+	addpath(N, tobj2, "var_cgi", "%s/share/cgi-bin", basepath);
+	addpath(N, tobj2, "var_db", "%s/db", basepath);
+	addpath(N, tobj2, "var_domains", "%s/domains", basepath);
+	addpath(N, tobj2, "var_htdocs", "%s/share/htdocs", basepath);
+	addpath(N, tobj2, "var_log", "%s/log", basepath);
+	addpath(N, tobj2, "var_spool", "%s/spool", basepath);
+	addpath(N, tobj2, "var_tmp", "%s/tmp", basepath);
+
+	tobj2 = nsp_settable(N, tobj, "sql");
+	cobj = nsp_getobj(N, tobj2, "sql_server_type");
+	if (cobj->val->type == NT_NULL) nsp_setstr(N, tobj2, "sql_server_type", "SQLITE", 6);
+
 	cobj = nsp_getobj(N, tobj, "log_level");
 	if (cobj->val->type == NT_NULL) nsp_setnum(N, tobj, "log_level", 1);
 	cobj = nsp_getobj(N, tobj, "umask");
 	if (cobj->val->type == NT_NULL) nsp_setnum(N, tobj, "umask", 0007);
-	strncpy(basepath, nsp_getstr(N, tobj, "var_path"), sizeof(basepath) - 1);
-	addpath(N, tobj, "var_backup_path", "%s/backup", basepath);
-	addpath(N, tobj, "var_cgi_path", "%s/share/cgi-bin", basepath);
-	addpath(N, tobj, "var_db_path", "%s/db", basepath);
-	addpath(N, tobj, "var_domains_path", "%s/domains", basepath);
-	addpath(N, tobj, "var_htdocs_path", "%s/share/htdocs", basepath);
-	addpath(N, tobj, "var_log_path", "%s/log", basepath);
-	addpath(N, tobj, "var_spool_path", "%s/spool", basepath);
-	addpath(N, tobj, "var_tmp_path", "%s/tmp", basepath);
+
 	return 0;
 }

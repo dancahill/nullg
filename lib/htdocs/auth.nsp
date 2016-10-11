@@ -7,7 +7,7 @@ if (_USER==null) {
 <form name='login' id='login' method='post' action='/auth.nsp' onsubmit='return _login.DoSubmit(event);' style='display:inline;'>
 <input type='hidden' name=pageuri value='/auth.nsp'>
 <input type='hidden' name=domain  value='NULL'>
-<table class='contenttable' style='width:275px;margin:0 auto;'>
+<table class='contentview' style='width:275px;margin:0 auto;'>
 <tr><th colspan=2>NullLogic GroupServer Login</th></tr>
 <tr><td><b>&nbsp;Login Name&nbsp;</b></td><td><input type='text' name='username' size='25' maxlength='50' value='' placeholder='Login Name' required='required' autocorrect='off' autocapitalize='off'></td></tr>
 <tr><td><b>&nbsp;Password&nbsp;</b></td><td><input type='password' name='password' size='25' maxlength='50' value='' placeholder='Password' required='required' autocorrect='off' autocapitalize='off'></td></tr>

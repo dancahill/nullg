@@ -200,13 +200,13 @@ DWORD do_filter(EXCEPTION_POINTERS *eps)
 		_snprintf(errbuf, sizeof(errbuf) - 1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
 		break;
 	case EXCEPTION_ACCESS_VIOLATION:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	case EXCEPTION_STACK_OVERFLOW:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	default:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	}
 	printf("SEH Exception: %s", errbuf);

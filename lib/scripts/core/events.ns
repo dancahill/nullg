@@ -1,0 +1,72 @@
+/*
+nsd core event class
+custom version in var/share/scripts/core/events.ns
+standard version in lib/scripts/core/events.ns
+*/
+namespace nsd.core {
+	class events {
+		function events() {
+			//logaccess("events() constructor");
+		};
+
+		function onstart() {
+			logaccess("onstart()");
+			this.fixmissinglogfiles();
+			this.fixlogpermissions();
+			this.purgeoldlogfiles();
+		};
+
+		function ontimer() {
+			//logaccess("ontimer()");
+			t=time.localtime();
+			if (t.tm_min==0) {
+				this.fixmissinglogfiles();
+				this.fixlogpermissions();
+				this.purgeoldlogfiles();
+			}
+		};
+
+		/* below are helper functions for the event methods above */
+
+		function fixlogpermissions() {
+			var logpath=CONFIG.paths.var_log;
+			var uid=CONFIG["uid"];
+			var gid=CONFIG["gid"];
+			if (uid==null || gid==null) return;
+			system(sprintf("chown %s.%s %s/*.log", uid, gid, logpath));
+			system(sprintf("chmod 600 %s/*.log", logpath));
+		};
+
+		function fixmissinglogfiles() {
+			local function touchfile(fname) {
+				if (!file.exists(fname)) system(sprintf("touch %s", fname));
+			};
+			var logpath=CONFIG.paths.var_log;
+			var d=time.sqldate().replace('-', '');
+			touchfile(sprintf("%s/all-%s.log", logpath, d));
+			touchfile(sprintf("%s/core-access-%s.log", logpath, d));
+			touchfile(sprintf("%s/core-error-%s.log", logpath, d));
+			foreach (n,v in CONFIG.modules) {
+				if (v.gettype()=='string') n=v;
+				touchfile(sprintf("%s/%s-access-%s.log", logpath, n, d));
+				touchfile(sprintf("%s/%s-error-%s.log", logpath, n, d));
+			}
+		};
+
+		function purgeoldlogfiles() {
+			local function deletefile(fname) {
+				if (file.exists(fname)) file.unlink(fname);
+			};
+			var logpath=CONFIG.paths.var_log;
+			var d=time.sqldate(time.now()-86400*8).replace('-', '');
+			deletefile(sprintf("%s/all-%s.log", logpath, d));
+			deletefile(sprintf("%s/core-access-%s.log", logpath, d));
+			deletefile(sprintf("%s/core-error-%s.log", logpath, d));
+			foreach (n,v in CONFIG.modules) {
+				if (v.gettype()=='string') n=v;
+				deletefile(sprintf("%s/%s-access-%s.log", logpath, n, d));
+				deletefile(sprintf("%s/%s-error-%s.log", logpath, n, d));
+			}
+		};
+	}
+}

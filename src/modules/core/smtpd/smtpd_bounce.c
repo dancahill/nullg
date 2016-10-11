@@ -59,7 +59,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 		}
 		memset(tmpname1, 0, sizeof(tmpname1));
 		memset(tmpname2, 0, sizeof(tmpname2));
-		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
+		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), localdomainid, tmpaddr);
 		if (stat(tmpname1, &sb) != 0) {
 #ifdef WIN32
 			if (mkdir(tmpname1) != 0) {
@@ -74,7 +74,7 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 	retry1:
 		gettimeofday(&ttime, &tzone);
 		memset(tmpname1, 0, sizeof(tmpname1));
-		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
 		fixslashes(tmpname1);
 		if (stat(tmpname1, &sb) == 0) goto retry1;
 		log_access(proc->N, "smtpd", "local delivery from: MAILER-DAEMON, to: '%s'", from);
@@ -85,8 +85,8 @@ int bounce_send(char *from, char *rcpt, char *orig_msg, char *reason)
 		gettimeofday(&ttime, &tzone);
 		memset(tmpname1, 0, sizeof(tmpname1));
 		memset(tmpname2, 0, sizeof(tmpname2));
-		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
-		snprintf(tmpname2, sizeof(tmpname2) - 1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+		snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+		snprintf(tmpname2, sizeof(tmpname2) - 1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
 		fixslashes(tmpname1);
 		fixslashes(tmpname2);
 		if (stat(tmpname1, &sb) == 0) goto retry2;

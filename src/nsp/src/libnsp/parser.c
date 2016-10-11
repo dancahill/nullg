@@ -234,9 +234,13 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 			}
 			cobj = nsp_setnfunc(N, tobj, namebuf, NULL, 0);
 			n_getfunction(N, cobj);
+
+			if (*N->readptr == OP_PCBRACE) break;
+			if (n_peekop(N) == OP_PSEMICOL) N->readptr++;
+			continue;
 		}
 		else {
-			n_warn(N, __FN__, "unhandled data.  probably an error [%d]", *N->readptr);
+			n_warn(N, __FN__, "unhandled data or symbol.  probably an error [%d][%s]", *N->readptr, n_getsym(N, *N->readptr));
 		}
 		if (n_peekop(N) == OP_MEQ || n_peekop(N) == OP_MCOLON) N->readptr++;
 	data:

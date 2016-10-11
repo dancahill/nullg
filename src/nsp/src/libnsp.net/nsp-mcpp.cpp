@@ -198,9 +198,9 @@ private:
 
 static NSP_FUNCTION(nsp_edit_flush)
 {
-	N->outbuf[N->outbuflen] = '\0';
-	NSP::WriteBuffer(gcnew String(N->outbuf));
+	N->outbuffer[N->outbuflen] = '\0';
+	NSP::WriteBuffer(gcnew String(N->outbuffer));
 	N->outbuflen = 0;
-	N->outbuf[N->outbuflen] = '\0';
+	N->outbuffer[N->outbuflen] = '\0';
 	return 0;
 }

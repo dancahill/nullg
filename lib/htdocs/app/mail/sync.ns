@@ -1,18 +1,24 @@
 include("mail.lib.ns");
-mailhtml.headermenu();
+mail.html.headermenu();
 print("<div style=\"text-align:left\">");
 query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid", tonumber(_USER['userid']));
 sqr=sqlquery(query);
-print("<hr>");
+print("<br>");
 foreach (row in sqr['_rows']) {
-	printf("<b>[%s]</b>", row['accountname']);
 	try {
-		mail.sync.dosync(row);
-		mail.sync.smtp_sync(row);
+		mail.sync.dosync(row, true);
 	} catch (ex) {
 		printf("<br>Exception: [%s]", html_encode(ex.description));
 	}
-	print("<hr>");
 }
+foreach (row in sqr['_rows']) {
+	try {
+		mail.sync.smtp_sync(row, true);
+	} catch (ex) {
+		printf("<br>Exception: [%s]", html_encode(ex.description));
+	}
+}
+
 //print("<hr><pre>",serialize(_GLOBALS),"</pre>");
 print("</div>");
+//printf("%s", statustext);

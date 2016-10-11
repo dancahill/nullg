@@ -2,19 +2,23 @@
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using System.Collections.Generic;
 
 namespace NSPEdit
 {
 	public partial class NSPEditForm : Form
 	{
-		public string loadfile = "";
-		List<string> autoCompleteList;
+		//public string loadfile = "";
+		//List<string> autoCompleteList;
 		AutoCompleteBox CB;
 		public RichCodeBox richCodeBox1;
 		public RichTextBox richTextBox2;
 		public Timer aTimer;
 		int OutputHeight = 150;
+
+		public CodeTip CodeTip1 = new CodeTip();
+		//public DateTime toolTip1_lastupdate = DateTime.Now;
+
+		SearchForm sf;
 
 		public NSPEditForm()
 		{
@@ -34,27 +38,107 @@ namespace NSPEdit
 			aTimer.Interval = 200;
 			aTimer.Enabled = false;
 
-			autoCompleteList = new List<string>();
-			autoCompleteList.Add("gettype");
-			autoCompleteList.Add("istr");
-			autoCompleteList.Add("length");
-			autoCompleteList.Add("replace");
-			autoCompleteList.Add("split");
-			autoCompleteList.Add("str");
-			autoCompleteList.Add("substring");
-			autoCompleteList.Add("tostring");
-			autoCompleteList.Add("tolower");
-			autoCompleteList.Add("toupper");
+			//autoCompleteList = CB.fillautocomplete("");
+
 			tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
 			tabControl1.DrawItem += TabControl1_DrawItem;
 			tabControl1.MouseClick += TabControl1_MouseClick;
-			newTabPage();
-			richCodeBox1.LoadScript(loadfile);
+
+
+
+
+
+			bool file_loaded = false;
+			string[] args = Environment.GetCommandLineArgs();
+
+			bool getfilename = false;
+			for (int i = 1; i < args.Length; i++)
+			{
+				string arg = args[i];
+				if (getfilename)
+				{
+					getfilename = false;
+					LoadFile(arg);
+					file_loaded = true;
+				}
+				else if (arg == "-f")
+				{
+					getfilename = true;
+					continue;
+				}
+				else if (!arg.StartsWith("-"))
+				{
+					LoadFile(arg);
+					file_loaded = true;
+				}
+			}
+
+			if (!file_loaded)
+			{
+				newTabPage();
+				richCodeBox1.LoadScript("");
+			}
+
 			this.ActiveControl = this.richCodeBox1;
+
+			//richCodeBox1.MouseEnter += RichCodeBox1_MouseEnter;
+			//richCodeBox1.MouseLeave += RichCodeBox1_MouseLeave;
+			//richCodeBox1.MouseMove += RichCodeBox1_MouseMove;
+
+			sf = new SearchForm();
+		}
+
+		Point oldp = new Point();
+
+		//protected override void OnLoad(EventArgs e)
+		//{
+		//	base.OnLoad(e);
+		//}
+
+		public void LoadFile(string name)
+		{
+			//MessageBox.Show(string.Format("name=[{0}]", name));
+			name = name.ToLower().Trim('"');
+			if (name.EndsWith(".ns") || name.EndsWith(".nsp"))
+			{
+				newTabPage();
+				richCodeBox1.LoadScript(name);
+			}
+		}
+
+		private void RichCodeBox1_MouseMove(object sender, MouseEventArgs e)
+		{
+			RichCodeBox rcb = (sender as RichCodeBox);
+			if (e.Button != MouseButtons.None)
+			{
+				CodeTip1.Hide(rcb);
+				return;
+			}
+			if (oldp.X == e.X && oldp.Y == e.Y) return;
+			oldp = new Point(e.X, e.Y);
+			int charindex = rcb.GetCharIndexFromPosition(e.Location);
+
+			Color color;
+			Font font;
+			rcb.GetFontFromPosition(charindex, out color, out font);
+
+			CodeTip1.Hide(rcb);
+			string t = CodeTip1.FormatToolTip(rcb.getlabel(charindex, true), color);
+			if (t != "") CodeTip1.Show(t, rcb, e.X, e.Y + font.Height, 5000); //else toolTip1.Hide(rcb);
 		}
 
 		private void NSPEditForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			if (richCodeBox1 == null) return;
+			if (richCodeBox1.LastSavedText != richCodeBox1.Text)
+			{
+				if (MessageBox.Show("richCodeBox1.LastSavedText != richCodeBox1.Text\nWould you like to save first?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+				{
+					e.Cancel = true;
+					return;
+				}
+			}
+
 			Rectangle bounds = this.WindowState != FormWindowState.Normal ? this.RestoreBounds : this.DesktopBounds;
 			Properties.Settings.Default.WindowLocation = bounds.Location;
 			Properties.Settings.Default.WindowSize = bounds.Size;
@@ -94,11 +178,19 @@ namespace NSPEdit
 				Rectangle closeButton = new Rectangle(r.Right - 15, r.Top + 4, 9, 7);
 				if (closeButton.Contains(e.Location))
 				{
-					//if (MessageBox.Show("Would you like to Close this Tab?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-					//{
+
+					RichCodeBox rcb = (RichCodeBox)((SplitContainer)tabControl1.TabPages[i].Controls["SplitContainer1"]).Panel1.Controls["RichCodeBox1"];
+					//string x = rcb.LastSavedText;
+					if (rcb.LastSavedText != rcb.Text)
+					{
+						if (MessageBox.Show("richCodeBox1.LastSavedText != richCodeBox1.Text\nWould you like to save first?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+						{
+							return;
+						}
+					}
+
 					this.tabControl1.TabPages.RemoveAt(i);
 					break;
-					//}
 				}
 			}
 			if (tabControl1.Controls.Count == 0)
@@ -136,28 +228,7 @@ namespace NSPEdit
 		{
 			if (e.KeyChar == '.')
 			{
-				CB.Text = "";
-				CB.Items.Clear();
-				CB.Items.Add("");
-				int maxchar = 0;
-				foreach (String s in autoCompleteList)
-				{
-					CB.Items.Add(s);
-					if (maxchar < s.Length) maxchar = s.Length;
-				}
-				CB.Visible = true;
-				Point cursorPt = richCodeBox1.GetPositionFromCharIndex(richCodeBox1.SelectionStart);
-				cursorPt.X += (int)richCodeBox1.Font.SizeInPoints;
-				cursorPt.Y += richCodeBox1.Location.Y;
-				CB.Size = new System.Drawing.Size(100, 1);
-				CB.DropDownHeight = richCodeBox1.Font.Height * 4;
-				CB.Width = (maxchar + 1) * (int)richCodeBox1.Font.SizeInPoints;
-				CB.Location = cursorPt;
-				CB.BringToFront();
-				// CB.DroppedDown = true;
-				CB.Show();
-				CB.Focus();
-				CB.Text = "";
+				CB.MakeActive();
 			}
 		}
 
@@ -222,6 +293,7 @@ namespace NSPEdit
 			{
 				StreamWriter sw = new StreamWriter(srcfile);
 				sw.Write(richCodeBox1.Text);
+				richCodeBox1.LastSavedText = richCodeBox1.Text;
 				sw.Close();
 				toolStripStatusLabel1.Text = "Saved " + srcfile;
 				SetScriptFileName(srcfile);
@@ -328,6 +400,9 @@ namespace NSPEdit
 			richCodeBox1.KeyPress += richCodeBox1_KeyPress;
 			//richCodeBox1.KeyDown += richCodeBox1_KeyDown;
 
+			richCodeBox1.MouseMove += RichCodeBox1_MouseMove;
+
+
 			// richTextBox2
 			richTextBox2.AcceptsTab = true;
 			richTextBox2.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -421,7 +496,7 @@ namespace NSPEdit
 
 		public void AppendOutput(string OutString)
 		{
-			richTextBox2.Text += OutString;
+			if (richTextBox2 != null) richTextBox2.Text += OutString;
 			Application.DoEvents();
 		}
 
@@ -453,7 +528,6 @@ namespace NSPEdit
 
 		private void aboutNSPEditorToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-
 		}
 
 		private void nSPHomepageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -463,8 +537,29 @@ namespace NSPEdit
 
 		private void nSPSyntaxToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-
 			System.Diagnostics.Process.Start("https://nulllogic.ca/nsp/syntax.html");
+		}
+
+		private void findToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			sf.SetSearch(richCodeBox1.SelectedText);
+			sf.Show();
+			sf.Focus();
+		}
+
+		private void findNextToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			sf.buttonSearch_Click(null, null);
+		}
+
+		public RichCodeBox GetActiveCodeBox()
+		{
+			return this.richCodeBox1;
+		}
+
+		public RichTextBox GetActiveOutputBox()
+		{
+			return this.richTextBox2;
 		}
 	}
 }

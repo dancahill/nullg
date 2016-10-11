@@ -1,4 +1,5 @@
-global db = {
+//global db = {
+namespace db {
 	function getblanksqr(tablename) {
 		var userinfo = db.getuserinfo();
 		sqr = {
@@ -217,7 +218,7 @@ global db = {
 	contacts = {
 		getlist = function () {
 			var userinfo = db.getuserinfo();
-			sqr=sqlquery("SELECT * FROM gw_contacts");
+			sqr=sqlquery("SELECT * FROM gw_contacts ORDER BY surname");
 			return sqr;
 		};
 		get = function (id) {
@@ -551,6 +552,9 @@ global db = {
 					{ "lastcount",      "integer",         "NOT NULL", "0"                 };
 					{ "notify",         "integer",         "NOT NULL", "0"                 };
 					{ "remove",         "integer",         "NOT NULL", "0"                 };
+						// 0 - never
+						// 1 - when retrieved
+						// 2 - when deleted from 'Trash'
 					{ "lastcheck",      "timestamp",       "NOT NULL", "current_timestamp" };
 					{ "showdebug",      "varchar(10)",     "NOT NULL", "'n'"               };
 					{ "signature",      "text",            "NOT NULL", "''"                };

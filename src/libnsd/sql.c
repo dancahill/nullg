@@ -308,7 +308,7 @@ typedef struct vary {
 static int fbsqlDLLInit(nsp_state *N)
 {
 	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
-	char *libpath=nsp_getstr(N, confobj, "lib_path");
+	char *libpath=nsp_getstr(N, nsp_settable(N, confobj, "paths"), "lib");
 	char libname[255];
 
 	if (hinstLib!=NULL) return 0;
@@ -382,6 +382,7 @@ static void fbsqlDisconnect(nsp_state *N)
 static int fbsqlConnect(nsp_state *N)
 {
 	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
+	obj_t *sqlobj=nsp_settable(N, confobj, "sql");
 	char *host, *user, *pass, *db;
 	ISC_STATUS isc_status[20];
 	char buf[1024];
@@ -391,10 +392,10 @@ static int fbsqlConnect(nsp_state *N)
 
 	if(fbsqlDLLInit(N)!=0) return -1;
 	if (sql_is_connected) return 0;
-	host=nsp_getstr(N, confobj, "sql_hostname");
-	user=nsp_getstr(N, confobj, "sql_username");
-	pass=nsp_getstr(N, confobj, "sql_password");
-	db=nsp_getstr(N, confobj, "sql_dbname");
+	host=nsp_getstr(N, sqlobj, "sql_hostname");
+	user=nsp_getstr(N, sqlobj, "sql_username");
+	pass=nsp_getstr(N, sqlobj, "sql_password");
+	db=nsp_getstr(N, sqlobj, "sql_dbname");
 	if (strlen(user)&&strlen(pass)) {
 		len=snprintf(buf, sizeof(buf), "%c%c%c%s%c%c%s", isc_dpb_version1, isc_dpb_user_name, (int)strlen(user), user, isc_dpb_password, (int)strlen(pass), pass);
 		snprintf(buf2, sizeof(buf2), "%s:%s", host, db);
@@ -675,7 +676,7 @@ static void fbsql_store_field(nsp_state *N, XSQLVAR ISC_FAR *var, obj_t *tobj)
 	case SQL_BLOB: {
 		//int bloblen=0;
 		ISC_QUAD        blob_id=*(ISC_QUAD ISC_FAR *)var->sqldata;
-		isc_blob_handle blob_handle = NULL;
+		isc_blob_handle blob_handle = 0;
 		short           blob_seg_len;
 		char            blob_segment[256];
 		long            blob_stat;
@@ -842,17 +843,18 @@ static void mysqlDisconnect()
 static int mysqlConnect(nsp_state *N)
 {
 	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
-	char *libpath=nsp_getstr(N, confobj, "lib_path");
+	obj_t *sqlobj=nsp_settable(N, confobj, "sql");
+	char *libpath=nsp_getstr(N, nsp_settable(N, confobj, "paths"), "lib");
 	char *host, *user, *pass, *db;
 	int port;
 
 	if(mysqlDLLInit(N, libpath)!=0) return -1;
 	if (sql_is_connected) return 0;
-	host=nsp_getstr(N, confobj, "sql_hostname");
-	user=nsp_getstr(N, confobj, "sql_username");
-	pass=nsp_getstr(N, confobj, "sql_password");
-	db=nsp_getstr(N, confobj, "sql_dbname");
-	port=(int)nsp_getnum(N, confobj, "sql_port");
+	host=nsp_getstr(N, sqlobj, "sql_hostname");
+	user=nsp_getstr(N, sqlobj, "sql_username");
+	pass=nsp_getstr(N, sqlobj, "sql_password");
+	db=nsp_getstr(N, sqlobj, "sql_dbname");
+	port=(int)nsp_getnum(N, sqlobj, "sql_port");
 	libmysql.init(&mysql);
 	if (!(mysock=libmysql.real_connect(&mysql, host, user, pass, db, port, NULL, 0))) {
 		log_error(N, "sql", __FILE__, __LINE__, 1, "MYSQL error: %s", libmysql.error(&mysql));
@@ -1124,16 +1126,17 @@ static void pgsqlDisconnect()
 static int pgsqlConnect(nsp_state *N)
 {
 	obj_t *confobj=nsp_settable(N, &N->g, "CONFIG");
-	char *libpath=nsp_getstr(N, confobj, "lib_path");
+	obj_t *sqlobj=nsp_settable(N, confobj, "sql");
+	char *libpath=nsp_getstr(N, nsp_settable(N, confobj, "paths"), "lib");
 	char *host, *user, *pass, *db, *port;
 
 	if(pgsqlDLLInit(N, libpath)!=0) return -1;
 	if (sql_is_connected) return 0;
-	host=nsp_getstr(N, confobj, "sql_hostname");
-	user=nsp_getstr(N, confobj, "sql_username");
-	pass=nsp_getstr(N, confobj, "sql_password");
-	db=nsp_getstr(N, confobj, "sql_dbname");
-	port=nsp_getstr(N, confobj, "sql_port");
+	host=nsp_getstr(N, sqlobj, "sql_hostname");
+	user=nsp_getstr(N, sqlobj, "sql_username");
+	pass=nsp_getstr(N, sqlobj, "sql_password");
+	db=nsp_getstr(N, sqlobj, "sql_dbname");
+	port=nsp_getstr(N, sqlobj, "sql_port");
 	pgconn=libpgsql.setdblogin(host, port, NULL, NULL, db, user, pass);
 	if (libpgsql.status(pgconn)==CONNECTION_BAD) {
 		log_error(N, "sql", __FILE__, __LINE__, 1, "PGSQL Connect - %s", libpgsql.errormessage(pgconn));
@@ -1280,8 +1283,8 @@ static void sqlite2Disconnect()
 
 static int sqlite2Connect(nsp_state *N)
 {
-	char *libpath=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "lib_path");
-	char *varpath=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "var_path");
+	char *libpath=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "paths"), "lib");
+	char *varpath=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "paths"), "var");
 	char dbname[255];
 	char *zErrMsg=0;
 
@@ -1433,8 +1436,8 @@ static void sqlite3Disconnect()
 
 static int sqlite3Connect(nsp_state *N)
 {
-	char *libpath=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "lib_path");
-	char *varpath=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "var_path");
+	char *libpath=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "paths"), "lib");
+	char *varpath=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "paths"), "var");
 	char dbname[255];
 	char *zErrMsg=0;
 
@@ -1584,7 +1587,7 @@ static int _sql_dll_unload()
 
 void _sql_disconnect(nsp_state *N)
 {
-	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
+	char *sqltype=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "sql"), "sql_server_type");
 
 	log_error(N, "sql", __FILE__, __LINE__, 4, "SQL Disconnection");
 	if (strcmp(sqltype, "FBSQL")==0) {
@@ -1631,7 +1634,7 @@ void _sql_freeresult(nsp_state *N, obj_t **qobj)
 
 int _sql_update(nsp_state *N, char *sqlquery)
 {
-	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
+	char *sqltype=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "sql"), "sql_server_type");
 	int rc=-1;
 
 	log_error(N, "sql", __FILE__, __LINE__, 2, "SQL update: %s", sqlquery);
@@ -1672,7 +1675,7 @@ int _sql_update(nsp_state *N, char *sqlquery)
 
 int _sql_query(nsp_state *N, obj_t **qobj, char *query)
 {
-	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
+	char *sqltype=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "sql"), "sql_server_type");
 	obj_t *tobj;
 	int rc=-1;
 
@@ -1756,7 +1759,7 @@ int _sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...)
 
 int _sql_getsequence(nsp_state *N, char *table)
 {
-	char *sqltype=nsp_getstr(N, nsp_settable(N, &N->g, "CONFIG"), "sql_server_type");
+	char *sqltype=nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "sql"), "sql_server_type");
 	obj_t *qobj=NULL;
 	int rc=-1;
 

@@ -121,14 +121,13 @@ NSP_FUNCTION(libnsp_net_socket_close)
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 
-	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket"))) {
+	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket")))
 		thisobj = nsp_getobj(N, &N->l, "1");
-	}
 	if (!nsp_istable(thisobj))
-		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
+		return 0;
 	cobj = nsp_getobj(N, thisobj, "_socket");
 	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "sock4") != 0)
-		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
+		return 0; //n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
 	tcp_close(N, sock, 1);
 	n_free(N, (void *)&cobj->val->d.str, sizeof(TCP_SOCKET) + 1);
@@ -178,9 +177,10 @@ NSP_FUNCTION(libnsp_net_socket_connect)
 	if ((rc = tcp_connect(N, sock, cobj1->val->d.str, (unsigned short)cobj2->val->d.num, use_tls)) < 0) {
 		n_free(N, (void *)&cobj->val->d.str, sizeof(TCP_SOCKET) + 1);
 		cobj->val->size = 0;
-		nsp_setstr(N, &N->r, "", "tcp error", -1);
+		nsp_setbool(N, &N->r, "", 0);
 		return -1;
 	}
+	nsp_setbool(N, &N->r, "", 1);
 	return 0;
 #undef __FN__
 }
@@ -225,7 +225,7 @@ NSP_FUNCTION(libnsp_net_socket_gettype)
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	cobj = nsp_getobj(N, thisobj, "_socket");
-	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str != NULL && nc_strcmp(cobj->val->d.str, "sock4") != 0))
+	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "sock4") != 0)
 		nsp_setstr(N, &N->r, "", "table", -1);
 	else
 		nsp_setstr(N, &N->r, "", "sock4", -1);
@@ -324,8 +324,8 @@ NSP_FUNCTION(libnsp_net_socket_setsockopt)
 		if (!nsp_isnum(cobj2)) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 		{
 #ifdef WIN32
-			DWORD to = (long)(cobj2->val->d.num);
-			setsockopt(sock->socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&to, sizeof(to));
+			DWORD timeout = (long)(cobj2->val->d.num);
+			setsockopt(sock->socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout));
 #else
 			struct timeval timeout;
 			timeout.tv_sec = 0;

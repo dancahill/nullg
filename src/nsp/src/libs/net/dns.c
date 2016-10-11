@@ -170,7 +170,7 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 	msg = (u_char *)&answer;
 	eom = (u_char *)&answer + n;
 	cp = (u_char *)&answer + HFIXEDSZ;
-	while (qdcount-->0 && cp < eom) {
+	while (qdcount-- > 0 && cp < eom) {
 		n = dn_skipname(cp, eom);
 		if (n < 0) return -1;
 		cp += n;
@@ -179,7 +179,7 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 	/* Loop through the answer buffer and extract records. */
 	i = 0;
 	memset(hostbuf, 0, sizeof(hostbuf));
-	while (ancount-->0 && cp < eom) {
+	while (ancount-- > 0 && cp < eom) {
 		stobj = nsp_settable(N, tobj, n_ntoa(N, namebuf, i, 10, 0));
 		if ((n = dn_expand(msg, eom, cp, hostbuf, HOSTBUF)) < 0) break;
 		if (N->debug) n_warn(N, __FN__, "?[%s]", hostbuf);

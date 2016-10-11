@@ -58,9 +58,9 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 	uri = cobj->val->d.str;
 	if (!nsp_isstr((cobj = nsp_getobj(N, thisobj, "body")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for body");
 	//body=cobj->val->d.str;
-//	blen=cobj->val->size;
-//	if (!nsp_isstr((cobj=nsp_getobj(N, thisobj, "contenttype")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for contenttype");
-//	ctype=cobj->val->d.str;
+	//	blen=cobj->val->size;
+	//	if (!nsp_isstr((cobj=nsp_getobj(N, thisobj, "contenttype")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for contenttype");
+	//	ctype=cobj->val->d.str;
 
 	nc_memset((char *)&sock, 0, sizeof(sock));
 	if ((rc = tcp_connect(N, &sock, host, port, use_tls)) < 0) {
@@ -134,13 +134,13 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 	cobj = nsp_setstr(N, &tobj, "body", NULL, 0);
 	for (;;) {
 		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
-		if (rc<1) break;
+		if (rc < 1) break;
 		len += rc;
 		/* slow, but at least it's safe */
 		nsp_strcat(N, cobj, tmpbuf, rc);
 		striprn(tmpbuf);
 		/* printf("{%s}\r\n", tmpbuf); */
-		if ((cl>-1) && (len >= cl)) break;
+		if ((cl > -1) && (len >= cl)) break;
 	}
 	tcp_close(N, &sock, 1);
 	if (N->debug) n_warn(N, __FN__, "Content-Length: %d/%d", len, cl);
@@ -150,39 +150,24 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 #undef __FN__
 }
 
-NSP_CLASS(libnsp_net_http_client)
+static void parseurl(nsp_state *N)
 {
-#define __FN__ __FILE__ ":libnsp_net_http_client()"
-	obj_t *cobj;//, *cobj2;
+#define __FN__ __FILE__ ":parseurl()"
+	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *cobj;
 	char *p1, *p2;
 	int port = 80;
 
-	nsp_setcfunc(N, &N->l, "send", (NSP_CFUNC)libnsp_net_http_client_send);
-
-	nsp_setbool(N, &N->l, "use_tls", 0);
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", port);
-	nsp_setstr(N, &N->l, "uri", "", 0);
-
-	nsp_setstr(N, &N->l, "method", "GET", 3);
-	nsp_setstr(N, &N->l, "protocol", "HTTP/1.0", 8);
-
-	nsp_setstr(N, &N->l, "body", "", 0);
-
-	/* parse constructor args */
-	if (!nsp_isstr((cobj = nsp_getobj(N, &N->l, "1"))) || cobj->val->d.str == NULL) {
-		return 0;
-	}
+	cobj = nsp_getobj(N, &N->l, "1");
+	if (!nsp_isstr(cobj) || cobj->val->size < 1) return;
 	p1 = cobj->val->d.str;
 	if (strncasecmp(p1, "http://", 7) == 0) {
-		//		n_warn(N, __FN__, "protocol is http://");
-		nsp_setbool(N, &N->l, "use_tls", 0);
+		nsp_setbool(N, thisobj, "use_tls", 0);
 		port = 80;
 		p1 += 7;
 	}
 	else if (strncasecmp(p1, "https://", 8) == 0) {
-		//		n_warn(N, __FN__, "protocol is https://");
-		nsp_setbool(N, &N->l, "use_tls", 1);
+		nsp_setbool(N, thisobj, "use_tls", 1);
 		port = 443;
 		p1 += 8;
 	}
@@ -192,8 +177,7 @@ NSP_CLASS(libnsp_net_http_client)
 	p2 = p1;
 	while (isalnum(*p2) || *p2 == '-' || *p2 == '_' || *p2 == '.') p2++;
 	if (p2 > p1) {
-		//		n_warn(N, __FN__, "host is %s", nsp_tostr(N, cobj2));
-		nsp_setstr(N, &N->l, "host", p1, p2 - p1);
+		nsp_setstr(N, thisobj, "host", p1, p2 - p1);
 	}
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "can't parse host");
@@ -206,8 +190,7 @@ NSP_CLASS(libnsp_net_http_client)
 			port = port * 10 + (*p1++ - '0');
 		}
 		if (port) {
-			//			n_warn(N, __FN__, "port is %d", port);
-			nsp_setnum(N, &N->l, "port", port);
+			nsp_setnum(N, thisobj, "port", port);
 		}
 		else {
 			n_error(N, NE_SYNTAX, __FN__, "can't parse port");
@@ -216,12 +199,31 @@ NSP_CLASS(libnsp_net_http_client)
 	p2 = p1;
 	while (*p2) p2++;
 	if (p2 > p1) {
-		//		n_warn(N, __FN__, "uri is %s", nsp_tostr(N, cobj2));
-		nsp_setstr(N, &N->l, "uri", p1, p2 - p1);
+		nsp_setstr(N, thisobj, "uri", p1, p2 - p1);
 	}
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "can't parse uri");
 	}
+#undef __FN__
+}
+
+NSP_CLASSMETHOD(libnsp_net_http_client_client)
+{
+#define __FN__ __FILE__ ":libnsp_net_http_client_client()"
+	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	//obj_t *cobj;
+
+	nsp_setbool(N, thisobj, "use_tls", 0);
+	nsp_setstr(N, thisobj, "host", "localhost", 9);
+	nsp_setnum(N, thisobj, "port", 80);
+	nsp_setstr(N, thisobj, "uri", "", 0);
+	nsp_setstr(N, thisobj, "method", "GET", 3);
+	nsp_setstr(N, thisobj, "protocol", "HTTP/1.0", 8);
+	nsp_setstr(N, thisobj, "body", "", 0);
+	//cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "net"), "http"), "client");
+	//if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	//else n_warn(N, __FN__, "net.http.client not found");
+	parseurl(N);
 	return 0;
 #undef __FN__
 }

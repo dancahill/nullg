@@ -39,7 +39,7 @@
 #endif
 #include "nullsd/defines.h"
 #include "nsp/nsp.h"
-#include "nsd.h"
+#include "nullsd/nsd.h"
 
 #define SQLBUFSIZE 32768
 
@@ -604,14 +604,14 @@ int main(int argc, char *argv[])
 		printf("can't read the config file.\r\n");
 		return 0;
 	}
-	tobj = nsp_getobj(N, &N->g, "CONFIG");
+	tobj = nsp_getobj(N, nsp_getobj(N, &N->g, "CONFIG"), "sql");
 	if (tobj->val->type != NT_TABLE) return 0;
 	cobj = nsp_getobj(N, tobj, "sql_server_type");
 	if (cobj->val->type == NT_STRING) {
 		snprintf(sql_type, sizeof(sql_type) - 1, "%s", cobj->val->d.str);
 	}
 
-	snprintf(filename, sizeof(filename) - 1, "%s/lib/script/db.ns", "..");
+	snprintf(filename, sizeof(filename) - 1, "%s/lib/scripts/db.ns", "..");
 	if (strlen(filename) > 0) {
 		if (nsp_execfile(N, filename) == 0);
 	}

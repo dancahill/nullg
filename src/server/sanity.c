@@ -70,14 +70,13 @@ int sanity_checkdb()
 	int i;
 	int errs = 0;
 
-	if (strncmp(nsp_getstr(proc.N, tobj, "sql_server_type"), "SQLITE", 6) == 0) {
-		if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_path")) != 0) exit(-2);
-		if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_db_path")) != 0) exit(-2);
+	if (strncmp(nsp_getstr(proc.N, nsp_getobj(proc.N, tobj, "sql"), "sql_server_type"), "SQLITE", 6) == 0) {
+		if (sanity_dircheck("%s", nsp_getstr(proc.N, nsp_getobj(proc.N, tobj, "paths"), "var")) != 0) exit(-2);
+		if (sanity_dircheck("%s", nsp_getstr(proc.N, nsp_getobj(proc.N, tobj, "paths"), "var_db")) != 0) exit(-2);
 		if (strcmp(nsp_getstr(proc.N, tobj, "sql_server_type"), "SQLITE2") == 0) {
-			snprintf(dbfile, sizeof(dbfile) - 1, "%s/%s.db2", nsp_getstr(proc.N, tobj, "var_db_path"), SERVER_BASENAME);
-		}
-		else {
-			snprintf(dbfile, sizeof(dbfile) - 1, "%s/%s.db3", nsp_getstr(proc.N, tobj, "var_db_path"), SERVER_BASENAME);
+			snprintf(dbfile, sizeof(dbfile) - 1, "%s/%s.db2", nsp_getstr(proc.N, nsp_getobj(proc.N, tobj, "paths"), "var_db"), SERVER_BASENAME);
+		} else {
+			snprintf(dbfile, sizeof(dbfile) - 1, "%s/%s.db3", nsp_getstr(proc.N, nsp_getobj(proc.N, tobj, "paths"), "var_db"), SERVER_BASENAME);
 		}
 		fixslashes(dbfile);
 		if ((stat(dbfile, &sb) != 0) || (sb.st_size == 0)) {
@@ -122,19 +121,19 @@ int sanity_checkdb()
 
 int sanity_checkdirs()
 {
-	obj_t *tobj = nsp_getobj(proc.N, &proc.N->g, "CONFIG");
+	obj_t *tobj = nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "paths");
 	obj_t *qobj = NULL;
 	int domainid;
 	int i;
 
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_db_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_domains_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_log_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_spool_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s/mqueue", nsp_getstr(proc.N, tobj, "var_spool_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s/mqinfo", nsp_getstr(proc.N, tobj, "var_spool_path")) != 0) exit(-2);
-	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_tmp_path")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_db")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_domains")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_log")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_spool")) != 0) exit(-2);
+	if (sanity_dircheck("%s/mqueue", nsp_getstr(proc.N, tobj, "var_spool")) != 0) exit(-2);
+	if (sanity_dircheck("%s/mqinfo", nsp_getstr(proc.N, tobj, "var_spool")) != 0) exit(-2);
+	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_tmp")) != 0) exit(-2);
 	return 0;
 	if (sql_query(proc.N, &qobj, "SELECT id, name FROM nullsd_entries WHERE class = 'organization'") < 0) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "Could not retrieve domain list");
@@ -147,13 +146,13 @@ int sanity_checkdirs()
 	}
 	for (i = 0;i < sql_numtuples(proc.N, &qobj);i++) {
 		domainid = atoi(sql_getvalue(proc.N, &qobj, i, 0));
-		if (sanity_dircheck("%s/%04d", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/attachments", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/cgi-bin", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/files", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/htdocs", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/mail", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
-		if (sanity_dircheck("%s/%04d/mailspool", nsp_getstr(proc.N, tobj, "var_domains_path"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/attachments", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/cgi-bin", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/files", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/htdocs", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/mail", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
+		if (sanity_dircheck("%s/%04d/mailspool", nsp_getstr(proc.N, tobj, "var_domains"), domainid) != 0) exit(-2);
 	}
 	sql_freeresult(proc.N, &qobj);
 	return 0;

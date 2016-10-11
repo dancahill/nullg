@@ -34,6 +34,7 @@ struct timezone { int tz_minuteswest; int tz_dsttime; };
 struct timezone { int tz_minuteswest; int tz_dsttime; };
 #pragma warning(disable:4996)
 #define WIN32_LEAN_AND_MEAN
+#define _USE_32BIT_TIME_T
 /* always include winsock2 before windows */
 #include <winsock2.h>
 #include <windows.h>
@@ -65,7 +66,7 @@ typedef signed char       int8;
 typedef unsigned char     uint8;
 
 #define MAX_OBJNAMELEN  64
-#define MAX_OUTBUFLEN   4096
+#define MAX_OUTBUFSIZE  4096
 #define OUTBUFLOWAT	2048
 
 /* object types */
@@ -159,9 +160,10 @@ typedef struct nsp_state {
 	char warnformat;
 	jmp_buf *savjmp;
 	struct timeval ttime;
-	unsigned short outbuflen;
 	char numbuf[128];
-	char outbuf[MAX_OUTBUFLEN + 1];
+	char *outbuffer;
+	unsigned short outbuflen;
+	unsigned short outbufmax;
 	char errbuf[256];
 	char *func;
 	char *file;

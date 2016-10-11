@@ -10,7 +10,6 @@ function search_bookmarks() {
 	result="";
 	results=0;
 	//result+="<br>\r\n";
-	result+="<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n";
 	result+="<table id='contenttable' class='contenttable' style='width:400px;'>\r\n";
 	result+="<thead>\r\n";
 	result+=sprintf("<tr><th colspan=2 style='text-align:center'>searching for '%s'</th></tr>\r\n", strtohtml(_POST['SEARCHTEXT']));

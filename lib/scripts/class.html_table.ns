@@ -10,11 +10,15 @@ class html_table {
 		this.autoaddcolumns=true;
 		/* sql query result */
 		this.datasource=null;
-	};
+	}
 	/* function to add column */
 	function addcolumn(name, label, lambda, lambda_td) {
 		columns[sizeof(columns)]={ name=name, label=label, lambda=lambda, lambda_td=lambda_td };
-	};
+	}
+	/* function to filter rows */
+	function filterrow(record) {
+		return false;
+	}
 	/* function to output complete table */
 	function write() {
 		// these should already be included in header.ns
@@ -22,7 +26,8 @@ class html_table {
 		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.tablesorter.js\"></script>\r\n");
 		printf("<script type=\"text/javascript\">\r\n"+
 			"$(function() {\r\n"+
-			"	$(\"#%s\").tablesorter({sortList:[[0,0]], widgets: ['zebra']});\r\n"+
+			//"	$(\"#%s\").tablesorter({sortList:[[0,0]], widgets: ['zebra']});\r\n"+
+			"	$(\"#%s\").tablesorter({sortList:[[0,0]]});\r\n"+
 			"});\r\n"+
 			"</script>"
 			, tablename
@@ -45,6 +50,7 @@ class html_table {
 		print("</thead>");
 		print("<tbody>");
 		foreach (record in datasource._rows) {
+			if (this.filterrow(record)) continue;
 			print("<tr>");
 			foreach (column in columns) {
 //				print("<td>");
@@ -69,5 +75,5 @@ class html_table {
 		}
 		print("</tbody>");
 		print("</table>");
-	};
+	}
 }

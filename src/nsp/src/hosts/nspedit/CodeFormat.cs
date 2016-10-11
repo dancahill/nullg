@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,41 @@ namespace NSPEdit
 {
 	class CodeFormat
 	{
+		public class ColourScheme
+		{
+			public class Colour
+			{
+				public string CodeType = "";
+				public string RTFColour = "";
+				public Color FormColour = Color.Black;
+				public FontStyle FontStyle = FontStyle.Regular;
+				public Colour(string CodeType, Color FormColour, FontStyle FontStyle, string RTFColour)
+				{
+					this.CodeType = CodeType;
+					this.FormColour = FormColour;
+					this.FontStyle = FontStyle;
+					this.RTFColour = RTFColour;
+				}
+			}
+			List<Colour> Colours = new List<Colour>();
+			public ColourScheme()
+			{
+				Colours.Add(new Colour("comment", Color.Green, FontStyle.Italic, @"\cf1"));
+				Colours.Add(new Colour("punctuation2", Color.Red, FontStyle.Bold, @"\cf2"));
+				Colours.Add(new Colour("keyword", Color.Black, FontStyle.Bold, @"\cf3"));
+				Colours.Add(new Colour("code", Color.DarkCyan, FontStyle.Regular, @"\cf4"));
+				Colours.Add(new Colour("punctuation", Color.Maroon, FontStyle.Bold, @"\cf5"));
+				Colours.Add(new Colour("reserved", Color.Blue, FontStyle.Regular, @"\cf6"));
+				Colours.Add(new Colour("string", Color.Blue, FontStyle.Regular, @"\cf6"));
+				Colours.Add(new Colour("number", Color.Navy, FontStyle.Regular, @"\cf7"));
+			}
+			public Colour Get(string CodeType)
+			{
+				foreach (Colour c in Colours) if (c.CodeType == CodeType) return c;
+				return null;
+			}
+		}
+
 		private string[] flist = new string[] { "exit", "throw", "finally", "catch", "try", "default", "case", "switch", "while", "do", "foreach", "for", "else", "if", "var", "local", "global", "function", "class", "new", "delete", "return", "continue", "break", "in", "namespace" };
 		private string[] rlist = new string[] { "true", "false", "null", "this" };
 		private static string RTFHeader =

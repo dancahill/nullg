@@ -70,7 +70,7 @@ static void winerror(int line)
 		return;
 	}
 	if (!rc) return;
-	FormatMessage(
+	FormatMessageA(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -84,7 +84,7 @@ static void winerror(int line)
 
 	//	printf("%d rc=0x%x\r\n", line, rc);
 	//	if (lpMsgBuf) {
-	printf("rc %d, %s\r\n", rc, lpMsgBuf);
+	printf("rc %d, %s\r\n", rc, (char *)lpMsgBuf);
 	LocalFree(lpMsgBuf);
 	//	}
 	SetLastError(0);

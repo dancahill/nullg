@@ -96,13 +96,13 @@ DWORD do_filter(EXCEPTION_POINTERS *eps, CONN *conn)
 		_snprintf(errbuf, sizeof(errbuf) - 1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
 		break;
 	case EXCEPTION_ACCESS_VIOLATION:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	case EXCEPTION_STACK_OVERFLOW:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	default:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
 		break;
 	}
 	{
@@ -172,7 +172,7 @@ void *htloop(void *x)
 
 void *get_conn()
 {
-	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd");
 	int i;
 	int maxconn;
 
@@ -206,13 +206,13 @@ DllExport int mod_init(_PROC *_proc)
 	proc = _proc;
 	if (mod_import() != 0) return -1;
 	htproc.N = nsp_newstate();
-	hobj = nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	hobj = nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd");
 	cobj = nsp_getobj(proc->N, hobj, "interface");
 	if (cobj->val->type != NT_STRING) cobj = nsp_setstr(proc->N, hobj, "interface", "INADDR_ANY", strlen("INADDR_ANY"));
 	cobj = nsp_getobj(proc->N, hobj, "port");
 	if (cobj->val->type != NT_NUMBER) cobj = nsp_setnum(proc->N, hobj, "port", 4110);
-	cobj = nsp_getobj(proc->N, hobj, "ssl_port");
-	if (cobj->val->type != NT_NUMBER) cobj = nsp_setnum(proc->N, hobj, "ssl_port", 4112);
+	cobj = nsp_getobj(proc->N, hobj, "tls_port");
+	if (cobj->val->type != NT_NUMBER) cobj = nsp_setnum(proc->N, hobj, "tls_port", 4112);
 	cobj = nsp_getobj(proc->N, hobj, "max_connections");
 	if (cobj->val->type != NT_NUMBER) cobj = nsp_setnum(proc->N, hobj, "max_connections", 50);
 	maxconn = (int)nsp_getnum(proc->N, hobj, "max_connections");
@@ -232,7 +232,7 @@ DllExport int mod_init(_PROC *_proc)
 	else {
 		htproc.ListenSocketSTD.socket = -1;
 	}
-	port = (int)nsp_getnum(proc->N, hobj, "ssl_port");
+	port = (int)nsp_getnum(proc->N, hobj, "tls_port");
 	if ((proc->ssl_is_loaded) && (port)) {
 		if ((htproc.ListenSocketSSL.socket = tcp_bind(nsp_getstr(proc->N, hobj, "interface"), port)) != -1) loaded = 1;
 	}
@@ -253,12 +253,12 @@ DllExport int mod_init(_PROC *_proc)
 
 DllExport int mod_exec()
 {
-	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd");
 
 	if (nsp_getnum(proc->N, hobj, "port") && (htproc.ListenSocketSTD.socket != -1)) {
 		addlistener(MODSHORTNAME, &htproc.ListenSocketSTD, (void *)get_conn, (void *)htloop, 0);
 	}
-	if (nsp_getnum(proc->N, hobj, "ssl_port") && (htproc.ListenSocketSSL.socket != -1) && (proc->ssl_is_loaded)) {
+	if (nsp_getnum(proc->N, hobj, "tls_port") && (htproc.ListenSocketSSL.socket != -1) && (proc->ssl_is_loaded)) {
 		addlistener(MODSHORTNAME, &htproc.ListenSocketSSL, (void *)get_conn, (void *)htloop, 1);
 	}
 	return 0;
@@ -266,7 +266,7 @@ DllExport int mod_exec()
 
 DllExport int mod_cron()
 {
-	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd");
+	obj_t *hobj = nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd");
 
 	int maxconn = (int)nsp_getnum(proc->N, hobj, "max_connections");
 	int maxkeepalive = (int)nsp_getnum(proc->N, hobj, "max_keepalive");

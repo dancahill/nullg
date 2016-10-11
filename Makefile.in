@@ -143,12 +143,13 @@ clean:
 #	@cd src/modules/httpd/mod_xmlrpc     && $(MAKE) clean && cd ../../../..
 
 	@rm -f bin/* lib/*.a lib/*.so lib/*.lib *~
-	@rm -rf lib/core lib/httpd lib/nsp lib/shared
 	@rm -f etc/ssl-cert.pem etc/ssl-priv.pem
 #	@rm -rf bin int lib obj
-	@rm -rf bin int obj
 
 distclean: clean
+	@rm -f bin/* lib/*.a lib/*.so lib/*.lib lib/*.pdb *~
+	@rm -rf bin int obj
+	@rm -rf lib/core lib/httpd lib/nsp lib/shared
 	@rm -rf .vs
 	@rm -f nsd.ncb nsd.suo nsd.v12.suo
 	@cd src/sqlite && ./libsqlite_make clean && cd ../..
@@ -166,6 +167,7 @@ distclean: clean
 	@chmod -R 0644 `find lib/locale -name '*' -type f`
 	@chmod -R 0644 `find lib/scripts -name '*' -type f`
 #	@chmod -R 0644 `find var/share/htdocs -name '*' -type f`
+	@find . -name ~AutoRecover.*.vcxproj
 	@chown -R 0:0 *
 	@rm -f bin/nullsd-backup.sh bin/nullsd-init.sh bin/nullsd-scanfile.sh
 	@rm -f build-stamp config.log config.status include/nullsd/config.h Makefile src/Rules.mak src/scripts/setup.sh src/scripts/nullsd-backup.sh src/scripts/nullsd-init.sh src/scripts/nullsd-scanfile.sh

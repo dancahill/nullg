@@ -25,7 +25,7 @@ static void conf_callback(char *var, char *val)
 	else if (strcmp(var, "port") == 0) {
 		mod_config.pop3_port = atoi(val);
 	}
-	else if (strcmp(var, "ssl_port") == 0) {
+	else if (strcmp(var, "tls_port") == 0) {
 		mod_config.pop3_sslport = atoi(val);
 	}
 	else if (strcmp(var, "require_tls") == 0) {

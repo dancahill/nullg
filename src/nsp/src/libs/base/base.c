@@ -57,10 +57,10 @@ int nspbase_register_all(nsp_state *N)
 	nsp_setcfunc(N, tobj, "replace", (NSP_CFUNC)libnsp_regex_replace);
 
 
-	tobj = nsp_settable(N, &N->g, "sort");
+	tobj = nsp_settable(N, &N->g, "table");
 	tobj->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj, "byname", (NSP_CFUNC)libnsp_base_sort_byname);
-	nsp_setcfunc(N, tobj, "bykey", (NSP_CFUNC)libnsp_base_sort_bykey);
+	nsp_setcfunc(N, tobj, "sortbyname", (NSP_CFUNC)libnsp_base_sort_byname);
+	nsp_setcfunc(N, tobj, "sortbykey", (NSP_CFUNC)libnsp_base_sort_bykey);
 
 #ifdef HAVE_THREADS
 	tobj = nsp_settable(N, &N->g, "thread");

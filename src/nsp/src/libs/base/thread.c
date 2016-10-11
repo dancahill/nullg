@@ -206,6 +206,8 @@ static void *thread_main(void *x)
 	OS_THREAD *thread = x;
 	obj_t *thisobj;
 	obj_t *cobj;
+	obj_t *fobj;
+	uchar *p;
 
 #ifdef WIN32
 	thread->id = GetCurrentThreadId();
@@ -213,19 +215,28 @@ static void *thread_main(void *x)
 	thread->id = pthread_self();
 	pthread_detach(thread->id);
 #endif
-
 	thisobj = nsp_setbool(thread->N, &thread->N->l, "this", 0);
 	nsp_linkval(thread->N, thisobj, &thread->this);
+
+	fobj = nsp_getobj(thread->N, thisobj, "fn");
+	if (nsp_typeof(fobj) != NT_CFUNC && nsp_typeof(fobj) != NT_NFUNC) {
+		return 0;
+	}
 
 	cobj = nsp_getobj(thread->N, thisobj, "_thread");
 	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "thread") != 0)
 		n_error(thread->N, NE_SYNTAX, "", "expected a thread");
 
-	nsp_exec(thread->N, "do_thread_stuff(this);");
+	p = thread->N->readptr;
+	thread->N->readptr = (uchar *)"";
+	n_execfunction(thread->N, fobj, thisobj, 0);
+	thread->N->readptr = p;
+
+	//nsp_exec(thread->N, "do_thread_stuff(this);");
 
 	nsp_unlinkval(thread->N, &thread->N->g);
-	if (thread->N->err) goto err;
-err:
+//	if (thread->N->err) goto err;
+//err:
 	//if (N->err) printf("%s\r\n", N->errbuf);
 	nsp_freestate(thread->N);
 	//if (intstatus || N->allocs != N->frees) printstate(N, fn);
@@ -259,7 +270,6 @@ NSP_FUNCTION(libnsp_base_thread_start)
 	thread = (OS_THREAD *)cobj->val->d.str;
 
 	nsp_linkval(N, &thread->this, thisobj);
-
 
 #ifdef WIN32
 	unsigned long int id;

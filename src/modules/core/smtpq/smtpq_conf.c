@@ -31,7 +31,7 @@ static void conf_callback(char *var, char *val)
 	else if (strcmp(var, "port") == 0) {
 		mod_config.smtp_port = atoi(val);
 	}
-	else if (strcmp(var, "ssl_port") == 0) {
+	else if (strcmp(var, "tls_port") == 0) {
 		mod_config.smtp_sslport = atoi(val);
 	}
 	else if (strcmp(var, "msa_port") == 0) {

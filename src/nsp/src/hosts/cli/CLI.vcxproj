@@ -40,13 +40,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)obj\cli\</IntDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>nsp</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)obj\cli\</IntDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\</IntDir>
     <LinkIncremental />
     <TargetName>nsp</TargetName>
   </PropertyGroup>
@@ -70,7 +70,7 @@
       <ImageHasSafeExceptionHandlers />
     </Link>
     <PostBuildEvent>
-      <Command>$(TargetPath) -b "$(SolutionDir)src\libs\autoconf.ns" msvc windows</Command>
+      <Command>$(TargetPath) -b "$(ProjectDir)..\..\libs\autoconf.ns" msvc windows</Command>
       <Message>
       </Message>
     </PostBuildEvent>
@@ -94,7 +94,7 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>$(TargetPath) -b "$(SolutionDir)src\libs\autoconf.ns" msvc windows</Command>
+      <Command>$(TargetPath) -b "$(ProjectDir)..\..\libs\autoconf.ns" msvc windows</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

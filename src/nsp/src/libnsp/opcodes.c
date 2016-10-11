@@ -288,6 +288,17 @@ const optab oplist[] = {
 		{ NULL,        OP_UNDEFINED,  -1 }  /* 255 */
 };
 
+/* return non-zero if name is a reserved keyword */
+short n_iskeyword(nsp_state *N, char *name)
+{
+	int i;
+
+	for (i = OP_KEXIT; i <= OP_KBREAK; i++) {
+		if (nc_strcmp(oplist[i].name, name) == 0) return oplist[i].value;
+	}
+	return 0;
+}
+
 /* return the next op/cmp and advance the readptr */
 short n_getop(nsp_state *N, char *name)
 {

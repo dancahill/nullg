@@ -55,5 +55,8 @@
     <ClCompile Include="smtpd_server.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="smtpd_nsp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

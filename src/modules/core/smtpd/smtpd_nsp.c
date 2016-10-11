@@ -79,10 +79,10 @@ static int smtp_nsp_receive(CONN *conn)
 	char filename[512];
 	struct stat sb;
 
-	snprintf(filename, sizeof(filename) - 1, "%s/share/scripts/smtp/inbound.ns", nsp_getstr(proc->N, confobj, "var_path"));
+	snprintf(filename, sizeof(filename) - 1, "%s/share/scripts/smtp/events.ns", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"));
 	fixslashes(filename);
 	if (stat(filename, &sb) != 0) {
-		snprintf(filename, sizeof(filename) - 1, "%s/scripts/smtp/inbound.ns", nsp_getstr(proc->N, confobj, "lib_path"));
+		snprintf(filename, sizeof(filename) - 1, "%s/scripts/smtp/events.ns", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"));
 		fixslashes(filename);
 		if (stat(filename, &sb) != 0) return 0;
 	}
@@ -91,7 +91,7 @@ static int smtp_nsp_receive(CONN *conn)
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "smtp_nsp_receive exception: [%s]", conn->N->errbuf);
 	}
 	else {
-		nsp_exec(conn->N, "if (typeof(smtp_in)=='table') global smtp_in_obj=new smtp_in();");
+		nsp_exec(conn->N, "if (typeof(nsd.smtp.events)=='table') global _smtp_events=new nsd.smtp.events();");
 	}
 	return conn->N->err;
 }
@@ -121,8 +121,8 @@ int smtp_nsp_init(CONN *conn)
 	nsp_setstr(conn->N, hsobj, "NSP_VERSION", NSP_VERSION, -1);
 	newconfobj = nsp_settable(conn->N, &conn->N->g, "_CONFIG");
 	newconfobj->val->attr |= NST_AUTOSORT;
-	cobj = nsp_getobj(proc->N, confobj, "var_path");
-	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "var_path", cobj->val->d.str, cobj->val->size);
+	cobj = nsp_getobj(proc->N, nsp_settable(proc->N, confobj, "paths"), "var");
+	if (nsp_isstr(cobj)) nsp_setstr(conn->N, nsp_settable(proc->N, newconfobj, "paths"), "var", cobj->val->d.str, cobj->val->size);
 	cobj = nsp_getobj(proc->N, confobj, "host_name");
 	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "host_name", cobj->val->d.str, cobj->val->size);
 	/* cheat and peek at the master process's global var table */
@@ -139,22 +139,22 @@ int smtp_nsp_init(CONN *conn)
 
 int smtp_nsp_prefilter(CONN *conn)
 {
-	obj_t *tobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "smtp_in_obj"), "prefilter");
+	obj_t *tobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_smtp_events"), "prefilter");
 	obj_t *robj;
 
 	if (nsp_isnull(tobj)) return 0;
-	robj = nsp_eval(conn->N, "smtp_in_obj.prefilter();");
-	if (nsp_isnum(robj)) return nsp_tonum(conn->N, robj);
+	robj = nsp_eval(conn->N, "_smtp_events.prefilter();");
+	if (nsp_isnum(robj)) return (int)nsp_tonum(conn->N, robj);
 	return 0;
 }
 
 int smtp_nsp_postfilter(CONN *conn)
 {
-	obj_t *tobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "smtp_in_obj"), "postfilter");
+	obj_t *tobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_smtp_events"), "postfilter");
 	obj_t *robj;
 
 	if (nsp_isnull(tobj)) return 0;
-	robj = nsp_eval(conn->N, "smtp_in_obj.postfilter();");
-	if (nsp_isnum(robj)) return nsp_tonum(conn->N, robj);
+	robj = nsp_eval(conn->N, "_smtp_events.postfilter();");
+	if (nsp_isnum(robj)) return (int)nsp_tonum(conn->N, robj);
 	return 0;
 }

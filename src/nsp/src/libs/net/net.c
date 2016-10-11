@@ -21,7 +21,7 @@
 
 int nspnet_register_all(nsp_state *N)
 {
-	obj_t *tobj, *tobj2;
+	obj_t *tobj, *tobj2, *tobj3;
 #ifdef WIN32
 	static WSADATA wsaData;
 	if (WSAStartup(0x101, &wsaData)) return -1;
@@ -48,38 +48,75 @@ int nspnet_register_all(nsp_state *N)
 #endif
 	tobj2 = nsp_settable(N, tobj, "ftp");
 	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_ftp_client);
+	tobj2 = nsp_settable(N, tobj2, "client");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_ftp_client_client);
+	nsp_setcfunc(N, tobj2, "open", (NSP_CFUNC)libnsp_net_ftp_client_open);
+	nsp_setcfunc(N, tobj2, "close", (NSP_CFUNC)libnsp_net_ftp_client_close);
+	nsp_setcfunc(N, tobj2, "ls", (NSP_CFUNC)libnsp_net_ftp_client_ls);
+	nsp_setcfunc(N, tobj2, "retr", (NSP_CFUNC)libnsp_net_ftp_client_retr);
+	nsp_setcfunc(N, tobj2, "stor", (NSP_CFUNC)libnsp_net_ftp_client_stor);
+
 	tobj2 = nsp_settable(N, tobj, "http");
 	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_http_client);
+	tobj2 = nsp_settable(N, tobj2, "client");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_http_client_client);
+	nsp_setcfunc(N, tobj2, "send", (NSP_CFUNC)libnsp_net_http_client_send);
+
 	tobj2 = nsp_settable(N, tobj, "mime");
 	tobj2->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj2, "read", (NSP_CFUNC)libnsp_net_mime_read);
 	nsp_setcfunc(N, tobj2, "write", (NSP_CFUNC)libnsp_net_mime_write);
-	nsp_setcfunc(N, tobj2, "decode_qp", (NSP_CFUNC)libnsp_net_mime_qp_decode);
-	nsp_setcfunc(N, tobj2, "decode_rfc2047", (NSP_CFUNC)libnsp_net_mime_rfc2047_decode);
-	tobj2 = nsp_settable(N, tobj, "smtp");
-	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_smtp_client);
+	tobj3 = nsp_settable(N, tobj2, "base64");
+	tobj3->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj3, "decode", (NSP_CFUNC)libnsp_net_mime_base64_decode);
+	nsp_setcfunc(N, tobj3, "encode", (NSP_CFUNC)libnsp_net_mime_base64_encode);
+	tobj3 = nsp_settable(N, tobj2, "qp");
+	tobj3->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj3, "decode", (NSP_CFUNC)libnsp_net_mime_qp_decode);
+	nsp_setcfunc(N, tobj3, "encode", (NSP_CFUNC)libnsp_net_mime_qp_encode);
+	tobj3 = nsp_settable(N, tobj2, "rfc2047");
+	tobj3->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj3, "decode", (NSP_CFUNC)libnsp_net_mime_rfc2047_decode);
+
 	tobj2 = nsp_settable(N, tobj, "pop3");
 	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_pop3_client);
+	tobj2 = nsp_settable(N, tobj2, "client");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_pop3_client_client);
+	nsp_setcfunc(N, tobj2, "open", (NSP_CFUNC)libnsp_net_pop3_client_open);
+	nsp_setcfunc(N, tobj2, "close", (NSP_CFUNC)libnsp_net_pop3_client_close);
+	nsp_setcfunc(N, tobj2, "stat", (NSP_CFUNC)libnsp_net_pop3_client_stat);
+	nsp_setcfunc(N, tobj2, "uidl", (NSP_CFUNC)libnsp_net_pop3_client_uidl);
+	nsp_setcfunc(N, tobj2, "top", (NSP_CFUNC)libnsp_net_pop3_client_top);
+	nsp_setcfunc(N, tobj2, "retr", (NSP_CFUNC)libnsp_net_pop3_client_retr);
+	nsp_setcfunc(N, tobj2, "dele", (NSP_CFUNC)libnsp_net_pop3_client_dele);
+	nsp_setcfunc(N, tobj2, "list", (NSP_CFUNC)libnsp_net_pop3_client_list);
+
+	tobj2 = nsp_settable(N, tobj, "smtp");
+	tobj2->val->attr |= NST_HIDDEN;
+	tobj2 = nsp_settable(N, tobj2, "client");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_smtp_client_client);
+	nsp_setcfunc(N, tobj2, "attach", (NSP_CFUNC)libnsp_net_smtp_client_attach);
+	nsp_setcfunc(N, tobj2, "send", (NSP_CFUNC)libnsp_net_smtp_client_send);
 
 	tobj2 = nsp_settable(N, tobj, "socket");
 	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "accept",     (NSP_CFUNC)libnsp_net_socket_accept);
-	nsp_setcfunc(N, tobj2, "bind",       (NSP_CFUNC)libnsp_net_socket_bind);
-	nsp_setcfunc(N, tobj2, "close",      (NSP_CFUNC)libnsp_net_socket_close);
-	nsp_setcfunc(N, tobj2, "connect",    (NSP_CFUNC)libnsp_net_socket_connect);
-	nsp_setcfunc(N, tobj2, "gets",       (NSP_CFUNC)libnsp_net_socket_gets);
-	nsp_setcfunc(N, tobj2, "gettype",    (NSP_CFUNC)libnsp_net_socket_gettype);
-	nsp_setcfunc(N, tobj2, "info",       (NSP_CFUNC)libnsp_net_socket_info);
-	nsp_setcfunc(N, tobj2, "read",       (NSP_CFUNC)libnsp_net_socket_read);
+	nsp_setcfunc(N, tobj2, "accept", (NSP_CFUNC)libnsp_net_socket_accept);
+	nsp_setcfunc(N, tobj2, "bind", (NSP_CFUNC)libnsp_net_socket_bind);
+	nsp_setcfunc(N, tobj2, "close", (NSP_CFUNC)libnsp_net_socket_close);
+	nsp_setcfunc(N, tobj2, "connect", (NSP_CFUNC)libnsp_net_socket_connect);
+	nsp_setcfunc(N, tobj2, "gets", (NSP_CFUNC)libnsp_net_socket_gets);
+	nsp_setcfunc(N, tobj2, "gettype", (NSP_CFUNC)libnsp_net_socket_gettype);
+	nsp_setcfunc(N, tobj2, "info", (NSP_CFUNC)libnsp_net_socket_info);
+	nsp_setcfunc(N, tobj2, "read", (NSP_CFUNC)libnsp_net_socket_read);
 	nsp_setcfunc(N, tobj2, "setsockopt", (NSP_CFUNC)libnsp_net_socket_setsockopt);
-	nsp_setcfunc(N, tobj2, "socket",     (NSP_CFUNC)libnsp_net_socket_socket);
-	nsp_setcfunc(N, tobj2, "tlsaccept",  (NSP_CFUNC)libnsp_net_socket_tlsaccept);
+	nsp_setcfunc(N, tobj2, "socket", (NSP_CFUNC)libnsp_net_socket_socket);
+	nsp_setcfunc(N, tobj2, "tlsaccept", (NSP_CFUNC)libnsp_net_socket_tlsaccept);
 	nsp_setcfunc(N, tobj2, "tlsconnect", (NSP_CFUNC)libnsp_net_socket_tlsconnect);
-	nsp_setcfunc(N, tobj2, "write",      (NSP_CFUNC)libnsp_net_socket_write);
+	nsp_setcfunc(N, tobj2, "write", (NSP_CFUNC)libnsp_net_socket_write);
 
 	tobj2 = nsp_settable(N, tobj, "tnef");
 	tobj2->val->attr |= NST_HIDDEN;

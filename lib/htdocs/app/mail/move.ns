@@ -12,7 +12,7 @@ function stuff() {
 			return false;
 		}
 		var domainid = tonumber(_USER['domainid']);
-		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
 		var srcname=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(srcfolder, 4), pad(headerid, 6));
 		var x=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(dstfolder, 4));
 		if (typeof(file.stat(x))!='table') file.mkdir(x);

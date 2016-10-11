@@ -53,5 +53,8 @@
     <ClCompile Include="tcp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nsp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

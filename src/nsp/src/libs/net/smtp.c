@@ -99,9 +99,9 @@ static void smtp_lasterr(nsp_state *N, char *msg)
 	return;
 }
 
-NSP_CLASSMETHOD(libnsp_net_smtp_attach)
+NSP_CLASSMETHOD(libnsp_net_smtp_client_attach)
 {
-#define __FN__ __FILE__ ":libnsp_net_smtp_attach()"
+#define __FN__ __FILE__ ":libnsp_net_smtp_client_attach()"
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* attachment name */
 	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* attachment */
@@ -123,9 +123,9 @@ NSP_CLASSMETHOD(libnsp_net_smtp_attach)
 #undef __FN__
 }
 
-NSP_CLASSMETHOD(libnsp_net_smtp_send)
+NSP_CLASSMETHOD(libnsp_net_smtp_client_send)
 {
-#define __FN__ __FILE__ ":libnsp_net_smtp_send()"
+#define __FN__ __FILE__ ":libnsp_net_smtp_client_send()"
 	char tmpbuf[1024];
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj;
@@ -145,6 +145,7 @@ NSP_CLASSMETHOD(libnsp_net_smtp_send)
 	struct timeval ttime;
 	struct timezone tzone;
 	char msgdate[100];
+	short starttls = 0;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (!nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
@@ -160,6 +161,7 @@ NSP_CLASSMETHOD(libnsp_net_smtp_send)
 	subj = cobj->val->d.str;
 	if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "date")))) date = (int)cobj->val->d.num;
 	if (!nsp_isstr((cobj = nsp_getobj(N, thisobj, "body")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for body");
+	if (cobj->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "body is empty");
 	body = cobj->val->d.str;
 	blen = cobj->val->size;
 	if (!nsp_isstr((cobj = nsp_getobj(N, thisobj, "contenttype")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for contenttype");
@@ -173,24 +175,63 @@ NSP_CLASSMETHOD(libnsp_net_smtp_send)
 		return 0;
 	}
 
-	rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+	do {
+		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+	} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
 	if (nc_strncmp(tmpbuf, "220", 3) != 0) goto err;
+helo:
+	tcp_fprintf(N, &sock, "EHLO <%s>\r\n", sock.LocalAddr);
+	do {
+		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+		if (strstr(tmpbuf, "STARTTLS") != NULL) {
+			starttls = 1;
+		}
+	} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
+	if (rc < 0 || nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
 
-	tcp_fprintf(N, &sock, "HELO <%s>\r\n", sock.LocalAddr);
-	rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
-	if (nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
+	//// if EHLO fails, try HELO
+	//if (strncasecmp(inbuffer, "250", 3) != 0) {
+	//	tcp_fprintf(&smtp_sock, "HELO %s\r\n", nsp_getstr(proc->N, confobj, "host_name"));
+	//	log_access(proc->N, MODSHORTNAME, "%s:%d >> HELO %s", smtp_sock.RemoteAddr, smtp_sock.RemotePort, nsp_getstr(proc->N, confobj, "host_name"));
+	//	do {
+	//		memset(inbuffer, 0, sizeof(inbuffer));
+	//		if (tcp_fgets(inbuffer, sizeof(inbuffer) - 1, &smtp_sock) < 0) return -1;
+	//		log_access(proc->N, MODSHORTNAME, "%s:%d << %s", smtp_sock.RemoteAddr, smtp_sock.RemotePort, inbuffer);
+	//	} while ((inbuffer[3] != ' ') && (inbuffer[3] != '\0'));
+	//}
+	//if (strncasecmp(inbuffer, "250", 3) != 0) goto quit;
+
+#ifdef HAVE_TLS
+	if (starttls && !sock.use_tls) {
+		tcp_fprintf(N, &sock, "STARTTLS\r\n");
+		do {
+			rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+		} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
+		if (nc_strncmp(tmpbuf, "220", 3) != 0) goto err;
+		rc = _tls_connect(N, &sock);
+		sock.use_tls = 1;
+		if (rc != 0) goto err;
+		goto helo;
+	}
+#endif
 
 	tcp_fprintf(N, &sock, "MAIL FROM: <%s>\r\n", from);
-	rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
-	if (nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
+	do {
+		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+	} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
+	if (rc < 0 || nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
 
 	tcp_fprintf(N, &sock, "RCPT TO: <%s>\r\n", rcpt);
-	rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
-	if (nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
+	do {
+		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+	} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
+	if (rc < 0 || nc_strncmp(tmpbuf, "250", 3) != 0) goto err;
 
 	tcp_fprintf(N, &sock, "DATA\r\n");
-	rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
-	if (nc_strncmp(tmpbuf, "354", 3) != 0) goto err;
+	do {
+		rc = tcp_fgets(N, &sock, tmpbuf, sizeof(tmpbuf) - 1);
+	} while (rc > 0 && tmpbuf[3] != ' ' && tmpbuf[3] != '\0');
+	if (rc < 0 || nc_strncmp(tmpbuf, "354", 3) != 0) goto err;
 	tcp_fprintf(N, &sock, "From: %s\r\n", from);
 	tcp_fprintf(N, &sock, "To: %s\r\n", rcpt);
 
@@ -254,20 +295,24 @@ quit:
 #undef __FN__
 }
 
-NSP_CLASS(libnsp_net_smtp_client)
+NSP_CLASSMETHOD(libnsp_net_smtp_client_client)
 {
-#define __FN__ __FILE__ ":libnsp_net_smtp_client()"
-	nsp_setcfunc(N, &N->l, "attach", (NSP_CFUNC)libnsp_net_smtp_attach);
-	nsp_setcfunc(N, &N->l, "send", (NSP_CFUNC)libnsp_net_smtp_send);
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", 25);
-	nsp_setbool(N, &N->l, "use_tls", 0);
-	nsp_setstr(N, &N->l, "from", "", 0);
-	nsp_setstr(N, &N->l, "rcpt", "", 0);
-	nsp_setnum(N, &N->l, "date", 0);
-	nsp_setstr(N, &N->l, "subject", "(no subject)", 12);
-	nsp_setstr(N, &N->l, "contenttype", "text/plain", 10);
-	nsp_setstr(N, &N->l, "body", "", 0);
+#define __FN__ __FILE__ ":libnsp_net_smtp_client_client()"
+	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	//obj_t *cobj;
+
+	nsp_setstr(N, thisobj, "host", "localhost", 9);
+	nsp_setnum(N, thisobj, "port", 25);
+	nsp_setbool(N, thisobj, "use_tls", 0);
+	nsp_setstr(N, thisobj, "from", "", 0);
+	nsp_setstr(N, thisobj, "rcpt", "", 0);
+	nsp_setnum(N, thisobj, "date", 0);
+	nsp_setstr(N, thisobj, "subject", "(no subject)", 12);
+	nsp_setstr(N, thisobj, "contenttype", "text/plain", 10);
+	nsp_setstr(N, thisobj, "body", "", 0);
+	//cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "net"), "smtp"), "client");
+	//if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	//else n_warn(N, __FN__, "net.smtp.client not found");
 	return 0;
 #undef __FN__
 }

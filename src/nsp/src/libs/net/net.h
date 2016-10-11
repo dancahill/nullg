@@ -122,8 +122,8 @@ typedef struct {
 	unsigned int bytes_out;
 	short int want_close;
 	/* TCP INPUT BUFFER */
-	short int recvbufsize;
-	short int recvbufoffset;
+	int recvbufsize;
+	int recvbufoffset;
 	char      recvbuf[MAX_TCP_READ_SIZE];
 } TCP_SOCKET;
 
@@ -153,18 +153,38 @@ NSP_FUNCTION(libnsp_net_dns_addr2name);
 NSP_FUNCTION(libnsp_net_dns_name2addr);
 #endif
 /* ftp.c */
-NSP_CLASS(libnsp_net_ftp_client);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_client);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_open);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_close);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_ls);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_retr);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_stor);
 /* http.c */
-NSP_CLASS(libnsp_net_http_client);
+NSP_CLASSMETHOD(libnsp_net_http_client_client);
+NSP_CLASSMETHOD(libnsp_net_http_client_send);
 /* mime.c */
 NSP_FUNCTION(libnsp_net_mime_read);
 NSP_FUNCTION(libnsp_net_mime_write);
+NSP_FUNCTION(libnsp_net_mime_base64_decode);
+NSP_FUNCTION(libnsp_net_mime_base64_encode);
 NSP_FUNCTION(libnsp_net_mime_qp_decode);
+NSP_FUNCTION(libnsp_net_mime_qp_encode);
 NSP_FUNCTION(libnsp_net_mime_rfc2047_decode);
 /* pop3.c */
-NSP_CLASS(libnsp_net_pop3_client);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_client);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_open);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_close);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_stat);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_uidl);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_top);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_retr);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_dele);
+NSP_CLASSMETHOD(libnsp_net_pop3_client_list);
 /* smtp.c */
-NSP_CLASS(libnsp_net_smtp_client);
+NSP_CLASSMETHOD(libnsp_net_smtp_client_client);
+NSP_CLASSMETHOD(libnsp_net_smtp_client_attach);
+NSP_CLASSMETHOD(libnsp_net_smtp_client_send);
+
 /* socket.c */
 NSP_FUNCTION(libnsp_net_socket_accept);
 NSP_FUNCTION(libnsp_net_socket_bind);

@@ -41,7 +41,7 @@
 #include "nullsd/defines.h"
 
 #include "nsp/nsp.h"
-#include "nsd.h"
+#include "nullsd/nsd.h"
 
 FILE *fp = NULL;
 

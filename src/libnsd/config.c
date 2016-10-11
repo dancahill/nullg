@@ -75,15 +75,16 @@ int config_new(nsp_state *N)
 /*	nsp_setstr(N, tobj, "etc_path", preppath("%s/etc", basedir)); */
 /*	nsp_setstr(N, tobj, "lib_path", preppath("%s/lib", basedir)); */
 /*	nsp_setstr(N, tobj, "var_path", preppath("%s/var", basedir)); */
-	nsp_setstr(N, tobj, "sql_server_type", "SQLITE", 6);
+//	nsp_setstr(N, tobj, "sql_server_type", "SQLITE", 6);
+	nsp_exec(N, "CONFIG['sql']={sql_server_type='SQLITE'}");
 /*	nsp_setstr(N, tobj, "ssl_cert_file", preppath("%s/etc/ssl-cert.pem", basedir)); */
 /*	nsp_setstr(N, tobj, "ssl_key_file", preppath("%s/etc/ssl-priv.pem", basedir)); */
-	nsp_exec(N, "CONFIG['modules']={'httpd','pop3d','smtpd','smtpq'}");
-	nsp_exec(N, "CONFIG['httpd']={interface='INADDR_ANY',port=80,max_connections=50,max_keepalive=15,max_idle=120,max_post_size=32*1024*1024,session_limit=1}");
-	nsp_exec(N, "CONFIG['httpd']['modules']={'mod_admin','mod_bookmarks','mod_calendar','mod_calls','mod_cgi','mod_contacts','mod_email','mod_files','mod_finance','mod_forums','mod_messages','mod_notes','mod_profile','mod_projects','mod_searches','mod_spellcheck','mod_tasks','mod_weblog','mod_xmlrpc'}");
-	nsp_exec(N, "CONFIG['pop3d']={interface='localhost',port=110,max_connections=50,max_idle=120}");
-	nsp_exec(N, "CONFIG['smtpd']={interface='localhost',port=25, max_connections=50,max_idle=120,retry_delay=300}");
-	nsp_exec(N, "CONFIG['mod_email'] = { max_idle=120 }");
+	nsp_exec(N, "CONFIG['modules']={}");
+	nsp_exec(N, "CONFIG['modules']['httpd']={interface='INADDR_ANY',port=80,max_connections=50,max_keepalive=15,max_idle=120,max_post_size=32*1024*1024,session_limit=1}");
+	//nsp_exec(N, "CONFIG['modules']['httpd']['modules']={'mod_admin','mod_bookmarks','mod_calendar','mod_calls','mod_cgi','mod_contacts','mod_email','mod_files','mod_finance','mod_forums','mod_messages','mod_notes','mod_profile','mod_projects','mod_searches','mod_spellcheck','mod_tasks','mod_weblog','mod_xmlrpc'}");
+	nsp_exec(N, "CONFIG['modules']['pop3d']={interface='localhost',port=110,max_connections=50,max_idle=120}");
+	nsp_exec(N, "CONFIG['modules']['smtpd']={interface='localhost',port=25, max_connections=50,max_idle=120,retry_delay=300}");
+//	nsp_exec(N, "CONFIG['mod_email'] = { max_idle=120 }");
 /*	nsp_exec(N, "CONFIG['mod_files'] = { filter_program='/usr/bin/nullsd-scanfile.sh' }"); */
 	return 0;
 }
@@ -132,7 +133,11 @@ _readconf:
 _haveconf:
 	if (conf_callback==NULL) return 0;
 	if (strlen(section)>0) {
-		tobj=nsp_getobj(N, tobj, section);
+		if (strcmp(section, "sql") == 0 || strcmp(section, "tls") == 0) {
+			tobj = nsp_getobj(N, tobj, section);
+		} else {
+			tobj = nsp_getobj(N, nsp_getobj(N, tobj, "modules"), section);
+		}
 		if (tobj->val->type!=NT_TABLE) return 0;
 	}
 	for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {

@@ -89,8 +89,12 @@ function contact_view() {
 	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Name&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">");
 	print(str2html(CONTACT['personaltitle'])); if (sizeof(CONTACT['personaltitle'])>0) print(" ");
-	print(str2html(CONTACT['givenname'])); if (sizeof(CONTACT['givenname'])>0) print(" ");
-	print(str2html(CONTACT['surname'])); if (sizeof(CONTACT['surname'])>0) print(" ");
+	//print(str2html(CONTACT['givenname'])); if (sizeof(CONTACT['givenname'])>0) print(" ");
+	//print(str2html(CONTACT['surname'])); if (sizeof(CONTACT['surname'])>0) print(" ");
+
+	gn=CONTACT['givenname']; sn=CONTACT['surname']; name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+	print(str2html(name));
+
 	if (sizeof(CONTACT['uid'])>0) print(" (",str2html(CONTACT['uid']),")");
 	print("</TD>\r\n");
 	print("<TD ALIGN=right>");
@@ -110,7 +114,8 @@ function contact_view() {
 			print(str2html(CONTACT['surname']));
 			print("&quot; <",CONTACT['email'],">')\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
 		} else {
-			print("<A HREF=\"/mail/write?to=",CONTACT['email'],"\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
+		//	print("<A HREF=\"/mail/write?to=",CONTACT['email'],"\">",str2html(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
+			print("<a href=\"javascript:contacts.emailaddrbook.add('&quot;"+str2html(name)+"&quot; <"+CONTACT['email']+">');\" title=\"Send Mail\">"+str2html(CONTACT['email'])+"</a>");
 		}
 	}
 	if (sizeof(CONTACT['website'])) {

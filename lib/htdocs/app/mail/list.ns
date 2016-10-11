@@ -56,7 +56,7 @@ function mail_list() {
 	var userid      = tonumber(_USER['userid']);
 	var domainid    = tonumber(_USER['domainid']);
 
-	mailhtml.headermenu();
+	mail.html.headermenu();
 	if (_GET['ACCOUNTID']!=null) {
 		n=tonumber(_GET['ACCOUNTID']);
 		if (accountid!=n) {
@@ -69,7 +69,7 @@ function mail_list() {
 	print("<table border=0 cellpadding=0 cellspacing=0 width=100%><tr>\r\n");
 	printf("<TD ALIGN=LEFT>\r\n");
 	//htselect_mailjump(sid->dat->user_mailcurrent, folderid);
-	mailhtml.mailjump(accountid, folderid);
+	mail.html.mailjump(accountid, folderid);
 	printf("</TD>\r\n");
 	printf("<FORM METHOD=GET ACTION=%s/app/mail/list NAME=search>\r\n", _SERVER['SCRIPT_NAME']);
 	printf("<INPUT TYPE=HIDDEN NAME=c value=all>\r\n");
@@ -109,14 +109,14 @@ function mail_list() {
 		"	}\r\n",
 		"}\r\n"
 	);
-	print(
-		"SetupDialogForm('dialog-form');\r\n"
-	);
+//	print(
+//		"SetupDialogForm('dialog-form');\r\n"
+//	);
 	print("//-->\r\n</script>\r\n");
 
-
-
 //	sql_updatef("UPDATE gw_email_headers SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", sid->dat->user_mailcurrent, sid->dat->user_uid);
+	sqlupdate(sprintf("UPDATE gw_email_headers SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", accountid, userid));
+
 	printf("<CENTER>\r\n");
 
 
@@ -190,7 +190,8 @@ function mail_list() {
 	printf(
 		"<script type=\"text/javascript\">\r\n"+
 		"$(function() {\r\n"+
-		"	$(\"#%s\").tablesorter({sortList:[[%d,1]], widgets: ['zebra']});\r\n"+
+		//"	$(\"#%s\").tablesorter({sortList:[[%d,1]], widgets: ['zebra']});\r\n"+
+		"	$(\"#%s\").tablesorter({sortList:[[%d,1]]});\r\n"+
 		"});\r\n"+
 		"</script>"
 		, "contenttable"
@@ -216,13 +217,13 @@ function mail_list() {
 	foreach (rec in sqr['_rows']) {
 		headerid=tonumber(rec['mailheaderid']);
 		from=mail.getaddr(rec['hdr_from']);
-		subject=strtohtml(net.mime.decode_rfc2047(rec['hdr_subject']));
+		subject=strtohtml(net.mime.rfc2047.decode(rec['hdr_subject']));
 		date=string.sub(rec['hdr_date'], 0, 10);
 		msgsize=tonumber(rec['size']);
 		status=rec['status'];
-		bgcolor=status=="r"?"#F0F0F0":"#D0D0FF";
+		//bgcolor=status=="r"?"#F0F0F0":"#D0D0FF";
 
-		printf("<tr style=\"background-color:%s\">\r\n", bgcolor);
+		printf("<tr id='%d'%s>\r\n", headerid, status!="r"?" class='unread'":"");
 		if (searchstring=="") {
 			printf("<td class='col0'><input type=checkbox name=%d value=\"%s\"></td>\r\n", headerid, rec['uidl']);
 		}
@@ -240,14 +241,16 @@ function mail_list() {
 		curdate[18]=tolower(curdate[18]);
 		curdate[19]=tolower(curdate[19]);
 */
-		print("\t<td class='col3'>"+date+"</td>\r\n");
+		printf("\t<td class='col3' title=\"%s\">%s</td>\r\n", rec['hdr_date'], date);
 		print("\t<td class='col4'>");
 		if (msgsize>=1048576) {
-			//printf("%1.1f M", msgsize/1048576);
-			printf("%d M", msgsize/1048576);
+			ms=msgsize/1048576;
+			if (ms<1) ms=1;
+			printf("%d M", ms);
 		} else {
-			//printf("%1.1f K", msgsize/1024);
-			printf("%d K", msgsize/1024);
+			ms=msgsize/1024;
+			if (ms<1) ms=1;
+			printf("%d K", ms);
 		}
 		printf("</td>\r\n\t<td class='col5'>");
 		if (string.istr(rec['hdr_contenttype'], "multipart/mixed")!=null) {

@@ -22,7 +22,7 @@ typedef	void(*LANG_CALLBACK)(char *, char *);
 int language_read(char *langcode, char *section, void *callback)
 {
 	obj_t *tobj = nsp_getobj(proc.N, &proc.N->g, "CONFIG");
-	obj_t *cobj = nsp_getobj(proc.N, tobj, "lib_path");
+	obj_t *cobj = nsp_getobj(proc.N, nsp_getobj(proc.N, tobj, "paths"), "lib");
 	LANG_CALLBACK language_callback = (LANG_CALLBACK)callback;
 	FILE *fp = NULL;
 	char file[256];

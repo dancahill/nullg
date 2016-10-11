@@ -92,9 +92,9 @@ typedef	char *(*MAIN_GETPOSTENV)(CONN *, char *);
 typedef	char *(*MAIN_GETXMLENV)(CONN *, char *);
 typedef	char *(*MAIN_GETXMLPARAM)(CONN *, int, char *);
 typedef	char *(*MAIN_GETXMLSTRUCT)(CONN *, char *, char *);
-typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
-typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
-typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, char *);
+//typedef	void  (*MAIN_HTPAGE_HEADER)(CONN *, char *);
+//typedef	void  (*MAIN_HTPAGE_FOOTER)(CONN *);
+//typedef	void  (*MAIN_HTPAGE_TOPMENU)(CONN *, char *);
 typedef	int   (*MAIN_HTPAGE_DIRLIST)(CONN *);
 /*
 typedef	void  (*MAIN_HTSELECT_CONTACT)(CONN *, int);
@@ -125,7 +125,7 @@ typedef	char *(*MAIN_HTVIEW_HOLIDAY)(char *);
 typedef	char *(*MAIN_HTVIEW_REMINDER)(CONN *, int);
 typedef	char *(*MAIN_HTVIEW_USER)(CONN *, int);
 */
-typedef void       (*MAIN_HTSCRIPT_SHOWPAGE)(CONN *, short int);
+//typedef void       (*MAIN_HTSCRIPT_SHOWPAGE)(CONN *, short int);
 typedef	int        (*MAIN_DB_LOG_ACTIVITY)(CONN *, char *, int, char *, const char *, ...);
 typedef char      *(*MAIN_LANG_GETS)(CONN *, char *, char *);
 typedef	void       (*MAIN_LOG_ACCESS)(nsp_state *, char *, const char *, ...);
@@ -239,9 +239,9 @@ EXTERN MAIN_GETPOSTENV			getpostenv;
 EXTERN MAIN_GETXMLENV			getxmlenv;
 EXTERN MAIN_GETXMLPARAM			getxmlparam;
 EXTERN MAIN_GETXMLSTRUCT		getxmlstruct;
-EXTERN MAIN_HTPAGE_HEADER		htpage_header;
-EXTERN MAIN_HTPAGE_FOOTER		htpage_footer;
-EXTERN MAIN_HTPAGE_TOPMENU		htpage_topmenu;
+//EXTERN MAIN_HTPAGE_HEADER		htpage_header;
+//EXTERN MAIN_HTPAGE_FOOTER		htpage_footer;
+//EXTERN MAIN_HTPAGE_TOPMENU		htpage_topmenu;
 EXTERN MAIN_HTPAGE_DIRLIST		htpage_dirlist;
 /*
 EXTERN MAIN_HTSELECT_CONTACT		htselect_contact;
@@ -272,7 +272,7 @@ EXTERN MAIN_HTVIEW_HOLIDAY		htview_holiday;
 EXTERN MAIN_HTVIEW_REMINDER		htview_reminder;
 EXTERN MAIN_HTVIEW_USER			htview_user;
 */
-EXTERN MAIN_HTSCRIPT_SHOWPAGE		htscript_showpage;
+//EXTERN MAIN_HTSCRIPT_SHOWPAGE		htscript_showpage;
 EXTERN MAIN_LANG_GETS			lang_gets;
 EXTERN MAIN_DB_LOG_ACTIVITY		db_log_activity;
 EXTERN MAIN_LOG_ACCESS			log_access;
@@ -441,9 +441,9 @@ int mod_import()
 	if (_get_func((void *)&getxmlenv,			"getxmlenv"			)!=0) return -1;
 	if (_get_func((void *)&getxmlparam,			"getxmlparam"			)!=0) return -1;
 	if (_get_func((void *)&getxmlstruct,			"getxmlstruct"			)!=0) return -1;
-	if (_get_func((void *)&htpage_header,			"htpage_header"			)!=0) return -1;
-	if (_get_func((void *)&htpage_footer,			"htpage_footer"			)!=0) return -1;
-	if (_get_func((void *)&htpage_topmenu,			"htpage_topmenu"		)!=0) return -1;
+//	if (_get_func((void *)&htpage_header,			"htpage_header"			)!=0) return -1;
+//	if (_get_func((void *)&htpage_footer,			"htpage_footer"			)!=0) return -1;
+//	if (_get_func((void *)&htpage_topmenu,			"htpage_topmenu"		)!=0) return -1;
 	if (_get_func((void *)&htpage_dirlist,			"htpage_dirlist"		)!=0) return -1;
 /*
 	if (_get_func((void *)&htselect_contact,		"htselect_contact"		)!=0) return -1;
@@ -474,7 +474,7 @@ int mod_import()
 	if (_get_func((void *)&htview_reminder,			"htview_reminder"		)!=0) return -1;
 	if (_get_func((void *)&htview_user,			"htview_user"			)!=0) return -1;
 */
-	if (_get_func((void *)&htscript_showpage,		"htscript_showpage"		)!=0) return -1;
+//	if (_get_func((void *)&htscript_showpage,		"htscript_showpage"		)!=0) return -1;
 	if (_get_func((void *)&lang_gets,			"lang_gets"			)!=0) return -1;
 	if (_get_func((void *)&md5_init,			"md5_init"			)!=0) return -1;
 	if (_get_func((void *)&md5_update,			"md5_update"			)!=0) return -1;

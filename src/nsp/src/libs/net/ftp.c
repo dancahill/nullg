@@ -44,7 +44,7 @@
 
 static void ftp_lasterr(nsp_state *N, char *msg)
 {
-	nsp_setstr(N, nsp_settable(N, nsp_settable(N, &N->g, "net"), "ftp"), "last_err", msg, -1);
+	nsp_setstr(N, nsp_getobj(N, &N->l, "this"), "last_err", msg, -1);
 	return;
 }
 
@@ -78,9 +78,9 @@ static int get_pasvaddr(const char *line, char *ipbuf, unsigned short *port)
 	return 0;
 }
 
-NSP_CLASSMETHOD(libnsp_net_ftp_open)
+NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_open()"
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_open()"
 	char iobuf[1024];
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj;
@@ -217,9 +217,9 @@ NSP_CLASSMETHOD(libnsp_net_ftp_open)
 #undef __FN__
 }
 
-NSP_CLASSMETHOD(libnsp_net_ftp_close)
+NSP_CLASSMETHOD(libnsp_net_ftp_client_close)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_close()"
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_close()"
 	char iobuf[1024];
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj;
@@ -246,9 +246,9 @@ NSP_CLASSMETHOD(libnsp_net_ftp_close)
 #undef __FN__
 }
 
-NSP_CLASSMETHOD(libnsp_net_ftp_ls)
+NSP_CLASSMETHOD(libnsp_net_ftp_client_ls)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_ls()"
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_ls()"
 	char iobuf[1024];
 	char *months[] = { "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" };
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
@@ -301,13 +301,13 @@ NSP_CLASSMETHOD(libnsp_net_ftp_ls)
 		tobj2 = nsp_settable(N, &tobj, iobuf + 56);
 		p = iobuf;
 		/*
-		 * This code has the virtue of being both ugly, _and_ probably wrong.
-		 * It's a two for one boxing week special.
-		 */
-		 /*
-		  * a dir entry should have these attrs ...
-		  * x = { mtime = #, size = #, type = "dir":"file" },
-		  */
+		* This code has the virtue of being both ugly, _and_ probably wrong.
+		* It's a two for one boxing week special.
+		*/
+		/*
+		* a dir entry should have these attrs ...
+		* x = { mtime = #, size = #, type = "dir":"file" },
+		*/
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
@@ -375,10 +375,10 @@ NSP_CLASSMETHOD(libnsp_net_ftp_ls)
 					t.tm_hour = atoi(p + plen);
 					t.tm_min = atoi(p + plen + 3);
 					/*
-					 * dates in the future or more than 6
-					 * months in the past have a year.
-					 * the rest have times.
-					 */
+					* dates in the future or more than 6
+					* months in the past have a year.
+					* the rest have times.
+					*/
 					t.tm_year = y;
 					if (t.tm_mon > m) t.tm_year--;
 				}
@@ -424,9 +424,9 @@ NSP_CLASSMETHOD(libnsp_net_ftp_ls)
 #undef __FN__
 }
 
-NSP_CLASSMETHOD(libnsp_net_ftp_retr)
+NSP_CLASSMETHOD(libnsp_net_ftp_client_retr)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_retr()"
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_retr()"
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj;
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
@@ -508,9 +508,9 @@ NSP_CLASSMETHOD(libnsp_net_ftp_retr)
 #undef __FN__
 }
 
-NSP_CLASSMETHOD(libnsp_net_ftp_stor)
+NSP_CLASSMETHOD(libnsp_net_ftp_client_stor)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_stor()"
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_stor()"
 	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj;
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
@@ -592,21 +592,22 @@ NSP_CLASSMETHOD(libnsp_net_ftp_stor)
 #undef __FN__
 }
 
-NSP_CLASS(libnsp_net_ftp_client)
+NSP_CLASS(libnsp_net_ftp_client_client)
 {
-#define __FN__ __FILE__ ":libnsp_net_ftp_client()"
-	nsp_setcfunc(N, &N->l, "open", (NSP_CFUNC)libnsp_net_ftp_open);
-	nsp_setcfunc(N, &N->l, "close", (NSP_CFUNC)libnsp_net_ftp_close);
-	nsp_setcfunc(N, &N->l, "ls", (NSP_CFUNC)libnsp_net_ftp_ls);
-	nsp_setcfunc(N, &N->l, "retr", (NSP_CFUNC)libnsp_net_ftp_retr);
-	nsp_setcfunc(N, &N->l, "stor", (NSP_CFUNC)libnsp_net_ftp_stor);
-	nsp_setbool(N, &N->l, "socket", 0);
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", 21);
-	nsp_setstr(N, &N->l, "username", "anonymous", 9);
-	nsp_setstr(N, &N->l, "password", "anonymous", 9);
-	nsp_setbool(N, &N->l, "pasv", 1);
-	nsp_setstr(N, &N->l, "body", "", 0);
+#define __FN__ __FILE__ ":libnsp_net_ftp_client_client()"
+	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	//obj_t *cobj;
+
+	nsp_setbool(N, thisobj, "socket", 0);
+	nsp_setstr(N, thisobj, "host", "localhost", 9);
+	nsp_setnum(N, thisobj, "port", 21);
+	nsp_setstr(N, thisobj, "username", "anonymous", 9);
+	nsp_setstr(N, thisobj, "password", "anonymous", 9);
+	nsp_setbool(N, thisobj, "pasv", 1);
+	nsp_setstr(N, thisobj, "body", "", 0);
+	//cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "net"), "ftp"), "client");
+	//if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	//else n_warn(N, __FN__, "net.ftp.client not found");
 	return 0;
 #undef __FN__
 }

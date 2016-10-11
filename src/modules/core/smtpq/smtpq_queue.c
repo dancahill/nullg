@@ -53,8 +53,8 @@ void *smtp_spool(void *x)
 	memset(dirname2, 0, sizeof(dirname2));
 	memset(from, 0, sizeof(from));
 	memset(rcpt, 0, sizeof(rcpt));
-	snprintf(dirname1, sizeof(dirname1) - 1, "%s/spool/mqinfo", nsp_getstr(proc->N, confobj, "var_path"));
-	snprintf(dirname2, sizeof(dirname2) - 1, "%s/spool/mqueue", nsp_getstr(proc->N, confobj, "var_path"));
+	snprintf(dirname1, sizeof(dirname1) - 1, "%s/spool/mqinfo", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"));
+	snprintf(dirname2, sizeof(dirname2) - 1, "%s/spool/mqueue", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"));
 	fixslashes(dirname1);
 	fixslashes(dirname2);
 	while (1) {

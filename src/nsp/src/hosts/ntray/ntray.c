@@ -202,8 +202,8 @@ NSP_FUNCTION(nsp_flush)
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
 
 	if (N == NULL || N->outbuflen == 0) return 0;
-	N->outbuf[N->outbuflen] = '\0';
-	log_error(N, "io.flush() outbuf=[%s]", N->outbuf);
+	N->outbuffer[N->outbuflen] = '\0';
+	log_error(N, "io.flush() outbuf=[%s]", N->outbuffer);
 	N->outbuflen = 0;
 	return 0;
 #undef __FN__
@@ -211,7 +211,7 @@ NSP_FUNCTION(nsp_flush)
 
 NSP_FUNCTION(nsp_print)
 {
-	log_error(N, "print() [%s]", N->outbuf);
+	log_error(N, "print() [%s]", N->outbuffer);
 	return 0;
 }
 

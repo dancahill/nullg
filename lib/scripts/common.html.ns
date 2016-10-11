@@ -84,7 +84,7 @@ global html = {
 		if (_USER!=null) {
 			print(
 			"<br />\r\n",
-			"<table class=\"contenttable\" style=\"width:90%;margin:0 auto;\">\r\n",
+			"<table class=\"contentview\" style=\"width:90%;margin:0 auto;\">\r\n",
 			"<tr><th>",
 			"<span style='float:left'>Welcome, ",str2html(_USER.username),".&nbsp;</span>",
 			"<span style='float:right'>&nbsp;",_TEMP.showtime,"</span>",

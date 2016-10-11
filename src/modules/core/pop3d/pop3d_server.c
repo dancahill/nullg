@@ -308,7 +308,7 @@ static void pop3_local(CONN *conn)
 	mdir.mboxtotal = 0;
 	mboxalloc = 50;
 	memset(dirname, 0, sizeof(dirname));
-	snprintf(dirname, sizeof(dirname) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
+	snprintf(dirname, sizeof(dirname) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did, conn->dat->username);
 	//	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "%s - dirname='%s'", conn->dat->RemoteAddr, dirname);
 	if (stat(dirname, &sb) != 0) {
 #ifdef WIN32
@@ -323,7 +323,7 @@ static void pop3_local(CONN *conn)
 	}
 	if ((mdir.msg = calloc(mboxalloc, sizeof(MDIRENT *))) == NULL) return;
 #ifdef WIN32
-	snprintf(dirname2, sizeof(dirname2) - 1, "%s/domains/%04d/mailspool/%s/*.*", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->username);
+	snprintf(dirname2, sizeof(dirname2) - 1, "%s/domains/%04d/mailspool/%s/*.*", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did, conn->dat->username);
 	if ((handle = _findfirst(dirname2, &dentry)) < 0) return;
 	do {
 		char *name = dentry.name;
@@ -440,7 +440,7 @@ static void pop3_remote(CONN *conn)
 		mdir.msg[i]->deleted = 0;
 		mdir.msg[i]->filesize = atoi(sql_getvalue(proc->N, &qptr, i, 1));
 		memset(mdir.msg[i]->filename, 0, sizeof(mdir.msg[i]->filename));
-		snprintf(mdir.msg[i]->filename, sizeof(mdir.msg[i]->filename) - 1, "%s/domains/%04d/%04d/%04d/%06d.msg", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, conn->dat->mailcurrent, 1, mdir.msg[i]->localid);
+		snprintf(mdir.msg[i]->filename, sizeof(mdir.msg[i]->filename) - 1, "%s/domains/%04d/%04d/%04d/%06d.msg", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did, conn->dat->mailcurrent, 1, mdir.msg[i]->localid);
 		fixslashes(mdir.msg[i]->filename);
 		memset(mdir.msg[i]->uidl, 0, sizeof(mdir.msg[i]->uidl));
 		decode_base64(mdir.msg[i]->uidl, sizeof(mdir.msg[i]->uidl) - 1, sql_getvalue(proc->N, &qptr, i, 2));

@@ -13,7 +13,6 @@ function search_contacts() {
 		print("<b>Found 0 matching contacts</b>\r\n");
 		return;
 	}
-	print("<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n");
 	t=new html_table();
 	t.datasource=Q;
 	t.tablename="T2";
@@ -35,15 +34,22 @@ function search_contacts() {
 			sn=row['surname']; gn=row['givenname']; name=gn+((sn!=""&&gn!="")?" ":"")+sn;
 			return "<a href=\"javascript:MsgTo('&quot;"+str2html(name)+"&quot; <"+email+">')\">"+str2html(email)+"</a>";
 		};
+		t.addcolumn("email", "E-Mail", fn);
 	} else {
+		fntd=function (row, column) {
+			email=row['email'];
+			if (email=="") return "<td>";
+			gn=row['givenname']; sn=row['surname']; name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+			return "<td onclick=\"javascript:contacts.emailaddrbook.add('&quot;"+str2html(name)+"&quot; <"+email+">');\">";
+		};
 		fn=function (row, column) {
 			email=row['email'];
 			if (email=="") return "";
-			return "<a href=\"/app/mail/write?to="+email+"\">"+str2html(email)+"</a>";
-			//return sprintf("<A HREF=\"mailto:%s\">%s</A>", email, str2html(email));
+			gn=row['givenname']; sn=row['surname']; name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+			return "<a href=\"javascript:contacts.emailaddrbook.add('&quot;"+str2html(name)+"&quot; <"+email+">');\">"+str2html(email)+"</a>";
 		};
+		t.addcolumn("email", "E-Mail", fn, fntd);
 	}
-	t.addcolumn("email", "E-Mail", fn);
 	fn=function (row, column) { website=row['website']; if (website=="") return ""; return sprintf("<a href=\"%s\" target=\"_blank\">visit</a>", website); };
 	t.addcolumn("website", "Web", fn);
 	t.write();

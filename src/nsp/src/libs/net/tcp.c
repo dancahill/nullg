@@ -229,6 +229,7 @@ int tcp_recv(nsp_state *N, TCP_SOCKET *socket, char *buffer, int max, int flags)
 		switch (ec) {
 		case 0:
 			return 0;
+		case WSAECONNABORTED:
 		case WSAETIMEDOUT:
 			return 0;
 		default:
@@ -254,7 +255,7 @@ int tcp_recv(nsp_state *N, TCP_SOCKET *socket, char *buffer, int max, int flags)
 		socket->mtime = time(NULL);
 		socket->bytes_in += rc;
 	}
-	if (N->debug) n_warn(N, __FN__, "[%s:%d] %d bytes of data", socket->RemoteAddr, socket->RemotePort, rc);
+	//if (N->debug) n_warn(N, __FN__, "[%s:%d] %d bytes of data", socket->RemoteAddr, socket->RemotePort, rc);
 	return rc;
 #undef __FN__
 }
@@ -353,6 +354,7 @@ retry:
 		}
 		else if (rc < 1) {
 			*pbuffer = '\0';
+			if (N->debug) n_warn(N, __FN__, "[%s:%d] %s", socket->RemoteAddr, socket->RemotePort, buffer);
 			return n;
 		}
 		socket->recvbufsize += rc;
@@ -368,6 +370,7 @@ retry:
 	}
 	*pbuffer = '\0';
 	if (n > max - 1) {
+		if (N->debug) n_warn(N, __FN__, "[%s:%d] %s", socket->RemoteAddr, socket->RemotePort, buffer);
 		return n;
 	}
 	if (!lf) {
@@ -383,6 +386,7 @@ retry:
 		}
 		goto retry;
 	}
+	if (N->debug) n_warn(N, __FN__, "[%s:%d] %s", socket->RemoteAddr, socket->RemotePort, buffer);
 	return n;
 #undef __FN__
 }

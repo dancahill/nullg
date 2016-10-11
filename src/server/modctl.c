@@ -17,12 +17,6 @@
 */
 #include "main.h"
 
-#ifdef WIN32
-#define LIBEXT "dll"
-#else
-#define LIBEXT "so"
-#endif
-
 SRVMOD_EXEC mod_cron;
 SRVMOD_EXEC mod_exec;
 SRVMOD_EXEC mod_exit;
@@ -123,66 +117,12 @@ static int regfunctions()
 	return 0;
 }
 
-static NSP_FUNCTION(libnsp_dl_load)
-{
-#define __FN__ __FILE__ ":libnsp_dl_load()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj, *tobj;
-	NSP_CFUNC cfunc;
-#ifdef WIN32
-	HINSTANCE l;
-#else
-	void *l;
-#endif
-	char namebuf[512];
-
-	if (!nsp_isstr(cobj1) || cobj1->val->size < 1) {
-		nsp_setbool(N, &N->r, "", 0);
-		return 0;
-	}
-	tobj = nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
-	if (!nsp_istable(tobj)) {
-		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "dl.path not found", -1);
-		nsp_setbool(N, &N->r, "", 0);
-		return 0;
-	}
-	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
-		if (!nsp_isstr(cobj)) continue;
-		memset(namebuf, 0, sizeof(namebuf));
-		snprintf(namebuf, sizeof(namebuf) - 1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, LIBEXT);
-		lib_error();
-		if ((l = lib_open(namebuf)) != NULL) {
-			lib_error();
-			if ((cfunc = (NSP_CFUNC)lib_sym(l, "nsplib_init")) != NULL) {
-				cfunc(N);
-				nsp_setbool(N, &N->r, "", 1);
-				return 0;
-			}
-			else {
-				nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
-				nsp_setbool(N, &N->r, "", 0);
-				lib_close(l);
-				return 0;
-			}
-		}
-	}
-	//log_error(proc.N, "core", __FILE__, __LINE__, 1, "can't open lib '%s' - %s", cobj1->val->d.str, lib_error());
-	nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lib_error(), -1);
-	nsp_setbool(N, &N->r, "", 0);
-	return 0;
-#undef __FN__
-}
-
-
 #ifdef WIN32
 unsigned _stdcall cronloop(void *x)
 #else
 void *cronloop(void *x)
 #endif
 {
-	char libbuf[80];
-	nsp_state *N;
-	obj_t *tobj, *tobj2;
 	time_t oldt, newt;
 	int i;
 
@@ -192,38 +132,8 @@ void *cronloop(void *x)
 		newt = (time(NULL) / 60) * 60;
 		if (newt > oldt) {
 			oldt = newt;
-			tobj = nsp_getobj(proc.N, nsp_getobj(proc.N, &proc.N->g, "CONFIG"), "cron_script");
-			if (nsp_typeof(tobj) != NT_STRING || tobj->val->size < 1) {
-				log_error(proc.N, "core", __FILE__, __LINE__, 1, "config.cron_script undefined");
-				goto endrun;
-			}
-			if ((N = nsp_newstate()) == NULL) {
-				log_error(proc.N, "core", __FILE__, __LINE__, 1, "nsp_newstate() failed");
-				goto endrun;
-			}
-#ifdef WIN32
-			/*
-						nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
-						GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
-						GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
-			*/
-			GetWindowsDirectory(libbuf, sizeof(libbuf));
-			_snprintf(libbuf + strlen(libbuf), sizeof(libbuf) - strlen(libbuf) - 1, "\\NSP");
-#else
-			snprintf(libbuf, sizeof(libbuf) - 1, "/usr/lib/nsp");
-#endif
-			tobj2 = nsp_settable(N, &N->g, "dl");
-			tobj2->val->attr |= NST_HIDDEN;
-			nsp_setcfunc(N, tobj2, "load", (NSP_CFUNC)libnsp_dl_load);
-			tobj2 = nsp_settable(N, tobj2, "path");
-			nsp_setstr(N, tobj2, "0", libbuf, -1);
-			nsp_execfile(N, tobj->val->d.str);
-			if (N->err) {
-				log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
-			}
-			N = nsp_endstate(N);
+			nsdevents_timer();
 		}
-	endrun:
 		sleep(1);
 		for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {
 			if (strlen(proc.srvmod[i].mod_name) < 1) break;
@@ -300,7 +210,7 @@ int module_load(char *modname)
 	}
 	if (i == MAX_MOD_FUNCTIONS) return -1;
 	memset(libname, 0, sizeof(libname));
-	snprintf(libname, sizeof(libname) - 1, "%s/core/%s.%s", nsp_getstr(proc.N, confobj, "lib_path"), modname, ext);
+	snprintf(libname, sizeof(libname) - 1, "%s/core/%s.%s", nsp_getstr(proc.N, nsp_getobj(proc.N, confobj, "paths"), "lib"), modname, ext);
 	fixslashes(libname);
 	snprintf(proc.srvmod[i].mod_name, sizeof(proc.srvmod[i].mod_name) - 1, "%s", modname);
 	if ((hinstLib = lib_open(libname)) == NULL) {
@@ -338,7 +248,8 @@ int modules_init(nsp_state *N)
 	if (tobj->val->type != NT_TABLE) return 0;
 	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
 		if (cobj->name[0] == '_') continue;
-		if (cobj->val->type == NT_STRING) module_load(cobj->val->d.str);
+		if (nsp_isstr(cobj)) module_load(cobj->val->d.str);
+		else if (nsp_istable(cobj)) module_load(cobj->name);
 	}
 	return 0;
 }

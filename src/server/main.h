@@ -76,7 +76,7 @@
 
 #include "nullsd/defines.h"
 #include "nsp/nsp.h"
-#include "nsd.h"
+#include "nullsd/nsd.h"
 #include "nullsd/typedefs.h"
 
 #ifdef MAIN_GLOBALS
@@ -124,6 +124,9 @@ int     modules_exec(void);
 int     modules_exit(void);
 int     modules_cron(void);
 int     module_load(char *modname);
+/* nsp.c functions */
+void    nsdevents_start(nsp_state *N);
+void    nsdevents_timer();
 /* sanity.c functions */
 int     sanity_checkdb(void);
 int     sanity_checkdirs(void);

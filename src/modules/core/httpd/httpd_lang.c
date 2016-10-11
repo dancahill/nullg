@@ -39,7 +39,7 @@ char *lang_gets(CONN *conn, char *sect, char *label)
 	cobj = nsp_getobj(conn->N, tobj, label);
 	if (cobj->val->type != NT_NULL) return nsp_tostr(conn->N, cobj);
 	/* sym not found, so let's go hunting */
-	snprintf(fname, sizeof(fname) - 1, "%s/locale/%s/%s.ns", nsp_getstr(proc->N, confobj, "lib_path"), conn->dat->language, sect);
+	snprintf(fname, sizeof(fname) - 1, "%s/locale/%s/%s.ns", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"), conn->dat->language, sect);
 	fixslashes(fname);
 	if (stat(fname, &sb) == 0) {
 		nsp_execfile(conn->N, fname);

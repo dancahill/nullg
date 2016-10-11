@@ -132,7 +132,7 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 
 	char namebuf[MAX_OBJNAMELEN + 1];
 
-	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "smtpd"), "host_name");
+	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "modules"), "smtpd"), "host_name");
 	if (nsp_isnull(hostnameobj)) hostnameobj = nsp_getobj(proc->N, confobj, "host_name");
 
 	memset(curdate1, 0, sizeof(curdate1));
@@ -190,7 +190,7 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 				continue;
 			}
 
-			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr);
+			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), localdomainid, tmpaddr);
 			if (stat(tmpname1, &sb) != 0) {
 #ifdef WIN32
 				if (mkdir(tmpname1) != 0) {
@@ -206,7 +206,7 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));
-			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/domains/%04d/mailspool/%s/%d%03d.msg", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), localdomainid, tmpaddr, (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
 			fixslashes(tmpname1);
 			if (stat(tmpname1, &sb) == 0) goto retry1;
 
@@ -223,8 +223,8 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname1, 0, sizeof(tmpname1));
 			memset(tmpname2, 0, sizeof(tmpname2));
-			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
-			snprintf(tmpname2, sizeof(tmpname2) - 1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, confobj, "var_path"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+			snprintf(tmpname1, sizeof(tmpname1) - 1, "%s/spool/mqueue/%d%03d.msg", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
+			snprintf(tmpname2, sizeof(tmpname2) - 1, "%s/spool/mqinfo/%d%03d.dat", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), (int)ttime.tv_sec, (int)(ttime.tv_usec / 1000));
 			fixslashes(tmpname1);
 			fixslashes(tmpname2);
 			if (stat(tmpname1, &sb) == 0) goto retry2;
@@ -315,7 +315,7 @@ static void smtp_data(CONN *conn, MAILCONN *mconn)
 	header_done = 0;
 	memset((char *)&header, 0, sizeof(header));
 
-	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "smtpd"), "host_name");
+	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "modules"), "smtpd"), "host_name");
 	if (nsp_isnull(hostnameobj)) hostnameobj = nsp_getobj(proc->N, confobj, "host_name");
 
 	log_access(proc->N, MODSHORTNAME, "%s:%d << [...]", conn->dat->RemoteAddr, conn->dat->RemotePort);
@@ -544,7 +544,7 @@ void smtp_dorequest(CONN *conn)
 		smtp_send(conn, line);
 		goto cleanup;
 	}
-	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "smtpd"), "host_name");
+	hostnameobj = nsp_getobj(proc->N, nsp_getobj(proc->N, nsp_getobj(proc->N, confobj, "modules"), "smtpd"), "host_name");
 	if (nsp_isnull(hostnameobj)) hostnameobj = nsp_getobj(proc->N, confobj, "host_name");
 	{
 		snprintf(line, sizeof(line) - 1, "220 %s - %s SMTPd", nsp_tostr(proc->N, hostnameobj), SERVER_NAME);

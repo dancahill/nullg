@@ -2,9 +2,9 @@ include_template("class.sqlcommand.ns");
 include_template("common.ns");
 include_template("common.html.ns");
 
-global mail = {
-	getaddr = function (x) {
-		x0=net.mime.decode_rfc2047(x);
+namespace mail {
+	function getaddr(x) {
+		x0=net.mime.rfc2047.decode(x);
 		if (typeof(x0)!='string') return { name=x, addr=x, full=x };
 		if ((x1=x0.str("<"))==null) return { name=x0, addr=x0, full=x0 };
 		if ((x2=x1.str(">"))==null) return { name=x0, addr=x0, full=x0 };
@@ -14,8 +14,8 @@ global mail = {
 		if (name.sub(0, 1)=="\"" && name.sub(-1, 1)=="\"") name=name.sub(1, name.len()-2);
 		if (name=="") name=addr;
 		return { name=name, addr=addr, full=x0 };
-	};
-	load_header_from_sql = function (mailheaderid, uidl) {
+	}
+	function load_header_from_sql(mailheaderid, uidl) {
 		var userid   = tonumber(mailheaderid);
 		var userid   = tonumber(_USER['userid']);
 		var domainid = tonumber(_USER['domainid']);
@@ -27,10 +27,10 @@ global mail = {
 		sqr=sqlquery(query);
 		if (sqr._tuples==1) return sqr['_rows'][0];
 		return null;
-	};
-	save_header_to_sql = function (newemailid, accountrow, message, uidl, size) {
+	}
+	function save_header_to_sql(newemailid, accountrow, message, uidl, size) {
 		local function getheader(x) {
-			if (typeof(x)=='string') return net.mime.decode_rfc2047(x);
+			if (typeof(x)=='string') return net.mime.rfc2047.decode(x);
 			return "";
 		}
 		var userid      = tonumber(_USER['userid']);
@@ -45,36 +45,16 @@ global mail = {
 			replyto=a.addr;
 		}
 		var subject     = getheader(message['head']['subject']);
+
+		// { "hdr_subject",    "varchar(200)",    "NOT NULL", "''"                };
+                if (subject.length()>200) subject=subject.sub(0, 200);
+
 		var boundary    = getheader(message['boundary']);
-		var dt          = tonumber(message['head']['date_numeric']);
+		var dt          = tonumber(message['headvalues']['date_numeric']);
 		var messageid   = getheader(message['head']['message-id']);
 		var inreplyto   = getheader(message['head']['in-reply-to']);
 		var contenttype = getheader(message['head']['content-type']);
 		var encoding    = getheader(message['head']['content-transfer-encoding']);
-/*
-		query=sprintf("INSERT INTO gw_email_headers (mailheaderid, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, folder, status, size, uidl,hdr_from, "+
-			"hdr_replyto, hdr_to, hdr_cc, hdr_bcc, hdr_subject, hdr_date, hdr_messageid, hdr_inreplyto, hdr_contenttype, hdr_boundary, hdr_encoding, hdr_scanresult)"+
-			" VALUES (%d, %d, 0, %d, 0, 0, %d, %d, 'n', %d, '%s', '%s', '%s', '%s', '', '', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '');"
-			, newemailid
-			, userid
-			, domainid
-			, accountid
-			, 1 //folderid
-			, size
-			, uidl
-			, sql_escape(from)
-			, sql_escape(replyto)
-			, sql_escape(to)
-			, sql_escape(subject)
-			, time.sqldatetime(dt)
-			, sql_escape(messageid)
-			, sql_escape(inreplyto)
-			, sql_escape(contenttype)
-			, sql_escape(boundary)
-			, sql_escape(encoding)
-		);
-		sqlupdate(query);
-*/
 		c = new sqlcommand("INSERT INTO gw_email_headers (mailheaderid,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountid,folder,status,size,uidl,hdr_from,"+
 			"hdr_replyto,hdr_to,hdr_cc,hdr_bcc,hdr_subject,hdr_date,hdr_messageid,hdr_inreplyto,hdr_contenttype,hdr_boundary,hdr_encoding,hdr_scanresult)"+
 			" VALUES (?,?,0,?,0,0,?,?,'n',?,?,?,?,?,'','',?,?,?,?,?,?,?,'');");
@@ -96,8 +76,8 @@ global mail = {
 		c.addvalue('hdr_boundary', boundary);
 		c.addvalue('hdr_encoding', encoding);
 		sqlupdate(c.tostring());
-	};
-	save_outbound = function () {
+	}
+	function save_outbound() {
 		local function strtohtml(s) {
 			s=typeof(s)=='string'?s:"";
 			return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
@@ -106,7 +86,9 @@ global mail = {
 			s='0'*p+s.tostring();
 			return string.sub(s, string.len(s)-p, p);
 		}
-
+		//file.writeall(sprintf("%s/%d.raw", MASTERGLOBAL['CONFIG']['paths']['var_tmp'], time.now()), POSTRAWDATA);
+		dim = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+		miy = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 		var userid   = tonumber(_USER['userid']);
 		var domainid = tonumber(_USER['domainid']);
 		var accountid = tonumber(_POST['MSGFROM']);
@@ -114,44 +96,27 @@ global mail = {
 		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d", userid, accountid));
 		if (sqr._tuples!=1) throw "account not found";
 		account=sqr['_rows'][0];
-	//	var accountid = tonumber(_USER['pref']['mailcurrent']);
-
-
-
-
+		//var accountid = tonumber(_USER['pref']['mailcurrent']);
 		//var accountid = tonumber(_USER['prefmailcurrent']);
-		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
 		var outfolderid = 2;
 		var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(outfolderid, 4));
 		if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
-
 		newemailid=sqlgetsequence("gw_email_headers");
 		if (newemailid<1) {
-			printf("newemailid<1 ?!?");
+			printf("newemailid<1 '%d' ??", newemailid);
 			return;
 		}
 		filename=sprintf("%s.msg", pad(newemailid, 6));
-//		printf("<br>saving '%s' in '%s/'", filename, tmpdirname);
-
-//		print("<pre>CONTENT_TYPE=",strtohtml(serialize(_SERVER['CONTENT_TYPE'])),"</pre><hr>");
-//		print("<pre>POSTRAWDATA=",strtohtml(POSTRAWDATA),"</pre><hr>");
-//		print("<pre>_POST=",strtohtml(serialize(_POST)),"</pre><hr>");
-//		print("<pre>_SERVER=",strtohtml(serialize(_SERVER)),"</pre><hr>");
-//		print("<pre>_USER=",strtohtml(serialize(_USER)),"</pre><hr>");
-		//print("<pre>",strtohtml(serialize(_GLOBALS)),"</pre><hr>");
-
-		//from=_POST['MSGFROM'];
 		from=sprintf("\"%s\" <%s>", account['realname'], account['address']);
 		to=_POST['MSGTO'];
 		cc=_POST['MSGCC'];
 		bcc=_POST['MSGBCC'];
 		subject=_POST['MSGSUBJECT'];
 		body=_POST['MSGBODY'];
-
 		organization=account['organization'];
 		replyto=account['replyto'];
 		inreplyto=_POST['INREPLYTO'];
-
 		msgbody="";
 		msgbody+=sprintf("From: %s\r\n", from);
 		if (replyto!="") msgbody+=sprintf("Reply-To: %s\r\n", replyto);
@@ -160,12 +125,10 @@ global mail = {
 		if (cc!="") msgbody+=sprintf("Cc: %s\r\n", cc);
 		msgbody+=sprintf("Subject: %s\r\n", subject);
 		t=time.gmtime();
-		dim = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-		miy = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 		msgdate=sprintf("%s, %d %s %d %s:%s:%s +0000", dim[t.tm_wday], t.tm_mday, miy[t.tm_mon], t.tm_year, pad(t.tm_hour, 2), pad(t.tm_min, 2), pad(t.tm_sec, 2));
 		msgbody+=sprintf("Date: %s\r\n", msgdate);
-		if (messageid==null) messageid=time.sqldatetime();
-		msgbody+=sprintf("Message-ID: %s\r\n", messageid.replace('-', '').replace(':', '').replace(' ', ''));
+		messageid=time.sqldatetime().replace('-', '').replace(':', '').replace(' ', '');
+		msgbody+=sprintf("Message-ID: %s\r\n", messageid);
 		if (inreplyto!="") msgbody+=sprintf("In-Reply-To: %s\r\n", inreplyto);
 		msgbody+=sprintf("MIME-Version: 1.0\r\n");
 //		if ((filesize>0)||(forward>0)) {
@@ -173,367 +136,365 @@ global mail = {
 //		} else {
 //			fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "iso-8859-1");
 //		}
-		msgbody+=sprintf("Content-Type: %s\r\n", "text/html");
-		msgbody+=sprintf("Content-Transfer-Encoding: base64\r\n");
-//		msgbody+=sprintf("X-Mailer: %s %s\r\n", SERVER_NAME, PACKAGE_VERSION);
+		attachments=false;
+		foreach (v in _POST) {
+			if (v.gettype()=='table') attachments=true;
+		}
+		if (attachments) {
+			boundary = sprintf("MIME_BOUNDARY_%s_0001", messageid);
+			msgbody+=sprintf("Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary);
+		} else {
+			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "iso-8859-1");
+			msgbody+=sprintf("Content-Transfer-Encoding: quoted-printable\r\n");
+		}
 		msgbody+=sprintf("X-Mailer: %s %s\r\n", "NullLogic GroupServer", "X");
-
-	//	if (nsp_istable(aobj)) {
-	//		char *boundary = "LAME_MIME_BOUNDARY";
-	//		tcp_fprintf(N, &sock, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary);
-	//		tcp_fprintf(N, &sock, "Mime-Version: 1.0\r\n");
-	//		tcp_fprintf(N, &sock, "\r\n");
-	//		tcp_fprintf(N, &sock, "This is MIME data.\r\n\r\n");
-	//		tcp_fprintf(N, &sock, "--%s\r\n", boundary);
-	//		tcp_fprintf(N, &sock, "Content-Type: %s; charset=iso-8859-1\r\n", ctype);
-	//		tcp_fprintf(N, &sock, "Content-Transfer-Encoding: 7bit\r\n\r\n");
-	//		tcp_send(N, &sock, body, blen, 0);
-	//		for (cobj = aobj->val->d.table.f;cobj;cobj = cobj->next) {
-	//			tcp_fprintf(N, &sock, "\r\n--%s\r\n", boundary);
-	//			tcp_fprintf(N, &sock, "Content-Type: application/octet-stream; name=\"%s\"\r\n", nsp_getstr(N, cobj, "name"));
-	//			tcp_fprintf(N, &sock, "Content-Transfer-Encoding: base64\r\n");
-	//			tcp_fprintf(N, &sock, "Content-Disposition: attachment; filename=\"%s\"\r\n\r\n", nsp_getstr(N, cobj, "name"));
-	//			_base64_encode_send(N, &sock, nsp_getobj(N, cobj, "file"));
-	//		}
-	//		tcp_fprintf(N, &sock, "\r\n--%s--\r\n", boundary);
-	//		tcp_fprintf(N, &sock, "\r\n");
-	//	}
-	//	else {
+		msgbody+=sprintf("\r\n");
+		if (attachments) {
+			msgbody+=sprintf("This is a multi-part message in MIME format.\r\n");
+			msgbody+=sprintf("\r\n--%s\r\n", boundary);
+			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "iso-8859-1");
+			msgbody+=sprintf("Content-Transfer-Encoding: quoted-printable\r\n\r\n");
+			msgbody+=net.mime.qp.encode(body, 76);
+			foreach (v in _POST) {
+				if (v.gettype()!='table') continue;
+				msgbody+=sprintf("\r\n--%s\r\n", boundary);
+				msgbody+=sprintf("Content-Type: application/octet-stream; name=\"%s\"\r\n", v['FILENAME']);
+				msgbody+=sprintf("Content-Transfer-Encoding: base64\r\n");
+				msgbody+=sprintf("Content-Disposition: attachment; filename=\"%s\"\r\n\r\n", v['FILENAME']);
+				msgbody+=net.mime.base64.encode(v['DATA'], 76);
+			}
+			msgbody+=sprintf("\r\n--%s--\r\n", boundary);
+		} else {
+			msgbody+=net.mime.qp.encode(body, 76);
 			msgbody+=sprintf("\r\n");
-			msgbody+=base64.encode(body, 80);
-			msgbody+=sprintf("\r\n");
-	//	}
+		}
 		if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
 			file.writeall(tmpdirname+"/"+filename, msgbody);
 		}
 		message=net.mime.read(msgbody);
 		uidl='x';
 		accountrow = { mailaccountid=accountid };
-		mail.save_header_to_sql(newemailid, accountrow, message, string.replace(base64.encode(uidl), '=', ''), sizeof(msgbody));
+		mail.save_header_to_sql(newemailid, accountrow, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
 		sqlupdate(sprintf("UPDATE gw_email_headers SET folder = %d WHERE mailheaderid = %d", outfolderid, newemailid));
 		print("success");
-	};
-	sync = {
-		function dir_sync(row) {
-			var userid = tonumber(_USER['userid']);
-			local function pad(s, p) {
-				s='0'*p+s.tostring();
-				return s.sub(s.len()-p, p);
-			}
-			var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
-			var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(0, 4));
-			var dstdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(1, 4));
+	}
+}
+
+namespace mail.sync {
+	function dir_sync(row) {
+		var userid = tonumber(_USER['userid']);
+		local function pad(s, p) {
+			s='0'*p+s.tostring();
+			return s.sub(s.len()-p, p);
+		}
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
+		var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(0, 4));
+		var dstdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(1, 4));
+		if (typeof(file.stat(tmpdirname))!='table') {
+			file.mkdir(tmpdirname);
 			if (typeof(file.stat(tmpdirname))!='table') {
-				file.mkdir(tmpdirname);
-				if (typeof(file.stat(tmpdirname))!='table') {
-					printf("%s doesn't exist!", tmpdirname);
-				}
+				printf("%s doesn't exist!", tmpdirname);
 			}
+		}
+		if (typeof(file.stat(dstdirname))!='table') {
+			file.mkdir(dstdirname);
 			if (typeof(file.stat(dstdirname))!='table') {
-				file.mkdir(dstdirname);
-				if (typeof(file.stat(dstdirname))!='table') {
-					printf("%s doesn't exist!", dstdirname);
-				}
+				printf("%s doesn't exist!", dstdirname);
 			}
-			importdirname=tmpdirname+"/import";
-			_d=dirlist(importdirname);
-			foreach (f in _d) {
-				if (f.type!="file") continue;
-				if (string.sub(f.name, -5, 5)==".done") continue;
-				print("file=<pre>",serialize(f),"</pre>");
+		}
+		importdirname=tmpdirname+"/import";
+		_d=dirlist(importdirname);
+		foreach (f in _d) {
+			if (f.type!="file") continue;
+			if (string.sub(f.name, -5, 5)==".done") continue;
+			print("file=<pre>",serialize(f),"</pre>");
+			newemailid=sqlgetsequence("gw_email_headers");
+			filename=sprintf("%s.msg", pad(newemailid, 6));
+			printf("saving '%s' in '%s/'<br>", filename, tmpdirname);
+			srcname=importdirname+"/"+f.name;
+			if (typeof(file.md5)!='function') {
+				print("file.md5() missing\n");
+				break;
+			}
+			uidl="file:"+file.md5(srcname);
+			msgbody=file.readall(srcname);
+			message=net.mime.read(msgbody);
+			tmpname=tmpdirname+"/"+filename;
+			dstname=dstdirname+"/"+filename;
+			if (typeof(file.stat(tmpname))=='table') {
+				printf("file %s already exists!", tmpname);
+				break;
+			}
+			file.rename(srcname, tmpname);
+			if (typeof(file.stat(tmpname))!='table') {
+				printf("failed to write file %s!", tmpname);
+				break;
+			}
+			mail.save_header_to_sql(newemailid, row, message, uidl, sizeof(msgbody));
+			print(".");
+			io.flush();
+			file.rename(tmpname, dstname);
+		}
+		return;
+	}
+	function pop3_sync(row, verbose) {
+		local function pad(s, p) {
+			s='0'*p+s.tostring();
+			return string.sub(s, string.len(s)-p, p);
+		}
+		local function getheader(x) {
+			if (typeof(x)=='string') return net.mime.rfc2047.decode(x);
+			return "";
+		}
+		local function strtohtml(s) {
+			s=typeof(s)=='string'?s:"";
+			return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
+		}
+		var userid = tonumber(_USER['userid']);
+		var accountid=tonumber(row['mailaccountid']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
+		var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(0, 4));
+		var trashdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(4, 4));
+		var newmail=0;
+		var deleted=0;
+		statustext="";
+		pop=new net.pop3.client();
+		pop.username = row['popusername'];
+		pop.password = net.mime.base64.decode(row['poppassword']);
+		pop.host     = row['pophost'];
+		pop.port     = tonumber(row['popport']);
+		pop.use_tls  = row['popssl']=="1"?true:false;
+		if (pop.open()!=true) {
+			printf("ERROR: pop.open() failed - [%s]", pop.last_err);
+			return;
+		}
+		sqlupdate(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d", time.sqldatetime(), accountid));
+		stat=pop.stat();
+		count=stat.count;
+		//printf("<b>[%s]</b>", row['accountname']);
+
+		if (verbose) printf("<b>%s</b><br>", row['accountname']);
+		if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
+		for (i=1;i<=count;i++) {
+			uidl=pop.uidl(i);
+			query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND uidl = '%s';", userid, string.replace(net.mime.base64.encode(uidl), '=', ''));
+			var sqr=sqlquery(query);
+			if (sizeof(sqr['_rows'])!=0) {
+				hrow=sqr['_rows'][0];
+				continue;
+			} else {
+				newmail++;
 				newemailid=sqlgetsequence("gw_email_headers");
 				filename=sprintf("%s.msg", pad(newemailid, 6));
-				printf("saving '%s' in '%s/'<br>", filename, tmpdirname);
-				srcname=importdirname+"/"+f.name;
-				if (typeof(file.md5)!='function') {
-					print("file.md5() missing\n");
-					break;
-				}
-				uidl="file:"+file.md5(srcname);
-				msgbody=file.readall(srcname);
+				//printf("<br>saving '%s' in '%s/'", filename, tmpdirname);
+				msgbody=pop.retr(i);
 				message=net.mime.read(msgbody);
-				tmpname=tmpdirname+"/"+filename;
-				dstname=dstdirname+"/"+filename;
-				if (typeof(file.stat(tmpname))=='table') {
-					printf("file %s already exists!", tmpname);
-					break;
+				if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
+					file.writeall(tmpdirname+"/"+filename, msgbody);
 				}
-				file.rename(srcname, tmpname);
-				if (typeof(file.stat(tmpname))!='table') {
-					printf("failed to write file %s!", tmpname);
-					break;
+				mail.save_header_to_sql(newemailid, row, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
+				var dstdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(1, 4));
+				if (typeof(file.stat(dstdirname))!='table') file.mkdir(dstdirname);
+				file.rename(tmpdirname+"/"+filename, dstdirname+"/"+filename);
+
+				var from    = getheader(message['head']['from']);
+				var subject = getheader(message['head']['subject']);
+				if (subject.length()>50) subject=subject.sub(0, 50)+"...";
+				printf("<b>From:</b> %s<br>", strtohtml(from));
+				printf("<b>Subject:</b> %s<br><br>", strtohtml(subject));
+			}
+		}
+
+		if (typeof(file.stat(trashdirname))!='table') file.mkdir(trashdirname);
+		uidls={};
+		for (i=1;i<=count;i++) {
+			uidl=pop.uidl(i);
+			uidls[sizeof(uidls)] = { remoteindex=i; uidl=uidl; };
+		}
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 ORDER BY mailheaderid;", userid, accountid);
+		sqr=sqlquery(query);
+
+		// delete local copies in trash if no remote copy is found
+		foreach (header in sqr['_rows']) {
+			//print("<hr><pre>header=",strtohtml(serialize(header)),"</pre><hr>");
+			matchfound=false;
+			matchedid=0;
+			foreach (uidl in uidls) {
+				x=net.mime.base64.encode(uidl.uidl).replace('=', '');
+				if (header['uidl']!=x) continue;
+				//printf("<font color=green>uidl=%s matches rowentry %s</font><br>", x, header['uidl']);
+				matchfound=true;
+				matchedid=uidl.remoteindex;
+				break;
+			}
+			if (matchfound==false) {
+				mailheaderid=tonumber(header['mailheaderid']);
+				filename=sprintf("%s.msg", pad(mailheaderid, 6));
+				if (typeof(file.stat(trashdirname+"/"+filename))=='table') {
+					file.unlink(trashdirname+"/"+filename);
 				}
-				mail.save_header_to_sql(newemailid, row, message, uidl, sizeof(msgbody));
-				print(".");
-				io.flush();
-				file.rename(tmpname, dstname);
+				query=sprintf("DELETE FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 AND mailheaderid = %d;", userid, accountid, mailheaderid);
+				sqlupdate(query);
+				deleted++;
 			}
-			return;
-		};
-		function pop3_sync(row) {
-			local function pad(s, p) {
-				s='0'*p+s.tostring();
-				return string.sub(s, string.len(s)-p, p);
+		}
+
+		// delete remote copy if found in local trash, then delete local trash copy
+		for (i=uidls.length();i>0;i--) {
+			matchfound=false;
+			matchedid=0;
+			mailheaderid=0;
+			uidl=uidls[i-1];
+			foreach (header in sqr['_rows']) {
+				x=net.mime.base64.encode(uidl.uidl).replace('=', '');
+				if (header['uidl']!=x) continue;
+				matchfound=true;
+				matchedid=uidl.remoteindex;
+				mailheaderid=tonumber(header['mailheaderid']);
+				u=pop.uidl(matchedid);
+				if (u!=uidl.uidl) break;
+				pop.dele(matchedid);
+				filename=sprintf("%s.msg", pad(mailheaderid, 6));
+				if (typeof(file.stat(trashdirname+"/"+filename))=='table') {
+					file.unlink(trashdirname+"/"+filename);
+				}
+				query=sprintf("DELETE FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 AND mailheaderid = %d;", userid, accountid, mailheaderid);
+				sqlupdate(query);
+				deleted++;
+				break;
 			}
-			var userid = tonumber(_USER['userid']);
-			var newmail=0;
-			var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
-			var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(0, 4));
-			pop=new net.pop3.client();
-			pop.username = row['popusername'];
-			pop.password = base64.decode(row['poppassword']);
-			pop.host     = row['pophost'];
-			pop.port     = tonumber(row['popport']);
-			pop.use_tls  = row['popssl']=="1"?true:false;
-			if (pop.open()!=true) {
-				printf("pop.open() failed");
-				printf("[pop.last_err=%s]", pop.last_err);
+		}
+		//print("<hr><pre>uidls=",strtohtml(serialize(uidls)),"</pre><hr>");
+		pop.close();
+
+		if (verbose) {
+			printf("%d message%s", count, (count==1)?'':'s');
+			printf(", %d new", newmail);
+			printf(", %d deleted<br>", deleted);
+		}
+		return;
+	}
+	function smtp_sync(accountrow) {
+		local function swrite(sock, text) {
+			//print("<font color=blue>",strtohtml(text),"</font><br>");
+			return sock.write(text);
+		}
+		local function sread(sock) {
+			do {
+				instr=sock.gets();
+				if (typeof(instr)!='string') throw "sock.gets() input error";
+				//print("<font color=red>",strtohtml(instr),"</font><br>");
+			} while (instr.sub(3, 1)=='-');
+			return instr;
+		}
+		local function pad(s, p) {
+			s='0'*p+s.tostring();
+			return string.sub(s, string.len(s)-p, p);
+		}
+		//print("<pre>account=", strtohtml(serialize(accountrow)), "</pre>");
+		var accountid = tonumber(accountrow['mailaccountid']);
+		var userid    = tonumber(_USER['userid']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
+		var outdirname =sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(accountrow['obj_did'], 4), pad(accountid, 4), pad(2, 4));
+		var sentdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(accountrow['obj_did'], 4), pad(accountid, 4), pad(3, 4));
+		if (typeof(file.stat(outdirname))!='table') file.mkdir(outdirname);
+		if (typeof(file.stat(sentdirname))!='table') file.mkdir(sentdirname);
+
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and folder = 2", userid, accountid);
+		sqr=sqlquery(query);
+		foreach (header in sqr['_rows']) {
+			//print("<pre>accountrow = ", strtohtml(serialize(accountrow)), "</pre>");
+			//print("<pre>header = ", strtohtml(serialize(header)), "</pre>");
+			headerid=tonumber(header['mailheaderid']);
+			filename=sprintf("%s.msg", pad(headerid, 6));
+			msgbody=file.readall(outdirname+"/"+filename);
+			//printf("[%s]", outdirname+"/"+filename);
+			//print("f.stat=",serialize(file.stat(outdirname+"/"+filename)),"<br>");
+			sock=new net.socket();
+			sock.connect(accountrow['smtphost'], tonumber(accountrow['smtpport']), tonumber(accountrow['smtpssl'])?true:false);
+			if (typeof(sock._socket)!='sock4') {
+				printf("can't connect to smtp server '%s'<br>",accountrow['smtphost']);
+				sock.close();
+				//delete sock;
 				return;
 			}
-			stat=pop.stat();
-			count=stat.count;
-			if (count==1) plural=''; else plural='s';
-			print("<br>E-mail status for "+row['accountname']+"<br>You have "+count+" message"+plural+"\r\n");
-			if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
-			for (i=1;i<=count;i++) {
-				uidl=pop.uidl(i);
-				query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND uidl = '%s';", userid, string.replace(base64.encode(uidl), '=', ''));
-				var sqr=sqlquery(query);
-				if (sizeof(sqr['_rows'])!=0) {
-					hrow=sqr['_rows'][0];
-					continue;
-				} else {
-					newmail++;
-					newemailid=sqlgetsequence("gw_email_headers");
-					filename=sprintf("%s.msg", pad(newemailid, 6));
-					printf("<br>saving '%s' in '%s/'", filename, tmpdirname);
-					msgbody=pop.retr(i);
-					message=net.mime.read(msgbody);
-					if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
-						file.writeall(tmpdirname+"/"+filename, msgbody);
-					}
-					mail.save_header_to_sql(newemailid, row, message, string.replace(base64.encode(uidl), '=', ''), sizeof(msgbody));
-					print(".");
-					var dstdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(1, 4));
-					if (typeof(file.stat(dstdirname))!='table') file.mkdir(dstdirname);
-					file.rename(tmpdirname+"/"+filename, dstdirname+"/"+filename);
-				}
-			}
-			pop.close();
-			printf("<br>New Emails = %d", newmail);
-			return;
-		};
-		function pop3_purge(row) {
-			local function pad(s, p) {
-				s='0'*p+s.tostring();
-				return string.sub(s, string.len(s)-p, p);
-			}
-			var userid = tonumber(_USER['userid']);
-			var accountid=tonumber(row['mailaccountid']);
-			var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
-			var trashdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(4, 4));
-			pop=new net.pop3.client();
-			pop.username = row['popusername'];
-			pop.password = base64.decode(row['poppassword']);
-			pop.host     = row['pophost'];
-			pop.port     = tonumber(row['popport']);
-			pop.use_tls  = row['popssl']=="1"?true:false;
-			if (pop.open()!=true) {
-				printf("pop.open() failed");
-				printf("[pop.last_err=%s]", pop.last_err);
-			}
-			stat=pop.stat();
-			count=stat.count;
-			print("<br>E-mail status for "+row['accountname']+"<br>You have "+count+" messages on server\r\n");
-			if (typeof(file.stat(trashdirname))!='table') file.mkdir(trashdirname);
-			uidls={};
-			for (i=1;i<=count;i++) {
-				uidl=pop.uidl(i);
-				uidls[sizeof(uidls)] = { remoteindex=i; uidl=uidl; };
-			}
-			query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 ORDER BY mailheaderid;", userid, accountid);
-			sqr=sqlquery(query);
-			deleted=0;
-			foreach (header in sqr['_rows']) {
-				//print("<hr><pre>header=",strtohtml(serialize(header)),"</pre><hr>");
-				matchfound=false;
-				matchedid=0;
-				foreach (uidl in uidls) {
-					x=base64.encode(uidl.uidl).replace('=', '');
-					if (header['uidl']==x) {
-						printf("<font color=green>uidl=%s matches rowentry %s</font><hr>", x, header['uidl']);
-						matchfound=true;
-						matchedid=uidl.remoteindex;
-						break;
-					}
-				}
-				if (matchfound==true) {
-					printf("<font color=green>uidl=%s matches remote id %d</font><hr>", header['uidl'], matchedid);
-				} else {
-					printf("<font color=red>no remote match for local uidl=%s</font><hr>", header['uidl']);
-					if (deleted<5) {
-						deleted++;
-						mailheaderid=tonumber(header['mailheaderid']);
-						filename=sprintf("%s.msg", pad(mailheaderid, 6));
-						if (typeof(file.stat(trashdirname+"/"+filename))=='table') {
-							file.unlink(trashdirname+"/"+filename);
-						}
-						query=sprintf("DELETE FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 AND mailheaderid = %d;", userid, accountid, mailheaderid);
-						printf("<font color=red>%s</font><hr>", query);
-						sqlupdate(query);
-					}
-				}
-			}
-			print("<hr><pre>uidls=",strtohtml(serialize(uidls)),"</pre><hr>");
-			pop.close();
-			return;
-		};
-		function smtp_sync(accountrow) {
-			local function swrite(sock, text) {
-				print("<font color=blue>",strtohtml(text),"</font><br>");
-				return sock.write(text);
-			}
-			local function sread(sock) {
-				do {
-					instr=sock.gets();
-					if (typeof(instr)!='string') throw "sock.gets() input error";
-					print("<font color=red>",strtohtml(instr),"</font><br>");
-				} while (instr.sub(3, 1)=='-');
-				return instr;
-			}
-			local function pad(s, p) {
-				s='0'*p+s.tostring();
-				return string.sub(s, string.len(s)-p, p);
-			}
-			//print("<pre>account=", strtohtml(serialize(accountrow)), "</pre>");
-			var accountid = tonumber(accountrow['mailaccountid']);
-			var userid    = tonumber(_USER['userid']);
-			var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
-			var outdirname =sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(accountrow['obj_did'], 4), pad(accountid, 4), pad(2, 4));
-			var sentdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(accountrow['obj_did'], 4), pad(accountid, 4), pad(3, 4));
-			if (typeof(file.stat(outdirname))!='table') file.mkdir(outdirname);
-			if (typeof(file.stat(sentdirname))!='table') file.mkdir(sentdirname);
-
-			query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and folder = 2", userid, accountid);
-			sqr=sqlquery(query);
-			foreach (header in sqr['_rows']) {
-				print("<pre>", strtohtml(serialize(header)), "</pre>");
-				headerid=tonumber(header['mailheaderid']);
-				filename=sprintf("%s.msg", pad(headerid, 6));
-				msgbody=file.readall(outdirname+"/"+filename);
-				//printf("[%s]", outdirname+"/"+filename);
-				//print("f.stat=",serialize(file.stat(outdirname+"/"+filename)),"<br>");
-				sock=new net.tcp.socket();
-				sock.connect(accountrow['smtphost'], tonumber(accountrow['smtpport']), tonumber(accountrow['smtpssl'])?true:false);
-				if (typeof(sock.socket)!='sock4') {
-					print("can't connect to smtp server\n");
-					return;
-				}
-				try {
+			try {
+				rc=sread(sock);
+				if (rc.sub(0, 3)!='220') throw "expected status '220', got '"+rc.sub(0, 3)+"'";
+				swrite(sock, "HELO localhost\r\n");
+				rc=sread(sock);
+				if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
+				if (accountrow.smtpauth=='y') {
+					swrite(sock, sprintf("AUTH PLAIN %s\r\n", net.mime.base64.encode(accountrow.popusername+'\0'+accountrow.popusername+'\0'+net.mime.base64.decode(accountrow.poppassword))));
 					rc=sread(sock);
-					if (rc.sub(0, 3)!='220') throw "expected status '220', got '"+rc.sub(0, 3)+"'";
-					swrite(sock, "HELO <localhost>\r\n");
-					rc=sread(sock);
-					if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
-					if (accountrow.smtpauth=='y') {
-						swrite(sock, sprintf("AUTH PLAIN %s\r\n", base64.encode(accountrow.popusername+'\0'+accountrow.popusername+'\0'+base64.decode(accountrow.poppassword))));
+				//	if (strncasecmp(inbuffer, "502", 3)==0) return 0;
+				//	if (strncasecmp(inbuffer, "235", 3)!=0) return -1;
+				}
+				swrite(sock, "MAIL From: <"+accountrow.address+">\r\n");
+				rc=sread(sock);
+				if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
+				foreach (rcptgroup in { header['hdr_to'], header['hdr_cc'], header['hdr_bcc'] } ) {
+					foreach (rcpt in rcptgroup.split(',')) {
+						a=mail.getaddr(rcpt);
+						swrite(sock, "RCPT To: <"+a.addr+">\r\n");
 						rc=sread(sock);
-					//	if (strncasecmp(inbuffer, "502", 3)==0) return 0;
-					//	if (strncasecmp(inbuffer, "235", 3)!=0) return -1;
+						if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 2)+"'";
 					}
-					swrite(sock, "MAIL From: <"+accountrow.address+">\r\n");
-					rc=sread(sock);
-					if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
-					foreach (rcptgroup in { header['hdr_to'], header['hdr_cc'], header['hdr_bcc'] } ) {
-						foreach (rcpt in rcptgroup.split(',')) {
-							a=mail.getaddr(rcpt);
-							swrite(sock, "RCPT To: <"+a.addr+">\r\n");
-							rc=sread(sock);
-							if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 2)+"'";
-						}
-					}
-					swrite(sock, "DATA\r\n");
-					rc=sread(sock);
-					if (rc.sub(0, 3)!='354') throw "expected status '354', got '"+rc.sub(0, 3)+"'";
-					//print("<font color=blue>sending data...</font><br>");
-					foreach (line in msgbody.split('\r\n')) {
-						swrite(sock, line+'\r\n');
-					}
-					swrite(sock, ".\r\n");
-					rc=sread(sock);
-					if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
-					sqlupdate(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d", headerid));
-					file.rename(outdirname+"/"+filename, sentdirname+"/"+filename);
-				} catch (ex) {
-					printf("Exception: [%s]", ex.description);
-				} 
-				swrite(sock, "QUIT\r\n");
-				sread(sock);
-				if (typeof(sock.socket)=='sock4') sock.close();
-				delete sock;
-			}
-			return;
-		};
-		dosync = function (accountrow) {
-			if (accountrow['hosttype']=="POP3") {
-				dir_sync(accountrow);
-				pop3_sync(accountrow);
-			} else {
-				printf("<br>Unknown Host Type '%s'", accountrow['hosttype']);
-			}
-		};
-		dopurge = function (accountrow) {
-			if (accountrow['hosttype']=="POP3") {
-				pop3_purge(accountrow);
-				//printf("don't know how to purge yet...");
-				//dir_sync(accountrow);
-			} else {
-				printf("<br>Unknown Host Type '%s'", accountrow['hosttype']);
-			}
-		};
-	};
-};
+				}
+				swrite(sock, "DATA\r\n");
+				rc=sread(sock);
+				if (rc.sub(0, 3)!='354') throw "expected status '354', got '"+rc.sub(0, 3)+"'";
+				//print("<font color=blue>sending data...</font><br>");
+				foreach (line in msgbody.split('\r\n')) {
+					swrite(sock, line+'\r\n');
+				}
+				swrite(sock, ".\r\n");
+				rc=sread(sock);
+				if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
+				sqlupdate(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d", headerid));
+				file.rename(outdirname+"/"+filename, sentdirname+"/"+filename);
+				printf("message sent - '%s'", filename);
+			} catch (ex) {
+				printf("Exception: [%s]", ex.description);
+			} 
+			swrite(sock, "QUIT\r\n");
+			sread(sock);
+			if (typeof(sock._socket)=='sock4') sock.close();
+			delete sock;
+		}
+		return;
+	}
+	function dosync(accountrow, verbose) {
+		if (accountrow['hosttype']=="POP3") {
+			dir_sync(accountrow);
+			pop3_sync(accountrow, verbose);
+		} else {
+			printf("<br>Unknown Host Type '%s'", accountrow['hosttype']);
+		}
+	}
+	function dopurge(accountrow) {
+		if (accountrow['hosttype']=="POP3") {
+			pop3_purge(accountrow);
+			//printf("don't know how to purge yet...");
+			//dir_sync(accountrow);
+		} else {
+			printf("<br>Unknown Host Type '%s'", accountrow['hosttype']);
+		}
+	}
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-global mailhtml = {
-	headermenu = function () {
-/*
-		print("<div class=\"tbar\" style=\"text-align:left;width:100%\">\r\n");
-		print("<a href=\"/app/mail/list\" onclick=\"return GoTo(event);\">LIST</a>");
-		print("&nbsp;&middot;&nbsp;");
-		print("<a href=\"/app/mail/compose\" onclick=\"return mail.compose(0);\">COMPOSE</a>");
-		print("&nbsp;&middot;&nbsp;");
-		print("<a href=\"/app/mail/sync\" onclick=\"return GoTo(event);\">SYNC</a>");
-		print("&nbsp;&middot;&nbsp;");
-		print("<a href=\"/app/mail/purge\" onclick=\"return GoTo(event);\">PURGE</a>");
-		print("</div>\r\n");
-*/
+namespace mail.html {
+	function headermenu () {
 		var menuitems = {
 			{ href="/app/mail/list";    onclick="return GoTo(event);";     text="LIST";    };
 			{ href="/app/mail/compose"; onclick="return mail.compose(0);"; text="COMPOSE"; };
 			{ href="/app/mail/sync";    onclick="return GoTo(event);";     text="SYNC";    };
-			{ href="/app/mail/purge";   onclick="return GoTo(event);";     text="PURGE";   };
+			//{ href="/app/mail/sync";    onclick="return mail.sync();";     text="SYNC";    };
+			//{ href="/app/mail/purge";   onclick="return GoTo(event);";     text="PURGE";   };
 		};
 		html.headersubmenu(menuitems);
-	};
-	mailjump = function (accountid, folderid) {
+	}
+	function mailjump(accountid, folderid) {
 		local function add_folders(add_folders, accountid, folderid, sqr2, account, parent, depth) {
 			//var accountid=tonumber(prefs['mailcurrent']);
 			foreach (fldrow in sqr2['_rows']) {
@@ -603,5 +564,5 @@ global mailhtml = {
 		}
 		printf("</select>\r\n");
 		return;
-	};
-};
+	}
+}

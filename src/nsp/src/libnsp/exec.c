@@ -135,7 +135,8 @@ obj_t *n_execfunction(nsp_state *N, obj_t *fobj, obj_t *pobj, uchar isnewobject)
 	else if (pobj) {
 		cobj = append_var(N, &listobj, "this");
 		nsp_linkval(N, cobj, pobj);
-		if (cobj->val) cobj->val->attr |= NST_HIDDEN;
+		// hiding this here causes serialize to not print regular table items
+		//if (cobj->val) cobj->val->attr |= NST_HIDDEN;
 	}
 	/* set fn name */
 	cobj = append_var(N, &listobj, "0");
@@ -164,14 +165,63 @@ obj_t *n_execfunction(nsp_state *N, obj_t *fobj, obj_t *pobj, uchar isnewobject)
 
 	if (noscopechange) {
 		/*
-		 * this is a bad hack to fix the issue with include() creating its own local context (it should not).
+		 * this is a bad hack to fix the issue with include() creating its own local context (IMHO, it should not).
 		 */
 		obj_t *cobj1 = nsp_getobj(N, &listobj, "1");
+		obj_t *cobj2 = nsp_getobj(N, &listobj, "2");
 		uchar *p;
 		int n = 0;
 
 		e = 0;
-		if (!nsp_isnull(cobj1)) {
+		if (nsp_isstr(cobj2)) {
+			//nsp_exec(N, (char *)cobj2->val->d.str);
+
+
+
+
+
+
+
+
+
+			uchar *p;
+			int psize;
+
+			uchar *oldbptr = N->blockptr;
+			uchar *oldbend = N->blockend;
+			uchar *oldrptr = N->readptr;
+			jmp_buf *savjmp;
+
+			n_decompose(N, NULL, (uchar *)cobj2->val->d.str, &p, &psize);
+			if (p) N->blockptr = p;
+			N->blockend = N->blockptr + readi4((N->blockptr + 8));
+			N->readptr = N->blockptr + readi4((N->blockptr + 12));
+
+			savjmp = N->savjmp;
+			N->savjmp = (jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
+			if (setjmp(*N->savjmp) == 0) {
+				nsp_linkval(N, &N->r, nsp_exec(N, (char *)N->readptr));
+			}
+			n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
+			N->savjmp = savjmp;
+
+			if (p) n_free(N, (void *)&p, psize);
+
+			N->blockptr = oldbptr;
+			N->blockend = oldbend;
+			N->readptr = oldrptr;
+
+
+
+
+
+
+
+
+
+
+		}
+		else if (nsp_isstr(cobj1)) {
 			p = N->readptr;
 
 			savjmp = N->savjmp;
@@ -673,22 +723,23 @@ nsp_state *nsp_newstate()
 			{ "copy", (NSP_CFUNC)nl_copy },
 			{ "eval", (NSP_CFUNC)nl_eval },
 			{ "exec", (NSP_CFUNC)nl_exec },
-			{ "serialize", (NSP_CFUNC)nl_serialize },
-			{ "iname", (NSP_CFUNC)nl_iname },
 			{ "include", (NSP_CFUNC)nl_include },
-			{ "ival", (NSP_CFUNC)nl_ival },
 			{ "print", (NSP_CFUNC)nl_print },
 			{ "printf", (NSP_CFUNC)nl_printf },
-			{ "sprintf", (NSP_CFUNC)nl_printf },
 			{ "runtime", (NSP_CFUNC)nl_runtime },
+			{ "serialize", (NSP_CFUNC)nl_serialize },
 			{ "sizeof", (NSP_CFUNC)nl_sizeof },
 			{ "sleep", (NSP_CFUNC)nl_sleep },
+			{ "sprintf", (NSP_CFUNC)nl_printf },
 			{ "system", (NSP_CFUNC)nl_system },
 			{ "tonumber", (NSP_CFUNC)nl_tonumber },
 			{ "typeof", (NSP_CFUNC)nl_typeof },
 			{ "write", (NSP_CFUNC)nl_write },
-			{ "zlink", (NSP_CFUNC)nl_zlink },
 			{ NULL, NULL }
+	};
+	FUNCTION list_debug[] = {
+		{ "break", (NSP_CFUNC)nl_break },
+		{ NULL, NULL }
 	};
 	FUNCTION list_dl[] = {
 			{ "load", (NSP_CFUNC)nl_dl_load },
@@ -698,6 +749,7 @@ nsp_state *nsp_newstate()
 	FUNCTION list_file[] = {
 			{ "append", (NSP_CFUNC)nl_filewriteall },
 			{ "chdir", (NSP_CFUNC)nl_filechdir },
+			{ "exists", (NSP_CFUNC)nl_fileexists },
 			{ "mkdir", (NSP_CFUNC)nl_filemkdir },
 			{ "readall", (NSP_CFUNC)nl_filereadall },
 			{ "rename", (NSP_CFUNC)nl_filerename },
@@ -743,6 +795,11 @@ nsp_state *nsp_newstate()
 			{ "icmp", (NSP_CFUNC)nl_strcmp },
 			{ "ncmp", (NSP_CFUNC)nl_strcmp },
 			{ "nicmp", (NSP_CFUNC)nl_strcmp },
+
+			{ "contains", (NSP_CFUNC)nl_strcontains },
+			{ "endswith", (NSP_CFUNC)nl_strcontains },
+			{ "startswith", (NSP_CFUNC)nl_strcontains },
+
 			{ "join", (NSP_CFUNC)nl_strjoin },
 			{ "len", (NSP_CFUNC)nl_strlen },
 			{ "replace", (NSP_CFUNC)nl_strrep },
@@ -754,6 +811,12 @@ nsp_state *nsp_newstate()
 			{ "tolower", (NSP_CFUNC)nl_strtolower },
 			{ "toupper", (NSP_CFUNC)nl_strtolower },
 			{ NULL, NULL }
+	};
+	FUNCTION list_table[] = {
+		{ "iname", (NSP_CFUNC)nl_iname },
+		{ "ival", (NSP_CFUNC)nl_ival },
+		{ "zlink", (NSP_CFUNC)nl_zlink },
+		{ NULL, NULL }
 	};
 	FUNCTION list_time[] = {
 			{ "gmtime", (NSP_CFUNC)nl_gmtime },
@@ -771,6 +834,9 @@ nsp_state *nsp_newstate()
 	short i;
 
 	new_N = (nsp_state *)n_alloc(NULL, sizeof(nsp_state), 1);
+	new_N->outbuflen = 0;
+	new_N->outbufmax = MAX_OUTBUFSIZE;
+	new_N->outbuffer = (char *)n_alloc(NULL, new_N->outbufmax + 1, 1);// add one byte for null termination
 	nc_gettimeofday(&new_N->ttime, NULL);
 	srand(new_N->ttime.tv_usec);
 	new_N->maxwarnings = 500;
@@ -796,6 +862,12 @@ nsp_state *nsp_newstate()
 
 	for (i = 0; list[i].fn_name != NULL; i++) {
 		nsp_setcfunc(new_N, &new_N->g, list[i].fn_name, list[i].fn_ptr);
+	}
+
+	cobj = nsp_settable(new_N, &new_N->g, "debug");
+	cobj->val->attr |= NST_HIDDEN;
+	for (i = 0; list_debug[i].fn_name != NULL; i++) {
+		nsp_setcfunc(new_N, cobj, list_debug[i].fn_name, list_debug[i].fn_ptr);
 	}
 
 	cobj = nsp_settable(new_N, &new_N->g, "dl");
@@ -842,6 +914,11 @@ nsp_state *nsp_newstate()
 	for (i = 0; list_string[i].fn_name != NULL; i++) {
 		nsp_setcfunc(new_N, cobj, list_string[i].fn_name, list_string[i].fn_ptr);
 	}
+	cobj = nsp_settable(new_N, &new_N->g, "table");
+	cobj->val->attr |= NST_HIDDEN;
+	for (i = 0; list_table[i].fn_name != NULL; i++) {
+		nsp_setcfunc(new_N, cobj, list_table[i].fn_name, list_table[i].fn_ptr);
+	}
 	cobj = nsp_settable(new_N, &new_N->g, "time");
 	cobj->val->attr |= NST_HIDDEN;
 	for (i = 0; list_time[i].fn_name != NULL; i++) {
@@ -856,7 +933,7 @@ nsp_state *nsp_newstate()
 	cobj = nsp_setstr(new_N, &new_N->g, "_version_", NSP_VERSION, -1);
 	cobj = nsp_setstr(new_N, &new_N->g, "_ostype_", _OSTYPE_, -1);
 	return new_N;
-	}
+}
 
 void nsp_freestate(nsp_state *N)
 {
@@ -886,6 +963,7 @@ nsp_state *nsp_endstate(nsp_state *N)
 	if (N != NULL) {
 		settrace();
 		nsp_freestate(N);
+		n_free(N, (void *)&N->outbuffer, N->outbufmax + 1);// one byte added for null termination
 		n_free(N, (void *)&N, sizeof(nsp_t));
 	}
 	return NULL;

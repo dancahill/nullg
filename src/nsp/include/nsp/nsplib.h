@@ -104,12 +104,14 @@ num_t    n_aton(nsp_state *N, const char *str);
 /* char    *n_itoa         (nsp_state *N, char *str, int num, short base); */
 char    *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec);
 /* libn.c */
+NSP_FUNCTION(nl_break);
 NSP_FUNCTION(nl_flush);
 NSP_FUNCTION(nl_print);
 NSP_FUNCTION(nl_write);
 NSP_FUNCTION(nl_dl_load);
 NSP_FUNCTION(nl_filemkdir);
 NSP_FUNCTION(nl_filechdir);
+NSP_FUNCTION(nl_fileexists);
 NSP_FUNCTION(nl_filereadall);
 NSP_FUNCTION(nl_filerename);
 NSP_FUNCTION(nl_filestat);
@@ -122,6 +124,7 @@ NSP_FUNCTION(nl_atoi);
 NSP_FUNCTION(nl_itoa);
 NSP_FUNCTION(nl_strcat);
 NSP_FUNCTION(nl_strcmp);
+NSP_FUNCTION(nl_strcontains);
 NSP_FUNCTION(nl_strjoin);
 NSP_FUNCTION(nl_strlen);
 NSP_FUNCTION(nl_strrep);
@@ -163,6 +166,7 @@ obj_t   *n_newiobj(nsp_state *N, int index);
 obj_t   *n_setname(nsp_state *N, obj_t *cobj, const char *name);
 obj_t   *n_setnamei(nsp_state *N, obj_t *cobj, unsigned long i);
 /* opcodes.c */
+short    n_iskeyword(nsp_state *N, char *name);
 short    n_getop(nsp_state *N, char *name);
 char    *n_getsym(nsp_state *N, short op);
 char    *n_gettype(nsp_state *N, short type);
@@ -189,7 +193,7 @@ void     n_storeval(nsp_state *N, obj_t *cobj);
 #define  n_peekop(N)     (*N->readptr!=OP_LINENUM?*N->readptr:n_skip_ws(N))
 #define  n_expect(N,f,o) if (n_peekop(N)!=o) _n_expect(N, f, o);
 
-int n_expect_argtype(nsp_state *N, unsigned short argn, unsigned short type, obj_t *obj, unsigned short allow_blank);
+int n_expect_argtype(nsp_state *N, unsigned short type, unsigned short argnum, obj_t *obj, unsigned short allow_blank);
 //#define  n_expect_argtype(N,a,t,o,ab) _n_expect_argtype(N, a, t, o, ab);
 
 #ifdef __cplusplus

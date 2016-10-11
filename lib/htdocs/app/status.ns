@@ -1,0 +1,38 @@
+include("mail/mail.lib.ns");
+
+function update_accounts() {
+	query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid", tonumber(_USER['userid']));
+	sqr=sqlquery(query);
+	// sync the pop3 mailboxes first
+	foreach (row in sqr['_rows']) {
+		t1=time.sqltounix(row['lastcheck']);
+		t2=time.sqltounix(time.sqldatetime());
+		//printf("%s - %d seconds<br>", row['accountname'], t2-t1);
+		if (t2-t1<120) continue;
+		//printf("syncing<br>");
+		try {
+			mail.sync.dosync(row);
+			//mail.sync.smtp_sync(row);
+		} catch (ex) {
+			printf("Exception: [%s]<br>", html_encode(ex.description));
+			return;
+		}
+	}
+	// then try to send stuff
+	foreach (row in sqr['_rows']) {
+		t1=time.sqltounix(row['lastcheck']);
+		t2=time.sqltounix(time.sqldatetime());
+		//printf("%s - %d seconds<br>", row['accountname'], t2-t1);
+		if (t2-t1<120) continue;
+		//printf("syncing<br>");
+		try {
+			//mail.sync.dosync(row);
+			mail.sync.smtp_sync(row);
+		} catch (ex) {
+			printf("Exception: [%s]<br>", html_encode(ex.description));
+			return;
+		}
+	}
+}
+
+update_accounts();

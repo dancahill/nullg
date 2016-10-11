@@ -6,8 +6,7 @@ function list_bookmarks() {
 	bookmarkhtml.headermenu(currentfolder.id);
 	bookmarkhtml.show_searchform();
 	//print("<br>\r\n");
-	print("<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n");
-	print("<table id='contenttable' class='contenttable' style='width:400px;'>\r\n");
+	print("<table id='contenttable' class='contenttable' style='width:450px;'>\r\n");
 	printf("<thead>\r\n");
 	printf("<tr><th colspan=2 style='text-align:center'>%s</th></tr>\r\n", currentfolder.name);
 	printf("</thead>\r\n");

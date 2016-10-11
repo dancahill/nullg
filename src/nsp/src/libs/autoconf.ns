@@ -59,8 +59,20 @@ function dotests() {
 	}
 
 	if (ostype=='windows') {
-		x=file.stat("../config-win.mak");
-		if (typeof(x)=='table') if (x.size>0) return;
+		x1=file.stat(_filepath+"/../../include/nsp/config-win.h");
+		x2=file.stat(_filepath+"/../config-win.mak");
+		if (typeof(x1)!='table') {
+			printf("config-win.h does not exist\r\n");
+		} else if (x1.size<1) {
+			printf("config-win.h is empty\r\n");
+		} else if (typeof(x2)!='table') {
+			printf("config-win.mak does not exist\r\n");
+		} else if (x2.size<1) {
+			printf("config-win.mak is empty\r\n");
+		} else {
+			printf("config-win.h and config-win.mak exist - skipping reconf\r\n");
+			return;
+		}
 	} else {
 		x=file.stat("../config.mak");
 		if (typeof(x)=='table') if (x.size>0) return;

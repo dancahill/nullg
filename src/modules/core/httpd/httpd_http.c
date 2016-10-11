@@ -22,7 +22,7 @@
 static void read_postdata(CONN *conn)
 {
 	obj_t *cobj;
-	int maxplen = (int)nsp_getnum(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd"), "max_post_size");
+	int maxplen = (int)nsp_getnum(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd"), "max_post_size");
 	int postlen = (int)nsp_getnum(conn->N, nsp_settable(conn->N, &conn->N->g, "_SERVER"), "CONTENT_LENGTH");
 	char *PostData, *p;
 	int bytesleft;
@@ -32,13 +32,13 @@ static void read_postdata(CONN *conn)
 	cobj = nsp_getobj(conn->N, &conn->N->g, "POSTRAWDATA");
 	if (cobj->val->type != NT_NULL) return;
 	bytesleft = postlen;
-	if (bytesleft<0) {
+	if (bytesleft < 0) {
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "ERROR: negative Content-Length of %d provided by client.", postlen);
 		postlen = 0;
 		closeconnect(conn, 1);
 		return;
 	}
-	else if (bytesleft>maxplen) {
+	else if (bytesleft > maxplen) {
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "ERROR: Content-Length of %d is too large.", postlen);
 		postlen = 0;
 		closeconnect(conn, 1);
@@ -78,7 +78,7 @@ static void read_postdata(CONN *conn)
 			closeconnect(conn, 1);
 			return;
 		}
-		else if (rc>0) {
+		else if (rc > 0) {
 			conn->socket.atime = time(NULL);
 			i += rc;
 		}
@@ -98,13 +98,14 @@ static int read_vardata(CONN *conn)
 	obj_t *servobj = nsp_settable(conn->N, &conn->N->g, "_SERVER");
 	obj_t *gobj = nsp_settable(conn->N, &conn->N->g, "_GET");
 	obj_t *pobj = nsp_settable(conn->N, &conn->N->g, "_POST");
+	obj_t *fobj;
 	obj_t *cobj;
 	char boundary[100];
 	int blen;
 	int clen;
-	int maxplen = (int)nsp_getnum(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "httpd"), "max_post_size");
+	int maxplen = (int)nsp_getnum(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, nsp_settable(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd"), "max_post_size");
 	char tmpbuf[MAX_OBJNAMELEN];
-	char tmpbuf2[MAX_OBJNAMELEN + 5];
+	//char tmpbuf2[MAX_OBJNAMELEN + 5];
 	char filename[255];
 	char *QueryString = nsp_getstr(conn->N, servobj, "QUERY_STRING");
 	char *p1, *p2;
@@ -226,7 +227,25 @@ static int read_vardata(CONN *conn)
 				/* read backward 4 chars */
 				if (p2[i - 1] == '-') i--; if (p2[i - 1] == '-') i--;
 				if (p2[i - 1] == '\n') i--; if (p2[i - 1] == '\r') i--;
-				cobj = nsp_setstr(conn->N, pobj, tmpbuf, NULL, 0);
+				if (filename[0] != '\0') {
+					fobj = nsp_settable(conn->N, pobj, tmpbuf);
+					cobj = nsp_setstr(conn->N, fobj, "DATA", NULL, 0);
+
+					//cobj->val->attr |= NST_HIDDEN; /* hide attached files from var dumps */
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_name", tmpbuf);
+					//nsp_setstr(conn->N, fobj, tmpbuf2, filename, strlen(filename));
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_size", tmpbuf);
+					//nsp_setnum(conn->N, fobj, tmpbuf2, i);
+
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_name", tmpbuf);
+					nsp_setstr(conn->N, fobj, "FILENAME", filename, -1);
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_size", tmpbuf);
+					nsp_setnum(conn->N, fobj, "SIZE", i);
+
+				}
+				else {
+					cobj = nsp_setstr(conn->N, pobj, tmpbuf, NULL, 0);
+				}
 				if (i) {
 					cobj->val->d.str = malloc(i + 1);
 					if (cobj->val->d.str) {
@@ -237,13 +256,13 @@ static int read_vardata(CONN *conn)
 				cobj->val->size = cobj->val->d.str ? i : 0;
 				/* decodeurl(conn->dat->smallbuf[1]); */
 				/* does any of this need to be decoded?  ever?  */
-				if (filename[0] != '\0') {
-					cobj->val->attr |= NST_HIDDEN; /* hide attached files from var dumps */
-					snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_name", tmpbuf);
-					nsp_setstr(conn->N, pobj, tmpbuf2, filename, strlen(filename));
-					snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_size", tmpbuf);
-					nsp_setnum(conn->N, pobj, tmpbuf2, i);
-				}
+				//if (filename[0] != '\0') {
+					//cobj->val->attr |= NST_HIDDEN; /* hide attached files from var dumps */
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_name", tmpbuf);
+					//nsp_setstr(conn->N, fobj, tmpbuf2, filename, strlen(filename));
+					//snprintf(tmpbuf2, sizeof(tmpbuf2) - 1, "%s_size", tmpbuf);
+					//nsp_setnum(conn->N, fobj, tmpbuf2, i);
+				//}
 				p2 += i;
 				/* end part reading */
 			} while (1);
@@ -459,7 +478,7 @@ int read_header(CONN *conn)
 {
 	obj_t *confobj = nsp_getobj(proc->N, &proc->N->g, "CONFIG");
 	obj_t *newconfobj;
-	obj_t *hobj = nsp_settable(proc->N, confobj, "httpd");
+	obj_t *hobj = nsp_settable(proc->N, nsp_getobj(proc->N, confobj, "modules"), "httpd");
 	obj_t *hcobj, *hrobj, *hsobj, *cobj;
 	char varname[64];
 	char line[2048];
@@ -617,27 +636,15 @@ int read_header(CONN *conn)
 
 	newconfobj = nsp_settable(conn->N, &conn->N->g, "_CONFIG");
 	newconfobj->val->attr |= NST_AUTOSORT;
-	//	cobj=nsp_getobj(proc->N, confobj, "var_path");
-	//	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "var_path", cobj->val->d.str, cobj->val->size);
 	cobj = nsp_getobj(proc->N, confobj, "default_language");
 	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "default_language", cobj->val->d.str, cobj->val->size);
 	cobj = nsp_getobj(proc->N, confobj, "sql_server_type");
 	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "sql_server_type", cobj->val->d.str, cobj->val->size);
 	cobj = nsp_getobj(proc->N, confobj, "host_name");
 	if (nsp_isstr(cobj)) nsp_setstr(conn->N, newconfobj, "host_name", cobj->val->d.str, cobj->val->size);
-	/*
-		snprintf(line, sizeof(line)-1, "%s/%04d/htdocs", nsp_getstr(proc->N, confobj, "var_domains_path"), conn->dat->did);
-		nsp_setstr(conn->N, newconfobj, "private_htdocs_path", line, -1);
-		snprintf(line, sizeof(line)-1, "%s/%04d/template", nsp_getstr(proc->N, confobj, "var_domains_path"), conn->dat->did);
-		nsp_setstr(conn->N, newconfobj, "private_template_path", line, -1);
-	*/
-//	snprintf(line, sizeof(line) - 1, "%s/share/htdocs", nsp_getstr(proc->N, confobj, "var_path"));
-//	nsp_setstr(conn->N, newconfobj, "shared_htdocs_path", line, -1);
-//	snprintf(line, sizeof(line) - 1, "%s/scripts", nsp_getstr(proc->N, confobj, "lib_path"));
-//	nsp_setstr(conn->N, newconfobj, "lib_script_path", line, -1);
 
-	nsp_setstr(conn->N, newconfobj, "lib_path", nsp_getstr(proc->N, confobj, "lib_path"), -1);
-	nsp_setstr(conn->N, newconfobj, "var_path", nsp_getstr(proc->N, confobj, "var_path"), -1);
+	nsp_setstr(conn->N, nsp_settable(conn->N, newconfobj, "paths"), "lib", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"), -1);
+	nsp_setstr(conn->N, nsp_settable(conn->N, newconfobj, "paths"), "var", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), -1);
 
 	nsp_linkval(conn->N, nsp_settable(conn->N, newconfobj, "MODULES"), nsp_getobj(proc->N, &proc->N->g, "GWMODULES"));
 
@@ -673,18 +680,18 @@ int read_header(CONN *conn)
 	 if (domainid>0) {
 		 if (strncmp(scriptname, "/cgi-bin/", 9)==0) {
 			 snprintf(progname, sizeof(progname)-1, "%s", scriptname+8);
-			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s/%04d/cgi-bin%s", nsp_getstr(proc->N, confobj, "var_domains_path"), domainid, progname);
+			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s/%04d/cgi-bin%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var_domains"), domainid, progname);
 		 } else if (strncmp(scriptname, "/", 1)==0) {
 			 snprintf(progname, sizeof(progname)-1, "%s", scriptname);
-			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s/%04d/htdocs%s", nsp_getstr(proc->N, confobj, "var_domains_path"), domainid, progname);
+			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s/%04d/htdocs%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var_domains"), domainid, progname);
 		 }
 	 } else {
 		 if (strncmp(scriptname, "/cgi-bin/", 9)==0) {
 			 snprintf(progname, sizeof(progname)-1, "%s", scriptname+8);
-			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s%s", nsp_getstr(proc->N, confobj, "var_cgi_path"), progname);
+			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var_cgi"), progname);
 		 } else if (strncmp(scriptname, "/", 1)==0) {
 			 snprintf(progname, sizeof(progname)-1, "%s", scriptname);
-			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s%s", nsp_getstr(proc->N, confobj, "var_htdocs_path"), progname);
+			 snprintf(scriptfilename, sizeof(scriptfilename)-1, "%s%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var_htdocs"), progname);
 		 }
 	 }
 	 fixslashes(scriptfilename);
@@ -818,7 +825,7 @@ void http_dorequest(CONN *conn)
 {
 	obj_t *confobj = nsp_getobj(proc->N, &proc->N->g, "CONFIG");
 	obj_t *htobj, *hrobj, *tobj;
-//	obj_t *newconfobj;
+	//	obj_t *newconfobj;
 	char buf[255];
 	//char *RequestMethod;
 	char *RequestURI;
@@ -840,8 +847,8 @@ void http_dorequest(CONN *conn)
 	nsp_setstr(conn->N, hrobj, "CONTENT_TYPE", "text/html", -1);
 	//RequestMethod=nsp_getstr(conn->N, htobj, "REQUEST_METHOD");
 	RequestURI = nsp_getstr(conn->N, htobj, "REQUEST_URI");
-//	memset(buf, 0, sizeof(buf));
-//	snprintf(buf, sizeof(buf) - 1, "%s%s", nsp_getstr(proc->N, confobj, "var_htdocs_path"), RequestURI);
+	//	memset(buf, 0, sizeof(buf));
+	//	snprintf(buf, sizeof(buf) - 1, "%s%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var_htdocs"), RequestURI);
 	proc->stats.http_pages++;
 
 	read_vardata(conn);
@@ -891,66 +898,66 @@ void http_dorequest(CONN *conn)
 			goto wrap;
 		}
 		else {
-			snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d%s", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did, RequestURI);
+			snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did, RequestURI);
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "http_dorequest: [%s]", buf);
 			if (filesend(conn, buf) == 0) goto wrap;
-			snprintf(buf, sizeof(buf) - 1, "%s/htdocs%s", nsp_getstr(proc->N, confobj, "var_path"), RequestURI);
+			snprintf(buf, sizeof(buf) - 1, "%s/htdocs%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), RequestURI);
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "http_dorequest: [%s]", buf);
 			if (filesend(conn, buf) == 0) goto wrap;
-			snprintf(buf, sizeof(buf) - 1, "%s/htdocs%s", nsp_getstr(proc->N, confobj, "lib_path"), RequestURI);
+			snprintf(buf, sizeof(buf) - 1, "%s/htdocs%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"), RequestURI);
 			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "http_dorequest: [%s]", buf);
 			if (filesend(conn, buf) == 0) goto wrap;
 		}
 	}
 
-//	newconfobj = nsp_settable(conn->N, &conn->N->g, "_CONFIG");
-//	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/htdocs", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did);
-//	nsp_setstr(conn->N, newconfobj, "private_htdocs_path", buf, -1);
-//	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/scripts", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did);
-//	nsp_setstr(conn->N, newconfobj, "private_scripts_path", buf, -1);
+	//	newconfobj = nsp_settable(conn->N, &conn->N->g, "_CONFIG");
+	//	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/htdocs", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did);
+	//	nsp_setstr(conn->N, newconfobj, "private_htdocs_path", buf, -1);
+	//	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/scripts", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did);
+	//	nsp_setstr(conn->N, newconfobj, "private_scripts_path", buf, -1);
 
-	//	if (strcmp(RequestURI, "/")==0) {
-	//		htpage_motd(conn);
-	//		goto wrap;
+		//	if (strcmp(RequestURI, "/")==0) {
+		//		htpage_motd(conn);
+		//		goto wrap;
+		//	}
+		//	if ((ext=strrchr(ScriptName, '.'))!=NULL) {
+		//		if (strcmp(ext, ".ns")==0) {
+		//			if (htnsp_doscript(conn)>-1) goto wrap;
+		//		}
+		//	}
+
+
+	//	char buf[255];
+
+	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/htdocs", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did);
+	//	cobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_CONFIG"), "private_htdocs_path");
+	//	if (nsp_isstr(cobj)) {
+	if (test_add(conn, buf, RequestURI, "") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
+	else if (test_add(conn, buf, RequestURI, ".ns") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
+	else if (test_add(conn, buf, RequestURI, ".nsp") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
 	//	}
-	//	if ((ext=strrchr(ScriptName, '.'))!=NULL) {
-	//		if (strcmp(ext, ".ns")==0) {
-	//			if (htnsp_doscript(conn)>-1) goto wrap;
-	//		}
+		/* if it's not in the private htdocs, try the public */
+	snprintf(buf, sizeof(buf) - 1, "%s/share/htdocs", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"));
+	//	cobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_CONFIG"), "shared_htdocs_path");
+	//	if (nsp_isstr(cobj)) {
+	if (test_add(conn, buf, RequestURI, "") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
+	else if (test_add(conn, buf, RequestURI, ".ns") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
+	else if (test_add(conn, buf, RequestURI, ".nsp") == 1) {
+		if (htnsp_doscript(conn) > -1) goto wrap;
+	}
 	//	}
-
-
-//	char buf[255];
-
-	snprintf(buf, sizeof(buf) - 1, "%s/domains/%04d/htdocs", nsp_getstr(proc->N, confobj, "var_path"), conn->dat->did);
-//	cobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_CONFIG"), "private_htdocs_path");
-//	if (nsp_isstr(cobj)) {
-		if (test_add(conn, buf, RequestURI, "") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-		else if (test_add(conn, buf, RequestURI, ".ns") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-		else if (test_add(conn, buf, RequestURI, ".nsp") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-//	}
-	/* if it's not in the private htdocs, try the public */
-	snprintf(buf, sizeof(buf) - 1, "%s/share/htdocs", nsp_getstr(proc->N, confobj, "var_path"));
-//	cobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_CONFIG"), "shared_htdocs_path");
-//	if (nsp_isstr(cobj)) {
-		if (test_add(conn, buf, RequestURI, "") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-		else if (test_add(conn, buf, RequestURI, ".ns") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-		else if (test_add(conn, buf, RequestURI, ".nsp") == 1) {
-			if (htnsp_doscript(conn) > -1) goto wrap;
-		}
-//	}
-	/* else try the static shared htdocs */
-	snprintf(buf, sizeof(buf) - 1, "%s/htdocs", nsp_getstr(proc->N, confobj, "lib_path"));
+		/* else try the static shared htdocs */
+	snprintf(buf, sizeof(buf) - 1, "%s/htdocs", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"));
 	if (test_add(conn, buf, RequestURI, "") == 1) {
 		if (htnsp_doscript(conn) > -1) goto wrap;
 	}
@@ -961,8 +968,8 @@ void http_dorequest(CONN *conn)
 		if (htnsp_doscript(conn) > -1) goto wrap;
 	}
 
-		
-		
+
+
 	RequestURI = nsp_getstr(conn->N, htobj, "REQUEST_URI");
 	if (strncmp(RequestURI, "/logout", 7) == 0) {
 		auth_logout(conn);

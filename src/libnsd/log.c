@@ -20,12 +20,13 @@
 void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 {
 	obj_t *tobj=nsp_getobj(N, &N->g, "CONFIG");
-	char *logpath=nsp_getstr(N, tobj, "var_log_path");
+	char *logpath=nsp_getstr(N, nsp_getobj(N, tobj, "paths"), "var_log");
 	int conflog;
 	char file[200];
 	char logbuf[1024];
 	char logbuf2[2048];
 	char timebuf[100];
+	char timebuf2[20];
 	va_list ap;
 	int fd;
 	struct timeval ttime;
@@ -41,10 +42,11 @@ void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 	gettimeofday(&ttime, &tzone);
 	timeptr=localtime((time_t *)&ttime.tv_sec);
 	strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", timeptr);
+	strftime(timebuf2, sizeof(timebuf2), "%Y%m%d", timeptr);
 	snprintf(logbuf2, sizeof(logbuf2)-1, "%s - %s\n", timebuf, logbuf);
 
 	if (conflog>1) {
-		snprintf(file, sizeof(file)-1, "%s/all.log", logpath);
+		snprintf(file, sizeof(file)-1, "%s/all-%s.log", logpath, timebuf2);
 		fixslashes(file);
 		fd=open(file, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
 		if (fd>-1) {
@@ -54,7 +56,7 @@ void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 		}
 	}
 
-	snprintf(file, sizeof(file)-1, "%s/%s-access.log", logpath, logsrc);
+	snprintf(file, sizeof(file)-1, "%s/%s-access-%s.log", logpath, logsrc, timebuf2);
 	fixslashes(file);
 	fd=open(file, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
 	if (fd>-1) {
@@ -73,6 +75,7 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 	char logbuf[1024];
 	char logbuf2[2048];
 	char timebuf[100];
+	char timebuf2[20];
 	va_list ap;
 	int fd;
 	struct timeval ttime;
@@ -81,7 +84,7 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 	char *ptemp;
 
 	if (tobj->val->type!=NT_TABLE) return;
-	logpath=nsp_getstr(N, tobj, "var_log_path");
+	logpath=nsp_getstr(N, nsp_getobj(N, tobj, "paths"), "var_log");
 	conflog=(int)nsp_getnum(N, tobj, "log_level");
 	//if ((loglevel>conflog)||(conflog<1)) return;
 	va_start(ap, format);
@@ -95,6 +98,7 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 	gettimeofday(&ttime, &tzone);
 	timeptr=localtime((time_t *)&(ttime.tv_sec));
 	strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", timeptr);
+	strftime(timebuf2, sizeof(timebuf2), "%Y%m%d", timeptr);
 	if ((ptemp=strrchr(srcfile, '/'))!=NULL) srcfile=ptemp+1;
 	if ((ptemp=strrchr(srcfile, '\\'))!=NULL) srcfile=ptemp+1;
 	if (conflog>1) {
@@ -103,7 +107,7 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 		snprintf(logbuf2, sizeof(logbuf2)-1, "%s - [%d] %s\n", timebuf, loglevel, logbuf);
 	}
 	if (conflog>1) {
-		snprintf(file, sizeof(file)-1, "%s/all.log", logpath);
+		snprintf(file, sizeof(file)-1, "%s/all-%s.log", logpath, timebuf2);
 		fixslashes(file);
 		fd=open(file, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
 		if (fd>-1) {
@@ -113,7 +117,7 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 		}
 	}
 	if ((loglevel>conflog)||(conflog<1)) return;
-	snprintf(file, sizeof(file)-1, "%s/%s-error.log", logpath, logsrc);
+	snprintf(file, sizeof(file)-1, "%s/%s-error-%s.log", logpath, logsrc, timebuf2);
 	fixslashes(file);
 	fd=open(file, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
 	if (fd>-1) {

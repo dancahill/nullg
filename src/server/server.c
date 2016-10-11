@@ -221,6 +221,7 @@ void init(nsp_state *N)
 	if (proc.debug) printf("Initing SSL\r\n");
 	ssl_init();
 #endif
+	nsdevents_start(N);
 	return;
 }
 

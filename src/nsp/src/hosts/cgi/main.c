@@ -51,8 +51,8 @@ static NSP_FUNCTION(nescgi_flush)
 		send_header(0, "text/html", -1, -1);
 		headersent = 1;
 	}
-	N->outbuf[N->outbuflen] = '\0';
-	write(STDOUT_FILENO, N->outbuf, N->outbuflen);
+	N->outbuffer[N->outbuflen] = '\0';
+	write(STDOUT_FILENO, N->outbuffer, N->outbuflen);
 	N->outbuflen = 0;
 	return 0;
 }

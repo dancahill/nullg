@@ -27,16 +27,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "httpd", "src\modules\core\h
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gsmon", "src\win\gsmon\gsmon.vcxproj", "{A6BE8EEB-9417-4E65-8155-E53DC3343586}"
 	ProjectSection(ProjectDependencies) = postProject
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A} = {52F99E4B-EA7D-470C-B66F-685C3B40626A}
 		{523F6D91-428F-4331-BD21-78F838E50BB2} = {523F6D91-428F-4331-BD21-78F838E50BB2}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "confutil", "src\confutil\confutil.vcxproj", "{67178C9F-A7A4-4445-A6D6-759A0AB810F0}"
 	ProjectSection(ProjectDependencies) = postProject
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A} = {52F99E4B-EA7D-470C-B66F-685C3B40626A}
 		{523F6D91-428F-4331-BD21-78F838E50BB2} = {523F6D91-428F-4331-BD21-78F838E50BB2}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dbutil", "src\dbutil\dbutil.vcxproj", "{47334CB0-11C1-4B73-81F8-1EF900241B21}"
 	ProjectSection(ProjectDependencies) = postProject
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A} = {52F99E4B-EA7D-470C-B66F-685C3B40626A}
 		{523F6D91-428F-4331-BD21-78F838E50BB2} = {523F6D91-428F-4331-BD21-78F838E50BB2}
 	EndProjectSection
 EndProject
@@ -60,29 +63,62 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smtpq", "src\modules\core\s
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NSP", "NSP", "{B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp", "src\nsp\src\libnsp\libnsp.vcxproj", "{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp", "src\nsp\src\libnsp\libnsp.vcxproj", "{52F99E4B-EA7D-470C-B66F-685C3B40626A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_base(dll)", "src\nsp\src\libs\base\libnsp_base(dll).vcxproj", "{D08F308C-C0C5-4F88-89F4-A435959F8E43}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_crypto(dll)", "src\nsp\src\libs\crypto\libnsp_crypto(dll).vcxproj", "{3A23312E-E821-41E4-ADE7-D27CC45C3F49}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_data(dll)", "src\nsp\src\libs\data\libnsp_data(dll).vcxproj", "{E2278892-2734-42A7-BA8F-ECD757E8AC42}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_fbsql(dll)", "src\nsp\src\libs\fbsql\libnsp_fbsql(dll).vcxproj", "{279D35AA-70BB-49FE-912F-FDFD41B0E386}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_ldap(dll)", "src\nsp\src\libs\ldap\libnsp_ldap(dll).vcxproj", "{A8AD9D26-8883-4D04-AF5F-91FEAE2D3382}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_mysql(dll)", "src\nsp\src\libs\mysql\libnsp_mysql(dll).vcxproj", "{36C2B760-92FA-4AFB-AB17-8EE323AEFCE7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_net(dll)", "src\nsp\src\libs\net\libnsp_net(dll).vcxproj", "{51AFBBE1-5517-4F44-AD2A-9A28B22287F0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_odbc(dll)", "src\nsp\src\libs\odbc\libnsp_odbc(dll).vcxproj", "{F32E799E-DB47-41F0-B395-C0443C1235FC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_pgsql(dll)", "src\nsp\src\libs\pgsql\libnsp_pgsql(dll).vcxproj", "{D7AD4332-E7F8-4818-9870-CAA8E02EF6EC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_sqlite(dll)", "src\nsp\src\libs\sqlite\libnsp_sqlite(dll).vcxproj", "{85544B83-3006-4820-98AD-6639122BA24D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnsp_ssh2(dll)", "src\nsp\src\libs\ssh2\libnsp_ssh2(dll).vcxproj", "{6EE0844B-E695-4B35-A08E-0C9504C358F8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{02EBD4F5-67F2-4664-9637-ED43375B2FED} = {02EBD4F5-67F2-4664-9637-ED43375B2FED}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CLI", "src\nsp\src\hosts\cli\CLI.vcxproj", "{02EBD4F5-67F2-4664-9637-ED43375B2FED}"
 EndProject
@@ -128,10 +164,10 @@ Global
 		{8622AFF9-44DE-481F-9EC4-876747BF047D}.Debug|Win32.Build.0 = Debug|Win32
 		{8622AFF9-44DE-481F-9EC4-876747BF047D}.Release|Win32.ActiveCfg = Release|Win32
 		{8622AFF9-44DE-481F-9EC4-876747BF047D}.Release|Win32.Build.0 = Release|Win32
-		{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D}.Debug|Win32.Build.0 = Debug|Win32
-		{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D}.Release|Win32.ActiveCfg = Release|Win32
-		{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D}.Release|Win32.Build.0 = Release|Win32
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A}.Debug|Win32.Build.0 = Debug|Win32
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A}.Release|Win32.ActiveCfg = Release|Win32
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A}.Release|Win32.Build.0 = Release|Win32
 		{D08F308C-C0C5-4F88-89F4-A435959F8E43}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D08F308C-C0C5-4F88-89F4-A435959F8E43}.Debug|Win32.Build.0 = Debug|Win32
 		{D08F308C-C0C5-4F88-89F4-A435959F8E43}.Release|Win32.ActiveCfg = Release|Win32
@@ -193,7 +229,7 @@ Global
 		{CCCEA9BF-A0A1-4B59-8C8A-A5E8E9D8914A} = {C1B75E8D-C0A9-48AA-B6E2-C6C9EE96EA47}
 		{65BCE2C7-1274-4D24-A6B2-D2B350647917} = {C1B75E8D-C0A9-48AA-B6E2-C6C9EE96EA47}
 		{8622AFF9-44DE-481F-9EC4-876747BF047D} = {C1B75E8D-C0A9-48AA-B6E2-C6C9EE96EA47}
-		{7DA1BAAF-868F-425F-ACA3-BB1646EC3D4D} = {B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}
+		{52F99E4B-EA7D-470C-B66F-685C3B40626A} = {B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}
 		{D08F308C-C0C5-4F88-89F4-A435959F8E43} = {B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}
 		{3A23312E-E821-41E4-ADE7-D27CC45C3F49} = {B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}
 		{E2278892-2734-42A7-BA8F-ECD757E8AC42} = {B538C3DF-EEBC-45ED-BA3D-FA28319BCEDF}

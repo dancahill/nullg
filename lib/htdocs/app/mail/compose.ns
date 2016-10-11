@@ -2,9 +2,9 @@ include("mail.lib.ns");
 
 function message_decode(body, header) {
 	if (header['content-transfer-encoding']=='quoted-printable') {
-		body=""+net.mime.decode_qp(body)+"";
+		body=""+net.mime.qp.decode(body)+"";
 	} else if (header['content-transfer-encoding']=='base64') {
-		body=""+base64.decode(body)+"";
+		body=""+net.mime.base64.decode(body)+"";
 	}
 	return body;
 }
@@ -34,25 +34,30 @@ function print_header() {
 	} else {
 		row={};
 	}
+	var currentaccountid = tonumber(_USER['pref']['mailcurrent']);
 	if (_GET['PART']=='header') {
 //		print("[Previous] ");
 //		print("[<A HREF=\"write?replyto=",msg,"\">Reply</A>] ");
 //		print("[Reply All] [Forward] [Print] [Delete] [Next]");
-		print("<table id='msgread' class='contenttable' style='height:100%;width:100%;'>\r\n");
+		print("<table id='msgread' class='contentview' style='height:100%;width:100%;'>\r\n");
 		//print("<tr><th width='1%' style='text-align:left'>From</th><td width='99%'><div id='msgfrom' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_to']),"</div></td></tr>\r\n");
 		print("<tr><th width='1%' style='text-align:left'>From</th><td width='99%'>");
 		print("<select id=msgfrom style='width:100%'>");
 		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d", userid));
-		var currentaccountid = tonumber(_USER['pref']['mailcurrent']);
 		foreach (acctrow in sqr['_rows']) {
 			mailaccountid=tonumber(acctrow['mailaccountid']);
 			printf("<option value=%d%s>%s</option>\r\n", mailaccountid, (mailaccountid==currentaccountid)?" SELECTED":"", acctrow['accountname']);
 		}
 		print("</select>");
 		print("</td></tr>\r\n");
-		print("<tr><th style='text-align:left'>To</th><td><div id='msgto' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_replyto']),"</div></td></tr>\r\n");
-		print("<tr><th style='text-align:left'>CC</th><td><div id='msgcc' contenteditable=true style='border:0;width:100%'>",strtohtml(row['hdr_cc']),"</div></td></tr>\r\n");
-		print("<tr><th style='text-align:left'>BCC</th><td><div id='msgbcc' contenteditable=true style='border:0;width:100%'></div></td></tr>\r\n");
+
+		//print("<tr><th style='text-align:left' onclick=\"javascript:contacts.emailaddrbook.list('');\"><a href=javascript:contacts.emailaddrbook.list(''); title=\"Address Book\">To</a></th>");
+		print("<tr><th style='text-align:left' onclick=\"javascript:contacts.emailaddrbook.list('to');\" title=\"Address Book\">To</th>");
+		print("<td><div id='msgto' contenteditable=true spellcheck=false style='border:0;width:100%'>",strtohtml(row['hdr_replyto']),"</div></td></tr>\r\n");
+		print("<tr><th style='text-align:left' onclick=\"javascript:contacts.emailaddrbook.list('cc');\" title=\"Address Book\">CC</th>");
+		print("<td><div id='msgcc' contenteditable=true spellcheck=false style='border:0;width:100%'>",strtohtml(row['hdr_cc']),"</div></td></tr>\r\n");
+		print("<tr><th style='text-align:left' onclick=\"javascript:contacts.emailaddrbook.list('bcc');\" title=\"Address Book\">BCC</th>");
+		print("<td><div id='msgbcc' contenteditable=true spellcheck=false style='border:0;width:100%'></div></td></tr>\r\n");
 		if (headerid==0) {
 			subject="";
 		} else {
@@ -114,7 +119,7 @@ function print_header() {
 			"subject<input type=text name=msgsubject value=''><br>",
 			"text<br><textarea name=msgbody></textarea><br>",
 			"</div>",
-			"<input type=file name=fattach size=70>\r\n",
+			"<input type=file name=fattach id=fattach size=70 multiple>\r\n",
 		//	"Attachment:<input type=file name=fattach size=70><br>",
 		//	"<input type=submit class=frmButton value='Send Mail'>",
 		//	"<input type=submit class=frmButton value='Save As Draft'>",
@@ -128,8 +133,15 @@ function print_header() {
 		print("</script>");
 	//	print("<br><a href=\"javascript:x();\">blah</a>");
 	} else if (_GET['PART']=='body') {
+		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d", currentaccountid, userid));
+		if (sqr['_rows'].length()!=1) {
+			throw "couldn't find current account";
+		}
+		signature=sqr['_rows'][0]['signature'];
+		if (signature!="") signature=""+signature+"<br><br>";
+
 		if (headerid==0) {
-			print("<div style='color:blue'><br><br></div>");
+			print("<div style='color:blue'><br><br>"+signature+"</div>");
 			return;
 		}
 		local function findtextorhtml(parent) {
@@ -153,8 +165,8 @@ function print_header() {
 			return string.sub(s, string.len(s)-p, p);
 		}
 		// /var/lib/nullgw/domains/0001/mail/0001/0001/000434.msg
-		//printf("MASTERGLOBAL['CONFIG']['var_domains_path']=[%s]", MASTERGLOBAL['CONFIG']['var_domains_path']);
-		var var_domains_path=MASTERGLOBAL['CONFIG']['var_domains_path'];
+		//printf("MASTERGLOBAL['CONFIG']['paths']['var_domains']=[%s]", MASTERGLOBAL['CONFIG']['paths']['var_domains']);
+		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
 		path=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(row['obj_did'], 4), pad(row['accountid'], 4), pad(row['folder'], 4), pad(row['mailheaderid'], 6));
 		msgbody=file.readall(path);
 		if (typeof(msgbody)!='string') {
@@ -200,7 +212,7 @@ function print_header() {
 			mb=messagebody.istr("<body");
 			if (mb==null) mb=messagebody;
 			print(
-				"<div style='color:black'><br><br>"+strtohtml(row['hdr_from'])+" said:</div>\r\n<blockquote class='gw_quote' style='margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex'>",
+				"<div style='color:black'><br><br>"+signature+strtohtml(row['hdr_from'])+" said:</div>\r\n<blockquote class='gw_quote' style='margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex'>",
 				mb,
 				"</blockquote>"
 			);
