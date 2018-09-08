@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ NSP_FUNCTION(libnsp_data_cdb_write);
 NSP_FUNCTION(libnsp_data_csv_reader);
 /* dbf.c */
 NSP_CLASS(libnsp_data_dbf_reader);
+/* json.c */
+NSP_CLASS(libnsp_data_json_encode);
 /* sql.c */
 NSP_FUNCTION(libnsp_data_sql_common_escape);
 NSP_FUNCTION(libnsp_data_sql_common_notimplemented);

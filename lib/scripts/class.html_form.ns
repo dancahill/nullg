@@ -1,0 +1,92 @@
+class html_form {
+	function _constructor(record) {
+		this.record = record;
+		this.fields = {};
+	}
+
+	function addfield(field) {
+		if (field.gettype()!='table') throw "field is not a table";
+		this.fields[this.fields.length()] = field;
+		if (field.type.gettype()!='string') field.type="text";
+		field.type=field.type.tolower();
+		if (field.type=="hidden") {
+			// strtohtml seems to be crashing on ints
+			printf("<input type=hidden id=%s name=%s value=\"%s\">\r\n", field.name, field.name, strtohtml(this.record[field.name].tostring()));
+			return;
+		}
+
+		if (field.type=="textarea") {
+			printf("<tr><td colspan=2><b>%s</b></td></tr><tr><td colspan=2>", field.label);
+			printf("<textarea wrap=virtual id=%s name=%s rows=5 cols=50>", field.name, field.name);
+			print(strtohtml(this.record[field.name].tostring()));
+			printf("</textarea></td></tr>");
+			return;
+		}
+
+		printf("<tr><td><b>%s</b></td>", field.label);
+		printf("<td>");
+		if (field.type=="select") {
+			printf("<select id=%s name=%s>\r\n", field.name, field.name);
+			v=this.record[(field.src!=null?field.src:field.name)];
+			if (typeof(field.handler)=='function') {
+				field.handler(v, this.record);
+			} else {
+				printf("%s needs a handler", field.name);
+			}
+			print("</select>");
+		} else if (field.type=="password") {
+			printf("<input type=password id=%s name=%s value=\"%s\"", field.name, field.name, "");
+			if (field.required===true) printf(" required='required'");
+			if (field.autocorrect!==true) printf(" spellcheck='false' autocorrect='off'");
+			printf(" autocomplete='new-password'");// google ignores 'off'
+			printf(">");
+		//} else if (field.type=="textarea") {
+			//printf("<textarea wrap=virtual id=%s name=%s rows=5 cols=50>", field.name, field.name);
+			//print(strtohtml(this.record[field.name].tostring()));
+			//printf("</textarea>");
+		} else {
+			printf("<input type=text id=%s name=%s value=\"", field.name, field.name);
+			v=this.record[(field.src!=null?field.src:field.name)];
+			if (typeof(field.handler)=='function') {
+				field.handler(v);
+			} else {
+				print(strtohtml(v));
+			}
+			printf("\"");
+			if (field.required===true) printf(" required='required'");
+			if (field.autocorrect!==true) printf(" spellcheck='false' autocorrect='off'");
+			printf(">");
+		}
+		printf("</td></tr>\r\n");
+	}
+
+	function validate(tablename) {
+		foreach (n,v in this.record) {
+			if (n=='obj_ctime') continue;
+			if (n=='obj_mtime') continue;
+			if (n=='obj_uid') continue;
+			if (n=='obj_gid') continue;
+			if (n=='obj_did') continue;
+			if (n=='obj_gperm') continue;
+			if (n=='obj_operm') continue;
+			found=false;
+			foreach (f in this.fields) {
+				if (f.src!=null && n==f.src) found=true;
+				if (n==f.name) found=true;
+			}
+			if (found==false) {
+				printf("db field '%s' not found on form<br>", n);
+			}
+		}
+		foreach (f in this.fields) {
+			found=false;
+			foreach (n,v in this.record) {
+				if (f.src!=null && n==f.src) found=true;
+				if (n==f.name) found=true;
+			}
+			if (found==false) {
+				printf("form field '%s' not found in db record<br>", f.name);
+			}
+		}
+	}
+}

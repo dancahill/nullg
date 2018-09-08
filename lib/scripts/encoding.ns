@@ -8,24 +8,6 @@ function html_encode(s) {
 	return s;
 }
 
-/*
-function strtohtml(s) {
-	s=typeof(s)=='string'?s:"";
-	return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
-}
-*/
-
-function strtohtml(s) {
-	if (typeof(s)!='string') return "";
-	s=s.replace("&",  "&amp;");
-	s=s.replace("\"", "&quot;");
-	s=s.replace("<",  "&lt;");
-	s=s.replace(">",  "&gt;");
-//	s=d.replace(" ",  "&nbsp;");
-//	return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
-	return s;
-}
-
 function sql_escape(s) {
 	s=s.tostring().replace("'", "''");
 	return s;

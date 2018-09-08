@@ -5,15 +5,15 @@ global bookmarks = {
 global bookmarkhtml = {
 	function headermenu(folderid) {
 		var menuitems = {
-			{ text="LIST BOOKMARKS"; href="/app/bookmarks/";                                     onclick="return GoTo(event);";                };
-			{ text="NEW BOOKMARK";   href="/app/bookmarks/editbookmark?id=0&folderid="+folderid; onclick="return ModalForm(event, 'bookmark', 0);";       };
-			{ text="NEW FOLDER";     href="/app/bookmarks/editfolder?id=0&parentid="+folderid;   onclick="return ModalForm(event, 'bookmarkfolder', 0);"; };
+			{ text="LIST BOOKMARKS"; href="/app/bookmarks/";                                     onclick="return ns.GoTo(event);";                };
+			{ text="NEW BOOKMARK";   href="/app/bookmarks/bookmark?id=0&folderid="+folderid; onclick="return ns.ModalForm(event, 'bookmark', 0);";       };
+			{ text="NEW FOLDER";     href="/app/bookmarks/bookmarkfolder?id=0&parentid="+folderid;   onclick="return ns.ModalForm(event, 'bookmarkfolder', 0);"; };
 		};
 		html.headersubmenu(menuitems);
 	};
 	function show_searchform() {
 		print("<div style='margin:auto;text-align:right;'>");
-		print("<form id=bookmarksearch name=bookmarksearch method=post action=\"/app/bookmarks/search\" onsubmit=\"return ModalSubmit(event, 'bookmarksearch', 'save');\" enctype='multipart/form-data'>");
+		print("<form id=bookmarksearch name=bookmarksearch method=post action=\"/app/bookmarks/list\" onsubmit=\"return ns.ModalSubmit(event, 'bookmarksearch', 'save');\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Bookmarks' required='required' autocorrect='off'>");
 		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
 		print("</form>");

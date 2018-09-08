@@ -1,0 +1,42 @@
+<?nsp
+
+function search_notes() {
+	print("<br>\r\n");
+	print("<center>\r\n");
+	noteslist=db.notes.getlist();
+	if (noteslist._tuples<1) {
+		print("<b>Found 0 matching notes</b></center>\r\n");
+		return;
+	}
+	t=new html_table();
+	t.datasource=noteslist;
+	t.tablename="T2";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	fntd=function (row, column) {
+		return sprintf("<td onclick=\"javascript:ns.notes.view(%d)\"'>", tonumber(row['noteid']));
+	};
+	fn=function (row, column) { id=tonumber(row['noteid']); if (row['notetitle']=="") return "";
+		return sprintf("<a href=\"javascript:ns.notes.view(%d);\">%s</a>", id, strtohtml(row['notetitle']));
+	};
+	t.addcolumn("notetitle", "Note Title", fn, fntd);
+	t.addcolumn("tablename", "Reference");
+	t.addcolumn("tableindex", "Reference ID");
+	t.addcolumn("obj_mtime", "Last Modified");
+	t.write();
+	print("</center>\r\n");
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include_template("db.ns");
+	include_template("class.html_table.ns");
+
+	html.headersubmenu(null);
+
+	search_notes();
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

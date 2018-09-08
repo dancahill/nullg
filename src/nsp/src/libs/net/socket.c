@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ NSP_FUNCTION(libnsp_net_socket_bind)
 	bsock = (TCP_SOCKET *)cobj->val->d.str;
 	if (cobj1->val->type != NT_STRING) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	if (cobj2->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
-	if ((rc = tcp_bind(N, cobj1->val->d.str, (unsigned short)cobj2->val->d.num)) < 0) {
+	if ((rc = tcp_bind(N, bsock, cobj1->val->d.str, (unsigned short)cobj2->val->d.num)) < 0) {
 		n_free(N, (void *)&cobj->val->d.str, sizeof(TCP_SOCKET) + 1);
 		cobj->val->size = 0;
 		nsp_setstr(N, &N->r, "", "tcp error", -1);

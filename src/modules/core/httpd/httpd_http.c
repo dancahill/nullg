@@ -887,9 +887,11 @@ void http_dorequest(CONN *conn)
 	if (conn->N->err) {
 		// conn->N->err=0;
 		if (strcmp(conn->N->errbuf, "authentication required") == 0) {
+			//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "http_dorequest: htnsp_runinit has an exception");
+			send_error(conn, 403, "Forbidden", "authentication required");
 			//htpage_login(conn);
 			//prints(conn, "<B>[Exception: \"%s\"]</B>\r\n", conn->N->errbuf);
-			prints(conn, "%s", conn->N->errbuf);
+			//prints(conn, "%s", conn->N->errbuf);
 			conn->N->err = 0;
 			flushbuffer(conn);
 			log_htaccess(conn);

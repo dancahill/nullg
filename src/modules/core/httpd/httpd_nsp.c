@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "httpd_main.h"
+#include "nsp/nsplib.h"
 
 #ifdef WIN32
 #define pthread_self() GetCurrentThreadId()
@@ -230,69 +231,155 @@ typedef struct {
 	short len;
 } _htmltags;
 static _htmltags htmltags[] = {
-	{  '"', "&quot;", 6 },
-	{  '&', "&amp;",  5 },
-	{  '<', "&lt;",   4 },
-	{  '>', "&gt;",   4 }
+	{ '"', "&quot;", 6 },
+	{ '\'', "&apos;", 6 },
+	{ '&', "&amp;",  5 },
+	{ '<', "&lt;",   4 },
+	{ '>', "&gt;",   4 },
+	{  0 ,NULL,     0 }
 };
 
-static NSP_FUNCTION(htnsp_str2html)
+static unsigned short isutf(uchar *str)
 {
+	//https://en.wikipedia.org/wiki/UTF-8
+	//http://unicodebook.readthedocs.io/guess_encoding.html
+	/*
+	Number		Bits for	First		Last
+	of bytes	code point	code point	code point	Byte 1		Byte 2		Byte 3		Byte 4
+	1		7		U+0000		U+007F		0xxxxxxx
+	2		11		U+0080		U+07FF		110xxxxx	10xxxxxx
+	3		16		U+0800		U+FFFF		1110xxxx	10xxxxxx	10xxxxxx
+	4		21		U+10000		U+10FFFF	11110xxx	10xxxxxx	10xxxxxx	10xxxxxx
+	*/
+	unsigned short len = 0;
+
+	if (0xC2 <= str[0] && str[0] <= 0xDF)
+		/* 0b110xxxxx: 2 bytes sequence */
+	{
+		//prints(get_conn(), "2[%d][%d][%d][%d][%s]\r\n", str[0], str[1], str[2], str[3], str);
+		len = 2;
+	}
+	else if (0xE0 <= str[0] && str[0] <= 0xEF)
+		/* 0b1110xxxx: 3 bytes sequence */
+	{
+		//prints(get_conn(), "3[%d][%d][%d][%d][%s]\r\n", str[0], str[1], str[2], str[3], str);
+		len = 3;
+	}
+	else if (0xF0 <= str[0] && str[0] <= 0xF4)
+		/* 0b11110xxx: 4 bytes sequence */
+	{
+		//prints(get_conn(), "4[%d][%d][%d][%d][%s]\r\n", str[0], str[1], str[2], str[3], str);
+		len = 4;
+	}
+	else {
+		/* invalid first byte of a multibyte character */
+		return 0;
+	}
+	// this should be validated!
+	return len;
+}
+
+static NSP_FUNCTION(htnsp_strtohtml)
+{
+	const char *hex = "0123456789ABCDEF";
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
 	obj_t *robj;
-	char *p, *p2;
-	int i;
-	unsigned int len;
+	uchar *cp;
+	char *dest;
+	int i, j;
+	int di;
+	unsigned int outlen;
+	unsigned short utflen;
 
 	if (nsp_isnull(cobj1)) {
 		nsp_setstr(N, &N->r, "", NULL, 0);
 		return 0;
 	}
-	else if (cobj1->val->type != NT_STRING) {
-		nsp_setstr(N, &N->r, "", nsp_tostr(N, cobj1), -1);
+	if (nsp_isnum(cobj1)) {
+		nsp_setnum(N, &N->r, "", cobj1->val->d.num);
 		return 0;
 	}
-	p = nsp_tostr(N, cobj1);
-	len = 0;
-	while (*p) {
-		for (i = 0;i < 4;i++) {
-			if (*p == htmltags[i].symbol) {
-				len += htmltags[i].len;
-				p++;
-				goto match1;
-			}
+	n_expect_argtype(N, NT_STRING, 1, cobj1, 1);
+	if (cobj1->val->size == 0) {
+		nsp_setstr(N, &N->r, "", NULL, 0);
+		return 0;
+	}
+	cp = (uchar *)cobj1->val->d.str;
+	outlen = 0;
+	for (i = 0;i < cobj1->val->size;i++) {
+		for (j = 0;htmltags[j].len != 0;j++) {
+			if (cp[i] != htmltags[j].symbol) continue;
+			outlen += htmltags[j].len;
+			goto match1;
 		}
-		len++;
-		p++;
+		utflen = isutf(cp + i);
+		if (utflen) {
+			outlen += (utflen > 3 ? 3 : utflen) * 2 + 4;
+			i += utflen - 1;
+		}
+		else if (strchr(" \r\n\t", cp[i]) == NULL && (cp[i] < 33 || cp[i] > 127)) {
+			outlen += 6;//&#xHH;
+		}
+		else {
+			outlen++;
+		}
 	match1:
 		continue;
 	}
-	if (len <= cobj1->val->size) {
-		/*
-		 * len less than object size?  it _is_ possible if the string
-		 * isn't text, and has a '\0'.
-		 */
-		nsp_setstr(N, &N->r, "", cobj1->val->d.str, len);
-		return 0;
-	}
+	if ((dest = n_alloc(N, outlen + 1, 0)) == NULL) return 0;
+	dest[outlen] = '\0';
 	robj = nsp_setstr(N, &N->r, "", NULL, 0);
-	robj->val->d.str = malloc(len + 1);
-	p = nsp_tostr(N, cobj1);
-	p2 = robj->val->d.str;
-	while (*p) {
-		for (i = 0;i < 4;i++) {
-			if (*p == htmltags[i].symbol) {
-				strcpy(p2, htmltags[i].code);
-				p2 += htmltags[i].len;
-				p++;
-				goto match2;
-			}
+	robj->val->size = outlen;
+	robj->val->d.str = dest;
+	di = 0;
+	for (i = 0;i < cobj1->val->size;i++) {
+		for (j = 0;htmltags[j].len != 0;j++) {
+			if (cp[i] != htmltags[j].symbol) continue;
+			strcpy(dest + di, htmltags[j].code);
+			di += htmltags[j].len;
+			goto match2;
 		}
-		*p2++ = *p++;
+		utflen = isutf(cp + i);
+		if (utflen) {
+			// not really sure if this unicode handling is really safe yet
+			unsigned int v = 0;
+			dest[di++] = '&';
+			dest[di++] = '#';
+			dest[di++] = 'x';
+			if (utflen == 2) {
+				v = ((cp[i] & 0x1f) << 6) + (cp[i + 1] & 0x3f);
+				snprintf(dest + di, 5, "%04X", v);
+				di += 4;
+			}
+			else if (utflen == 3)
+			{
+				v = ((cp[i] & 0x0f) << 12) + ((cp[i + 1] & 0x3f) << 6) + (cp[i + 2] & 0x3f);
+				snprintf(dest + di, 7, "%06X", v);
+				di += 6;
+			}
+			else if (utflen == 4) {
+				v = ((cp[i] & 0x07) << 18) + ((cp[i + 1] & 0x3f) << 12) + ((cp[i + 2] & 0x3f) << 6) + (cp[i + 3] & 0x3f);
+				snprintf(dest + di, 7, "%06X", v);
+				di += 6;
+			}
+			i += utflen - 1;
+			dest[di++] = ';';
+		}
+		//if (cp[i] != ' ' && cp[i] != '\r' && cp[i] != '\n' && cp[i] != '\t' && (cp[i] < 33 || cp[i] > 127)) {
+		else if (strchr(" \r\n\t", cp[i]) == NULL && (cp[i] < 33 || cp[i] > 127)) {
+			dest[di++] = '&';
+			dest[di++] = '#';
+			dest[di++] = 'x';
+			dest[di++] = hex[(unsigned int)cp[i] / 16];
+			dest[di++] = hex[(unsigned int)cp[i] & 15];
+			dest[di++] = ';';
+		}
+		else {
+			dest[di++] = cp[i];
+		}
 	match2:
 		continue;
 	}
-	robj->val->d.str[len] = 0;
 	return 0;
 }
 
@@ -464,7 +551,7 @@ static int htnsp_initenv(CONN *conn)
 	nsp_setcfunc(conn->N, &conn->N->g, "dirlist", (NSP_CFUNC)htnsp_dirlist);
 	nsp_setcfunc(conn->N, &conn->N->g, "include_template", (NSP_CFUNC)htnsp_include_template);
 	nsp_setcfunc(conn->N, &conn->N->g, "lang_gets", (NSP_CFUNC)htnsp_lang_gets);
-	nsp_setcfunc(conn->N, &conn->N->g, "str2html", (NSP_CFUNC)htnsp_str2html);
+	nsp_setcfunc(conn->N, &conn->N->g, "strtohtml", (NSP_CFUNC)htnsp_strtohtml);
 	nsp_setcfunc(conn->N, &conn->N->g, "sqlquery", (NSP_CFUNC)htnsp_sqlquery);
 	nsp_setcfunc(conn->N, &conn->N->g, "sqlupdate", (NSP_CFUNC)htnsp_sqlupdate);
 	nsp_setcfunc(conn->N, &conn->N->g, "sqlgetsequence", (NSP_CFUNC)htnsp_sqlgetsequence);

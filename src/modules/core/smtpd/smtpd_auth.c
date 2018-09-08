@@ -51,7 +51,7 @@ int auth_login(CONN *conn, char *username, char *password, int mbox)
 	obj_t *qptr = NULL;
 
 	if (strlen(username) == 0) return -1;
-	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE username = '%s'", username) < 0) {
+	if (sql_queryf(proc->N, &qptr, "SELECT * FROM gw_users WHERE username = '%s';", username) < 0) {
 		return -1;
 	}
 	if (sql_numtuples(proc->N, &qptr) != 1) {

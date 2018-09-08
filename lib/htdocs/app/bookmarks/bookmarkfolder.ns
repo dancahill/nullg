@@ -1,0 +1,69 @@
+
+function view_folder(id) {
+	var method=_SERVER['REQUEST_METHOD'];
+	if (id==null) id=tonumber((method=='POST')?_POST['FOLDERID']:_GET['ID']);
+	Q=db.bookmarks.getfolder(id);
+	if (Q==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	FOLDER=Q['_rows'][0];
+	print("<form id=bookmarkfolderedit name=bookmarkfolderedit METHOD=POST ACTION=\"/app/bookmarks/bookmarksfolder\" onsubmit=\"return ns.ModalSubmit(event, 'bookmarkfolder', 'save');\" enctype='multipart/form-data'>\r\n");
+	print("<input type=hidden name=folderid value='",id,"'>\r\n");
+	print("<table class=\"contentform\">\r\n");
+	print("<tr><td>Parent Folder</td><td><select name=parentid value='",1,"'>\r\n");
+	bookmarkhtml.htselect_bookmarkfolder(FOLDER['parentid']);
+	print("</select></td></tr>\r\n");
+	//<tr><td><b>&nbsp;Login Name&nbsp;</b></td><td><input type='text' name='username' size='25' maxlength='50' value='' placeholder='Login Name' required='required' autocorrect='off' autocapitalize='off'></td></tr>
+	print("<tr><td>Folder Name</td><td><input type=text name=foldername value=\""+strtohtml(FOLDER['foldername'])+"\"></td></tr>\r\n");
+	print("</table>\r\n");
+
+	print("<input type=hidden name=submitaction value=''>\r\n");
+	print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+	if (id>0) {
+//		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ConfirmDelete();\">\r\n");
+		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ModalSubmit(event, 'bookmarkfolder', 'delete');\">\r\n");
+	}
+	print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
+	print("</form>\r\n");
+	//printf("<hr>_POST=[%s]", serialize(_POST));
+	//printf("<hr>_GET=[%s]", serialize(_GET));
+	return;
+}
+
+function save_folder() {
+	if (_SERVER['REQUEST_METHOD']!='POST') return;
+	id=tonumber(_POST['FOLDERID']);
+	Q=db.bookmarks.getfolder(id);
+	if (Q==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	FOLDER=Q['_rows'][0];
+	if (_POST['SUBMITACTION']=='save') {
+		FOLDER['folderid']=tonumber(_POST['FOLDERID']);
+		FOLDER['parentid']=tonumber(_POST['PARENTID']);
+		FOLDER['foldername']=_POST['FOLDERNAME'];
+		db.bookmarks.setfolder(FOLDER);
+		printf("bookmark folder %d saved", FOLDER['folderid']);
+		view_folder(FOLDER['folderid']);
+	} if (_POST['SUBMITACTION']=='delete') {
+		db.bookmarks.deletefolder(FOLDER);
+		printf("bookmark folder %d deleted", FOLDER['folderid']);
+	}
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("bookmarks.lib.ns");
+	print("<center>\r\n");
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		save_folder();
+	} else {
+		view_folder();
+	}
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

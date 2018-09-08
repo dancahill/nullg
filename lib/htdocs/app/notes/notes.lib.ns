@@ -1,6 +1,4 @@
-include_template("common.ns");
-
-global notes = {
+namespace notes {
 	print_note_text = function (note_text) {
 	//	print(strtohtml(NOTE['notetext']).replace("\n", "\n<br>"));
 		lines=note_text.split('\n');
@@ -49,17 +47,5 @@ global notes = {
 				print("<br>\r\n");
 			}
 		}
-	};
-	save = function () {
-		noteid=tonumber(_POST['NOTEID']);
-		notetext=_POST['NOTETEXT'];
-		if (noteid>0) {
-			query=sprintf("update gw_notes set notetext = '%s' where noteid = %d", sql_escape(notetext), noteid);
-			sqlupdate(query);
-			print("success");
-		} else {
-			// new note...
-		}
-		//printf("[[_GLOBALS=%s]]", serialize(_GLOBALS));
 	};
 };

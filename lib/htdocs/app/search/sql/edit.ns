@@ -38,9 +38,9 @@ function sql_edit() {
 		print("<TR><TH COLSPAN=2>New Query</TH></TR>\r\n");
 	}
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"",str2html(Q['_rows'][0]['_data']['cn']),"\" SIZE=60></TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"",strtohtml(Q['_rows'][0]['_data']['cn']),"\" SIZE=60></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>",str2html(Q['_rows'][0]['_data']['query']),"</TEXTAREA></TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>",strtohtml(Q['_rows'][0]['_data']['query']),"</TEXTAREA></TD></TR>\r\n");
 /*
 	if ((query.obj_uid==conn->dat->uid)||(priv&A_ADMIN)) {
 		print("<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\r\n");

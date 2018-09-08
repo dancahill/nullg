@@ -1,0 +1,26 @@
+<?nsp
+include("projects.lib.ns");
+projects.html.headermenu(0);
+print("Projects - The project app is not started yet.");
+print("<center>\r\n");
+print("<table class='contenttable'><thead>\r\n");
+print("<tr><th>Projects</th></tr>\r\n");
+print("</thead><tbody>\r\n");
+
+ui=new db.userinfo();
+query=sprintf("SELECT * FROM gw_projects WHERE obj_did = %d ORDER BY startdate DESC", ui.domainid);
+sqr=sqlquery(query);
+sqrlen=sqr['_rows'].length();
+//if (sqrlen<1) continue;
+for (i=0;i<sqrlen;i++) {
+	rec=sqr['_rows'][i];
+	id=tonumber(rec['projectid']);
+	printf("<tr><td>");
+	printf("<a href=\"javascript:ns.projects.view(event, %d);\">%s</a>", id, rec['projectname']);
+	printf("</td></tr>");
+}
+
+print("</tbody></table>\r\n");
+print("</center>\r\n");
+//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+?>

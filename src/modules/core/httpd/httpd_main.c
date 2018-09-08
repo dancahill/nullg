@@ -178,7 +178,7 @@ void *get_conn()
 
 	pthread_mutex_lock(&ListenerMutex);
 	maxconn = (int)nsp_getnum(proc->N, hobj, "max_connections");
-	for (i = 0;;i++) {
+	for (i = 0;; i++) {
 		if (i > maxconn - 1) { msleep(5); i = 0; }
 		if (htproc.conn[i].id == 0) break;
 	}
@@ -244,7 +244,7 @@ DllExport int mod_init(_PROC *_proc)
 			printf("\r\nconn calloc(%d, %d) failed\r\n", maxconn, (int)sizeof(CONN));
 			return -1;
 		}
-		for (i = 0;i < maxconn;i++) htproc.conn[i].socket.socket = -1;
+		for (i = 0; i < maxconn; i++) htproc.conn[i].socket.socket = -1;
 		if (modules_init() != 0) exit(-2);
 		return 0;
 	}
@@ -276,7 +276,7 @@ DllExport int mod_cron()
 	short int i;
 
 	if ((htproc.ListenSocketSTD.socket == -1) && (htproc.ListenSocketSSL.socket == -1)) return 0;
-	for (i = 0;i < maxconn;i++) {
+	for (i = 0; i < maxconn; i++) {
 		if ((htproc.conn[i].id == 0) || (htproc.conn[i].socket.atime == 0)) continue;
 		connections++;
 		if (htproc.conn[i].state == 0) {
@@ -285,7 +285,10 @@ DllExport int mod_cron()
 		else {
 			if (ctime - htproc.conn[i].socket.atime < maxidle) continue;
 		}
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", htproc.conn[i].socket.RemoteAddr, htproc.conn[i].socket.RemotePort, ctime - htproc.conn[i].socket.atime);
+
+		if (ctime - htproc.conn[i].socket.atime > 59) {
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", htproc.conn[i].socket.RemoteAddr, htproc.conn[i].socket.RemotePort, ctime - htproc.conn[i].socket.atime);
+		}
 		/* closeconnect is _not_ ssl-friendly */
 /*
 		closeconnect(&htproc.conn[i], 0);
@@ -295,6 +298,7 @@ DllExport int mod_cron()
 			}
 		}
 */
+		/* TODO: this doesn't seem to do anything - check later, comment out log_error for now */
 		tcp_close(&htproc.conn[i].socket, 0);
 	}
 	return 0;

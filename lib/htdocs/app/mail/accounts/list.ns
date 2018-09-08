@@ -1,0 +1,37 @@
+
+function list_mailaccounts() {
+	var maxlist   = tonumber(_USER['pref']['maxlist']);
+	var menustyle = tonumber(_USER['pref']['menustyle']);
+	var userid    = tonumber(_USER['userid']);
+	mail.html.headermenu();
+	global Q=db.mailaccounts.getlist();
+	print("<br>\r\n");
+	if (Q._tuples<1) {
+		print("<b>Found 0 matching mail accounts</b>\r\n");
+		return;
+	}
+	t=new html_table();
+	t.datasource=Q;
+	t.tablename="T2";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	fn=function (row, column) {
+		text=sprintf("<td onclick=\"ns.mail.accountview(event, %d);\">", tonumber(row['mailaccountid']));
+		text+=sprintf("<a href=\"javascript:ns.mail.accountview(event, %d);\">%s</a></td>", tonumber(row['mailaccountid']), strtohtml(row['accountname']));
+		return text;
+	};
+	t.addcolumn("accountname", "E-Mail Account", fn);
+	t.write();
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include_template("class.html_table.ns");
+	include("../mail.lib.ns");
+	print("<center>\r\n");
+	list_mailaccounts();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

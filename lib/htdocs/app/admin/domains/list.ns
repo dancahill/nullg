@@ -10,7 +10,7 @@ function list_domains() {
 		print("<b>Found 0 matching domains</b>\r\n");
 		return;
 	}
-	print("<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n");
+	print("<script type=\"text/javascript\">\r\nns.SetupDialogForm('dialog-form');\r\n</script>\r\n");
 	t=new html_table();
 	t.datasource=Q;
 	t.tablename="T2";
@@ -20,15 +20,15 @@ function list_domains() {
 
 /*
 	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:users.view(%d)\"'>", tonumber(row['userid']));
+		return sprintf("<td onclick=\"javascript:ns.users.view(%d)\"'>", tonumber(row['userid']));
 	};
 	fn=function (row, column) {
-		return sprintf("<a href=\"javascript:users.view(%d);\">%s</a>", tonumber(row['userid']), str2html(row['username']));
+		return sprintf("<a href=\"javascript:users.view(%d);\">%s</a>", tonumber(row['userid']), strtohtml(row['username']));
 	};
 	t.addcolumn("username", "User Name", fn, fntd);
 	fn=function (row, column) {
 		id=tonumber(row['userid']); sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn; if (name=="") return "";
-		return sprintf("%s", str2html(name));
+		return sprintf("%s", strtohtml(name));
 	};
 	t.addcolumn("surname", "Real Name", fn);
 	t.addcolumn("email", "E-Mail");
@@ -36,10 +36,10 @@ function list_domains() {
 
 /*
 	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:contacts.view(%d)\"'>", tonumber(row['contactid']));
+		return sprintf("<td onclick=\"javascript:ns.contacts.view(event, %d)\"'>", tonumber(row['contactid']));
 	};
 	fn=function (row, column) { id=tonumber(row['contactid']); sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn; if (name=="") return "";
-		return sprintf("<a href=\"javascript:contacts.view(%d);\">%s</a>", id, str2html(name));
+		return sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
 	};
 	t.addcolumn("surname", "Contact Name", fn, fntd);
 	t.addcolumn("organization", "Company Name");
@@ -49,14 +49,14 @@ function list_domains() {
 			email=row['email'];
 			if (email=="") return "";
 			sn=row['surname']; gn=row['givenname']; name=gn+((sn!=""&&gn!="")?" ":"")+sn;
-			return "<a href=\"javascript:MsgTo('&quot;"+str2html(name)+"&quot; <"+email+">')\">"+str2html(email)+"</a>";
+			return "<a href=\"javascript:MsgTo('&quot;"+strtohtml(name)+"&quot; <"+email+">')\">"+strtohtml(email)+"</a>";
 		};
 	} else {
 		fn=function (row, column) {
 			email=row['email'];
 			if (email=="") return "";
-			return "<a href=\"/app/mail/write?to="+email+"\">"+str2html(email)+"</a>";
-			//return sprintf("<A HREF=\"mailto:%s\">%s</A>", email, str2html(email));
+			return "<a href=\"/app/mail/write?to="+email+"\">"+strtohtml(email)+"</a>";
+			//return sprintf("<A HREF=\"mailto:%s\">%s</A>", email, strtohtml(email));
 		};
 	}
 	t.addcolumn("email", "E-Mail", fn);

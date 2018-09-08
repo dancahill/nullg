@@ -2,17 +2,26 @@ global html = {
 	function headersubmenu(menuitems) {
 /*
 		var menuitems = {
-			{ href="/app/mail/list"; onclick="return GoTo(event);"; text="LIST"; };
-			{ href="/app/mail/compose"; onclick="return mail.compose(0);"; text="COMPOSE";   };
-			{ href="/app/mail/sync"; onclick="return GoTo(event);"; text="SYNC";     };
-			{ href="/app/mail/purge"; onclick="return GoTo(event);"; text="PURGE";     };
+			{ href="/app/mail/list"; onclick="return ns.GoTo(event);"; text="LIST"; };
+			{ href="/app/mail/compose"; onclick="return ns.mail.compose(0);"; text="COMPOSE";   };
+			{ href="/app/mail/sync"; onclick="return ns.GoTo(event);"; text="SYNC";     };
+			{ href="/app/mail/purge"; onclick="return ns.GoTo(event);"; text="PURGE";     };
 		};
 */
 		print("<div class=\"tbar\" style=\"text-align:left;width:100%\">\r\n");
 		first=true;
-		foreach (item in menuitems) {
-			if (!first) print("&nbsp;&middot;&nbsp;"); else first=false;
-			printf("<a href=\"%s\" onclick=\"%s\">%s</a>", item.href, item.onclick, item.text);
+
+		//print("<span style="font-size:30px;cursor:pointer" onclick="ns.openNav()">&#9776; open</span>
+
+		print("<span class=\"tbar-navlink\" style=\"font-size:22px;cursor:pointer\" onclick=\"ns.openNav()\">&#9776");
+		if (menuitems!=null) print("&nbsp;&middot;&nbsp;");
+		print("</span>");
+
+		if (menuitems!=null) {
+			foreach (item in menuitems) {
+				if (!first) print("&nbsp;&middot;&nbsp;"); else first=false;
+				printf("<a href=\"%s\" onclick=\"%s\">%s</a>", item.href, item.onclick, item.text);
+			}
 		}
 		print("</div>\r\n");
 	};
@@ -86,7 +95,7 @@ global html = {
 			"<br />\r\n",
 			"<table class=\"contentview\" style=\"width:90%;margin:0 auto;\">\r\n",
 			"<tr><th>",
-			"<span style='float:left'>Welcome, ",str2html(_USER.username),".&nbsp;</span>",
+			"<span style='float:left'>Welcome, ",strtohtml(_USER.username),".&nbsp;</span>",
 			"<span style='float:right'>&nbsp;",_TEMP.showtime,"</span>",
 			"</th></tr>\r\n",
 			"<tr class=\"fieldval\"><td style='border-style:solid' contenteditable=true>",
@@ -96,6 +105,15 @@ global html = {
 			"<br /></td></tr>\r\n",
 			"</table>"
 			);
+
+			print("<hr><center>\r\n");
+			print("<button onclick=\"return _null.showAlert('test 1 body', 'test 1 title');\">test 1</button>");
+			print(" <button onclick=\"return _null.toastAlert('test 2');\">test 2</button>");
+			print(" <button onclick=\"return _null.vibrate();\">test 3</button>");
+			print(" <button onclick=\"return _null.speak('stop poking me, dammit');\">test 4</button>");
+			print(" <button onclick=\"return _null.setNotification('This is a test!', 'Null Device Test Title');\">test 5</button>");
+			print("</center>\r\n");
+
 		} else {
 			print("Shouldn't you be logged in or something?<BR>");
 		}
@@ -110,14 +128,14 @@ global html = {
 		print("<span class=\"tbar\">");
 		foreach(mod in _CONFIG.MODULES) {
 			if (mod.name==null || mod.name.length()==0) continue;
-			printf("<a href=\"%s\" onclick=\"return GoTo(event);\">", mod['uri']);
+			printf("<a href=\"%s\" onclick=\"return ns.GoTo(event);\">", mod['uri']);
 			print("<img style=\"border:0;\" height=24 width=24 src=\"/lib/images/icons/",mod['pic'],"\" title=\"",mod['name'],"\"></a>&nbsp;");
 		}
 		printf("&nbsp;</span>\r\n<span class=\"tbar\" style=\"float:right\">&nbsp;");
-		printf("<a href=\"javascript:ShowHelp();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_help"));
+		printf("<a href=\"javascript:ns.ShowHelp();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_help"));
 		printf("<a href=\"javascript:window.print();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_print"));
-		printf("<a href=\"/app/profile/\" onclick=\"return GoTo(event);\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_profile"));
-		printf("<a href=\"/logout\" onClick=\"return GoTo(event);\">%s</a>", lang_gets("httpd", "menu_top_logout"));
+		printf("<a href=\"/app/profile/\" onclick=\"return ns.GoTo(event);\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_profile"));
+		printf("<a href=\"/logout\" onClick=\"return ns.GoTo(event);\">%s</a>", lang_gets("httpd", "menu_top_logout"));
 		printf("&nbsp;&nbsp;</span>\r\n");
 		return;
 /*
@@ -151,12 +169,12 @@ global html = {
 		} else if (menu=='bookmarks') {
 			if (typeof(_GET['PID'])!='null') folderid=tonumber(_GET['PID']); else folderid=0;
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
-			print("<a HREF=\"/bookmarks/list\" onClick=\"return GoTo('/bookmarks/list');\">LIST BOOKMARKS</A>");
+			print("<a HREF=\"/bookmarks/list\" onClick=\"return ns.GoTo('/bookmarks/list');\">LIST BOOKMARKS</A>");
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
-			print("<a HREF=\"/bookmarks/editnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/editnew?pid=",folderid,"');\">NEW BOOKMARK</A>");
+			print("<a HREF=\"/bookmarks/editnew?pid=",folderid,"\" onClick=\"return ns.GoTo('/bookmarks/editnew?pid=",folderid,"');\">NEW BOOKMARK</A>");
 	//		if (auth_priv(conn, "bookmarks")&A_ADMIN) {
 				if (cnt++) print("&nbsp;&middot;&nbsp;");
-				print("<a HREF=\"/bookmarks/foldereditnew?pid=",folderid,"\" onClick=\"return GoTo('/bookmarks/foldereditnew?pid=",folderid,"');\">NEW FOLDER</A>");
+				print("<a HREF=\"/bookmarks/foldereditnew?pid=",folderid,"\" onClick=\"return ns.GoTo('/bookmarks/foldereditnew?pid=",folderid,"');\">NEW FOLDER</A>");
 	//		}
 		} else if ((menu=='calendar')||(menu=='tasks')) {
 	/ *
@@ -213,16 +231,16 @@ global html = {
 			if (menustyle>0) {
 				if (mailcurrent>0) {
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
-					print("<a TARGET=gwmain HREF=/mail/main onClick=\"return GoTo('/mail/main');\");return false;\">INBOX</A>");
+					print("<a TARGET=gwmain HREF=/mail/main onClick=\"return ns.GoTo('/mail/main');\");return false;\">INBOX</A>");
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
 					print("<a HREF=\"javascript:ComposeMail();\">COMPOSE</A>");
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
-					print("<a TARGET=gwmain HREF=/mail/sync onClick=\"return GoTo('/mail/sync');\");return false;\">SEND/RECV</A>");
+					print("<a TARGET=gwmain HREF=/mail/sync onClick=\"return ns.GoTo('/mail/sync');\");return false;\">SEND/RECV</A>");
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
-					print("<a TARGET=gwmain HREF=/mail/search onClick=\"return GoTo('/mail/search');\");return false;\">SEARCH</A>");
+					print("<a TARGET=gwmain HREF=/mail/search onClick=\"return ns.GoTo('/mail/search');\");return false;\">SEARCH</A>");
 				}
 				if (cnt++) print("&nbsp;&middot;&nbsp;");
-				print("<a TARGET=gwmain HREF=\"/mail/accounts/list\" onClick=\"return GoTo('/mail/accounts/list');\");return false;\">ACCOUNTS</A>");
+				print("<a TARGET=gwmain HREF=\"/mail/accounts/list\" onClick=\"return ns.GoTo('/mail/accounts/list');\");return false;\">ACCOUNTS</A>");
 			} else {
 				if (mailcurrent>0) {
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
@@ -290,10 +308,10 @@ global html = {
 			print("<a HREF=/projects/editnew>NEW PROJECT</A>");
 		} else if (menu=='searches') {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
-			print("<a HREF=\"/search/\" onClick=\"return GoTo('/search/');\">SEARCHES</A>");
+			print("<a HREF=\"/search/\" onClick=\"return ns.GoTo('/search/');\">SEARCHES</A>");
 	//		if ((auth_priv(conn, "domainadmin")&A_ADMIN)&&(auth_priv(conn, "query")&A_ADMIN)) {
 				if (cnt++) print("&nbsp;&middot;&nbsp;");
-				print("<a HREF=\"/search/sql/\" onClick=\"return GoTo('/search/sql/');\">SQL QUERIES</A>");
+				print("<a HREF=\"/search/sql/\" onClick=\"return ns.GoTo('/search/sql/');\">SQL QUERIES</A>");
 	//		}
 		} else if (menu=='weblog') {
 			if (cnt++) print("&nbsp;&middot;&nbsp;");
@@ -303,5 +321,21 @@ global html = {
 		}
 		print("</span>\r\n");
 */
+	};
+
+	function printsidenav() {
+		global menu=_TEMP['modname'];
+		print("<a href=\"javascript:void(0)\" class=\"closebtn\" onclick=\"ns.closeNav()\">&times;</a>");
+		foreach(mod in _CONFIG.MODULES) {
+			if (mod.name==null || mod.name.length()==0) continue;
+			printf("<a href=\"%s\" onclick=\"ns.closeNav();return ns.GoTo(event);\">", mod['uri']);
+			print("<img style=\"border:0;\" height=24 width=24 src=\"/lib/images/icons/",mod['pic'],"\" title=\"",mod['name'],"\">",mod['name'],"</a><br/>");
+		}
+		printf("<hr/>");
+		printf("<a href=\"javascript:ns.ShowHelp();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_help"));
+		printf("<a href=\"javascript:window.print();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_print"));
+		printf("<a href=\"/app/profile/\" onClick=\"ns.closeNav();return ns.GoTo(event);\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_profile"));
+		printf("<a href=\"/logout\" onClick=\"return ns.GoTo(event);\">%s</a>", lang_gets("httpd", "menu_top_logout"));
+		return;
 	};
 };

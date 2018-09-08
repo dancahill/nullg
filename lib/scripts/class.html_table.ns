@@ -53,18 +53,20 @@ class html_table {
 			if (this.filterrow(record)) continue;
 			print("<tr>");
 			foreach (column in columns) {
-//				print("<td>");
+				if (column.lambda!=null) {
+					celltext=column.lambda(record, column);
+				} else {
+					celltext=strtohtml(record[column.name]);
+				}
 				if (column.lambda_td!=null) {
 					print(column.lambda_td(record, column));
+					print(celltext);
+					print("</td>");
+				} else if (celltext.tolower().startswith("<td")) {
+					print(celltext);
 				} else {
-					print("<td>");
+					print("<td>", celltext, "</td>");
 				}
-				if (column.lambda!=null) {
-					print(column.lambda(record, column));
-				} else {
-					print(strtohtml(record[column.name]));
-				}
-				print("</td>");
 			}
 			if (autoaddcolumns==true) {
 				foreach (n,v in record) {

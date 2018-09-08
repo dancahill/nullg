@@ -1,6 +1,6 @@
 global _SERVER['LANGUAGE']['en']['common'] = {
-	html_charset    = "us-ascii",
-	mime_charset    = "iso-8859-1",
+	html_charset    = "utf-8",
+	mime_charset    = "utf-8",
 #	apptitle        = "NullLogic GroupServer",
 	err_noaccess    = "Access Denied",
 	err_norecord    = "No matching record found",

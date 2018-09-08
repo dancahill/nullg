@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include <direct.h>
 #include <io.h>
 #elif !defined( __TURBOC__)
+#include <signal.h>
 #include <unistd.h>
 #endif
 
@@ -95,7 +96,7 @@ void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 
 		b = 0;
 		if (nc_isdigit(cobj->name[0])) b = 1;
-		for (p = cobj->name;*p != '\0';p++) {
+		for (p = cobj->name; *p != '\0'; p++) {
 			if (!nc_isalnum(*p) && *p != '_') b = 1;
 		}
 		if (n_iskeyword(N, cobj->name)) b = 1;
@@ -251,7 +252,8 @@ NSP_FUNCTION(nl_break)
 	//DebugBreak();
 #endif
 #else
-	__builtin_trap();
+	//__builtin_trap();
+	raise(SIGINT);
 #endif
 	return 0;
 #undef __FN__
@@ -749,7 +751,7 @@ NSP_FUNCTION(nl_tostring)
 		cobj2 = cobj1;
 		cobj1 = thisobj;
 	}
-	if (cobj1->val->type == NT_NUMBER&&cobj2->val->type == NT_NUMBER) {
+	if (cobj1->val->type == NT_NUMBER && cobj2->val->type == NT_NUMBER) {
 		d = (unsigned short)cobj2->val->d.num;
 		if (d > sizeof(N->numbuf) - 2) d = sizeof(N->numbuf) - 2;
 		p = n_ntoa(N, N->numbuf, cobj1->val->d.num, 10, d);
@@ -936,7 +938,7 @@ NSP_FUNCTION(nl_strjoin)
 		cobj1 = thisobj;
 	}
 	if (cobj1->val->type != NT_TABLE) n_error(N, NE_SYNTAX, __FN__, "expected a table for arg1");
-	if (cobj2->val->type == NT_STRING&&cobj2->val->size > 0) { p = cobj2->val->d.str; len2 = cobj2->val->size; }
+	if (cobj2->val->type == NT_STRING && cobj2->val->size > 0) { p = cobj2->val->d.str; len2 = cobj2->val->size; }
 	for (cobj = cobj1->val->d.table.f; cobj; cobj = cobj->next) {
 		if (cobj->val->type == NT_STRING) {
 			len1 += cobj->val->size;
@@ -1218,11 +1220,44 @@ NSP_FUNCTION(nl_strtolower)
 #undef __FN__
 }
 
-NSP_FUNCTION(nl_sqltime)
+NSP_FUNCTION(nl_strtrim)
 {
-#define __FN__ __FILE__ ":nl_sqltime()"
+#define __FN__ __FILE__ ":nl_strtrim()"
+	obj_t *basetype = nsp_getobj(N, &N->l, "basetype");
+	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	//	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
 	char *fname = nsp_getstr(N, &N->l, "0");
+	char *p;
+	int plen;
+
+	settrace();
+	if (!nsp_isnull(basetype)) {
+		cobj1 = thisobj;
+	}
+	n_expect_argtype(N, NT_STRING, 1, cobj1, 1);
+	if (cobj1->val->size < 1) {
+		nsp_setstr(N, &N->r, "", NULL, 0);
+		return 0;
+	}
+	p = cobj1->val->d.str;
+	plen = cobj1->val->size;
+	if (nc_strcmp(fname, "trim") == 0 || nc_strcmp(fname, "trimstart") == 0) {
+		while (nc_isspace(p[0])) { p++; plen--; }
+	}
+	if (nc_strcmp(fname, "trim") == 0 || nc_strcmp(fname, "trimend") == 0) {
+		while (nc_isspace(p[plen - 1])) { plen--; }
+	}
+	nsp_setstr(N, &N->r, "", p, plen);
+	return 0;
+#undef __FN__
+}
+
+NSP_FUNCTION(nl_asctime)
+{
+#define __FN__ __FILE__ ":nl_asctime()"
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	//char *fname = nsp_getstr(N, &N->l, "0");
 	struct timeval ttime;
 	time_t t;
 	char timebuf[32];
@@ -1236,7 +1271,7 @@ NSP_FUNCTION(nl_sqltime)
 		int m = (int)nsp_getnum(N, cobj1, "tm_min");
 		int s = (int)nsp_getnum(N, cobj1, "tm_sec");
 
-		if (yy) mm++;
+		//if (yy) mm++;
 		snprintf(timebuf, sizeof(timebuf), "%04d-%02d-%02d %02d:%02d:%02d", yy, mm, dd, h, m, s);
 		nsp_setstr(N, &N->r, "", timebuf, -1);
 		return 0;
@@ -1248,84 +1283,126 @@ NSP_FUNCTION(nl_sqltime)
 		nc_gettimeofday(&ttime, NULL);
 	}
 	t = ttime.tv_sec;
-	if (nc_strcmp(fname, "sqldate") == 0) {
-		strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d", localtime(&t));
-	}
-	else if (nc_strcmp(fname, "sqltime") == 0) {
-		strftime(timebuf, sizeof(timebuf) - 1, "%H:%M:%S", localtime(&t));
-	}
-	else {
-		//strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", localtime((time_t *)&ttime.tv_sec)); <- this crashes in VS now because tv_sec is expected to be LONG
-		strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", localtime(&t));
-	}
+	//	if (nc_strcmp(fname, "sqldate") == 0) {
+	//		strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d", gmtime(&t));
+	//	}
+	//	else if (nc_strcmp(fname, "sqltime") == 0) {
+	//		strftime(timebuf, sizeof(timebuf) - 1, "%H:%M:%S", gmtime(&t));
+	//	}
+	//	else {
+			//strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", localtime((time_t *)&ttime.tv_sec)); <- this crashes in VS now because tv_sec is expected to be LONG
+	strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
+	//	}
 	nsp_setstr(N, &N->r, "", timebuf, -1);
 	return 0;
 #undef __FN__
 }
 
-NSP_FUNCTION(nl_sqltounix)
+static int getunixtime(int y, int m, int d, int hh, int mm, int ss)
 {
-#define __FN__ __FILE__ ":nl_sqltounix()"
 	int dim[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	char *pdate;
 	int unixdate = 0;
-	int year;
-	int month;
-	int day;
 	int i;
 
-	settrace();
-	if (cobj1->val->type != NT_STRING || cobj1->val->d.str == NULL) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
-	pdate = cobj1->val->d.str;
+	m -= 1;
+	d -= 1;
 
+	for (i = 1970; i < y; i++) {
+		unixdate += 365;
+		if ((i / 4.0f) == (int)(i / 4)) {
+			if ((i / 400.0f) == (int)(i / 400)) {
+				unixdate++;
+			}
+			else if ((i / 100.0f) != (int)(i / 100)) {
+				unixdate++;
+			}
+		}
+	}
+	for (i = 0; i < m; i++) {
+		unixdate += dim[i];
+		if (i != 1) continue;
+		if ((y / 4.0f) == (int)(y / 4)) {
+			if ((y / 400.0f) == (int)(y / 400)) {
+				unixdate++;
+			}
+			else if ((y / 100.0f) != (int)(y / 100)) {
+				unixdate++;
+			}
+		}
+	}
+	unixdate += d;
+	unixdate *= 86400;
+	if (unixdate < 0) unixdate = 0;
+	unixdate += hh * 3600;
+	unixdate += mm * 60;
+	unixdate += ss;
+	return unixdate;
+}
+
+static int getunixfromstring(char *datestr)
+{
+	char *pdate;
+	int unixdate = 0;
+	int y = 0, m = 0, d = 0, hh, mm, ss;
+
+	pdate = datestr;
 	if (atoi(pdate) >= 1970) {
-		year = atoi(pdate);
+		y = atoi(pdate);
 		while ((*pdate) && (*pdate != '-')) pdate++;
 		while ((*pdate) && (!nc_isdigit(*pdate))) pdate++;
-		month = atoi(pdate) - 1;
+		m = atoi(pdate);// - 1;
 		while ((*pdate) && (*pdate != '-')) pdate++;
 		while ((*pdate) && (!nc_isdigit(*pdate))) pdate++;
-		day = atoi(pdate) - 1;
-		for (i = 1970; i < year; i++) {
-			unixdate += 365;
-			if ((i / 4.0f) == (int)(i / 4)) {
-				if ((i / 400.0f) == (int)(i / 400)) {
-					unixdate++;
-				}
-				else if ((i / 100.0f) != (int)(i / 100)) {
-					unixdate++;
-				}
-			}
-		}
-		for (i = 0; i < month; i++) {
-			unixdate += dim[i];
-			if (i != 1) continue;
-			if ((year / 4.0f) == (int)(year / 4)) {
-				if ((year / 400.0f) == (int)(year / 400)) {
-					unixdate++;
-				}
-				else if ((year / 100.0f) != (int)(year / 100)) {
-					unixdate++;
-				}
-			}
-		}
-		unixdate += day;
-		unixdate *= 86400;
+		d = atoi(pdate);// - 1;
 		while ((*pdate) && (*pdate != ' ')) pdate++;
 	}
 	if (unixdate < 0) unixdate = 0;
 	while ((*pdate) && (!nc_isdigit(*pdate))) pdate++;
 	if (*pdate == '0') pdate++;
-	unixdate += atoi(pdate) * 3600;
+	hh = atoi(pdate);// * 3600;
 	while ((*pdate) && (*pdate != ':')) pdate++;
 	while ((*pdate) && (!nc_isdigit(*pdate))) pdate++;
-	unixdate += atoi(pdate) * 60;
+	mm = atoi(pdate);// * 60;
 	while ((*pdate) && (*pdate != ':')) pdate++;
 	while ((*pdate) && (!nc_isdigit(*pdate))) pdate++;
-	unixdate += atoi(pdate);
+	ss = atoi(pdate);
+	unixdate = getunixtime(y, m, d, hh, mm, ss);
+	return unixdate;
+}
 
+NSP_FUNCTION(nl_sqltounix)
+{
+#define __FN__ __FILE__ ":nl_sqltounix()"
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	int unixdate = 0;
+
+	settrace();
+	if (cobj1->val->type != NT_STRING || cobj1->val->d.str == NULL) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	unixdate = getunixfromstring(cobj1->val->d.str);
 	nsp_setnum(N, &N->r, "", (num_t)unixdate);
+	return 0;
+#undef __FN__
+}
+
+NSP_FUNCTION(nl_mktime)
+{
+#define __FN__ __FILE__ ":nl_mktime()"
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+
+	settrace();
+	if (nsp_istable(cobj1)) {
+		int yy = (int)nsp_getnum(N, cobj1, "tm_year");
+		int mm = (int)nsp_getnum(N, cobj1, "tm_mon");
+		int dd = (int)nsp_getnum(N, cobj1, "tm_mday");
+		int h = (int)nsp_getnum(N, cobj1, "tm_hour");
+		int m = (int)nsp_getnum(N, cobj1, "tm_min");
+		int s = (int)nsp_getnum(N, cobj1, "tm_sec");
+		nsp_setnum(N, &N->r, "", getunixtime(yy, mm, dd, h, m, s));
+	}
+	else {
+		if (!nsp_isstr(cobj1)) n_error(N, NE_SYNTAX, __FN__, "expected a table or string for arg1");
+		nsp_setnum(N, &N->r, "", getunixfromstring(cobj1->val->d.str));
+	}
 	return 0;
 #undef __FN__
 }
@@ -1352,27 +1429,26 @@ NSP_FUNCTION(nl_gmtime)
 	if (cobj1->val->type == NT_NUMBER) {
 		t = (time_t)cobj1->val->d.num;
 	}
+	else if (cobj1->val->type == NT_STRING) {
+		t = (time_t)getunixfromstring(cobj1->val->d.str);
+	}
 	else {
 		t = time(NULL);
 	}
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
-	if (nc_strcmp(fname, "gmtime") == 0) {
-		tp = gmtime(&t);
-	}
-	else if (nc_strcmp(fname, "localtime") == 0) {
+	if (nc_strcmp(fname, "localtime") == 0) {
 		tp = localtime(&t);
 	}
 	else {
-		nsp_setnum(N, &N->r, "", 0);
-		return 0;
+		tp = gmtime(&t);
 	}
 	if (tp->tm_year < 1900) tp->tm_year += 1900;
 	nsp_setnum(N, &tobj, "tm_sec", tp->tm_sec);
 	nsp_setnum(N, &tobj, "tm_min", tp->tm_min);
 	nsp_setnum(N, &tobj, "tm_hour", tp->tm_hour);
 	nsp_setnum(N, &tobj, "tm_mday", tp->tm_mday);
-	nsp_setnum(N, &tobj, "tm_mon", tp->tm_mon);
+	nsp_setnum(N, &tobj, "tm_mon", tp->tm_mon + 1);
 	nsp_setnum(N, &tobj, "tm_year", tp->tm_year);
 	nsp_setnum(N, &tobj, "tm_wday", tp->tm_wday);
 	nsp_setnum(N, &tobj, "tm_yday", tp->tm_yday);
@@ -1681,13 +1757,13 @@ NSP_FUNCTION(nl_system)
 	int n = -1;
 
 	settrace();
-	if (cobj1->val->type == NT_STRING&&cobj1->val->d.str != NULL) {
+	if (cobj1->val->type == NT_STRING && cobj1->val->d.str != NULL) {
 		nl_flush(N);
 		n = system(cobj1->val->d.str);
 #ifdef WEXITSTATUS
 		n = WEXITSTATUS(n);
 #endif
-}
+	}
 	nsp_setnum(N, &N->r, "", n);
 	return 0;
 #undef __FN__

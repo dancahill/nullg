@@ -45,7 +45,7 @@ function stuff() {
 	//print("_POST=",serialize(_POST));
 	foreach (id,uidl in _POST) {
 		if (id!==tonumber(id).tostring()) continue;
-		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d and uidl = '%s'", userid, id, uidl);
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d AND uidl = '%s';", userid, id, uidl);
 		sqr=sqlquery(query);
 		if (sqr._tuples!=1) {
 			printf("could not find mail header for id %d.", id);

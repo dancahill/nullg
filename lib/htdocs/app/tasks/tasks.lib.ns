@@ -1,0 +1,133 @@
+include_template("common.ns");
+
+namespace tasks {
+}
+
+namespace tasks.html {
+	function headermenu(folderid) {
+		ui=new db.userinfo();
+		var userid = tonumber(_GET['userid']);
+		if (userid==0) {
+			userid=ui.userid;
+		}
+		//var userid = tonumber(_USER['userid']);
+
+		var menuitems = {
+			{ text="TASKS";        href="/app/tasks/list?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";     };
+			{ text="NEW TASK";     href="/app/tasks/view?userid="+userid; onclick="return ns.ModalForm(event, 'task', 0);"; };
+		};
+
+		//var menuitems = null;
+		html.headersubmenu(menuitems);
+	}
+
+	function htselect_user(selected) {
+		var userinfo = db.getuserinfo();
+		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", userinfo.domainid);
+		sqr=sqlquery(query);
+		printf("<option value='0'></option>\r\n");
+		foreach (row in sqr['_rows']) {
+			ts=tonumber(selected)==tonumber(row['userid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(row['userid']), ts, strtohtml(row['username']));
+		}
+	}
+
+	function htselect_contact(selected) {
+		var userinfo = db.getuserinfo();
+		query=sprintf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", userinfo.domainid);
+		sqr=sqlquery(query);
+		printf("<option value='0'></option>\r\n");
+		foreach (row in sqr['_rows']) {
+			ts=tonumber(selected)==tonumber(row['contactid'])?" selected":"";
+			sn=row['surname']; gn=row['givenname']; cn=sn+((sn!=""&&gn!="")?", ":"")+gn;
+			printf("<option value='%d'%s>%s</option>", tonumber(row['contactid']), ts, strtohtml(cn));
+		}
+	}
+
+	function htselect_project(selected) {
+		var userinfo = db.getuserinfo();
+		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", userinfo.domainid);
+		sqr=sqlquery(query);
+		printf("<option value='0'></option>\r\n");
+		foreach (row in sqr['_rows']) {
+			ts=tonumber(selected)==tonumber(row['projectid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(row['projectid']), ts, strtohtml(row['projectname']));
+		}
+	}
+
+	function htselect_priority(selected) {
+		var option = { "Lowest", "Low", "Normal", "High", "Highest" };
+		printf("<option value='0'></option>\r\n");
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_status(selected) {
+		var option = { "Open", "Closed" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_closingstatus(selected) {
+		var userinfo = db.getuserinfo();
+		query=sprintf("SELECT eventclosingid, closingname FROM gw_events_closings ORDER BY closingname ASC");
+		sqr=sqlquery(query);
+		printf("<option value='0'></option>\r\n");
+		foreach (row in sqr['_rows']) {
+			ts=tonumber(selected)==tonumber(row['eventclosingid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(row['eventclosingid']), ts, strtohtml(row['closingname']));
+		}
+	}
+
+	function htview_reminder(selected)
+	{
+		selected=tonumber(selected);
+
+		if (selected==0) {
+			return sprintf("No reminder");
+		} else if ((selected>0)&&(selected<60)) {
+			return sprintf("%d minutes before", selected);
+		} else if ((selected>59)&&(selected<120)) {
+			return sprintf("%d hour before", selected/60);
+		} else if ((selected>119)&&(selected<1440)) {
+			return sprintf("%d hours before", selected/60);
+		} else if ((selected>1439)&&(selected<2880)) {
+			return sprintf("%d day before", selected/1440);
+		} else if (selected>2879) {
+			return sprintf("%d days before", selected/1440);
+		}
+		return "???";
+	}
+
+	function htselect_reminder(selected)
+	{
+		selected=tonumber(selected);
+		print("<OPTION VALUE='0'>No reminder\r\n");
+		print("<OPTION VALUE='15'%s>15 minutes before\r\n", (selected==15)?" SELECTED":"");
+		print("<OPTION VALUE='30'%s>30 minutes before\r\n", (selected==30)?" SELECTED":"");
+		for (i=1;i<169;i++) {
+			switch(i) {
+			case 1:
+			case 2:
+			case 3:
+			case 6:
+			case 12:
+			case 24:
+			case 48:
+			case 72:
+			case 96:
+			case 120:
+			case 144:
+			case 168:
+				printf("<OPTION VALUE='%d'%s>%s\r\n", i*60, i*60==selected?" SELECTED":"", tasks.html.htview_reminder(i*60));
+				continue;
+			default:
+				continue;
+			}
+		}
+	}
+}

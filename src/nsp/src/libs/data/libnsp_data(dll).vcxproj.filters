@@ -36,6 +36,9 @@
     <ClCompile Include="sql.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="json.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data.h">

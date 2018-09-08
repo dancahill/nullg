@@ -28,7 +28,7 @@ END:VCARD
 	prints(sid, "BEGIN:VCARD\r\n");
 	prints(sid, "VERSION:2.1\r\n");
 	prints(sid, "N:%s;%s;;%s\r\n", contact.surname, contact.givenname, contact.salutation);
-	prints(sid, "FN:%s%s%s\r\n", str2html(sid, contact.givenname), strlen(contact.givenname)?" ":"", str2html(sid, contact.surname));
+	prints(sid, "FN:%s%s%s\r\n", strtohtml(sid, contact.givenname), strlen(contact.givenname)?" ":"", strtohtml(sid, contact.surname));
 	if (strlen(contact.username))     prints(sid, "NICKNAME:%s\r\n", contact.username);
 	if (strlen(contact.organization)) prints(sid, "ORG:%s\r\n", contact.organization);
 	if (strlen(contact.jobtitle))     prints(sid, "TITLE:%s\r\n", contact.jobtitle);

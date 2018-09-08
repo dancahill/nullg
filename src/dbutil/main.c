@@ -330,7 +330,7 @@ int table_init(nsp_state *N, obj_t *table_schema)
 				"IF (NEW.%s IS NULL OR NEW.%s=0) THEN NEW.%s = GEN_ID(gen_%s, 1);\n"
 				"END\n"
 				, tablename, tablename, indexname, indexname, indexname, tablename
-				);
+			);
 		}
 	}
 	return 0;
@@ -346,7 +346,7 @@ int init_db(nsp_state *N)
 	for (table_schema = sql_schema->val->d.table.f;table_schema;table_schema = table_schema->next) {
 		if (!nsp_istable(sql_schema)) continue;
 		printf("-");
-}
+	}
 	printf("\r");
 #endif
 	for (table_schema = sql_schema->val->d.table.f;table_schema;table_schema = table_schema->next) {
@@ -370,7 +370,7 @@ int init_db(nsp_state *N)
 	printf("done.\r\n");
 	_sql_disconnect(N);
 	return 0;
-	}
+}
 
 int restore_db(nsp_state *N, char *filename)
 {
@@ -422,10 +422,10 @@ int dump_table(nsp_state *N, FILE *fp, char *table, char *index)
 	obj_t *qobj = NULL;
 
 	if (strcmp(table, "gw_dbinfo") == 0) {
-		snprintf(query, sizeof(query) - 1, "SELECT * FROM %s ORDER BY %s ASC", table, index);
+		snprintf(query, sizeof(query) - 1, "SELECT * FROM %s ORDER BY %s;", table, index);
 	}
 	else {
-		snprintf(query, sizeof(query) - 1, "SELECT * FROM %s ORDER BY obj_did ASC, %s ASC", table, index);
+		snprintf(query, sizeof(query) - 1, "SELECT * FROM %s ORDER BY obj_did,%s;", table, index);
 	}
 	if (_sql_query(N, &qobj, query) < 0) {
 		printf("\r\nError dumping %s\r\n", table);
@@ -490,7 +490,7 @@ int dump_db_sql(nsp_state *N, char *filename)
 	dump_table(N, fp, "gw_domains_aliases", "domainaliasid");
 	dump_table(N, fp, "gw_email_accounts", "mailaccountid");
 	dump_table(N, fp, "gw_email_filters", "mailfilterid");
-	dump_table(N, fp, "gw_email_folders", "mailfolderid");
+	dump_table(N, fp, "gw_email_folders", "accountid,mailfolderid");
 	dump_table(N, fp, "gw_email_headers", "mailheaderid");
 	dump_table(N, fp, "gw_events", "eventid");
 	dump_table(N, fp, "gw_events_closings", "eventclosingid");
@@ -506,6 +506,7 @@ int dump_db_sql(nsp_state *N, char *filename)
 	dump_table(N, fp, "gw_forums_posts", "messageid");
 	dump_table(N, fp, "gw_groups", "groupid");
 	dump_table(N, fp, "gw_groups_members", "groupmemberid");
+	dump_table(N, fp, "gw_locations_history", "locationhistoryid");
 	dump_table(N, fp, "gw_messages", "messageid");
 	dump_table(N, fp, "gw_notes", "noteid");
 	dump_table(N, fp, "gw_projects", "projectid");
@@ -611,12 +612,13 @@ int main(int argc, char *argv[])
 		snprintf(sql_type, sizeof(sql_type) - 1, "%s", cobj->val->d.str);
 	}
 
-	snprintf(filename, sizeof(filename) - 1, "%s/lib/scripts/db.ns", "..");
-	if (strlen(filename) > 0) {
-		if (nsp_execfile(N, filename) == 0);
-	}
+	snprintf(filename, sizeof(filename) - 1, "%s/lib/scripts/db.schema.ns", "..");
+	//	if (strlen(filename) > 0) {
+	//		if (nsp_execfile(N, filename) == 0);
+	//	}
+	nsp_execfile(N, filename);
 	//sql_schema=nsp_getobj(N, &N->g, "sql_schema");
-	sql_schema = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "db"), "sql"), "schema");
+	sql_schema = nsp_getobj(N, nsp_getobj(N, &N->g, "db"), "schema");
 	if (!nsp_istable(sql_schema)) {
 		printf("table 'sql_schema' not found\r\n");
 		return 0;

@@ -1,0 +1,5 @@
+<?nsp
+include("calendar.lib.ns");
+calendar.html.headermenu(0);
+print("Avail - The calendar app is not started yet.");
+?>

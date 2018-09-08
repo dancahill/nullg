@@ -1,49 +1,26 @@
-include_template("db.ns");
-include("mail.lib.ns");
 
 function wmsearch_doquery(order_by, folderid) {
 	prefs=_USER['pref'];
 	var accountid = tonumber(prefs['mailcurrent']);
 	var userid    = tonumber(_USER['userid']);
 	//var mailcurrent = tonumber(_USER['prefmailcurrent']);
-/*
-	ptemp1=getgetenv(sid, "C");
-	ptemp2=getgetenv(sid, "TEXT");
-	if ((ptemp1!=NULL)&&(ptemp2!=NULL)) {
-		if (strcmp(ptemp1, "addr")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "from")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "to")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_to LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "cc")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_cc LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "subject")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_subject LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "body")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, order_by);
-		} else if (strcmp(ptemp1, "all")==0) {
-			return sql_queryf(sqr, "SELECT * FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' OR hdr_subject LIKE '%%%s%%' OR msg_text LIKE '%%%s%%' AND status != 'd' ORDER BY %s", sid->dat->user_uid, ptemp2, ptemp2, ptemp2, ptemp2, ptemp2, order_by);
-		}
+
+	searchtext="";
+	if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+		searchtext=_POST['SEARCHTEXT'];
 	}
-*/
-//	sqr1=sqlquery(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_uid = %d order by accountname ASC", userid));
-//	return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d AND folder = %d AND status != 'd' ORDER BY %s", userid, mailcurrent, folderid, order_by));
-//	return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d AND folder = %d ORDER BY %s", userid, mailcurrent, folderid, order_by));
-//query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d AND folder = %d ORDER BY %s LIMIT 500", userid, mailcurrent, folderid, order_by);
-//query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and folder = %d ORDER BY %s", userid, mailcurrent, folderid, order_by);
-query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and folder = %d ORDER BY %s", userid, accountid, folderid, order_by);
-//print(query);
+	if (searchtext=="") {
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = %d ORDER BY %s;", userid, accountid, folderid, order_by);
+	} else {
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d ORDER BY %s;", userid, accountid, order_by);
+	}
+	//print(query);
 	return sqlquery(query);
-//	return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE accountid = 4 LIMIT 100"));
+	//return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE accountid = 4 LIMIT 100;"));
 }
 
 function mail_list() {
 	var userinfo = db.getuserinfo();
-//	if (_SERVER['REQUEST_METHOD']=='POST') {
-//		print(serialize(_GLOBALS));
-//		return;
-//	}
 
 	prefs=_USER['pref'];
 	var maildefault = tonumber(prefs['maildefault']);
@@ -62,31 +39,43 @@ function mail_list() {
 		if (accountid!=n) {
 			accountid=n;
 			prefs['mailcurrent']=accountid;
-			sqlupdate(sprintf("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d", accountid, userid, domainid));
+			sqlupdate(sprintf("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d;", accountid, userid, domainid));
 		}
 	}
-	if (_GET['FOLDERID']!=null) folderid=tonumber(_GET['FOLDERID']);
-	print("<table border=0 cellpadding=0 cellspacing=0 width=100%><tr>\r\n");
-	printf("<TD ALIGN=LEFT>\r\n");
-	//htselect_mailjump(sid->dat->user_mailcurrent, folderid);
-	mail.html.mailjump(accountid, folderid);
-	printf("</TD>\r\n");
-	printf("<FORM METHOD=GET ACTION=%s/app/mail/list NAME=search>\r\n", _SERVER['SCRIPT_NAME']);
-	printf("<INPUT TYPE=HIDDEN NAME=c value=all>\r\n");
-	printf("<TD ALIGN=RIGHT>&nbsp;");
-	printf("<INPUT TYPE=TEXT NAME=text value=\"\" SIZE=30 style='width:180px'>");
-	printf("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Search'>\r\n");
-	printf("</TD></FORM>\r\n</TR></TABLE>\r\n");
+	searchtext="";
+	if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+		searchtext=_POST['SEARCHTEXT'];
+		//var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+	}
 
-	//snprintf(searchstring, sizeof(searchstring)-1, "%s", wmsearch_makestring(sid));
+	if (_GET['FOLDERID']!=null) folderid=tonumber(_GET['FOLDERID']);
+	print("<table border=0 cellpadding=0 cellspacing=0 width=100%><tr>");
+	printf("<td align=left>");
+	mail.html.mailjump(accountid, folderid);
+	printf("</td>");
+	printf("<td align=right>");
+	mail.html.show_searchform();
+	printf("</td></tr></table>\r\n");
 	searchstring="";
 //	if (wmsearch_doquery(sid, &sqr, order_by[order], folderid)<0) return;
 	sqr=wmsearch_doquery("hdr_date DESC", folderid);
 
-	var userid    = tonumber(_USER['userid']);
-	//sqr=sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d", userid));
+	if (searchtext!="") {
+		sqrlen=sqr['_rows'].length();
+		for (i=0;i<sqrlen;i++) {
+			rec=sqr['_rows'][i];
+			headerid=tonumber(rec['mailheaderid']);
+			folderid=tonumber(rec['folder']);
+			message = new mail.messagereader(headerid, folderid);
+			found=message.search(searchtext);
+			//if (found) printf("%d %s %s %s<br>", id, strtohtml(rec['hdr_from']), strtohtml(rec['hdr_subject']), found);
+			if (!found) sqr['_rows'][i]=null;
+		}
+	}
 
-	nummessages=sqr._tuples;
+	//sqr=sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d;", userid));
+
+	nummessages=sqr['_rows'].length();
 	//nummessages=sql_numtuples(&sqr);
 	if (nummessages<1) {
 		printf("<br><center><b>You have no messages in this mailbox</b></center><br>\r\n");
@@ -109,31 +98,11 @@ function mail_list() {
 		"	}\r\n",
 		"}\r\n"
 	);
-//	print(
-//		"SetupDialogForm('dialog-form');\r\n"
-//	);
 	print("//-->\r\n</script>\r\n");
-
-//	sql_updatef("UPDATE gw_email_headers SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", sid->dat->user_mailcurrent, sid->dat->user_uid);
-	sqlupdate(sprintf("UPDATE gw_email_headers SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n'", accountid, userid));
-
+	sqlupdate(sprintf("UPDATE gw_email_headers SET status = 'o' WHERE accountid = %d AND obj_uid = %d AND status = 'n';", accountid, userid));
 	printf("<CENTER>\r\n");
-
-
-
-//	sqr1=sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d", userid));
-
-
-
-
-
-
 	if (searchstring=="") {
-		//printf("<form method=post name=webmail action=%s/app/mail/move%s>\r\n", sid.dat.in_scriptname, sid.dat.user_menustyle>0?" target=wmread":"");
-//		printf("<form id=webmail method=post action=%s/app/mail/move target=wmread>\r\n", sid.dat.in_scriptname);
 		printf("<form id=webmail name=webmail method=post action=/app/mail/move>\r\n");
-//		printf("<input type=hidden name=offset value=%d>\r\n", offset);
-//		printf("<input type=hidden name=order value=%d>\r\n", order);
 	}
 	print("<table border=0 cellpadding=0 cellspacing=0 width=100%>\r\n");
 	if (searchstring=="") {
@@ -141,50 +110,21 @@ function mail_list() {
 		printf("<button type=button class=frmButton onclick='SubmitDelete();'><a>Delete</a></button>\r\n");
 		printf("<button type=button class=frmButton onclick='SubmitMove();'><a>Move To:</a></button>");
 		printf("<input type=hidden name=submitaction value=''>\r\n");
-
-//		printf("<input type=submit class=frmButton name=delete value=\"%s\">\r\n", "Delete");
-//		printf("<input type=submit class=frmButton name=move value=\"%s\">", "Move To");
 		printf("<select name=dest1>\r\n");
 		printf("<option></option>");
-
-		sqr2=sqlquery(sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", userid, 1));
+		sqr2=sqlquery(sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d ORDER BY parentfolderid ASC, foldername ASC;", userid, accountid));
 		if (sqr2['_tuples']==0) continue;
 		foreach (rec in sqr2['_rows']) {
 			folderid=tonumber(rec['mailfolderid']);
 			printf("<option value=%d>%s (%d)</option>\r\n", folderid, rec['foldername'], folderid);
 		}
-
-		//htselect_mailfolder(sid, 0, 1, 0);
-//		printf("<option></option>");
-//		printf("<option>1</option>");
-//		printf("<option>2</option>");
 		printf("</select></nobr></td>");
 	} else {
 		printf("<tr><td align=left nowrap>&nbsp;</td>");
 	}
 	printf("<td align=right nowrap><b>");
-/*
-	if (nummessages>sid->dat->user_maxlist) {
-		if (offset>0) {
-			i=offset-sid->dat->user_maxlist;
-			if (i<0) i=0;
-			prints(sid, "<A HREF=%s/app/mail/list?folderid=%d&offset=%d&order=%d%s>&lt;&lt;</A>", sid->dat->in_ScriptName, folderid, i, order, searchstring);
-		} else {
-			prints(sid, "&lt;&lt;");
-		}
-		prints(sid, " Listing %d-%d of %d ", offset+1, offset+sid->dat->user_maxlist, nummessages);
-		if (offset+sid->dat->user_maxlist<nummessages) {
-			i=offset+sid->dat->user_maxlist;
-			if (i>nummessages-sid->dat->user_maxlist) i=nummessages-sid->dat->user_maxlist;
-			prints(sid, "<A HREF=%s/app/mail/list?folderid=%d&offset=%d&order=%d%s>&gt;&gt;</A>", sid->dat->in_ScriptName, folderid, i, order, searchstring);
-		} else {
-			prints(sid, "&gt;&gt;");
-		}
-	} else {
-*/
-//		printf("Listing %d-%d of %d", offset+1, nummessages, nummessages);
-		printf("Listing %d of %d", nummessages, nummessages);
-//	}
+//	printf("Listing %d-%d of %d", offset+1, nummessages, nummessages);
+	printf("Listing %d of %d", nummessages, nummessages);
 	printf("</b></td></tr>\r\n");
 	printf("<tr><td colspan=2>");
 	printf(
@@ -197,107 +137,18 @@ function mail_list() {
 		, "contenttable"
 		, searchstring==""?3:2
 	);
-
-//	print("<table id='contenttable' class='contenttable' style='width:100%;max-width:100%;table-layout:fixed;'>\r\n");
-	print("<table id='contenttable' class='maillist contenttable' style='width:100%;table-layout:fixed;'>\r\n");
-	printf("<thead>\r\n");
-	printf("<tr>\r\n");
+	//print("<table id='contenttable' class='contenttable' style='width:100%;max-width:100%;table-layout:fixed;'>\r\n");
+	print("<div id=\"messagelist\" />\r\n");
+	//<script>ns.mail.list("accountid=1&folderid=6");</script>
+	print("<script>ns.mail.list(\""+_SERVER['QUERY_STRING']+"\");</script>\r\n");
+	printf("</td></tr>\r\n");
 	if (searchstring=="") {
-		print("<th class='col0'>&nbsp;</th>");
-	}
-	print("<th class='col1'>&nbsp;From&nbsp;</th>\r\n");
-	print("<th class='col2'>&nbsp;Subject&nbsp;</th>\r\n");
-	print("<th class='col3'>&nbsp;Date&nbsp;</th>\r\n");
-	print("<th class='col4'>&nbsp;Size&nbsp;</th>\r\n");
-	print("<th class='col5'>&nbsp;</th>");
-	printf("</tr>\r\n");
-	printf("</thead>\r\n");
-	printf("<tbody>\r\n");
-
-	foreach (rec in sqr['_rows']) {
-		headerid=tonumber(rec['mailheaderid']);
-		from=mail.getaddr(rec['hdr_from']);
-		subject=strtohtml(net.mime.rfc2047.decode(rec['hdr_subject']));
-		date=string.sub(rec['hdr_date'], 0, 10);
-		msgsize=tonumber(rec['size']);
-		status=rec['status'];
-		//bgcolor=status=="r"?"#F0F0F0":"#D0D0FF";
-
-		printf("<tr id='%d'%s>\r\n", headerid, status!="r"?" class='unread'":"");
-		if (searchstring=="") {
-			printf("<td class='col0'><input type=checkbox name=%d value=\"%s\"></td>\r\n", headerid, rec['uidl']);
-		}
-		printf("\t<td class='col1' title=\"%s\">", strtohtml(from.full));
-		printf("%s</td>\r\n", strtohtml(from.name));
-		printf("\t<td class='col2' onClick=\"");
-		printf("mail.view(%d);\" ", headerid);
-		printf("title=\"%s\">", subject);
-		printf("<a href=javascript:mail.view(%d); title=\"%s\">%s</a></td>\r\n", headerid, subject, subject);
-/*
-		unixdate=time_sql2unix(header.Date);
-		unixdate+=time_tzoffset(sid, unixdate);
-		if (unixdate<0) unixdate=0;
-		strftime(curdate, 30, "%b %d, %Y %I:%M%p", gmtime(&unixdate));
-		curdate[18]=tolower(curdate[18]);
-		curdate[19]=tolower(curdate[19]);
-*/
-		printf("\t<td class='col3' title=\"%s\">%s</td>\r\n", rec['hdr_date'], date);
-		print("\t<td class='col4'>");
-		if (msgsize>=1048576) {
-			ms=msgsize/1048576;
-			if (ms<1) ms=1;
-			printf("%d M", ms);
-		} else {
-			ms=msgsize/1024;
-			if (ms<1) ms=1;
-			printf("%d K", ms);
-		}
-		printf("</td>\r\n\t<td class='col5'>");
-		if (string.istr(rec['hdr_contenttype'], "multipart/mixed")!=null) {
-			printf("<img border=0 src=/lib/images/paperclip.png height=16 width=11 alt='File Attachments'>");
-		} else {
-			printf("&nbsp;&nbsp;&nbsp;");
-		}
-		printf("</td>\r\n");
-		printf("</tr>\r\n");
-	}
-	printf("</tbody>\r\n");
-	printf("</table>\r\n</td></tr>\r\n");
-
-	if (searchstring=="") {
-//		prints(sid, "<TR><TD ALIGN=LEFT NOWRAP><NOBR><INPUT TYPE=checkbox NAME=allbox2 onclick='CheckAll(2);'>");
-//		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=delete VALUE=\"%s\">\r\n", lang.form_delete);
-//		prints(sid, "<INPUT TYPE=SUBMIT CLASS=frmButton NAME=move VALUE=\"%s\"><SELECT NAME=dest2>\r\n", lang.mail_moveto);
-//		htselect_mailfolder(sid, 0, 1, 0);
-//		prints(sid, "</SELECT></NOBR></TD>");
-//		prints(sid, "<TD ALIGN=RIGHT NOWRAP>&nbsp;</TD></TR>\r\n");
 		printf("</form>\r\n");
 	}
 	printf("</table>\r\n");
-/*
-	if (nummessages>sid->dat->user_maxlist) {
-		if (offset>0) {
-			i=offset-sid->dat->user_maxlist;
-			if (i<0) i=0;
-			prints(sid, "[<A HREF=%s/app/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, lang.mail_prevpage);
-		} else {
-			prints(sid, "[%s]", lang.mail_prevpage);
-		}
-		if (offset+sid->dat->user_maxlist<nummessages) {
-			i=offset+sid->dat->user_maxlist;
-			if (i>nummessages-sid->dat->user_maxlist) i=nummessages-sid->dat->user_maxlist;
-			prints(sid, "[<A HREF=%s/app/mail/list?folderid=%d&offset=%d&order=%d%s>%s</A>]", sid->dat->in_ScriptName, folderid, i, order, searchstring, lang.mail_nextpage);
-		} else {
-			prints(sid, "[%s]", lang.mail_nextpage);
-		}
-	}
-	prints(sid, "</CENTER>\r\n");
-	sql_freeresult(&sqr);
-	return;
-*/
 	print(
 		"<script type=\"text/javascript\">\r\n",
-		"mail.set_list_submit();\r\n",
+		"ns.mail.set_list_submit();\r\n",
 		"function SubmitDelete()\r\n",
 		"{\r\n",
 		"	$('input[name=\"submitaction\"]').val('delete');\r\n",
@@ -310,11 +161,12 @@ function mail_list() {
 		"}\r\n",
 		"</script>\r\n"
 	);
-	//print("<PRE>",strtohtml(serialize(sqr['_rows'][0])), "</PRE>");
 	return;
 }
 
 try {
+	include_template("db.ns");
+	include("mail.lib.ns");
 	mail_list();
 } catch (e) {
 	print("Exception: [",e.description,"]");

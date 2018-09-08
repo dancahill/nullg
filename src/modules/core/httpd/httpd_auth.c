@@ -61,7 +61,9 @@ void auth_savesession(CONN *conn)
 	}
 	/* log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "[%s]", data); */
 //	sql_updatef(proc->N, "UPDATE nullsd_sessions SET mtime = '%s', data = '{ %s}' WHERE token = '%s' AND uid = %d AND did = %d", timebuffer, str2sql(conn->dat->largebuf, sizeof(conn->dat->largebuf)-1, data), conn->dat->token, conn->dat->uid, conn->dat->did);
-	sql_updatef(proc->N, "UPDATE gw_users_sessions SET obj_mtime = '%s' WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", timebuffer, conn->dat->token, conn->dat->uid, conn->dat->did);
+	if (conn->dat->uid > 0) {
+		sql_updatef(proc->N, "UPDATE gw_users_sessions SET obj_mtime = '%s' WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", timebuffer, conn->dat->token, conn->dat->uid, conn->dat->did);
+	}
 	free(data);
 	return;
 }
@@ -122,7 +124,7 @@ static int auth_renewcookie(CONN *conn, int settoken)
 	if ((settoken) && (strlen(conn->dat->token) != 32)) {
 		return -1;
 	}
-	rc = sql_queryf(proc->N, &qobj, "SELECT * FROM gw_users_sessions WHERE token = '%s' AND remoteip = '%s'", conn->dat->token, conn->socket.RemoteAddr);
+	rc = sql_queryf(proc->N, &qobj, "SELECT * FROM gw_users_sessions WHERE token = '%s' AND remoteip = '%s';", conn->dat->token, conn->socket.RemoteAddr);
 	if (rc < 0) return -1;
 	if (sql_numtuples(proc->N, &qobj) != 1) {
 		sql_freeresult(proc->N, &qobj);

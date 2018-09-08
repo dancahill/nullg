@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -353,7 +353,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_hostkey)
 	memset(fpbuf, 0, sizeof(fpbuf));
 	snprintf(fpbuf, sizeof(fpbuf) - 1, "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
 		p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]
-		);
+	);
 	nsp_setstr(N, &N->r, "", fpbuf, -1);
 	return 0;
 #undef __FN__
@@ -367,11 +367,11 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* pass or keyset */
 	obj_t *cobj;
 	SSH_CONN *sshconn;
-	char rsapub[256];
-	char rsaprv[256];
-	char rsapass[64];
+	//	char rsapub[256];
+	//	char rsaprv[256];
+	//	char rsapass[64];
 	char *userauthlist;
-	int rc;
+	int rc = -1;
 
 	cobj = nsp_getobj(N, thisobj, "connection");
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "ssh-conn") != 0)) {
@@ -389,28 +389,29 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 	if (N->debug) n_warn(N, __FN__, "Available auth methods: %s", userauthlist);
 	/* should userauthlist be free()d? */
 	if (nsp_istable(cobj2)) {
+		obj_t *pubfile = nsp_getobj(N, cobj2, "pub");
+		obj_t *prvfile = nsp_getobj(N, cobj2, "prv");
+		obj_t *pubdata = nsp_getobj(N, cobj2, "pubdata");
+		obj_t *prvdata = nsp_getobj(N, cobj2, "prvdata");
+		obj_t *passwd = nsp_getobj(N, cobj2, "pass");
+
 		if (strstr(userauthlist, "publickey") == NULL) {
-			n_warn(N, __FN__, "Authentication method not available");
+			n_warn(N, __FN__, "Authentication method \"publickey\" not available - Available methods: \"%s\"", userauthlist);
 			nsp_setbool(N, &N->r, "", 0);
 			return -1;
 		}
-		cobj = nsp_getobj(N, cobj2, "pub");
-		if (!nsp_isstr(cobj) || cobj->val->d.str == NULL) {
-			n_error(N, NE_SYNTAX, __FN__, "missing public key filename");
+		if (nsp_isstr(pubfile) && pubfile->val->size > 0 && nsp_isstr(prvfile) && prvfile->val->size > 0) {
+			rc = libssh2_userauth_publickey_fromfile(sshconn->session, cobj1->val->d.str, pubfile->val->d.str, prvfile->val->d.str, passwd->val->d.str);
 		}
-		snprintf(rsapub, sizeof(rsapub) - 1, "%s", nsp_tostr(N, cobj));
-		cobj = nsp_getobj(N, cobj2, "prv");
-		if (!nsp_isstr(cobj) || cobj->val->d.str == NULL) {
-			n_error(N, NE_SYNTAX, __FN__, "missing private key filename");
+		else if (nsp_isstr(pubdata) && pubdata->val->size > 0 && nsp_isstr(prvdata) && prvdata->val->size > 0) {
+			rc = libssh2_userauth_publickey_frommemory(sshconn->session, cobj1->val->d.str, cobj1->val->size, pubdata->val->d.str, pubdata->val->size, prvdata->val->d.str, prvdata->val->size, passwd->val->d.str);
 		}
-		snprintf(rsaprv, sizeof(rsaprv) - 1, "%s", nsp_tostr(N, cobj));
-		cobj = nsp_getobj(N, cobj2, "pass");
-		if (!nsp_isstr(cobj) || cobj->val->d.str == NULL) {
+		else {
+			n_error(N, NE_SYNTAX, __FN__, "invalid key data");
+		}
+		if (!nsp_isstr(passwd) || passwd->val->size == 0) {
 			n_error(N, NE_SYNTAX, __FN__, "missing private key password");
 		}
-		snprintf(rsapass, sizeof(rsapass) - 1, "%s", nsp_tostr(N, cobj));
-		/* auth via public key */
-		rc = libssh2_userauth_publickey_fromfile(sshconn->session, cobj1->val->d.str, rsapub, rsaprv, rsapass);
 		if (rc) {
 			ssh_lasterr(N, sshconn);
 			n_warn(N, __FN__, "Authentication by public key failed");
@@ -420,7 +421,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 	}
 	else if (nsp_isstr(cobj2) && cobj2->val->d.str != NULL) {
 		if (strstr(userauthlist, "password") == NULL) {
-			n_warn(N, __FN__, "Authentication method not available");
+			n_warn(N, __FN__, "Authentication method \"password\" not available - Available methods: \"%s\"", userauthlist);
 			nsp_setbool(N, &N->r, "", 0);
 			return -1;
 		}
@@ -631,7 +632,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 		while (got < fileinfo.st_size) {
 			max = fileinfo.st_size - got < MAX_SFTP_READ_SIZE ? fileinfo.st_size - got : MAX_SFTP_READ_SIZE;
 			rc = libssh2_sftp_read(handle, buf, max);
-			if (rc<1) {
+			if (rc < 1) {
 				n_warn(N, __FN__, "libssh2_channel_read() failed: %d", rc);
 				libssh2_sftp_close(handle);
 				ssh_close(N, sshconn);
@@ -639,7 +640,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 				return -1;
 			}
 			if (ppmeter) {
-				if ((pp = (int)((float)got / (float)fileinfo.st_size*100.0F))>op) printf("\r%d%%", (int)pp);
+				if ((pp = (int)((float)got / (float)fileinfo.st_size*100.0F)) > op) printf("\r%d%%", (int)pp);
 				op = pp;
 			}
 			write(fd, buf, rc);

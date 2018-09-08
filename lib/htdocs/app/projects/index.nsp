@@ -1,1 +1,3 @@
-<?nsp ?"The projects app is not started yet." ?>
+<?nsp
+exec(convertnsp(file.readall(_filepath+"/list.nsp")));
+?>

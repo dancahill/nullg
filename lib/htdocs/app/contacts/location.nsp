@@ -1,0 +1,94 @@
+<?nsp
+include_template("common.ns");
+include_template("timezones.ns");
+
+function tz_utc2user(unixtime) {
+	local function isdst(unixtime) {
+		t=time.localtime(unixtime);
+		return t.tm_isdst?true:false;
+	}
+	tz=_SERVER['TIMEZONES'][tonumber(_USER['preftimezone'])];
+	o=tz.o;
+	if (tz.d==1 && isdst(unixtime)) o+=60;
+	unixtime+=(o*60);
+	return unixtime;
+}
+
+id=tonumber(_GET['ID']);
+Q=db.contacts.get(id);
+CONTACT=Q['_rows'][0];
+if (Q==null || CONTACT==null) {
+	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+	return;
+}
+gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
+name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+url=sprintf("<a href=\"javascript:contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+query=sprintf("SELECT FIRST 1 * FROM gw_locations_history WHERE tablename='contacts' AND tableindex=%d ORDER BY locationhistoryid DESC", id);
+sqr=sqlquery(query);
+sqrlen=sqr['_rows'].length();
+if (sqrlen==1) {
+	rec=sqr['_rows'][0];
+	latitude=rec['latitude'];
+	longitude=rec['longitude'];
+	lastupdate=time.sqltime(tz_utc2user(time.mktime(rec['eventtime'])));
+	lastupdate=lastupdate.sub(0, 16);
+} else {
+	latitude="45.5";
+	longitude="-73.6";
+	lastupdate="unknown";
+}
+
+divhtml="<table>";
+divhtml+=sprintf("<tr><td>Contact</td><td>%s</td></tr>", url);
+if (lastupdate!="unknown") {
+	divhtml+=sprintf("<tr><td>Location</td><td>%s,%s</td></tr>", latitude, longitude);
+	divhtml+=sprintf("<tr><td>Last Update</td><td>%s</td></tr>", lastupdate);
+	url2=sprintf("<a href=\"javascript:ns.contacts.location.viewhistory(event, %d);\">view</a>", id);
+	divhtml+=sprintf("<tr><td>Timeline</td><td>%s</td></tr>", url2);
+} else {
+	divhtml+=sprintf("<tr><td>Location</td><td>unknown</td></tr>");
+}
+divhtml+="</table>";
+
+?>
+<style>
+#mapid { height: 350px; width:570px; }
+</style>
+<div id="mapid"></div>
+<script>
+var latlng = L.latLng(<?nsp print(latitude) ?>, <?nsp print(longitude) ?>);
+
+var map = L.map('mapid', {
+	attributionControl: false,
+	center: latlng,
+	zoom: 13
+});//.setView(latlng, 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+}).addTo(map);
+
+map.addControl(L.control.attribution({
+	position: 'bottomright',
+	prefix: '<a href="http://leafletjs.com" title="A JS library for interactive maps" target="_blank">Leaflet</a>'
+}));
+
+L.marker(latlng).addTo(map)
+	.bindPopup('<?nsp print(divhtml) ?>')
+	.openPopup();
+
+L.control.scale().addTo(map);
+
+//https://stackoverflow.com/questions/33468905/draw-lines-between-markers-in-leaflet
+
+//http://embed.plnkr.co/h7aMwc/
+
+
+var polyline = new L.Polyline([]).addTo(map);
+map.on('click', function(event) {
+	new L.Marker(event.latlng).addTo(map);
+	polyline.addLatLng(event.latlng);
+});
+
+</script>

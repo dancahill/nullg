@@ -3,6 +3,140 @@ include_template("common.ns");
 include_template("common.html.ns");
 
 namespace mail {
+	class messagereader {
+		function messagereader(messageid, folderid) {
+			local function pad(s, p) {
+				s='0'*p+s.tostring();
+				return string.sub(s, string.len(s)-p, p);
+			}
+			var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
+			accountid = tonumber(_USER['pref']['mailcurrent']);
+			domainid  = tonumber(_USER['domainid']);
+			userid    = tonumber(_USER['userid']);
+			this.body_found=false;
+			this.messageid = messageid;
+			if (messageid==0) return false;
+			this.filename=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(folderid, 4), pad(messageid, 6));
+			//printf("loading %d %s %s<br>", this.messageid, this.filename, serialize(file.stat(this.filename)));
+			this.msgbody=file.readall(this.filename);
+			if (typeof(this.msgbody)!='string') {
+				//printf("cannot read file '%s'", this.filename);
+				this.msgbody="";
+				return false;
+			}
+			this.message=net.mime.read(this.msgbody);
+		}
+		function getbody() {
+			local function findtextorhtml(parent) {
+				local function message_decode(body, header) {
+					if (header['content-transfer-encoding']=='quoted-printable') {
+						body=""+net.mime.qp.decode(body)+"";
+					} else if (header['content-transfer-encoding']=='base64') {
+						body=""+net.mime.base64.decode(body)+"";
+					}
+					return body;
+				}
+				foreach (n,v in parent['body']) {
+					ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+					if (string.istr(ctype, 'text/html')==null) continue;
+					messagebody=this.message_decode(v['body'], v['head']);
+					return messagebody;
+				}
+				foreach (n,v in parent['body']) {
+					ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+					if (string.istr(ctype, 'text/plain')==null) continue;
+					messagebody=this.message_decode(v['body'], v['head']);
+					messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+					return messagebody;
+				}
+				return null;
+			}
+			local function message_decode(body, header) {
+				if (header['content-transfer-encoding']=='quoted-printable') {
+					body=""+net.mime.qp.decode(body)+"";
+				} else if (header['content-transfer-encoding']=='base64') {
+					body=""+net.mime.base64.decode(body)+"";
+				}
+				return body;
+			}
+			local function pad(s, p) {
+				s='0'*p+s.tostring();
+				return string.sub(s, string.len(s)-p, p);
+			}
+			if (typeof(this.message['body'])=='string') {
+				messagebody=message_decode(this.message['body'], this.message['head']);
+				ctype=this.message['head']['content-type']!=null?this.message['head']['content-type']:"";
+				if (string.istr(ctype, 'text/html')==null) {
+					messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
+				}
+				this.body_found=true;
+			}
+			if (!this.body_found && this.message.len()>0) {
+				res=findtextorhtml(this.message);
+				if (res!=null) {
+					messagebody=res;
+					this.body_found=true;
+				} else {
+					/* it might be in an alternative part */
+					foreach (n,v in this.message['body']) {
+						ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
+						if (string.istr(ctype, 'multipart/alternative')==null && string.istr(ctype, 'multipart/related')==null) continue;
+						//subbody=this.message_decode(v['body'], v['head']);
+						//return messagebody;
+						res=findtextorhtml(v);
+						if (res!=null) {
+							messagebody=res;
+							this.body_found=true;
+						}
+					}
+				}
+			}
+			if (!this.body_found) {
+				messagebody="";
+			}
+			return messagebody;
+		}
+		function search(searchtext) {
+			local function getheader(x) {
+				if (typeof(x)=='string') return net.mime.rfc2047.decode(x);
+				return "";
+			}
+			if (searchtext=="") return false;
+			found=false;
+			var from    = getheader(this.message['head']['from']);
+			var to      = getheader(this.message['head']['to']);
+			var subject = getheader(this.message['head']['subject']);
+			if (from.tolower().contains(searchtext)) found=true;
+			else if (to.tolower().contains(searchtext)) found=true;
+			else if (subject.tolower().contains(searchtext)) found=true;
+			else {
+				// this function should be done in c - too slow in script
+				local function fromhtml(bodytext) {
+					y=bodytext.split('');
+					len=y.length();
+					for (i=0;i<len;i++) {
+						if (y[i]!='<') continue;
+						for (j=i;j<len;j++) {
+							c=y[j];
+							y[j]='';
+							if (c=='>') break;
+						}
+						i=j;
+					}
+					bodytext=y.join();
+					return bodytext;
+				}
+				bodytext=fromhtml(this.getbody());
+				if (bodytext.tolower().contains(searchtext)) {
+					//printf("[%s]<hr>", strtohtml(bodytext));
+					found=true;
+				}
+			}
+			//this.message="";
+			//msgbody="";
+			return found;
+		}
+	};
 	function getaddr(x) {
 		x0=net.mime.rfc2047.decode(x);
 		if (typeof(x0)!='string') return { name=x, addr=x, full=x };
@@ -24,6 +158,7 @@ namespace mail {
 		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND obj_did = %d", userid, domainid);
 		if (mailheaderid!=null) query+=sprintf(" AND mailheaderid = %d", mailheaderid);
 		if (uidl!=null) query+=sprintf(" AND uidl = '%s'", sql_escape(uidl));
+		query+=";";
 		sqr=sqlquery(query);
 		if (sqr._tuples==1) return sqr['_rows'][0];
 		return null;
@@ -69,7 +204,7 @@ namespace mail {
 		c.addvalue('hdr_replyto', replyto);
 		c.addvalue('hdr_to', to);
 		c.addvalue('hdr_subject', subject);
-		c.addvalue('hdr_date', time.sqldatetime(dt));
+		c.addvalue('hdr_date', time.sqltime(dt));
 		c.addvalue('hdr_messageid', messageid);
 		c.addvalue('hdr_inreplyto', inreplyto);
 		c.addvalue('hdr_contenttype', contenttype);
@@ -93,13 +228,15 @@ namespace mail {
 		var domainid = tonumber(_USER['domainid']);
 		var accountid = tonumber(_POST['MSGFROM']);
 
-		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d", userid, accountid));
+		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", userid, accountid));
 		if (sqr._tuples!=1) throw "account not found";
 		account=sqr['_rows'][0];
 		//var accountid = tonumber(_USER['pref']['mailcurrent']);
 		//var accountid = tonumber(_USER['prefmailcurrent']);
 		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
 		var outfolderid = 2;
+		if (_POST['FOLDER']=='draft') outfolderid = 5;
+		//folder
 		var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(outfolderid, 4));
 		if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
 		newemailid=sqlgetsequence("gw_email_headers");
@@ -123,18 +260,18 @@ namespace mail {
 		if (organization!="") msgbody+=sprintf("Organization: %s\r\n", organization);
 		msgbody+=sprintf("To: %s\r\n", to);
 		if (cc!="") msgbody+=sprintf("Cc: %s\r\n", cc);
-		msgbody+=sprintf("Subject: %s\r\n", subject);
+		msgbody+=sprintf("Subject: %s\r\n", net.mime.rfc2047.encode(subject));
 		t=time.gmtime();
-		msgdate=sprintf("%s, %d %s %d %s:%s:%s +0000", dim[t.tm_wday], t.tm_mday, miy[t.tm_mon], t.tm_year, pad(t.tm_hour, 2), pad(t.tm_min, 2), pad(t.tm_sec, 2));
+		msgdate=sprintf("%s, %d %s %d %s:%s:%s +0000", dim[t.tm_wday], t.tm_mday, miy[t.tm_mon-1], t.tm_year, pad(t.tm_hour, 2), pad(t.tm_min, 2), pad(t.tm_sec, 2));
 		msgbody+=sprintf("Date: %s\r\n", msgdate);
-		messageid=time.sqldatetime().replace('-', '').replace(':', '').replace(' ', '');
+		messageid=time.sqltime().replace('-', '').replace(':', '').replace(' ', '');
 		msgbody+=sprintf("Message-ID: %s\r\n", messageid);
 		if (inreplyto!="") msgbody+=sprintf("In-Reply-To: %s\r\n", inreplyto);
 		msgbody+=sprintf("MIME-Version: 1.0\r\n");
 //		if ((filesize>0)||(forward>0)) {
 //			fprintf(fp, "Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary);
 //		} else {
-//			fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "iso-8859-1");
+//			fprintf(fp, "Content-Type: %s; charset=%s\r\n", header.contenttype, "utf-8");
 //		}
 		attachments=false;
 		foreach (v in _POST) {
@@ -144,7 +281,7 @@ namespace mail {
 			boundary = sprintf("MIME_BOUNDARY_%s_0001", messageid);
 			msgbody+=sprintf("Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary);
 		} else {
-			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "iso-8859-1");
+			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "utf-8");
 			msgbody+=sprintf("Content-Transfer-Encoding: quoted-printable\r\n");
 		}
 		msgbody+=sprintf("X-Mailer: %s %s\r\n", "NullLogic GroupServer", "X");
@@ -152,7 +289,7 @@ namespace mail {
 		if (attachments) {
 			msgbody+=sprintf("This is a multi-part message in MIME format.\r\n");
 			msgbody+=sprintf("\r\n--%s\r\n", boundary);
-			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "iso-8859-1");
+			msgbody+=sprintf("Content-Type: %s; charset=%s\r\n", "text/html", "utf-8");
 			msgbody+=sprintf("Content-Transfer-Encoding: quoted-printable\r\n\r\n");
 			msgbody+=net.mime.qp.encode(body, 76);
 			foreach (v in _POST) {
@@ -175,7 +312,7 @@ namespace mail {
 		uidl='x';
 		accountrow = { mailaccountid=accountid };
 		mail.save_header_to_sql(newemailid, accountrow, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
-		sqlupdate(sprintf("UPDATE gw_email_headers SET folder = %d WHERE mailheaderid = %d", outfolderid, newemailid));
+		sqlupdate(sprintf("UPDATE gw_email_headers SET folder = %d WHERE mailheaderid = %d;", outfolderid, newemailid));
 		print("success");
 	}
 }
@@ -209,6 +346,10 @@ namespace mail.sync {
 			if (string.sub(f.name, -5, 5)==".done") continue;
 			print("file=<pre>",serialize(f),"</pre>");
 			newemailid=sqlgetsequence("gw_email_headers");
+			if (newemailid<1) {
+				printf("newemailid<1 '%d' ??", newemailid);
+				return;
+			}
 			filename=sprintf("%s.msg", pad(newemailid, 6));
 			printf("saving '%s' in '%s/'<br>", filename, tmpdirname);
 			srcname=importdirname+"/"+f.name;
@@ -250,6 +391,13 @@ namespace mail.sync {
 			s=typeof(s)=='string'?s:"";
 			return s.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;");
 		}
+
+		var notify=tonumber(row['notify']);
+
+		if (notify==0) {
+			return;
+		}
+
 		var userid = tonumber(_USER['userid']);
 		var accountid=tonumber(row['mailaccountid']);
 		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
@@ -258,22 +406,21 @@ namespace mail.sync {
 		var newmail=0;
 		var deleted=0;
 		statustext="";
+		sqlupdate(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d;", time.sqltime(), accountid));
 		pop=new net.pop3.client();
 		pop.username = row['popusername'];
 		pop.password = net.mime.base64.decode(row['poppassword']);
 		pop.host     = row['pophost'];
 		pop.port     = tonumber(row['popport']);
 		pop.use_tls  = row['popssl']=="1"?true:false;
+		if (verbose) printf("<b>%s</b><br>", row['accountname']);
 		if (pop.open()!=true) {
-			printf("ERROR: pop.open() failed - [%s]", pop.last_err);
+			if (!verbose) printf("<b>%s</b><br>", row['accountname']);
+			printf("ERROR: pop.open() \"%s\"", pop.last_err);
 			return;
 		}
-		sqlupdate(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d", time.sqldatetime(), accountid));
 		stat=pop.stat();
 		count=stat.count;
-		//printf("<b>[%s]</b>", row['accountname']);
-
-		if (verbose) printf("<b>%s</b><br>", row['accountname']);
 		if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
 		for (i=1;i<=count;i++) {
 			uidl=pop.uidl(i);
@@ -285,6 +432,10 @@ namespace mail.sync {
 			} else {
 				newmail++;
 				newemailid=sqlgetsequence("gw_email_headers");
+				if (newemailid<1) {
+					printf("newemailid<1 '%d' ??", newemailid);
+					return;
+				}
 				filename=sprintf("%s.msg", pad(newemailid, 6));
 				//printf("<br>saving '%s' in '%s/'", filename, tmpdirname);
 				msgbody=pop.retr(i);
@@ -400,7 +551,7 @@ namespace mail.sync {
 		if (typeof(file.stat(outdirname))!='table') file.mkdir(outdirname);
 		if (typeof(file.stat(sentdirname))!='table') file.mkdir(sentdirname);
 
-		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and accountid = %d and folder = 2", userid, accountid);
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 2;", userid, accountid);
 		sqr=sqlquery(query);
 		foreach (header in sqr['_rows']) {
 			//print("<pre>accountrow = ", strtohtml(serialize(accountrow)), "</pre>");
@@ -451,7 +602,7 @@ namespace mail.sync {
 				swrite(sock, ".\r\n");
 				rc=sread(sock);
 				if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
-				sqlupdate(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d", headerid));
+				sqlupdate(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d;", headerid));
 				file.rename(outdirname+"/"+filename, sentdirname+"/"+filename);
 				printf("message sent - '%s'", filename);
 			} catch (ex) {
@@ -486,13 +637,18 @@ namespace mail.sync {
 namespace mail.html {
 	function headermenu () {
 		var menuitems = {
-			{ href="/app/mail/list";    onclick="return GoTo(event);";     text="LIST";    };
-			{ href="/app/mail/compose"; onclick="return mail.compose(0);"; text="COMPOSE"; };
-			{ href="/app/mail/sync";    onclick="return GoTo(event);";     text="SYNC";    };
-			//{ href="/app/mail/sync";    onclick="return mail.sync();";     text="SYNC";    };
-			//{ href="/app/mail/purge";   onclick="return GoTo(event);";     text="PURGE";   };
+			{ href="/app/mail/list";          onclick="return ns.GoTo(event);";     text="LIST";     };
+			{ href="/app/mail/compose";       onclick="return ns.mail.compose(0);"; text="COMPOSE";  };
+			{ href="/app/mail/sync";          onclick="return ns.GoTo(event);";     text="SYNC";     };
+			{ href="/app/mail/accounts/list"; onclick="return ns.GoTo(event);";     text="ACCOUNTS"; };
 		};
 		html.headersubmenu(menuitems);
+	}
+	function show_searchform() {
+		print("<form id=mailsearch name=mailsearch method=post action=\"/app/mail/list\" onsubmit=\"return ns.ModalSubmit(event, 'mailsearch', 'save');\" enctype='multipart/form-data'>");
+		print("<input type=text name=searchtext value=\"\" placeholder='Search Mail' required='required' autocorrect='off'>");
+		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
+		print("</form>");
 	}
 	function mailjump(accountid, folderid) {
 		local function add_folders(add_folders, accountid, folderid, sqr2, account, parent, depth) {
@@ -512,23 +668,15 @@ namespace mail.html {
 		}
 		var menustyle = tonumber(_USER['pref']['menustyle']);
 		var userid    = tonumber(_USER['userid']);
-		/*
-		if (sql_queryf(&sqr2, "SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, account)<0) continue;
-		if (sql_numtuples(&sqr2)<1) {
-			sql_freeresult(&sqr2);
-			wmfolder_makedefaults(account);
-			if (sql_queryf(&sqr2, "SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, foldername ASC", sid->dat->user_uid, sid->dat->user_mailcurrent)<0) continue;
-		}
-		*/
 		//if (!(auth_priv(sid, "email")&A_READ)) return;
-		sqr1=sqlquery(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_uid = %d order by accountname ASC", userid));
+		sqr1=sqlquery(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname ASC;", userid));
 		//print("sqr1:",serialize(sqr1));
 		if (sqr1['_tuples']==0) return;
 
 		printf("<SCRIPT LANGUAGE=\"javascript\">\r\n");
 		printf("function ChangeMail() {\r\n");
 		//printf("	%slocation.replace('%s/mail/%s?'+document.mailjump.accountid.options[document.mailjump.accountid.selectedIndex].value);\r\n", menustyle>0?"top.gwmain.":"", _SERVER['SCRIPT_NAME'], menustyle>0?"main":"list");
-		printf("	GoTo('/app/mail/list?'+document.changemail.accountid.options[document.changemail.accountid.selectedIndex].value);\r\n");
+		printf("	ns.GoTo('/app/mail/list?'+document.changemail.accountid.options[document.changemail.accountid.selectedIndex].value);\r\n");
 		printf("}\r\n");
 		printf("</SCRIPT>\r\n");
 
@@ -541,7 +689,7 @@ namespace mail.html {
 			if (account==accountid) printf(" selected class=selBold");
 			printf(">[ %s ]", strtohtml(acctrow['accountname']));
 			if (account==accountid) {
-				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d ORDER BY parentfolderid ASC, mailfolderid ASC", userid, account);
+				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d ORDER BY parentfolderid ASC, mailfolderid ASC;", userid, account);
 				sqr2=sqlquery(query);
 				if (sqr2['_tuples']==0) continue;
 				foreach (row in sqr2['_rows']) {
@@ -551,18 +699,18 @@ namespace mail.html {
 					}
 				}
 				printf("</option>\r\n");
-				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d AND mailfolderid<10 ORDER BY parentfolderid ASC, mailfolderid ASC", userid, account);
+				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d AND mailfolderid < 10 ORDER BY parentfolderid ASC, mailfolderid ASC;", userid, account);
 				sqr2=sqlquery(query);
 				add_folders(add_folders, accountid, folderid, sqr2, account, 0, 1);
-				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d and accountid = %d AND mailfolderid>9 ORDER BY parentfolderid ASC, foldername ASC", userid, account);
+				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d AND mailfolderid > 9 ORDER BY parentfolderid ASC, foldername ASC;", userid, account);
 				sqr2=sqlquery(query);
 				add_folders(add_folders, accountid, folderid, sqr2, account, 0, 1);
 			} else {
 				printf("</option>\r\n");
 			}
-			printf("</form>\r\n");
 		}
 		printf("</select>\r\n");
+		printf("</form>\r\n");
 		return;
 	}
 }

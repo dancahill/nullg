@@ -1,7 +1,7 @@
 include("mail.lib.ns");
 mail.html.headermenu();
 print("<div style=\"text-align:left\">");
-query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid", tonumber(_USER['userid']));
+query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid;", tonumber(_USER['userid']));
 sqr=sqlquery(query);
 print("<br>");
 foreach (row in sqr['_rows']) {

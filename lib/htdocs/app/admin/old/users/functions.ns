@@ -267,7 +267,7 @@ function user_view() {
 		}
 //		if ((priv&A_DELETE)&&(id!=0)) {
 		if (id>0) {
-			print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\r\n");
+			print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"ns.return ConfirmDelete();\">\r\n");
 		}
 		print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
 		print("</TD></TR>\r\n");

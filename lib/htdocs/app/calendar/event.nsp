@@ -1,0 +1,141 @@
+<?nsp
+
+function view_event(id) {
+	var method=_SERVER['REQUEST_METHOD'];
+	if (id==null) id=tonumber((method=='POST')?_POST['EVENTID']:_GET['ID']);
+	Q=db.events.get(id);
+	EVENT=Q['_rows'][0];
+	if (Q==null || EVENT==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	if (id==0) {
+		EVENT['contactid']=tonumber(_GET['CONTACTID']);
+		EVENT['projectid']=tonumber(_GET['PROJECTID']);
+	}
+
+	//print("<div><pre>",serialize(Q),"</pre></div>");
+	var form=new html_form(EVENT);
+	print("<form id=eventedit name=eventedit METHOD=POST ACTION=\"/app/calendar/event\" onsubmit=\"return ns.ModalSubmit(event, 'event', 'save');\" enctype='multipart/form-data'>\r\n");
+	form.addfield({name="eventid", type="hidden"});
+	//print("<div style='width:100%'>");
+	print("<div style='width:100%;background-color:#f0f0f0'>");
+
+	print("<div style='float:left'>");
+	print("<table class=\"contentform contentform2\">\r\n");
+	form.addfield({name="eventname", label="Event Name", required=true});
+	form.addfield({name="assignedby", label="Assigned By", type="select", handler=calendar.html.htselect_user});
+	form.addfield({name="assignedto", label="Assigned To", type="select", handler=calendar.html.htselect_user});
+	form.addfield({name="eventtype", label="Event type", type="select", handler=calendar.html.htselect_eventtype});
+	form.addfield({name="contactid", label="Contact Name", type="select", handler=calendar.html.htselect_contact});
+	form.addfield({name="projectid", label="Project", type="select", handler=calendar.html.htselect_project});
+	form.addfield({name="priority", label="Priority", type="select", handler=calendar.html.htselect_priority});
+	form.addfield({name="reminder", label="Reminder", type="select", handler=calendar.html.htselect_reminder});
+
+	print("</table>\r\n");
+	print("</div><div style='float:left'>");
+	print("<table class=\"contentform contentform2\">\r\n");
+
+	form.addfield({name="eventstart1", src="eventstart", label="Date", required=true, handler=calendar.html.htselect_startdate});
+	form.addfield({name="eventstart2", src="eventstart", label="Start Time", type="select", handler=calendar.html.htselect_starttime});
+	form.addfield({name="eventfinish", label="Event Finish", required=true});
+	form.addfield({name="busy", label="Availability", type="select", handler=calendar.html.htselect_availability});
+	form.addfield({name="status", label="Status", type="select", handler=calendar.html.htselect_status});
+	form.addfield({name="closingstatus", label="Closing status", type="select", handler=calendar.html.htselect_closingstatus});
+	print("</table>\r\n");
+	print("</div>");
+
+	print("<div style='clear:both'>");
+	print("<table class=\"contentform\">\r\n");
+	form.addfield({name="details", label="Details", type="textarea", required=true});
+	print("</table>\r\n");
+
+	print("</div>");
+
+
+	print("</div>");
+
+	print("<div style='clear:both'>");
+	form.validate("gw_events");
+	print("<input type=hidden name=submitaction value=''>\r\n");
+	print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+	if (id>0) {
+		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ModalSubmit(event, 'event', 'delete');\">\r\n");
+	}
+	print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
+	print("</div>");
+	print("</form>\r\n");
+	//if (method=="POST") printf("<hr>_POST=[%s]", serialize(_POST));
+
+	print("<script>
+	$( function() {
+		$( '#eventstart1' ).datepicker({ dateFormat: 'yy-mm-dd' });
+		$( '#eventfinish' ).datepicker({ dateFormat: 'yy-mm-dd' });
+	} );
+	</script>\r\n");
+	return;
+}
+
+function save_event() {
+	if (_SERVER['REQUEST_METHOD']!='POST') return;
+	id=tonumber(_POST['EVENTID']);
+	Q=db.events.get(id);
+	EVENT=Q['_rows'][0];
+	if (Q==null || EVENT==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	switch (_POST['SUBMITACTION']) {
+	case 'save':
+		EVENT["assignedby"] = _POST["ASSIGNEDBY"];
+		EVENT["assignedto"] = _POST["ASSIGNEDTO"];
+		EVENT["eventname"] = _POST["EVENTNAME"];
+		EVENT["eventtype"] = _POST["EVENTTYPE"];
+		EVENT["contactid"] = _POST["CONTACTID"];
+		EVENT["projectid"] = _POST["PROJECTID"];
+		EVENT["priority"] = _POST["PRIORITY"];
+		EVENT["reminder"] = _POST["REMINDER"];
+
+		eventstart=_POST["EVENTSTART1"]+" "+_POST["EVENTSTART2"];
+		dt = new datetime(time.mktime(eventstart));
+		calendar.tz_user2utc(dt);
+		eventstart=dt.tostring();
+
+		EVENT["eventstart"] = eventstart;
+
+		// eventfinish should be eventstart+duration posted from the form
+
+		EVENT["eventfinish"] = _POST["EVENTFINISH"];
+		EVENT["busy"] = _POST["BUSY"];
+		EVENT["status"] = _POST["STATUS"];
+		EVENT["closingstatus"] = _POST["CLOSINGSTATUS"];
+		EVENT["details"] = _POST["DETAILS"];
+
+		db.events.set(EVENT);
+		printf("event %d saved", EVENT['eventid']);
+		view_event(EVENT['eventid']);
+		break;
+	case 'delete':
+		db.events.remove(EVENT);
+		printf("event %d deleted", EVENT['eventid']);
+		break;
+	}
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include_template("class.html_form.ns");
+	include("calendar.lib.ns");
+	print("<center>\r\n");
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		save_event();
+	} else {
+		view_event();
+	}
+	print("</center>\r\n");
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
+?>

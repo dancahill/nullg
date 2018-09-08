@@ -1,0 +1,114 @@
+<style>
+#p1 {
+	position: absolute;
+	left: 2px;
+	top: 2px;
+	bottom: 0px;
+	width: 110px;
+	overflow: scroll;
+	overflow-x: hidden;
+}
+
+#timelinemap {
+	position: absolute;
+	left: 110px;
+	top: 2px;
+	bottom: 0px;
+	right: 0px;
+	float: right;
+}
+</style>
+<div id='p1'></div>
+<div id="timelinemap"></div>
+<?nsp
+include_template("common.ns");
+include_template("timezones.ns");
+include_template("class.datetime.ns");
+
+function tz_utc2user(unixtime) {
+	local function isdst(unixtime) {
+		t=time.localtime(unixtime);
+		return t.tm_isdst?true:false;
+	}
+	tz=_SERVER['TIMEZONES'][tonumber(_USER['preftimezone'])];
+	o=tz.o;
+	if (tz.d==1 && isdst(unixtime)) o+=60;
+	unixtime+=(o*60);
+	return unixtime;
+}
+
+function tz_user2utc(unixtime) {
+	local function isdst(unixtime) {
+		t=time.localtime(unixtime);
+		return t.tm_isdst?true:false;
+	}
+	tz=_SERVER['TIMEZONES'][tonumber(_USER['preftimezone'])];
+	o=tz.o;
+	if (tz.d==1 && isdst(unixtime)) o+=60;
+	unixtime-=(o*60);
+	return unixtime;
+}
+
+id=tonumber(_GET['ID']);
+Q=db.contacts.get(id);
+CONTACT=Q['_rows'][0];
+if (Q==null || CONTACT==null) {
+	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+	return;
+}
+gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
+name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+url=sprintf("<a href=\"javascript:contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+
+
+// convert to user's local time, round down to midnight, then back to utc for the query
+d1=new datetime();
+d1.unixtime=tz_utc2user(d1.unixtime);
+day=time.gmtime(d1.unixtime);
+day.tm_hour=0;day.tm_min=0;day.tm_sec=0;
+d1.unixtime=tz_user2utc(time.mktime(day));
+d2=d1.adddays(1);
+
+//query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
+
+
+query=sprintf("SELECT * FROM gw_locations_history WHERE tablename='contacts' AND tableindex=%d AND eventtime >= '"+d1.tostring()+"' AND eventtime < '"+d2.tostring()+"' ORDER BY locationhistoryid DESC", id);
+//print(query);
+sqr=sqlquery(query);
+sqrlen=sqr['_rows'].length();
+outdata={};
+
+	function pad(n) {
+		x="0"+n;
+		return x.sub(-2, 2);
+	}
+
+foreach (row in sqr['_rows']) {
+	et = new datetime(time.mktime(row['eventtime']));
+	et.unixtime=tz_utc2user(et.unixtime);
+	ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+":"+pad(et.getseconds())+(et.gethours()>=12?"pm":"am");
+	newrow = {
+		id=tonumber(row['locationhistoryid']);
+		date=ts;
+		lat=row['latitude'].trim();
+		lon=row['longitude'].trim();
+	};
+	outdata[tonumber(row['locationhistoryid'])]=newrow;
+}
+print("<script>\r\n");
+if (sqrlen>0) {
+	print("var gpsdata = ",data.json.encode(outdata),";\r\n");
+} else {
+	print("var gpsdata = null;\r\n");
+}
+print("</script>\r\n");
+?>
+
+<script>
+//contacts.location.list_history(JSON.parse(gpsdata));
+setTimeout(function() {
+	//map.invalidateSize();
+	ns.contacts.location.list_history(gpsdata);
+	ns.contacts.location.map_history(gpsdata);
+}, 10);
+</script>

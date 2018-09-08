@@ -1,0 +1,23 @@
+include_template("common.ns");
+
+namespace projects {
+}
+
+namespace projects.html {
+	function headermenu(folderid) {
+		ui=new db.userinfo();
+		var userid = tonumber(_GET['userid']);
+		if (userid==0) {
+			userid=ui.userid;
+		}
+		//var userid = tonumber(_USER['userid']);
+
+		var menuitems = {
+			{ text="PROJECTS";     href="/app/projects/list?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
+			{ text="NEW PROJECT";  href="/app/projects/edit?userid="+userid; onclick="return ns.ModalForm(event, 'project', 0);"; };
+		};
+
+		//var menuitems = null;
+		html.headersubmenu(menuitems);
+	}
+}

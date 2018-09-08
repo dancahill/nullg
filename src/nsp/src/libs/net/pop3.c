@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,8 +89,9 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 	nc_strncpy(sock->obj_type, "sock4", sizeof(sock->obj_type) - 1);
 	sock->obj_term = (NSP_CFREE)tcp_murder;
 	if ((rc = tcp_connect(N, sock, host, port, use_tls)) < 0) {
+		pop3_lasterr(N, sock->errormsg);
 		n_free(N, (void *)&sock, sizeof(TCP_SOCKET) + 1);
-		n_error(N, NE_SYNTAX, __FN__, "cannot connect to %s:%d", host, port);
+		//n_error(N, NE_SYNTAX, __FN__, "cannot connect to %s:%d", host, port);
 		return -1;
 	}
 	/* welcome dialog */

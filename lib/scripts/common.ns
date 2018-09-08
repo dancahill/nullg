@@ -3,6 +3,7 @@ include_template("class.pop3_sync.ns");
 include_template("class.sqlcommand.ns");
 include_template("common.html.ns");
 include_template("db.ns");
+include_template("db.schema.ns");
 include_template("encoding.ns");
 include_template("mime.ns");
 include_template("tzones.ns");

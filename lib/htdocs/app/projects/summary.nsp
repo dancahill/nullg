@@ -1,0 +1,91 @@
+<?nsp
+
+function viewproject() {
+	statuses={'Open', 'Closed'};
+	priorities = { "Lowest", "Low", "Normal", "High", "Highest" };
+
+	id=tonumber((method=='POST')?_POST['PROJECTID']:_GET['ID']);
+	ui=new db.userinfo();
+	query=sprintf("SELECT * FROM gw_projects WHERE obj_did = %d AND projectid=%d", ui.domainid, id);
+	sqr=sqlquery(query);
+	sqrlen=sqr['_rows'].length();
+	if (sqrlen!=1) return;
+	rec=sqr['_rows'][0];
+	print("<table class='contenttable'><thead>\r\n");
+	printf("<tr><th colspan=2>%s</th></tr>\r\n", strtohtml(rec['projectname']));
+	print("</thead><tbody>\r\n");
+
+	printf("<tr><th>Project Name</th><td><a href=\"javascript:ns.projects.view(event, %d);\">%s</a></td></tr>", tonumber(rec['projectid']), rec['projectname']);
+	printf("<tr><th>Project Admin</th><td>%d</td></tr>", tonumber(rec['projectadmin']));
+	printf("<tr><th>Start Date</th><td>%s</td></tr>", rec['projectstart']);
+	printf("<tr><th>Finish Date</th><td>%s</td></tr>", rec['projectfinish']);
+	printf("<tr><th>Status</th><td>%d</td></tr>", tonumber(rec['status']));
+	printf("<tr><th colspan=2>Details</th></tr>");
+	printf("<tr><td colspan=2>%s</td></tr>", rec['details']);
+
+	// show related events
+	printf("<tr><th colspan=2>events<span style='float:right;font-size:14px'><a style=\"color:#ffffff;text-decoration:none;\" href=\"/app/calendar/event?id=0&projectid=%d\" onclick=\"return ns.ModalForm(event, 'event', 0);\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+	print("<tr><td colspan=2>");
+	query=sprintf("SELECT * FROM gw_events WHERE obj_did = %d and projectid=%d ORDER BY status ASC, priority DESC", ui.domainid, id);
+	sqr=sqlquery(query);
+	sqrlen=sqr['_rows'].length();
+	if (sqrlen>0) {
+		print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+		for (i=0;i<sqrlen;i++) {
+			rec=sqr['_rows'][i];
+			print("<tr><td width=100%>");
+			printf("<a href=\"javascript:ns.events.view(event, %d);\">%s</a></td><td>%s</td><td>%s</td></tr>", tonumber(rec['eventid']), rec['eventname'], priorities[tonumber(rec['priority'])], statuses[tonumber(rec['status'])]);
+		}
+		print("</table></div>");
+	}
+	print("</td></tr>");
+	// show related tasks
+	printf("<tr><th colspan=2>tasks<span style='float:right;font-size:14px'><a style=\"color:#ffffff;text-decoration:none;\" href=\"/app/tasks/task?id=0&projectid=%d\" onclick=\"return ns.ModalForm(event, 'task', 0);\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+	print("<tr><td colspan=2>");
+	query=sprintf("SELECT * FROM gw_tasks WHERE obj_did = %d and projectid=%d ORDER BY status ASC, priority DESC", ui.domainid, id);
+	sqr=sqlquery(query);
+	sqrlen=sqr['_rows'].length();
+	if (sqrlen>0) {
+		print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+		for (i=0;i<sqrlen;i++) {
+			rec=sqr['_rows'][i];
+			print("<tr><td width=100%>");
+			printf("<a href=\"javascript:ns.tasks.view(event, %d);\">%s</a></td>", tonumber(rec['taskid']), rec['taskname']);
+			printf("<td style='text-align:right'>%d%s</td>", tonumber(rec['progress']), '%');
+			printf("<td>%s</td><td>%s</td></tr>", priorities[tonumber(rec['priority'])], statuses[tonumber(rec['status'])]);
+		}
+		print("</table></div>");
+	}
+	print("</td></tr>");
+	// show related notes
+	//printf("<tr><th>notes<span style='float:right'>&plus;</span></th></tr>\r\n");
+	printf("<tr><th colspan=2>Notes<span style='float:right;font-size:14px'><a style=\"color:#ffffff;text-decoration:none;\" href=\"/app/notes/note?id=0&projectid=%d\" onclick=\"return ns.ModalForm(event, 'note', 0);\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+	print("<tr><td colspan=2>");
+	query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d AND tablename='projects' AND tableindex=%d", ui.domainid, id);
+	sqr=sqlquery(query);
+	sqrlen=sqr['_rows'].length();
+	if (sqrlen>0) {
+		print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+		for (i=0;i<sqrlen;i++) {
+			rec=sqr['_rows'][i];
+			print("<tr><td width=100%>");
+			printf("<a href=\"javascript:ns.notes.view(%d);\">%s</a></td></tr>", tonumber(rec['noteid']), rec['notetitle']);
+		}
+		print("</table></div>");
+	}
+	print("</td></tr>");
+}
+
+include("projects.lib.ns");
+projects.html.headermenu(0);
+//print("Projects - The project app is not started yet.");
+print("<br/>");
+print("<center>\r\n");
+try {
+	viewproject();
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+print("</center>\r\n");
+//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+?>

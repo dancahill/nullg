@@ -1,0 +1,117 @@
+
+function wmsearch_doquery(order_by, folderid) {
+	prefs=_USER['pref'];
+	var accountid = tonumber(prefs['mailcurrent']);
+	var userid    = tonumber(_USER['userid']);
+	//var mailcurrent = tonumber(_USER['prefmailcurrent']);
+
+	searchtext="";
+	if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+		searchtext=_POST['SEARCHTEXT'];
+	}
+	if (searchtext=="") {
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = %d ORDER BY %s;", userid, accountid, folderid, order_by);
+	} else {
+		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d ORDER BY %s;", userid, accountid, order_by);
+	}
+	//print(query);
+	return sqlquery(query);
+	//return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE accountid = 4 LIMIT 100;"));
+}
+
+function mail_list() {
+	var userinfo = db.getuserinfo();
+
+	prefs=_USER['pref'];
+	var maildefault = tonumber(prefs['maildefault']);
+	var mailcurrent = tonumber(prefs['mailcurrent']);
+	var maxlist     = tonumber(prefs['maxlist']);
+	var menustyle   = tonumber(prefs['menustyle']);
+	var accountid   = tonumber(prefs['mailcurrent']);
+	var folderid=1;// should default to 1
+
+	var userid      = tonumber(_USER['userid']);
+	var domainid    = tonumber(_USER['domainid']);
+
+//	mail.html.headermenu();
+	if (_GET['ACCOUNTID']!=null) {
+		n=tonumber(_GET['ACCOUNTID']);
+		if (accountid!=n) {
+			accountid=n;
+			prefs['mailcurrent']=accountid;
+			sqlupdate(sprintf("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d;", accountid, userid, domainid));
+		}
+	}
+	searchtext="";
+	if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+		searchtext=_POST['SEARCHTEXT'];
+		//var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+	}
+
+	if (_GET['FOLDERID']!=null) folderid=tonumber(_GET['FOLDERID']);
+	sqr=wmsearch_doquery("hdr_date DESC", folderid);
+
+	if (searchtext!="") {
+		sqrlen=sqr['_rows'].length();
+		for (i=0;i<sqrlen;i++) {
+			rec=sqr['_rows'][i];
+			headerid=tonumber(rec['mailheaderid']);
+			folderid=tonumber(rec['folder']);
+			message = new mail.messagereader(headerid, folderid);
+			found=message.search(searchtext);
+			if (!found) sqr['_rows'][i]=null;
+		}
+	}
+	nummessages=sqr['_rows'].length();
+	//nummessages=sql_numtuples(&sqr);
+	if (nummessages<1) {
+		printf("<br><center><b>You have no messages in this mailbox</b></center><br>\r\n");
+		sqr=null;
+		return;
+	}
+
+	outdata={};
+	foreach (row in sqr['_rows']) {
+		from=mail.getaddr(row['hdr_from']);
+		msgsize=tonumber(row['size']);
+		if (msgsize>=1048576) {
+			ms=msgsize/1048576;
+			if (ms<1) ms=1;
+			ssize=sprintf("%d M", ms);
+		} else {
+			ms=msgsize/1024;
+			if (ms<1) ms=1;
+			ssize=sprintf("%d K", ms);
+		}
+		newrow = {
+			attachment=(string.istr(row['hdr_contenttype'], "multipart/mixed")!=null);
+			date=string.sub(row['hdr_date'], 0, 10);
+			datefull=row['hdr_date'];
+			folderid=tonumber(row['folder']);
+			from=mail.getaddr(row['hdr_from']);
+			fromfull=from.full;
+			fromname=from.name;
+
+			headerid=tonumber(row['mailheaderid']);
+			subject=net.mime.rfc2047.decode(row['hdr_subject']);
+			msgsize=tonumber(row['size']);
+			ssize=ssize;
+			status=row['status'];
+			uidl=row['uidl'];
+		};
+		outdata[outdata.length()]=newrow;
+	}
+//	outdata["original"]=sqr['_rows'];
+//	print(data.json.encode(sqr['_rows']));
+//	print("<hr>");
+	print(data.json.encode(outdata));
+	return;
+}
+
+try {
+	include_template("db.ns");
+	include("mail.lib.ns");
+	mail_list();
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}

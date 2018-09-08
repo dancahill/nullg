@@ -46,7 +46,7 @@ static int sanity_dbcheck_table(char *tablename, char *indexname, int numfields)
 	obj_t *qobj = NULL;
 	int nfields;
 
-	if (sql_queryf(proc.N, &qobj, "SELECT * FROM %s WHERE %s = 1", tablename, indexname) < 0) {
+	if (sql_queryf(proc.N, &qobj, "SELECT * FROM %s WHERE %s = 1;", tablename, indexname) < 0) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "ERROR: Could not access %s table!", tablename);
 		exit(-2);
 	}

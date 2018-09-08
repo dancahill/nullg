@@ -75,7 +75,7 @@ function search_sql() {
 		}
 		for (i=0;i<sql_numtuples(proc->N, &qobj2);i++) {
 			for (j=0;j<sql_numfields(proc->N, &qobj2);j++) {
-				print("\"%s\"", str2html(conn, sql_getvalue(proc->N, &qobj2, i, j)));
+				print("\"%s\"", strtohtml(conn, sql_getvalue(proc->N, &qobj2, i, j)));
 				if (j<sql_numfields(proc->N, &qobj2)-1) {
 					print(",");
 				} else {
@@ -98,9 +98,9 @@ function search_sql() {
 	print("<CENTER>\r\n");
 	if (offset>(_USER.pref.maxlist-1)) {
 		if (id>=0) {
-			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
+			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
 		} else {
-			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
+			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">&lt;&lt;</A>");
 		}
 	} else {
 		print("&lt;&lt;");
@@ -108,9 +108,9 @@ function search_sql() {
 	print(" ",qname," - ",Q._tuples," results ");
 	if (offset+_USER.pref.maxlist<Q._tuples) {
 		if (id>=0) {
-			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
+			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
 		} else {
-			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
+			print("<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
 		}
 	} else {
 		print("&gt;&gt;");
@@ -118,13 +118,13 @@ function search_sql() {
 	print("<BR />\r\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	print("<TR>");
 	for (i=0;i<Q._fields;i++) {
-		print("<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>",str2html(iname(Q['_rows'][0], i)),"</TH>");
+		print("<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>",strtohtml(iname(Q['_rows'][0], i)),"</TH>");
 	}
 	print("</TR>\r\n");
 	for (i=offset;(i<Q._tuples)&&(i<offset+_USER.pref.maxlist);i++) {
 		print("<TR CLASS=\"FIELDVAL\">");
 		for (j=0;j<Q._fields;j++) {
-			print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i][iname(Q['_rows'][i], j)]),"&nbsp;</TD>");
+			print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i][iname(Q['_rows'][i], j)]),"&nbsp;</TD>");
 		}
 		print("</TR>\r\n");
 	}
@@ -133,9 +133,9 @@ function search_sql() {
 	if (Q._tuples>_USER.pref.maxlist) {
 		if (offset>(_USER.pref.maxlist-1)) {
 			if (id>=0) {
-				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">");
+				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">");
 			} else {
-				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">");
+				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset-_USER.pref.maxlist,"');\">");
 			}
 			min=offset-_USER.pref.maxlist+1;
 			max=offset;
@@ -147,9 +147,9 @@ function search_sql() {
 		}
 		if (offset+_USER.pref.maxlist<Q._tuples) {
 			if (id>=0) {
-				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">");
+				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">");
 			} else {
-				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">");
+				print("[<A HREF=\"/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?querystring=",encodeurl(query),"&offset=",offset+_USER.pref.maxlist,"');\">");
 			}
 			min=offset+_USER.pref.maxlist+1;
 			max=offset+_USER.pref.maxlist+_USER.pref.maxlist;

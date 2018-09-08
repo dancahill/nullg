@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -339,20 +339,23 @@ num_t n_aton(nsp_state *N, const char *str)
 {
 #define __FN__ __FILE__ ":n_aton()"
 	char *s = (char *)str;
+	short neg = 0;
 	num_t rval = 0;
 	num_t rdot = 0.1;
 
 	settrace();
+	if (*s == '-') { neg = 1; s++; }
 	while (nc_isdigit(*s)) {
 		rval = 10 * rval + (*s++ - '0');
 	}
-	if (*s != '.') return rval;
-	s++;
-	while (nc_isdigit(*s)) {
-		rval += (*s++ - '0')*rdot;
-		rdot *= 0.1;
+	if (*s == '.') {
+		s++;
+		while (nc_isdigit(*s)) {
+			rval += (*s++ - '0')*rdot;
+			rdot *= 0.1;
+		}
 	}
-	return rval;
+	return neg ? 0 - rval : rval;
 #undef __FN__
 }
 

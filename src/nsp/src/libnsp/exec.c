@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -235,8 +235,8 @@ obj_t *n_execfunction(nsp_state *N, obj_t *fobj, obj_t *pobj, uchar isnewobject)
 			N->readptr = p;
 		}
 		nsp_setbool(N, &N->r, "", n ? 0 : 1);
+		if (n < 0) n_warn(N, __FN__, "failed to include '%s'", cobj1->val->d.str);
 		nsp_unlinkval(N, &listobj);
-		if (n < 0) n_error(N, NE_SYNTAX, __FN__, "failed to include '%s'", cobj1->val->d.str);
 
 		if (N->ret) N->ret = 0;
 		N->func = oldfunc;
@@ -810,6 +810,11 @@ nsp_state *nsp_newstate()
 			{ "tostring", (NSP_CFUNC)nl_tostring },
 			{ "tolower", (NSP_CFUNC)nl_strtolower },
 			{ "toupper", (NSP_CFUNC)nl_strtolower },
+
+			{ "trim", (NSP_CFUNC)nl_strtrim},
+			{ "trimstart", (NSP_CFUNC)nl_strtrim },
+			{ "trimend", (NSP_CFUNC)nl_strtrim },
+
 			{ NULL, NULL }
 	};
 	FUNCTION list_table[] = {
@@ -819,14 +824,13 @@ nsp_state *nsp_newstate()
 		{ NULL, NULL }
 	};
 	FUNCTION list_time[] = {
-			{ "gmtime", (NSP_CFUNC)nl_gmtime },
+			{ "asctime", (NSP_CFUNC)nl_asctime },
 			{ "gettimeofday", (NSP_CFUNC)nl_gettimeofday },
+			{ "gmtime", (NSP_CFUNC)nl_gmtime },
 			{ "localtime", (NSP_CFUNC)nl_gmtime },
-			{ "sqldate", (NSP_CFUNC)nl_sqltime },
-			{ "sqltime", (NSP_CFUNC)nl_sqltime },
-			{ "sqldatetime", (NSP_CFUNC)nl_sqltime },
-			{ "sqltounix", (NSP_CFUNC)nl_sqltounix },
+			{ "mktime", (NSP_CFUNC)nl_mktime },
 			{ "now", (NSP_CFUNC)nl_time },
+			{ "sqltime", (NSP_CFUNC)nl_asctime },
 			{ NULL, NULL }
 	};
 	nsp_state *new_N;

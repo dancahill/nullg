@@ -1,22 +1,3 @@
 <?nsp
-print("The calendar app is not started yet.");
-include("calendar.lib.ns");
-utime=time.now()
-utime=utime-(utime%86400);
-month=calendar.getmonth(utime);
-print("<div style='float:right;'>\r\n");
-print("<table><thead>\r\n");
-print("<tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>\r\n");
-print("</thead><tbody>\r\n");
-foreach (week in month) {
-	print("<tr>");
-	foreach (day in week) {
-		color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-		printf("<td><span style='color:%s'>%d</span></td>", color, day.tm_mday);
-	}
-	print("</tr>\r\n");
-}
-print("</tbody></table>\r\n");
-print("</div>\r\n");
-//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+exec(convertnsp(file.readall(_filepath+"/dlist.nsp")));
 ?>

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -712,6 +712,83 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 	}
 	nsp_linkval(N, &N->r, &tobj);
 	nsp_unlinkval(N, &tobj);
+	return 0;
+#undef __FN__
+}
+
+NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
+{
+#define __FN__ __FILE__ ":libnsp_net_mime_rfc2047_encode()"
+	const char *hex = "0123456789ABCDEF";
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *robj;
+	uchar *cp;
+	char *dest;
+	unsigned int i;
+	int di;
+	int outlen = 0;
+	int linelen = 0;
+	int maxlinelen = 76;
+
+	n_expect_argtype(N, NT_STRING, 1, cobj1, 1);
+	if (cobj1->val->size == 0) {
+		nsp_setstr(N, &N->r, "", NULL, 0);
+		return 0;
+	}
+	cp = (uchar *)cobj1->val->d.str;
+	// calculate output size
+	for (i = 0;i < cobj1->val->size;i++) {
+	breakline1:
+		if (linelen >= maxlinelen) {
+			outlen += 3;
+			linelen = 0;
+		}
+		if (cp[i] != ' ' && (cp[i] < 33 || cp[i] == 61 || cp[i] > 127)) {
+			linelen += 3;
+			if (linelen >= maxlinelen) goto breakline1;
+			outlen += 3;
+		}
+		else {
+			linelen += 1;
+			if (linelen >= maxlinelen) goto breakline1;
+			outlen += 1;
+		}
+	}
+	if (outlen == cobj1->val->size) {
+		nsp_setstr(N, &N->r, "", cobj1->val->d.str, cobj1->val->size);
+		return 0;
+	}
+	if ((dest = n_alloc(N, outlen + 1, 0)) == NULL) return 0;
+	dest[outlen] = '\0';
+	robj = nsp_setstr(N, &N->r, "", NULL, 0);
+	di = 0;
+	linelen = 0;
+	// create output string
+	nsp_strcat(N, robj, "=?UTF-8?Q?", -1);
+	for (i = 0;i < cobj1->val->size;i++) {
+	breakline2:
+		if (linelen >= maxlinelen) {
+			dest[di++] = '=';
+			dest[di++] = '\r';
+			dest[di++] = '\n';
+			linelen = 0;
+		}
+		if (cp[i] != ' ' && (cp[i] < 33 || cp[i] == 61 || cp[i] > 127)) {
+			linelen += 3;
+			if (linelen >= maxlinelen) goto breakline2;
+			dest[di++] = '=';
+			dest[di++] = hex[(unsigned int)cp[i] / 16];
+			dest[di++] = hex[(unsigned int)cp[i] & 15];
+		}
+		else {
+			linelen += 1;
+			if (linelen >= maxlinelen) goto breakline2;
+			dest[di++] = cp[i];
+		}
+	}
+	nsp_strcat(N, robj, dest, outlen);
+	nsp_strcat(N, robj, "?=", -1);
+	n_free(N, (void *)&dest, outlen + 1);
 	return 0;
 #undef __FN__
 }

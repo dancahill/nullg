@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ int nspnet_register_all(nsp_state *N)
 	nsp_setcfunc(N, tobj2, "client", (NSP_CFUNC)libnsp_net_ftp_client_client);
 	nsp_setcfunc(N, tobj2, "open", (NSP_CFUNC)libnsp_net_ftp_client_open);
 	nsp_setcfunc(N, tobj2, "close", (NSP_CFUNC)libnsp_net_ftp_client_close);
+	nsp_setcfunc(N, tobj2, "cwd", (NSP_CFUNC)libnsp_net_ftp_client_cwd);
+	nsp_setcfunc(N, tobj2, "pwd", (NSP_CFUNC)libnsp_net_ftp_client_pwd);
 	nsp_setcfunc(N, tobj2, "ls", (NSP_CFUNC)libnsp_net_ftp_client_ls);
 	nsp_setcfunc(N, tobj2, "retr", (NSP_CFUNC)libnsp_net_ftp_client_retr);
 	nsp_setcfunc(N, tobj2, "stor", (NSP_CFUNC)libnsp_net_ftp_client_stor);
@@ -79,6 +81,7 @@ int nspnet_register_all(nsp_state *N)
 	tobj3 = nsp_settable(N, tobj2, "rfc2047");
 	tobj3->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj3, "decode", (NSP_CFUNC)libnsp_net_mime_rfc2047_decode);
+	nsp_setcfunc(N, tobj3, "encode", (NSP_CFUNC)libnsp_net_mime_rfc2047_encode);
 
 	tobj2 = nsp_settable(N, tobj, "pop3");
 	tobj2->val->attr |= NST_HIDDEN;

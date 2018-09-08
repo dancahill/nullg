@@ -1,0 +1,71 @@
+class datetime {
+	function datetime(t) {
+		//print("typeof(unixtime)=",typeof(unixtime),"\r\n");
+		if (typeof(t)=="number") {
+			this.unixtime=t;
+		} else if (typeof(t)=="table") {
+			this.unixtime=time.mktime(t);
+		} else {
+			this.unixtime=time.now();
+		}
+	}
+
+	function adddays(n) {
+		//x=new datetime();
+		/* doesn't seem to be able to return a class by declaring it normally
+		 * but this works
+		 */
+		x = {};
+		x.this = &x;
+		x.inherit(datetime);
+		x.datetime(this.unixtime+(n*86400));
+		return x;
+	}
+
+	function addhours(n) {
+		x = {};
+		x.this = &x;
+		x.inherit(datetime);
+		x.datetime(this.unixtime+(n*3600));
+		return x;
+	}
+
+	function addminutes(n) {
+		x = {};
+		x.this = &x;
+		x.inherit(datetime);
+		x.datetime(this.unixtime+(n*60));
+		return x;
+	}
+
+	function gethours() {
+		t=time.gmtime(this.unixtime);
+		return t.tm_hour;
+	}
+
+	function getminutes() {
+		t=time.gmtime(this.unixtime);
+		return t.tm_min;
+	}
+
+	function getseconds() {
+		t=time.gmtime(this.unixtime);
+		return t.tm_sec;
+	}
+
+	function isdst() {
+		t=time.localtime(this.unixtime);
+		return t.tm_isdst?true:false;
+	}
+
+	function gettzoffset() {
+		tz=_SERVER['TIMEZONES'][tonumber(_USER['preftimezone'])];
+		o=tz.o;
+		if (tz.d==1 && this.isdst(this.unixtime)) o+=60;
+		return o*60;
+	}
+
+	function tostring() {
+		return time.sqltime(time.gmtime(this.unixtime));
+	}
+}

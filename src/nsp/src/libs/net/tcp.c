@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -65,40 +65,40 @@ void tcp_murder(nsp_state *N, obj_t *cobj)
 #undef __FN__
 }
 
-int tcp_bind(nsp_state *N, char *ifname, unsigned short port)
+int tcp_bind(nsp_state *N, TCP_SOCKET *sock, char *ifname, unsigned short port)
 {
 #define __FN__ __FILE__ ":tcp_bind()"
 	struct hostent *hp;
 	struct sockaddr_in sin;
 	int option;
-	int sock;
+	int bindsock;
 
 	nc_memset((char *)&sin, 0, sizeof(sin));
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	bindsock = socket(AF_INET, SOCK_STREAM, 0);
 	sin.sin_family = AF_INET;
 	if (strcasecmp("INADDR_ANY", ifname) == 0) {
 		sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 	else {
 		if ((hp = gethostbyname(ifname)) == NULL) {
-			n_warn(N, __FN__, "Host lookup error for %s", ifname);
+			snprintf(sock->errormsg, sizeof(sock->errormsg) - 1, "Host lookup error for %s", ifname);
 			return -1;
 		}
 		nc_memcpy((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
 	}
 	sin.sin_port = htons(port);
 	option = 1;
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
-	if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		n_warn(N, __FN__, "bind() error [%s:%d]", ifname, port);
+	setsockopt(bindsock, SOL_SOCKET, SO_REUSEADDR, (void *)&option, sizeof(option));
+	if (bind(bindsock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		snprintf(sock->errormsg, sizeof(sock->errormsg) - 1, "bind() error [%s:%d]", ifname, port);
 		return -1;
 	}
-	if (listen(sock, 50) < 0) {
-		n_warn(N, __FN__, "listen() error");
-		closesocket(sock);
+	if (listen(bindsock, 50) < 0) {
+		snprintf(sock->errormsg, sizeof(sock->errormsg) - 1, "listen() error");
+		closesocket(bindsock);
 		return -1;
 	}
-	return sock;
+	return bindsock;
 #undef __FN__
 }
 
@@ -120,7 +120,7 @@ int tcp_accept(nsp_state *N, TCP_SOCKET *bsock, TCP_SOCKET *asock)
 	if (clientsock < 0) {
 		asock->LocalPort = 0;
 		asock->RemotePort = 0;
-		n_warn(N, __FN__, "failed tcp_accept");
+		snprintf(bsock->errormsg, sizeof(bsock->errormsg) - 1, "failed tcp_accept");
 		return -1;
 	}
 	asock->socket = clientsock;
@@ -186,7 +186,7 @@ int tcp_connect(nsp_state *N, TCP_SOCKET *sock, char *host, unsigned short port,
 	struct sockaddr_in serv;
 
 	if ((hp = gethostbyname(host)) == NULL) {
-		n_warn(N, __FN__, "Host lookup error for %s", host);
+		snprintf(sock->errormsg, sizeof(sock->errormsg) - 1, "Host lookup error for %s", host);
 		return -1;
 	}
 	nc_memset((char *)&serv, 0, sizeof(serv));
@@ -360,7 +360,7 @@ retry:
 		socket->recvbufsize += rc;
 	}
 	obuffer = socket->recvbuf + socket->recvbufoffset;
-	while ((n < max) && (socket->recvbufsize>0)) {
+	while ((n < max) && (socket->recvbufsize > 0)) {
 		socket->recvbufoffset++;
 		socket->recvbufsize--;
 		n++;

@@ -1,62 +1,100 @@
-include_template("common.ns");
-include_template("class.html_table.ns");
-include_template("db.ns");
-
 function search_contacts() {
+	contacts.html.headermenu();
+	contacts.html.show_searchform();
 	var maxlist   = tonumber(_USER['pref']['maxlist']);
 	var menustyle = tonumber(_USER['pref']['menustyle']);
 	var userid    = tonumber(_USER['userid']);
-
 	global Q=db.contacts.getlist();
-	print("<br>\r\n");
 	if (Q._tuples<1) {
 		print("<b>Found 0 matching contacts</b>\r\n");
 		return;
 	}
-	t=new html_table();
-	t.datasource=Q;
-	t.tablename="T2";
-	t.tableclass="contenttable";
-	t.autoaddcolumns=false;
-	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:contacts.view(%d)\"'>", tonumber(row['contactid']));
-	};
-	fn=function (row, column) { id=tonumber(row['contactid']); sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn; if (name=="") return "";
-		return sprintf("<a href=\"javascript:contacts.view(%d);\">%s</a>", id, str2html(name));
-	};
-	t.addcolumn("surname", "Contact Name", fn, fntd);
-	t.addcolumn("organization", "Company Name");
-	t.addcolumn("worknumber", "Work Number");
-	if (menustyle>0) {
-		fn=function (row, column) {
-			email=row['email'];
-			if (email=="") return "";
-			sn=row['surname']; gn=row['givenname']; name=gn+((sn!=""&&gn!="")?" ":"")+sn;
-			return "<a href=\"javascript:MsgTo('&quot;"+str2html(name)+"&quot; <"+email+">')\">"+str2html(email)+"</a>";
-		};
-		t.addcolumn("email", "E-Mail", fn);
-	} else {
-		fntd=function (row, column) {
-			email=row['email'];
-			if (email=="") return "<td>";
-			gn=row['givenname']; sn=row['surname']; name=gn+((gn!=""&&sn!="")?" ":"")+sn;
-			return "<td onclick=\"javascript:contacts.emailaddrbook.add('&quot;"+str2html(name)+"&quot; <"+email+">');\">";
-		};
-		fn=function (row, column) {
-			email=row['email'];
-			if (email=="") return "";
-			gn=row['givenname']; sn=row['surname']; name=gn+((gn!=""&&sn!="")?" ":"")+sn;
-			return "<a href=\"javascript:contacts.emailaddrbook.add('&quot;"+str2html(name)+"&quot; <"+email+">');\">"+str2html(email)+"</a>";
-		};
-		t.addcolumn("email", "E-Mail", fn, fntd);
+
+	print("<table id=\"T2\" class=\"contenttable\">");
+	print("<thead><tr><th class=\"header r60max\"></th><th class=\"header r60 headerSortDown\">Contact Name</th><th class=\"header r60\">Company Name</th><th class=\"header r60\">Work Number</th><th class=\"header r60\">E-Mail</th><th class=\"header r60\">Web</th></tr>");
+	print("</thead><tbody>");
+
+	foreach (row in Q['_rows']) {
+		print("<tr>");
+
+		id=tonumber(row['contactid']);
+		sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn;
+
+		sites="";
+		if (row['website']!="")  sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website.png\" width=32 height=32></a>", strtohtml(row['website']));
+		if (row['website2']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website2.png\" width=32 height=32></a>", strtohtml(row["website2"]));
+		if (row['website3']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website3.png\" width=32 height=32></a>", strtohtml(row["website3"]));
+		if (row['website4']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website4.png\" width=32 height=32></a>", strtohtml(row["website4"]));
+		if (row['website5']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website5.png\" width=32 height=32></a>", strtohtml(row["website5"]));
+
+		td=sprintf("<td onclick=\"javascript:ns.contacts.view(event, %d)\" class='r60max'><div style='font-size:18px'><b>", id);
+		if (name!="") {
+			td+=sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+		} else {
+			td+="blank?";
+		}
+		td+="</b>";
+		if (row["organization"]!="") td+="<br/>"+strtohtml(row["organization"]);
+		if (row["homenumber"]!="") td+="<br/>Home: "+strtohtml(row["homenumber"]);
+		if (row["worknumber"]!="") td+="<br/>Work: "+strtohtml(row["worknumber"]);
+		if (row["mobilenumber"]!="") td+="<br/>Cell: "+strtohtml(row["mobilenumber"]);
+
+		email=row['email'];
+		if (email!="") {
+			td+="<br/><a href=\"javascript:ns.contacts.emailaddrbook.add('&quot;"+strtohtml(name)+"&quot; <"+email+">');\">"+strtohtml(email)+"</a>";
+		}
+
+		if (sites!="") td+="<br/>"+sites;
+
+		td+="</div></td>";
+		print(td);
+
+		td=sprintf("<td class='r60' onclick=\"javascript:ns.contacts.view(event, %d)\">", id);
+		if (name!="") td+=sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+		td+="</td>";
+		print(td);
+
+		td=sprintf("<td class='r60'>");
+		td+=strtohtml(row["organization"]);
+		td+="</td>";
+		print(td);
+
+		td=sprintf("<td class='r60'>");
+		td+=strtohtml(row["worknumber"]);
+		td+="</td>";
+		print(td);
+
+		email=row['email'];
+		if (email!="") {
+			td="<td onclick=\"javascript:ns.contacts.emailaddrbook.add('&quot;"+strtohtml(name)+"&quot; <"+email+">');\" class='r60'>";
+			td+="<a href=\"javascript:ns.contacts.emailaddrbook.add('&quot;"+strtohtml(name)+"&quot; <"+email+">');\">"+strtohtml(email)+"</a>";
+			td+="</td>";
+			print(td);
+		} else {
+			td=sprintf("<td class='r60'>");
+			td+="";
+			td+="</td>";
+			print(td);
+		}
+
+		td="<td class='r60' style=\"padding:0px; vertical-align: middle;\">";
+		if (row['website']!="")  td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website.png\" width=16 height=16></a>", strtohtml(row['website']));
+		if (row['website2']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website2.png\" width=16 height=16></a>", strtohtml(row["website2"]));
+		if (row['website3']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website3.png\" width=16 height=16></a>", strtohtml(row["website3"]));
+		if (row['website4']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website4.png\" width=16 height=16></a>", strtohtml(row["website4"]));
+		if (row['website5']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website5.png\" width=16 height=16></a>", strtohtml(row["website5"]));
+		td+="</td>";
+		print(td);
+
+		print("</tr>\r\n");
 	}
-	fn=function (row, column) { website=row['website']; if (website=="") return ""; return sprintf("<a href=\"%s\" target=\"_blank\">visit</a>", website); };
-	t.addcolumn("website", "Web", fn);
-	t.write();
+	print("</tbody></table>");
 	return;
 }
 
 try {
+	include_template("common.ns");
+	include("contacts.lib.ns");
 	print("<center>\r\n");
 	search_contacts();
 	print("</center>\r\n");

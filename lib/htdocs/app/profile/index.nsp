@@ -1,0 +1,3 @@
+<?nsp
+exec(convertnsp(file.readall(_filepath+"/profile.nsp")));
+?>

@@ -1,0 +1,125 @@
+<?nsp
+
+function view_task(id) {
+	var method=_SERVER['REQUEST_METHOD'];
+	if (id==null) id=tonumber((method=='POST')?_POST['TASKID']:_GET['ID']);
+	Q=db.tasks.get(id);
+	TASK=Q['_rows'][0];
+	if (Q==null || TASK==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	if (id==0) {
+		TASK['contactid']=tonumber(_GET['CONTACTID']);
+		TASK['projectid']=tonumber(_GET['PROJECTID']);
+	}
+
+	//print("<div><pre>",serialize(Q),"</pre></div>");
+	var form=new html_form(TASK);
+	print("<form id=taskedit name=taskedit METHOD=POST ACTION=\"/app/tasks/task\" onsubmit=\"return ns.ModalSubmit(event, 'task', 'save');\" enctype='multipart/form-data'>\r\n");
+	form.addfield({name="taskid", type="hidden"});
+	//print("<div style='width:100%'>");
+	print("<div style='width:100%;background-color:#f0f0f0'>");
+
+	//print("<div style='float:left'>");
+	print("<table class=\"contentform\">\r\n");
+	form.addfield({name="taskname", label="Task Name", required=true});
+	form.addfield({name="assignedby", label="Assigned By", type="select", handler=tasks.html.htselect_user});
+	form.addfield({name="assignedto", label="Assigned To", type="select", handler=tasks.html.htselect_user});
+	form.addfield({name="contactid", label="Contact Name", type="select", handler=tasks.html.htselect_contact});
+	form.addfield({name="projectid", label="Project", type="select", handler=tasks.html.htselect_project});
+	form.addfield({name="priority", label="Priority", type="select", handler=tasks.html.htselect_priority});
+	form.addfield({name="progress", label="Progress %", required=true});
+	form.addfield({name="reminder", label="Reminder", type="select", handler=tasks.html.htselect_reminder});
+	form.addfield({name="duedate", label="Due Date", required=true, handler=tasks.html.htselect_startdate});
+	form.addfield({name="status", label="Status", type="select", handler=tasks.html.htselect_status});
+	print("</table>\r\n");
+	print("</div>");
+
+	print("<div style='clear:both'>");
+	print("<table class=\"contentform\">\r\n");
+	form.addfield({name="details", label="Details", type="textarea", required=true});
+	print("</table>\r\n");
+
+	//print("</div>");
+
+
+	print("</div>");
+
+	print("<div style='clear:both'>");
+	form.validate("gw_tasks");
+	print("<input type=hidden name=submitaction value=''>\r\n");
+	print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+	if (id>0) {
+		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ModalSubmit(event, 'task', 'delete');\">\r\n");
+	}
+	print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
+	print("</div>");
+	print("</form>\r\n");
+	//if (method=="POST") printf("<hr>_POST=[%s]", serialize(_POST));
+
+	print("<script>
+	$( function() {
+		$( '#duedate' ).datepicker({ dateFormat: 'yy-mm-dd' });
+	} );
+	</script>\r\n");
+	return;
+}
+
+function save_task() {
+	if (_SERVER['REQUEST_METHOD']!='POST') return;
+	id=tonumber(_POST['TASKID']);
+	Q=db.tasks.get(id);
+	TASK=Q['_rows'][0];
+	if (Q==null || TASK==null) {
+		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		return;
+	}
+	switch (_POST['SUBMITACTION']) {
+	case 'save':
+		TASK["assignedby"] = _POST["ASSIGNEDBY"];
+		TASK["assignedto"] = _POST["ASSIGNEDTO"];
+		TASK["taskname"] = _POST["TASKNAME"];
+		TASK["contactid"] = _POST["CONTACTID"];
+		TASK["projectid"] = _POST["PROJECTID"];
+		TASK["priority"] = _POST["PRIORITY"];
+		TASK["progress"] = _POST["PROGRESS"];
+		TASK["reminder"] = _POST["REMINDER"];
+
+		duedate = _POST["DUEDATE"];
+		//dt = new datetime(time.mktime(duedate));
+		//calendar.tz_user2utc(dt);
+		//duedate=dt.tostring();
+		TASK["duedate"] = duedate;
+
+		TASK["status"] = _POST["STATUS"];
+		TASK["details"] = _POST["DETAILS"];
+
+		db.tasks.set(TASK);
+		printf("task %d saved", TASK['taskid']);
+		view_task(TASK['taskid']);
+		break;
+	case 'delete':
+		db.tasks.remove(TASK);
+		printf("task %d deleted", TASK['taskid']);
+		break;
+	}
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include_template("class.html_form.ns");
+	include("tasks.lib.ns");
+	print("<center>\r\n");
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		save_task();
+	} else {
+		view_task();
+	}
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

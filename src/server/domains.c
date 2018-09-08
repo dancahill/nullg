@@ -21,6 +21,7 @@ char *domain_getname(char *outstring, int outlen, int domainid)
 {
 	obj_t *qobj = NULL;
 
+	if (domainid == 0) return NULL;
 	if (sql_queryf(proc.N, &qobj, "SELECT domainname FROM gw_domains WHERE domainid = %d", domainid) < 0) return NULL;
 	if (sql_numtuples(proc.N, &qobj) > 0) {
 		strncpy(outstring, sql_getvalue(proc.N, &qobj, 0, 0), outlen - 1);

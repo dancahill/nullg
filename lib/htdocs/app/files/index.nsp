@@ -1,1 +1,5 @@
-<?nsp ?"The files app is not started yet." ?>
+<?nsp
+include_template("common.ns");
+html.headersubmenu(null);
+print("The files app is not started yet.");
+ ?>

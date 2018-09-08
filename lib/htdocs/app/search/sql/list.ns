@@ -40,7 +40,7 @@ function sql_list()
 				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/edit.ns?id=",id,">edit</A></TD>");
 //			}
 			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/run.ns?id=",id,">");
-			print(str2html(Q['_rows'][i]['queryname'])+"</A>&nbsp;</TD>\r\n");
+			print(strtohtml(Q['_rows'][i]['queryname'])+"</A>&nbsp;</TD>\r\n");
 			print("<TD NOWRAP STYLE='border-style:solid'>");
 //			if (string.nicmp("SELECT", Q['_rows'][i]['_data']['query'], 6)==0) {
 			if (string.nicmp("SELECT", Q['_rows'][i]['query'], 6)==0) {

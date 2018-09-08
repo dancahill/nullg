@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,10 @@ int nspdata_register_all(nsp_state *N)
 	tobj2 = nsp_settable(N, tobj, "dbf");
 	tobj2->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj2, "reader", (NSP_CFUNC)libnsp_data_dbf_reader);
+
+	tobj2 = nsp_settable(N, tobj, "json");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "encode", (NSP_CFUNC)libnsp_data_json_encode);
 
 	tobj2 = nsp_settable(N, tobj, "sql");
 	tobj2->val->attr |= NST_HIDDEN;

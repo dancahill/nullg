@@ -1,18 +1,25 @@
 include("mail/mail.lib.ns");
 
 function update_accounts() {
-	query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid", tonumber(_USER['userid']));
+	query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid;", tonumber(_USER['userid']));
 	sqr=sqlquery(query);
 	// sync the pop3 mailboxes first
 	foreach (row in sqr['_rows']) {
-		t1=time.sqltounix(row['lastcheck']);
-		t2=time.sqltounix(time.sqldatetime());
-		//printf("%s - %d seconds<br>", row['accountname'], t2-t1);
+		t1=time.mktime(row['lastcheck']);
+		t2=time.mktime(time.sqltime());
+
+		file.append("/usr/local/nullsd/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
+		file.append("/usr/local/nullsd/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
+		/*
+		[2018-07-25 23:59:36] [2018-07-26 13:25:18] t1=1830769236 t2=1701133218 t2-t1=-129636018
+		[2018-07-25 23:59:38] [2018-07-26 13:25:18] t1=1830769238 t2=1701133218 t2-t1=-129636020
+		[2018-07-20 13:41:06] [2018-07-26 13:25:18]
+		t1=1700672406 t2=1701133218 t2-t1=460812
+		*/
+
 		if (t2-t1<120) continue;
-		//printf("syncing<br>");
 		try {
 			mail.sync.dosync(row);
-			//mail.sync.smtp_sync(row);
 		} catch (ex) {
 			printf("Exception: [%s]<br>", html_encode(ex.description));
 			return;
@@ -20,13 +27,10 @@ function update_accounts() {
 	}
 	// then try to send stuff
 	foreach (row in sqr['_rows']) {
-		t1=time.sqltounix(row['lastcheck']);
-		t2=time.sqltounix(time.sqldatetime());
-		//printf("%s - %d seconds<br>", row['accountname'], t2-t1);
+		t1=time.mktime(row['lastcheck']);
+		t2=time.mktime(time.sqltime());
 		if (t2-t1<120) continue;
-		//printf("syncing<br>");
 		try {
-			//mail.sync.dosync(row);
 			mail.sync.smtp_sync(row);
 		} catch (ex) {
 			printf("Exception: [%s]<br>", html_encode(ex.description));

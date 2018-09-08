@@ -1,3 +1,4 @@
+include_template("common.ns");
 include_template("db.ns");
 
 function form_inet_script() {
@@ -95,6 +96,7 @@ function form_contacts() {
 
 
 try {
+	html.headersubmenu(null);
 	var userinfo = db.getuserinfo();
 	print("<BR>\r\n");
 	form_inet_script();

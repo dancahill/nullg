@@ -173,25 +173,25 @@ function search_contacts() {
 		gn=Q['_rows'][i]['_data']['gn'];
 		print("<TR CLASS=\"FIELDVAL\">");
 		print("<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='/contacts/view?id="+id+"'\">");
-		print("<A HREF=/contacts/view?id="+id+">",str2html(sn));
+		print("<A HREF=/contacts/view?id="+id+">",strtohtml(sn));
 		if ((sizeof(sn)>0)&&(sizeof(gn)>0)) print(", "); else if (sizeof(sn)==0&&sizeof(gn)==0) print("&nbsp;");
-		print(str2html(gn),"</A>&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i]['_data']['organization']),"&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",str2html(Q['_rows'][i]['_data']['worktelephonenumber']),"&nbsp;</TD>");
+		print(strtohtml(gn),"</A>&nbsp;</TD>");
+		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i]['_data']['organization']),"&nbsp;</TD>");
+		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i]['_data']['worktelephonenumber']),"&nbsp;</TD>");
 		addr=Q['_rows'][i]['_data']['mail'];
 		if (sizeof(addr)==0) {
 			print("<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		} else if (maildefault==0) {
-			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"mailto:",addr,"\">",str2html(addr),"</A>&nbsp;</TD>");
+			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"mailto:",addr,"\">",strtohtml(addr),"</A>&nbsp;</TD>");
 		} else {
 			if (menustyle>0) {
 				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"javascript:MsgTo('");
-				print("&quot;",str2html(gn));
+				print("&quot;",strtohtml(gn));
 				if ((sizeof(sn)>0)&&(sizeof(gn)>0)) print(" ");
-				print(str2html(sn),"&quot;");
-				print(" <",addr,">')\">",str2html(addr),"</A>&nbsp;</TD>");
+				print(strtohtml(sn),"&quot;");
+				print(" <",addr,">')\">",strtohtml(addr),"</A>&nbsp;</TD>");
 			} else {
-				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"/mail/write?to=",addr,"\">",str2html(addr),"</A>&nbsp;</TD>");
+				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=\"/mail/write?to=",addr,"\">",strtohtml(addr),"</A>&nbsp;</TD>");
 			}
 		}
 		print("<INPUT TYPE=hidden NAME=addr",i-offset," VALUE=\"",addr,"\">");

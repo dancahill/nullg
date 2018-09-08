@@ -1,13 +1,13 @@
 
 function search_bookmarks() {
-//	local function aa(url) { return sprintf("<a href=\"%s\" onclick='return GoTo(\"%s\");'>", url.replace("\"", "'"), url.replace("\"", "'")); };
-//	local function a(url, module, id) { return sprintf("<a href=\"%s\" onclick=\"return ModalForm(event, '%s', %d);\">", url.replace("\"", "'"), module, id); };
+//	local function aa(url) { return sprintf("<a href=\"%s\" onclick='return ns.GoTo(\"%s\");'>", url.replace("\"", "'"), url.replace("\"", "'")); };
+//	local function a(url, module, id) { return sprintf("<a href=\"%s\" onclick=\"return ns.ModalForm(event, '%s', %d);\">", url.replace("\"", "'"), module, id); };
 //	var currentfolder=db.bookmarks.getcurrentfolder();
 
 	adminhtml.headermenu(0);
 /*
 	print("<br>\r\n");
-	print("<script type=\"text/javascript\">\r\nSetupDialogForm('dialog-form');\r\n</script>\r\n");
+	print("<script type=\"text/javascript\">\r\nns.SetupDialogForm('dialog-form');\r\n</script>\r\n");
 	print("<table id='contenttable' class='contenttable' style='width:400px;'>\r\n");
 	printf("<thead>\r\n");
 	printf("<tr><th colspan=2 style='text-align:center'>%s</th></tr>\r\n", currentfolder.name);
@@ -24,8 +24,8 @@ function search_bookmarks() {
 	}
 	q1=db.bookmarks.getlist(currentfolder.id);
 	foreach (row in q1['_rows']) {
-//		printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/editbookmark?id=%d", tonumber(row['folderid'])))+"edit</a></td>");
-		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/editbookmark?id="+tonumber(row['bookmarkid']), 'bookmark', tonumber(row['bookmarkid']))+"edit</a></td>");
+//		printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/bookmark?id=%d", tonumber(row['folderid'])))+"edit</a></td>");
+		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/bookmark?id="+tonumber(row['bookmarkid']), 'bookmark', tonumber(row['bookmarkid']))+"edit</a></td>");
 		printf("<td style='width:99%%'><a href=\"%s\" target=\"_blank\">%s</a></td></tr>\r\n", row['bookmarkurl'], strtohtml(row['bookmarkname']));
 	}
 	printf("</tbody>\r\n");
@@ -33,6 +33,8 @@ function search_bookmarks() {
 */
 	return;
 }
+
+
 
 try {
 	include_template("common.ns");

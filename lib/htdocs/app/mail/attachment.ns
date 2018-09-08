@@ -1,71 +1,19 @@
-include("mail.lib.ns");
 
-function message_print(row) {
-	local function findtextorhtml(parent) {
-		foreach (n,v in parent['body']) {
-			ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
-			if (string.istr(ctype, 'text/html')==null) continue;
-			//messagebody=message_decode(v['body'], v['head']);
-			//return messagebody;
-			return "";
-		}
-		foreach (n,v in parent['body']) {
-			ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
-			if (string.istr(ctype, 'text/plain')==null) continue;
-			//messagebody=message_decode(v['body'], v['head']);
-			//messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
-			//return messagebody;
-			return "";
-		}
-		return null;
+function send_file() {
+	var userid   = tonumber(_USER['userid']);
+	var headerid = tonumber(_GET['ID']);
+	Q=db.mailheaders.get(headerid);
+	row=Q['_rows'][0];
+	if (Q==null || row==null) {
+		printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
+		return;
 	}
-	local function pad(s, p) {
-		s='0'*p+s.tostring();
-		return string.sub(s, string.len(s)-p, p);
-	}
-	// /var/lib/nullgw/domains/0001/mail/0001/0001/000434.msg
-	//printf("MASTERGLOBAL['CONFIG']['paths']['var_domains']=[%s]", MASTERGLOBAL['CONFIG']['paths']['var_domains']);
-	var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
-	path=sprintf("%s/%s/mail/%s/%s/%s.msg", var_domains_path, pad(row['obj_did'], 4), pad(row['accountid'], 4), pad(row['folder'], 4), pad(row['mailheaderid'], 6));
-	msgbody=file.readall(path);
-	if (typeof(msgbody)!='string') {
-		throw sprintf("cannot read file '%s'", path);
-	}
-	message=net.mime.read(msgbody);
-	body_found=false;
-	if (typeof(message['body'])=='string') {
-		messagebody=message_decode(message['body'], message['head']);
-		ctype=message['head']['content-type']!=null?message['head']['content-type']:"";
-		if (string.istr(ctype, 'text/html')==null) {
-			messagebody=string.replace(strtohtml(messagebody), "\n", "\n<BR>");
-		}
-		body_found=true;
-	}
-	if (!body_found) {
-		res=findtextorhtml(message);
-		if (res!=null) {
-			messagebody=res;
-			body_found=true;
-		} else {
-			/* it might be in an alternative part */
-			foreach (n,v in message['body']) {
-				ctype=v['head']['content-type']!=null?v['head']['content-type']:"";
-				if (string.istr(ctype, 'multipart/alternative')==null && string.istr(ctype, 'multipart/related')==null) continue;
-				//subbody=message_decode(v['body'], v['head']);
-				//return messagebody;
-				res=findtextorhtml(v);
-				if (res!=null) {
-					messagebody=res;
-					body_found=true;
-				}
-			}
-		}
-	}
-	if (!body_found) {
+	message=new mail.messagereader(headerid, row['folder']);
+	body=message.getbody();
+	if (!message.body_found) {
 		throw "message is not parseable!!!";
 	}
-	filelist={};
-	foreach (x in message.body) {
+	foreach (x in message.message.body) {
 		ctype=x.head["content-type"]?x.head["content-type"].tostring().tolower():"";
 		cdisp=x.head["content-disposition"]?x.head["content-disposition"].tostring().tolower():"";
 		encoding=x.head["content-transfer-encoding"]?x.head["content-transfer-encoding"]:"";
@@ -88,37 +36,9 @@ function message_print(row) {
 	printf(serialize(x));
 }
 
-function send_file() {
-	var userid   = tonumber(_USER['userid']);
-	var domainid = tonumber(_USER['domainid']);
-	var headerid = tonumber(_GET['ID']);
-
-	if (userid==0) {
-		throw "userid is 0?  are you sure you logged in?";
-		return;
-	}
-	query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d", userid, headerid);
-	sqr=sqlquery(query);
-	if (sqr._tuples<1) {
-		throw sprintf("could not find mail header for id %d", headerid);
-		sqr=null;
-		return;
-	} else if (sqr._tuples>1) {
-		throw sprintf("found duplicate mail headers for id %d", headerid);
-		sqr=null;
-		return;
-	}
-	row=sqr['_rows'][0];
-
-	message_print(row);
-
-	return;
-}
-
 try {
+	include("mail.lib.ns");
 	send_file();
-	//print("<hr><pre>",serialize(_GLOBALS),"</pre>");
 } catch (ex) {
 	printf("<b>Exception: %s</b>", ex.description);
-	print(serialize(_GLOBALS));
 }

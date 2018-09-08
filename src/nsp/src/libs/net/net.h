@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -121,10 +121,11 @@ typedef struct {
 	unsigned int bytes_in;
 	unsigned int bytes_out;
 	short int want_close;
+	char errormsg[256];
 	/* TCP INPUT BUFFER */
 	int recvbufsize;
 	int recvbufoffset;
-	char      recvbuf[MAX_TCP_READ_SIZE];
+	char recvbuf[MAX_TCP_READ_SIZE];
 } TCP_SOCKET;
 
 /* tls.c functions */
@@ -139,7 +140,7 @@ int _tls_shutdown(nsp_state *N, TCP_SOCKET *sock);
 #endif
 
 /* tcp.c functions */
-int tcp_bind   (nsp_state *N, char *ifname, unsigned short port);
+int tcp_bind   (nsp_state *N, TCP_SOCKET *sock, char *ifname, unsigned short port);
 int tcp_accept (nsp_state *N, TCP_SOCKET *bsock, TCP_SOCKET *asock);
 int tcp_connect(nsp_state *N, TCP_SOCKET *socket, char *host, unsigned short port, short int use_tls);
 int tcp_fgets  (nsp_state *N, TCP_SOCKET *socket, char *buffer, int max);
@@ -156,6 +157,8 @@ NSP_FUNCTION(libnsp_net_dns_name2addr);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_client);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_open);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_close);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_cwd);
+NSP_CLASSMETHOD(libnsp_net_ftp_client_pwd);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_ls);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_retr);
 NSP_CLASSMETHOD(libnsp_net_ftp_client_stor);
@@ -170,6 +173,7 @@ NSP_FUNCTION(libnsp_net_mime_base64_encode);
 NSP_FUNCTION(libnsp_net_mime_qp_decode);
 NSP_FUNCTION(libnsp_net_mime_qp_encode);
 NSP_FUNCTION(libnsp_net_mime_rfc2047_decode);
+NSP_FUNCTION(libnsp_net_mime_rfc2047_encode);
 /* pop3.c */
 NSP_CLASSMETHOD(libnsp_net_pop3_client_client);
 NSP_CLASSMETHOD(libnsp_net_pop3_client_open);

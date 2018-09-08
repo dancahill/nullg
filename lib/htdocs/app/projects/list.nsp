@@ -1,0 +1,36 @@
+<?nsp
+
+function projects_list() {
+	include("projects.lib.ns");
+	projects.html.headermenu(0);
+	print("<br/>");
+	print("<center>\r\n");
+	print("<table class='contenttable'><thead>\r\n");
+	print("<tr><th>Project Name</th><th>Admin</th><th>Start Date</th><th>Status</th></tr>\r\n");
+	print("</thead><tbody>\r\n");
+	ui=new db.userinfo();
+	query=sprintf("SELECT * FROM gw_projects WHERE obj_did = %d ORDER BY projectstart DESC", ui.domainid);
+	sqr=sqlquery(query);
+	sqrlen=sqr['_rows'].length();
+	for (i=0;i<sqrlen;i++) {
+		rec=sqr['_rows'][i];
+		id=tonumber(rec['projectid']);
+		printf("<tr>");
+		url=sprintf("/app/projects/summary?id=%d", id);
+		printf("<td><a href=\"%s\" onclick='return ns.GoTo(\"%s\");'>%s</a></td>", url, url, rec['projectname']);
+		printf("<td>%d</td>", rec['projectadmin']);
+		printf("<td>%s</td>", rec['projectstart']);
+		printf("<td>%d</td>", rec['status']);
+		printf("</tr>");
+	}
+	print("</tbody></table>\r\n");
+	print("</center>\r\n");
+}
+
+try {
+	projects_list();
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

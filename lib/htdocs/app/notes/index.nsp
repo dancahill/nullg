@@ -1,1 +1,3 @@
-<?nsp include("list.ns"); ?>
+<?nsp
+exec(convertnsp(file.readall(_filepath+"/list.nsp")));
+?>

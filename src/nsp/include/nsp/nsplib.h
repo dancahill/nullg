@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2015 Dan Cahill
+    Copyright (C) 2007-2018 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -132,8 +132,10 @@ NSP_FUNCTION(nl_strsplit);
 NSP_FUNCTION(nl_strstr);
 NSP_FUNCTION(nl_strsub);
 NSP_FUNCTION(nl_strtolower);
-NSP_FUNCTION(nl_sqltime);
+NSP_FUNCTION(nl_strtrim);
+NSP_FUNCTION(nl_asctime);
 NSP_FUNCTION(nl_sqltounix);
+NSP_FUNCTION(nl_mktime);
 NSP_FUNCTION(nl_time);
 NSP_FUNCTION(nl_gmtime);
 NSP_FUNCTION(nl_gettimeofday);

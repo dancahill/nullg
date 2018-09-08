@@ -3,7 +3,7 @@ To: New NullLogic GroupServer User
 Subject: Welcome
 Date: Wed, 17 May 2006 18:18:25 -0400
 MIME-Version: 1.0
-Content-Type: text/html; charset=iso-8859-1
+Content-Type: text/html; charset=utf-8
 X-Mailer: NullLogic GroupServer 1.3.30
 
 <HTML>

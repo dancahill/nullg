@@ -257,30 +257,28 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 	//	} else {
 	//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", pid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 	if (pid) {
-		rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC", oc, pid, did);
+		rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC;", oc, pid, did);
 	}
 	else if (strlen(oc) > 0) {
-		//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d ORDER BY name ASC", oc, did);
 		if (strcmp(oc, "domain") == 0) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_domains order by domainname ASC", did);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_domains ORDER BY domainname ASC;", did);
 		}
 		else if (strcmp(oc, "user") == 0) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d ORDER BY obj_did, userid ASC", did);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d ORDER BY obj_did, userid ASC;", did);
 		}
 		else if (strcmp(oc, "contact") == 0) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC", did);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC;", did);
 		}
 		else if (strcmp(oc, "dbquery") == 0) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d ORDER BY obj_did, queryid ASC", did);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d ORDER BY obj_did, queryid ASC;", did);
 		}
 		else {
 			log_error(proc->N, "shit", __FILE__, __LINE__, 1, "oc '%s' missing", oc);
 		}
 	}
 	else {
-		//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE did = %d ORDER BY did, id ASC", did);
 		if (strcmp(oc, "contact") == 0) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC", did);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_contacts WHERE obj_did = %d ORDER BY obj_did, contactid ASC;", did);
 		}
 		else {
 			log_error(proc->N, "shit", __FILE__, __LINE__, 1, "oc '%s' missing", oc);
@@ -333,13 +331,9 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 
 	if (strcmp(oc, "user") == 0) {
 		if (id) {
-			//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
-			//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND userid = %d;", did, id);
 			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE userid = %d;", id);
 		}
 		else if (name) {
-			//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
-			//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE obj_did = %d AND username = '%s';", did, name);
 			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE username = '%s';", name);
 		}
 	}
@@ -353,7 +347,6 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 	}
 	else if (strcmp(oc, "dbquery") == 0) {
 		if (id) {
-			//			rc=sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d AND queryid = %d;", did, id);
 		}
 		else if (name) {

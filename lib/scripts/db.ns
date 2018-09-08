@@ -1,5 +1,23 @@
-//global db = {
 namespace db {
+	class userinfo {
+		function userinfo() {
+			this.userid = tonumber(_USER['userid']);
+			if (this.userid==0) throw "authentication required";
+			//this.info = {
+	//			var maildefault = tonumber(_USER['pref']['maildefault']);
+	//			var maxlist     = tonumber(_USER['pref']['maxlist']);
+	//			var menustyle   = tonumber(_USER['pref']['menustyle']);
+	//			var userid      = tonumber(_USER['userid']);
+	//			var offset=0;
+				this.userid   = tonumber(_USER['userid']);
+				this.groupid  = tonumber(_USER['groupid']);
+				this.domainid = tonumber(_USER['obj_did']);
+				this.username = _USER['username'];
+			//};
+			//print(serialize(_USER));
+		}
+	};
+
 	function getblanksqr(tablename) {
 		var userinfo = db.getuserinfo();
 		sqr = {
@@ -10,7 +28,10 @@ namespace db {
 			}
 		};
 		row=sqr['_rows'][0];
-		foreach (table in db.sql.schema) {
+		if (db.schema==null) {
+			throw "db.schema not found - include db.schema.ns from "+_filename;
+		}
+		foreach (table in db.schema) {
 			if (table.name!=tablename) continue;
 			foreach (field in table.fields) {
 				if (field[1]=='integer') {
@@ -24,7 +45,7 @@ namespace db {
 			return sqr;
 		}
 		return null;
-	};
+	}
 	function getuserinfo() {
 		userid = tonumber(_USER['userid']);
 		if (userid==0) throw "authentication required";
@@ -41,27 +62,93 @@ namespace db {
 		};
 		//print(serialize(_USER));
 		return info;
-	};
+	}
+	function createtemplate(tablename) {
+		foreach (t in db.schema) {
+			if (t.name!=tablename) continue;
+			a="";
+			b="";
+			foreach (f in t.fields) {
+				fname=f[0];
+				if (a!="") a+=",";
+				a+=fname;
+				if (b!="") b+=",";
+				b+="?";
+			}
+			printf("c = new sqlcommand(\"INSERT INTO %s (%s) VALUES (%s);\");\r\n", tablename, a, b);
+
+			printf("c.addvalue('obj_ctime', time.sqltime(time.gmtime()));\r\n");
+			printf("c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
+			printf("c.addvalue('obj_uid', userinfo.userid);\r\n");
+			printf("c.addvalue('obj_gid', userinfo.groupid);\r\n");
+			printf("c.addvalue('obj_did', userinfo.domainid);\r\n");
+			printf("c.addvalue('obj_gperm', 0);\r\n");
+			printf("c.addvalue('obj_operm', 0);\r\n");
+
+			foreach (f in t.fields) {
+				fname=f[0];
+				if (fname.startswith("obj_")) continue;
+				printf("c.addvalue(\"%s\", record[\"%s\"]);\r\n", fname, fname);
+			}
+			a="";
+			b="";
+			first=true;
+			foreach (f in t.fields) {
+				fname=f[0];
+				if (fname=="obj_ctime") continue;
+				if (first) {
+					first=false;
+					b=sprintf("WHERE %s=?", fname);
+				} else {
+					if (a!="") a+=",";
+					a+=sprintf("%s=?", fname);
+				}
+			}
+			printf("c = new sqlcommand(\"UPDATE %s SET %s %s;\");\r\n", tablename, a, b);
+
+			printf("c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
+
+			first=true;
+			foreach (f in t.fields) {
+				fname=f[0];
+				if (fname=="obj_ctime"||fname=="obj_mtime") continue;
+				if (first) {
+					first=false;
+					b=sprintf("c.addvalue(\"%s\", record[\"%s\"]);\r\n", fname, fname);
+				} else {
+					printf("c.addvalue(\"%s\", record[\"%s\"]);\r\n", fname, fname);
+				}
+			}
+			printf("%s", b);
+
+
+			foreach (f in t.fields) {
+				fname=f[0];
+				printf("record[\"%s\"] = _POST[\"%s\"];\r\n", fname, fname.toupper());
+				//CONTACT['surname'] =_POST['SURNAME'];
+			}
+		}
+	}
 	admin = {
 		domains = {
 			function getlist() {
 				var userinfo = db.getuserinfo();
-				query=sprintf("SELECT * FROM gw_domains");
+				query=sprintf("SELECT * FROM gw_domains;");
 				sqr=sqlquery(query);
 				return sqr;
-			};
+			}
 			function getuser(id) {
-			};
+			}
 		};
 		users = {
 			function getlist() {
 				var userinfo = db.getuserinfo();
-				query=sprintf("SELECT * FROM gw_users");
+				query=sprintf("SELECT * FROM gw_users;");
 				sqr=sqlquery(query);
 				return sqr;
-			};
+			}
 			function getuser(id) {
-			};
+			}
 		};
 	};
 	bookmarks = {
@@ -72,7 +159,6 @@ namespace db {
 				c = new sqlcommand("SELECT * FROM gw_bookmarks_folders WHERE parentid = 0 AND foldername = 'users';");
 				q1=sqlquery(c.tostring());
 
-				//q1=sqlquery(sprintf("SELECT * FROM gw_bookmarks_folders WHERE parentid = 0 AND foldername = 'users'"));
 				if (q1._tuples!=1) return currentfolder;
 				currentfolder={ id=tonumber(q1['_rows'][0]['folderid']), name=q1['_rows'][0]['foldername'] };
 
@@ -81,30 +167,28 @@ namespace db {
 				c.addvalue('foldername', _USER['username']);
 				q2=sqlquery(c.tostring());
 
-//				q2=sqlquery(sprintf("SELECT * FROM gw_bookmarks_folders WHERE parentid = %d AND foldername = '%s'", currentfolder.id, _USER['username']));
-				//print("q2:", serialize(q2));
 				if (q2._tuples!=1) return currentfolder;
 				currentfolder={ id=tonumber(q2['_rows'][0]['folderid']), parentid=tonumber(q2['_rows'][0]['parentid']), name=q2['_rows'][0]['foldername'] };
 			} else {
 				id=tonumber(_GET['FOLDERID']);
-				q1=sqlquery(sprintf("SELECT * FROM gw_bookmarks_folders WHERE folderid = %d", id));
+				q1=sqlquery(sprintf("SELECT * FROM gw_bookmarks_folders WHERE folderid = %d;", id));
 				if (q1._tuples!=1)  return currentfolder;
 				currentfolder={ id=tonumber(q1['_rows'][0]['folderid']), parentid=tonumber(q1['_rows'][0]['parentid']), name=q1['_rows'][0]['foldername'] };
 			}
 			return currentfolder;
-		};
+		}
 		function getlist(folderid) {
 			var userinfo = db.getuserinfo();
-			query=sprintf("SELECT * FROM gw_bookmarks WHERE folderid = %d ORDER BY bookmarkname", folderid);
+			query=sprintf("SELECT * FROM gw_bookmarks WHERE folderid = %d ORDER BY bookmarkname;", folderid);
 			sqr=sqlquery(query);
 			return sqr;
-		};
+		}
 		function getfolderlist(folderid) {
 			var userinfo = db.getuserinfo();
-			query=sprintf("SELECT * FROM gw_bookmarks_folders WHERE parentid = %d ORDER BY foldername", folderid);
+			query=sprintf("SELECT * FROM gw_bookmarks_folders WHERE parentid = %d ORDER BY foldername;", folderid);
 			sqr=sqlquery(query);
 			return sqr;
-		};
+		}
 		function getbookmark(id) {
 			var userinfo = db.getuserinfo();
 			id=tonumber(id);
@@ -120,9 +204,9 @@ namespace db {
 				bookmark['_rows'][0]['bookmarkurl']='http://';
 				return bookmark;
 			}
-			sqr=sqlquery("select * from gw_bookmarks where bookmarkid = "+id);
+			sqr=sqlquery("select * from gw_bookmarks where bookmarkid = "+id+";");
 			return sqr;
-		};
+		}
 		function getfolder(id) {
 			var userinfo = db.getuserinfo();
 			id=tonumber(id);
@@ -137,17 +221,22 @@ namespace db {
 				folder['_rows'][0]['foldername']='New Bookmark Folder';
 				return folder;
 			}
-			sqr=sqlquery("select * from gw_bookmarks_folders where folderid = "+id);
+			sqr=sqlquery("select * from gw_bookmarks_folders where folderid = "+id+";");
 			return sqr;
-		};
+		}
 		function setbookmark(bookmark) {
 			var userinfo = db.getuserinfo();
 			if (bookmark['bookmarkid']==0) {
-				bookmark['bookmarkid']=sqlgetsequence("gw_bookmarks");
+				newid=sqlgetsequence("gw_bookmarks");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				bookmark['bookmarkid']=newid;
 				c = new sqlcommand("INSERT INTO gw_bookmarks (bookmarkid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,bookmarkname,bookmarkurl) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('bookmarkid', tonumber(bookmark['bookmarkid']));
-				c.addvalue('obj_ctime', time.sqldatetime());
-				c.addvalue('obj_mtime', time.sqldatetime());
+				c.addvalue('obj_ctime', time.sqltime());
+				c.addvalue('obj_mtime', time.sqltime());
 				c.addvalue('obj_uid', userinfo.userid);
 				c.addvalue('obj_gid', userinfo.groupid);
 				c.addvalue('obj_did', userinfo.domainid);
@@ -159,7 +248,7 @@ namespace db {
 				sqlupdate(c.tostring());
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,bookmarkname=?,bookmarkurl=? WHERE bookmarkid=?;");
-				c.addvalue('obj_mtime', time.sqldatetime());
+				c.addvalue('obj_mtime', time.sqltime());
 				c.addvalue('obj_uid', tonumber(bookmark['obj_uid']));
 				c.addvalue('obj_gid', tonumber(bookmark['obj_gid']));
 				c.addvalue('obj_did', tonumber(bookmark['obj_did']));
@@ -172,15 +261,20 @@ namespace db {
 				sqlupdate(c.tostring());
 			}
 			//printf("[%s]", c.tostring());
-		};
+		}
 		function setfolder(folder) {
 			var userinfo = db.getuserinfo();
 			if (folder['folderid']==0) {
-				folder['folderid']=sqlgetsequence("gw_bookmarks_folders");
+				newid=sqlgetsequence("gw_bookmarks_folders");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				folder['folderid']=newid;
 				c = new sqlcommand("INSERT INTO gw_bookmarks_folders (folderid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,parentid,foldername) VALUES (?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('folderid', tonumber(folder['folderid']));
-				c.addvalue('obj_ctime', time.sqldatetime());
-				c.addvalue('obj_mtime', time.sqldatetime());
+				c.addvalue('obj_ctime', time.sqltime());
+				c.addvalue('obj_mtime', time.sqltime());
 				c.addvalue('obj_uid', userinfo.userid);
 				c.addvalue('obj_gid', userinfo.groupid);
 				c.addvalue('obj_did', userinfo.domainid);
@@ -191,7 +285,7 @@ namespace db {
 				sqlupdate(c.tostring());
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks_folders SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,parentid=?,foldername=? WHERE folderid=?;");
-				c.addvalue('obj_mtime', time.sqldatetime());
+				c.addvalue('obj_mtime', time.sqltime());
 				c.addvalue('obj_uid', tonumber(folder['obj_uid']));
 				c.addvalue('obj_gid', tonumber(folder['obj_gid']));
 				c.addvalue('obj_did', tonumber(folder['obj_did']));
@@ -203,1083 +297,524 @@ namespace db {
 				sqlupdate(c.tostring());
 			}
 			//printf("[%s]", c.tostring());
-		};
+		}
 		function deletebookmark(bookmark) {
 			c = new sqlcommand("DELETE FROM gw_bookmarks WHERE bookmarkid=?;");
 			c.addvalue('bookmarkid', bookmark['bookmarkid']);
 			sqlupdate(c.tostring());
-		};
+		}
 		function deletefolder(folder) {
 			c = new sqlcommand("DELETE FROM gw_bookmarks_folders WHERE folderid=?;");
 			c.addvalue('folderid', folder['folderid']);
 			sqlupdate(c.tostring());
-		};
+		}
 	};
 	contacts = {
-		getlist = function () {
+		function getlist() {
 			var userinfo = db.getuserinfo();
-			sqr=sqlquery("SELECT * FROM gw_contacts ORDER BY surname");
+			if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+				var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+				query="SELECT * FROM gw_contacts WHERE";
+				query+=" LOWER(surname) LIKE '%"+text+"%'";
+				query+=" OR LOWER(givenname) LIKE '%"+text+"%'";
+				query+=" OR LOWER(organization) LIKE '%"+text+"%'";
+				query+=" ORDER BY UPPER(surname);";
+				sqr=sqlquery(query);
+			} else {
+				sqr=sqlquery("SELECT * FROM gw_contacts ORDER BY UPPER(surname);");
+			}
 			return sqr;
-		};
-		get = function (id) {
+		}
+		function get(id) {
+			var userinfo = db.getuserinfo();
 			id=tonumber(id);
 			if (id==0) {
-				contact = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
+				contact = db.getblanksqr("gw_contacts");
+				contact['_rows'][0]['surname']='New Contact';
+				//contact = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
 				return contact;
 			}
-			sqr=sqlquery("select * from gw_contacts where contactid = "+id);
+			sqr=sqlquery("select * from gw_contacts where contactid = "+id+";");
 			return sqr;
-		};
-		set = function () {
-		};
-	};
-	notes = {
-		getlist = function () {
+		}
+		function set(record) {
 			var userinfo = db.getuserinfo();
-			query=sprintf("SELECT * FROM gw_notes WHERE obj_uid = %d", userinfo.userid);
-			sqr=sqlquery(query);
+			if (record['contactid']==0) {
+				newid=sqlgetsequence("gw_contacts");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				record['contactid']=newid;
+				c = new sqlcommand("INSERT INTO gw_contacts (contactid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,username,password,enabled,geozone,timezone,surname,givenname,salutation,contacttype,referredby,altcontact,prefbilling,email,website,website2,website3,website4,website5,homenumber,worknumber,faxnumber,mobilenumber,jobtitle,organization,homeaddress,homelocality,homeregion,homecountry,homepostalcode,workaddress,worklocality,workregion,workcountry,workpostalcode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue("contactid", tonumber(record["contactid"]));
+				c.addvalue('obj_ctime', time.sqltime());
+				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_uid', userinfo.userid);
+				c.addvalue('obj_gid', userinfo.groupid);
+				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue("folderid", record["folderid"]);
+				c.addvalue("username", record["username"]);
+				c.addvalue("password", record["password"]);
+				c.addvalue("enabled", record["enabled"]);
+				c.addvalue("geozone", record["geozone"]);
+				c.addvalue("timezone", record["timezone"]);
+				c.addvalue("surname", record["surname"]);
+				c.addvalue("givenname", record["givenname"]);
+				c.addvalue("salutation", record["salutation"]);
+				c.addvalue("contacttype", record["contacttype"]);
+				c.addvalue("referredby", record["referredby"]);
+				c.addvalue("altcontact", record["altcontact"]);
+				c.addvalue("prefbilling", record["prefbilling"]);
+				c.addvalue("email", record["email"]);
+				c.addvalue("website", record["website"]);
+				c.addvalue("website2", record["website2"]);
+				c.addvalue("website3", record["website3"]);
+				c.addvalue("website4", record["website4"]);
+				c.addvalue("website5", record["website5"]);
+				c.addvalue("homenumber", record["homenumber"]);
+				c.addvalue("worknumber", record["worknumber"]);
+				c.addvalue("faxnumber", record["faxnumber"]);
+				c.addvalue("mobilenumber", record["mobilenumber"]);
+				c.addvalue("jobtitle", record["jobtitle"]);
+				c.addvalue("organization", record["organization"]);
+				c.addvalue("homeaddress", record["homeaddress"]);
+				c.addvalue("homelocality", record["homelocality"]);
+				c.addvalue("homeregion", record["homeregion"]);
+				c.addvalue("homecountry", record["homecountry"]);
+				c.addvalue("homepostalcode", record["homepostalcode"]);
+				c.addvalue("workaddress", record["workaddress"]);
+				c.addvalue("worklocality", record["worklocality"]);
+				c.addvalue("workregion", record["workregion"]);
+				c.addvalue("workcountry", record["workcountry"]);
+				c.addvalue("workpostalcode", record["workpostalcode"]);
+				sqlupdate(c.tostring());
+			} else {
+				c = new sqlcommand("UPDATE gw_contacts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,username=?,password=?,enabled=?,geozone=?,timezone=?,surname=?,givenname=?,salutation=?,contacttype=?,referredby=?,altcontact=?,prefbilling=?,email=?,website=?,website2=?,website3=?,website4=?,website5=?,homenumber=?,worknumber=?,faxnumber=?,mobilenumber=?,jobtitle=?,organization=?,homeaddress=?,homelocality=?,homeregion=?,homecountry=?,homepostalcode=?,workaddress=?,worklocality=?,workregion=?,workcountry=?,workpostalcode=? WHERE contactid=?;");
+				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_uid', tonumber(record['obj_uid']));
+				c.addvalue('obj_gid', tonumber(record['obj_gid']));
+				c.addvalue('obj_did', tonumber(record['obj_did']));
+				c.addvalue('obj_gperm', tonumber(record['obj_gperm']));
+				c.addvalue('obj_operm', tonumber(record['obj_operm']));
+				c.addvalue("folderid", record["folderid"]);
+				c.addvalue("username", record["username"]);
+				c.addvalue("password", record["password"]);
+				c.addvalue("enabled", record["enabled"]);
+				c.addvalue("geozone", record["geozone"]);
+				c.addvalue("timezone", record["timezone"]);
+				c.addvalue("surname", record["surname"]);
+				c.addvalue("givenname", record["givenname"]);
+				c.addvalue("salutation", record["salutation"]);
+				c.addvalue("contacttype", record["contacttype"]);
+				c.addvalue("referredby", record["referredby"]);
+				c.addvalue("altcontact", record["altcontact"]);
+				c.addvalue("prefbilling", record["prefbilling"]);
+				c.addvalue("email", record["email"]);
+				c.addvalue("website", record["website"]);
+				c.addvalue("website2", record["website2"]);
+				c.addvalue("website3", record["website3"]);
+				c.addvalue("website4", record["website4"]);
+				c.addvalue("website5", record["website5"]);
+				c.addvalue("homenumber", record["homenumber"]);
+				c.addvalue("worknumber", record["worknumber"]);
+				c.addvalue("faxnumber", record["faxnumber"]);
+				c.addvalue("mobilenumber", record["mobilenumber"]);
+				c.addvalue("jobtitle", record["jobtitle"]);
+				c.addvalue("organization", record["organization"]);
+				c.addvalue("homeaddress", record["homeaddress"]);
+				c.addvalue("homelocality", record["homelocality"]);
+				c.addvalue("homeregion", record["homeregion"]);
+				c.addvalue("homecountry", record["homecountry"]);
+				c.addvalue("homepostalcode", record["homepostalcode"]);
+				c.addvalue("workaddress", record["workaddress"]);
+				c.addvalue("worklocality", record["worklocality"]);
+				c.addvalue("workregion", record["workregion"]);
+				c.addvalue("workcountry", record["workcountry"]);
+				c.addvalue("workpostalcode", record["workpostalcode"]);
+				c.addvalue("contactid", record["contactid"]);
+				sqlupdate(c.tostring());
+			}
+			//printf("[%s]", c.tostring());
+		}
+		function remove(contact) {
+			var userinfo = db.getuserinfo();
+			c = new sqlcommand("DELETE FROM gw_contacts WHERE contactid=? AND obj_did=? AND obj_uid=?;");
+			c.addvalue('contactid', contact['contactid']);
+			c.addvalue('obj_did', userinfo.domainid);
+			c.addvalue('obj_uid', userinfo.userid);
+			sqlupdate(c.tostring());
+		}
+	};
+
+
+
+	events = {
+		// expand filtering to include assignedto user or group, and a range of dates for the start of the event
+		function getlist(startdate1, startdate2, userid, groupid) {
+			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
+			//if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+				//var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+				query=sprintf("SELECT * FROM gw_events WHERE obj_did = %d", ui.domainid);
+				if (startdate1!=null) query+=" AND eventstart >= '"+startdate1+"'";
+				if (startdate2!=null) query+=" AND eventstart < '"+startdate2+"'";
+				if (userid!=null && userid>0) query+=" AND assignedto = "+userid+"";
+
+				//query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
+
+				//query+=" LOWER(eventname) LIKE '%"+text+"%'";
+				//query+=" OR LOWER(givenname) LIKE '%"+text+"%'";
+				//query+=" OR LOWER(organization) LIKE '%"+text+"%'";
+				query+=" ORDER BY eventstart;";
+				sqr=sqlquery(query);
+			//} else {
+			//	sqr=sqlquery("SELECT * FROM gw_events ORDER BY eventstart;");
+			//}
 			return sqr;
-		};
-		get = function (id) {
+		}
+		function get(id) {
+			ui=new db.userinfo();
+			//var userinfo = db.getuserinfo();
+			id=tonumber(id);
+			if (id==0) {
+				event = db.getblanksqr("gw_events");
+				event['_rows'][0]['eventname']='New Event';
+
+				event['_rows'][0]['assignedby']=ui.userid;
+				event['_rows'][0]['assignedto']=ui.userid;
+				event['_rows'][0]['busy']=1;
+				event['_rows'][0]['priority']=2;
+
+				t=time.mktime(time.gmtime())+900;
+				t-=t%900;
+				event['_rows'][0]['eventstart']=time.sqltime(time.gmtime(t));
+				event['_rows'][0]['eventfinish']=time.sqltime(time.gmtime(t+900));
+
+				//contact = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
+				return event;
+			}
+			sqr=sqlquery("select * from gw_events where eventid = "+id+";");
+			return sqr;
+		}
+		function set(record) {
+			var userinfo = db.getuserinfo();
+			if (record['eventid']==0) {
+				newid=sqlgetsequence("gw_events");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				record['eventid']=newid;
+				c = new sqlcommand("INSERT INTO gw_events (eventid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,eventname,eventtype,contactid,projectid,priority,reminder,eventstart,eventfinish,busy,status,closingstatus,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue("eventid", record["eventid"]);
+				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_uid', userinfo.userid);
+				c.addvalue('obj_gid', userinfo.groupid);
+				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue("assignedby", record["assignedby"]);
+				c.addvalue("assignedto", record["assignedto"]);
+				c.addvalue("eventname", record["eventname"]);
+				c.addvalue("eventtype", record["eventtype"]);
+				c.addvalue("contactid", record["contactid"]);
+				c.addvalue("projectid", record["projectid"]);
+				c.addvalue("priority", record["priority"]);
+				c.addvalue("reminder", record["reminder"]);
+				c.addvalue("eventstart", record["eventstart"]);
+				c.addvalue("eventfinish", record["eventfinish"]);
+				c.addvalue("busy", record["busy"]);
+				c.addvalue("status", record["status"]);
+				c.addvalue("closingstatus", record["closingstatus"]);
+				c.addvalue("details", record["details"]);
+				sqlupdate(c.tostring());
+			} else {
+				c = new sqlcommand("UPDATE gw_events SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,eventname=?,eventtype=?,contactid=?,projectid=?,priority=?,reminder=?,eventstart=?,eventfinish=?,busy=?,status=?,closingstatus=?,details=? WHERE eventid=?;");
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue("obj_uid", record["obj_uid"]);
+				c.addvalue("obj_gid", record["obj_gid"]);
+				c.addvalue("obj_did", record["obj_did"]);
+				c.addvalue("obj_gperm", record["obj_gperm"]);
+				c.addvalue("obj_operm", record["obj_operm"]);
+				c.addvalue("assignedby", record["assignedby"]);
+				c.addvalue("assignedto", record["assignedto"]);
+				c.addvalue("eventname", record["eventname"]);
+				c.addvalue("eventtype", record["eventtype"]);
+				c.addvalue("contactid", record["contactid"]);
+				c.addvalue("projectid", record["projectid"]);
+				c.addvalue("priority", record["priority"]);
+				c.addvalue("reminder", record["reminder"]);
+				c.addvalue("eventstart", record["eventstart"]);
+				c.addvalue("eventfinish", record["eventfinish"]);
+				c.addvalue("busy", record["busy"]);
+				c.addvalue("status", record["status"]);
+				c.addvalue("closingstatus", record["closingstatus"]);
+				c.addvalue("details", record["details"]);
+				c.addvalue("eventid", record["eventid"]);
+				sqlupdate(c.tostring());
+			}
+			//printf("[%s]", c.tostring());
+		}
+		function remove(event) {
+			var userinfo = db.getuserinfo();
+			c = new sqlcommand("DELETE FROM gw_events WHERE eventid=? AND obj_did=? AND obj_uid=?;");
+			c.addvalue('eventid', event['eventid']);
+			c.addvalue('obj_did', userinfo.domainid);
+			c.addvalue('obj_uid', userinfo.userid);
+			sqlupdate(c.tostring());
+		}
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	mailaccounts = {
+		function getlist() {
+			var userinfo = db.getuserinfo();
+			sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname;", userinfo.userid));
+			return sqr;
+		}
+		function get(id) {
 			var userinfo = db.getuserinfo();
 			id=tonumber(id);
-			userid = tonumber(_USER['userid']);
 			if (id==0) {
-				note = getblanksqr("gw_notes");
-				return note;
+				account = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New E-Mail Account'}}}};
+				return contact;
 			}
-			//Q=sqlquery(sprintf("SELECT * FROM gw_notes WHERE obj_uid = %d and noteid = %d", userid, id));
-			sqr=sqlquery(sprintf("select * from gw_notes where obj_uid = %d and noteid = %d", userid, id));
+			sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", userinfo.userid, id));
 			return sqr;
-		};
-		set = function () {
-		};
+		}
+		function set(record) {
+			var userinfo = db.getuserinfo();
+			if (record['mailaccountid']==0) {
+				newid=sqlgetsequence("gw_email_accounts");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				record['mailaccountid']=newid;
+				c = new sqlcommand("INSERT INTO gw_email_accounts (mailaccountid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountname,realname,organization"+
+					",address,replyto,hosttype,popusername,poppassword,pophost,popport,popssl,smtpauth,smtphost,smtpport,smtpssl,notify,remove,showdebug,signature"+
+					") VALUES (?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue('mailaccountid', tonumber(record['mailaccountid']));
+				c.addvalue('obj_ctime', time.sqltime());
+				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_uid', userinfo.userid);
+				c.addvalue('obj_gid', userinfo.groupid);
+				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue('accountname', record['accountname']);
+				c.addvalue('realname', record['realname']);
+				c.addvalue('organization', record['organization']);
+				c.addvalue('address', record['address']);
+				c.addvalue('replyto', record['replyto']);
+				c.addvalue('hosttype', record['hosttype']);
+				c.addvalue('popusername', record['popusername']);
+				c.addvalue('poppassword', record['poppassword']);
+				c.addvalue('pophost', record['pophost']);
+				c.addvalue('popport', record['popport']);
+				c.addvalue('popssl', record['popssl']);
+				c.addvalue('smtpauth', record['smtpauth']);
+				c.addvalue('smtphost', record['smtphost']);
+				c.addvalue('smtpport', record['smtpport']);
+				c.addvalue('smtpssl', record['smtpssl']);
+				c.addvalue('notify', record['notify']);
+				c.addvalue('remove', record['remove']);
+				c.addvalue('showdebug', record['showdebug']);
+				c.addvalue('signature', record['signature']);
+				sqlupdate(c.tostring());
+			} else {
+				c = new sqlcommand("UPDATE gw_email_accounts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,accountname=?,realname=?,organization=?,address=?,replyto=?,hosttype=?"+
+					",popusername=?,poppassword=?,pophost=?,popport=?,popssl=?,smtpauth=?,smtphost=?,smtpport=?,smtpssl=?,notify=?,remove=?,showdebug=?,signature=? WHERE mailaccountid=?;");
+				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_uid', tonumber(record['obj_uid']));
+				c.addvalue('obj_gid', tonumber(record['obj_gid']));
+				c.addvalue('obj_did', tonumber(record['obj_did']));
+				c.addvalue('obj_gperm', tonumber(record['obj_gperm']));
+				c.addvalue('obj_operm', tonumber(record['obj_operm']));
+				c.addvalue('accountname', record['accountname']);
+				c.addvalue('realname', record['realname']);
+				c.addvalue('organization', record['organization']);
+				c.addvalue('address', record['address']);
+				c.addvalue('replyto', record['replyto']);
+				c.addvalue('hosttype', record['hosttype']);
+				c.addvalue('popusername', record['popusername']);
+				c.addvalue('poppassword', record['poppassword']);
+				c.addvalue('pophost', record['pophost']);
+				c.addvalue('popport', record['popport']);
+				c.addvalue('popssl', record['popssl']);
+				c.addvalue('smtpauth', record['smtpauth']);
+				c.addvalue('smtphost', record['smtphost']);
+				c.addvalue('smtpport', record['smtpport']);
+				c.addvalue('smtpssl', record['smtpssl']);
+				c.addvalue('notify', record['notify']);
+				c.addvalue('remove', record['remove']);
+				c.addvalue('showdebug', record['showdebug']);
+				c.addvalue('signature', record['signature']);
+				c.addvalue('mailaccountid', tonumber(record['mailaccountid']));
+				sqlupdate(c.tostring());
+			}
+			//printf("[%s]", c.tostring());
+		}
+		function remove(record) {
+			printf("<b>not implemented</b><br>");
+		}
+	};
+	mailheaders = {
+		function get(id) {
+			var userinfo = db.getuserinfo();
+			id=tonumber(id);
+			if (id==0) {
+				sqr = db.getblanksqr("gw_email_headers");
+				sqr['_rows'][0]['hdr_subject']='';
+				return sqr;
+			}
+			sqr=sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d;", userinfo.userid, id));
+			return sqr;
+		}
+	};
+	notes = {
+		function getlist() {
+			var userinfo = db.getuserinfo();
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_uid = %d;", userinfo.userid);
+			sqr=sqlquery(query);
+			return sqr;
+		}
+		function get(id) {
+			ui=new db.userinfo();
+			id=tonumber(id);
+			if (id==0) {
+				sqr = db.getblanksqr("gw_notes");
+				sqr['_rows'][0]['notetitle']='New Note';
+				sqr['_rows'][0]['notetext']='';
+				return sqr;
+			}
+			sqr=sqlquery(sprintf("select * from gw_notes where obj_did = %d and noteid = %d;", ui.domainid, id));
+			return sqr;
+		}
+		function set() {
+		}
 	};
 	profile = {
 		function get() {
 			var userinfo = db.getuserinfo();
-			query=sprintf("select * from gw_users where userid = %d and obj_did = %d", userinfo.userid, userinfo.domainid);
+			query=sprintf("select * from gw_users where userid = %d and obj_did = %d;", userinfo.userid, userinfo.domainid);
 			return sqlquery(query);
-		};
+		}
 		function set() {
-		};
+		}
 	};
+	tasks = {
+		function getlist() {
+/*
+			var userinfo = db.getuserinfo();
+			if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
+				var text=sql_escape(_POST['SEARCHTEXT'].tolower());
+				query="SELECT * FROM gw_tasks WHERE";
+				query+=" LOWER(eventname) LIKE '%"+text+"%'";
+				query+=" ORDER BY eventstart;";
+				sqr=sqlquery(query);
+			} else {
+				sqr=sqlquery("SELECT * FROM gw_tasks ORDER BY eventstart;");
+			}
+			return sqr;
+*/
+		}
+		function get(id) {
+			id=tonumber(id);
+			ui=new db.userinfo();
+			if (id==0) {
+				task = db.getblanksqr("gw_tasks");
+				task['_rows'][0]['taskname']='New Task';
+				task['_rows'][0]['assignedby']=ui.userid;
+				task['_rows'][0]['assignedto']=ui.userid;
+				task['_rows'][0]['priority']=2;
 
+				t=time.mktime(time.gmtime())+900;
+				t-=t%900;
+				task['_rows'][0]['duedate']=time.sqltime(time.gmtime(t));
 
-
-
-	/*
-	 * This is the source of the data definition for the schema of the SQL
-	 * database in use.  Also included here is default data for the initial
-	 * creation of that database.
-	 */
-	sql = {
-		/*
-		FBSQL            | MYSQL           |ODBC             | PGSQL           | SQLITE
-		-----------------+-----------------+-----------------+-----------------+-----------------
-		varchar          |varchar          |varchar          |varchar          |varchar
-		numeric(9,3)     |numeric(9,3)     |float            |numeric(9,3)     |numeric(9,3)
-		integer          |int4             |integer          |int4             |int4
-		blob sub_type 1  |text             |memo             |text             |text
-
-		timestamp        |timestamp        |datetime         |timestamp        |datetime
-		current_timestamp|current_timestamp|current_timestamp|now()            |current_timestamp
-		*/
-		schema = {
-			{
-				name         = "gw_dbinfo";
-				index        = "dbversion";
-				sequencename = null;
-				primarykey   = null;
-				fields = {
-					{ "dbversion",      "varchar(10)",     "NOT NULL", null                };
-					{ "tax1name",       "varchar(20)",     "NOT NULL", null                };
-					{ "tax2name",       "varchar(20)",     "NOT NULL", null                };
-					{ "tax1percent",    "numeric(9,3)",    "NOT NULL", "'0.080'"           };
-					{ "tax2percent",    "numeric(9,3)",    "NOT NULL", "'0.070'"           };
-				};
-			};
-			{
-				name         = "gw_activity";
-				index        = "activityid";
-				sequencename = "actiid_seq";
-				primarykey   = "activityid";
-				fields = {
-					{ "activityid",     "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "userid",         "integer",         "NOT NULL", "0"                 };
-					{ "clientip",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "category",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "indexid",        "integer",         "NOT NULL", "0"                 };
-					{ "action",         "varchar(50)",     "NOT NULL", "''"                };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_bookmarks";
-				index        = "bookmarkid";
-				sequencename = "bkmkid_seq";
-				primarykey   = "bookmarkid";
-				fields = {
-					{ "bookmarkid",     "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "folderid",       "integer",         "NOT NULL", "0"                 };
-					{ "bookmarkname",   "varchar(100)",    "NOT NULL", "''"                };
-					{ "bookmarkurl",    "varchar(255)",    "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_bookmarks_folders";
-				index        = "folderid";
-				sequencename = "bfldid_seq";
-				primarykey   = "folderid";
-				fields = {
-					{ "folderid",       "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "parentid",       "integer",         "NOT NULL", "0"                 };
-					{ "foldername",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_calls";
-				index        = "callid";
-				sequencename = "callid_seq";
-				primarykey   = "callid";
-				fields = {
-					{ "callid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "assignedby",     "integer",         "NOT NULL", "0"                 };
-					{ "assignedto",     "integer",         "NOT NULL", "0"                 };
-					{ "callname",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "callstart",      "timestamp",       "NOT NULL", null                };
-					{ "callfinish",     "timestamp",       "NOT NULL", null                };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "action",         "integer",         "NOT NULL", "0"                 };
-					{ "status",         "integer",         "NOT NULL", "0"                 };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_calls_actions";
-				index        = "actionid";
-				sequencename = "calaid_seq";
-				primarykey   = "actionid";
-				fields = {
-					{ "actionid",       "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "actionname",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_contacts";
-				index        = "contactid";
-				sequencename = "contid_seq";
-				primarykey   = "contactid";
-				fields = {
-					{ "contactid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "folderid",       "integer",         "NOT NULL", "0"                 };
-					{ "username",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "password",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "enabled",        "integer",         "NOT NULL", "0"                 };
-					{ "geozone",        "integer",         "NOT NULL", "0"                 };
-					{ "timezone",       "integer",         "NOT NULL", "0"                 };
-					{ "surname",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "givenname",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "salutation",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "contacttype",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "referredby",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "altcontact",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "prefbilling",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "website",        "varchar(250)",    "NOT NULL", "''"                };
-					{ "email",          "varchar(250)",    "NOT NULL", "''"                };
-					{ "homenumber",     "varchar(25)",     "NOT NULL", "''"                };
-					{ "worknumber",     "varchar(25)",     "NOT NULL", "''"                };
-					{ "faxnumber",      "varchar(25)",     "NOT NULL", "''"                };
-					{ "mobilenumber",   "varchar(25)",     "NOT NULL", "''"                };
-					{ "jobtitle",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "organization",   "varchar(50)",     "NOT NULL", "''"                };
-					{ "homeaddress",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "homelocality",   "varchar(50)",     "NOT NULL", "''"                };
-					{ "homeregion",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "homecountry",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "homepostalcode", "varchar(10)",     "NOT NULL", "''"                };
-					{ "workaddress",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "worklocality",   "varchar(50)",     "NOT NULL", "''"                };
-					{ "workregion",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "workcountry",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "workpostalcode", "varchar(10)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_contacts_folders";
-				index        = "folderid";
-				sequencename = "cfldid_seq";
-				primarykey   = "folderid";
-				fields = {
-					{ "folderid",       "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "parentid",       "integer",         "NOT NULL", "0"                 };
-					{ "foldername",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_contacts_sessions";
-				index        = "sessionid";
-				sequencename = "csesid_seq";
-				primarykey   = "sessionid";
-				fields = {
-					{ "sessionid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "remoteip",       "varchar(20)",     "NOT NULL", "'0.0.0.0'"         };
-					{ "token",          "varchar(50)",     "NOT NULL", "''"                };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "domainid",       "integer",         "NOT NULL", "0"                 };
-				};
-			};
-			{
-				name         = "gw_domains";
-				index        = "domainid";
-				sequencename = "domaid_seq";
-				primarykey   = "domainid";
-				fields = {
-					{ "domainid",       "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "domainname",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_domains_aliases";
-				index        = "domainaliasid";
-				sequencename = "domlid_seq";
-				primarykey   = "domainaliasid";
-				fields = {
-					{ "domainaliasid",  "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "domainid",       "integer",         "NOT NULL", "0"                 };
-					{ "domainname",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_email_accounts";
-				index        = "mailaccountid";
-				sequencename = "mailid_seq";
-				primarykey   = "mailaccountid";
-				fields = {
-					{ "mailaccountid",  "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "accountname",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "realname",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "organization",   "varchar(50)",     "NOT NULL", "''"                };
-					{ "address",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "replyto",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "hosttype",       "varchar(12)",     "NOT NULL", "''"                };
-					{ "pophost",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "popport",        "integer",         "NOT NULL", "110"               };
-					{ "popssl",         "integer",         "NOT NULL", "0"                 };
-					{ "smtphost",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "smtpport",       "integer",         "NOT NULL", "25"                };
-					{ "smtpssl",        "integer",         "NOT NULL", "0"                 };
-					{ "popusername",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "poppassword",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "smtpauth",       "varchar(10)",     "NOT NULL", "'n'"               };
-					{ "lastcount",      "integer",         "NOT NULL", "0"                 };
-					{ "notify",         "integer",         "NOT NULL", "0"                 };
-					{ "remove",         "integer",         "NOT NULL", "0"                 };
-						// 0 - never
-						// 1 - when retrieved
-						// 2 - when deleted from 'Trash'
-					{ "lastcheck",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "showdebug",      "varchar(10)",     "NOT NULL", "'n'"               };
-					{ "signature",      "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_email_filters";
-				index        = "mailfilterid";
-				sequencename = "mfilid_seq";
-				primarykey   = "mailfilterid,accountid";
-				fields = {
-					{ "mailfilterid",   "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "accountid",      "integer",         "NOT NULL", "0"                 };
-					{ "filtername",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "header",         "varchar(50)",     "NOT NULL", "''"                };
-					{ "string",         "varchar(50)",     "NOT NULL", "''"                };
-					{ "rule",           "varchar(10)",     "NOT NULL", "''"                };
-					{ "action",         "varchar(10)",     "NOT NULL", "''"                };
-					{ "dstfolderid",    "integer",         "NOT NULL", "1"                 };
-				};
-			};
-			{
-				name         = "gw_email_folders";
-				index        = "mailfolderid";
-				sequencename = "mfdrid_seq";
-				primarykey   = "mailfolderid,accountid";
-				fields = {
-					{ "mailfolderid",   "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "accountid",      "integer",         "NOT NULL", "0"                 };
-					{ "parentfolderid", "integer",         "NOT NULL", "0"                 };
-					{ "foldername",     "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_email_headers";
-				index        = "mailheaderid";
-				sequencename = "mhdrid_seq";
-				primarykey   = "mailheaderid,accountid";
-				fields = {
-					{ "mailheaderid",   "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "accountid",      "integer",         "NOT NULL", "0"                 };
-					{ "folder",         "integer",         "NOT NULL", "'1'"               };
-					{ "status",         "varchar(10)",     "NOT NULL", "'n'"               };
-					{ "size",           "integer",         "NOT NULL", "'-1'"              };
-					{ "uidl",           "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_from",       "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_replyto",    "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_to",         "text",            "NOT NULL", "''"                };
-					{ "hdr_cc",         "text",            "NOT NULL", "''"                };
-					{ "hdr_bcc",        "text",            "NOT NULL", "''"                };
-					{ "hdr_subject",    "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_date",       "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "hdr_messageid",  "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_inreplyto",  "varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_contenttype","varchar(200)",    "NOT NULL", "''"                };
-					{ "hdr_boundary",   "varchar(100)",    "NOT NULL", "''"                };
-					{ "hdr_encoding",   "varchar(100)",    "NOT NULL", "''"                };
-					{ "hdr_scanresult", "varchar(100)",    "NOT NULL", "''"                };
-					{ "msg_text",       "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_events";
-				index        = "eventid";
-				sequencename = "evenid_seq";
-				primarykey   = "eventid";
-				fields = {
-					{ "eventid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "assignedby",     "integer",         "NOT NULL", "0"                 };
-					{ "assignedto",     "integer",         "NOT NULL", "0"                 };
-					{ "eventname",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "eventtype",      "integer",         "NOT NULL", "0"                 };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "projectid",      "integer",         "NOT NULL", "0"                 };
-					{ "priority",       "integer",         "NOT NULL", "0"                 };
-					{ "reminder",       "integer",         "NOT NULL", "0"                 };
-					{ "eventstart",     "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "eventfinish",    "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "busy",           "integer",         "NOT NULL", "0"                 };
-					{ "status",         "integer",         "NOT NULL", "0"                 };
-					{ "closingstatus",  "integer",         "NOT NULL", "0"                 };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_events_closings";
-				index        = "eventclosingid";
-				sequencename = "ecloid_seq";
-				primarykey   = "eventclosingid";
-				fields = {
-					{ "eventclosingid", "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "closingname",    "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_events_types";
-				index        = "eventtypeid";
-				sequencename = "etypid_seq";
-				primarykey   = "eventtypeid";
-				fields = {
-					{ "eventtypeid",    "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "eventtypename",  "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_files";
-				index        = "fileid";
-				sequencename = "fileid_seq";
-				primarykey   = "fileid";
-				//"	UNIQUE (obj_did, filepath, filename)\n"
-				fields = {
-					{ "fileid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "filepath",       "varchar(255)",    "NOT NULL", "''"                };
-					{ "filename",       "varchar(255)",    "NOT NULL", "''"                };
-					{ "filetype",       "varchar(10)",     "NOT NULL", "''"                };
-					{ "uldate",         "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "lastdldate",     "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "numdownloads",   "integer",         "NOT NULL", "0"                 };
-					{ "description",    "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_finance_accounts";
-				index        = "accountid";
-				sequencename = "accaid_seq";
-				primarykey   = "accountid";
-				fields = {
-					{ "accountid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "accounttype",    "varchar(4)",      "NOT NULL", "''"                };
-					{ "accountname",    "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_finance_inventory";
-				index        = "inventoryid";
-				sequencename = "prodid_seq";
-				primarykey   = "inventoryid";
-				fields = {
-					{ "inventoryid",    "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "itemname",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "category",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "discount",       "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "unitprice",      "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "internalcost",   "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "tax1",           "numeric(9,3)",    "NOT NULL", "'0.08'"            };
-					{ "tax2",           "numeric(9,3)",    "NOT NULL", "'0.07'"            };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_finance_invoices";
-				index        = "invoiceid";
-				sequencename = "ordeid_seq";
-				primarykey   = "invoiceid";
-				fields = {
-					{ "invoiceid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "userid",         "integer",         "NOT NULL", "0"                 };
-					{ "invoicedate",    "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "invoicetype",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "paymentmethod",  "varchar(50)",     "NOT NULL", "''"                };
-					{ "paymentdue",     "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "paymentreceived","numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "status",         "integer",         "NOT NULL", "0"                 };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_finance_invoices_items";
-				index        = "invoiceitemid";
-				sequencename = "ordiid_seq";
-				primarykey   = "invoiceitemid";
-				fields = {
-					{ "invoiceitemid",  "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "invoiceid",      "integer",         "NOT NULL", "0"                 };
-					{ "inventoryid",    "integer",         "NOT NULL", "0"                 };
-					{ "quantity",       "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "discount",       "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "unitprice",      "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "internalcost",   "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "tax1",           "numeric(9,3)",    "NOT NULL", "'0.08'"            };
-					{ "tax2",           "numeric(9,3)",    "NOT NULL", "'0.07'"            };
-				};
-			};
-			{
-				name         = "gw_finance_journal";
-				index        = "entryid";
-				sequencename = "accaid_seq";
-				primarykey   = "entryid";
-				fields = {
-					{ "entryid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "entrydate",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "accountid",      "integer",         "NOT NULL", "0"                 };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "debit",          "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "credit",         "numeric(9,2)",    "NOT NULL", "'0.00'"            };
-					{ "details",        "varchar(250)",    "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_forums";
-				index        = "forumid";
-				sequencename = "foruid_seq";
-				primarykey   = "forumid";
-				fields = {
-					{ "forumid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "forumgroupid",   "integer",         "NOT NULL", "0"                 };
-					{ "postername",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "posttime",       "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "subject",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "message",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_forums_groups";
-				index        = "forumgroupid";
-				sequencename = "forgid_seq";
-				primarykey   = "forumgroupid";
-				fields = {
-					{ "forumgroupid",   "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "title",          "varchar(50)",     "NOT NULL", "''"                };
-					{ "description",    "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_forums_posts";
-				index        = "messageid";
-				sequencename = null;
-				primarykey   = "messageid,forumid";
-				fields = {
-					{ "messageid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "forumid",        "integer",         "NOT NULL", "0"                 };
-					{ "referenceid",    "integer",         "NOT NULL", "0"                 };
-					{ "postername",     "varchar(50)",     "NOT NULL", "''"                };
-					{ "posttime",       "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "subject",        "varchar(50)",     "NOT NULL", "''"                };
-					{ "message",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_groups";
-				index        = "groupid";
-				sequencename = "grouid_seq";
-				primarykey   = "groupid";
-				fields = {
-					{ "groupid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "groupname",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "availability",   "varchar(170)",    "NOT NULL", "''"                };
-					{ "motd",           "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_groups_members";
-				index        = "groupmemberid";
-				sequencename = "grpmid_seq";
-				primarykey   = "groupmemberid";
-				fields = {
-					{ "groupmemberid",  "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "userid",         "integer",         "NOT NULL", "0"                 };
-					{ "groupid",        "integer",         "NOT NULL", "0"                 };
-				};
-			};
-			{
-				name         = "gw_messages";
-				index        = "messageid";
-				sequencename = "messid_seq";
-				primarykey   = "messageid";
-				fields = {
-					{ "messageid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "sender",         "integer",         "NOT NULL", "0"                 };
-					{ "rcpt",           "integer",         "NOT NULL", "0"                 };
-					{ "status",         "integer",         "NOT NULL", "2"                 };
-					{ "message",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_notes";
-				index        = "noteid";
-				sequencename = "noteid_seq";
-				primarykey   = "noteid";
-				fields = {
-					{ "noteid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "tablename",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "tableindex",     "integer",         "NOT NULL", "0"                 };
-					{ "notetitle",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "notetext",       "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_projects";
-				index        = "projectid";
-				sequencename = "projid_seq";
-				primarykey   = "projectid";
-				fields = {
-					{ "projectid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "projectname",    "varchar(50)",     "NOT NULL", "''"                };
-					{ "projectadmin",   "integer",         "NOT NULL", "'0'"               };
-					{ "projectstart",   "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "projectfinish",  "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "status",         "integer",         "NOT NULL", "'0'"               };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_queries";
-				index        = "queryid";
-				sequencename = "querid_seq";
-				primarykey   = "queryid";
-				fields = {
-					{ "queryid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "queryname",      "varchar(50)",     "NOT NULL", "''"                };
-					{ "query",          "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_smtp_aliases";
-				index        = "aliasid";
-				sequencename = "aliaid_seq";
-				primarykey   = "aliasid";
-				fields = {
-					{ "aliasid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "aliasname",      "varchar(32)",     "NOT NULL", "''"                };
-					{ "userid",         "integer",         "NOT NULL", "0"                 };
-					{ "domainid",       "integer",         "NOT NULL", "0"                 };
-				};
-			};
-			{
-				name         = "gw_smtp_relayrules";
-				index        = "relayruleid";
-				sequencename = "smtrid_seq";
-				primarykey   = "relayruleid";
-				fields = {
-					{ "relayruleid",    "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "ruletype",       "varchar(8)",      "NOT NULL", "'allow'"           };
-					{ "persistence",    "varchar(8)",      "NOT NULL", "'temp'"            };
-					{ "ipaddress",      "varchar(20)",     "NOT NULL", "'0.0.0.0'"         };
-				};
-			};
-			{
-				name         = "gw_tasks";
-				index        = "taskid";
-				sequencename = "taskid_seq";
-				primarykey   = "taskid";
-				fields = {
-					{ "taskid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "assignedby",     "integer",         "NOT NULL", "0"                 };
-					{ "assignedto",     "integer",         "NOT NULL", "0"                 };
-					{ "taskname",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "contactid",      "integer",         "NOT NULL", "0"                 };
-					{ "projectid",      "integer",         "NOT NULL", "0"                 };
-					{ "duedate",        "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "priority",       "integer",         "NOT NULL", "0"                 };
-					{ "reminder",       "integer",         "NOT NULL", "0"                 };
-					{ "status",         "integer",         "NOT NULL", "0"                 };
-					{ "details",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_users";
-				index        = "userid";
-				sequencename = "userid_seq";
-				primarykey   = "userid";
-				fields = {
-					{ "userid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "username",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "password",       "varchar(50)",     "NOT NULL", "''"                };
-					{ "groupid",        "integer",         "NOT NULL", "0"                 };
-					{ "domainid",       "integer",         "NOT NULL", "0"                 };
-					{ "enabled",        "integer",         "NOT NULL", "0"                 };
-					{ "authdomainadmin","integer",         "NOT NULL", "0"                 };
-					{ "authadmin",      "integer",         "NOT NULL", "0"                 };
-					{ "authbookmarks",  "integer",         "NOT NULL", "0"                 };
-					{ "authcalendar",   "integer",         "NOT NULL", "0"                 };
-					{ "authcalls",      "integer",         "NOT NULL", "0"                 };
-					{ "authcontacts",   "integer",         "NOT NULL", "0"                 };
-					{ "authemail",      "integer",         "NOT NULL", "0"                 };
-					{ "authfiles",      "integer",         "NOT NULL", "0"                 };
-					{ "authfinance",    "integer",         "NOT NULL", "0"                 };
-					{ "authforums",     "integer",         "NOT NULL", "0"                 };
-					{ "authmessages",   "integer",         "NOT NULL", "0"                 };
-					{ "authprofile",    "integer",         "NOT NULL", "0"                 };
-					{ "authprojects",   "integer",         "NOT NULL", "0"                 };
-					{ "authquery",      "integer",         "NOT NULL", "0"                 };
-					{ "prefdaystart",   "integer",         "NOT NULL", "0"                 };
-					{ "prefdaylength",  "integer",         "NOT NULL", "0"                 };
-					{ "prefmailcurrent","integer",         "NOT NULL", "0"                 };
-					{ "prefmaildefault","integer",         "NOT NULL", "0"                 };
-					{ "prefmaxlist",    "integer",         "NOT NULL", "0"                 };
-					{ "prefmenustyle",  "integer",         "NOT NULL", "1"                 };
-					{ "preftimezone",   "integer",         "NOT NULL", "0"                 };
-					{ "prefgeozone",    "integer",         "NOT NULL", "0"                 };
-					{ "preflanguage",   "varchar(4)",      "NOT NULL", "'en'"              };
-					{ "preftheme",      "varchar(40)",     "NOT NULL", "'default'"         };
-					{ "availability",   "varchar(170)",    "NOT NULL", "''"                };
-					{ "surname",        "varchar(50)",     "",         null                };
-					{ "givenname",      "varchar(50)",     "",         null                };
-					{ "jobtitle",       "varchar(50)",     "",         null                };
-					{ "division",       "varchar(50)",     "",         null                };
-					{ "supervisor",     "varchar(50)",     "",         null                };
-					{ "address",        "varchar(50)",     "",         null                };
-					{ "locality",       "varchar(50)",     "",         null                };
-					{ "region",         "varchar(50)",     "",         null                };
-					{ "country",        "varchar(50)",     "",         null                };
-					{ "postalcode",     "varchar(10)",     "",         null                };
-					{ "homenumber",     "varchar(25)",     "",         null                };
-					{ "worknumber",     "varchar(25)",     "",         null                };
-					{ "faxnumber",      "varchar(25)",     "",         null                };
-					{ "cellnumber",     "varchar(25)",     "",         null                };
-					{ "pagernumber",    "varchar(25)",     "",         null                };
-					{ "email",          "varchar(50)",     "",         null                };
-					{ "birthdate",      "date",            "",         null                };
-					{ "hiredate",       "date",            "",         null                };
-					{ "sin",            "varchar(15)",     "",         null                };
-					{ "isactive",       "varchar(10)",     "",         null                };
-				};
-			};
-
-			{
-				name         = "gw_users_sessions";
-				index        = "sessionid";
-				sequencename = "usesid_seq";
-				primarykey   = "sessionid";
-				fields = {
-					{ "sessionid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "remoteip",       "varchar(20)",     "NOT NULL", "'0.0.0.0'"         };
-					{ "token",          "varchar(50)",     "NOT NULL", "''"                };
-					{ "userid",         "integer",         "NOT NULL", "0"                 };
-					{ "domainid",       "integer",         "NOT NULL", "0"                 };
-				};
-			};
-			{
-				name         = "gw_weblog_comments";
-				index        = "commentid";
-				sequencename = "weblog_commentid_seq";
-				primarykey   = "commentid,entryid";
-				fields = {
-					{ "commentid",      "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "entryid",        "integer",         "NOT NULL", "0"                 };
-					{ "referenceid",    "integer",         "NOT NULL", "0"                 };
-					{ "subject",        "varchar(120)",    "NOT NULL", "''"                };
-					{ "message",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_weblog_entries";
-				index        = "entryid";
-				sequencename = "weblog_entryid_seq";
-				primarykey   = "entryid";
-				fields = {
-					{ "entryid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "entrygroupid",   "integer",         "NOT NULL", "0"                 };
-					{ "subject",        "varchar(120)",    "NOT NULL", "''"                };
-					{ "summary",        "text",            "NOT NULL", "''"                };
-					{ "message",        "text",            "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_weblog_groups";
-				index        = "groupid";
-				sequencename = "weblog_groupid_seq";
-				primarykey   = "groupid";
-				fields = {
-					{ "groupid",        "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "name",           "varchar(50)",     "NOT NULL", "''"                };
-					{ "description",    "varchar(240)",    "NOT NULL", "''"                };
-				};
-			};
-			{
-				name         = "gw_zones";
-				index        = "zoneid";
-				sequencename = "zoneid_seq";
-				primarykey   = "zoneid";
-				fields = {
-					{ "zoneid",         "integer",         "NOT NULL", null                };
-					{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_mtime",      "timestamp",       "NOT NULL", "current_timestamp" };
-					{ "obj_uid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gid",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_did",        "integer",         "NOT NULL", "0"                 };
-					{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
-					{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
-					{ "zonename",       "varchar(50)",     "NOT NULL", "''"                };
-				};
-			};
-		};
-		defaultdata = {
-			"INSERT INTO gw_dbinfo (dbversion, tax1name, tax2name, tax1percent, tax2percent) VALUES ('0.0.0', 'PST', 'GST', '0.080', '0.070');",
-			"INSERT INTO gw_bookmarks (bookmarkid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, folderid, bookmarkname, bookmarkurl) VALUES ('1', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '0', 'NullLogic', 'http://nullgroupware.sourceforge.net/groupware/');",
-			"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('1', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '0', 'users');",
-			"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('2', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '0', 'groups');",
-			"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('3', '2008-01-01', '2008-01-01', '0', '1', '1', '2', '1', '2', 'Administrators');",
-			"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('4', '2008-01-01', '2008-01-01', '0', '2', '1', '2', '1', '2', 'Users');",
-			"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('5', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '1', 'administrator');",
-			"INSERT INTO gw_email_accounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, popssl, smtphost, smtpport, smtpssl, popusername, poppassword, smtpauth, lastcount, notify, remove, lastcheck, showdebug, signature) VALUES ('1', '2008-01-01', '2008-01-01', '1', '0', '1', '0', '0', 'Local Mail', 'Groupware Administrator', '', 'administrator@localhost', '', 'POP3', 'localhost', '110', '0', 'localhost', '25', '0', 'administrator@localhost', 'dmlzdWFs', 'n', '0', '60', '2', '2008-01-01', 'n', '');",
-			"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('1', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '/files/', 'users', 'dir', '2008-01-01', '2008-01-01', '0', '');",
-			"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('2', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '/files/', 'groups', 'dir', '2008-01-01', '2008-01-01', '0', '');",
-			"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('3', '2008-01-01', '2008-01-01', '0', '1', '1', '2', '1', '/files/groups/', 'Administrators', 'dir', '2008-01-01', '2008-01-01', '0', '');",
-			"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('4', '2008-01-01', '2008-01-01', '0', '2', '1', '2', '1', '/files/groups/', 'Users', 'dir', '2008-01-01', '2008-01-01', '0', '');",
-			"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('5', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '/files/users/', 'administrator', 'dir', '2008-01-01', '2008-01-01', '0', '');",
-			"INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupname, availability, motd) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'Administrators', '000000000000000000000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000000000000000000', '<BR>\r\n<DIV CLASS=JUSTIFY>\r\nWelcome to NullLogic Groupware.  If you are a new user, please take the time to read the online help.  It is also recommended that you edit your profile and configure your e-mail account information if you haven''t already done so.\n<BR><BR>\r\nADMINISTRATORS: This message can, and should be customized to meet the needs of your users.\n</DIV>');",
-			"INSERT INTO gw_groups (groupid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, groupname, availability, motd) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'Users', '000000000000000000000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000000000000000000', '<BR>\r\n<DIV CLASS=JUSTIFY>\r\nWelcome to NullLogic Groupware.  If you are a new user, please take the time to read the online help.  It is also recommended that you edit your profile and configure your e-mail account information if you haven''t already done so.\n</DIV>');",
-			"INSERT INTO gw_groups_members (groupmemberid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, userid, groupid) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', '1', '1');",
-			"INSERT INTO gw_groups_members (groupmemberid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, userid, groupid) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', '1', '2');",
-			"INSERT INTO gw_smtp_relayrules (relayruleid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, persistence, ipaddress) VALUES ('1', '2008-01-01', '2008-01-01', '1', '0', '1', '0', '0', 'perm', '127.0.0.1');",
-			"INSERT INTO gw_users (userid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, username, password, groupid, domainid, enabled, authdomainadmin, authadmin, authbookmarks, authcalendar, authcalls, authcontacts, authemail, authfiles, authfinance, authforums, authmessages, authprofile, authprojects, authquery, prefdaystart, prefdaylength, prefmailcurrent, prefmaildefault, prefmaxlist, prefmenustyle, preftimezone, prefgeozone, preflanguage, preftheme, availability, surname, givenname, jobtitle, division, supervisor, address, locality, region, country, postalcode, homenumber, worknumber, faxnumber, cellnumber, pagernumber, email, birthdate, hiredate, sin, isactive) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'administrator', '$1$0hs2u/6B$KxBgAAw59fBu/DyHA/Vor/', '1', '1', '1', '31', '31', '31', '31', '31', '31', '15', '31', '31', '21', '13', '3', '31', '17', '0', '24', '1', '0', '25', '1', '10', '1', 'en', 'default', '000000000000000000000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000111111110000000000000000000000000000000', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'administrator@localhost', '1900-01-01', '1900-01-01', '', '');",
-			"INSERT INTO gw_zones (zoneid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, zonename) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'default');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Phoned');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Returned your call');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Please call');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('4', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Came to see you');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('5', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Wants to see you');",
-			"INSERT INTO gw_calls_actions (actionid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, actionname) VALUES ('6', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Will call again');",
-			"INSERT INTO gw_domains (domainid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, domainname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '1', '0', '0', 'localhost');",
-			"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Completed');",
-			"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Cancelled');",
-			"INSERT INTO gw_events_closings (eventclosingid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, closingname) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Rescheduled');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('1', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'All Day Event');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('2', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Anniversary');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('3', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Appointment');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('4', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Meeting');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('5', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Reminder');",
-			"INSERT INTO gw_events_types (eventtypeid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, eventtypename) VALUES ('6', '2008-01-01', '2008-01-01', '0', '0', '0', '0', '0', 'Service Call');"
-		};
+				return task;
+			}
+			sqr=sqlquery("select * from gw_tasks where taskid = "+id+";");
+			return sqr;
+		}
+		function set(record) {
+			var userinfo = db.getuserinfo();
+			if (record['taskid']==0) {
+				newid=sqlgetsequence("gw_tasks");
+				if (newid<1) {
+					printf("newid<1 '%d' ??", newid);
+					return;
+				}
+				record['taskid']=newid;
+				c = new sqlcommand("INSERT INTO gw_tasks (taskid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,taskname,contactid,projectid,duedate,priority,progress,reminder,status,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue("taskid", record["taskid"]);
+				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_uid', userinfo.userid);
+				c.addvalue('obj_gid', userinfo.groupid);
+				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue("assignedby", record["assignedby"]);
+				c.addvalue("assignedto", record["assignedto"]);
+				c.addvalue("taskname", record["taskname"]);
+				c.addvalue("contactid", record["contactid"]);
+				c.addvalue("projectid", record["projectid"]);
+				c.addvalue("duedate", record["duedate"]);
+				c.addvalue("priority", record["priority"]);
+				c.addvalue("progress", record["progress"]);
+				c.addvalue("reminder", record["reminder"]);
+				c.addvalue("status", record["status"]);
+				c.addvalue("details", record["details"]);
+				sqlupdate(c.tostring());
+			} else {
+				c = new sqlcommand("UPDATE gw_tasks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,taskname=?,contactid=?,projectid=?,duedate=?,priority=?,progress=?,reminder=?,status=?,details=? WHERE taskid=?;");
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue("obj_uid", record["obj_uid"]);
+				c.addvalue("obj_gid", record["obj_gid"]);
+				c.addvalue("obj_did", record["obj_did"]);
+				c.addvalue("obj_gperm", record["obj_gperm"]);
+				c.addvalue("obj_operm", record["obj_operm"]);
+				c.addvalue("assignedby", record["assignedby"]);
+				c.addvalue("assignedto", record["assignedto"]);
+				c.addvalue("taskname", record["taskname"]);
+				c.addvalue("contactid", record["contactid"]);
+				c.addvalue("projectid", record["projectid"]);
+				c.addvalue("duedate", record["duedate"]);
+				c.addvalue("priority", record["priority"]);
+				c.addvalue("progress", record["progress"]);
+				c.addvalue("reminder", record["reminder"]);
+				c.addvalue("status", record["status"]);
+				c.addvalue("details", record["details"]);
+				c.addvalue("taskid", record["taskid"]);
+				sqlupdate(c.tostring());
+			}
+			//printf("[%s]", c.tostring());
+		}
+		function remove(task) {
+			var userinfo = db.getuserinfo();
+			c = new sqlcommand("DELETE FROM gw_tasks WHERE taskid=? AND obj_did=? AND obj_uid=?;");
+			c.addvalue('taskid', task['taskid']);
+			c.addvalue('obj_did', userinfo.domainid);
+			c.addvalue('obj_uid', userinfo.userid);
+			sqlupdate(c.tostring());
+		}
 	};
 };
