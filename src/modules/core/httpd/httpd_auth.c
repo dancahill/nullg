@@ -62,7 +62,7 @@ void auth_savesession(CONN *conn)
 	/* log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "[%s]", data); */
 //	sql_updatef(proc->N, "UPDATE nullsd_sessions SET mtime = '%s', data = '{ %s}' WHERE token = '%s' AND uid = %d AND did = %d", timebuffer, str2sql(conn->dat->largebuf, sizeof(conn->dat->largebuf)-1, data), conn->dat->token, conn->dat->uid, conn->dat->did);
 	if (conn->dat->uid > 0) {
-		sql_updatef(proc->N, "UPDATE gw_users_sessions SET obj_mtime = '%s' WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", timebuffer, conn->dat->token, conn->dat->uid, conn->dat->did);
+		sql_updatef(proc->N, NULL, "UPDATE gw_users_sessions SET obj_mtime = '%s' WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", timebuffer, conn->dat->token, conn->dat->uid, conn->dat->did);
 	}
 	free(data);
 	return;
@@ -132,7 +132,7 @@ static int auth_renewcookie(CONN *conn, int settoken)
 	}
 	userid = atoi(sql_getvaluebyname(proc->N, &qobj, 0, "obj_uid"));
 	domainid = atoi(sql_getvaluebyname(proc->N, &qobj, 0, "obj_did"));
-	cobj = nsp_getobj(proc->N, qobj, "_rows");
+	cobj = nsp_getobj(proc->N, qobj, "rows");
 	if (cobj->val->type != NT_TABLE) goto blah;
 	cobj = nsp_getiobj(proc->N, cobj, 0);
 	if (cobj->val->type != NT_TABLE) goto blah;
@@ -159,10 +159,10 @@ blah:
 	conn->dat->did = atoi(ldir_getval(&qobj, 0, "obj_did"));
 	snprintf(conn->dat->username, sizeof(conn->dat->username) - 1, "%s", ldir_getval(&qobj, 0, "username"));
 	nsp_setstr(conn->N, htobj, "REMOTE_USER", conn->dat->username, strlen(conn->dat->username));
-	tobj = nsp_getobj(proc->N, qobj, "_rows");
+	tobj = nsp_getobj(proc->N, qobj, "rows");
 	if (tobj->val->type != NT_TABLE) return -1;
 	/* steal the results and plant the tree in the user's back yard */
-	cobj = nsp_getobj(conn->N, qobj, "_rows");
+	cobj = nsp_getobj(conn->N, qobj, "rows");
 	if (cobj->val->type == NT_TABLE) {
 		cobj = nsp_getiobj(conn->N, cobj, 0);
 		if (cobj->val->type == NT_TABLE) {
@@ -304,10 +304,10 @@ int auth_setcookie(CONN *conn)
 		limit = (int)nsp_getnum(proc->N, hobj, "session_limit");
 		for (i = limit - 1;i < sql_numtuples(proc->N, &qobj);i++) {
 			if (i < 0) continue;
-			sql_updatef(proc->N, "DELETE FROM gw_users_sessions WHERE sessionid = %d AND obj_uid = %d AND obj_did = %d", atoi(sql_getvalue(proc->N, &qobj, i, 0)), conn->dat->uid, conn->dat->did);
+			sql_updatef(proc->N, NULL, "DELETE FROM gw_users_sessions WHERE sessionid = %d AND obj_uid = %d AND obj_did = %d", atoi(sql_getvalue(proc->N, &qobj, i, 0)), conn->dat->uid, conn->dat->did);
 		}
 		sql_freeresult(proc->N, &qobj);
-		sql_updatef(proc->N, "INSERT INTO gw_users_sessions (obj_ctime, obj_mtime, obj_uid, obj_did, token, remoteip) VALUES ('%s', '%s', %d, %d, '%s', '%s')", timebuffer, timebuffer, conn->dat->uid, conn->dat->did, conn->dat->token, conn->socket.RemoteAddr);
+		sql_updatef(proc->N, NULL, "INSERT INTO gw_users_sessions (obj_ctime, obj_mtime, obj_uid, obj_did, token, remoteip) VALUES ('%s', '%s', %d, %d, '%s', '%s')", timebuffer, timebuffer, conn->dat->uid, conn->dat->did, conn->dat->token, conn->socket.RemoteAddr);
 		return auth_renewcookie(conn, 1);
 	}
 	else {
@@ -322,7 +322,7 @@ void auth_logout(CONN *conn)
 	obj_t *tobj;
 	char CookieToken[128];
 
-	sql_updatef(proc->N, "DELETE FROM gw_users_sessions WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", conn->dat->token, conn->dat->uid, conn->dat->did);
+	sql_updatef(proc->N, NULL, "DELETE FROM gw_users_sessions WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", conn->dat->token, conn->dat->uid, conn->dat->did);
 	tobj = nsp_getobj(conn->N, &conn->N->g, "_HEADER");
 	if (tobj->val->type == NT_TABLE) {
 		snprintf(CookieToken, sizeof(CookieToken) - 1, "gstoken=NULL; path=/");

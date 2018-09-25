@@ -46,13 +46,13 @@ function stuff() {
 	foreach (id,uidl in _POST) {
 		if (id!==tonumber(id).tostring()) continue;
 		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d AND uidl = '%s';", userid, id, uidl);
-		sqr=sqlquery(query);
-		if (sqr._tuples!=1) {
+		sqr=sql.query(query);
+		if (sqr.rows.length()!=1) {
 			printf("could not find mail header for id %d.", id);
 			sqr=null;
 			return false;
 		}
-		row=sqr['_rows'][0];
+		row=sqr.rows[0];
 		accountid=tonumber(row['accountid']);
 		srcfolder=tonumber(row['folder']);
 		action=_POST['SUBMITACTION'];
@@ -69,7 +69,7 @@ function stuff() {
 		}
 		if (movefile(accountid, id, srcfolder, dstfolder)==true) {
 			query=sprintf("UPDATE gw_email_headers SET folder = %d WHERE obj_uid = %d AND mailheaderid = %d AND uidl = '%s';", dstfolder, userid, id, sql_escape(uidl));
-			sqlupdate(query);
+			sql.update(query);
 		}
 	}
 	return true;

@@ -2,7 +2,7 @@
 function sql_edit() {
 //	print("<CENTER>\r\n");
 //	query="select * from nullsd_entries where class = 'sqlquery'";
-//	global Q=sqlquery(query);
+//	global Q=sql.query(query);
 //	print("</CENTER>\r\n");
 
 //	if (!(priv&A_ADMIN)) {
@@ -24,11 +24,6 @@ function sql_edit() {
 //		print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));
 //		return;
 //	}
-	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\n");
-	print("function ConfirmDelete() {\r\n");
-	print("	return confirm(\"Are you sure you want to delete this record?\");\r\n");
-	print("}\r\n");
-	print("// -->\r\n</SCRIPT>\r\n");
 	print("<CENTER>\r\n<FORM METHOD=POST ACTION=/search/sql/save.ns NAME=queryrun>\r\n");
 	print("<INPUT TYPE=HIDDEN NAME=id VALUE=",id,">\r\n");
 	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0>\r\n");
@@ -38,9 +33,9 @@ function sql_edit() {
 		print("<TR><TH COLSPAN=2>New Query</TH></TR>\r\n");
 	}
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query Name&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"",strtohtml(Q['_rows'][0]['_data']['cn']),"\" SIZE=60></TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><INPUT TYPE=TEXT NAME=queryname VALUE=\"",strtohtml(Q.rows[0]['_data']['cn']),"\" SIZE=60></TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><B>&nbsp;Query&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>",strtohtml(Q['_rows'][0]['_data']['query']),"</TEXTAREA></TD></TR>\r\n");
+	print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=2><TEXTAREA NAME=query ROWS=5 COLS=60>",strtohtml(Q.rows[0]['_data']['query']),"</TEXTAREA></TD></TR>\r\n");
 /*
 	if ((query.obj_uid==conn->dat->uid)||(priv&A_ADMIN)) {
 		print("<TR><TH ALIGN=center COLSPAN=2>Permissions</TH></TR>\r\n");
@@ -67,7 +62,7 @@ function sql_edit() {
 	print("</TABLE>\r\n");
 	print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Save'>\r\n");
 	if (id!=0) {
-		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\r\n");
+		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Delete' onClick=\"return ns.ConfirmDelete();\">\r\n");
 	}
 	print("</FORM>\r\n</CENTER>\r\n");
 	print("<SCRIPT LANGUAGE=JavaScript>\r\n<!--\r\ndocument.queryrun.queryname.focus();\r\n// -->\r\n</SCRIPT>\r\n");

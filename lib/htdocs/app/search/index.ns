@@ -97,7 +97,7 @@ function form_contacts() {
 
 try {
 	html.headersubmenu(null);
-	var userinfo = db.getuserinfo();
+	ui = new db.userinfo();
 	print("<BR>\r\n");
 	form_inet_script();
 	print("<CENTER>\r\n");

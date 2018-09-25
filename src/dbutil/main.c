@@ -106,7 +106,7 @@ int sequence_sync(nsp_state *N)
 				max = atoi(sql_getvalue(N, &qobj, 0, 0));
 			}
 			_sql_freeresult(N, &qobj);
-			_sql_updatef(N, "SET GENERATOR gen_%s TO %d;", tablename, max);
+			_sql_updatef(N, NULL, "SET GENERATOR gen_%s TO %d;", tablename, max);
 		}
 		//printf("fbsql_generator_sync done;\r\n");
 	}
@@ -207,7 +207,7 @@ int table_check(nsp_state *N)
 	//_sql_updatef(N, "UPDATE gw_notes SET obj_did = 1 WHERE obj_did = 0");
 	//_sql_updatef(N, "UPDATE gw_tasks SET obj_did = 1 WHERE obj_did = 0");
 	/* Update the db version */
-	_sql_updatef(N, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
+	_sql_updatef(N, NULL, "UPDATE gw_dbinfo SET dbversion = '%s'", PACKAGE_VERSION);
 	return 0;
 }
 
@@ -290,13 +290,13 @@ int table_init(nsp_state *N, obj_t *table_schema)
 	if (strcasecmp(sql_type, "FBSQL") == 0) {
 		/* drop any old triggers and generators, and then the table */
 		if (strcmp(sequencename, "null") != 0) {
-			_sql_updatef(N, "DROP TRIGGER %s_bi;", tablename);
-			_sql_updatef(N, "DROP GENERATOR gen_%s;", tablename);
+			_sql_updatef(N, NULL, "DROP TRIGGER %s_bi;", tablename);
+			_sql_updatef(N, NULL, "DROP GENERATOR gen_%s;", tablename);
 		}
-		_sql_updatef(N, "DROP TABLE %s;", tablename);
+		_sql_updatef(N, NULL, "DROP TABLE %s;", tablename);
 	}
 	else if (strcasecmp(sql_type, "MYSQL") == 0) {
-		_sql_updatef(N, "DROP TABLE IF EXISTS %s;", tablename);
+		_sql_updatef(N, NULL, "DROP TABLE IF EXISTS %s;", tablename);
 #ifdef WIN32
 	}
 	else if (strcasecmp(sql_type, "ODBC") == 0) {
@@ -304,26 +304,26 @@ int table_init(nsp_state *N, obj_t *table_schema)
 	}
 	else if (strcasecmp(sql_type, "PGSQL") == 0) {
 		/* drop and create sequence before creating the table */
-		_sql_updatef(N, "DROP SEQUENCE %s;", sequencename);
-		_sql_updatef(N, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", sequencename);
-		_sql_updatef(N, "DROP TABLE %s;", tablename);
+		_sql_updatef(N, NULL, "DROP SEQUENCE %s;", sequencename);
+		_sql_updatef(N, NULL, "CREATE SEQUENCE %s start 1 increment 1 maxvalue 2147483647 minvalue 1 cache 1;", sequencename);
+		_sql_updatef(N, NULL, "DROP TABLE %s;", tablename);
 	}
 	else if (strcasecmp(sql_type, "SQLITE2") == 0) {
-		_sql_updatef(N, "DROP TABLE %s;", tablename);
+		_sql_updatef(N, NULL, "DROP TABLE %s;", tablename);
 	}
 	else if (strncasecmp(sql_type, "SQLITE", 6) == 0) {
-		_sql_updatef(N, "DROP TABLE IF EXISTS %s;", tablename);
+		_sql_updatef(N, NULL, "DROP TABLE IF EXISTS %s;", tablename);
 	}
-	if (_sql_update(N, query) < 0) {
+	if (_sql_update(N, NULL, query) < 0) {
 		printf("\r\nError inserting %s\r\n", tablename);
 		return -1;
 	}
 	if (strcasecmp(sql_type, "FBSQL") == 0) {
 		/* create generators and triggers for this table */
 		if (strcmp(sequencename, "null") != 0) {
-			_sql_updatef(N, "CREATE GENERATOR gen_%s;", tablename);
-			_sql_updatef(N, "SET GENERATOR gen_%s TO 0;", tablename);
-			_sql_updatef(N, "CREATE TRIGGER %s_bi FOR %s\n"
+			_sql_updatef(N, NULL, "CREATE GENERATOR gen_%s;", tablename);
+			_sql_updatef(N, NULL, "SET GENERATOR gen_%s TO 0;", tablename);
+			_sql_updatef(N, NULL, "CREATE TRIGGER %s_bi FOR %s\n"
 				"ACTIVE BEFORE INSERT POSITION 0\n"
 				"AS\n"
 				"BEGIN\n"
@@ -362,7 +362,7 @@ int init_db(nsp_state *N)
 	table_check(N);
 	sequence_sync(N);
 	if (strlen(rootpass) > 0) {
-		if (_sql_updatef(N, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass) < 0) {
+		if (_sql_updatef(N, NULL, "UPDATE gw_users SET password = '%s' WHERE userid = 1", rootpass) < 0) {
 			printf("\r\nError setting root password\r\n");
 			return -1;
 		}
@@ -402,7 +402,7 @@ int restore_db(nsp_state *N, char *filename)
 				}
 				pTemp++;
 			}
-			if (_sql_update(N, line) < 0) return -1;
+			if (_sql_update(N, NULL, line) < 0) return -1;
 		}
 	}
 	sequence_sync(N);

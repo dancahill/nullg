@@ -51,14 +51,13 @@ function tz_user2utc(unixtime) {
 
 id=tonumber(_GET['ID']);
 Q=db.contacts.get(id);
-CONTACT=Q['_rows'][0];
+CONTACT=Q.rows[0];
 if (Q==null || CONTACT==null) {
 	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 	return;
 }
-gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
-name=gn+((gn!=""&&sn!="")?" ":"")+sn;
-url=sprintf("<a href=\"javascript:contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+//gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
+//name=gn+((gn!=""&&sn!="")?" ":"")+sn;
 
 
 // convert to user's local time, round down to midnight, then back to utc for the query
@@ -74,8 +73,8 @@ d2=d1.adddays(1);
 
 query=sprintf("SELECT * FROM gw_locations_history WHERE tablename='contacts' AND tableindex=%d AND eventtime >= '"+d1.tostring()+"' AND eventtime < '"+d2.tostring()+"' ORDER BY locationhistoryid DESC", id);
 //print(query);
-sqr=sqlquery(query);
-sqrlen=sqr['_rows'].length();
+sqr=sql.query(query);
+sqrlen=sqr.rows.length();
 outdata={};
 
 	function pad(n) {
@@ -83,7 +82,7 @@ outdata={};
 		return x.sub(-2, 2);
 	}
 
-foreach (row in sqr['_rows']) {
+foreach (row in sqr.rows) {
 	et = new datetime(time.mktime(row['eventtime']));
 	et.unixtime=tz_utc2user(et.unixtime);
 	ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+":"+pad(et.getseconds())+(et.gethours()>=12?"pm":"am");

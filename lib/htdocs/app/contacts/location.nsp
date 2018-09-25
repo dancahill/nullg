@@ -1,6 +1,5 @@
 <?nsp
 include_template("common.ns");
-include_template("timezones.ns");
 
 function tz_utc2user(unixtime) {
 	local function isdst(unixtime) {
@@ -16,19 +15,18 @@ function tz_utc2user(unixtime) {
 
 id=tonumber(_GET['ID']);
 Q=db.contacts.get(id);
-CONTACT=Q['_rows'][0];
+CONTACT=Q.rows[0];
 if (Q==null || CONTACT==null) {
 	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 	return;
 }
 gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
 name=gn+((gn!=""&&sn!="")?" ":"")+sn;
-url=sprintf("<a href=\"javascript:contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
 query=sprintf("SELECT FIRST 1 * FROM gw_locations_history WHERE tablename='contacts' AND tableindex=%d ORDER BY locationhistoryid DESC", id);
-sqr=sqlquery(query);
-sqrlen=sqr['_rows'].length();
+sqr=sql.query(query);
+sqrlen=sqr.rows.length();
 if (sqrlen==1) {
-	rec=sqr['_rows'][0];
+	rec=sqr.rows[0];
 	latitude=rec['latitude'];
 	longitude=rec['longitude'];
 	lastupdate=time.sqltime(tz_utc2user(time.mktime(rec['eventtime'])));
@@ -39,12 +37,13 @@ if (sqrlen==1) {
 	lastupdate="unknown";
 }
 
+url=sprintf("<a class=\"dialog\" href=\"/app/contacts/contact?id=%d\">%s</a>", id, strtohtml(name));
 divhtml="<table>";
 divhtml+=sprintf("<tr><td>Contact</td><td>%s</td></tr>", url);
 if (lastupdate!="unknown") {
 	divhtml+=sprintf("<tr><td>Location</td><td>%s,%s</td></tr>", latitude, longitude);
 	divhtml+=sprintf("<tr><td>Last Update</td><td>%s</td></tr>", lastupdate);
-	url2=sprintf("<a href=\"javascript:ns.contacts.location.viewhistory(event, %d);\">view</a>", id);
+	url2=sprintf("<a class=\"dialog\" href=\"/app/contacts/timeline?id=%d\">%s</a>", id, "view");
 	divhtml+=sprintf("<tr><td>Timeline</td><td>%s</td></tr>", url2);
 } else {
 	divhtml+=sprintf("<tr><td>Location</td><td>unknown</td></tr>");

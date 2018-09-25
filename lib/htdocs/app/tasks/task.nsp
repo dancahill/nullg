@@ -1,123 +1,196 @@
 <?nsp
 
-function view_task(id) {
-	var method=_SERVER['REQUEST_METHOD'];
-	if (id==null) id=tonumber((method=='POST')?_POST['TASKID']:_GET['ID']);
-	Q=db.tasks.get(id);
-	TASK=Q['_rows'][0];
-	if (Q==null || TASK==null) {
-		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+class task {
+	function view(id) {
+		local function printnotes(id) {
+			if (id==0) return;
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Notes<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/notes/note?id=0&taskid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2>");
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d AND tablename='tasks' AND tableindex=%d", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen>0) {
+				print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+				for (i=0;i<sqrlen;i++) {
+					rec=sqr.rows[i];
+					url=sprintf("/app/notes/note?id=%d", tonumber(rec['noteid']));
+					print("<tr><td onclick=\"return ns.dialog.create('"+url+"');\" width=100%>");
+					printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['notetitle']));
+				}
+				print("</table></div>");
+			} else {
+				print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+				url=sprintf("/app/notes/note?taskid=%d", id);
+				print("<tr title='New Note'><td onclick=\"return ns.dialog.create('"+url+"');\" width=100%>&nbsp;</td></tr>");
+				print("</table></div>");
+			}
+			print("</td></tr>");
+		}
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['TASKID']:_GET['ID']);
+		Q=db.tasks.get(id);
+		TASK=Q.rows[0];
+		if (Q==null || TASK==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		if (id==0) {
+			TASK['contactid']=tonumber(_GET['CONTACTID']);
+			TASK['projectid']=tonumber(_GET['PROJECTID']);
+		}
+		var form=new html_form(TASK);
+		var tabset=new html_tabset({activepage=1,minheight=225});
+		//if (id==0) tabset.activepage=2;
+		tabset.addtab("SETTINGS");
+		tabset.addtab("DETAILS");
+		tabset.addtab("PERMISSIONS");
+		tabset.showtabs();
+		print("<form id=taskedit name=taskedit METHOD=POST ACTION=\"/app/tasks/task\" onsubmit=\"return ns.dialog.submit(event, 'task', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="taskid", type="hidden"});
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+	
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="taskname", label="Task Name", required=true});
+		form.addfield({name="assignedby", label="Assigned By", type="select", handler=tasks.html.htselect_user});
+		form.addfield({name="assignedto", label="Assigned To", type="select", handler=tasks.html.htselect_user});
+		form.addfield({name="contactid", label="Contact Name", type="select", handler=tasks.html.htselect_contact});
+		form.addfield({name="projectid", label="Project", type="select", handler=tasks.html.htselect_project});
+		form.addfield({name="priority", label="Priority", type="select", handler=tasks.html.htselect_priority});
+		form.addfield({name="progress", label="Progress %", required=true});
+		form.addfield({name="reminder", label="Reminder", type="select", handler=tasks.html.htselect_reminder});
+		form.addfield({name="duedate", label="Due Date", required=true, handler=tasks.html.htselect_duedate});
+		form.addfield({name="status", label="Status", type="select", handler=tasks.html.htselect_status});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="details", label="Details", type="textarea", style="min-height:"+(tabset.minheight-32)+"px;width:100%", required=true});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		print("<tr><td>permissions not done yet</td></tr>");
+		print("</table>\r\n");
+		tabset.pageend();
+
+		print("</div>");
+		
+		print("<div style='clear:both;text-align:center'>");
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		printnotes(id);
+		print("</table>\r\n");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		form.validate("gw_tasks");
+	
+		title=TASK['taskname'];
+		if (method=='POST') title+=" (Saved)";
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	$('#duedate').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	setTimeout(function() {\r\n"); // must give time for the dialog to be created
+		printf("		$(\"#dialog_task_%d\" ).dialog( \"option\", \"title\", \"Task: %s\" );\r\n", id, strtohtml(title));
+		printf("		ns.showtab(\"dialog_task_%d\", %d);\r\n", id, tabset.activepage);
+		printf("		document.taskedit.taskname.focus();\r\n");
+		printf("	}, 50);\r\n");
+		printf("});\r\n</script>");
 		return;
 	}
-	if (id==0) {
-		TASK['contactid']=tonumber(_GET['CONTACTID']);
-		TASK['projectid']=tonumber(_GET['PROJECTID']);
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
 	}
 
-	//print("<div><pre>",serialize(Q),"</pre></div>");
-	var form=new html_form(TASK);
-	print("<form id=taskedit name=taskedit METHOD=POST ACTION=\"/app/tasks/task\" onsubmit=\"return ns.ModalSubmit(event, 'task', 'save');\" enctype='multipart/form-data'>\r\n");
-	form.addfield({name="taskid", type="hidden"});
-	//print("<div style='width:100%'>");
-	print("<div style='width:100%;background-color:#f0f0f0'>");
-
-	//print("<div style='float:left'>");
-	print("<table class=\"contentform\">\r\n");
-	form.addfield({name="taskname", label="Task Name", required=true});
-	form.addfield({name="assignedby", label="Assigned By", type="select", handler=tasks.html.htselect_user});
-	form.addfield({name="assignedto", label="Assigned To", type="select", handler=tasks.html.htselect_user});
-	form.addfield({name="contactid", label="Contact Name", type="select", handler=tasks.html.htselect_contact});
-	form.addfield({name="projectid", label="Project", type="select", handler=tasks.html.htselect_project});
-	form.addfield({name="priority", label="Priority", type="select", handler=tasks.html.htselect_priority});
-	form.addfield({name="progress", label="Progress %", required=true});
-	form.addfield({name="reminder", label="Reminder", type="select", handler=tasks.html.htselect_reminder});
-	form.addfield({name="duedate", label="Due Date", required=true, handler=tasks.html.htselect_startdate});
-	form.addfield({name="status", label="Status", type="select", handler=tasks.html.htselect_status});
-	print("</table>\r\n");
-	print("</div>");
-
-	print("<div style='clear:both'>");
-	print("<table class=\"contentform\">\r\n");
-	form.addfield({name="details", label="Details", type="textarea", required=true});
-	print("</table>\r\n");
-
-	//print("</div>");
-
-
-	print("</div>");
-
-	print("<div style='clear:both'>");
-	form.validate("gw_tasks");
-	print("<input type=hidden name=submitaction value=''>\r\n");
-	print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
-	if (id>0) {
-		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ModalSubmit(event, 'task', 'delete');\">\r\n");
-	}
-	print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
-	print("</div>");
-	print("</form>\r\n");
-	//if (method=="POST") printf("<hr>_POST=[%s]", serialize(_POST));
-
-	print("<script>
-	$( function() {
-		$( '#duedate' ).datepicker({ dateFormat: 'yy-mm-dd' });
-	} );
-	</script>\r\n");
-	return;
-}
-
-function save_task() {
-	if (_SERVER['REQUEST_METHOD']!='POST') return;
-	id=tonumber(_POST['TASKID']);
-	Q=db.tasks.get(id);
-	TASK=Q['_rows'][0];
-	if (Q==null || TASK==null) {
-		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['TASKID']);
+		Q=db.tasks.get(id);
+		TASK=Q.rows[0];
+		if (Q==null || TASK==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(TASK, "assignedby");
+			addfield(TASK, "assignedto");
+			addfield(TASK, "taskname");
+			addfield(TASK, "contactid");
+			addfield(TASK, "projectid");
+			addfield(TASK, "priority");
+			addfield(TASK, "progress");
+			addfield(TASK, "reminder");
+			t=time.mktime(_POST["DUEDATE"]);
+			if (t<=0) t=time.now();
+			addfield(TASK, "duedate", time.sqltime(t).sub(0, 10));
+			addfield(TASK, "status");
+			addfield(TASK, "details");
+			if (!this.validate(TASK)) {
+				this.view(TASK['taskid']);
+				return;
+			}
+			if (!db.tasks.set(TASK)) {
+				printf("error saving record");
+				return;
+			}
+			printf("<script>\r\nns.status.show(\"task %d saved\", 5);\r\n</script>\r\n", TASK['taskid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_task_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/tasks/task?id=%d\");\r\n", TASK['taskid']);
+				print("}, 200);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(TASK['taskid']);
+			}
+			break;
+		case 'delete':
+			if (!db.tasks.remove(TASK)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>task %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"task %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_task_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
 		return;
 	}
-	switch (_POST['SUBMITACTION']) {
-	case 'save':
-		TASK["assignedby"] = _POST["ASSIGNEDBY"];
-		TASK["assignedto"] = _POST["ASSIGNEDTO"];
-		TASK["taskname"] = _POST["TASKNAME"];
-		TASK["contactid"] = _POST["CONTACTID"];
-		TASK["projectid"] = _POST["PROJECTID"];
-		TASK["priority"] = _POST["PRIORITY"];
-		TASK["progress"] = _POST["PROGRESS"];
-		TASK["reminder"] = _POST["REMINDER"];
-
-		duedate = _POST["DUEDATE"];
-		//dt = new datetime(time.mktime(duedate));
-		//calendar.tz_user2utc(dt);
-		//duedate=dt.tostring();
-		TASK["duedate"] = duedate;
-
-		TASK["status"] = _POST["STATUS"];
-		TASK["details"] = _POST["DETAILS"];
-
-		db.tasks.set(TASK);
-		printf("task %d saved", TASK['taskid']);
-		view_task(TASK['taskid']);
-		break;
-	case 'delete':
-		db.tasks.remove(TASK);
-		printf("task %d deleted", TASK['taskid']);
-		break;
-	}
-	return;
 }
 
 try {
 	include_template("common.ns");
 	include_template("class.html_form.ns");
 	include("tasks.lib.ns");
-	print("<center>\r\n");
+	//print("<center>\r\n");
+	t=new task();
 	if (_SERVER['REQUEST_METHOD']=='POST') {
-		save_task();
+		t.save();
 	} else {
-		view_task();
+		t.view();
 	}
-	print("</center>\r\n");
+	//print("</center>\r\n");
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }

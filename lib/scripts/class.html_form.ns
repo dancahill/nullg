@@ -9,6 +9,9 @@ class html_form {
 		this.fields[this.fields.length()] = field;
 		if (field.type.gettype()!='string') field.type="text";
 		field.type=field.type.tolower();
+		if (field.type=="placeholder") {
+			return;
+		}
 		if (field.type=="hidden") {
 			// strtohtml seems to be crashing on ints
 			printf("<input type=hidden id=%s name=%s value=\"%s\">\r\n", field.name, field.name, strtohtml(this.record[field.name].tostring()));
@@ -16,8 +19,14 @@ class html_form {
 		}
 
 		if (field.type=="textarea") {
+			//"notetext<br><textarea name=notetext style='height:600px;width:600px'>"+strtohtml(NOTE['notetext'])+"</textarea><br>",
 			printf("<tr><td colspan=2><b>%s</b></td></tr><tr><td colspan=2>", field.label);
-			printf("<textarea wrap=virtual id=%s name=%s rows=5 cols=50>", field.name, field.name);
+			//printf("<textarea id=%s name=%s wrap=virtual rows=5 cols=50>", field.name, field.name);
+			if (field.style!=null) {
+				printf("<textarea id=%s name=%s style=\"%s\">", field.name, field.name, field.style);
+			} else {
+				printf("<textarea id=%s name=%s wrap=virtual rows=5 cols=50>", field.name, field.name);
+			}
 			print(strtohtml(this.record[field.name].tostring()));
 			printf("</textarea></td></tr>");
 			return;
@@ -38,7 +47,8 @@ class html_form {
 			printf("<input type=password id=%s name=%s value=\"%s\"", field.name, field.name, "");
 			if (field.required===true) printf(" required='required'");
 			if (field.autocorrect!==true) printf(" spellcheck='false' autocorrect='off'");
-			printf(" autocomplete='new-password'");// google ignores 'off'
+			//printf(" autocomplete='new-password'");// google ignores 'off'
+			//printf(" autocomplete='fuck-you-google'");// google ignores 'off'
 			printf(">");
 		//} else if (field.type=="textarea") {
 			//printf("<textarea wrap=virtual id=%s name=%s rows=5 cols=50>", field.name, field.name);
@@ -55,6 +65,7 @@ class html_form {
 			printf("\"");
 			if (field.required===true) printf(" required='required'");
 			if (field.autocorrect!==true) printf(" spellcheck='false' autocorrect='off'");
+			//printf(" autocomplete='off'");// google ignores 'off'
 			printf(">");
 		}
 		printf("</td></tr>\r\n");

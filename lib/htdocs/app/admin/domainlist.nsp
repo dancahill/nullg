@@ -1,0 +1,39 @@
+<?nsp
+
+function list_domains() {
+	Q=db.admin.domains.getlist();
+	print("<br>\r\n");
+	if (Q.rows.length()<1) {
+		print("<b>Found 0 matching domains</b>\r\n");
+		return;
+	}
+	t=new html_table();
+	t.datasource=Q;
+	t.tablename="T2";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	fntd=function (row, column) {
+		url=sprintf("/app/admin/domain?id=%d", tonumber(row['domainid']));
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+	};
+	fn=function (row, column) {
+		url=sprintf("/app/admin/domain?id=%d", tonumber(row['domainid']));
+		return sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(row['domainname']));
+	};
+	t.addcolumn("domainname", "Domain Name", fn, fntd);
+	t.write();
+	printf("<a class=\"dialog\" href=\"/app/admin/domain?id=0\">%s</a>", strtohtml("New Domain"));
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	admin.html.headermenu();
+	print("<center>\r\n");
+	list_domains();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

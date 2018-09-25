@@ -1,6 +1,3 @@
 <?nsp
-/* FIX THIS */
-_HEADER['STATUS']=302;
-_HEADER['LOCATION']='list';
-include("list.ns");
+exec(convertnsp(file.readall(_filepath+"/list.nsp")));
 ?>

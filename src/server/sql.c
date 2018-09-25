@@ -31,12 +31,12 @@ void sql_freeresult(nsp_state *N, obj_t **qobj)
 	return;
 }
 
-int sql_update(nsp_state *N, char *sqlquery)
+int sql_update(nsp_state *N, obj_t **qobj, char *sqlquery)
 {
 	int rc = -1;
 
 	pthread_mutex_lock(&Lock.SQL);
-	rc = _sql_update(N, sqlquery);
+	rc = _sql_update(N, qobj, sqlquery);
 	pthread_mutex_unlock(&Lock.SQL);
 	return rc;
 }
@@ -51,7 +51,7 @@ int sql_query(nsp_state *N, obj_t **qobj, char *query)
 	return rc;
 }
 
-int sql_updatef(nsp_state *N, char *format, ...)
+int sql_updatef(nsp_state *N, obj_t **qobj, char *format, ...)
 {
 	char *sqlquery;
 	va_list ap;
@@ -64,7 +64,7 @@ int sql_updatef(nsp_state *N, char *format, ...)
 	va_start(ap, format);
 	vsnprintf(sqlquery, 8191, format, ap);
 	va_end(ap);
-	rc = sql_update(N, sqlquery);
+	rc = sql_update(N, qobj, sqlquery);
 	free(sqlquery);
 	return rc;
 }

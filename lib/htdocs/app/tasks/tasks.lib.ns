@@ -14,7 +14,7 @@ namespace tasks.html {
 
 		var menuitems = {
 			{ text="TASKS";        href="/app/tasks/list?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";     };
-			{ text="NEW TASK";     href="/app/tasks/view?userid="+userid; onclick="return ns.ModalForm(event, 'task', 0);"; };
+			{ text="NEW TASK";     href="/app/tasks/view?userid="+userid; onclick="return ns.dialog.create(event, 'task', 0);"; };
 		};
 
 		//var menuitems = null;
@@ -22,22 +22,22 @@ namespace tasks.html {
 	}
 
 	function htselect_user(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['userid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['userid']), ts, strtohtml(row['username']));
 		}
 	}
 
 	function htselect_contact(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['contactid'])?" selected":"";
 			sn=row['surname']; gn=row['givenname']; cn=sn+((sn!=""&&gn!="")?", ":"")+gn;
 			printf("<option value='%d'%s>%s</option>", tonumber(row['contactid']), ts, strtohtml(cn));
@@ -45,11 +45,11 @@ namespace tasks.html {
 	}
 
 	function htselect_project(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['projectid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['projectid']), ts, strtohtml(row['projectname']));
 		}
@@ -57,11 +57,16 @@ namespace tasks.html {
 
 	function htselect_priority(selected) {
 		var option = { "Lowest", "Low", "Normal", "High", "Highest" };
-		printf("<option value='0'></option>\r\n");
 		for (i=0;i<option.length();i++) {
 			ts=tonumber(selected)==i?" selected":"";
 			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
 		}
+	}
+
+	function htselect_duedate(value) {
+		t=time.mktime(value);
+		if (t<=0) t=time.now();
+		print(time.sqltime(t).sub(0, 10));
 	}
 
 	function htselect_status(selected) {
@@ -73,11 +78,10 @@ namespace tasks.html {
 	}
 
 	function htselect_closingstatus(selected) {
-		var userinfo = db.getuserinfo();
 		query=sprintf("SELECT eventclosingid, closingname FROM gw_events_closings ORDER BY closingname ASC");
-		sqr=sqlquery(query);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['eventclosingid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['eventclosingid']), ts, strtohtml(row['closingname']));
 		}

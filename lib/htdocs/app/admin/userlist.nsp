@@ -1,29 +1,31 @@
+<?nsp
 
-function list_domains() {
+function list_users() {
 //	var maxlist   = tonumber(_USER['pref']['maxlist']);
 //	var menustyle = tonumber(_USER['pref']['menustyle']);
 //	var userid    = tonumber(_USER['userid']);
-	Q=db.admin.domains.getlist();
+	Q=db.admin.users.getlist();
 //	global Q=db.contacts.getlist();
 	print("<br>\r\n");
-	if (Q._tuples<1) {
-		print("<b>Found 0 matching domains</b>\r\n");
+	if (Q.rows.length()<1) {
+		print("<b>Found 0 matching users</b>\r\n");
 		return;
 	}
-	print("<script type=\"text/javascript\">\r\nns.SetupDialogForm('dialog-form');\r\n</script>\r\n");
 	t=new html_table();
 	t.datasource=Q;
 	t.tablename="T2";
 	t.tableclass="contenttable";
-	//t.autoaddcolumns=false;
-	t.autoaddcolumns=true;
+	t.autoaddcolumns=false;
+	//t.autoaddcolumns=true;
 
-/*
+
 	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:ns.users.view(%d)\"'>", tonumber(row['userid']));
+		url=sprintf("/app/admin/user?id=%d", tonumber(row['userid']));
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
 	};
 	fn=function (row, column) {
-		return sprintf("<a href=\"javascript:users.view(%d);\">%s</a>", tonumber(row['userid']), strtohtml(row['username']));
+		url=sprintf("/app/admin/user?id=%d", tonumber(row['userid']));
+		return sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(row['username']));
 	};
 	t.addcolumn("username", "User Name", fn, fntd);
 	fn=function (row, column) {
@@ -32,7 +34,7 @@ function list_domains() {
 	};
 	t.addcolumn("surname", "Real Name", fn);
 	t.addcolumn("email", "E-Mail");
-*/
+
 
 /*
 	fntd=function (row, column) {
@@ -64,16 +66,18 @@ function list_domains() {
 	t.addcolumn("website", "Web", fn);
 */
 	t.write();
+	printf("<a class=\"dialog\" href=\"/app/admin/user?id=0\">%s</a>", strtohtml("New User"));
 	return;
 }
 
 try {
 	include_template("common.ns");
-	include("../admin.lib.ns");
-	adminhtml.headermenu();
+	include("admin.lib.ns");
+	admin.html.headermenu();
 	print("<center>\r\n");
-	list_domains();
+	list_users();
 	print("</center>\r\n");
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }
+?>

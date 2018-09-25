@@ -3,13 +3,13 @@ function view_mailaccount(id) {
 	var method=_SERVER['REQUEST_METHOD'];
 	if (id==null) id=tonumber((method=='POST')?_POST['MAILACCOUNTID']:_GET['ID']);
 	Q=db.mailaccounts.get(id);
-	MAILACCOUNT=Q['_rows'][0];
+	MAILACCOUNT=Q.rows[0];
 	if (Q==null || MAILACCOUNT==null) {
 		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 		return;
 	}
 	var form=new html_form(MAILACCOUNT);
-	print("<form id=mailaccountedit name=mailaccountedit METHOD=POST ACTION=\"/app/mail/accounts/account\" onsubmit=\"return ns.ModalSubmit(event, 'mailaccount', 'save');\" enctype='multipart/form-data'>\r\n");
+	print("<form id=mailaccountedit name=mailaccountedit METHOD=POST ACTION=\"/app/mail/accounts/account\" onsubmit=\"return ns.dialog.submit(event, 'mailaccount', 'save');\" enctype='multipart/form-data'>\r\n");
 	form.addfield({name="mailaccountid", type="hidden"});
 	print("<table class=\"contentform\">\r\n");
 	form.addfield({name="accountname",  label="Account Name", required=true});
@@ -38,7 +38,7 @@ function view_mailaccount(id) {
 	print("<input type=hidden name=submitaction value=''>\r\n");
 	print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
 	if (id>0) {
-		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.ModalSubmit(event, 'mailaccount', 'delete');\">\r\n");
+		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ns.dialog.submit(event, 'mailaccount', 'delete');\">\r\n");
 	}
 	print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
 	print("</form>\r\n");
@@ -49,7 +49,7 @@ function save_mailaccount() {
 	if (_SERVER['REQUEST_METHOD']!='POST') return;
 	id=tonumber(_POST['MAILACCOUNTID']);
 	Q=db.mailaccounts.get(id);
-	MAILACCOUNT=Q['_rows'][0];
+	MAILACCOUNT=Q.rows[0];
 	//printf("<hr><pre>_POST=[%s]</pre>", serialize(_POST));
 	//printf("<hr><pre>MAILACCOUNT=[%s]</pre>", serialize(MAILACCOUNT));
 	if (Q==null || MAILACCOUNT==null) {
@@ -94,7 +94,6 @@ function save_mailaccount() {
 
 try {
 	include_template("common.ns");
-	include_template("class.html_form.ns");
 	include("../mail.lib.ns");
 	print("<center>\r\n");
 	if (_SERVER['REQUEST_METHOD']=='POST') {

@@ -15,14 +15,14 @@ function urlencode(s) {
 }
 
 function print_table(sqr) {
-	if (sqr._rows[0]!=null) {
+	if (sqr.rows[0]!=null) {
 		print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 WIDTH='100%' STYLE='border-style:solid'>");
 		print("<TR>");
-		foreach (n,v in sqr._rows[0]) {
+		foreach (n,v in sqr.rows[0]) {
 			printf("<TH>%s</TH>", n);
 		}
 		print("</TR>");
-		foreach (row in sqr._rows) {
+		foreach (row in sqr.rows) {
 			print("<TR>");
 			foreach (field in row) {
 				printf("<TD NOWRAP>%s</TD>", urlencode(field));
@@ -35,12 +35,12 @@ function print_table(sqr) {
 
 try {
 	if (MASTERGLOBAL['CONFIG']['sql_server_type']=='MYSQL') {
-		sqr=sqlquery("SHOW TABLES");//MySQL
+		sqr=sql.query("SHOW TABLES");//MySQL
 	} else {
-		sqr=sqlquery("SELECT tbl_name AS name FROM sqlite_master WHERE type = 'table'");//SQLITE
+		sqr=sql.query("SELECT tbl_name AS name FROM sqlite_master WHERE type = 'table'");//SQLITE
 	}
 	print_table(sqr);
-	foreach (n,tablerec in sqr['_rows']) {
+	foreach (n,tablerec in sqr.rows) {
 		if (MASTERGLOBAL['CONFIG']['sql_server_type']=='MYSQL') {
 			tablename=tablerec['Tables_in_nullgroupware'];
 		} else {
@@ -54,7 +54,7 @@ try {
 		if (tablename=='gw_notes') continue;
 		if (tablename=='gw_smtp_relayrules') continue;
 		if (tablename=='gw_weblog_entries') continue;
-		sqr2=sqlquery(sprintf("SELECT * FROM %s", tablename));
+		sqr2=sql.query(sprintf("SELECT * FROM %s", tablename));
 		print_table(sqr2);
 	}
 	print("<HR>");

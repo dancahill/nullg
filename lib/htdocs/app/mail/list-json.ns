@@ -15,12 +15,12 @@ function wmsearch_doquery(order_by, folderid) {
 		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d ORDER BY %s;", userid, accountid, order_by);
 	}
 	//print(query);
-	return sqlquery(query);
-	//return sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE accountid = 4 LIMIT 100;"));
+	return sql.query(query);
+	//return sql.query(sprintf("SELECT * FROM gw_email_headers WHERE accountid = 4 LIMIT 100;"));
 }
 
 function mail_list() {
-	var userinfo = db.getuserinfo();
+	ui = new db.userinfo();
 
 	prefs=_USER['pref'];
 	var maildefault = tonumber(prefs['maildefault']);
@@ -39,7 +39,7 @@ function mail_list() {
 		if (accountid!=n) {
 			accountid=n;
 			prefs['mailcurrent']=accountid;
-			sqlupdate(sprintf("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d;", accountid, userid, domainid));
+			sql.update(sprintf("UPDATE gw_users SET prefmailcurrent = %d WHERE userid = %d AND domainid = %d;", accountid, userid, domainid));
 		}
 	}
 	searchtext="";
@@ -52,17 +52,17 @@ function mail_list() {
 	sqr=wmsearch_doquery("hdr_date DESC", folderid);
 
 	if (searchtext!="") {
-		sqrlen=sqr['_rows'].length();
+		sqrlen=sqr.rows.length();
 		for (i=0;i<sqrlen;i++) {
-			rec=sqr['_rows'][i];
+			rec=sqr.rows[i];
 			headerid=tonumber(rec['mailheaderid']);
 			folderid=tonumber(rec['folder']);
 			message = new mail.messagereader(headerid, folderid);
 			found=message.search(searchtext);
-			if (!found) sqr['_rows'][i]=null;
+			if (!found) sqr.rows[i]=null;
 		}
 	}
-	nummessages=sqr['_rows'].length();
+	nummessages=sqr.rows.length();
 	//nummessages=sql_numtuples(&sqr);
 	if (nummessages<1) {
 		printf("<br><center><b>You have no messages in this mailbox</b></center><br>\r\n");
@@ -71,7 +71,7 @@ function mail_list() {
 	}
 
 	outdata={};
-	foreach (row in sqr['_rows']) {
+	foreach (row in sqr.rows) {
 		from=mail.getaddr(row['hdr_from']);
 		msgsize=tonumber(row['size']);
 		if (msgsize>=1048576) {
@@ -101,8 +101,8 @@ function mail_list() {
 		};
 		outdata[outdata.length()]=newrow;
 	}
-//	outdata["original"]=sqr['_rows'];
-//	print(data.json.encode(sqr['_rows']));
+//	outdata["original"]=sqr.rows;
+//	print(data.json.encode(sqr.rows));
 //	print("<hr>");
 	print(data.json.encode(outdata));
 	return;

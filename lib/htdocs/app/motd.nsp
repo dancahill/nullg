@@ -1,0 +1,10 @@
+<?nsp
+include_template("common.ns");
+if (_USER==null) {
+} else {
+//	print("<div id=\"main\">\r\n");
+	html.headersubmenu(null);
+	html.motd();
+//	print("</div>\r\n");
+}
+?>

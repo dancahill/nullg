@@ -4,7 +4,7 @@ function print_header() {
 	var headerid = tonumber(_GET['ID']);
 	var currentaccountid = tonumber(_USER['pref']['mailcurrent']);
 	Q=db.mailheaders.get(headerid);
-	row=Q['_rows'][0];
+	row=Q.rows[0];
 	if (Q==null || row==null) {
 		printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
 		return;
@@ -14,8 +14,8 @@ function print_header() {
 		print("<table id='msgread' class='contentview' style='height:100%;width:100%;'>\r\n");
 		print("<tr><th width='1%' style='text-align:left'>From</th><td width='99%'>");
 		print("<select id=msgfrom style='width:100%'>");
-		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d", userid));
-		foreach (acctrow in sqr['_rows']) {
+		sqr=sql.query(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d", userid));
+		foreach (acctrow in sqr.rows) {
 			mailaccountid=tonumber(acctrow['mailaccountid']);
 			printf("<option value=%d%s>%s</option>\r\n", mailaccountid, (mailaccountid==currentaccountid)?" SELECTED":"", acctrow['accountname']);
 		}
@@ -88,9 +88,9 @@ function print_header() {
 		print("$('#contentiframe').load(function(e){ ns.mail.load_compose_body("+headerid+"); })\r\n");
 		print("</script>");
 	} else if (_GET['PART']=='body') {
-		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d", currentaccountid, userid));
-		if (sqr['_rows'].length()!=1) throw "couldn't find current account";
-		signature=sqr['_rows'][0]['signature'];
+		sqr=sql.query(sprintf("SELECT * FROM gw_email_accounts WHERE mailaccountid = %d AND obj_uid = %d", currentaccountid, userid));
+		if (sqr.rows.length()!=1) throw "couldn't find current account";
+		signature=sqr.rows[0]['signature'];
 		if (signature!="") signature=""+signature+"<br><br>";
 		if (headerid==0) {
 			print("<div style='color:black'><br><br>"+signature+"</div>");

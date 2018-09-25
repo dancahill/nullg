@@ -13,7 +13,7 @@ function sql_list()
 	global Q=ldir.getlist("dbquery", 0);
 //	print("<pre>",serialize(Q),"</pre>");
 	print("<CENTER>\r\n");
-	if (Q._tuples>0) {
+	if (Q.rows.length()>0) {
 		print("Saved queries<BR />\r\n");
 		print("<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR>\r\n");
 //		if (auth_priv(conn, "query")&A_ADMIN) {
@@ -33,17 +33,17 @@ function sql_list()
 			print("<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>\r\n");
 			print("</TR>\r\n");
 //		}
-		for (i=0;i<Q._tuples;i++) {
-			id=tonumber(Q['_rows'][i]['queryid']);
+		for (i=0;i<Q.rows.length();i++) {
+			id=tonumber(Q.rows[i]['queryid']);
 			print("<TR CLASS=\"FIELDVAL\">");
 //			if (auth_priv(conn, "query")&A_ADMIN) {
 				print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/edit.ns?id=",id,">edit</A></TD>");
 //			}
 			print("<TD NOWRAP STYLE='border-style:solid'><A HREF=/search/sql/run.ns?id=",id,">");
-			print(strtohtml(Q['_rows'][i]['queryname'])+"</A>&nbsp;</TD>\r\n");
+			print(strtohtml(Q.rows[i]['queryname'])+"</A>&nbsp;</TD>\r\n");
 			print("<TD NOWRAP STYLE='border-style:solid'>");
-//			if (string.nicmp("SELECT", Q['_rows'][i]['_data']['query'], 6)==0) {
-			if (string.nicmp("SELECT", Q['_rows'][i]['query'], 6)==0) {
+//			if (string.nicmp("SELECT", Q.rows[i]['_data']['query'], 6)==0) {
+			if (string.nicmp("SELECT", Q.rows[i]['query'], 6)==0) {
 				print("<A HREF=/search/sql/run.ns?id=",id,"&format=csv>CSV</A></TD>\r\n</TR>\r\n");
 			} else {
 				print("&nbsp;</TD>\r\n</TR>\r\n");

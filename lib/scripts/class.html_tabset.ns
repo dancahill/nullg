@@ -1,0 +1,56 @@
+class html_tabset {
+	function html_tabset(params) {
+		this.tabnames={};
+		this.currentpage=1;
+		this.activepage=1;
+		this.minheight=0;
+		if (typeof(params)=='table') {
+			if (params.currentpage!=null) {
+				this.currentpage=params.currentpage;
+			}
+			if (params.activepage!=null) {
+				this.activepage=params.activepage;
+			}
+			if (params.minheight!=null) {
+				this.minheight=params.minheight;
+			}
+		}
+	}
+	function addtab(tabname) {
+		this.tabnames[this.tabnames.length()]=tabname;
+	}
+	function showtabs() {
+/*
+		print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">\r\n");
+		print("<TD class=tab name=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 href=\"#\" onclick=\"return ns.showtab(event,1);\">SUMMARY</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 href=\"#\" onclick=\"return ns.showtab(event,2);\">NAME</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 href=\"3\" onclick=\"return ns.showtab(event,3);\">HOME</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 href=\"4\" onclick=\"return ns.showtab(event,4);\">WORK</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 href=\"5\" onclick=\"return ns.showtab(event,5);\">WEB</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 href=\"6\" onclick=\"return ns.showtab(event,6);\">USER</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page7tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=7 href=\"7\" onclick=\"return ns.showtab(event,7);\">PERMISSIONS</A>&nbsp;</TD>\r\n");
+		print("<TD class=tab name=page8tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=8 href=\"8\" onclick=\"return ns.showtab(event,8);\">OTHER</A>&nbsp;</TD>\r\n");
+		print("</TR></TABLE>");
+*/
+		//this.tabnames[this.tabnames.length()]=tabname;
+		print("<table border=1 cellpadding=0 cellspacing=0 style='border-style:solid'>\r\n<tr class=\"fieldname\">\r\n");
+		for (i=0;i<this.tabnames.length();i++) {
+			//printf("[%s]", name);
+			printf("<td class=tab name=page%dtab nowrap style='border-style:solid'>", i+1);
+			printf("&nbsp;<a accesskey=%d href=\"#\" onclick=\"return ns.showtab(event,%d);\">%s</a>&nbsp;</td>\r\n", i+1, i+1, strtohtml(this.tabnames[i]));
+		}
+		print("</tr></table>");
+	}
+
+	function pagebegin() {
+/*
+		print("<DIV class=tabpage ID=page1 name=page1 STYLE='display:"+((activetab==1)?'block':'none')+";min-height:"+minheight+"px'>\r\n");
+*/
+		printf("<div class=tabpage ID=page"+this.currentpage+" name=page"+this.currentpage+" style='display:"+((this.currentpage==this.activepage)?'block':'none')+";min-height:"+this.minheight+"px'>\r\n");
+	}
+
+	function pageend() {
+		print("</div>\r\n");
+		this.currentpage++;
+	}
+}

@@ -1,6 +1,12 @@
 <?nsp
-/* FIX THIS */
-_HEADER['STATUS']=302;
-_HEADER['LOCATION']='list';
-include("list.ns");
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	admin.html.headermenu();
+	print("<center>\r\n");
+	//list_users();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
 ?>

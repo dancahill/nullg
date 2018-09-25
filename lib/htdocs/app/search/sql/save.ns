@@ -28,9 +28,9 @@ function sql_save()
 //		if ((ptemp=getpostenv(conn, "OBJ_GPERM"))!=NULL) query.obj_gperm=atoi(ptemp);
 //		if ((ptemp=getpostenv(conn, "OBJ_OPERM"))!=NULL) query.obj_operm=atoi(ptemp);
 //	}
-	if (typeof(_POST['QUERYNAME'])!='null') Q['_rows'][0]['_data']['cn']    = _POST['QUERYNAME'];
-	if (typeof(_POST['QUERY'])!='null')     Q['_rows'][0]['_data']['query'] = _POST['QUERY'];
-	if (sizeof(Q['_rows'][0]['_data']['cn'])==0) Q['_rows'][0]['_data']['cn'] = "Unnamed Query";
+	if (typeof(_POST['QUERYNAME'])!='null') Q.rows[0]['_data']['cn']    = _POST['QUERYNAME'];
+	if (typeof(_POST['QUERY'])!='null')     Q.rows[0]['_data']['query'] = _POST['QUERY'];
+	if (sizeof(Q.rows[0]['_data']['cn'])==0) Q.rows[0]['_data']['cn'] = "Unnamed Query";
 	if (_POST['SUBMIT']=="Delete") {
 //		if (!(priv&A_ADMIN)) {
 //			print("<BR /><CENTER>%s</CENTER><BR />\r\n", lang_gets(conn, "common", "err_noaccess"));

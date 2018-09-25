@@ -4,16 +4,41 @@ namespace contacts {
 namespace contacts.html {
 	function headermenu() {
 		var menuitems = {
-			{ text="LIST CONTACTS"; href="/app/contacts/";          onclick="return ns.GoTo(event);";                    };
-			{ text="NEW CONTACT";   href="/app/contacts/edit?id=0"; onclick="return ns.ModalForm(event, 'contact', 0);"; };
+			{ text="LIST CONTACTS"; cls="main",   href="/app/contacts/";            };
+			{ text="NEW CONTACT";   cls="dialog", href="/app/contacts/contact?id=0";};
 		};
 		html.headersubmenu(menuitems);
 	}
+
+	function htselect_enabled(selected) {
+		var option = { "No", "Yes" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_geozone(selected) {
+		ui=new db.userinfo();
+		sqr=sql.query(sprintf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d", ui.domainid));
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['zoneid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['zoneid']), ts, strtohtml(sqr.rows[i]['zonename']));
+		}
+	}
+
+	function htselect_timezone(selected) {
+		//printf("<option value='0'></option>\r\n");
+		for (i=0;i<_SERVER['TIMEZONES'].length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(_SERVER['TIMEZONES'][i].n));
+		}
+	}
+
 	function show_searchform() {
 		print("<div style='margin:auto;text-align:right;'>");
-		print("<form id=contactsearch name=contactsearch method=post action=\"/app/contacts/list\" onsubmit=\"return ns.ModalSubmit(event, 'contactsearch', 'save');\" enctype='multipart/form-data'>");
+		print("<form id=contactsearch name=contactsearch method=post action=\"/app/contacts/list\" onsubmit=\"return ns.dialog.submit(event, 'contactsearch', 'save');\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Contacts' required='required' autocorrect='off'>");
-		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
 		print("</form>");
 		print("</div>\r\n");
 	}

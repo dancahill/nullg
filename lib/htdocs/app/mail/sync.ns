@@ -2,16 +2,16 @@ include("mail.lib.ns");
 mail.html.headermenu();
 print("<div style=\"text-align:left\">");
 query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid;", tonumber(_USER['userid']));
-sqr=sqlquery(query);
+sqr=sql.query(query);
 print("<br>");
-foreach (row in sqr['_rows']) {
+foreach (row in sqr.rows) {
 	try {
 		mail.sync.dosync(row, true);
 	} catch (ex) {
 		printf("<br>Exception: [%s]", html_encode(ex.description));
 	}
 }
-foreach (row in sqr['_rows']) {
+foreach (row in sqr.rows) {
 	try {
 		mail.sync.smtp_sync(row, true);
 	} catch (ex) {

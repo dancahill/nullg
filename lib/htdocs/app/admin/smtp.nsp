@@ -1,0 +1,67 @@
+<?nsp
+
+function list_smtp() {
+	Q=sql.query("SELECT * FROM gw_smtp_aliases ORDER BY aliasid");
+	//Q=db.admin.zones.getlist();
+	print("<br>\r\n");
+//	if (Q.rows.length()<1) {
+//		print("<b>Found 0 matching domains</b>\r\n");
+//		return;
+//	}
+	t=new html_table();
+	t.datasource=Q;
+	t.tablename="T1";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	// fntd=function (row, column) {
+	// 	url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));
+	// 	return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+	// };
+	// fn=function (row, column) {
+	// 	url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));
+	// 	return sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(row['zonename']));
+	// };
+	// t.addcolumn("zonename", "Zone Name", fn, fntd);
+
+	t.addcolumn("aliasid", "ID");
+	t.addcolumn("obj_uid", "uid");
+	t.addcolumn("obj_did", "did");
+	t.addcolumn("aliasname", "Alias Name");
+	t.addcolumn("userid", "Target User");
+	t.addcolumn("domainid", "Target Domain");
+	t.write();
+	// printf("<a class=\"dialog\" href=\"/app/admin/zone?id=0\">%s</a>", strtohtml("New Zone"));
+
+	Q=sql.query("SELECT * FROM gw_smtp_relayrules ORDER BY obj_mtime DESC, relayruleid DESC");
+	print("<br>\r\n");
+	///if (q.rows.length()>0) {
+		t=new html_table();
+		t.datasource=Q;
+		t.tablename="T2";
+		t.tableclass="contenttable";
+		t.autoaddcolumns=false;
+		t.sortlist="sortList:[[1,1],[0,1]]";
+		t.addcolumn("relayruleid", "ID");
+		//t.addcolumn("obj_ctime", "Created");
+		t.addcolumn("obj_mtime", "Updated");
+		t.addcolumn("expires", "Expires");
+		t.addcolumn("ipaddress", "IP Address");
+		t.addcolumn("ruletype", "Type");
+		t.addcolumn("persistence", "Persistence");
+		t.addcolumn("reason", "Reason");
+		t.write();
+	//}
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	admin.html.headermenu();
+	print("<center>\r\n");
+	list_smtp();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

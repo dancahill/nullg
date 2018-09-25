@@ -10,6 +10,8 @@ class html_table {
 		this.autoaddcolumns=true;
 		/* sql query result */
 		this.datasource=null;
+		/* jquery.tablesorter */
+		this.sortlist="sortList:[[0,0]]";
 	}
 	/* function to add column */
 	function addcolumn(name, label, lambda, lambda_td) {
@@ -21,17 +23,6 @@ class html_table {
 	}
 	/* function to output complete table */
 	function write() {
-		// these should already be included in header.ns
-		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.js\"></script>\r\n");
-		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.tablesorter.js\"></script>\r\n");
-		printf("<script type=\"text/javascript\">\r\n"+
-			"$(function() {\r\n"+
-			//"	$(\"#%s\").tablesorter({sortList:[[0,0]], widgets: ['zebra']});\r\n"+
-			"	$(\"#%s\").tablesorter({sortList:[[0,0]]});\r\n"+
-			"});\r\n"+
-			"</script>"
-			, tablename
-		);
 		print("<table");
 		if (tablename!="") print(" id='"+tablename+"'");
 		if (tableclass!="") print(" class='"+tableclass+"'");
@@ -42,14 +33,14 @@ class html_table {
 			printf("<th>%s</th>", strtohtml(column.label));
 		}
 		if (autoaddcolumns==true) {
-			foreach (n,v in datasource._rows[0]) {
+			foreach (n,v in datasource.rows[0]) {
 				printf("<th>%s</th>", strtohtml(n));
 			}
 		}
 		print("</tr>\r\n");
 		print("</thead>");
 		print("<tbody>");
-		foreach (record in datasource._rows) {
+		foreach (record in datasource.rows) {
 			if (this.filterrow(record)) continue;
 			print("<tr>");
 			foreach (column in columns) {
@@ -77,5 +68,20 @@ class html_table {
 		}
 		print("</tbody>");
 		print("</table>");
+		// these should already be included in header.ns
+		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.js\"></script>\r\n");
+		//print("<script type=\"text/javascript\" src=\"/scripts/jquery.tablesorter.js\"></script>\r\n");
+
+		if (datasource.rows.length()>0) {
+			printf("<script type=\"text/javascript\">\r\n"+
+				"$(function() {\r\n"+
+				//"	$(\"#%s\").tablesorter({sortList:[[0,0]], widgets: ['zebra']});\r\n"+
+				"	$(\"#%s\").tablesorter({%s});\r\n"+
+				"});\r\n"+
+				"</script>"
+				, tablename
+				, sortlist
+			);
+		}
 	}
 }

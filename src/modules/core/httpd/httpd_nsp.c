@@ -137,7 +137,56 @@ static NSP_FUNCTION(htnsp_auth_md5pass)
 	return 0;
 }
 
-static NSP_FUNCTION(htnsp_sqlquery)
+static NSP_FUNCTION(htnsp_sql_escape)
+{
+	CONN *conn = get_conn();
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	char *ss, *se;
+	char *s2;
+	int l2;
+
+	if (cobj1->val->type != NT_STRING) {
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		return 0;
+	}
+	//if (!nsp_isstr(cobj1)) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	nsp_setstr(N, &N->r, "", NULL, 0);
+	if (cobj1->val->d.str == NULL) return 0;
+	se = ss = cobj1->val->d.str;
+	s2 = "'";
+	l2 = 1;
+	for (; *se; se++) {
+		if (nc_strncmp(se, s2, l2) != 0) continue;
+		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, "''", 2);
+		ss = se += l2;
+		if (*se) { --se; continue; }
+		nsp_strcat(N, &N->r, ss, se - ss);
+		break;
+	}
+	if (se > ss) {
+		nsp_strcat(N, &N->r, ss, se - ss);
+	}
+	return 0;
+}
+
+static NSP_FUNCTION(htnsp_sql_getsequence)
+{
+	CONN *conn = get_conn();
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	int rc = -1;
+
+	if (cobj1->val->type != NT_STRING) {
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		nsp_setnum(N, &N->r, "", rc);
+		return 0;
+	}
+	rc = sql_getsequence(proc->N, cobj1->val->d.str);
+	nsp_setnum(N, &N->r, "", rc);
+	return rc;
+}
+
+static NSP_FUNCTION(htnsp_sql_query)
 {
 	CONN *conn = get_conn();
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
@@ -155,33 +204,21 @@ static NSP_FUNCTION(htnsp_sqlquery)
 	return rc;
 }
 
-static NSP_FUNCTION(htnsp_sqlupdate)
+static NSP_FUNCTION(htnsp_sql_update)
 {
 	CONN *conn = get_conn();
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *qobj = NULL;
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
 		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
 		return 0;
 	}
-	rc = sql_update(proc->N, cobj1->val->d.str);
-	return rc;
-}
-
-static NSP_FUNCTION(htnsp_sqlgetsequence)
-{
-	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	int rc = -1;
-
-	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
-		nsp_setnum(N, &N->r, "", rc);
-		return 0;
-	}
-	rc = sql_getsequence(proc->N, cobj1->val->d.str);
-	nsp_setnum(N, &N->r, "", rc);
+	rc = sql_update(proc->N, &qobj, cobj1->val->d.str);
+	nsp_linkval(N, &N->r, qobj);
+	nsp_unlinkval(N, qobj);
+	free(qobj);
 	return rc;
 }
 
@@ -552,9 +589,13 @@ static int htnsp_initenv(CONN *conn)
 	nsp_setcfunc(conn->N, &conn->N->g, "include_template", (NSP_CFUNC)htnsp_include_template);
 	nsp_setcfunc(conn->N, &conn->N->g, "lang_gets", (NSP_CFUNC)htnsp_lang_gets);
 	nsp_setcfunc(conn->N, &conn->N->g, "strtohtml", (NSP_CFUNC)htnsp_strtohtml);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlquery", (NSP_CFUNC)htnsp_sqlquery);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlupdate", (NSP_CFUNC)htnsp_sqlupdate);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlgetsequence", (NSP_CFUNC)htnsp_sqlgetsequence);
+
+	tobj = nsp_settable(conn->N, &conn->N->g, "sql");
+	nsp_setcfunc(conn->N, tobj, "escape", (NSP_CFUNC)htnsp_sql_escape);
+	nsp_setcfunc(conn->N, tobj, "getsequence", (NSP_CFUNC)htnsp_sql_getsequence);
+	nsp_setcfunc(conn->N, tobj, "query", (NSP_CFUNC)htnsp_sql_query);
+	nsp_setcfunc(conn->N, tobj, "update", (NSP_CFUNC)htnsp_sql_update);
+
 	nsp_setcfunc(conn->N, &conn->N->g, "system", (NSP_CFUNC)htnsp_system);
 	tobj = nsp_settable(conn->N, &conn->N->g, "io");
 	nsp_setcfunc(conn->N, tobj, "flush", (NSP_CFUNC)htnsp_flush);

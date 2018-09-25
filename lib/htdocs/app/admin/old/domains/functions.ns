@@ -28,7 +28,7 @@ function str2sql(s) {
 function domain_list() {
 	global Q=ldir.getlist("domain", 0);
 	print("<CENTER>");
-	if (Q._tuples<1) {
+	if (Q.rows.length()<1) {
 		print("<B>Found 0 matching domains</B></CENTER>\r\n");
 		return;
 	}
@@ -37,11 +37,11 @@ function domain_list() {
 		"<TR><TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Domain Name&nbsp;</TH></TR>\r\n"
 	);
 	i=0;
-	foreach (rec in Q['_rows']) {
+	foreach (rec in Q.rows) {
 		printf("<TR CLASS=\"FIELDNAME\"><TD ALIGN=LEFT COLSPAN=5 NOWRAP STYLE='border-style:solid'>&nbsp;%s&nbsp;</TD></TR>", rec['domainname']);
 
-		sqr=sqlquery(sprintf("SELECT * FROM gw_domains_aliases WHERE domainid = %d", tonumber(rec['domainid'])));
-		foreach (aliasrec in sqr['_rows']) {
+		sqr=sql.query(sprintf("SELECT * FROM gw_domains_aliases WHERE domainid = %d", tonumber(rec['domainid'])));
+		foreach (aliasrec in sqr.rows) {
 			printf("<TR CLASS=\"FIELDVAL\">");
 			printf("<TD NOWRAP style='cursor:hand; border-style:solid'>&nbsp;&nbsp;&nbsp;%s</TD>", str2html(aliasrec['domainname']));
 			printf("</TR>\r\n");
@@ -69,8 +69,8 @@ function domain_view() {
 //		global Q={_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New User'}}}};
 		global Q=default_user;
 	}
-//	USER=Q['_rows'][0]['_data'];
-	USER=Q['_rows'][0];
+//	USER=Q.rows[0]['_data'];
+	USER=Q.rows[0];
 
 //	print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(USER),"</PRE></TD></TR>");
 
@@ -93,10 +93,7 @@ function domain_view() {
 //	tz2=time_tzoffsetcon(conn, time(NULL), id);
 //	if (id<1) tz2=tz1;
 	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
-	print("function ConfirmDelete() {\r\n");
-	print("	return confirm(\"Are you sure you want to delete this record?\");\r\n");
-	print("}\r\n");
-//	htscript_showpage(conn, 7);
+//	htscript_showtab(conn, 7);
 	global pages=6;
 	include_template("html/tabs.ns");
 //	showtabs(7);
@@ -115,12 +112,12 @@ function domain_view() {
 
 	print("<TR><TD ALIGN=LEFT>");
 	print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">\r\n");
-	print("<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=\"javascript:showpage(1)\">SUMMARY</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=\"javascript:showpage(2)\">USER</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=\"javascript:showpage(3)\">NAME</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=\"javascript:showpage(4)\">ADDRESS</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=\"javascript:showpage(5)\">PREFERENCES</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=\"javascript:showpage(6)\">PERMISSIONS</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=\"javascript:showtab(event,1)\">SUMMARY</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=\"javascript:showtab(event,2)\">USER</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=\"javascript:showtab(event,3)\">NAME</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page4tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=4 HREF=\"javascript:showtab(event,4)\">ADDRESS</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page5tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=5 HREF=\"javascript:showtab(event,5)\">PREFERENCES</A>&nbsp;</TD>\r\n");
+	print("<TD ID=page6tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=6 HREF=\"javascript:showtab(event,6)\">PERMISSIONS</A>&nbsp;</TD>\r\n");
 	print("</TR></TABLE>");
 	print("</TD></TR>\r\n");
 	print("<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
@@ -204,10 +201,10 @@ function domain_view() {
 	print("</CENTER>\r\n");
 	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
 	if ((id<1)||(is_recycled)) {
-		print("showpage(2);\r\n");
+		print("showtab(2);\r\n");
 		print("document.useredit.username.focus();\r\n");
 	} else {
-		print("showpage(1);\r\n");
+		print("showtab(1);\r\n");
 	}
 	print("// -->\r\n</SCRIPT>\r\n");
 
@@ -229,7 +226,7 @@ function domain_save() {
 		return;
 	}
 * /
-	curdate=time.sqldatetime();
+	curdate=time.sqltime();
 	if (_SERVER['REQUEST_METHOD']!='POST') return;
 	if (_POST['ID']==null) return;
 	id=tonumber(_POST['ID']);
@@ -265,9 +262,9 @@ function domain_save() {
 			print("Form is missing "+F+" = "+_POST[F].tostring()+"<BR>");
 			continue;
 		}
-		Q['_rows'][0]['_data'][string.tolower(field)] = _POST[F];
+		Q.rows[0]['_data'][string.tolower(field)] = _POST[F];
 	}
-	user=Q['_rows'][0];
+	user=Q.rows[0];
 	if (string.len(_POST['PASSWORD'])>0) {
 		newpass=auth_md5pass(_POST['PASSWORD']);
 		passchanged=true;
@@ -291,14 +288,14 @@ function domain_save() {
 		}
 		if (sql_updatef("DELETE FROM gw_users WHERE userid = %d", user.userid)<0) return;
 * /
-		sqr=sqlquery(sprintf("DELETE FROM gw_users WHERE userid = %d", user.userid));
+		sqr=sql.query(sprintf("DELETE FROM gw_users WHERE userid = %d", user.userid));
 		print("</CENTER><PRE>",serialize(sqr),"</PRE>");
 
 		print("<CENTER>User ",id," deleted successfully</CENTER><BR />\r\n");
 //		db_log_activity(conn, "queries", id, "delete", "%s - %s deleted user %d", conn->socket.RemoteAddr, conn->dat->username, id);
 	} else if (id==0) {
-		sqr=sqlquery(sprintf("SELECT username FROM gw_users where username = '%s' AND domainid = %d", str2sql(user.username), user.domainid));
-		if (sqr._tuples>0) {
+		sqr=sql.query(sprintf("SELECT username FROM gw_users where username = '%s' AND domainid = %d", str2sql(user.username), user.domainid));
+		if (sqr.rows.length()>0) {
 			printf("<CENTER><B>User %s already exists</B></CENTER>\r\n", user.username);
 			//adminuseredit(sid, &user);
 			return;
@@ -311,9 +308,9 @@ function domain_save() {
 
 //		snprintf(user.password, sizeof(user.password)-1, "%s", auth_setpass(sid, user.password));
 //		if (sql_query(&sqr, "SELECT max(userid) FROM gw_users")<0) return;
-		sqr=sqlquery("SELECT max(userid) AS MAX FROM gw_users");
-		//print("</CENTER><PRE>",serialize(sqr['_rows'][0]),"</PRE>");
-		user.userid=tonumber(sqr['_rows'][0]['MAX'])+1;
+		sqr=sql.query("SELECT max(userid) AS MAX FROM gw_users");
+		//print("</CENTER><PRE>",serialize(sqr.rows[0]),"</PRE>");
+		user.userid=tonumber(sqr.rows[0]['MAX'])+1;
 		if (user.userid<1) user.userid=1;
 
 //		memset(query, 0, sizeof(query));
@@ -375,7 +372,7 @@ function domain_save() {
 
 		//print("<BR>Insert does nothing yet.<BR>");
 		//return;
-		sqr=sqlquery(query);
+		sqr=sql.query(query);
 		print("</CENTER><PRE>",serialize(sqr),"</PRE>");
 / *
 		if (sql_update(query)<0) return;
@@ -425,8 +422,8 @@ function domain_save() {
 //			prints(sid, "<CENTER>%s</CENTER><BR>\r\n", lang.err_noaccess);
 //			return;
 //		}
-		sqr=sqlquery(sprintf("SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", str2sql(user.username), user.userid, user.domainid));
-		if (sqr._tuples>0) {
+		sqr=sql.query(sprintf("SELECT username FROM gw_users where username = '%s' and userid <> %d AND domainid = %d", str2sql(user.username), user.userid, user.domainid));
+		if (sqr.rows.length()>0) {
 			printf("<CENTER><B>User %s already exists</B></CENTER>\r\n", user.username);
 			//adminuseredit(sid, &user);
 			return;
@@ -492,7 +489,7 @@ function domain_save() {
 		query+=sprintf("isactive = '%s'", str2sql(user.isactive));
 		query+=sprintf(" WHERE userid = %d", user.userid);
 		print(query);
-		sqr=sqlquery(query);
+		sqr=sql.query(query);
 		print("</CENTER><PRE>",serialize(sqr),"</PRE>");
 		print("<CENTER>User ",id," modified successfully</CENTER><BR />\r\n");
 //		db_log_activity(conn, "queries", id, "modify", "%s - %s modified user %d", conn->socket.RemoteAddr, conn->dat->username, id);

@@ -1,68 +1,96 @@
 <?nsp
-include("calendar.lib.ns");
-calendar.html.headermenu(0);
-print("<div style='text-align:left'>");
-calendar.html.htselect_userfilter();
-print("</div>");
-print("Month List - The calendar app is not started yet.");
-utime=time.now()
-utime=utime-(utime%86400);
-month=calendar.getmonth(utime);
-print("<table class='calendar'><thead>\r\n");
-print("<tr><th>Sunday</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th></tr>\r\n");
-print("</thead><tbody>\r\n");
-foreach (week in month) {
-	print("<tr>");
-	foreach (day in week) {
-		local function pad(n) {
-			x="0"+n;
-			return x.sub(-2, 2);
-		}
-		//color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-		color=day.t==utime?'blue':'black';
-		//bgcolor=day.tm_mon==month[1][0].tm_mon?'black':'grey';
-		printf("<td"+(day.tm_mon!=month[1][0].tm_mon?" style='background-color:grey'":"")+"><span style='color:%s'>%s</span>", color, pad(day.tm_mday));
 
-		//d1=new datetime(day);
-		//calendar.tz_utc2user(d1);
-		//d2=d1.adddays(1);
-
-		/*
-		// convert to user's local time, round down to midnight, then back to utc for the query
-		d1=new datetime();
-		d1.unixtime=tz_utc2user(d1.unixtime);
-		day=time.gmtime(d1.unixtime);
-		day.tm_hour=0;day.tm_min=0;day.tm_sec=0;
-		d1.unixtime=tz_user2utc(time.mktime(day));
-		d2=d1.adddays(1);
-		*/
-
-		d1=new datetime(day);
-		d1.unixtime-=d1.gettzoffset();
-		d2=d1.adddays(1);
-
-		//query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
-		//print(query);
-		//sqr=sqlquery(query);
-
-		sqr=db.events.getlist(d1.tostring(), d2.tostring(), 0, 0);
-
-		sqrlen=sqr['_rows'].length();
-		//if (sqrlen<1) continue;
-		for (i=0;i<sqrlen;i++) {
-			rec=sqr['_rows'][i];
-			id=tonumber(rec['eventid']);
-			et = new datetime(time.mktime(rec['eventstart']));
-			calendar.tz_utc2user(et);
-			ts=""+pad(et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
-			printf("<br/><span style='background-color:lightgreen'>");
-			printf("<a href=\"javascript:ns.events.view(event, %d);\">%s - %s</a>", id, ts, rec['eventname']);
-			printf("</span>");
-		}
-		printf("</td>");
+function print_datelink(day, text) {
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
 	}
-	print("</tr>\r\n");
+	if (groupid>0) {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&groupid=%d&status=%d'>%s</a>", day, groupid, status, strtohtml(text));
+	} else {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&userid=%d&status=%d'>%s</a>", day, userid, status, strtohtml(text));
+	}
 }
-print("</tbody></table>\r\n");
-//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+
+function mlist() {
+	userid = tonumber(_GET['USERID']);
+	groupid = tonumber(_GET['GROUPID']);
+	status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
+	}
+	day = tonumber(_GET['DAY']);
+	if (day==0) {
+		t=calendar.today();
+		day=t/86400;
+	} else {
+		t=day*86400;
+	}
+	calendar.html.headermenu(day);
+	print("<div style='text-align:left'>");
+	calendar.html.htselect_userfilter();
+	print("</div>");
+	print("Month List - The calendar app is not started yet.");
+	utime=time.now()
+	utime=utime-(utime%86400);
+	month=calendar.getmonth(utime);
+	print("<table class='calendar'><thead>\r\n");
+	print("<tr><th>Sunday</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th></tr>\r\n");
+	print("</thead><tbody>\r\n");
+	foreach (week in month) {
+		print("<tr>");
+		foreach (day in week) {
+			local function pad(n) {
+				x="0"+n;
+				return x.sub(-2, 2);
+			}
+			//color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
+			color=day.t==utime?'blue':'black';
+			//bgcolor=day.tm_mon==month[1][0].tm_mon?'black':'grey';
+			//printf("<td"+(day.tm_mon!=month[1][0].tm_mon?" style='background-color:grey;white-space:nowrap;overflow:hidden'":"")+"><span style='color:%s'>", color);
+			printf("<td"+(day.tm_mon!=month[1][0].tm_mon?" style='background-color:grey;white-space:nowrap;overflow:hidden'":"")+">");
+			d = time.mktime(day)/86400;
+			print_datelink(d, pad(day.tm_mday));
+			//printf("</span>");
+
+			d1=new datetime(day);
+			d1.unixtime-=d1.gettzoffset();
+			d2=d1.adddays(1);
+
+			sqr=db.events.getlist(d1.tostring(), d2.tostring(), userid, groupid, status);
+	
+			sqrlen=sqr.rows.length();
+			//if (sqrlen<1) continue;
+			for (i=0;i<sqrlen;i++) {
+				rec=sqr.rows[i];
+				id=tonumber(rec['eventid']);
+				et = new datetime(time.mktime(rec['eventstart']));
+				calendar.tz_utc2user(et);
+				//ts=""+pad(et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
+				ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
+				//printf("<br/><span style='background-color:lightgreen'>");
+				printf("<br/><span style='background-color:lightgreen;white-space:nowrap;overflow:hidden'>");
+				printf("<a class=\"dialog\" href=\"/app/calendar/event?id=%d\">%s - %s</a>", id, ts, strtohtml(rec['eventname']));
+				printf("</span>");
+			}
+			printf("</td>");
+		}
+		print("</tr>\r\n");
+	}
+	print("</tbody></table>\r\n");
+	//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+}
+
+try {
+	include_template("common.ns");
+	include("calendar.lib.ns");
+	mlist();
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
 ?>

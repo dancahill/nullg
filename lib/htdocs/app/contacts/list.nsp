@@ -1,3 +1,4 @@
+<?nsp
 function search_contacts() {
 	contacts.html.headermenu();
 	contacts.html.show_searchform();
@@ -5,7 +6,7 @@ function search_contacts() {
 	var menustyle = tonumber(_USER['pref']['menustyle']);
 	var userid    = tonumber(_USER['userid']);
 	global Q=db.contacts.getlist();
-	if (Q._tuples<1) {
+	if (Q.rows.length()<1) {
 		print("<b>Found 0 matching contacts</b>\r\n");
 		return;
 	}
@@ -14,22 +15,23 @@ function search_contacts() {
 	print("<thead><tr><th class=\"header r60max\"></th><th class=\"header r60 headerSortDown\">Contact Name</th><th class=\"header r60\">Company Name</th><th class=\"header r60\">Work Number</th><th class=\"header r60\">E-Mail</th><th class=\"header r60\">Web</th></tr>");
 	print("</thead><tbody>");
 
-	foreach (row in Q['_rows']) {
+	foreach (row in Q.rows) {
 		print("<tr>");
 
 		id=tonumber(row['contactid']);
 		sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn;
 
 		sites="";
-		if (row['website']!="")  sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website.png\" width=32 height=32></a>", strtohtml(row['website']));
-		if (row['website2']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website2.png\" width=32 height=32></a>", strtohtml(row["website2"]));
-		if (row['website3']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website3.png\" width=32 height=32></a>", strtohtml(row["website3"]));
-		if (row['website4']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website4.png\" width=32 height=32></a>", strtohtml(row["website4"]));
-		if (row['website5']!="") sites+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website5.png\" width=32 height=32></a>", strtohtml(row["website5"]));
+		if (row['website']!="")  sites+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website.png\" width=32 height=32></a>", strtohtml(row['website']));
+		if (row['website2']!="") sites+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website2.png\" width=32 height=32></a>", strtohtml(row["website2"]));
+		if (row['website3']!="") sites+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website3.png\" width=32 height=32></a>", strtohtml(row["website3"]));
+		if (row['website4']!="") sites+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website4.png\" width=32 height=32></a>", strtohtml(row["website4"]));
+		if (row['website5']!="") sites+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website5.png\" width=32 height=32></a>", strtohtml(row["website5"]));
 
-		td=sprintf("<td onclick=\"javascript:ns.contacts.view(event, %d)\" class='r60max'><div style='font-size:18px'><b>", id);
+		url=sprintf("/app/contacts/contact?id=%d", id);
+		td=sprintf("<td class='r60max' onclick=\"return ns.dialog.create('%s');\"><div style='font-size:18px'><b>", url);
 		if (name!="") {
-			td+=sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+			td+=sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(name));
 		} else {
 			td+="blank?";
 		}
@@ -49,8 +51,9 @@ function search_contacts() {
 		td+="</div></td>";
 		print(td);
 
-		td=sprintf("<td class='r60' onclick=\"javascript:ns.contacts.view(event, %d)\">", id);
-		if (name!="") td+=sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
+		url=sprintf("/app/contacts/contact?id=%d", id);
+		td=sprintf("<td class='r60' onclick=\"return ns.dialog.create('%s');\">", url);
+		if (name!="") td+=sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(name));
 		td+="</td>";
 		print(td);
 
@@ -78,11 +81,11 @@ function search_contacts() {
 		}
 
 		td="<td class='r60' style=\"padding:0px; vertical-align: middle;\">";
-		if (row['website']!="")  td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website.png\" width=16 height=16></a>", strtohtml(row['website']));
-		if (row['website2']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website2.png\" width=16 height=16></a>", strtohtml(row["website2"]));
-		if (row['website3']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website3.png\" width=16 height=16></a>", strtohtml(row["website3"]));
-		if (row['website4']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website4.png\" width=16 height=16></a>", strtohtml(row["website4"]));
-		if (row['website5']!="") td+=sprintf("<a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website5.png\" width=16 height=16></a>", strtohtml(row["website5"]));
+		if (row['website']!="")  td+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website.png\" width=16 height=16></a>", strtohtml(row['website']));
+		if (row['website2']!="") td+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website2.png\" width=16 height=16></a>", strtohtml(row["website2"]));
+		if (row['website3']!="") td+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website3.png\" width=16 height=16></a>", strtohtml(row["website3"]));
+		if (row['website4']!="") td+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website4.png\" width=16 height=16></a>", strtohtml(row["website4"]));
+		if (row['website5']!="") td+=sprintf("<a class=\"external\" href=\"%s\"><img src=\"/lib/images/icons/website5.png\" width=16 height=16></a>", strtohtml(row["website5"]));
 		td+="</td>";
 		print(td);
 
@@ -101,3 +104,4 @@ try {
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }
+?>

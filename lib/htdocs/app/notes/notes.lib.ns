@@ -49,3 +49,70 @@ namespace notes {
 		}
 	};
 };
+
+namespace notes.html {
+	function headermenu() {
+		ui=new db.userinfo();
+		var userid = tonumber(_GET['userid']);
+		if (userid==0) {
+			userid=ui.userid;
+		}
+		var menuitems = {
+			{ text="LIST NOTES"; cls='main';   href="/app/notes/list?userid="+userid; };
+			{ text="NEW NOTE";   cls='dialog'; href="/app/notes/note?id=0";           };
+		};
+		html.headersubmenu(menuitems);
+	}
+
+	function htselect_userfilter() {
+		ui=new db.userinfo();
+		script_name="/app/notes/list";
+		userid = tonumber(_GET['USERID']);
+		groupid = tonumber(_GET['GROUPID']);
+		status = tonumber(_GET['STATUS']);
+
+		if (userid==0 && groupid==0) userid=ui.userid;
+
+		sqr1=sql.query("SELECT * FROM gw_groups WHERE obj_did="+ui.domainid+" ORDER BY groupname");
+		sqr2=sql.query("SELECT * FROM gw_users WHERE obj_did="+ui.domainid+" ORDER BY username");
+
+		print("<script>");
+		print("function go1() {\r\n");
+		print("	var userid=document.notefilter.userid;\r\n");
+		print("	var url=userid.options[userid.selectedIndex].value;\r\n");
+		print("	if (url!='') ns.GoTo(url);\r\n");
+		print("}\r\n");
+		// print("function go2() {\r\n");
+		// print("	var status=document.notefilter.status;\r\n");
+		// print("	var url=status.options[status.selectedIndex].value;\r\n");
+		// print("	if (url!='') ns.GoTo(url);\r\n");
+		// print("}\r\n");
+		print("</script>");
+
+		print("<form name='notefilter'>");
+		print("<select name='userid' onChange='go1()'>");
+		foreach (row in sqr1.rows) {
+			if (tonumber(row['groupid'])==groupid) ts=" SELECTED"; else ts="";
+			printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, tonumber(row['groupid']), status, ts, strtohtml(row['groupname']));
+			foreach (urow in sqr2.rows) {
+				if (tonumber(urow['groupid'])!=tonumber(row['groupid'])) continue;
+				if (tonumber(urow['userid'])==userid) ts=" SELECTED"; else ts="";
+				printf("<option value='%s?userid=%d&status=%d'%s>&nbsp;&nbsp;%s</option>\r\n", script_name, tonumber(urow['userid']), status, ts, strtohtml(urow['username']));
+			}
+		}
+		print("</select>");
+		// print("<select name='status' onChange='go2()'>");
+		// statuses = { "Open", "Closed", "All" };
+		// if (groupid>0) {
+		// 	printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
+		// 	printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
+		// 	printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
+		// } else {
+		// 	printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
+		// 	printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
+		// 	printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
+		// }
+		// print("</select>");
+		print("</form>");
+	}
+}

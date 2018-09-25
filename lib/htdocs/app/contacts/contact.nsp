@@ -1,0 +1,517 @@
+<?nsp
+
+/*
+ * One of these modules has to be properly commented, so I guess this
+ * one is as good a choice as any.
+ */
+class contact {
+	function summary(id, CONTACT) {
+		id=tonumber(CONTACT['contactid']);
+		if ((sizeof(CONTACT['homeaddress'])>0)&&(sizeof(CONTACT['homelocality'])>0)&&(sizeof(CONTACT['homeregion'])>0)&&(sizeof(CONTACT['homecountry'])>0)) {
+			//https://www.google.com/maps?iwloc=A&hl=en&q=5311%20Rue%20Sherbrooke%20O,%20#601, Montr%C3%A9al, Quebec, Canada
+			haddr="http://www.google.com/maps?iwloc=A&hl=en&q="+CONTACT['homeaddress']+", "+CONTACT['homelocality']+", "+CONTACT['homeregion']+", "+CONTACT['homecountry'];
+			//haddr=string.replace(haddr, ' ', '+');
+			haddr=strtohtml(haddr);
+		}
+		if ((sizeof(CONTACT['workaddress'])>0)&&(sizeof(CONTACT['worklocality'])>0)&&(sizeof(CONTACT['workregion'])>0)&&(sizeof(CONTACT['workcountry'])>0)) {
+			waddr="http://www.google.com/maps?iwloc=A&hl=en&q="+CONTACT['workaddress']+", "+CONTACT['worklocality']+", "+CONTACT['workregion']+", "+CONTACT['workcountry'];
+			//waddr=string.replace(waddr, ' ', '+');
+			waddr=strtohtml(waddr);
+		}
+		print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Name</B></TD><TD NOWRAP WIDTH=\"100%\">");
+		print(strtohtml(CONTACT['personaltitle'])); if (sizeof(CONTACT['personaltitle'])>0) print(" ");
+		gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
+		name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+		print(strtohtml(name));
+		if (sizeof(CONTACT['uid'])>0) print(" (",strtohtml(CONTACT['uid']),")");
+		print("</TD>\r\n");
+		print("<TD ALIGN=right>");
+		if (id>0) print("<A HREF=\"/app/contacts/vcard?id=",id,"\">vCard</A>"); else print("&nbsp;");
+		print("</TD>\r\n");
+		print("</TR>\r\n");
+
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>E-Mail</B></TD><TD NOWRAP WIDTH=\"100%\">");
+		if (sizeof(CONTACT['email'])<1) {
+			print("&nbsp;</TD></TR>\r\n");
+		} else if (_USER['pref']['maildefault']==0) {
+			print("<A HREF=\"mailto:",CONTACT['email'],"\">",strtohtml(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
+		} else {
+			if (_USER['pref']['menustyle']==0) {
+				print("<A HREF=\"javascript:MsgTo('&quot;");
+				print(strtohtml(CONTACT['givenname']));
+				if (sizeof(CONTACT['givenname'])>0&&sizeof(CONTACT['surname'])>0) print(" ");
+				print(strtohtml(CONTACT['surname']));
+				print("&quot; <",CONTACT['email'],">')\">",strtohtml(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
+			} else {
+			//	print("<A HREF=\"/mail/write?to=",CONTACT['email'],"\">",strtohtml(CONTACT['email']),"</A>&nbsp;</TD></TR>\r\n");
+				print("<a href=\"javascript:ns.contacts.emailaddrbook.add('&quot;"+strtohtml(name)+"&quot; <"+CONTACT['email']+">');\" title=\"Send Mail\">"+strtohtml(CONTACT['email'])+"</a>");
+			}
+		}
+		//if (sizeof(CONTACT['website'])) {
+			print("<TR><TD ALIGN=RIGHT NOWRAP><B>On The Web</B></TD><TD NOWRAP WIDTH=\"100%\">");
+			print("<A HREF=\"",CONTACT['website'],"\" target=_blank>",strtohtml(CONTACT['website']),"</A>");
+			if (sizeof(CONTACT["website2"])||sizeof(CONTACT["website3"])||sizeof(CONTACT["website4"])||sizeof(CONTACT["website5"])) print(" -");
+			if (sizeof(CONTACT["website2"])) printf(" <a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website2.png\"></a>", strtohtml(CONTACT["website2"]));
+			if (sizeof(CONTACT["website3"])) printf(" <a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website3.png\"></a>", strtohtml(CONTACT["website3"]));
+			if (sizeof(CONTACT["website4"])) printf(" <a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website4.png\"></a>", strtohtml(CONTACT["website4"]));
+			if (sizeof(CONTACT["website5"])) printf(" <a href=\"%s\" target=_blank><img src=\"/lib/images/icons/website5.png\"></a>", strtohtml(CONTACT["website5"]));
+			print("</TD></TR>\r\n");
+		//}
+		local function formatphone(number) {
+			x=strtohtml(number);
+			if (x.length()>0) {
+				return sprintf("<A HREF=\"tel:%s\">%s</a> - <A HREF=\"sms:%s\">SMS</a>", x, x, x);
+			} else {
+				return sprintf("&nbsp;");
+			}
+		}
+		printf("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Home Phone</B></TD><TD NOWRAP WIDTH=\"100%%\">%s</TD></TR>\r\n", formatphone(CONTACT['homenumber']));
+		printf("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Mobile Phone</B></TD><TD NOWRAP WIDTH=\"100%%\">%s</TD></TR>\r\n", formatphone(CONTACT['mobilenumber']));
+		if (haddr!=null) {
+			print("<TR><TD ALIGN=RIGHT NOWRAP><B>Home Address</B></TD><TD WIDTH=\"100%\"><A HREF=\"",haddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
+			print("<TR><TD ALIGN=RIGHT NOWRAP><B>GPS Location</B></TD><TD WIDTH=\"100%\">");
+			printf("<a class=\"dialog\" href=\"/app/contacts/location?id=%d\">%s</a>", id, strtohtml("MAP"));
+			printf(" - <a class=\"dialog\" href=\"/app/contacts/timeline?id=%d\">%s</a>", id, strtohtml("TIMELINE"));
+			print("&nbsp;</TD></TR>\r\n");
+		}
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Organization</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(CONTACT['organization']),"&nbsp;</TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Job Title</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(CONTACT['jobtitle']),"&nbsp;</TD></TR>\r\n");
+		printf("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Work Phone</B></TD><TD NOWRAP WIDTH=\"100%%\">%s</TD></TR>\r\n", formatphone(CONTACT['worknumber']));
+//		print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>FAX</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(CONTACT['faxnumber']),"&nbsp;</TD></TR>\r\n");
+		if (waddr!=null) print("<TR><TD><B>Work Address</B></TD><TD WIDTH=\"100%\"><A HREF=\"",waddr,"\" TARGET=\"_blank\">Map Available</A>&nbsp;</TD></TR>\r\n");
+//		if (tz1!=tz2) {
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>Time</B></TD><TD NOWRAP WIDTH=\"100%\"><SPAN ID=contz></SPAN>&nbsp;</TD></TR>\r\n");
+//		}
+		print("</TABLE>\r\n");
+	}
+
+	function view() {
+		local function printnotes(id) {
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Notes<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/notes/note?id=0&contactid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2>");
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d AND tablename='contacts' AND tableindex=%d", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen>0) {
+				print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+				for (i=0;i<sqrlen;i++) {
+					rec=sqr.rows[i];
+					url=sprintf("/app/notes/note?id=%d", tonumber(rec['noteid']));
+					print("<tr><td onclick=\"return ns.dialog.create('"+url+"');\" width=100%>");
+					printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['notetitle']));
+				}
+				print("</table></div>");
+			} else {
+				print("<br/>");
+			}
+			print("</td></tr>");
+		}
+
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['CONTACTID']:_GET['ID']);
+		Q=db.contacts.get(id);
+		CONTACT=Q.rows[0];
+		if (Q==null || CONTACT==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+
+	//	print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(CONTACT),"</PRE></TD></TR>");
+
+		disabled=" DISABLED";
+		is_editable=0;
+	//	if (priv&A_ADMIN) {
+			disabled="";
+			is_editable=1;
+	//	} else if ((priv&A_MODIFY)&&(perm>=2)) {
+	//	} else if (priv&A_MODIFY) {
+	//		disabled="";
+	//		is_editable=1;
+	//	}
+	//	tz1=time_tzoffset(conn, time(NULL));
+	//	tz2=time_tzoffsetcon(conn, time(NULL), id);
+	//	if (id<1) tz2=tz1;
+		print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n");
+		print("function vcardImport() {\r\n");
+		print("	window.open('/app/contacts/vcardimport?id=",id,"','vcardimport','toolbar=no,location=no,directories=no,alwaysRaised=yes,top=0,left=0,status=no,menubar=no,scrollbars=yes,resizable=no,width=400,height=150');\r\n");
+		print("}\r\n");
+		//html.js_showtab(8);
+		print("</SCRIPT>\r\n");
+		//print("<CENTER>\r\n");
+		// if (id>0) {
+		// 	print("<B>",strtohtml(CONTACT['givenname'])); if (sizeof(CONTACT['givenname'])>0) print(" ");
+		// 	print(strtohtml(CONTACT['surname']),"</B>");
+		// } else {
+		// 	print("<B>New Contact</B>\r\n");
+		// }
+		var form=new html_form(CONTACT);
+		var tabset=new html_tabset({activepage=1,minheight=215});
+		//activetab=(method=='POST'||id==0)?2:1;
+		if (id>0) tabset.addtab("SUMMARY");
+		tabset.addtab("NAME");
+		tabset.addtab("HOME");
+		tabset.addtab("WORK");
+		tabset.addtab("WEB");
+		tabset.addtab("USER");
+		tabset.addtab("PERMISSIONS");
+		tabset.addtab("OTHER");
+		tabset.showtabs();
+		print("<form id=contactedit name=contactedit METHOD=POST ACTION=\"/app/contacts/contact\" onsubmit=\"return ns.dialog.submit(event, 'contact', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="contactid", type="hidden"});
+		form.addfield({name="folderid", type="hidden"});
+	//	if (strncmp(nes_getstr(conn->N, htobj, "REQUEST_URI"), "/contacts/viewnew2", 18)==0) {
+	//		print("<INPUT TYPE=hidden NAME=callset VALUE='1'>\r\n");
+	//	}
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		print("<hr>\r\n");
+		if (id>0) {
+			tabset.pagebegin();
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			this.summary(id, CONTACT);
+			print("</table>\r\n");
+			tabset.pageend();
+		}
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="surname",        label="Surname"});
+		form.addfield({name="givenname",      label="Given Name"});
+		form.addfield({name="salutation",     label="Title"});
+		form.addfield({name="contacttype",    label="Contact Type"});
+		form.addfield({name="referredby",     label="Referred By"});
+		form.addfield({name="altcontact",     label="Alternate Contact"});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="homenumber",     label="Home Phone"});
+		form.addfield({name="mobilenumber",   label="Mobile Phone"});
+		form.addfield({name="homeaddress",    label="Home Address"});
+		form.addfield({name="homelocality",   label="Home City"});
+		form.addfield({name="homeregion",     label="Home Province"});
+		form.addfield({name="homecountry",    label="Home Country"});
+		form.addfield({name="homepostalcode", label="Home Postal Code"});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="organization",   label="Organization"});
+		form.addfield({name="jobtitle",       label="Job Title"});
+		form.addfield({name="worknumber",     label="Work Phone"});
+		form.addfield({name="faxnumber",      label="Fax Number"});
+		form.addfield({name="workaddress",    label="Work Address"});
+		form.addfield({name="worklocality",   label="Work City"});
+		form.addfield({name="workregion",     label="Work Province"});
+		form.addfield({name="workcountry",    label="Work Country"});
+		form.addfield({name="workpostalcode", label="Work Postal Code"});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="email",          label="E-mail"});
+		form.addfield({name="website",        label="Web Site"});
+		form.addfield({name="website2",       label="Facebook"});
+		form.addfield({name="website3",       label="Google+"});
+		form.addfield({name="website4",       label="Twitter"});
+		form.addfield({name="website5",       label="LinkedIn"});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+	//	if (module_exists("mod_xmlrpc")) {
+			form.addfield({name="username", label="Username"});
+//			for (i=0;i<20;i++) {
+//				printf("<input name=\"disable-pwd-mgr-%d\" type=\"password\" id=\"disable-pwd-mgr-%d\" style=\"display: block;\" value=\"disable-pwd-mgr-%d\" />", i, i, i);
+//			}
+//			print("<input name=\"disable-pwd-mgr-2\" type=\"password\" id=\"disable-pwd-mgr-2\" style=\"display: none;\" value=\"disable-pwd-mgr-2\" />");
+//			print("<input name=\"disable-pwd-mgr-3\" type=\"password\" id=\"disable-pwd-mgr-3\" style=\"display: none;\" value=\"disable-pwd-mgr-3\" />");
+			//form.addfield({name="password", label="password", type="password"});
+			form.addfield({name="password", src="password", label="Password", type="password"});
+			//form.addfield({name="enabled", label="enabled"});
+			form.addfield({name="enabled", label="Allow Login", type="select", handler=contacts.html.htselect_enabled});
+			//	}
+		form.addfield({name="geozone", label="Geographic Zone", type="select", handler=contacts.html.htselect_geozone});
+		//form.addfield({name="timezone", label="Time Zone"});
+		form.addfield({name="timezone", label="Time Zone", type="select", handler=contacts.html.htselect_timezone});
+		form.addfield({name="prefbilling", label="Billing Method"});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+	/*	if ((contact->obj_uid==conn->dat->uid)||(priv&A_ADMIN)) editperms=1;
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
+		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
+		htselect_user(conn, contact->obj_uid, conn->dat->did);
+		print("</SELECT></TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
+		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\r\n", ((priv&A_ADMIN)||(contact->obj_uid==conn->dat->did))?"":" DISABLED");
+		htselect_group(conn, priv, contact->obj_gid, conn->dat->did);
+		print("</SELECT></TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\r\n", contact->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\r\n", contact->obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\r\n", contact->obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
+		print("</TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\r\n", contact->obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\r\n", contact->obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\r\n", contact->obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
+		print("</TD></TR>\r\n");
+	*/
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD COLSPAN=3><A HREF=\"javascript:vcardImport();\">Import vCard</A></TD></TR>\r\n");
+		if (id>0) {
+/*
+			if (module_exists("mod_calls")&&(auth_priv(conn, "calls")&A_READ)) {
+				if (sql_queryf(&sqr, "SELECT count(callid) FROM gw_calls WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
+				print("<TR CLASS=\"EDITFORM\">");
+				print("<TD NOWRAP WIDTH=\"100%\">%d Calls</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+				print("<TD>");
+				if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
+					print("<A HREF=%s/contacts/callslist?contactid=%d>list</A>", ScriptName, id);
+				}
+				print("&nbsp;</TD>\r\n");
+				print("<TD><A HREF=%s/calls/editnew?contactid=%d>new</A></TD>\r\n", ScriptName, id);
+				print("</TR>\r\n");
+				sql_freeresult(&sqr);
+			}
+			if (module_exists("mod_calendar")&&(auth_priv(conn, "calendar")&A_READ)) {
+				if (sql_queryf(&sqr, "SELECT count(eventid) FROM gw_events WHERE contactid = %d and (assignedto = %d or obj_uid = %d or (obj_gid = %d and obj_gperm>0) or obj_operm>0) AND obj_did = %d", id, conn->dat->uid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
+				print("<TR CLASS=\"EDITFORM\">");
+				print("<TD NOWRAP WIDTH=\"100%\">%d Events</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+				print("<TD>");
+				if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
+					print("<A HREF=%s/contacts/eventlist?contactid=%d>list</A>", ScriptName, id);
+				}
+				print("&nbsp;</TD>\r\n");
+				print("<TD><A HREF=%s/calendar/editnew?contactid=%d>new</A></TD>\r\n", ScriptName, id);
+				print("</TR>\r\n");
+				sql_freeresult(&sqr);
+			}
+			if (module_exists("mod_finance")&&(auth_priv(conn, "finance")&A_READ)) {
+				if (sql_queryf(&sqr, "SELECT count(invoiceid) FROM gw_finance_invoices WHERE contactid = %d AND obj_did = %d", id, conn->dat->did)<0) return;
+				print("<TR CLASS=\"EDITFORM\">");
+				print("<TD NOWRAP WIDTH=\"100%\">%d Invoices</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+				print("<TD>");
+				if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
+					print("<A HREF=%s/contacts/orderlist?contactid=%d>list</A>", ScriptName, id);
+				}
+				print("&nbsp;</TD>\r\n");
+				print("<TD><A HREF=%s/finance/invoices/editnew?contactid=%d>new</A></TD>\r\n", ScriptName, id);
+				print("</TR>\r\n");
+				sql_freeresult(&sqr);
+			}
+*/
+		}
+/*
+		if (module_exists("mod_email")&&(auth_priv(conn, "email")&A_READ)&&(strchr(contact->email, '@')!=NULL)) {
+			if (sql_queryf(&sqr, "SELECT count(mailheaderid) FROM gw_email_headers WHERE obj_uid = %d AND hdr_from LIKE '%%%s%%' OR hdr_to LIKE '%%%s%%' OR hdr_cc LIKE '%%%s%%' AND status != 'd'", conn->dat->uid, contact->email, contact->email, contact->email)<0) return;
+			print("<TR CLASS=\"EDITFORM\">");
+			print("<TD NOWRAP WIDTH=\"100%\">%d E-Mails</TD>\r\n", atoi(sql_getvalue(&sqr, 0, 0)));
+			print("<TD>");
+			if (atoi(sql_getvalue(&sqr, 0, 0))>0) {
+				if (conn->dat->menustyle>0) {
+					print("<A HREF=%s/mail/main?c=addr&text=%s TARGET=gwmain>list</A>", ScriptName, contact->email);
+				} else {
+					print("<A HREF=%s/mail/main?c=addr&text=%s>list</A>", ScriptName, contact->email);
+				}
+			}
+			print("&nbsp;</TD>\r\n");
+			if (strlen(contact->email)==0) {
+				print("<TD>&nbsp;</TD></TR>\r\n");
+			} else if (conn->dat->maildefault==0) {
+				print("<TD><A HREF=\"mailto:%s\">new</A></TD>\r\n", contact->email);
+			} else {
+				if (conn->dat->menustyle>0) {
+					print("<TD><A HREF=\"javascript:MsgTo('");
+					print("&quot;%s%s%s&quot;", strtohtml(conn, contact->givenname), strlen(contact->givenname)?" ":"", strtohtml(conn, contact->surname));
+					print(" <%s>')\">new</A></TD>\r\n", contact->email);
+				} else {
+					print("<TD><A HREF=\"mailwrite?to=%s\">new</A></TD>\r\n", contact->email);
+				}
+			}
+			print("</TR>\r\n");
+			sql_freeresult(&sqr);
+		}
+*/
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		print("<hr>\r\n");
+		if (id>0) {
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			printnotes(id);
+			print("</table>\r\n");
+		}
+		if (is_editable) {
+			print("<input type=hidden name=submitaction value=''>\r\n");
+			print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+			if (is_recycled) print("<input type=submit class=frmButton name=submit value='Force Save'>\r\n");
+	//		if ((priv&A_DELETE)&&(id!=0)) {
+			if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+			//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+			print("</td></tr>\r\n");
+		}
+		print("</div>");
+		print("</form>\r\n");
+		form.validate("gw_contacts");
+
+		print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
+	//	if (tz1!=tz2) {
+			t=time.now();
+	//		t+=time_tzoffset(conn, t);
+	//		t+=(tz2-tz1);
+			print(
+				"var t=",t,";\r\n",
+				"var d=new Date();\r\n",
+				"d.setTime(t*1000);\r\n",
+				"t+=d.getTimezoneOffset()*60;\r\n",
+				"function padout(number) { return (number<10)?'0'+number:number; }\r\n",
+				"function setDuration() {\r\n",
+				"	var el=document.getElementById('contz');\r\n",
+				"	if (el==null) return;\r\n",
+				"	d.setTime(t*1000);\r\n",
+				"	var h=d.getHours();\r\n",
+				"	var ap=(h<12)?'AM':'PM';\r\n",
+				"	if (h<1) h=12; else if (h>12) h-=12;\r\n",
+				"	el.innerHTML=h+':'+padout(d.getMinutes())+':'+padout(d.getSeconds())+' '+ap;\r\n",
+				"	t++;\r\n",
+				"	setTimeout(\"setDuration()\", 1000);\r\n",
+				"}\r\n",
+				"setDuration();\r\n"
+			);
+	//	}
+
+
+
+		if (id>0) {
+			title=CONTACT['givenname'];
+			if (sizeof(CONTACT['givenname'])>0) title+=" ";
+			title+=CONTACT['surname'];
+		} else {
+			title="New Contact";
+		}
+		if (method=='POST') title+=" (Saved)";
+		print("setTimeout(function() {\r\n");
+			if ((id<1)||(is_recycled)) {
+				printf("ns.showtab(\"dialog_contact_%d\", %d);\r\n", id, tabset.activepage);
+				print("document.contactedit.surname.focus();\r\n");
+			} else {
+				printf("ns.showtab(\"dialog_contact_%d\", %d);\r\n", id, tabset.activepage);
+			}
+			printf("	$(\"#dialog_contact_%d\" ).dialog( \"option\", \"title\", \"Contact: %s\" );\r\n", id, strtohtml(title));
+		print("}, 50);\r\n");
+	
+
+
+
+
+
+		print("// -->\r\n</SCRIPT>\r\n");
+
+	//	print("</CENTER><PRE>",serialize(Q),"</PRE>");
+
+		Q=null;
+		return;
+	}
+
+	function save() {
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		//db.createtemplate('gw_contacts');
+		id=tonumber(_POST['CONTACTID']);
+		Q=db.contacts.get(id);
+		CONTACT=Q.rows[0];
+		//printf("<hr><pre>_POST=[%s]</pre>", serialize(_POST));
+		//printf("<hr><pre>CONTACT=[%s]</pre>", serialize(CONTACT));
+		if (Q==null || CONTACT==null) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			CONTACT["folderid"] = _POST["FOLDERID"];
+			CONTACT["username"] = _POST["USERNAME"];
+			CONTACT["password"] = _POST["PASSWORD"];
+	//		if (_POST['PASSWORD']!="") {
+	//			CONTACT['password']=net.mime.base64.encode(_POST['PASSWORD']);
+	//		}
+			CONTACT["enabled"] = _POST["ENABLED"];
+			CONTACT["geozone"] = _POST["GEOZONE"];
+			CONTACT["timezone"] = _POST["TIMEZONE"];
+			CONTACT["surname"] = _POST["SURNAME"];
+			CONTACT["givenname"] = _POST["GIVENNAME"];
+			CONTACT["salutation"] = _POST["SALUTATION"];
+			CONTACT["contacttype"] = _POST["CONTACTTYPE"];
+			CONTACT["referredby"] = _POST["REFERREDBY"];
+			CONTACT["altcontact"] = _POST["ALTCONTACT"];
+			CONTACT["prefbilling"] = _POST["PREFBILLING"];
+			CONTACT["email"] = _POST["EMAIL"];
+			CONTACT["website"] = _POST["WEBSITE"];
+			CONTACT["website2"] = _POST["WEBSITE2"];
+			CONTACT["website3"] = _POST["WEBSITE3"];
+			CONTACT["website4"] = _POST["WEBSITE4"];
+			CONTACT["website5"] = _POST["WEBSITE5"];
+			CONTACT["homenumber"] = _POST["HOMENUMBER"];
+			CONTACT["worknumber"] = _POST["WORKNUMBER"];
+			CONTACT["faxnumber"] = _POST["FAXNUMBER"];
+			CONTACT["mobilenumber"] = _POST["MOBILENUMBER"];
+			CONTACT["jobtitle"] = _POST["JOBTITLE"];
+			CONTACT["organization"] = _POST["ORGANIZATION"];
+			CONTACT["homeaddress"] = _POST["HOMEADDRESS"];
+			CONTACT["homelocality"] = _POST["HOMELOCALITY"];
+			CONTACT["homeregion"] = _POST["HOMEREGION"];
+			CONTACT["homecountry"] = _POST["HOMECOUNTRY"];
+			CONTACT["homepostalcode"] = _POST["HOMEPOSTALCODE"];
+			CONTACT["workaddress"] = _POST["WORKADDRESS"];
+			CONTACT["worklocality"] = _POST["WORKLOCALITY"];
+			CONTACT["workregion"] = _POST["WORKREGION"];
+			CONTACT["workcountry"] = _POST["WORKCOUNTRY"];
+			CONTACT["workpostalcode"] = _POST["WORKPOSTALCODE"];
+			db.contacts.set(CONTACT);
+			printf("contact %d saved", CONTACT['contactid']);
+			this.view(CONTACT['contactid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_contact_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/contacts/contact?id=%d\");\r\n", CONTACT['contactid']);
+				print("}, 200);\r\n");
+				print("</script>\r\n");
+			}
+			break;
+		case 'delete':
+			db.contacts.remove(CONTACT);
+			printf("contact %d removed", CONTACT['contactid']);
+			print("<script>\r\n");
+			print("setTimeout(function() {\r\n");
+			printf("	$('#dialog_contact_%d').dialog('close');\r\n", id);
+			print("}, 1000);\r\n");
+			print("</script>\r\n");
+			break;
+		}
+		printf("<script>\r\nns.GoTo('/app/contacts/list');\r\n</script>\r\n");
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("contacts.lib.ns");
+	//print("<center>\r\n");
+	rec=new contact();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		rec.save();
+	} else {
+		rec.view();
+	}
+	//print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

@@ -139,9 +139,9 @@ int     startlisteners(void);
 /* sql.c functions */
 void    sql_disconnect(nsp_state *N);
 void    sql_freeresult(nsp_state *N, obj_t **qobj);
-int     sql_update(nsp_state *N, char *sqlquery);
+int     sql_update(nsp_state *N, obj_t **qobj, char *sqlquery);
 int     sql_query(nsp_state *N, obj_t **qobj, char *query);
-int     sql_updatef(nsp_state *N, char *format, ...);
+int     sql_updatef(nsp_state *N, obj_t **qobj, char *format, ...);
 int     sql_queryf(nsp_state *N, obj_t **qobj, char *format, ...);
 int     sql_getsequence(nsp_state *N, char *table);
 /* ssl.c functions */

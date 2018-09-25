@@ -53,11 +53,11 @@ function search_contacts() {
 */
 	print("<CENTER>\r\n");
 	global Q=ldir.getlist("person", 0);
-	if (Q._tuples<1) {
+	if (Q.rows.length()<1) {
 		print("<B>Found 0 matching contacts</B></CENTER>\r\n");
 		return;
-	} else if (Q._tuples==1) {
-		id=tonumber(Q['_rows'][0]['id']);
+	} else if (Q.rows.length()==1) {
+		id=tonumber(Q.rows[0]['id']);
 		print(
 			"<B>Found 1 matching contact</B>\r\n",
 			"<SCRIPT LANGUAGE=JavaScript TYPE=text/javascript>\r\n<!--\r\n",
@@ -157,7 +157,7 @@ function search_contacts() {
 	print(
 		"<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR>\r\n",
 		"<TD ALIGN=LEFT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
-		"<TD ALIGN=CENTER NOWRAP><B>Found ",Q._tuples," matching contacts</B></TD>\r\n",
+		"<TD ALIGN=CENTER NOWRAP><B>Found ",Q.rows.length()," matching contacts</B></TD>\r\n",
 		"<TD ALIGN=RIGHT NOWRAP WIDTH=150>&nbsp;</TD>\r\n",
 		"</TR>\r\n<TR><TD ALIGN=CENTER COLSPAN=3>\r\n",
 		"<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n",
@@ -167,18 +167,18 @@ function search_contacts() {
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>&nbsp;Work Number&nbsp;</TH>",
 		"<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid' COLSPAN=2>&nbsp;E-Mail&nbsp;</TH></TR>\r\n"
 	);
-	for (i=offset;(i<Q._tuples)&&(i<offset+maxlist);i++) {
-		id=tonumber(Q['_rows'][i]['id']);
-		sn=Q['_rows'][i]['_data']['sn'];
-		gn=Q['_rows'][i]['_data']['gn'];
+	for (i=offset;(i<Q.rows.length())&&(i<offset+maxlist);i++) {
+		id=tonumber(Q.rows[i]['id']);
+		sn=Q.rows[i]['_data']['sn'];
+		gn=Q.rows[i]['_data']['gn'];
 		print("<TR CLASS=\"FIELDVAL\">");
 		print("<TD NOWRAP style='cursor:hand; border-style:solid' onClick=\"window.location.href='/contacts/view?id="+id+"'\">");
 		print("<A HREF=/contacts/view?id="+id+">",strtohtml(sn));
 		if ((sizeof(sn)>0)&&(sizeof(gn)>0)) print(", "); else if (sizeof(sn)==0&&sizeof(gn)==0) print("&nbsp;");
 		print(strtohtml(gn),"</A>&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i]['_data']['organization']),"&nbsp;</TD>");
-		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i]['_data']['worktelephonenumber']),"&nbsp;</TD>");
-		addr=Q['_rows'][i]['_data']['mail'];
+		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q.rows[i]['_data']['organization']),"&nbsp;</TD>");
+		print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q.rows[i]['_data']['worktelephonenumber']),"&nbsp;</TD>");
+		addr=Q.rows[i]['_data']['mail'];
 		if (sizeof(addr)==0) {
 			print("<TD NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 		} else if (maildefault==0) {
@@ -208,7 +208,7 @@ function search_contacts() {
 	print("</TABLE>\r\n</TD></TR>\r\n");
 	print("<TR>\r\n<TD ALIGN=LEFT NOWRAP WIDTH=150>&nbsp;</TD>\r\n");
 	print("<TD ALIGN=CENTER NOWRAP>");
-	if (Q._tuples>maxlist) {
+	if (Q.rows.length()>maxlist) {
 		if (offset>0) {
 			print("[<A HREF=/search/contacts.ns?column=");
 //			printhex(conn, "%s", column);
@@ -218,7 +218,7 @@ function search_contacts() {
 		} else {
 			print("[Previous Page]");
 		}
-		if (offset+maxlist<Q._tuples) {
+		if (offset+maxlist<Q.rows.length()) {
 			print("[<A HREF=/search/contacts.ns?column=");
 //			printhex(conn, "%s", column);
 			print("&string=");

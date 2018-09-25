@@ -1,0 +1,77 @@
+<?nsp
+class zone {
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['ZONEID']:_GET['ID']);
+		Q=db.admin.zones.get(id);
+		rec=Q.rows[0];
+		if (Q==null || rec==null) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		var form=new html_form(rec);
+		print("<form id=zoneedit name=zoneedit METHOD=POST ACTION=\"/app/admin/zone\" onsubmit=\"return ns.dialog.submit(event, 'zone', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="zoneid", type="hidden"});
+		print("<table class=\"contentform\">\r\n");
+		form.addfield({name="zonename", label="Zone Name", required=true});
+		print("</table>\r\n");
+		form.validate("gw_zones");
+		//db.createtemplate("gw_zones");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete' onClick=\"return ns.dialog.submit(event, 'zone', 'delete');\">\r\n");
+		print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</form>\r\n");
+		return;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['ZONEID']);
+		Q=db.admin.zones.get(id);
+		rec=Q.rows[0];
+		if (Q==null || rec==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		folderid=tonumber(rec['folderid']);
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(rec, "zonename");
+			db.admin.zones.set(rec);
+			printf("zone %d saved", rec['zoneid']);
+			this.view(rec['zoneid']);
+			break;
+		case 'delete':
+			db.admin.zones.remove(rec);
+			printf("zone %d deleted", rec['zoneid']);
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	print("<center>\r\n");
+	z=new zone();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		z.save();
+	} else {
+		z.view();
+	}
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

@@ -3,10 +3,10 @@ class sqlcommand {
 		this.command="";
 		this.parameters = {};
 		if (s.gettype()=='string') this.command=s;
-	};
+	}
 	function addvalue(name, val) {
 		parameters[parameters.length()] = { name=name; val=val; };
-	};
+	}
 	function tostring() {
 		c=command.split('?');
 		q="";
@@ -26,5 +26,5 @@ class sqlcommand {
 			q+=x;
 		}
 		return q;
-	};
+	}
 }

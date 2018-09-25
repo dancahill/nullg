@@ -221,6 +221,7 @@ DllExport int mod_exec()
 
 DllExport int mod_cron()
 {
+	obj_t *qobj = NULL;
 	char curdate[32];
 	time_t ctime = time(NULL);
 	short int connections = 0;
@@ -229,10 +230,10 @@ DllExport int mod_cron()
 	/* every 30 minutes or so, cleam up stale rules */
 	if ((ctime % 1800) == 0) {
 		memset(curdate, 0, sizeof(curdate));
-		time_unix2sql(curdate, sizeof(curdate) - 1, time(NULL) - mod_config.popauth_window);
-		sql_updatef(proc->N, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND obj_mtime < '%s'", curdate);
+		time_unix2sql(curdate, sizeof(curdate) - 1, time(NULL));
+		sql_updatef(proc->N, &qobj, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND expires < '%s'", curdate);
+		sql_freeresult(proc->N, &qobj);
 	}
-
 	if ((ListenSocketSTD.socket == -1) && (ListenSocketSSL.socket == -1) && (ListenSocketMSA.socket == -1)) return 0;
 	for (i = 0;i < mod_config.smtp_maxconn;i++) {
 		if ((conn[i].id == 0) || (conn[i].socket.atime == 0)) continue;

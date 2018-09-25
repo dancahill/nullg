@@ -1,30 +1,136 @@
+namespace admin {
+	function checkperms() {
+		authdomainadmin=tonumber(_USER['authdomainadmin']);
+		authadmin=tonumber(_USER['authadmin']);
+		if (!authdomainadmin && !authadmin) {
+			html.headersubmenu(null);
+			throw "admin access required";
+		}
+	}
+}
 
-global admin = {
-};
-
-global adminhtml = {
+namespace admin.html {
 	function headermenu(folderid) {
 		var menuitems = {
-			{ text="DOMAINS"; href="/app/admin/domains/"; onclick="return ns.GoTo(event);"; };
-			{ text="USERS";   href="/app/admin/users/";   onclick="return ns.GoTo(event);"; };
-		//	{ text="LIST BOOKMARKS"; href="/app/bookmarks/";                                     onclick="return ns.GoTo(event);";                };
-		//	{ text="NEW BOOKMARK";   href="/app/bookmarks/bookmark?id=0&folderid="+folderid; onclick="return ns.ModalForm(event, 'bookmark', 0);";       };
-		//	{ text="NEW FOLDER";     href="/app/bookmarks/bookmarkfolder?id=0&folderid="+folderid;   onclick="return ns.ModalForm(event, 'bookmarkfolder', 0);"; };
+			{ text="DOMAINS"; cls="main", href="/app/admin/domainlist"; };
+			{ text="USERS";   cls="main", href="/app/admin/userlist";   };
+			{ text="GROUPS";  cls="main", href="/app/admin/grouplist";  };
+			{ text="ZONES";   cls="main", href="/app/admin/zonelist";   };
+			{ text="SMTP";    cls="main", href="/app/admin/smtp";       };
 		};
 		html.headersubmenu(menuitems);
-	};
-};
-
-local function checkperms() {
-	authdomainadmin=tonumber(_USER['authdomainadmin']);
-	authadmin=tonumber(_USER['authadmin']);
-	if (!authdomainadmin && !authadmin) {
-		html.headersubmenu(null);
-		throw "admin access required";
 	}
-//	printf("authdomainadmin=%d<br>", authdomainadmin);
-//	printf("authadmin=%d<br>", authadmin);
-//	print("<div style='text-align:left'><pre>",serialize(_GLOBALS),"</pre></pre>");
-//	print("<div style='text-align:left'><pre>",serialize(_USER),"</pre></pre>");
+
+	function htselect_daystart(selected) {
+		for (i=0;i<24;i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			td=sprintf("%d:00 %s", i==0?12:i<13?i:i-12, i>11?"PM":"AM");
+			printf("<option value='%d'%s>%s</option>", i, ts, td);
+		}
+	}
+
+	function htselect_daylength(selected) {
+		for (i=0;i<25;i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%d</option>", i, ts, i);
+		}
+	}
+
+	function htselect_domain(selected, rec) {
+		sqr=sql.query(sprintf("SELECT domainid, domainname FROM gw_domains"));
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['domainid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['domainid']), ts, strtohtml(sqr.rows[i]['domainname']));
+		}
+	}
+
+	function htselect_enabled(selected) {
+		var option = { "No", "Yes" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_geozone(selected, rec) {
+		sqr=sql.query(sprintf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d", tonumber(rec['domainid'])));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['zoneid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['zoneid']), ts, strtohtml(sqr.rows[i]['zonename']));
+		}
+	}
+
+	function htselect_group(selected, rec) {
+		sqr=sql.query(sprintf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d", tonumber(rec['domainid'])));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['groupid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['groupid']), ts, strtohtml(sqr.rows[i]['groupname']));
+		}
+	}
+
+	function htselect_language(selected) {
+		lib_path=MASTERGLOBAL['CONFIG']['paths']['lib'];
+		dirname=sprintf("%s/locale", lib_path);
+		d=dirlist(dirname);
+		foreach (f in d) {
+			if (f.name.startswith(".")) continue;
+			ts=selected==f.name?" selected":"";
+			printf("<option value=\"%s\"%s>%s</option>\r\n", f.name, ts, strtohtml(f.name));
+		}
+	}
+
+	function htselect_theme(selected) {
+		lib_path=MASTERGLOBAL['CONFIG']['paths']['lib'];
+		dirname=sprintf("%s/htdocs/lib/themes", lib_path);
+		d=dirlist(dirname);
+		foreach (f in d) {
+			if (f.name.startswith(".")) continue;
+			ts=selected==f.name?" selected":"";
+			printf("<option value=\"%s\"%s>%s</option>\r\n", f.name, ts, strtohtml(f.name));
+		}
+	}
+
+	function htselect_mailcurrent(selected, rec) {
+		sqr=sql.query(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_did = %d AND obj_uid = %d", tonumber(rec['domainid']), tonumber(rec['userid'])));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['mailaccountid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['mailaccountid']), ts, strtohtml(sqr.rows[i]['accountname']));
+		}
+	}
+
+	function htselect_mailtype(selected) {
+		var option = { "External Mail Client", "Web E-Mail" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_maxlist(selected) {
+		for (i=5;i<=200;i+=5) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%d</option>", i, ts, i);
+		}
+	}
+
+	function htselect_menustyle(selected) {
+		var option = { "Simple (Frameless)", "Standard", "Outlook" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_timezone(selected) {
+		//printf("<option value='0'></option>\r\n");
+		for (i=0;i<_SERVER['TIMEZONES'].length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(_SERVER['TIMEZONES'][i].n));
+		}
+	}
 }
-checkperms();
+
+admin.checkperms();

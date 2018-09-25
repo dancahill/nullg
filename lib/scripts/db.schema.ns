@@ -67,7 +67,7 @@ namespace db {
 				{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
 				{ "folderid",       "integer",         "NOT NULL", "0"                 };
 				{ "bookmarkname",   "varchar(100)",    "NOT NULL", "''"                };
-				{ "bookmarkurl",    "varchar(255)",    "NOT NULL", "''"                };
+				{ "bookmarkurl",    "varchar(512)",    "NOT NULL", "''"                };
 			};
 		};
 		{
@@ -806,9 +806,11 @@ namespace db {
 				{ "obj_did",        "integer",         "NOT NULL", "0"                 };
 				{ "obj_gperm",      "integer",         "NOT NULL", "0"                 };
 				{ "obj_operm",      "integer",         "NOT NULL", "0"                 };
+				{ "ipaddress",      "varchar(20)",     "NOT NULL", "'0.0.0.0'"         };
 				{ "ruletype",       "varchar(8)",      "NOT NULL", "'allow'"           };
 				{ "persistence",    "varchar(8)",      "NOT NULL", "'temp'"            };
-				{ "ipaddress",      "varchar(20)",     "NOT NULL", "'0.0.0.0'"         };
+				{ "expires",        "timestamp",       "NOT NULL", "current_timestamp" };
+				{ "reason",         "varchar(60)",     "NOT NULL", "''"                };
 			};
 		};
 		{

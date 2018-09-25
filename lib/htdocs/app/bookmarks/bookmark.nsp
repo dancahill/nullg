@@ -1,0 +1,120 @@
+<?nsp
+
+class bookmark {
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['BOOKMARKID']:_GET['ID']);
+		Q=db.bookmarks.getbookmark(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		BOOKMARK=Q.rows[0];
+		var form=new html_form(BOOKMARK);
+		print("<form id=bookmarkedit name=bookmarkedit METHOD=POST ACTION=\"/app/bookmarks/bookmark\" onsubmit=\"return ns.dialog.submit(event, 'bookmark', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="bookmarkid", type="hidden"});
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="folderid", label="Bookmark Folder", type="select", handler=bookmarkhtml.htselect_bookmarkfolder});
+		form.addfield({name="bookmarkname", label="Bookmark Name", required=true});
+		form.addfield({name="bookmarkurl", label="Bookmark Address", required=true});
+		print("</table>\r\n");
+		print("</div>");
+		form.validate("gw_bookmarks");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		print("</form>\r\n");
+		title="Bookmark: "+BOOKMARK['bookmarkname'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_bookmark_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), 0);
+		printf("});\r\n</script>");
+		Q=null;
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['BOOKMARKID']);
+		Q=db.bookmarks.getbookmark(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		BOOKMARK=Q.rows[0];
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(BOOKMARK, "folderid");
+			addfield(BOOKMARK, "bookmarkname");
+			addfield(BOOKMARK, "bookmarkurl");
+			if (!this.validate(BOOKMARK)) {
+				this.view(BOOKMARK['bookmarkid']);
+				return;
+			}
+			if (!db.bookmarks.setbookmark(BOOKMARK)) {
+				printf("error saving record");
+				return;
+			}
+			printf("<script>\r\nns.status.show(\"bookmark %d saved\", 5);\r\n</script>\r\n", BOOKMARK['bookmarkid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_bookmark_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/bookmarks/bookmark?id=%d\");\r\n", BOOKMARK['bookmarkid']);
+				print("}, 50);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(BOOKMARK['bookmarkid']);
+			}
+			break;
+		case 'delete':
+			if (!db.bookmarks.deletebookmark(BOOKMARK)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>bookmark %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"bookmark %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_bookmark_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("bookmarks.lib.ns");
+	print("<center>\r\n");
+	bm=new bookmark();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		bm.save();
+	} else {
+		bm.view();
+	}
+	print("</center>\r\n");
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
+?>

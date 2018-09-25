@@ -4,7 +4,7 @@ function print_header() {
 	var headerid = tonumber(_GET['ID']);
 	//var currentaccountid = tonumber(_USER['pref']['mailcurrent']);
 	Q=db.mailheaders.get(headerid);
-	row=Q['_rows'][0];
+	row=Q.rows[0];
 	if (Q==null || row==null) {
 		printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
 		return;
@@ -40,7 +40,7 @@ function print_header() {
 			for (i=0;i<filelist.length();i++) {
 				f=filelist[i];
 				if (first) print("<tr><th style='text-align:left'>Attachments</th><td>"); else print(" | ");
-				printf("<a href=\"javascript:mail.getattachment(%d, '%s');\">%s</a>", headerid, strtohtml(f), strtohtml(f));
+				printf("<a href=\"javascript:ns.mail.getattachment(%d, '%s');\">%s</a>", headerid, strtohtml(f), strtohtml(f));
 				first=false;
 			}
 			if (!first) print("</td></tr>\r\n");
@@ -57,7 +57,7 @@ function print_header() {
 			print("Raw body: <pre>"+strtohtml(serialize(message.message))+"</pre>");
 		} else {
 			print(body);
-			sqlupdate(sprintf("UPDATE gw_email_headers SET status = 'r' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", row['accountid'], userid, headerid));
+			sql.update(sprintf("UPDATE gw_email_headers SET status = 'r' WHERE accountid = %d AND obj_uid = %d and mailheaderid = %d", row['accountid'], userid, headerid));
 		}
 	}
 }

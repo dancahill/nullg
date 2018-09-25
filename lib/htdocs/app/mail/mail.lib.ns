@@ -1,6 +1,4 @@
-include_template("class.sqlcommand.ns");
 include_template("common.ns");
-include_template("common.html.ns");
 
 namespace mail {
 	class messagereader {
@@ -112,6 +110,7 @@ namespace mail {
 			else {
 				// this function should be done in c - too slow in script
 				local function fromhtml(bodytext) {
+					if (typeof(bodytext)!='string') return bodytext;
 					y=bodytext.split('');
 					len=y.length();
 					for (i=0;i<len;i++) {
@@ -127,6 +126,10 @@ namespace mail {
 					return bodytext;
 				}
 				bodytext=fromhtml(this.getbody());
+				if (typeof(bodytext)!='string') {
+					//printf("[%s]<hr>", serialize(this.message));
+					return false;
+				}
 				if (bodytext.tolower().contains(searchtext)) {
 					//printf("[%s]<hr>", strtohtml(bodytext));
 					found=true;
@@ -159,11 +162,11 @@ namespace mail {
 		if (mailheaderid!=null) query+=sprintf(" AND mailheaderid = %d", mailheaderid);
 		if (uidl!=null) query+=sprintf(" AND uidl = '%s'", sql_escape(uidl));
 		query+=";";
-		sqr=sqlquery(query);
-		if (sqr._tuples==1) return sqr['_rows'][0];
+		sqr=sql.query(query);
+		if (sqr.rows.length()==1) return sqr.rows[0];
 		return null;
 	}
-	function save_header_to_sql(newemailid, accountrow, message, uidl, size) {
+	function save_header_to_sql(accountrow, message, uidl, size) {
 		local function getheader(x) {
 			if (typeof(x)=='string') return net.mime.rfc2047.decode(x);
 			return "";
@@ -193,7 +196,7 @@ namespace mail {
 		c = new sqlcommand("INSERT INTO gw_email_headers (mailheaderid,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountid,folder,status,size,uidl,hdr_from,"+
 			"hdr_replyto,hdr_to,hdr_cc,hdr_bcc,hdr_subject,hdr_date,hdr_messageid,hdr_inreplyto,hdr_contenttype,hdr_boundary,hdr_encoding,hdr_scanresult)"+
 			" VALUES (?,?,0,?,0,0,?,?,'n',?,?,?,?,?,'','',?,?,?,?,?,?,?,'');");
-		c.addvalue('mailheaderid', newemailid);
+		c.addvalue('mailheaderid', 0);
 		c.addvalue('obj_uid', userid);
 		c.addvalue('obj_did', domainid);
 		c.addvalue('accountid', accountid);
@@ -210,7 +213,10 @@ namespace mail {
 		c.addvalue('hdr_contenttype', contenttype);
 		c.addvalue('hdr_boundary', boundary);
 		c.addvalue('hdr_encoding', encoding);
-		sqlupdate(c.tostring());
+		sqr=sql.update(c.tostring());
+		if (sqr.lastinsertedid<1) throw "sqr.lastinsertedid is invalid";
+		//message['mailheaderid']=sqr.lastinsertedid;
+		return sqr.lastinsertedid;
 	}
 	function save_outbound() {
 		local function strtohtml(s) {
@@ -228,9 +234,9 @@ namespace mail {
 		var domainid = tonumber(_USER['domainid']);
 		var accountid = tonumber(_POST['MSGFROM']);
 
-		sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", userid, accountid));
-		if (sqr._tuples!=1) throw "account not found";
-		account=sqr['_rows'][0];
+		sqr=sql.query(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", userid, accountid));
+		if (sqr.rows.length()!=1) throw "account not found";
+		account=sqr.rows[0];
 		//var accountid = tonumber(_USER['pref']['mailcurrent']);
 		//var accountid = tonumber(_USER['prefmailcurrent']);
 		var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
@@ -239,12 +245,6 @@ namespace mail {
 		//folder
 		var tmpdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(domainid, 4), pad(accountid, 4), pad(outfolderid, 4));
 		if (typeof(file.stat(tmpdirname))!='table') file.mkdir(tmpdirname);
-		newemailid=sqlgetsequence("gw_email_headers");
-		if (newemailid<1) {
-			printf("newemailid<1 '%d' ??", newemailid);
-			return;
-		}
-		filename=sprintf("%s.msg", pad(newemailid, 6));
 		from=sprintf("\"%s\" <%s>", account['realname'], account['address']);
 		to=_POST['MSGTO'];
 		cc=_POST['MSGCC'];
@@ -305,14 +305,20 @@ namespace mail {
 			msgbody+=net.mime.qp.encode(body, 76);
 			msgbody+=sprintf("\r\n");
 		}
-		if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
-			file.writeall(tmpdirname+"/"+filename, msgbody);
-		}
 		message=net.mime.read(msgbody);
 		uidl='x';
 		accountrow = { mailaccountid=accountid };
-		mail.save_header_to_sql(newemailid, accountrow, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
-		sqlupdate(sprintf("UPDATE gw_email_headers SET folder = %d WHERE mailheaderid = %d;", outfolderid, newemailid));
+		newemailid=mail.save_header_to_sql(accountrow, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
+		sql.update(sprintf("UPDATE gw_email_headers SET folder = %d WHERE mailheaderid = %d;", outfolderid, newemailid));
+		//newemailid=sqlgetsequence("gw_email_headers");
+		// if (newemailid<1) {
+		// 	printf("newemailid<1 '%d' ??", newemailid);
+		// 	return;
+		// }
+		filename=sprintf("%s.msg", pad(newemailid, 6));
+		if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
+			file.writeall(tmpdirname+"/"+filename, msgbody);
+		}
 		print("success");
 	}
 }
@@ -345,11 +351,15 @@ namespace mail.sync {
 			if (f.type!="file") continue;
 			if (string.sub(f.name, -5, 5)==".done") continue;
 			print("file=<pre>",serialize(f),"</pre>");
-			newemailid=sqlgetsequence("gw_email_headers");
-			if (newemailid<1) {
-				printf("newemailid<1 '%d' ??", newemailid);
-				return;
-			}
+			uidl="file:"+file.md5(srcname);
+			msgbody=file.readall(srcname);
+			message=net.mime.read(msgbody);
+			newemailid=mail.save_header_to_sql(row, message, uidl, sizeof(msgbody));
+			// newemailid=sqlgetsequence("gw_email_headers");
+			// if (newemailid<1) {
+			// 	printf("newemailid<1 '%d' ??", newemailid);
+			// 	return;
+			// }
 			filename=sprintf("%s.msg", pad(newemailid, 6));
 			printf("saving '%s' in '%s/'<br>", filename, tmpdirname);
 			srcname=importdirname+"/"+f.name;
@@ -357,9 +367,6 @@ namespace mail.sync {
 				print("file.md5() missing\n");
 				break;
 			}
-			uidl="file:"+file.md5(srcname);
-			msgbody=file.readall(srcname);
-			message=net.mime.read(msgbody);
 			tmpname=tmpdirname+"/"+filename;
 			dstname=dstdirname+"/"+filename;
 			if (typeof(file.stat(tmpname))=='table') {
@@ -371,7 +378,7 @@ namespace mail.sync {
 				printf("failed to write file %s!", tmpname);
 				break;
 			}
-			mail.save_header_to_sql(newemailid, row, message, uidl, sizeof(msgbody));
+			// newemailid=mail.save_header_to_sql(row, message, uidl, sizeof(msgbody));
 			print(".");
 			io.flush();
 			file.rename(tmpname, dstname);
@@ -406,7 +413,7 @@ namespace mail.sync {
 		var newmail=0;
 		var deleted=0;
 		statustext="";
-		sqlupdate(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d;", time.sqltime(), accountid));
+		sql.update(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d;", time.sqltime(), accountid));
 		pop=new net.pop3.client();
 		pop.username = row['popusername'];
 		pop.password = net.mime.base64.decode(row['poppassword']);
@@ -425,25 +432,28 @@ namespace mail.sync {
 		for (i=1;i<=count;i++) {
 			uidl=pop.uidl(i);
 			query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND uidl = '%s';", userid, string.replace(net.mime.base64.encode(uidl), '=', ''));
-			var sqr=sqlquery(query);
-			if (sizeof(sqr['_rows'])!=0) {
-				hrow=sqr['_rows'][0];
+			var sqr=sql.query(query);
+			if (sizeof(sqr.rows)!=0) {
+				hrow=sqr.rows[0];
 				continue;
 			} else {
 				newmail++;
-				newemailid=sqlgetsequence("gw_email_headers");
-				if (newemailid<1) {
-					printf("newemailid<1 '%d' ??", newemailid);
-					return;
-				}
-				filename=sprintf("%s.msg", pad(newemailid, 6));
 				//printf("<br>saving '%s' in '%s/'", filename, tmpdirname);
 				msgbody=pop.retr(i);
 				message=net.mime.read(msgbody);
+				newemailid=mail.save_header_to_sql(row, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
+
+				// newemailid=sqlgetsequence("gw_email_headers");
+				// if (newemailid<1) {
+				// 	printf("newemailid<1 '%d' ??", newemailid);
+				// 	return;
+				// }
+				filename=sprintf("%s.msg", pad(newemailid, 6));
+
 				if (typeof(file.stat(tmpdirname+"/"+filename))!='table') {
 					file.writeall(tmpdirname+"/"+filename, msgbody);
 				}
-				mail.save_header_to_sql(newemailid, row, message, string.replace(net.mime.base64.encode(uidl), '=', ''), sizeof(msgbody));
+
 				var dstdirname=sprintf("%s/%s/mail/%s/%s", var_domains_path, pad(row['obj_did'], 4), pad(row['mailaccountid'], 4), pad(1, 4));
 				if (typeof(file.stat(dstdirname))!='table') file.mkdir(dstdirname);
 				file.rename(tmpdirname+"/"+filename, dstdirname+"/"+filename);
@@ -463,10 +473,10 @@ namespace mail.sync {
 			uidls[sizeof(uidls)] = { remoteindex=i; uidl=uidl; };
 		}
 		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 ORDER BY mailheaderid;", userid, accountid);
-		sqr=sqlquery(query);
+		sqr=sql.query(query);
 
 		// delete local copies in trash if no remote copy is found
-		foreach (header in sqr['_rows']) {
+		foreach (header in sqr.rows) {
 			//print("<hr><pre>header=",strtohtml(serialize(header)),"</pre><hr>");
 			matchfound=false;
 			matchedid=0;
@@ -485,7 +495,7 @@ namespace mail.sync {
 					file.unlink(trashdirname+"/"+filename);
 				}
 				query=sprintf("DELETE FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 AND mailheaderid = %d;", userid, accountid, mailheaderid);
-				sqlupdate(query);
+				sql.update(query);
 				deleted++;
 			}
 		}
@@ -496,7 +506,7 @@ namespace mail.sync {
 			matchedid=0;
 			mailheaderid=0;
 			uidl=uidls[i-1];
-			foreach (header in sqr['_rows']) {
+			foreach (header in sqr.rows) {
 				x=net.mime.base64.encode(uidl.uidl).replace('=', '');
 				if (header['uidl']!=x) continue;
 				matchfound=true;
@@ -510,7 +520,7 @@ namespace mail.sync {
 					file.unlink(trashdirname+"/"+filename);
 				}
 				query=sprintf("DELETE FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 4 AND mailheaderid = %d;", userid, accountid, mailheaderid);
-				sqlupdate(query);
+				sql.update(query);
 				deleted++;
 				break;
 			}
@@ -552,8 +562,8 @@ namespace mail.sync {
 		if (typeof(file.stat(sentdirname))!='table') file.mkdir(sentdirname);
 
 		query=sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d AND accountid = %d AND folder = 2;", userid, accountid);
-		sqr=sqlquery(query);
-		foreach (header in sqr['_rows']) {
+		sqr=sql.query(query);
+		foreach (header in sqr.rows) {
 			//print("<pre>accountrow = ", strtohtml(serialize(accountrow)), "</pre>");
 			//print("<pre>header = ", strtohtml(serialize(header)), "</pre>");
 			headerid=tonumber(header['mailheaderid']);
@@ -602,7 +612,7 @@ namespace mail.sync {
 				swrite(sock, ".\r\n");
 				rc=sread(sock);
 				if (rc.sub(0, 3)!='250') throw "expected status '250', got '"+rc.sub(0, 3)+"'";
-				sqlupdate(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d;", headerid));
+				sql.update(sprintf("UPDATE gw_email_headers SET folder = 3 WHERE mailheaderid = %d;", headerid));
 				file.rename(outdirname+"/"+filename, sentdirname+"/"+filename);
 				printf("message sent - '%s'", filename);
 			} catch (ex) {
@@ -637,41 +647,39 @@ namespace mail.sync {
 namespace mail.html {
 	function headermenu () {
 		var menuitems = {
-			{ href="/app/mail/list";          onclick="return ns.GoTo(event);";     text="LIST";     };
-			{ href="/app/mail/compose";       onclick="return ns.mail.compose(0);"; text="COMPOSE";  };
-			{ href="/app/mail/sync";          onclick="return ns.GoTo(event);";     text="SYNC";     };
-			{ href="/app/mail/accounts/list"; onclick="return ns.GoTo(event);";     text="ACCOUNTS"; };
+			{ text="LIST";     cls='main'; href="/app/mail/list";          };
+			{ text="COMPOSE";              href="/app/mail/compose"; onclick="return ns.mail.compose(0);"; };
+			{ text="SYNC";     cls='main'; href="/app/mail/sync";          };
+			{ text="ACCOUNTS"; cls='main'; href="/app/mail/accounts/list"; };
 		};
 		html.headersubmenu(menuitems);
 	}
 	function show_searchform() {
-		print("<form id=mailsearch name=mailsearch method=post action=\"/app/mail/list\" onsubmit=\"return ns.ModalSubmit(event, 'mailsearch', 'save');\" enctype='multipart/form-data'>");
+		// print("<form id=mailsearch name=mailsearch method=post action=\"/app/mail/list\" onsubmit=\"return ns.dialog.submit(event, 'mailsearch', 'save');\" enctype='multipart/form-data'>");
+		// print("<input type=text name=searchtext value=\"\" placeholder='Search Mail' required='required' autocorrect='off'>");
+		// //print("<input type=submit class=frmbutton name=search value='search'>\r\n");
+		// print("</form>");
+		print("<form id=mailsearch name=mailsearch method=post action=\"/app/mail/list\" onsubmit=\"return ns.mail.search();\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Mail' required='required' autocorrect='off'>");
-		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
 		print("</form>");
 	}
 	function mailjump(accountid, folderid) {
-		local function add_folders(add_folders, accountid, folderid, sqr2, account, parent, depth) {
-			//var accountid=tonumber(prefs['mailcurrent']);
-			foreach (fldrow in sqr2['_rows']) {
+		local function add_folders(add_folders, accountid, folderid, sqr, account, parent, depth) {
+			foreach (fldrow in sqr.rows) {
 				folder=tonumber(fldrow['mailfolderid']);
 				if (parent!=tonumber(fldrow['parentfolderid'])) continue;
-				printf("<option value=\"accountid=%d&folderid=%d\">&nbsp;&nbsp;&nbsp;&nbsp;", account, folder);
-				for (indent=0;indent<depth;indent++) printf("&nbsp;&nbsp;&nbsp;&nbsp;");
-				printf("%s", strtohtml(fldrow['foldername']));
-				if (account==accountid && folder==folderid) {
-					printf(" - (Current)");
-				}
+				printf("<option value=\"accountid=%d&folderid=%d\">%s%s", account, folder, "&nbsp;"*depth*4, strtohtml(fldrow['foldername']));
+				if (account==accountid && folder==folderid) printf(" - (Current)");
 				printf("</option>\r\n");
-				add_folders(add_folders, accountid, folderid, sqr2, account, folder, depth+1);
+				add_folders(add_folders, accountid, folderid, sqr, account, folder, depth+1);
 			}
 		}
 		var menustyle = tonumber(_USER['pref']['menustyle']);
 		var userid    = tonumber(_USER['userid']);
 		//if (!(auth_priv(sid, "email")&A_READ)) return;
-		sqr1=sqlquery(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname ASC;", userid));
+		sqr1=sql.query(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname ASC;", userid));
 		//print("sqr1:",serialize(sqr1));
-		if (sqr1['_tuples']==0) return;
+		if (sqr1.rows.length()==0) return;
 
 		printf("<SCRIPT LANGUAGE=\"javascript\">\r\n");
 		printf("function ChangeMail() {\r\n");
@@ -683,16 +691,16 @@ namespace mail.html {
 		printf("<form method=get name=changemail>\r\n", _SERVER['SCRIPT_NAME']);
 		printf("<select id=accountid style=\"width:250px\" onChange=\"ChangeMail()\">\r\n");
 
-		foreach (acctrow in sqr1['_rows']) {
+		foreach (acctrow in sqr1.rows) {
 			account=tonumber(acctrow['mailaccountid']);
 			printf("<option value=\"accountid=%d&folderid=1\"", account);
 			if (account==accountid) printf(" selected class=selBold");
 			printf(">[ %s ]", strtohtml(acctrow['accountname']));
 			if (account==accountid) {
 				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d ORDER BY parentfolderid ASC, mailfolderid ASC;", userid, account);
-				sqr2=sqlquery(query);
-				if (sqr2['_tuples']==0) continue;
-				foreach (row in sqr2['_rows']) {
+				sqr2=sql.query(query);
+				if (sqr2.rows.length()==0) continue;
+				foreach (row in sqr2.rows) {
 					if (tonumber(row['mailfolderid'])==folderid) {
 						printf(" - %s", strtohtml(row['foldername']));
 						break;
@@ -700,11 +708,20 @@ namespace mail.html {
 				}
 				printf("</option>\r\n");
 				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d AND mailfolderid < 10 ORDER BY parentfolderid ASC, mailfolderid ASC;", userid, account);
-				sqr2=sqlquery(query);
-				add_folders(add_folders, accountid, folderid, sqr2, account, 0, 1);
+				sqr2=sql.query(query);
 				query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_uid = %d AND accountid = %d AND mailfolderid > 9 ORDER BY parentfolderid ASC, foldername ASC;", userid, account);
-				sqr2=sqlquery(query);
+				sqr3=sql.query(query);
+
+				// merge the two queries, preserving the returned order
+				foreach (row in sqr3.rows) {
+					sqr2.rows[sqr2.rows.length()]=row;
+				}
+
 				add_folders(add_folders, accountid, folderid, sqr2, account, 0, 1);
+
+				//if (sqr2.rows.length()>0) printf("<option value=\"\">%s--</option>\r\n", "&nbsp;"*8);
+
+				//add_folders(add_folders, accountid, folderid, sqr2, account, 0, 1);
 			} else {
 				printf("</option>\r\n");
 			}

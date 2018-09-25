@@ -117,8 +117,8 @@ typedef obj_t     *(*MAIN_NSP_EVAL)      (nsp_state *, char *);
 typedef obj_t     *(*MAIN_NSP_EVALF)     (nsp_state *, const char *, ...);
 
 typedef	void       (*MAIN_SQL_FREERESULT)(nsp_state *, obj_t **);
-typedef	int        (*MAIN_SQL_UPDATE)(nsp_state *, char *);
-typedef	int        (*MAIN_SQL_UPDATEF)(nsp_state *, const char *, ...);
+typedef	int        (*MAIN_SQL_UPDATE)(nsp_state *, obj_t **, char *);
+typedef	int        (*MAIN_SQL_UPDATEF)(nsp_state *, obj_t **, const char *, ...);
 typedef	int        (*MAIN_SQL_QUERY)(nsp_state *, obj_t **, char *);
 typedef	int        (*MAIN_SQL_QUERYF)(nsp_state *, obj_t **, char *, ...);
 typedef	int        (*MAIN_SQL_GETSEQUENCE)(nsp_state *, char *);

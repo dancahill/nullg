@@ -127,7 +127,7 @@ int ldir_deleteentry(char *oc, int id, int did)
 {
 	int rc;
 
-	rc = sql_updatef(proc->N, "DELETE FROM nullsd_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
+	rc = sql_updatef(proc->N, NULL, "DELETE FROM nullsd_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
 	return rc;
 }
 
@@ -197,7 +197,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 	time_t t = time(NULL);
 
 	if ((query = calloc(MAX_TUPLE_SIZE, sizeof(char))) == NULL) return -1;
-	tobj = nsp_getobj(proc->N, *qobj, "_rows");
+	tobj = nsp_getobj(proc->N, *qobj, "rows");
 	if (!nsp_istable(tobj)) { free(query); prints(conn, "broken table"); return -1; }
 	tobj = nsp_getiobj(proc->N, tobj, 0);
 	if (!nsp_istable(tobj)) { free(query); prints(conn, "broken table"); return -1; }
@@ -222,7 +222,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 		len += dump_sub(conn->N, query + len, MAX_TUPLE_SIZE - len, dobj);
 		strncatf(query + len, MAX_TUPLE_SIZE - len - 1, "}');");
 		len += strlen(query + len);
-		id = sql_update(proc->N, query);
+		id = sql_update(proc->N, NULL, query);
 		if (id < 0) id = -1;
 	}
 	else {
@@ -231,7 +231,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 		len += dump_sub(conn->N, query + len, MAX_TUPLE_SIZE - len, dobj);
 		strncatf(query + len, MAX_TUPLE_SIZE - len - 1, "}' WHERE id=%d;", id);
 		len += strlen(query + len);
-		rc = sql_update(proc->N, query);
+		rc = sql_update(proc->N, NULL, query);
 		if (rc < 0) id = -1;
 	}
 	//log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
@@ -287,7 +287,7 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 	//	}
 	if (rc < 0) return NULL;
 	for (i = 0;i < sql_numtuples(proc->N, &qobj1);i++) {
-		tobj = nsp_getobj(proc->N, qobj1, "_rows");
+		tobj = nsp_getobj(proc->N, qobj1, "rows");
 		tobj = nsp_getiobj(proc->N, tobj, i);
 		tobj = nsp_settable(proc->N, tobj, "_data");
 		if ((p = sql_getvaluebyname(proc->N, &qobj1, i, "data")) == NULL) continue;
@@ -300,7 +300,7 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 	}
 	if (strcmp(oc, "weblogentry") == 0) {
 		nsp_linkval(N, nsp_settable(N, &N->g, "weblogentryresults"), qobj1);
-		sort_bykey(N, nsp_getobj(N, qobj1, "_rows"), "ctime", NULL, 1);
+		sort_bykey(N, nsp_getobj(N, qobj1, "rows"), "ctime", NULL, 1);
 		//	} else if (strcmp(oc, "user")==0) {
 		//		ldir_sortlist(N, qobj1, "sn", "_data", 1);
 	}
@@ -312,7 +312,7 @@ void ldir_sortlist(nsp_state *N, obj_t *qobj, char *key, char *subtab, int order
 	obj_t *tobj;
 	unsigned int i;
 
-	tobj = nsp_getobj(N, qobj, "_rows");
+	tobj = nsp_getobj(N, qobj, "rows");
 	if (!nsp_istable(tobj)) return;
 	sort_bykey(N, tobj, "sn", "_data", order);
 	for (i = 0, tobj = tobj->val->d.table.f;tobj;i++, tobj = tobj->next) {
@@ -383,7 +383,7 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 	}
 	if (rc < 0) return NULL;
 	for (i = 0;i < sql_numtuples(proc->N, &qobj1);i++) {
-		tobj = nsp_getobj(proc->N, qobj1, "_rows");
+		tobj = nsp_getobj(proc->N, qobj1, "rows");
 		tobj = nsp_getiobj(proc->N, tobj, i);
 		tobj = nsp_settable(proc->N, tobj, "_data");
 		//		if ((p=sql_getvaluebyname(proc->N, &qobj1, i, "data"))==NULL) continue;
@@ -407,7 +407,7 @@ char *ldir_getval(obj_t **qobj, int rowset, char *name)
 	obj_t *tobj, *tobj2;
 	obj_t *cobj;
 
-	tobj = nsp_getobj(proc->N, *qobj, "_rows");
+	tobj = nsp_getobj(proc->N, *qobj, "rows");
 	if (tobj->val->type != NT_TABLE) return "";
 	tobj = nsp_getiobj(proc->N, tobj, rowset);
 	if (tobj->val->type != NT_TABLE) return "";

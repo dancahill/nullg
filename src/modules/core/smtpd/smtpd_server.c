@@ -80,20 +80,21 @@ static short int allow_relay(CONN *conn)
 	int i;
 
 	memset(curdate, 0, sizeof(curdate));
-	time_unix2sql(curdate, sizeof(curdate) - 1, time(NULL) - mod_config.popauth_window);
-	sql_updatef(proc->N, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND obj_mtime < '%s'", curdate);
-	//log_access(proc->N, MODSHORTNAME, "%s:%d -- rule purge temporarily disabled!!", conn->dat->RemoteAddr, conn->dat->RemotePort);
-	if (sql_queryf(proc->N, &qptr, "SELECT ipaddress, ruletype FROM gw_smtp_relayrules WHERE ipaddress = '%s' AND (persistence = 'perm' OR obj_mtime > '%s') GROUP BY ipaddress, ruletype ORDER BY ruletype DESC", conn->dat->RemoteAddr, curdate) < 0) {
+	time_unix2sql(curdate, sizeof(curdate) - 1, time(NULL));
+	sql_updatef(proc->N, &qptr, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND expires < '%s'", curdate);
+	sql_freeresult(proc->N, &qptr);
+	if (strcmp(conn->dat->RemoteAddr, "127.0.0.1") == 0) return 1;
+	if (sql_queryf(proc->N, &qptr, "SELECT ipaddress, ruletype, reason FROM gw_smtp_relayrules WHERE ipaddress = '%s' AND (persistence = 'perm' OR expires > '%s') GROUP BY ipaddress, ruletype, reason ORDER BY ruletype DESC", conn->dat->RemoteAddr, curdate) < 0) {
 		log_access(proc->N, MODSHORTNAME, "%s:%d -- failed rule query", conn->dat->RemoteAddr, conn->dat->RemotePort);
 		return 0;
 	}
-	for (i = 0;i < sql_numtuples(proc->N, &qptr);i++) {
+	for (i = 0; i < sql_numtuples(proc->N, &qptr); i++) {
 		if (strcmp(sql_getvaluebyname(proc->N, &qptr, i, "ruletype"), "allow") == 0) {
-			log_access(proc->N, MODSHORTNAME, "%s:%d -- %s - found rule 'allowed'", conn->dat->RemoteAddr, conn->dat->RemotePort, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d -- found rule 'allowed' - \"%s\"", conn->dat->RemoteAddr, conn->dat->RemotePort, sql_getvaluebyname(proc->N, &qptr, i, "reason"));
 			allowed = 1;
 		}
 		else if (strcmp(sql_getvaluebyname(proc->N, &qptr, i, "ruletype"), "deny") == 0) {
-			log_access(proc->N, MODSHORTNAME, "%s:%d -- %s - found rule 'denied'", conn->dat->RemoteAddr, conn->dat->RemotePort, conn->dat->RemoteAddr);
+			log_access(proc->N, MODSHORTNAME, "%s:%d -- found rule 'denied' - \"%s\"", conn->dat->RemoteAddr, conn->dat->RemotePort, sql_getvaluebyname(proc->N, &qptr, i, "reason"));
 			denied = 1;
 		}
 	}
@@ -142,7 +143,7 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 
 	nsp_setstr(conn->N, reqobj, "FROM", mconn->from, -1);
 
-	for (i = 0;i < mconn->num_rcpts;i++) {
+	for (i = 0; i < mconn->num_rcpts; i++) {
 		is_remote = 0;
 		snprintf(tmpaddr, sizeof(tmpaddr) - 1, "%s", mconn->rcpt[i]);
 
@@ -160,7 +161,12 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 		memset(tmpname1, 0, sizeof(tmpname1));
 		memset(tmpname2, 0, sizeof(tmpname2));
 		if (localdomainid > 0) {
+			char *p;
 			userid = 0;
+
+			if ((p = strchr(tmpaddr, '+')) != NULL) {
+				*p = '\0';
+			}
 
 			if (sql_queryf(proc->N, &qptr, "SELECT userid, aliasname FROM gw_smtp_aliases WHERE LOWER(aliasname) = LOWER('%s') AND domainid = %d", tmpaddr, localdomainid) < 0) return -1;
 			if (sql_numtuples(proc->N, &qptr) == 1) {
@@ -201,7 +207,7 @@ static int smtp_accept(CONN *conn, MAILCONN *mconn)
 					log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "Error creating directory '%s'", tmpname1);
 					continue;
 				}
-			}
+				}
 		retry1:
 			gettimeofday(&ttime, &tzone);
 			memset(tmpname1, 0, sizeof(tmpname1));
@@ -352,7 +358,7 @@ static void smtp_data(CONN *conn, MAILCONN *mconn)
 				if (strlen(outbuf)) {
 					if ((mconn->msgbodysize + strlen(outbuf) + 2) > buf_alloc) {
 						buf_alloc += 131072;
-						mconn->msgbody = realloc(mconn->msgbody, buf_alloc*sizeof(char));
+						mconn->msgbody = realloc(mconn->msgbody, buf_alloc * sizeof(char));
 						if (mconn->msgbody == NULL) {
 							smtp_send(conn, "451 Temporary failure - try again later");
 							return;
@@ -371,7 +377,7 @@ static void smtp_data(CONN *conn, MAILCONN *mconn)
 		}
 		if ((mconn->msgbodysize + strlen(line) + 2) > buf_alloc) {
 			buf_alloc += 131072;
-			mconn->msgbody = realloc(mconn->msgbody, buf_alloc*sizeof(char));
+			mconn->msgbody = realloc(mconn->msgbody, buf_alloc * sizeof(char));
 			if (mconn->msgbody == NULL) {
 				smtp_send(conn, "451 Temporary failure - try again later");
 				return;
@@ -408,7 +414,7 @@ static void smtp_from(CONN *conn, MAILCONN *mconn, char *line)
 	char *host;
 	int i;
 
-	for (i = 0;i < mconn->num_rcpts;i++) {
+	for (i = 0; i < mconn->num_rcpts; i++) {
 		if (mconn->rcpt[i] != NULL) { free(mconn->rcpt[i]); mconn->rcpt[i] = NULL; }
 	}
 	memset(mconn->from, 0, sizeof(mconn->from));
@@ -479,6 +485,7 @@ static void smtp_rcpt(CONN *conn, MAILCONN *mconn, char *line)
 			log_access(proc->N, MODSHORTNAME, "%s:%d -- relaying denied from:'%s', to:'%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, mconn->from, ptemp1);
 			log_access(proc->N, MODSHORTNAME, "%s:%d -- sender is not local, and neither is the recipient domain '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, ptemp2);
 			smtp_send(conn, "553 Relaying denied");
+			smtp_nsp_addfilter(conn, "553 Relaying denied");
 			return;
 		}
 	}
@@ -498,7 +505,7 @@ static void smtp_rset(CONN *conn, MAILCONN *mconn, short quiet)
 {
 	int i;
 
-	for (i = 0;i < mconn->num_rcpts;i++) {
+	for (i = 0; i < mconn->num_rcpts; i++) {
 		if (mconn->rcpt[i] != NULL) { free(mconn->rcpt[i]); mconn->rcpt[i] = NULL; }
 	}
 	memset(mconn->from, 0, sizeof(mconn->from));
@@ -536,10 +543,8 @@ void smtp_dorequest(CONN *conn)
 		return;
 	}
 	memset((char *)&mconn, 0, sizeof(mconn));
-	if (smtp_nsp_prefilter(conn)) goto cleanup;
 	mconn.sender_can_relay = allow_relay(conn);
-	if (mconn.sender_can_relay == -1) {
-		//log_access(proc->N, MODSHORTNAME, "%s:%d -- This IP is banned", conn->dat->RemoteAddr, conn->dat->RemotePort);
+	if (mconn.sender_can_relay == -1 || smtp_nsp_prefilter(conn)) {
 		snprintf(line, sizeof(line) - 1, "550 5.3.2 Service currently unavailable; client %s temporarily blocked", conn->dat->RemoteAddr);
 		smtp_send(conn, line);
 		goto cleanup;
@@ -589,7 +594,9 @@ void smtp_dorequest(CONN *conn)
 		}
 		else if (conn->state == 1) {
 			if (strncasecmp(line, "auth", 4) == 0) {
+				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
 				smtp_send(conn, "502 Unknown Command");
+				smtp_nsp_addfilter(conn, "AUTH LOGIN ATTEMPT");
 			}
 			else if (strncasecmp(line, "mail from:", 10) == 0) {
 				smtp_from(conn, &mconn, line + 10);
@@ -612,6 +619,7 @@ void smtp_dorequest(CONN *conn)
 			else {
 				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
 				smtp_send(conn, "502 Unknown Command");
+				smtp_nsp_addfilter(conn, "502 Unknown Command");
 			}
 		}
 		else {
@@ -619,7 +627,7 @@ void smtp_dorequest(CONN *conn)
 		}
 	} while (1);
 cleanup:
-	for (i = 0;i < mconn.num_rcpts;i++) {
+	for (i = 0; i < mconn.num_rcpts; i++) {
 		if (mconn.rcpt[i] != NULL) {
 			free(mconn.rcpt[i]);
 		}

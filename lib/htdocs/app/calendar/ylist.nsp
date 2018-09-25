@@ -1,8 +1,75 @@
 <?nsp
-include("calendar.lib.ns");
-calendar.html.headermenu(0);
-print("<div style='text-align:left'>");
-calendar.html.htselect_userfilter();
-print("</div>");
-print("Year List - The calendar app is not started yet.");
+
+function print_datelink(day, text) {
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
+	}
+	if (groupid>0) {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&groupid=%d&status=%d'>%s</a>", day, groupid, status, strtohtml(text));
+	} else {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&userid=%d&status=%d'>%s</a>", day, userid, status, strtohtml(text));
+	}
+}
+
+function show_month(utime) {
+	months = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+	utime=utime-(utime%86400);
+	month=calendar.getmonth(utime);
+	m=month[1][0].tm_mon;
+	printf("<table id=\"T2\" border=1 class=\"contentform\" style='width:200px'>");
+	print("<thead>\r\n");
+	printf("<tr><th colspan=7>%s</th></tr>\r\n", months[m-1]);
+	print("<tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>\r\n");
+	print("</thead><tbody>\r\n");
+	foreach (week in month) {
+		print("<tr>");
+		foreach (day in week) {
+			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
+			d = time.mktime(day)/86400;
+			printf("<td>");
+			if (m==day.tm_mon) {
+				print_datelink(d, day.tm_mday.tostring());
+			}
+			printf("</td>");
+		}
+		print("</tr>\r\n");
+	}
+	print("</tbody></table>\r\n");
+}
+
+try {
+	include_template("common.ns");
+	include("calendar.lib.ns");
+	day = tonumber(_GET['DAY']);
+	if (day==0) {
+		t=calendar.today();
+		day=t/86400;
+	} else {
+		t=day*86400;
+	}
+	calendar.html.headermenu(day);
+	print("<div style='text-align:left'>");
+	calendar.html.htselect_userfilter();
+	print("</div>");
+	tm=time.gmtime(t);
+	print("<br/>");
+	print("<center><table>");
+	for (i=0;i<4;i++) {
+		print("<tr>");
+		for (j=0;j<3;j++) {
+			print("<td style='vertical-align:top'>");
+			show_month(time.mktime({tm_mday=1, tm_mon=i*3+j+1, tm_year=tm.tm_year}));
+			print("</td>");
+		}
+		print("</tr>");
+	}
+	print("</table></center>");
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
 ?>

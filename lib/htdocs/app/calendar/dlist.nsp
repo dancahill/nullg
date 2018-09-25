@@ -1,31 +1,42 @@
 <?nsp
 
+function print_datelink(day, text) {
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
+	}
+	if (groupid>0) {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&groupid=%d&status=%d'>%s</a>", day, groupid, status, strtohtml(text));
+	} else {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&userid=%d&status=%d'>%s</a>", day, userid, status, strtohtml(text));
+	}
+}
+
 function show_day(utime) {
 	local function pad(n) {
 		x="0"+n;
 		return x.sub(-2, 2);
 	}
-
+	ui=new db.userinfo();
+	daystart=ui.pref("daystart");
+	daylength=ui.pref("daylength");
 	d1=new datetime(utime);
 	d2=d1.adddays(1);
-	//printf("[%d][%s]<br/>", d1.unixtime, d1.tostring());
-	//printf("[%d][%s]<br/>", d2.unixtime, d2.tostring());
-
-	//query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
-	//print(query);
-	//db.events.getlist(startdate1, startdate2, userid, groupid);
-	sqr=db.events.getlist(d1.tostring(), d2.tostring(), 0, 0);
-	//sqr=sqlquery(query);
-	sqrlen=sqr['_rows'].length();
-	//if (sqrlen<1) continue;
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	sqr=db.events.getlist(d1.tostring(), d2.tostring(), userid, groupid, status);
+	sqrlen=sqr.rows.length();
 	print("<div style='float:left;width:calc(100% - 200px - 5px)'>\r\n");
-//	print("<div style='float:left'>\r\n");
 	print("<table id=\"T1\" class=\"contenttable\" style='width:100%'>");
 	print("<tr><th>Time</th><th style='width:99%'>Event Name</th></tr>\r\n");
 	for (i=0;i<24;i++) {
 		found=false;
 		for (j=0;j<sqrlen;j++) {
-			rec=sqr['_rows'][j];
+			rec=sqr.rows[j];
 
 			dt1=new datetime(utime+i*3600);
 			dt2=dt1.addhours(1);
@@ -40,30 +51,31 @@ function show_day(utime) {
 				et = new datetime(time.mktime(rec['eventstart']));
 				calendar.tz_utc2user(et);
 				ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
-				printf("<tr><td style='text-align:right'>%s</td><td><span style='background-color:yellow'>", ts);
-				printf("<a href=\"javascript:ns.events.view(event, %d);\"> %s</a>", id, rec['eventname']);
+				printf("<tr");
+				if (i<daystart || i>=daystart+daylength) {
+					printf(" style='background-color:lightgrey'");
+				}
+				printf("><td style='text-align:right'>%s</td><td><span>", ts);
+				printf("<a class='dialog' href=\"/app/calendar/event?id=%d\">%s</a></td>", id, strtohtml(rec['eventname']));
 				printf("</span></td></tr>");
 			}
 			rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
 		}
 		if (!found) {
-			ts=""+(i==0?12:(i>12)?(i-12):i)+":"+pad(0)+(i>=12?"pm":"am");
-			printf("<tr><td style='text-align:right'>%s</td><td></td></tr>\r\n", ts);
+			if (i>=daystart && i<daystart+daylength) {
+				ts=""+(i==0?12:(i>12)?(i-12):i)+":"+pad(0)+(i>=12?"pm":"am");
+				printf("<tr><td style='text-align:right'>%s</td><td></td></tr>\r\n", ts);
+			}
 		}
 	}
 	printf("</table></div>");
 }
 
 function show_month(utime) {
-	//utime=time.now()
 	utime=utime-(utime%86400);
 	month=calendar.getmonth(utime);
-//	print("<div style='float:right'>\r\n");
-//	print("<div style='position:absolute;right:0'>\r\n");
-//	print("<div style='position:absolute;right:0'>\r\n");
-	//print("<div style='position:absolute;top:0;right:0'>\r\n");
 	print("<div style='float:right'>\r\n");
-	printf("<table id=\"T2\" class=\"contenttable\" style='width:200px'>");
+	printf("<table id=\"T2\" border=1 class=\"contentform\" style='width:200px'>");
 	print("<thead>\r\n");
 	print("<tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>\r\n");
 	print("</thead><tbody>\r\n");
@@ -71,40 +83,41 @@ function show_month(utime) {
 		print("<tr>");
 		foreach (day in week) {
 			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-			printf("<td><span style='color:%s'>%d</span></td>", color, day.tm_mday);
+			d = time.mktime(day)/86400;///86400;
+			printf("<td>");
+			print_datelink(d, day.tm_mday.tostring());
+			printf("</td>");
 		}
 		print("</tr>\r\n");
 	}
 	print("</tbody></table>\r\n");
 	print("</div>\r\n");
-
 }
 
 function show_tasks() {
 	ui=new db.userinfo();
 	var status = tonumber(_GET['STATUS']);
-	//query="SELECT * FROM gw_tasks WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
+	var userid = tonumber(_GET['USERID']);
+	if (userid==0) userid=ui.userid;
 	query="SELECT * FROM gw_tasks WHERE obj_did = "+ui.domainid;
+	query+=sprintf(" AND assignedto = %d", userid);
 	if (status!=2) query+=sprintf(" AND status = %d", status);
-	query+=" ORDER BY status ASC, priority DESC, duedate ASC, taskname ASC";
-	//print(query);
-	sqr=sqlquery(query);
-	sqrlen=sqr['_rows'].length();
-	//if (sqrlen<1) continue;
-	//printf("<div style='position:absolute;top:0px;right:0px;max-width:200px;overflow:scroll;overflow-x:hidden'>");
+	query+=" ORDER BY status ASC, priority DESC, duedate ASC, taskid ASC";
+	sqr=sql.query(query);
+	sqrlen=sqr.rows.length();
 	printf("<div style='float:right;clear:right;max-width:200px'>");
 	printf("<table id=\"T3\" class=\"contenttable\" style='width:200px;overflow:scroll;overflow-x:hidden'>");
-
 	print("<tr><th style='text-align:left'>Tasks</th></tr>\r\n");
 	found=false;
 	for (i=0;i<sqrlen;i++) {
-		rec=sqr['_rows'][i];
+		rec=sqr.rows[i];
 		found=true;
 		id=tonumber(rec['taskid']);
-		//printf("<tr><td><span style='background-color:lightblue'>");
-		//printf("<tr><td style='max-width:200px;overflow:hidden'>");
-		printf("<tr><td style='max-width:194px;overflow:hidden' title=\"%s\">", strtohtml(rec['taskname']));
-		printf("<a href=\"javascript:ns.tasks.view(event, %d);\">%s</a>", id, strtohtml(rec['taskname']));
+		url=sprintf("/app/tasks/task?id=%d", id);
+		title=rec['taskname'];
+		title+="\nDue "+rec['duedate'].sub(0, 10);
+		printf("<tr><td style='max-width:194px;overflow:hidden' onclick=\"return ns.dialog.create('%s');\" title=\"%s\">", url, strtohtml(title));
+		printf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(rec['taskname']));
 		printf("</td></tr>");
 		rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
 	}
@@ -117,30 +130,28 @@ function show_tasks() {
 try {
 	include_template("common.ns");
 	include("calendar.lib.ns");
-
-	// get the user's local midnight
-	d1=new datetime();
-	d1.unixtime+=d1.gettzoffset();
-	d1.unixtime-=d1.unixtime%86400;
-
-	calendar.html.headermenu(0);
-
+	day = tonumber(_GET['DAY']);
+	if (day==0) {
+		t=calendar.today();
+		day=t/86400;
+	} else {
+		t=day*86400;
+	}
+	calendar.html.headermenu(day);
 	print("<div style='text-align:left'>");
 	calendar.html.htselect_userfilter();
 	print("</div>");
-
-	//print("<center>\r\n");
-	//print("Day List - The calendar app is not started yet.");
-	//print("<div style='min-width:800px;min-height:400px;height:100%'>");
+	printf("<b>");
+	print_datelink(day-1, "<<");
+	printf(" Calendar Events for %s ", time.sqltime(t).sub(0, 10));
+	print_datelink(day+1, ">>");
+	printf("</b>");
 	print("<div>");
-	//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
-	show_day(d1.unixtime);
-	show_month(d1.unixtime);
-	//print("<br/><br/>");
+	show_day(t);
+	show_month(t);
 	printf("<div style='float:right;clear:right;height:5px'></div>");
 	show_tasks();
 	print("</div>");
-	//print("</center>\r\n");
 } catch (ex) {
 	print("Exception: [",ex.description,"]");
 }

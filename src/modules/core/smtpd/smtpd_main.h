@@ -55,6 +55,7 @@ int filter_scan(CONN *conn, char *msgfilename);
 /* smtpd_nsp.c */
 int smtp_nsp_init(CONN *conn);
 int smtp_nsp_prefilter(CONN *conn);
+int smtp_nsp_addfilter(CONN *conn, char *reason);
 int smtp_nsp_postfilter(CONN *conn);
 /* smtpd_server.c functions */
 void smtp_dorequest(CONN *conn);

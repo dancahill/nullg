@@ -2,4 +2,26 @@
 include_template("common.ns");
 html.headersubmenu(null);
 print("The files app is not started yet.");
- ?>
+
+printf("<div style='white-space:pre;text-align:left'>");
+
+local function pad(s, p) {
+	s='0'*p+s.tostring();
+	return string.sub(s, string.len(s)-p, p);
+}
+
+ui=new db.userinfo();
+
+var var_domains_path=MASTERGLOBAL['CONFIG']['paths']['var_domains'];
+var filedirname =sprintf("%s/%s/files", var_domains_path, pad(ui.domainid, 4));
+
+printf("filedirname=[%s]<hr/>", filedirname);
+
+//printf("%s", serialize(_GLOBALS));
+//printf("MASTERGLOBAL = %s<hr/>", serialize(MASTERGLOBAL));
+printf("_SERVER = %s<hr/>", serialize(_SERVER));
+printf("dirlist filedirname = %s<hr/>", serialize(dirlist(filedirname)));
+
+printf("</div>");
+
+?>

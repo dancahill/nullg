@@ -5,7 +5,7 @@ try {
 	global _TEMP={ modname="admin" };
 	//include_template("html/headmenu.ns");
 	print("<BR>\r\n");
-	var userinfo = db.getuserinfo();
+	ui = new db.userinfo();
 	include_template("html/debug.ns");
 	//include_template("html/footer.ns");
 } catch (e) {

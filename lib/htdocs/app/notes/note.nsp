@@ -1,160 +1,267 @@
 <?nsp
 
-function note_view() {
-	var method=_SERVER['REQUEST_METHOD'];
-	if (id==null) id=tonumber((method=='POST')?_POST['NOTEID']:_GET['ID']);
-	Q=db.notes.get(id);
-	NOTE=Q['_rows'][0];
-	if (Q==null || NOTE==null) {
-		print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+class note {
+	function view(id) {
+		local function printreference(NOTE) {
+			tindex=tonumber(NOTE['tableindex']);
+			if (tindex<1) return;
+			ui=new db.userinfo();
+			tname=NOTE['tablename'];
+			ttitle=tname;
+			turl="";
+			cls="dialog";
+			switch (tname) {
+			case "contacts":
+				tname="Contact";
+				sqr=sql.query(sprintf("SELECT givenname, surname FROM gw_contacts WHERE obj_did = %d AND contactid = %d", ui.domainid, tindex));
+				if (sqr.rows.length()==1) {
+					gn=sqr.rows[0]['givenname'];
+					sn=sqr.rows[0]['surname'];
+					ttitle=gn+(gn.length()&&sn.length()?" ":"")+sn;
+				} else ttitle="Project ?";
+				turl=sprintf("/app/contacts/contact?id=%d", tindex);
+				break;
+			case "events":
+				tname="Event";
+				sqr=sql.query(sprintf("SELECT eventname FROM gw_events WHERE obj_did = %d AND eventid = %d", ui.domainid, tindex));
+				if (sqr.rows.length()==1) ttitle=sqr.rows[0]['eventname']; else ttitle="Event ?";
+				turl=sprintf("/app/calendar/event?id=%d", tindex);
+				break;
+			case "notes":
+				tname="Note";
+				sqr=sql.query(sprintf("SELECT notetitle FROM gw_notes WHERE obj_did = %d AND noteid = %d", ui.domainid, tindex));
+				if (sqr.rows.length()==1) ttitle=sqr.rows[0]['notetitle']; else ttitle="Note ?";
+				turl=sprintf("/app/notes/note?id=%d", tindex);
+				break;
+			case "projects":
+				tname="Project";
+				sqr=sql.query(sprintf("SELECT projectname FROM gw_projects WHERE obj_did = %d AND projectid = %d", ui.domainid, tindex));
+				if (sqr.rows.length()==1) ttitle=sqr.rows[0]['projectname']; else ttitle="Project ?";
+				turl=sprintf("/app/projects/summary?id=%d", tindex);
+				cls="main";
+				break;
+			case "tasks":
+				tname="Task";
+				sqr=sql.query(sprintf("SELECT taskname FROM gw_tasks WHERE obj_did = %d AND taskid = %d", ui.domainid, tindex));
+				if (sqr.rows.length()==1) ttitle=sqr.rows[0]['taskname']; else ttitle="Task ?";
+				turl=sprintf("/app/tasks/task?id=%d", tindex);
+				break;
+			default:
+				break;
+			}
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP width='1%'><B>&nbsp;"+tname+"&nbsp;</B></TD>");
+			print("<td nowrap width=\"100%\">");
+			if (turl!="") {
+				print("<a class=\""+cls+"\" href=\""+turl+"\">",strtohtml(ttitle),"</a>");
+			} else {
+				print("&nbsp;");
+			}
+			print("</td></tr>\r\n");
+		}
+		local function printnotes(id) {
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Notes<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/notes/note?id=0&noteid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2>");
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d AND tablename='notes' AND tableindex=%d", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen>0) {
+				print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+				for (i=0;i<sqrlen;i++) {
+					rec=sqr.rows[i];
+					url=sprintf("/app/notes/note?id=%d", tonumber(rec['noteid']));
+					print("<tr><td onclick=\"return ns.dialog.create('"+url+"');\" width=100%>");
+					printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['notetitle']));
+				}
+				print("</table></div>");
+			} else {
+				print("<div style='max-height:250px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+				url=sprintf("/app/notes/note?noteid=%d", id);
+				print("<tr title='New Note'><td onclick=\"return ns.dialog.create('"+url+"');\" width=100%>&nbsp;</td></tr>");
+				print("</table></div>");
+			}
+			print("</td></tr>");
+		}
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['NOTEID']:_GET['ID']);
+		Q=db.notes.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		NOTE=Q.rows[0];
+		if (_GET['CONTACTID']!=null) {
+			NOTE['tablename']="contacts";
+			NOTE['tableindex']=tonumber(_GET['CONTACTID']);
+		} else if (_GET['NOTEID']!=null) {
+			NOTE['tablename']="notes";
+			NOTE['tableindex']=tonumber(_GET['NOTEID']);
+		} else if (_GET['EVENTID']!=null) {
+			NOTE['tablename']="events";
+			NOTE['tableindex']=tonumber(_GET['EVENTID']);
+		} else if (_GET['PROJECTID']!=null) {
+			NOTE['tablename']="projects";
+			NOTE['tableindex']=tonumber(_GET['PROJECTID']);
+		} else if (_GET['TASKID']!=null) {
+			NOTE['tablename']="tasks";
+			NOTE['tableindex']=tonumber(_GET['TASKID']);
+		}
+		var form=new html_form(NOTE);
+		var tabset=new html_tabset({activepage=1,minheight=100});
+		//if (id==0) tabset.activepage=2;
+		if (id>0) tabset.addtab("SUMMARY");
+		tabset.addtab("EDIT");
+		tabset.addtab("PERMISSIONS");
+		tabset.showtabs();
+		print("<form id=noteedit name=noteedit METHOD=POST ACTION=\"/app/notes/note\" onsubmit=\"return ns.dialog.submit(event, 'note', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="noteid", type="hidden"});
+		form.addfield({name="tablename", type="hidden"});
+		form.addfield({name="tableindex", type="hidden"});
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		if (id>0) {
+			tabset.pagebegin();
+			print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP width='1%'><B>&nbsp;Note Title&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(NOTE['notetitle']),"&nbsp;</TD></TR>\r\n");
+			printreference(NOTE);
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP width='1%'><B>&nbsp;Note Text&nbsp;</B></TD><td></td></TR>\r\n");
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=left NOWRAP colspan=2 WIDTH=\"100%\" style='white-space:normal'>");
+			notes.print_note_text(NOTE['notetext']);
+			print("</TD></TR>\r\n");
+			print("</TABLE>\r\n");
+			tabset.pageend();
+		}
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="notetitle", label="Note Title", required=true});
+		form.addfield({name="notetext", label="Note Text", type="textarea", style="height:550px;width:100%", required=true});
+		form.validate("gw_notes");
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+/*
+		if ((note->obj_uid==conn->dat->uid)||(priv&A_ADMIN)) editperms=1;
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
+		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
+		htselect_user(conn, note->obj_uid, conn->dat->did);
+		print("</SELECT></TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
+		print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\r\n", ((priv&A_ADMIN)||(note->obj_uid==conn->dat->did))?"":" DISABLED");
+		htselect_group(conn, priv, note->obj_gid, conn->dat->did);
+		print("</SELECT></TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\r\n", note->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\r\n", note->obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\r\n", note->obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
+		print("</TD></TR>\r\n");
+		print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\r\n", note->obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\r\n", note->obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
+		print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\r\n", note->obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
+		print("</TD></TR>\r\n");
+*/
+		print("<tr><td>permissions not done yet</td></tr>");
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		if (id>0) {
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			printnotes(id);
+			print("</table>\r\n");
+		}
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title=NOTE['notetitle'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_note_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		Q=null;
 		return;
 	}
-	if (_GET['CONTACTID']!=null) {
-		NOTE['tablename']="contacts";
-		NOTE['tableindex']=tonumber(_GET['CONTACTID']);
-	} else if (_GET['PROJECTID']!=null) {
-		NOTE['tablename']="projects";
-		NOTE['tableindex']=tonumber(_GET['PROJECTID']);
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
 	}
 
-	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n");
-	print("function ConfirmDelete() {\r\n");
-	print("	return confirm(\"Are you sure you want to delete this record?\");\r\n");
-	print("}\r\n");
-	html.js_showpage(3);
-	print("</SCRIPT>\r\n");
-	print("<CENTER>\r\n");
-	if (id>0) {
-		print(strtohtml(NOTE['notetitle']),"</B>");
-	} else {
-		print("<B>New Note</B>\r\n");
-	}
-	print("<form id=noteedit name=noteedit METHOD=POST ACTION=\"/app/notes/note\" enctype='multipart/form-data'>\r\n");
-	print("<INPUT TYPE=hidden NAME=id VALUE='",id,"'>\r\n");
-	print("<TABLE class=\"contentform\" BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=90%>\r\n");
-	print("<TR><TD ALIGN=LEFT>");
-	print("<TABLE BORDER=1 CELLPADDING=0 CELLSPACING=0 STYLE='border-style:solid'>\r\n<TR CLASS=\"FIELDNAME\">\r\n");
-	print("<TD ID=page1tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=1 HREF=\"javascript:showpage(1)\">SUMMARY</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page2tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=2 HREF=\"javascript:showpage(2)\">EDIT</A>&nbsp;</TD>\r\n");
-	print("<TD ID=page3tab NOWRAP STYLE='border-style:solid'>&nbsp;<A ACCESSKEY=3 HREF=\"javascript:showpage(3)\">PERMISSIONS</A>&nbsp;</TD>\r\n");
-	print("</TR></TABLE>");
-	print("</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD VALIGN=TOP STYLE='padding:3px'>");
-	print("<HR>\r\n");
-	print("<DIV ID=page1 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Note Title&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(NOTE['notetitle']),"&nbsp;</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP colspan=2><B>&nbsp;Note Text&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP colspan=2 WIDTH=\"100%\">");
-	notes.print_note_text(NOTE['notetext']);
-	print("</TD></TR>\r\n");
-	print("</TABLE>\r\n");
-	print("</DIV>\r\n");
-
-	print("<DIV ID=page2 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
-//	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP><B>&nbsp;Note Title&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(NOTE['notetitle']),"&nbsp;</TD></TR>\r\n");
-//	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP colspan=2><B>&nbsp;Note Text&nbsp;</B></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP colspan=2 WIDTH=\"100%\">");
-//	notes.print_note_text(NOTE['notetext']);
-
-	print(
-	//	"<form id=noteedit name=noteedit method=post action='/app/notes/save' enctype='multipart/form-data'>",
-		"<input type=hidden name=noteid value=\""+strtohtml(NOTE['noteid'])+"\">",
-		"tablename<input type=text name=tablename value=\""+strtohtml(NOTE['tablename'])+"\"><br>",
-		"tableindex<input type=text name=tableindex value=\""+strtohtml(NOTE['tableindex'])+"\"><br>",
-		"notetitle<input type=text name=notetitle value=\""+strtohtml(NOTE['notetitle'])+"\"><br>",
-		"notetext<br><textarea name=notetext style='height:600px;width:600px'>"+strtohtml(NOTE['notetext'])+"</textarea><br>",
-		"<input type=hidden name=submitaction value=''>\r\n"
-		//"</form>"
-	);
-	printf("<button type=button class=frmButton onclick='ns.notes.SubmitSave();'><a>Save</a></button>\r\n");
-	print("<script type=\"text/javascript\">\r\n","ns.notes.set_submit();","</script>");
-	print("</TD></TR>\r\n");
-	print("</TABLE>\r\n");
-	print("</DIV>\r\n");
-
-
-	print("<DIV ID=page3 STYLE='display: block'>\r\n");
-	print("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0 WIDTH=\"100%\">\r\n");
-/*	if ((note->obj_uid==conn->dat->uid)||(priv&A_ADMIN)) editperms=1;
-	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Owner&nbsp;</B></TD>");
-	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_uid style='width:255px'%s>\r\n", (priv&A_ADMIN)?"":" DISABLED");
-	htselect_user(conn, note->obj_uid, conn->dat->did);
-	print("</SELECT></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group&nbsp;</B></TD>");
-	print("<TD ALIGN=RIGHT STYLE='padding:0px'><SELECT NAME=obj_gid style='width:255px'%s>\r\n", ((priv&A_ADMIN)||(note->obj_uid==conn->dat->did))?"":" DISABLED");
-	htselect_group(conn, priv, note->obj_gid, conn->dat->did);
-	print("</SELECT></TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Group Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
-	print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"0\"%s%s>None\r\n", note->obj_gperm==0?" CHECKED":"", editperms?"":" DISABLED");
-	print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"1\"%s%s>Read\r\n", note->obj_gperm==1?" CHECKED":"", editperms?"":" DISABLED");
-	print("<INPUT TYPE=RADIO NAME=obj_gperm VALUE=\"2\"%s%s>Write\r\n", note->obj_gperm==2?" CHECKED":"", editperms?"":" DISABLED");
-	print("</TD></TR>\r\n");
-	print("<TR CLASS=\"EDITFORM\"><TD STYLE='padding:0px'><B>&nbsp;Other Members&nbsp;</B></TD><TD ALIGN=RIGHT STYLE='padding:0px'>\r\n");
-	print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"0\"%s%s>None\r\n", note->obj_operm==0?" CHECKED":"", editperms?"":" DISABLED");
-	print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"1\"%s%s>Read\r\n", note->obj_operm==1?" CHECKED":"", editperms?"":" DISABLED");
-	print("<INPUT TYPE=RADIO NAME=obj_operm VALUE=\"2\"%s%s>Write\r\n", note->obj_operm==2?" CHECKED":"", editperms?"":" DISABLED");
-	print("</TD></TR>\r\n");
-*/
-	print("</TABLE>\r\n");
-	print("</DIV>\r\n");
-	print("<HR>\r\n");
-	print("</TD></TR>\r\n");
-	if (is_editable) {
-		print("<TR><TD ALIGN=CENTER>\r\n");
-		print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Save'>\r\n");
-		if (is_recycled) {
-			print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Force Save'>\r\n");
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
 		}
-//		if ((priv&A_DELETE)&&(id!=0)) {
-		if (id>0) {
-			print("<INPUT TYPE=SUBMIT CLASS=frmButton NAME=submit VALUE='Delete' onClick=\"return ConfirmDelete();\">\r\n");
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['NOTEID']);
+		Q=db.notes.get(id);
+		NOTE=Q.rows[0];
+		if (Q==null || NOTE==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
 		}
-		print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
-		print("</TD></TR>\r\n");
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(NOTE, "tablename");
+			addfield(NOTE, "tableindex");
+			addfield(NOTE, "notetitle");
+			addfield(NOTE, "notetext");
+			if (!this.validate(NOTE)) {
+				this.view(NOTE['noteid']);
+				return;
+			}
+			if (!db.notes.set(NOTE)) {
+				printf("error saving record");
+				return;
+			}
+			printf("<script>\r\nns.status.show(\"note %d saved\", 5);\r\n</script>\r\n", NOTE['noteid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_note_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/notes/note?id=%d\");\r\n", NOTE['noteid']);
+				print("}, 50);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(NOTE['noteid']);
+			}
+			break;
+		case 'delete':
+			if (!db.notes.remove(NOTE)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>note %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"note %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_note_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
+		return;
 	}
-	print("</TABLE>\r\n");
-	print("</FORM>\r\n");
-	print("</CENTER>\r\n");
-	print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
-	if ((id<1)||(is_recycled)) {
-		print("showpage(2);\r\n");
-	//	print("document.noteedit.surname.focus();\r\n");
-	} else {
-		print("showpage(1);\r\n");
-	}
-	print("// -->\r\n</SCRIPT>\r\n");
-
-//	print("</CENTER><PRE>",serialize(Q),"</PRE>");
-
-	Q=null;
-	return;
-}
-
-function note_save() {
-	//notes.save();
-	noteid=tonumber(_POST['NOTEID']);
-	notetext=_POST['NOTETEXT'];
-	if (noteid>0) {
-		query=sprintf("update gw_notes set notetext = '%s' where noteid = %d", sql_escape(notetext), noteid);
-		sqlupdate(query);
-		print("success");
-	} else {
-		// new note...
-	}
-	//printf("[[_GLOBALS=%s]]", serialize(_GLOBALS));
 }
 
 try {
 	include_template("common.ns");
-	include_template("common.html.ns");
-	include_template("db.ns");
 	include("notes.lib.ns");
+	n=new note();
 	if (_SERVER['REQUEST_METHOD']=='POST') {
-		note_save();
+		note.save();
 	} else {
-		note_view();
+		note.view();
 	}
 } catch (ex) {
 	print("Exception: [",ex.description,"]");

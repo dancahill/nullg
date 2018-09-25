@@ -1,10 +1,17 @@
 <?nsp
 
 function search_notes() {
-	print("<br>\r\n");
+	//print("<br>\r\n");
 	print("<center>\r\n");
-	noteslist=db.notes.getlist();
-	if (noteslist._tuples<1) {
+	ui=new db.userinfo();
+	var userid = tonumber(_GET['USERID']);
+	if (userid==0) {
+		userid=ui.userid;
+	}
+	tablename='';
+	tableindex=0;
+	noteslist=db.notes.getlist(userid, tablename, tableindex);
+	if (noteslist.rows.length()<1) {
 		print("<b>Found 0 matching notes</b></center>\r\n");
 		return;
 	}
@@ -14,15 +21,26 @@ function search_notes() {
 	t.tableclass="contenttable";
 	t.autoaddcolumns=false;
 	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:ns.notes.view(%d)\"'>", tonumber(row['noteid']));
+		return sprintf("<td width=100%s onclick=\"return ns.dialog.create('/app/notes/note?id=%d');\">", '%', tonumber(row['noteid']));
 	};
 	fn=function (row, column) { id=tonumber(row['noteid']); if (row['notetitle']=="") return "";
-		return sprintf("<a href=\"javascript:ns.notes.view(%d);\">%s</a>", id, strtohtml(row['notetitle']));
+		return sprintf("<a class=\"dialog\" href=\"/app/notes/note?id=%d\">%s</a>", id, strtohtml(row['notetitle']));
 	};
 	t.addcolumn("notetitle", "Note Title", fn, fntd);
-	t.addcolumn("tablename", "Reference");
-	t.addcolumn("tableindex", "Reference ID");
-	t.addcolumn("obj_mtime", "Last Modified");
+	if (tablename!="") {
+		t.addcolumn("tablename", "Reference");
+	}
+	//t.addcolumn("tableindex", "Reference ID");
+	fn=function (row, column) {
+		ui=new db.userinfo();
+		parenttablename=row['tablename'];
+		if (parenttablename=='') parenttablename='notes';
+		sqr=sql.query(sprintf("SELECT COUNT(*) AS cnt FROM gw_notes WHERE obj_did = %d AND tablename = '%s' AND tableindex = %d", ui.domainid, parenttablename, tonumber(row['noteid'])));
+		return sqr.rows[0]['cnt'];
+	};
+	t.addcolumn("tableindex", "References", fn);
+	fn=function (row, column) { return sprintf("%s", row['obj_mtime'].sub(0, 10)); };
+	t.addcolumn("obj_mtime", "Last Modified", fn);
 	t.write();
 	print("</center>\r\n");
 	return;
@@ -30,13 +48,14 @@ function search_notes() {
 
 try {
 	include_template("common.ns");
-	include_template("db.ns");
-	include_template("class.html_table.ns");
-
-	html.headersubmenu(null);
-
+	include("notes.lib.ns");
+	notes.html.headermenu();
+	print("<div style='text-align:left'>");
+	notes.html.htselect_userfilter();
+	print("</div>");
 	search_notes();
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }
+
 ?>

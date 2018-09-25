@@ -1,0 +1,76 @@
+<?nsp
+class domain {
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['DOMAINID']:_GET['ID']);
+		Q=db.admin.domains.get(id);
+		rec=Q.rows[0];
+		if (Q==null || rec==null) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		var form=new html_form(rec);
+		print("<form id=domainedit name=domainedit METHOD=POST ACTION=\"/app/admin/domain\" onsubmit=\"return ns.dialog.submit(event, 'domain', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="domainid", type="hidden"});
+		print("<table class=\"contentform\">\r\n");
+		form.addfield({name="domainname", label="Domain Name", required=true});
+		print("</table>\r\n");
+		form.validate("gw_domains");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete' onClick=\"return ns.dialog.submit(event, 'domain', 'delete');\">\r\n");
+		print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</form>\r\n");
+		return;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['DOMAINID']);
+		Q=db.admin.domains.get(id);
+		rec=Q.rows[0];
+		if (Q==null || rec==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		folderid=tonumber(rec['folderid']);
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(rec, "domainname");
+			db.admin.domains.set(rec);
+			printf("domain %d saved", rec['domainid']);
+			this.view(rec['domainid']);
+			break;
+		case 'delete':
+			db.admin.domains.remove(rec);
+			printf("domain %d deleted", rec['domainid']);
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	print("<center>\r\n");
+	z=new domain();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		z.save();
+	} else {
+		z.view();
+	}
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

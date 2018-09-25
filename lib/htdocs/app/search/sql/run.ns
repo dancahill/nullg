@@ -24,19 +24,19 @@ function search_sql() {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
-		qname=Q['_rows'][0]['queryname'];
-		query=Q['_rows'][0]['query'];
+		qname=Q.rows[0]['queryname'];
+		query=Q.rows[0]['query'];
 	} else {
 		print("missing something?");
 		return;
 	}
 	if ((string.nicmp("SELECT", query, 6)!=0)&&(string.nicmp("SHOW", query, 4)!=0)) {
 		if (string.nicmp("DELETE", query, 6)==0) {
-			global Q=sqlquery(query);
+			global Q=sql.update(query);
 		} else if (string.nicmp("INSERT", query, 6)==0) {
-			global Q=sqlquery(query);
+			global Q=sql.update(query);
 		} else if (string.nicmp("UPDATE", query, 6)==0) {
-			global Q=sqlquery(query);
+			global Q=sql.update(query);
 		} else {
 			print("<CENTER>Unknown SQL query type.</CENTER>\r\n");
 			return;
@@ -48,7 +48,7 @@ function search_sql() {
 		}
 		return;
 	}
-	global Q=sqlquery(query);
+	global Q=sql.query(query);
 	if (typeof(Q)=='null') {
 		print("<CENTER>SQL query failed.</CENTER>\r\n");
 		return;
@@ -86,7 +86,7 @@ function search_sql() {
 		goto cleanup;
 	}
 */
-	if (Q._tuples<1) {
+	if (Q.rows.length()<1) {
 		print("<CENTER>Query [",qname,"] returned no results.</CENTER>\r\n");
 		return;
 	}
@@ -105,8 +105,8 @@ function search_sql() {
 	} else {
 		print("&lt;&lt;");
 	}
-	print(" ",qname," - ",Q._tuples," results ");
-	if (offset+_USER.pref.maxlist<Q._tuples) {
+	print(" ",qname," - ",Q.rows.length()," results ");
+	if (offset+_USER.pref.maxlist<Q.rows.length()) {
 		if (id>=0) {
 			print("<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">&gt;&gt;</A>");
 		} else {
@@ -118,19 +118,19 @@ function search_sql() {
 	print("<BR />\r\n<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0 STYLE='border-style:solid'>\r\n");
 	print("<TR>");
 	for (i=0;i<Q._fields;i++) {
-		print("<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>",strtohtml(iname(Q['_rows'][0], i)),"</TH>");
+		print("<TH ALIGN=LEFT NOWRAP STYLE='border-style:solid'>",strtohtml(iname(Q.rows[0], i)),"</TH>");
 	}
 	print("</TR>\r\n");
-	for (i=offset;(i<Q._tuples)&&(i<offset+_USER.pref.maxlist);i++) {
+	for (i=offset;(i<Q.rows.length())&&(i<offset+_USER.pref.maxlist);i++) {
 		print("<TR CLASS=\"FIELDVAL\">");
 		for (j=0;j<Q._fields;j++) {
-			print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q['_rows'][i][iname(Q['_rows'][i], j)]),"&nbsp;</TD>");
+			print("<TD NOWRAP STYLE='border-style:solid'>",strtohtml(Q.rows[i][iname(Q.rows[i], j)]),"&nbsp;</TD>");
 		}
 		print("</TR>\r\n");
 	}
 	print("</TABLE></CENTER>\r\n");
 	print("<CENTER>\r\n");
-	if (Q._tuples>_USER.pref.maxlist) {
+	if (Q.rows.length()>_USER.pref.maxlist) {
 		if (offset>(_USER.pref.maxlist-1)) {
 			if (id>=0) {
 				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset-_USER.pref.maxlist,"');\">");
@@ -139,13 +139,13 @@ function search_sql() {
 			}
 			min=offset-_USER.pref.maxlist+1;
 			max=offset;
-			if (min<0) min=0; else if (min>Q._tuples) min=Q._tuples;
-			if (max<0) max=0; else if (max>Q._tuples) max=Q._tuples;
+			if (min<0) min=0; else if (min>Q.rows.length()) min=Q.rows.length();
+			if (max<0) max=0; else if (max>Q.rows.length()) max=Q.rows.length();
 			print("Previous (",min," to ",max,")</A>]\r\n");
 		} else {
 			print("[Previous]\r\n");
 		}
-		if (offset+_USER.pref.maxlist<Q._tuples) {
+		if (offset+_USER.pref.maxlist<Q.rows.length()) {
 			if (id>=0) {
 				print("[<A HREF=\"/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"\" onClick=\"return ns.GoTo('/search/sql/run.ns?id=",id,"&offset=",offset+_USER.pref.maxlist,"');\">");
 			} else {
@@ -153,8 +153,8 @@ function search_sql() {
 			}
 			min=offset+_USER.pref.maxlist+1;
 			max=offset+_USER.pref.maxlist+_USER.pref.maxlist;
-			if (min<0) min=0; else if (min>Q._tuples) min=Q._tuples;
-			if (max<0) max=0; else if (max>Q._tuples) max=Q._tuples;
+			if (min<0) min=0; else if (min>Q.rows.length()) min=Q.rows.length();
+			if (max<0) max=0; else if (max>Q.rows.length()) max=Q.rows.length();
 			print("Next (",min," to ",max,")</A>]\r\n");
 		} else {
 			print("[Next]\r\n");

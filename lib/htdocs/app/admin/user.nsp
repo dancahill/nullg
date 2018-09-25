@@ -1,0 +1,456 @@
+<?nsp
+
+class user {
+	function view(id, rec) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['USERID']:_GET['ID']);
+		if (rec==null) {
+			Q=db.admin.users.get(id);
+			rec=Q.rows[0];
+			if (Q==null || rec==null) {
+				print("<center>No matching record found for ",id,"</center>\r\n");
+				return;
+			}
+		}
+		var form=new html_form(rec);
+		var tabset=new html_tabset({activepage=1,minheight=300});
+		//if (id==0) tabset.activepage=2;
+		readonly=false;
+		allowdelete=(id!=0&&id!=1);
+		//if (rec['userid']==1) readonly=true;//just for testing
+		if (id>0) tabset.addtab("SUMMARY");
+		tabset.addtab("USER");
+		tabset.addtab("PERSON");
+		tabset.addtab("ADDRESS");
+		tabset.addtab("PREFERENCES");
+		tabset.addtab("PERMISSIONS");
+		tabset.showtabs();
+		print("<form id=useredit name=useredit METHOD=POST ACTION=\"/app/admin/user\" onsubmit=\"return ns.dialog.submit(event, 'user', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		printf("<fieldset%s>\r\n", readonly?" disabled":"");
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		form.addfield({name="userid", type="hidden"});
+		if (id>0) {
+			tabset.pagebegin();
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			print("<tr><td>not done</td></tr>");
+			print("</table>\r\n");
+			tabset.pageend();
+		}
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="username", label="User Name", required=true});
+		form.addfield({name="password", src="password", label="Password", type="password"});
+		form.addfield({name="groupid", label="Default Group", type="select", handler=admin.html.htselect_group});
+		form.addfield({name="domainid", label="Domain", type="select", handler=admin.html.htselect_domain});
+		// form.addfield({name="enabled", label="Allow Login", required=true});
+		form.addfield({name="enabled", label="Allow Login", type="select", handler=admin.html.htselect_enabled});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="availability", type="placeholder"});
+		//form.addfield({name="availability", label="availability", required=false});
+		form.addfield({name="surname", label="Surname", required=false});
+		form.addfield({name="givenname", label="Given Name", required=false});
+		form.addfield({name="jobtitle", label="Job Title", required=false});
+		form.addfield({name="division", label="Division", required=false});
+		form.addfield({name="supervisor", label="Supervisor", required=false});
+		form.addfield({name="birthdate", label="Date of Birth", required=false});
+		form.addfield({name="hiredate", label="Hire Date", required=false});
+		form.addfield({name="sin", label="S.I.N.", required=false});
+		form.addfield({name="isactive", label="Active", required=false});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="homenumber", label="Home Phone", required=false});
+		form.addfield({name="worknumber", label="Work Phone", required=false});
+		form.addfield({name="faxnumber", label="FAX", required=false});
+		form.addfield({name="cellnumber", label="Cell Phone", required=false});
+		form.addfield({name="pagernumber", label="Pager", required=false});
+		form.addfield({name="email", label="E-Mail", required=false});
+		form.addfield({name="address", label="Address", required=false});
+		form.addfield({name="locality", label="City", required=false});
+		form.addfield({name="region", label="Province", required=false});
+		form.addfield({name="country", label="Country", required=false});
+		form.addfield({name="postalcode", label="Postal Code", required=false});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="prefdaystart", label="Calendar Day Start", type="select", handler=admin.html.htselect_daystart});
+		form.addfield({name="prefdaylength", label="Calendar Day Length", type="select", handler=admin.html.htselect_daylength});
+		form.addfield({name="prefmailcurrent", label="Current Mail Account", type="select", handler=admin.html.htselect_mailcurrent});
+		form.addfield({name="prefmaildefault", label="Default Mail Type", type="select", handler=admin.html.htselect_mailtype});
+		form.addfield({name="prefmaxlist", label="Maximum Results/Page", type="select", handler=admin.html.htselect_maxlist});
+		form.addfield({name="prefmenustyle", label="Menu and Frame Style", type="select", handler=admin.html.htselect_menustyle});
+		form.addfield({name="preftimezone", label="Time Zone", type="select", handler=admin.html.htselect_timezone});
+		form.addfield({name="prefgeozone", label="Geographic Zone", type="select", handler=admin.html.htselect_geozone});
+		form.addfield({name="preflanguage", label="Language", type="select", handler=admin.html.htselect_language});
+		form.addfield({name="preftheme", label="Theme", type="select", handler=admin.html.htselect_theme});
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+
+		printf("<tr><td></td>");
+		printf("<td><b>Read</b></td>");
+		printf("<td><b>Modify</b></td>");
+		printf("<td><b>Insert</b></td>");
+		printf("<td><b>Delete</b></td>");
+		printf("<td><b>Admin</b></td>");
+		print("<td style='width:90%'></td>");
+		printf("</tr>\r\n");
+
+		local function auth(rec, module) {
+			p=tonumber(rec[module]);
+			a={};
+			a.read   = p&1?true:false;
+			a.modify = p&2?true:false;
+			a.insert = p&4?true:false;
+			a.delete = p&8?true:false;
+			a.admin  = p&16?true:false;
+			return a;
+		}
+
+		form.addfield({name="authdomainadmin", type="placeholder"});
+		a=auth(rec, "authdomainadmin");
+		printf("<tr><td><b>%s</b></td>", "Domain Administration");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authdomainadmin_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authadmin", type="placeholder"});
+		a=auth(rec, "authadmin");
+		printf("<tr><td><b>%s</b></td>", "Administration");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authadmin_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authbookmarks", type="placeholder"});
+		a=auth(rec, "authbookmarks");
+		printf("<tr style='text-align:center'><td><b>%s</b></td>", "Bookmarks");
+		printf("<td><input type=checkbox class='nomargin' name=authbookmarks_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authbookmarks_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authbookmarks_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authbookmarks_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authbookmarks_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authcalendar", type="placeholder"});
+		a=auth(rec, "authcalendar");
+		printf("<tr><td><b>%s</b></td>", "Calendar");
+		printf("<td><input type=checkbox class='nomargin' name=authcalendar_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalendar_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalendar_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalendar_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalendar_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authcalls", type="placeholder"});
+		a=auth(rec, "authcalls");
+		printf("<tr><td><b>%s</b></td>", "Calls");
+		printf("<td><input type=checkbox class='nomargin' name=authcalls_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalls_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalls_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalls_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcalls_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authcontacts", type="placeholder"});
+		a=auth(rec, "authcontacts");
+		printf("<tr><td><b>%s</b></td>", "Contacts");
+		printf("<td><input type=checkbox class='nomargin' name=authcontacts_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcontacts_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcontacts_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcontacts_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authcontacts_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authemail", type="placeholder"});
+		a=auth(rec, "authemail");
+		printf("<tr><td><b>%s</b></td>", "E-Mail");
+		printf("<td><input type=checkbox class='nomargin' name=authemail_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authemail_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authemail_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authemail_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td></td>");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authfiles", type="placeholder"});
+		a=auth(rec, "authfiles");
+		printf("<tr><td><b>%s</b></td>", "Files");
+		printf("<td><input type=checkbox class='nomargin' name=authfiles_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfiles_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfiles_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfiles_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfiles_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authfinance", type="placeholder"});
+		a=auth(rec, "authfinance");
+		printf("<tr><td><b>%s</b></td>", "Finance");
+		printf("<td><input type=checkbox class='nomargin' name=authfinance_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfinance_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfinance_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfinance_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authfinance_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authforums", type="placeholder"});
+		a=auth(rec, "authforums");
+		printf("<tr><td><b>%s</b></td>", "Forums");
+		printf("<td><input type=checkbox class='nomargin' name=authforums_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authforums_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authforums_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authmessages", type="placeholder"});
+		a=auth(rec, "authmessages");
+		printf("<tr><td><b>%s</b></td>", "Messages");
+		printf("<td><input type=checkbox class='nomargin' name=authmessages_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authmessages_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authmessages_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td></td>");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authprofile", type="placeholder"});
+		a=auth(rec, "authprofile");
+		printf("<tr><td><b>%s</b></td>", "Profile");
+		printf("<td><input type=checkbox class='nomargin' name=authprofile_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authprofile_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authprojects", type="placeholder"});
+		a=auth(rec, "authprojects");
+		printf("<tr><td><b>%s</b></td>", "Projects");
+		printf("<td><input type=checkbox class='nomargin' name=authprojects_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authprojects_m value='1'%s></td>", a.modify?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authprojects_i value='1'%s></td>", a.insert?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authprojects_d value='1'%s></td>", a.delete?" checked":"");
+		printf("<td><input type=checkbox class='nomargin' name=authprojects_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		form.addfield({name="authquery", type="placeholder"});
+		a=auth(rec, "authquery");
+		printf("<tr><td><b>%s</b></td>", "Queries");
+		printf("<td><input type=checkbox class='nomargin' name=authquery_r value='1'%s></td>", a.read?" checked":"");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td></td>");
+		printf("<td><input type=checkbox class='nomargin' name=authquery_a value='1'%s></td>", a.admin?" checked":"");
+		printf("</tr>\r\n");
+
+		print("</table>\r\n");
+		tabset.pageend();
+
+		print("</div>");
+
+		print("<div style='clear:both;text-align:center'>");
+		form.validate("gw_users");
+		if (!readonly) {
+			print("<input type=hidden name=submitaction value=''>\r\n");
+			print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+			if (id>0 && allowdelete) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+			//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		}
+		print("</div>");
+		print("</fieldset>\r\n");
+		print("</form>\r\n");
+
+		title=rec['username'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_user_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	$('#birthdate').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	$('#hiredate').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		// printf("	setTimeout(function() {\r\n"); // must give time for the dialog to be created
+		// printf("		$(\"#dialog_user_%d\" ).dialog( \"option\", \"title\", \"User: %s\" );\r\n", id, strtohtml(title));
+		// printf("		ns.showtab(\"dialog_user_%d\", %d);\r\n", id, tabset.activepage);
+		// if (tabset.activepage==2) print("		document.useredit.username.focus();\r\n");
+		// printf("	}, 50);\r\n");
+		printf("});\r\n</script>");
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		if (rec['username'].length()<2) {
+			print("<b>username must be at least 3 characters long</b><br/>");
+			isvalid=false;
+		}
+		sqr=sql.query(sprintf("SELECT username FROM gw_users WHERE obj_did = %d AND userid <> %d AND username = '%s'", tonumber(rec['domainid']), tonumber(rec['userid']), sql.escape(rec['username'])));
+		if (sqr.rows.length()>0) {
+			printf("<b>username \"%s\" is already in use</b><br/>", strtohtml(rec['username']));
+			isvalid=false;
+		}
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		local function addauth(record, name) {
+			//printf("<div style='text-align:left;white-space:pre'>[%s]</div>", serialize(_POST));
+			value = _POST[name.toupper()+"_R"]!=null?1:0;
+			value += _POST[name.toupper()+"_M"]!=null?2:0;
+			value += _POST[name.toupper()+"_I"]!=null?4:0;
+			value += _POST[name.toupper()+"_D"]!=null?8:0;
+			value += _POST[name.toupper()+"_A"]!=null?16:0;
+			if (value&16) value=31;
+			//printf("<div style='text-align:left;white-space:pre'>[%s][%s]</div>", name, serialize(value));
+			uid=tonumber(record["userid"]);
+			if (uid==1 && value!=31) {
+				if (name=="authdomainadmin") {
+					printf("user 1 cannot be demoted from domain admin<br/>");
+					value=31;
+				}
+				if (name=="authadmin") {
+					printf("user 1 cannot be demoted from admin<br/>");
+					value=31;
+				}
+			}
+			return value;
+		}
+
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['USERID']);
+		Q=db.admin.users.get(id);
+		rec=Q.rows[0];
+		if (Q==null || rec==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		//folderid=tonumber(rec['folderid']);
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			birthdate=_POST["BIRTHDATE"];
+			if (birthdate=="") birthdate="1900-01-01";
+			hiredate=_POST["HIREDATE"];
+			if (hiredate=="") hiredate="1900-01-01";
+			addfield(rec, "username");
+			if (_POST['PASSWORD'].length()>0) {
+				newpass=auth_md5pass(_POST['PASSWORD']);
+				addfield(rec, "password", newpass);
+			}
+			addfield(rec, "groupid");
+			addfield(rec, "domainid");
+			addfield(rec, "enabled");
+			addfield(rec, "authdomainadmin", addauth(rec, "authdomainadmin"));
+			addfield(rec, "authadmin", addauth(rec, "authadmin"));
+			addfield(rec, "authbookmarks", addauth(rec, "authbookmarks"));
+			addfield(rec, "authcalendar", addauth(rec, "authcalendar"));
+			addfield(rec, "authcalls", addauth(rec, "authcalls"));
+			addfield(rec, "authcontacts", addauth(rec, "authcontacts"));
+			addfield(rec, "authemail", addauth(rec, "authemail"));
+			addfield(rec, "authfiles", addauth(rec, "authfiles"));
+			addfield(rec, "authfinance", addauth(rec, "authfinance"));
+			addfield(rec, "authforums", addauth(rec, "authforums"));
+			addfield(rec, "authmessages", addauth(rec, "authmessages"));
+			addfield(rec, "authprofile", addauth(rec, "authprofile"));
+			addfield(rec, "authprojects", addauth(rec, "authprojects"));
+			addfield(rec, "authquery", addauth(rec, "authquery"));
+			addfield(rec, "prefdaystart");
+			addfield(rec, "prefdaylength");
+			addfield(rec, "prefmailcurrent");
+			addfield(rec, "prefmaildefault");
+			addfield(rec, "prefmaxlist");
+			addfield(rec, "prefmenustyle");
+			addfield(rec, "preftimezone");
+			addfield(rec, "prefgeozone");
+			addfield(rec, "preflanguage");
+			addfield(rec, "preftheme");
+			//addfield(rec, "availability");
+			addfield(rec, "surname");
+			addfield(rec, "givenname");
+			addfield(rec, "jobtitle");
+			addfield(rec, "division");
+			addfield(rec, "supervisor");
+			addfield(rec, "address");
+			addfield(rec, "locality");
+			addfield(rec, "region");
+			addfield(rec, "country");
+			addfield(rec, "postalcode");
+			addfield(rec, "homenumber");
+			addfield(rec, "worknumber");
+			addfield(rec, "faxnumber");
+			addfield(rec, "cellnumber");
+			addfield(rec, "pagernumber");
+			addfield(rec, "email");
+			addfield(rec, "birthdate", birthdate);
+			addfield(rec, "hiredate", hiredate);
+			addfield(rec, "sin");
+			addfield(rec, "isactive");
+			if (!this.validate(rec)) {
+				this.view(rec['userid'], rec);
+				return;
+			}
+			if (!db.admin.users.set(rec)) {
+				printf("error saving record");
+				return;
+			}
+			printf("<script>\r\nns.status.show(\"user %d saved\", 5);\r\n</script>\r\n", rec['userid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_user_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/admin/user?id=%d\");\r\n", rec['userid']);
+				print("}, 50);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(rec['userid']);
+			}
+			break;
+		case 'delete':
+			if (!db.admin.users.remove(rec)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>user %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"user %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_user_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	u=new user();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		u.save();
+	} else {
+		u.view();
+	}
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

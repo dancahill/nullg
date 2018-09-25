@@ -1,0 +1,39 @@
+<?nsp
+
+function list_groups() {
+	Q=db.admin.groups.getlist();
+	print("<br>\r\n");
+	if (Q.rows.length()<1) {
+		print("<b>Found 0 matching domains</b>\r\n");
+		return;
+	}
+	t=new html_table();
+	t.datasource=Q;
+	t.tablename="T2";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	fntd=function (row, column) {
+		url=sprintf("/app/admin/group?id=%d", tonumber(row['groupid']));
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+	};
+	fn=function (row, column) {
+		url=sprintf("/app/admin/group?id=%d", tonumber(row['groupid']));
+		return sprintf("<a class=\"dialog\" href=\"%s\">%s</a>", url, strtohtml(row['groupname']));
+	};
+	t.addcolumn("groupname", "Group Name", fn, fntd);
+	t.write();
+	printf("<a class=\"dialog\" href=\"/app/admin/group?id=0\">%s</a>", strtohtml("New Group"));
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	admin.html.headermenu();
+	print("<center>\r\n");
+	list_groups();
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+?>

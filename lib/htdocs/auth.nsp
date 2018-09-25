@@ -1,5 +1,5 @@
 <?nsp
-include_template("common.html.ns");
+include_template("common.ns");
 if (_USER==null) {
 ?>
 <br />
@@ -33,5 +33,11 @@ ns.login.PrepForm();
 	html.headersubmenu(null);
 	html.motd();
 	print("</div>\r\n");
+	//ui=new db.userinfo();
+	//_USER['pref']['menustyle']
+	//printf("<script>\r\nns.loadtheme(\"%s\");\r\n</script>\r\n", ui.pref('theme'));
+	printf("<script>\r\nns.loadtheme(\"%s\");\r\n</script>\r\n", _USER['preftheme']);
+	//printf("_USER=[%s]", serialize(_USER));
+	//printf("_USER=[%s]", serialize(_USER['pref']));
 }
 ?>

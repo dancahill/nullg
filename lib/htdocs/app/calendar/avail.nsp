@@ -1,4 +1,5 @@
 <?nsp
+include_template("common.ns");
 include("calendar.lib.ns");
 calendar.html.headermenu(0);
 print("Avail - The calendar app is not started yet.");

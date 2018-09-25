@@ -6,7 +6,7 @@ function list_mailaccounts() {
 	mail.html.headermenu();
 	global Q=db.mailaccounts.getlist();
 	print("<br>\r\n");
-	if (Q._tuples<1) {
+	if (Q.rows.length()<1) {
 		print("<b>Found 0 matching mail accounts</b>\r\n");
 		return;
 	}
@@ -16,8 +16,9 @@ function list_mailaccounts() {
 	t.tableclass="contenttable";
 	t.autoaddcolumns=false;
 	fn=function (row, column) {
-		text=sprintf("<td onclick=\"ns.mail.accountview(event, %d);\">", tonumber(row['mailaccountid']));
-		text+=sprintf("<a href=\"javascript:ns.mail.accountview(event, %d);\">%s</a></td>", tonumber(row['mailaccountid']), strtohtml(row['accountname']));
+		url=sprintf("/app/mail/accounts/account?id=%d", tonumber(row['mailaccountid']));
+		text="<td onclick=\"return ns.dialog.create('"+url+"');\">";
+		text+=sprintf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(row['accountname']));
 		return text;
 	};
 	t.addcolumn("accountname", "E-Mail Account", fn);
@@ -27,7 +28,6 @@ function list_mailaccounts() {
 
 try {
 	include_template("common.ns");
-	include_template("class.html_table.ns");
 	include("../mail.lib.ns");
 	print("<center>\r\n");
 	list_mailaccounts();

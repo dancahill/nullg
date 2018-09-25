@@ -16,18 +16,41 @@ namespace db {
 			//};
 			//print(serialize(_USER));
 		}
+		function auth(name) {
+			//printf("<hr>_USER = [%s]<hr>", serialize(_USER));
+			p=tonumber(_USER['auth'+name.tolower()]);
+			a={};
+			a.none   = p==0?true:false;
+			a.read   = p&1?true:false;
+			a.modify = p&2?true:false;
+			a.insert = p&4?true:false;
+			a.delete = p&8?true:false;
+			a.admin  = p&16?true:false;
+			//printf("<hr>a = [%s]<hr>", serialize(a));
+			return a;
+		}
+		function pref(name) {
+			//printf("<hr>_USER = [%s]<hr>", serialize(_USER));
+			switch (name) {
+			case 'daystart' : return tonumber(_USER['prefdaystart']);
+			case 'daylength': return tonumber(_USER['prefdaylength']);
+			case 'theme': return _USER['preftheme'];
+			default:
+				throw sprintf("userinfo() pref '%s' not defined", name);
+			}
+		}
 	};
 
 	function getblanksqr(tablename) {
-		var userinfo = db.getuserinfo();
+		ui = new db.userinfo();
 		sqr = {
 			_tuples = 1;
-			_rows = {
+			rows = {
 				[0] = {
 				}
 			}
 		};
-		row=sqr['_rows'][0];
+		row=sqr.rows[0];
 		if (db.schema==null) {
 			throw "db.schema not found - include db.schema.ns from "+_filename;
 		}
@@ -40,28 +63,17 @@ namespace db {
 					row[field[0]]="";
 				}
 			}
-			sqr['_rows'][0]['obj_did']=userinfo.domainid;
-			sqr['_rows'][0]['obj_uid']=userinfo.userid;
+			sqr.rows[0]['obj_did']=ui.domainid;
+			sqr.rows[0]['obj_uid']=ui.userid;
 			return sqr;
 		}
 		return null;
 	}
-	function getuserinfo() {
-		userid = tonumber(_USER['userid']);
-		if (userid==0) throw "authentication required";
-		var info = {
-//			var maildefault = tonumber(_USER['pref']['maildefault']);
-//			var maxlist     = tonumber(_USER['pref']['maxlist']);
-//			var menustyle   = tonumber(_USER['pref']['menustyle']);
-//			var userid      = tonumber(_USER['userid']);
-//			var offset=0;
-			userid   = tonumber(_USER['userid']);
-			groupid  = tonumber(_USER['groupid']);
-			domainid = tonumber(_USER['obj_did']);
-			username = _USER['username'];
-		};
-		//print(serialize(_USER));
-		return info;
+	function checksqlerror(sqr) {
+		if (sqr.error==null) return;
+		printf("<div style='white-space:pre;color:red'><hr>query = %s<hr>error = %s<hr>sqr = %s<hr></div>",
+			strtohtml(sqr.query), strtohtml(sqr.error), strtohtml(serialize(sqr)));
+		throw "sql error";
 	}
 	function createtemplate(tablename) {
 		foreach (t in db.schema) {
@@ -75,20 +87,23 @@ namespace db {
 				if (b!="") b+=",";
 				b+="?";
 			}
-			printf("c = new sqlcommand(\"INSERT INTO %s (%s) VALUES (%s);\");\r\n", tablename, a, b);
-
-			printf("c.addvalue('obj_ctime', time.sqltime(time.gmtime()));\r\n");
-			printf("c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
-			printf("c.addvalue('obj_uid', userinfo.userid);\r\n");
-			printf("c.addvalue('obj_gid', userinfo.groupid);\r\n");
-			printf("c.addvalue('obj_did', userinfo.domainid);\r\n");
-			printf("c.addvalue('obj_gperm', 0);\r\n");
-			printf("c.addvalue('obj_operm', 0);\r\n");
-
+			printf("<div style='text-align:left;white-space:pre'><hr/>");
+			printf("function set(record) {\r\n");
+			printf("			ui = new db.userinfo();\r\n");
+			printf("	if (record['Xid']==0) {\r\n");
+			// print INSERT helpers
+			printf("	c = new sqlcommand(\"INSERT INTO %s (%s) VALUES (%s);\");\r\n", tablename, a, b);
+			printf("	c.addvalue('obj_ctime', time.sqltime(time.gmtime()));\r\n");
+			printf("	c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
+			printf("	c.addvalue('obj_uid', ui.userid);\r\n");
+			printf("	c.addvalue('obj_gid', ui.groupid);\r\n");
+			printf("	c.addvalue('obj_did', ui.domainid);\r\n");
+			printf("	c.addvalue('obj_gperm', 0);\r\n");
+			printf("	c.addvalue('obj_operm', 0);\r\n");
 			foreach (f in t.fields) {
 				fname=f[0];
 				if (fname.startswith("obj_")) continue;
-				printf("c.addvalue(\"%s\", record[\"%s\"]);\r\n", fname, fname);
+				printf("	c.addvalue(\"%s\", record[\"%s\"]);\r\n", fname, fname);
 			}
 			a="";
 			b="";
@@ -104,10 +119,12 @@ namespace db {
 					a+=sprintf("%s=?", fname);
 				}
 			}
+			printf("<hr/>");
+			print("		sql.update(c.tostring());\r\n");
+			print("	} else {\r\n");
+			// print UPDATE helpers
 			printf("c = new sqlcommand(\"UPDATE %s SET %s %s;\");\r\n", tablename, a, b);
-
 			printf("c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
-
 			first=true;
 			foreach (f in t.fields) {
 				fname=f[0];
@@ -120,132 +137,481 @@ namespace db {
 				}
 			}
 			printf("%s", b);
-
-
+			print("		sql.update(c.tostring());\r\n");
+			print("	}\r\n");
+			print("	//printf(\"[%s]\", c.tostring());\r\n");
+			print("}\r\n");
+			printf("<hr/>");
+			// print POST values to grab
 			foreach (f in t.fields) {
 				fname=f[0];
-				printf("record[\"%s\"] = _POST[\"%s\"];\r\n", fname, fname.toupper());
+				//printf("record[\"%s\"] = _POST[\"%s\"];\r\n", fname, fname.toupper());
+				printf("addfield(rec, \"%s\");\r\n", fname);
 				//CONTACT['surname'] =_POST['SURNAME'];
 			}
+			printf("</div>");
 		}
 	}
 	admin = {
 		domains = {
 			function getlist() {
-				var userinfo = db.getuserinfo();
+				ui=new db.userinfo();
 				query=sprintf("SELECT * FROM gw_domains;");
-				sqr=sqlquery(query);
+				sqr=sql.query(query);
 				return sqr;
 			}
-			function getuser(id) {
+			function get(id) {
+				id=tonumber(id);
+				ui=new db.userinfo();
+				if (id==0) {
+					rec = db.getblanksqr("gw_domains");
+					rec.rows[0]['domainname']='New Domain';
+					return rec;
+				}
+				sqr=sql.query("select * from gw_domains where domainid = "+id+";");
+				return sqr;
+			}
+			function set(record) {
+				ui = new db.userinfo();
+				if (record['domainid']==0) {
+					c = new sqlcommand("INSERT INTO gw_domains (domainid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,domainname) VALUES (?,?,?,?,?,?,?,?,?);");
+					c.addvalue("domainid", record["domainid"]);
+					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_uid', ui.userid);
+					c.addvalue('obj_gid', ui.groupid);
+					c.addvalue('obj_did', ui.domainid);
+					c.addvalue('obj_gperm', 0);
+					c.addvalue('obj_operm', 0);
+					c.addvalue("domainname", record["domainname"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+					if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+					record['domainid']=sqr.lastinsertedid;
+				} else {
+					c = new sqlcommand("UPDATE gw_domains SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,domainname=? WHERE domainid=?;");
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue("obj_uid", record["obj_uid"]);
+					c.addvalue("obj_gid", record["obj_gid"]);
+					c.addvalue("obj_did", record["obj_did"]);
+					c.addvalue("obj_gperm", record["obj_gperm"]);
+					c.addvalue("obj_operm", record["obj_operm"]);
+					c.addvalue("domainname", record["domainname"]);
+					c.addvalue("domainid", record["domainid"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+				}
+				//printf("[%s]", c.tostring());
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+			function remove(record) {
+				ui=new db.userinfo();
+				if (ui.domainid==tonumber(record['domainid'])) {
+					throw "you cannot delete your own domain";
+					return;
+				}
+				c = new sqlcommand("DELETE FROM gw_domains WHERE domainid=?;");
+				c.addvalue('domainid', record['domainid']);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+		};
+		groups = {
+			function getlist() {
+				ui=new db.userinfo();
+				query=sprintf("SELECT * FROM gw_groups;");
+				sqr=sql.query(query);
+				return sqr;
+			}
+			function get(id) {
+				id=tonumber(id);
+				ui=new db.userinfo();
+				if (id==0) {
+					rec = db.getblanksqr("gw_groups");
+					rec.rows[0]['groupname']='New Group';
+					return rec;
+				}
+				sqr=sql.query("select * from gw_groups where groupid = "+id+";");
+				return sqr;
+			}
+			function set(record) {
+				ui = new db.userinfo();
+				if (record['groupid']==0) {
+					c = new sqlcommand("INSERT INTO gw_groups (groupid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,groupname,availability,motd) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
+					c.addvalue("groupid", record["groupid"]);
+					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_uid', ui.userid);
+					c.addvalue('obj_gid', ui.groupid);
+					c.addvalue('obj_did', ui.domainid);
+					c.addvalue('obj_gperm', 0);
+					c.addvalue('obj_operm', 0);
+					c.addvalue("groupname", record["groupname"]);
+					c.addvalue("availability", record["availability"]);
+					c.addvalue("motd", record["motd"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+					if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+					record['groupid']=sqr.lastinsertedid;
+				} else {
+					c = new sqlcommand("UPDATE gw_groups SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,groupname=?,availability=?,motd=? WHERE groupid=?;");
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue("obj_uid", record["obj_uid"]);
+					c.addvalue("obj_gid", record["obj_gid"]);
+					c.addvalue("obj_did", record["obj_did"]);
+					c.addvalue("obj_gperm", record["obj_gperm"]);
+					c.addvalue("obj_operm", record["obj_operm"]);
+					c.addvalue("groupname", record["groupname"]);
+					c.addvalue("availability", record["availability"]);
+					c.addvalue("motd", record["motd"]);
+					c.addvalue("groupid", record["groupid"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+				}
+				//printf("[%s]", c.tostring());
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+			function remove(record) {
+				ui=new db.userinfo();
+				c = new sqlcommand("DELETE FROM gw_groups WHERE obj_did=? AND groupid=?;");
+				c.addvalue('obj_did', ui.domainid);
+				c.addvalue('groupid', record['groupid']);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
 			}
 		};
 		users = {
 			function getlist() {
-				var userinfo = db.getuserinfo();
+				ui=new db.userinfo();
 				query=sprintf("SELECT * FROM gw_users;");
-				sqr=sqlquery(query);
+				sqr=sql.query(query);
 				return sqr;
 			}
-			function getuser(id) {
+			function get(id) {
+				id=tonumber(id);
+				ui=new db.userinfo();
+				if (id==0) {
+					rec = db.getblanksqr("gw_users");
+					rec.rows[0]['username']='New User';
+					rec.rows[0]['preflanguage']='en';
+					rec.rows[0]['preftheme']='default';
+					rec.rows[0]['birthdate']='1900-01-01';
+					rec.rows[0]['hiredate']='1900-01-01';
+					return rec;
+				}
+				sqr=sql.query("select * from gw_users where userid = "+id+";");
+				return sqr;
+			}
+			function set(record) {
+				ui = new db.userinfo();
+				if (record['userid']==0) {
+					c = new sqlcommand("INSERT INTO gw_users (userid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,username,password,groupid,domainid,enabled,authdomainadmin,authadmin,authbookmarks,authcalendar,authcalls,authcontacts,authemail,authfiles,authfinance,authforums,authmessages,authprofile,authprojects,authquery,prefdaystart,prefdaylength,prefmailcurrent,prefmaildefault,prefmaxlist,prefmenustyle,preftimezone,prefgeozone,preflanguage,preftheme,availability,surname,givenname,jobtitle,division,supervisor,address,locality,region,country,postalcode,homenumber,worknumber,faxnumber,cellnumber,pagernumber,email,birthdate,hiredate,sin,isactive) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+					c.addvalue("userid", record["userid"]);
+					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_uid', ui.userid);
+					c.addvalue('obj_gid', ui.groupid);
+					c.addvalue('obj_did', ui.domainid);
+					c.addvalue('obj_gperm', 0);
+					c.addvalue('obj_operm', 0);
+					c.addvalue("username", record["username"]);
+					c.addvalue("password", record["password"]);
+					c.addvalue("groupid", record["groupid"]);
+					c.addvalue("domainid", record["domainid"]);
+					c.addvalue("enabled", record["enabled"]);
+					c.addvalue("authdomainadmin", record["authdomainadmin"]);
+					c.addvalue("authadmin", record["authadmin"]);
+					c.addvalue("authbookmarks", record["authbookmarks"]);
+					c.addvalue("authcalendar", record["authcalendar"]);
+					c.addvalue("authcalls", record["authcalls"]);
+					c.addvalue("authcontacts", record["authcontacts"]);
+					c.addvalue("authemail", record["authemail"]);
+					c.addvalue("authfiles", record["authfiles"]);
+					c.addvalue("authfinance", record["authfinance"]);
+					c.addvalue("authforums", record["authforums"]);
+					c.addvalue("authmessages", record["authmessages"]);
+					c.addvalue("authprofile", record["authprofile"]);
+					c.addvalue("authprojects", record["authprojects"]);
+					c.addvalue("authquery", record["authquery"]);
+					c.addvalue("prefdaystart", record["prefdaystart"]);
+					c.addvalue("prefdaylength", record["prefdaylength"]);
+					c.addvalue("prefmailcurrent", record["prefmailcurrent"]);
+					c.addvalue("prefmaildefault", record["prefmaildefault"]);
+					c.addvalue("prefmaxlist", record["prefmaxlist"]);
+					c.addvalue("prefmenustyle", record["prefmenustyle"]);
+					c.addvalue("preftimezone", record["preftimezone"]);
+					c.addvalue("prefgeozone", record["prefgeozone"]);
+					c.addvalue("preflanguage", record["preflanguage"]);
+					c.addvalue("preftheme", record["preftheme"]);
+					c.addvalue("availability", record["availability"]);
+					c.addvalue("surname", record["surname"]);
+					c.addvalue("givenname", record["givenname"]);
+					c.addvalue("jobtitle", record["jobtitle"]);
+					c.addvalue("division", record["division"]);
+					c.addvalue("supervisor", record["supervisor"]);
+					c.addvalue("address", record["address"]);
+					c.addvalue("locality", record["locality"]);
+					c.addvalue("region", record["region"]);
+					c.addvalue("country", record["country"]);
+					c.addvalue("postalcode", record["postalcode"]);
+					c.addvalue("homenumber", record["homenumber"]);
+					c.addvalue("worknumber", record["worknumber"]);
+					c.addvalue("faxnumber", record["faxnumber"]);
+					c.addvalue("cellnumber", record["cellnumber"]);
+					c.addvalue("pagernumber", record["pagernumber"]);
+					c.addvalue("email", record["email"]);
+					c.addvalue("birthdate", record["birthdate"]);
+					c.addvalue("hiredate", record["hiredate"]);
+					c.addvalue("sin", record["sin"]);
+					c.addvalue("isactive", record["isactive"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+					if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+					record['userid']=sqr.lastinsertedid;
+				} else {
+					c = new sqlcommand("UPDATE gw_users SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,username=?,password=?,groupid=?,domainid=?,enabled=?,authdomainadmin=?,authadmin=?,authbookmarks=?,authcalendar=?,authcalls=?,authcontacts=?,authemail=?,authfiles=?,authfinance=?,authforums=?,authmessages=?,authprofile=?,authprojects=?,authquery=?,prefdaystart=?,prefdaylength=?,prefmailcurrent=?,prefmaildefault=?,prefmaxlist=?,prefmenustyle=?,preftimezone=?,prefgeozone=?,preflanguage=?,preftheme=?,availability=?,surname=?,givenname=?,jobtitle=?,division=?,supervisor=?,address=?,locality=?,region=?,country=?,postalcode=?,homenumber=?,worknumber=?,faxnumber=?,cellnumber=?,pagernumber=?,email=?,birthdate=?,hiredate=?,sin=?,isactive=? WHERE userid=?;");
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue("obj_uid", record["obj_uid"]);
+					c.addvalue("obj_gid", record["obj_gid"]);
+					c.addvalue("obj_did", record["obj_did"]);
+					c.addvalue("obj_gperm", record["obj_gperm"]);
+					c.addvalue("obj_operm", record["obj_operm"]);
+					c.addvalue("username", record["username"]);
+					c.addvalue("password", record["password"]);
+					c.addvalue("groupid", record["groupid"]);
+					c.addvalue("domainid", record["domainid"]);
+					c.addvalue("enabled", record["enabled"]);
+					c.addvalue("authdomainadmin", record["authdomainadmin"]);
+					c.addvalue("authadmin", record["authadmin"]);
+					c.addvalue("authbookmarks", record["authbookmarks"]);
+					c.addvalue("authcalendar", record["authcalendar"]);
+					c.addvalue("authcalls", record["authcalls"]);
+					c.addvalue("authcontacts", record["authcontacts"]);
+					c.addvalue("authemail", record["authemail"]);
+					c.addvalue("authfiles", record["authfiles"]);
+					c.addvalue("authfinance", record["authfinance"]);
+					c.addvalue("authforums", record["authforums"]);
+					c.addvalue("authmessages", record["authmessages"]);
+					c.addvalue("authprofile", record["authprofile"]);
+					c.addvalue("authprojects", record["authprojects"]);
+					c.addvalue("authquery", record["authquery"]);
+					c.addvalue("prefdaystart", record["prefdaystart"]);
+					c.addvalue("prefdaylength", record["prefdaylength"]);
+					c.addvalue("prefmailcurrent", record["prefmailcurrent"]);
+					c.addvalue("prefmaildefault", record["prefmaildefault"]);
+					c.addvalue("prefmaxlist", record["prefmaxlist"]);
+					c.addvalue("prefmenustyle", record["prefmenustyle"]);
+					c.addvalue("preftimezone", record["preftimezone"]);
+					c.addvalue("prefgeozone", record["prefgeozone"]);
+					c.addvalue("preflanguage", record["preflanguage"]);
+					c.addvalue("preftheme", record["preftheme"]);
+					c.addvalue("availability", record["availability"]);
+					c.addvalue("surname", record["surname"]);
+					c.addvalue("givenname", record["givenname"]);
+					c.addvalue("jobtitle", record["jobtitle"]);
+					c.addvalue("division", record["division"]);
+					c.addvalue("supervisor", record["supervisor"]);
+					c.addvalue("address", record["address"]);
+					c.addvalue("locality", record["locality"]);
+					c.addvalue("region", record["region"]);
+					c.addvalue("country", record["country"]);
+					c.addvalue("postalcode", record["postalcode"]);
+					c.addvalue("homenumber", record["homenumber"]);
+					c.addvalue("worknumber", record["worknumber"]);
+					c.addvalue("faxnumber", record["faxnumber"]);
+					c.addvalue("cellnumber", record["cellnumber"]);
+					c.addvalue("pagernumber", record["pagernumber"]);
+					c.addvalue("email", record["email"]);
+					c.addvalue("birthdate", record["birthdate"]);
+					c.addvalue("hiredate", record["hiredate"]);
+					c.addvalue("sin", record["sin"]);
+					c.addvalue("isactive", record["isactive"]);
+					c.addvalue("userid", record["userid"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+				}
+				//printf("[%s]", c.tostring());
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+			function remove(record) {
+				ui=new db.userinfo();
+				if (ui.domainid==tonumber(record['obj_did']) && ui.userid==tonumber(record['userid'])) {
+					throw "you cannot delete your own account";
+					return;
+				}
+				c = new sqlcommand("DELETE FROM gw_users WHERE obj_did=? AND userid=?;");
+				c.addvalue('obj_did', ui.domainid);
+				c.addvalue('userid', record['userid']);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+		};
+		zones = {
+			function getlist() {
+				ui=new db.userinfo();
+				query=sprintf("SELECT * FROM gw_zones;");
+				sqr=sql.query(query);
+				return sqr;
+			}
+			function get(id) {
+				id=tonumber(id);
+				ui=new db.userinfo();
+				if (id==0) {
+					rec = db.getblanksqr("gw_zones");
+					rec.rows[0]['zonename']='New Zone';
+					return rec;
+				}
+				sqr=sql.query("select * from gw_zones where zoneid = "+id+";");
+				return sqr;
+			}
+			function set(record) {
+				ui = new db.userinfo();
+				if (record['zoneid']==0) {
+					c = new sqlcommand("INSERT INTO gw_zones (zoneid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,zonename) VALUES (?,?,?,?,?,?,?,?,?);");
+					c.addvalue("zoneid", record["zoneid"]);
+					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_uid', ui.userid);
+					c.addvalue('obj_gid', ui.groupid);
+					c.addvalue('obj_did', ui.domainid);
+					c.addvalue('obj_gperm', 0);
+					c.addvalue('obj_operm', 0);
+					c.addvalue("zonename", record["zonename"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+					if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+					record['zoneid']=sqr.lastinsertedid;
+				} else {
+					c = new sqlcommand("UPDATE gw_zones SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,zonename=? WHERE zoneid=?;");
+					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue("obj_uid", record["obj_uid"]);
+					c.addvalue("obj_gid", record["obj_gid"]);
+					c.addvalue("obj_did", record["obj_did"]);
+					c.addvalue("obj_gperm", record["obj_gperm"]);
+					c.addvalue("obj_operm", record["obj_operm"]);
+					c.addvalue("zonename", record["zonename"]);
+					c.addvalue("zoneid", record["zoneid"]);
+					sqr=sql.update(c.tostring());
+					db.checksqlerror(sqr);
+				}
+				//printf("[%s]", c.tostring());
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
+			}
+			function remove(record) {
+				ui=new db.userinfo();
+				c = new sqlcommand("DELETE FROM gw_zones WHERE obj_did=? AND zoneid=?;");
+				c.addvalue('obj_did', ui.domainid);
+				c.addvalue('zoneid', record['zoneid']);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				//printf("rows affected=[%d]", sqr.rowsaffected);
+				return (sqr.rowsaffected>0);
 			}
 		};
 	};
 	bookmarks = {
 		function getcurrentfolder() {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			currentfolder={ id=0, parentid=-1, name="Bookmarks" };
 			if (_GET['FOLDERID']==null) {
 				c = new sqlcommand("SELECT * FROM gw_bookmarks_folders WHERE parentid = 0 AND foldername = 'users';");
-				q1=sqlquery(c.tostring());
+				q1=sql.query(c.tostring());
 
-				if (q1._tuples!=1) return currentfolder;
-				currentfolder={ id=tonumber(q1['_rows'][0]['folderid']), name=q1['_rows'][0]['foldername'] };
+				if (q1.rows.length()!=1) return currentfolder;
+				currentfolder={ id=tonumber(q1.rows[0]['folderid']), name=q1.rows[0]['foldername'] };
 
 				c = new sqlcommand("SELECT * FROM gw_bookmarks_folders WHERE parentid = ? AND foldername = ?;");
 				c.addvalue('parentid', currentfolder.id);
 				c.addvalue('foldername', _USER['username']);
-				q2=sqlquery(c.tostring());
+				q2=sql.query(c.tostring());
 
-				if (q2._tuples!=1) return currentfolder;
-				currentfolder={ id=tonumber(q2['_rows'][0]['folderid']), parentid=tonumber(q2['_rows'][0]['parentid']), name=q2['_rows'][0]['foldername'] };
+				if (q2.rows.length()!=1) return currentfolder;
+				currentfolder={ id=tonumber(q2.rows[0]['folderid']), parentid=tonumber(q2.rows[0]['parentid']), name=q2.rows[0]['foldername'] };
 			} else {
 				id=tonumber(_GET['FOLDERID']);
-				q1=sqlquery(sprintf("SELECT * FROM gw_bookmarks_folders WHERE folderid = %d;", id));
-				if (q1._tuples!=1)  return currentfolder;
-				currentfolder={ id=tonumber(q1['_rows'][0]['folderid']), parentid=tonumber(q1['_rows'][0]['parentid']), name=q1['_rows'][0]['foldername'] };
+				q1=sql.query(sprintf("SELECT * FROM gw_bookmarks_folders WHERE folderid = %d;", id));
+				if (q1.rows.length()!=1)  return currentfolder;
+				currentfolder={ id=tonumber(q1.rows[0]['folderid']), parentid=tonumber(q1.rows[0]['parentid']), name=q1.rows[0]['foldername'] };
 			}
 			return currentfolder;
 		}
 		function getlist(folderid) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			query=sprintf("SELECT * FROM gw_bookmarks WHERE folderid = %d ORDER BY bookmarkname;", folderid);
-			sqr=sqlquery(query);
+			sqr=sql.query(query);
 			return sqr;
 		}
 		function getfolderlist(folderid) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			query=sprintf("SELECT * FROM gw_bookmarks_folders WHERE parentid = %d ORDER BY foldername;", folderid);
-			sqr=sqlquery(query);
+			sqr=sql.query(query);
 			return sqr;
 		}
 		function getbookmark(id) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			id=tonumber(id);
 			if (id==0) {
 				bookmark = db.getblanksqr("gw_bookmarks");
 				if (_GET['FOLDERID']!=null) {
-					bookmark['_rows'][0]['folderid']=tonumber(_GET['FOLDERID']);
+					bookmark.rows[0]['folderid']=tonumber(_GET['FOLDERID']);
 				} else {
 					var currentfolder=db.bookmarks.getcurrentfolder();
-					bookmark['_rows'][0]['folderid']=currentfolder.id;
+					bookmark.rows[0]['folderid']=currentfolder.id;
 				}
-				bookmark['_rows'][0]['bookmarkname']='New Bookmark';
-				bookmark['_rows'][0]['bookmarkurl']='http://';
+				bookmark.rows[0]['bookmarkname']='New Bookmark';
+				bookmark.rows[0]['bookmarkurl']='http://';
 				return bookmark;
 			}
-			sqr=sqlquery("select * from gw_bookmarks where bookmarkid = "+id+";");
+			sqr=sql.query("select * from gw_bookmarks where bookmarkid = "+id+";");
 			return sqr;
 		}
 		function getfolder(id) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			id=tonumber(id);
 			if (id==0) {
 				folder = db.getblanksqr("gw_bookmarks_folders");
 				if (_GET['PARENTID']!=null) {
-					folder['_rows'][0]['parentid']=tonumber(_GET['PARENTID']);
+					folder.rows[0]['parentid']=tonumber(_GET['PARENTID']);
 				} else {
 					var currentfolder=db.bookmarks.getcurrentfolder();
-					folder['_rows'][0]['parentid']=currentfolder.id;
+					folder.rows[0]['parentid']=currentfolder.id;
 				}
-				folder['_rows'][0]['foldername']='New Bookmark Folder';
+				folder.rows[0]['foldername']='New Bookmark Folder';
 				return folder;
 			}
-			sqr=sqlquery("select * from gw_bookmarks_folders where folderid = "+id+";");
+			sqr=sql.query("select * from gw_bookmarks_folders where folderid = "+id+";");
 			return sqr;
 		}
 		function setbookmark(bookmark) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (bookmark['bookmarkid']==0) {
-				newid=sqlgetsequence("gw_bookmarks");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				bookmark['bookmarkid']=newid;
 				c = new sqlcommand("INSERT INTO gw_bookmarks (bookmarkid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,bookmarkname,bookmarkurl) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('bookmarkid', tonumber(bookmark['bookmarkid']));
 				c.addvalue('obj_ctime', time.sqltime());
 				c.addvalue('obj_mtime', time.sqltime());
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue('folderid', tonumber(bookmark['folderid']));
 				c.addvalue('bookmarkname', bookmark['bookmarkname']);
 				c.addvalue('bookmarkurl', bookmark['bookmarkurl']);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				//print(serialize(sqr));
+				bookmark['bookmarkid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,bookmarkname=?,bookmarkurl=? WHERE bookmarkid=?;");
 				c.addvalue('obj_mtime', time.sqltime());
@@ -258,31 +624,31 @@ namespace db {
 				c.addvalue('bookmarkname', bookmark['bookmarkname']);
 				c.addvalue('bookmarkurl', bookmark['bookmarkurl']);
 				c.addvalue('bookmarkid', tonumber(bookmark['bookmarkid']));
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function setfolder(folder) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (folder['folderid']==0) {
-				newid=sqlgetsequence("gw_bookmarks_folders");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				folder['folderid']=newid;
 				c = new sqlcommand("INSERT INTO gw_bookmarks_folders (folderid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,parentid,foldername) VALUES (?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('folderid', tonumber(folder['folderid']));
 				c.addvalue('obj_ctime', time.sqltime());
 				c.addvalue('obj_mtime', time.sqltime());
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue('parentid', tonumber(folder['parentid']));
 				c.addvalue('foldername', folder['foldername']);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				folder['folderid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks_folders SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,parentid=?,foldername=? WHERE folderid=?;");
 				c.addvalue('obj_mtime', time.sqltime());
@@ -294,24 +660,33 @@ namespace db {
 				c.addvalue('parentid', tonumber(folder['parentid']));
 				c.addvalue('foldername', folder['foldername']);
 				c.addvalue('folderid', tonumber(folder['folderid']));
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function deletebookmark(bookmark) {
 			c = new sqlcommand("DELETE FROM gw_bookmarks WHERE bookmarkid=?;");
 			c.addvalue('bookmarkid', bookmark['bookmarkid']);
-			sqlupdate(c.tostring());
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function deletefolder(folder) {
 			c = new sqlcommand("DELETE FROM gw_bookmarks_folders WHERE folderid=?;");
 			c.addvalue('folderid', folder['folderid']);
-			sqlupdate(c.tostring());
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
 	contacts = {
 		function getlist() {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
 				var text=sql_escape(_POST['SEARCHTEXT'].tolower());
 				query="SELECT * FROM gw_contacts WHERE";
@@ -319,40 +694,33 @@ namespace db {
 				query+=" OR LOWER(givenname) LIKE '%"+text+"%'";
 				query+=" OR LOWER(organization) LIKE '%"+text+"%'";
 				query+=" ORDER BY UPPER(surname);";
-				sqr=sqlquery(query);
+				sqr=sql.query(query);
 			} else {
-				sqr=sqlquery("SELECT * FROM gw_contacts ORDER BY UPPER(surname);");
+				sqr=sql.query("SELECT * FROM gw_contacts ORDER BY UPPER(surname);");
 			}
 			return sqr;
 		}
 		function get(id) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			id=tonumber(id);
 			if (id==0) {
 				contact = db.getblanksqr("gw_contacts");
-				contact['_rows'][0]['surname']='New Contact';
-				//contact = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
+				contact.rows[0]['surname']='New Contact';
 				return contact;
 			}
-			sqr=sqlquery("select * from gw_contacts where contactid = "+id+";");
+			sqr=sql.query("select * from gw_contacts where contactid = "+id+";");
 			return sqr;
 		}
 		function set(record) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (record['contactid']==0) {
-				newid=sqlgetsequence("gw_contacts");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				record['contactid']=newid;
 				c = new sqlcommand("INSERT INTO gw_contacts (contactid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,username,password,enabled,geozone,timezone,surname,givenname,salutation,contacttype,referredby,altcontact,prefbilling,email,website,website2,website3,website4,website5,homenumber,worknumber,faxnumber,mobilenumber,jobtitle,organization,homeaddress,homelocality,homeregion,homecountry,homepostalcode,workaddress,worklocality,workregion,workcountry,workpostalcode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("contactid", tonumber(record["contactid"]));
 				c.addvalue('obj_ctime', time.sqltime());
 				c.addvalue('obj_mtime', time.sqltime());
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue("folderid", record["folderid"]);
@@ -390,7 +758,10 @@ namespace db {
 				c.addvalue("workregion", record["workregion"]);
 				c.addvalue("workcountry", record["workcountry"]);
 				c.addvalue("workpostalcode", record["workpostalcode"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				record['contactid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_contacts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,username=?,password=?,enabled=?,geozone=?,timezone=?,surname=?,givenname=?,salutation=?,contacttype=?,referredby=?,altcontact=?,prefbilling=?,email=?,website=?,website2=?,website3=?,website4=?,website5=?,homenumber=?,worknumber=?,faxnumber=?,mobilenumber=?,jobtitle=?,organization=?,homeaddress=?,homelocality=?,homeregion=?,homecountry=?,homepostalcode=?,workaddress=?,worklocality=?,workregion=?,workcountry=?,workpostalcode=? WHERE contactid=?;");
 				c.addvalue('obj_mtime', time.sqltime());
@@ -435,86 +806,70 @@ namespace db {
 				c.addvalue("workcountry", record["workcountry"]);
 				c.addvalue("workpostalcode", record["workpostalcode"]);
 				c.addvalue("contactid", record["contactid"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function remove(contact) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			c = new sqlcommand("DELETE FROM gw_contacts WHERE contactid=? AND obj_did=? AND obj_uid=?;");
 			c.addvalue('contactid', contact['contactid']);
-			c.addvalue('obj_did', userinfo.domainid);
-			c.addvalue('obj_uid', userinfo.userid);
-			sqlupdate(c.tostring());
+			c.addvalue('obj_did', ui.domainid);
+			c.addvalue('obj_uid', ui.userid);
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
-
-
-
 	events = {
 		// expand filtering to include assignedto user or group, and a range of dates for the start of the event
-		function getlist(startdate1, startdate2, userid, groupid) {
-			var userinfo = db.getuserinfo();
+		function getlist(startdate1, startdate2, userid, groupid, status) {
 			ui=new db.userinfo();
-			//if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
-				//var text=sql_escape(_POST['SEARCHTEXT'].tolower());
-				query=sprintf("SELECT * FROM gw_events WHERE obj_did = %d", ui.domainid);
-				if (startdate1!=null) query+=" AND eventstart >= '"+startdate1+"'";
-				if (startdate2!=null) query+=" AND eventstart < '"+startdate2+"'";
-				if (userid!=null && userid>0) query+=" AND assignedto = "+userid+"";
-
-				//query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
-
-				//query+=" LOWER(eventname) LIKE '%"+text+"%'";
-				//query+=" OR LOWER(givenname) LIKE '%"+text+"%'";
-				//query+=" OR LOWER(organization) LIKE '%"+text+"%'";
-				query+=" ORDER BY eventstart;";
-				sqr=sqlquery(query);
-			//} else {
-			//	sqr=sqlquery("SELECT * FROM gw_events ORDER BY eventstart;");
-			//}
+			groupid=tonumber(groupid);
+			userid=tonumber(userid);
+			status=tonumber(status);
+			query=sprintf("SELECT * FROM gw_events WHERE obj_did = %d", ui.domainid);
+			if (startdate1!=null) query+=" AND eventstart >= '"+startdate1+"'";
+			if (startdate2!=null) query+=" AND eventstart < '"+startdate2+"'";
+			if (status==0 || status==1) query+=" AND status = "+status+"";//status 2 is all, so no filter
+			if (userid>0) query+=" AND assignedto = "+userid+"";
+			query+=" ORDER BY eventstart;";
+			sqr=sql.query(query);
 			return sqr;
 		}
 		function get(id) {
 			ui=new db.userinfo();
-			//var userinfo = db.getuserinfo();
 			id=tonumber(id);
 			if (id==0) {
 				event = db.getblanksqr("gw_events");
-				event['_rows'][0]['eventname']='New Event';
-
-				event['_rows'][0]['assignedby']=ui.userid;
-				event['_rows'][0]['assignedto']=ui.userid;
-				event['_rows'][0]['busy']=1;
-				event['_rows'][0]['priority']=2;
-
+				event.rows[0]['eventname']='New Event';
+				event.rows[0]['assignedby']=ui.userid;
+				event.rows[0]['assignedto']=ui.userid;
+				event.rows[0]['busy']=1;
+				event.rows[0]['priority']=2;
 				t=time.mktime(time.gmtime())+900;
 				t-=t%900;
-				event['_rows'][0]['eventstart']=time.sqltime(time.gmtime(t));
-				event['_rows'][0]['eventfinish']=time.sqltime(time.gmtime(t+900));
-
-				//contact = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New Contact'}}}};
+				event.rows[0]['eventstart']=time.sqltime(time.gmtime(t));
+				event.rows[0]['eventfinish']=time.sqltime(time.gmtime(t+900));
 				return event;
 			}
-			sqr=sqlquery("select * from gw_events where eventid = "+id+";");
+			sqr=sql.query("SELECT * FROM gw_events WHERE eventid = "+id+";");
 			return sqr;
 		}
 		function set(record) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (record['eventid']==0) {
-				newid=sqlgetsequence("gw_events");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				record['eventid']=newid;
 				c = new sqlcommand("INSERT INTO gw_events (eventid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,eventname,eventtype,contactid,projectid,priority,reminder,eventstart,eventfinish,busy,status,closingstatus,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
-				c.addvalue("eventid", record["eventid"]);
+				c.addvalue("eventid", 0);
 				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
 				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue("assignedby", record["assignedby"]);
@@ -531,7 +886,10 @@ namespace db {
 				c.addvalue("status", record["status"]);
 				c.addvalue("closingstatus", record["closingstatus"]);
 				c.addvalue("details", record["details"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "last inserted id is invalid";
+				record['eventid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_events SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,eventname=?,eventtype=?,contactid=?,projectid=?,priority=?,reminder=?,eventstart=?,eventfinish=?,busy=?,status=?,closingstatus=?,details=? WHERE eventid=?;");
 				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
@@ -555,67 +913,53 @@ namespace db {
 				c.addvalue("closingstatus", record["closingstatus"]);
 				c.addvalue("details", record["details"]);
 				c.addvalue("eventid", record["eventid"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function remove(event) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			c = new sqlcommand("DELETE FROM gw_events WHERE eventid=? AND obj_did=? AND obj_uid=?;");
 			c.addvalue('eventid', event['eventid']);
-			c.addvalue('obj_did', userinfo.domainid);
-			c.addvalue('obj_uid', userinfo.userid);
-			sqlupdate(c.tostring());
+			c.addvalue('obj_did', ui.domainid);
+			c.addvalue('obj_uid', ui.userid);
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	mailaccounts = {
 		function getlist() {
-			var userinfo = db.getuserinfo();
-			sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname;", userinfo.userid));
+			ui=new db.userinfo();
+			sqr=sql.query(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY accountname;", ui.userid));
 			return sqr;
 		}
 		function get(id) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			id=tonumber(id);
 			if (id==0) {
 				account = {_tuples=1,_rows={[0]={id=0,pid=tonumber(_USER['domainid']),did=tonumber(_USER['domainid']),_data={cn='New E-Mail Account'}}}};
 				return contact;
 			}
-			sqr=sqlquery(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", userinfo.userid, id));
+			sqr=sql.query(sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d AND mailaccountid = %d;", ui.userid, id));
 			return sqr;
 		}
 		function set(record) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (record['mailaccountid']==0) {
-				newid=sqlgetsequence("gw_email_accounts");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				record['mailaccountid']=newid;
 				c = new sqlcommand("INSERT INTO gw_email_accounts (mailaccountid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountname,realname,organization"+
 					",address,replyto,hosttype,popusername,poppassword,pophost,popport,popssl,smtpauth,smtphost,smtpport,smtpssl,notify,remove,showdebug,signature"+
 					") VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('mailaccountid', tonumber(record['mailaccountid']));
 				c.addvalue('obj_ctime', time.sqltime());
 				c.addvalue('obj_mtime', time.sqltime());
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue('accountname', record['accountname']);
@@ -637,7 +981,10 @@ namespace db {
 				c.addvalue('remove', record['remove']);
 				c.addvalue('showdebug', record['showdebug']);
 				c.addvalue('signature', record['signature']);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				record['mailaccountid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_email_accounts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,accountname=?,realname=?,organization=?,address=?,replyto=?,hosttype=?"+
 					",popusername=?,poppassword=?,pophost=?,popport=?,popssl=?,smtpauth=?,smtphost=?,smtpport=?,smtpssl=?,notify=?,remove=?,showdebug=?,signature=? WHERE mailaccountid=?;");
@@ -667,32 +1014,40 @@ namespace db {
 				c.addvalue('showdebug', record['showdebug']);
 				c.addvalue('signature', record['signature']);
 				c.addvalue('mailaccountid', tonumber(record['mailaccountid']));
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function remove(record) {
 			printf("<b>not implemented</b><br>");
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			//return (sqr.rowsaffected>0);
 		}
 	};
 	mailheaders = {
 		function get(id) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			id=tonumber(id);
 			if (id==0) {
 				sqr = db.getblanksqr("gw_email_headers");
-				sqr['_rows'][0]['hdr_subject']='';
+				sqr.rows[0]['hdr_subject']='';
 				return sqr;
 			}
-			sqr=sqlquery(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d;", userinfo.userid, id));
+			sqr=sql.query(sprintf("SELECT * FROM gw_email_headers WHERE obj_uid = %d and mailheaderid = %d;", ui.userid, id));
 			return sqr;
 		}
 	};
 	notes = {
-		function getlist() {
-			var userinfo = db.getuserinfo();
-			query=sprintf("SELECT * FROM gw_notes WHERE obj_uid = %d;", userinfo.userid);
-			sqr=sqlquery(query);
+		function getlist(userid, tablename, tableindex) {
+			ui=new db.userinfo();
+			userid=tonumber(userid);
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d", ui.domainid);
+			if (userid>0) query+=sprintf(" AND obj_uid = %d", userid);
+			if (tablename!=null) query+=sprintf(" AND tablename = '%s' AND tableindex = %d", tablename, tableindex);
+			sqr=sql.query(query);
 			return sqr;
 		}
 		function get(id) {
@@ -700,37 +1055,185 @@ namespace db {
 			id=tonumber(id);
 			if (id==0) {
 				sqr = db.getblanksqr("gw_notes");
-				sqr['_rows'][0]['notetitle']='New Note';
-				sqr['_rows'][0]['notetext']='';
+				sqr.rows[0]['notetitle']='New Note';
+				sqr.rows[0]['notetext']='';
 				return sqr;
 			}
-			sqr=sqlquery(sprintf("select * from gw_notes where obj_did = %d and noteid = %d;", ui.domainid, id));
+			sqr=sql.query(sprintf("select * from gw_notes where obj_did = %d and noteid = %d;", ui.domainid, id));
 			return sqr;
 		}
-		function set() {
+		function set(record) {
+			ui=new db.userinfo();
+			if (record['noteid']==0) {
+				c = new sqlcommand("INSERT INTO gw_notes (noteid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,tablename,tableindex,notetitle,notetext) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue("noteid", record["noteid"]);
+				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue("tablename", record["tablename"]);
+				c.addvalue("tableindex", record["tableindex"]);
+				c.addvalue("notetitle", record["notetitle"]);
+				c.addvalue("notetext", record["notetext"]);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				record['noteid']=sqr.lastinsertedid;
+			} else {
+				c = new sqlcommand("UPDATE gw_notes SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,tablename=?,tableindex=?,notetitle=?,notetext=? WHERE noteid=?;");
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue("obj_uid", record["obj_uid"]);
+				c.addvalue("obj_gid", record["obj_gid"]);
+				c.addvalue("obj_did", record["obj_did"]);
+				c.addvalue("obj_gperm", record["obj_gperm"]);
+				c.addvalue("obj_operm", record["obj_operm"]);
+				c.addvalue("tablename", record["tablename"]);
+				c.addvalue("tableindex", record["tableindex"]);
+				c.addvalue("notetitle", record["notetitle"]);
+				c.addvalue("notetext", record["notetext"]);
+				c.addvalue("noteid", tonumber(record["noteid"]));
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+			}
+			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
+		}
+		function remove(record) {
+			ui=new db.userinfo();
+			c = new sqlcommand("DELETE FROM gw_notes WHERE obj_did=? AND noteid=?;");
+			c.addvalue('obj_did', ui.domainid);
+			c.addvalue('noteid', tonumber(record['noteid']));
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
 	profile = {
 		function get() {
-			var userinfo = db.getuserinfo();
-			query=sprintf("select * from gw_users where userid = %d and obj_did = %d;", userinfo.userid, userinfo.domainid);
-			return sqlquery(query);
+			ui=new db.userinfo();
+			query=sprintf("SELECT * FROM gw_users WHERE obj_did = %d AND userid = %d;", ui.domainid, ui.userid);
+			return sql.query(query);
 		}
-		function set() {
+		function set(record) {
+			ui=new db.userinfo();
+			c = new sqlcommand("UPDATE gw_users SET obj_mtime=?,password=?,prefdaystart=?,prefdaylength=?,prefmailcurrent=?,prefmaildefault=?,prefmaxlist=?,prefmenustyle=?,preftimezone=?,prefgeozone=?,preflanguage=?,preftheme=? WHERE domainid=? AND userid=?;");
+			c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+			c.addvalue("password", record["password"]);
+			c.addvalue("prefdaystart", tonumber(record["prefdaystart"]));
+			c.addvalue("prefdaylength", tonumber(record["prefdaylength"]));
+			c.addvalue("prefmailcurrent", tonumber(record["prefmailcurrent"]));
+			c.addvalue("prefmaildefault", tonumber(record["prefmaildefault"]));
+			c.addvalue("prefmaxlist", tonumber(record["prefmaxlist"]));
+			c.addvalue("prefmenustyle", tonumber(record["prefmenustyle"]));
+			c.addvalue("preftimezone", tonumber(record["preftimezone"]));
+			c.addvalue("prefgeozone", tonumber(record["prefgeozone"]));
+			c.addvalue("preflanguage", record["preflanguage"]);
+			c.addvalue("preftheme", record["preftheme"]);
+			c.addvalue("domainid", ui.domainid);
+			c.addvalue("userid", ui.userid);
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
+		}
+	};
+	projects = {
+		function get(id) {
+			local function today() {
+				d=new datetime();
+				d.unixtime+=d.gettzoffset();
+				d.unixtime-=d.unixtime%86400;
+				return d.unixtime;
+			}
+			id=tonumber(id);
+			ui=new db.userinfo();
+			if (id==0) {
+				project = db.getblanksqr("gw_projects");
+				project.rows[0]['projectname']='New Project';
+				project.rows[0]['projectadmin']=ui.userid;
+				t=time.sqltime(today()).sub(0, 10);
+				project.rows[0]['projectstart']=t;
+				project.rows[0]['projectfinish']=t;
+				project.rows[0]['status']=0;
+				project.rows[0]['details']='';
+				return project;
+			}
+			sqr=sql.query("select * from gw_projects where obj_did = "+ui.domainid+" AND projectid = "+id+";");
+			return sqr;
+		}
+		function set(record) {
+			ui=new db.userinfo();
+			if (record['projectid']==0) {
+				c = new sqlcommand("INSERT INTO gw_projects (projectid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,projectname,projectadmin,projectstart,projectfinish,status,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				c.addvalue("projectid", record["projectid"]);
+				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
+				c.addvalue('obj_gperm', 0);
+				c.addvalue('obj_operm', 0);
+				c.addvalue("projectname", record["projectname"]);
+				c.addvalue("projectadmin", tonumber(record["projectadmin"]));
+				c.addvalue("projectstart", record["projectstart"]);
+				c.addvalue("projectfinish", record["projectfinish"]);
+				c.addvalue("status", tonumber(record["status"]));
+				c.addvalue("details", record["details"]);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				record['projectid']=sqr.lastinsertedid;
+			} else {
+				c = new sqlcommand("UPDATE gw_projects SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,projectname=?,projectadmin=?,projectstart=?,projectfinish=?,status=?,details=? WHERE projectid=?;");
+				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue("obj_uid", record["obj_uid"]);
+				c.addvalue("obj_gid", record["obj_gid"]);
+				c.addvalue("obj_did", record["obj_did"]);
+				c.addvalue("obj_gperm", record["obj_gperm"]);
+				c.addvalue("obj_operm", record["obj_operm"]);
+				c.addvalue("projectname", record["projectname"]);
+				c.addvalue("projectadmin", tonumber(record["projectadmin"]));
+				c.addvalue("projectstart", record["projectstart"]);
+				c.addvalue("projectfinish", record["projectfinish"]);
+				c.addvalue("status", tonumber(record["status"]));
+				c.addvalue("details", record["details"]);
+				c.addvalue("projectid", record["projectid"]);
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+			}
+			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
+		}
+		function remove(project) {
+			ui=new db.userinfo();
+			c = new sqlcommand("DELETE FROM gw_projects WHERE obj_did=? AND projectid=?;");
+			c.addvalue('obj_did', ui.domainid);
+			c.addvalue('projectid', project['projectid']);
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
 	tasks = {
 		function getlist() {
 /*
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (_SERVER['REQUEST_METHOD']=='POST' && _POST['SEARCHTEXT']!=null) {
 				var text=sql_escape(_POST['SEARCHTEXT'].tolower());
 				query="SELECT * FROM gw_tasks WHERE";
 				query+=" LOWER(eventname) LIKE '%"+text+"%'";
 				query+=" ORDER BY eventstart;";
-				sqr=sqlquery(query);
+				sqr=sql.query(query);
 			} else {
-				sqr=sqlquery("SELECT * FROM gw_tasks ORDER BY eventstart;");
+				sqr=sql.query("SELECT * FROM gw_tasks ORDER BY eventstart;");
 			}
 			return sqr;
 */
@@ -740,36 +1243,28 @@ namespace db {
 			ui=new db.userinfo();
 			if (id==0) {
 				task = db.getblanksqr("gw_tasks");
-				task['_rows'][0]['taskname']='New Task';
-				task['_rows'][0]['assignedby']=ui.userid;
-				task['_rows'][0]['assignedto']=ui.userid;
-				task['_rows'][0]['priority']=2;
-
+				task.rows[0]['taskname']='New Task';
+				task.rows[0]['assignedby']=ui.userid;
+				task.rows[0]['assignedto']=ui.userid;
+				task.rows[0]['priority']=2;
 				t=time.mktime(time.gmtime())+900;
 				t-=t%900;
-				task['_rows'][0]['duedate']=time.sqltime(time.gmtime(t));
-
+				task.rows[0]['duedate']=time.sqltime(time.gmtime(t));
 				return task;
 			}
-			sqr=sqlquery("select * from gw_tasks where taskid = "+id+";");
+			sqr=sql.query("select * from gw_tasks where taskid = "+id+";");
 			return sqr;
 		}
 		function set(record) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			if (record['taskid']==0) {
-				newid=sqlgetsequence("gw_tasks");
-				if (newid<1) {
-					printf("newid<1 '%d' ??", newid);
-					return;
-				}
-				record['taskid']=newid;
 				c = new sqlcommand("INSERT INTO gw_tasks (taskid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,taskname,contactid,projectid,duedate,priority,progress,reminder,status,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("taskid", record["taskid"]);
 				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
 				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_uid', userinfo.userid);
-				c.addvalue('obj_gid', userinfo.groupid);
-				c.addvalue('obj_did', userinfo.domainid);
+				c.addvalue('obj_uid', ui.userid);
+				c.addvalue('obj_gid', ui.groupid);
+				c.addvalue('obj_did', ui.domainid);
 				c.addvalue('obj_gperm', 0);
 				c.addvalue('obj_operm', 0);
 				c.addvalue("assignedby", record["assignedby"]);
@@ -783,7 +1278,10 @@ namespace db {
 				c.addvalue("reminder", record["reminder"]);
 				c.addvalue("status", record["status"]);
 				c.addvalue("details", record["details"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
+				if (sqr.lastinsertedid<1) throw "lastinsertedid is invalid";
+				record['taskid']=sqr.lastinsertedid;
 			} else {
 				c = new sqlcommand("UPDATE gw_tasks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,taskname=?,contactid=?,projectid=?,duedate=?,priority=?,progress=?,reminder=?,status=?,details=? WHERE taskid=?;");
 				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
@@ -804,17 +1302,23 @@ namespace db {
 				c.addvalue("status", record["status"]);
 				c.addvalue("details", record["details"]);
 				c.addvalue("taskid", record["taskid"]);
-				sqlupdate(c.tostring());
+				sqr=sql.update(c.tostring());
+				db.checksqlerror(sqr);
 			}
 			//printf("[%s]", c.tostring());
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 		function remove(task) {
-			var userinfo = db.getuserinfo();
+			ui=new db.userinfo();
 			c = new sqlcommand("DELETE FROM gw_tasks WHERE taskid=? AND obj_did=? AND obj_uid=?;");
 			c.addvalue('taskid', task['taskid']);
-			c.addvalue('obj_did', userinfo.domainid);
-			c.addvalue('obj_uid', userinfo.userid);
-			sqlupdate(c.tostring());
+			c.addvalue('obj_did', ui.domainid);
+			c.addvalue('obj_uid', ui.userid);
+			sqr=sql.update(c.tostring());
+			db.checksqlerror(sqr);
+			//printf("rows affected=[%d]", sqr.rowsaffected);
+			return (sqr.rowsaffected>0);
 		}
 	};
 };

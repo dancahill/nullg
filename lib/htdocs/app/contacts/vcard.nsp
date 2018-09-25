@@ -1,3 +1,4 @@
+<?nsp
 
 //	snprintf(sid->dat->out_ContentDisposition, sizeof(sid->dat->out_ContentDisposition)-1, "attachment; filename=\"%s%s%s.vcf\"", contact.givenname, strlen(contact.givenname)?" ":"", contact.surname);
 //	send_header(sid, 1, 200, "1", "application/octet-stream", -1, -1);
@@ -42,3 +43,4 @@ END:VCARD
 	prints(sid, "REV:%s\r\n", mtime);
 	prints(sid, "END:VCARD\r\n");
 */
+?>

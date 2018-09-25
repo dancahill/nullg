@@ -5,15 +5,15 @@ global bookmarks = {
 global bookmarkhtml = {
 	function headermenu(folderid) {
 		var menuitems = {
-			{ text="LIST BOOKMARKS"; href="/app/bookmarks/";                                     onclick="return ns.GoTo(event);";                };
-			{ text="NEW BOOKMARK";   href="/app/bookmarks/bookmark?id=0&folderid="+folderid; onclick="return ns.ModalForm(event, 'bookmark', 0);";       };
-			{ text="NEW FOLDER";     href="/app/bookmarks/bookmarkfolder?id=0&parentid="+folderid;   onclick="return ns.ModalForm(event, 'bookmarkfolder', 0);"; };
+			{ text="LIST BOOKMARKS"; cls="main",   href="/app/bookmarks/";                                       };
+			{ text="NEW BOOKMARK";   cls="dialog", href="/app/bookmarks/bookmark?id=0&folderid="+folderid;       };
+			{ text="NEW FOLDER";     cls="dialog", href="/app/bookmarks/bookmarkfolder?id=0&parentid="+folderid; };
 		};
 		html.headersubmenu(menuitems);
 	};
 	function show_searchform() {
 		print("<div style='margin:auto;text-align:right;'>");
-		print("<form id=bookmarksearch name=bookmarksearch method=post action=\"/app/bookmarks/list\" onsubmit=\"return ns.ModalSubmit(event, 'bookmarksearch', 'save');\" enctype='multipart/form-data'>");
+		print("<form id=bookmarksearch name=bookmarksearch method=post action=\"/app/bookmarks/list\" onsubmit=\"return ns.dialog.submit(event, 'bookmarksearch', 'save');\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Bookmarks' required='required' autocorrect='off'>");
 		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
 		print("</form>");
@@ -21,7 +21,7 @@ global bookmarkhtml = {
 	};
 	function htselect_bookmarkfolder_r(sqr, depth, parentid, selected) {
 		foldercount=0;
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			pid=tonumber(row['parentid']);
 			if (pid==parentid) {
 				fid=tonumber(row['folderid']);
@@ -34,9 +34,10 @@ global bookmarkhtml = {
 		return foldercount;
 	};
 	function htselect_bookmarkfolder(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT folderid, parentid, foldername FROM gw_bookmarks_folders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		selected=tonumber(selected);
+		ui = new db.userinfo();
+		query=sprintf("SELECT folderid, parentid, foldername FROM gw_bookmarks_folders WHERE obj_did = %d ORDER BY parentid ASC, foldername ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'>Root Folder</option>\r\n");
 		bookmarkhtml.htselect_bookmarkfolder_r(sqr, 1, 0, selected);
 	}

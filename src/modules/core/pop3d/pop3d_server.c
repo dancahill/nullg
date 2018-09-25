@@ -492,7 +492,7 @@ static void pop3_remote(CONN *conn)
 	} while (1);
 	for (i = 0;i < mdir.mboxtotal;i++) {
 		if (mdir.msg[i]->deleted == 1) {
-			sql_updatef(proc->N, "UPDATE gw_email_headers SET folder = 4 WHERE accountid = %d AND obj_uid = %d AND mailheaderid = %d", conn->dat->mailcurrent, conn->dat->uid, mdir.msg[i]->localid);
+			sql_updatef(proc->N, NULL, "UPDATE gw_email_headers SET folder = 4 WHERE accountid = %d AND obj_uid = %d AND mailheaderid = %d", conn->dat->mailcurrent, conn->dat->uid, mdir.msg[i]->localid);
 		}
 	}
 cleanup:
@@ -508,12 +508,16 @@ cleanup:
 void pop3_dorequest(CONN *conn)
 {
 	char curdate[32];
+	char expdate[32];
 	char line[128];
 	char username[64];
 	char domain[64];
 	char password[64];
 	int mbox;
 	char *ptemp;
+
+	obj_t *qptr = NULL;
+	int ruleid = 0;
 
 	memset(username, 0, sizeof(username));
 	memset(domain, 0, sizeof(domain));
@@ -581,9 +585,26 @@ void pop3_dorequest(CONN *conn)
 	} while (1);
 	conn->state = 1;
 	log_access(proc->N, "pop3d", "%s - SUCCESSFUL AUTH: %s @ %s", conn->dat->RemoteAddr, username, domain);
+
 	memset(curdate, 0, sizeof(curdate));
 	time_unix2sql(curdate, sizeof(curdate) - 1, time(NULL));
-	sql_updatef(proc->N, "INSERT INTO gw_smtp_relayrules (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, ruletype, persistence, ipaddress) values ('%s', '%s', %d, 0, %d, 'allow', 'temp', '%s')", curdate, curdate, conn->dat->did, conn->dat->did, conn->dat->RemoteAddr);
+	memset(expdate, 0, sizeof(expdate));
+	time_unix2sql(expdate, sizeof(expdate) - 1, time(NULL) + 1800);
+	//time_unix2sql(expdate, sizeof(expdate) - 1, time(NULL) - mod_config.popauth_window);
+
+	sql_updatef(proc->N, NULL, "DELETE FROM gw_smtp_relayrules WHERE persistence <> 'perm' AND expires < '%s'", curdate);
+
+	if (sql_queryf(proc->N, &qptr, "SELECT relayruleid FROM gw_smtp_relayrules WHERE ruletype = 'allow' AND persistence = 'temp' AND ipaddress = '%s' ORDER BY relayruleid ASC", conn->dat->RemoteAddr) < 0) return;
+	if (sql_numtuples(proc->N, &qptr)>0) {
+		ruleid = atoi(sql_getvalue(proc->N, &qptr, 0, 0));
+	}
+	sql_freeresult(proc->N, &qptr);
+
+	if (ruleid > 0) {
+		sql_updatef(proc->N, NULL, "UPDATE gw_smtp_relayrules SET obj_mtime = '%s', obj_did = %d, expires = '%s', reason = 'POP3 Login: %s@%s' WHERE relayruleid = %d", curdate, conn->dat->did, expdate, username, domain, ruleid);
+	} else {
+		sql_updatef(proc->N, NULL, "INSERT INTO gw_smtp_relayrules (obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, ruletype, persistence, expires, ipaddress, reason) values ('%s', '%s', %d, 0, %d, 'allow', 'temp', '%s', '%s', 'POP3 Login: %s@%s')", curdate, curdate, conn->dat->uid, conn->dat->did, expdate, conn->dat->RemoteAddr, username, domain);
+	}
 	if (mbox > 0) {
 		pop3_remote(conn);
 	}

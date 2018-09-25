@@ -1,9 +1,173 @@
 <?nsp
-include("calendar.lib.ns");
-calendar.html.headermenu(0);
-print("<div style='text-align:left'>");
-calendar.html.htselect_userfilter();
-print("</div>");
 
-print("Week List - The calendar app is not started yet.");
+function print_datelink(day, text) {
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
+	}
+	if (groupid>0) {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&groupid=%d&status=%d'>%s</a>", day, groupid, status, strtohtml(text));
+	} else {
+		printf("<a class='main' href='/app/calendar/dlist?day=%d&userid=%d&status=%d'>%s</a>", day, userid, status, strtohtml(text));
+	}
+}
+
+function print_datelink_w(day, text) {
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+	if (userid==0 && groupid==0) {
+		ui=new db.userinfo();
+		userid=ui.userid;
+	}
+	printf("<a href='/app/calendar/wlist?day=%d", day);
+	if (groupid>0) {
+		printf("&groupid=%d", groupid);
+	} else {
+		printf("&userid=%d", userid);
+	}
+	printf("&status=%d' onclick='return ns.GoTo(event);'>%s</a>", status, strtohtml(text));
+}
+
+function show_day(utime) {
+	local function pad(n) {
+		x="0"+n;
+		return x.sub(-2, 2);
+	}
+
+	d1=new datetime(utime);
+	d2=d1.adddays(1);
+
+	var userid = tonumber(_GET['USERID']);
+	var groupid = tonumber(_GET['GROUPID']);
+	var status = tonumber(_GET['STATUS']);
+
+	sqr=db.events.getlist(d1.tostring(), d2.tostring(), userid, groupid, status);
+	sqrlen=sqr.rows.length();
+	printf("<tr><th colspan=2 style='text-align:left'>");
+	print_datelink(utime/86400, time.sqltime(utime).sub(0, 10));
+	printf("</th></tr>\r\n");
+	found=false;
+	for (j=0;j<sqrlen;j++) {
+		rec=sqr.rows[j];
+		found=true;
+		id=tonumber(rec['eventid']);
+		et = new datetime(time.mktime(rec['eventstart']));
+		et.unixtime+=et.gettzoffset();
+		//calendar.tz_utc2user(et);
+		ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
+		et2 = new datetime(time.mktime(rec['eventfinish']));
+		//calendar.tz_utc2user(et2);
+		et2.unixtime+=et2.gettzoffset();
+		ts2=""+(et2.gethours()==0?12:(et2.gethours()>12)?(et2.gethours()-12):et2.gethours())+":"+pad(et2.getminutes())+(et2.gethours()>=12?"pm":"am");
+		printf("<tr><td style='text-align:right'>%s - %s</td><td width=100%s><span>", ts, ts2, '%');
+		printf("<a class='dialog' href=\"/app/calendar/event?id=%d\">%s</a></td>", id, strtohtml(rec['eventname']));
+		printf("</span></td></tr>");
+		rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
+	}
+	if (!found) {
+		//ts=""+(i==0?12:(i>12)?(i-12):i)+":"+pad(0)+(i>=12?"pm":"am");
+		printf("<tr><td colspan=2>&nbsp;</td></tr>\r\n");
+	}
+}
+
+function show_month(utime) {
+	utime=utime-(utime%86400);
+	month=calendar.getmonth(utime);
+	print("<div style='float:right'>\r\n");
+	printf("<table id=\"T2\" border=1 class=\"contentform\" style='width:200px'>");
+	print("<thead>\r\n");
+	print("<tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>\r\n");
+	print("</thead><tbody>\r\n");
+	foreach (week in month) {
+		print("<tr>");
+		foreach (day in week) {
+			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
+			d = time.mktime(day)/86400;///86400;
+			printf("<td>");
+			print_datelink(d, day.tm_mday.tostring());
+			printf("</td>");
+		}
+		print("</tr>\r\n");
+	}
+	print("</tbody></table>\r\n");
+	print("</div>\r\n");
+}
+
+function show_tasks() {
+	ui=new db.userinfo();
+	var status = tonumber(_GET['STATUS']);
+	var userid = tonumber(_GET['USERID']);
+	if (userid==0) userid=ui.userid;
+	query="SELECT * FROM gw_tasks WHERE obj_did = "+ui.domainid;
+	query+=sprintf(" AND assignedto = %d", userid);
+	if (status!=2) query+=sprintf(" AND status = %d", status);
+	query+=" ORDER BY status ASC, priority DESC, duedate ASC, taskid ASC";
+	sqr=sql.query(query);
+	sqrlen=sqr.rows.length();
+	printf("<div style='float:right;clear:right;max-width:200px'>");
+	printf("<table id=\"T3\" class=\"contenttable\" style='width:200px;overflow:scroll;overflow-x:hidden'>");
+	print("<tr><th style='text-align:left'>Tasks</th></tr>\r\n");
+	found=false;
+	for (i=0;i<sqrlen;i++) {
+		rec=sqr.rows[i];
+		found=true;
+		id=tonumber(rec['taskid']);
+		url=sprintf("/app/tasks/task?id=%d", id);
+		title=rec['taskname'];
+		title+="\nDue "+rec['duedate'].sub(0, 10);
+		printf("<tr><td style='max-width:194px;overflow:hidden' onclick=\"return ns.dialog.create('%s');\" title=\"%s\">", url, strtohtml(title));
+		printf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(rec['taskname']));
+		printf("</td></tr>");
+		rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
+	}
+	if (!found) {
+		printf("<tr><td>...</td></tr>\r\n");
+	}
+	printf("</table></div>");
+}
+
+try {
+	include_template("common.ns");
+	include("calendar.lib.ns");
+	day = tonumber(_GET['DAY']);
+	if (day==0) {
+		t=calendar.today();
+		day=t/86400;
+	} else {
+		t=day*86400;
+	}
+
+	tm=time.gmtime(t);
+	t1=t-(tm.tm_wday*86400);
+
+	calendar.html.headermenu(day);
+	print("<div style='text-align:left'>");
+	calendar.html.htselect_userfilter();
+	print("</div>");
+	printf("<b>");
+	print_datelink_w(day-7, "<<");
+	printf(" Calendar Events for %s to %s ", time.sqltime(t1).sub(0, 10), time.sqltime(t1+(6*86400)).sub(0, 10));
+	print_datelink_w(day+7, ">>");
+	printf("</b>");
+	print("<div>");
+
+	print("<div style='float:left;width:calc(100% - 200px - 5px)'>\r\n");
+	print("<table id=\"T1\" class=\"contenttable\" style='width:100%'>");
+	for (i=0;i<7;i++) {
+		show_day(t1+(i*86400));
+	}
+	printf("</table></div>");
+
+	show_month(t);
+	printf("<div style='float:right;clear:right;height:5px'></div>");
+	show_tasks();
+	print("</div>");
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
 ?>

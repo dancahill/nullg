@@ -14,7 +14,7 @@
 <script type="text/javascript" src="/lib/scripts/leaflet/leaflet.js"></script>
 <script type="text/javascript" src="/lib/scripts/nullsd.js"></script>
 </head>
-<body onLoad="ns.nsd_init();" onResize="ns.ResizeEvents();">
+<body onLoad="ns.init();" onResize="ns.ResizeEvents();">
 <div id="container"></div>
 </body>
 </html>

@@ -17,7 +17,56 @@
 */
 #include "smtpd_main.h"
 
-static NSP_FUNCTION(htnsp_sqlquery)
+static NSP_FUNCTION(htnsp_sql_escape)
+{
+	//CONN *conn = get_conn();
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	char *ss, *se;
+	char *s2;
+	int l2;
+
+	if (cobj1->val->type != NT_STRING) {
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		//prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		return 0;
+	}
+	//if (!nsp_isstr(cobj1)) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
+	nsp_setstr(N, &N->r, "", NULL, 0);
+	if (cobj1->val->d.str == NULL) return 0;
+	se = ss = cobj1->val->d.str;
+	s2 = "'";
+	l2 = 1;
+	for (; *se; se++) {
+		if (strncmp(se, s2, l2) != 0) continue;
+		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, "''", 2);
+		ss = se += l2;
+		if (*se) { --se; continue; }
+		nsp_strcat(N, &N->r, ss, se - ss);
+		break;
+	}
+	if (se > ss) {
+		nsp_strcat(N, &N->r, ss, se - ss);
+	}
+	return 0;
+}
+
+static NSP_FUNCTION(htnsp_sql_getsequence)
+{
+	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	int rc = -1;
+
+	if (cobj1->val->type != NT_STRING) {
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		nsp_setnum(N, &N->r, "", rc);
+		return 0;
+	}
+	rc = sql_getsequence(proc->N, cobj1->val->d.str);
+	nsp_setnum(N, &N->r, "", rc);
+	return rc;
+}
+
+static NSP_FUNCTION(htnsp_sql_query)
 {
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
 	obj_t *qobj = NULL;
@@ -34,7 +83,7 @@ static NSP_FUNCTION(htnsp_sqlquery)
 	return rc;
 }
 
-static NSP_FUNCTION(htnsp_sqlupdate)
+static NSP_FUNCTION(htnsp_sql_update)
 {
 	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
 	int rc;
@@ -43,22 +92,7 @@ static NSP_FUNCTION(htnsp_sqlupdate)
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
 		return 0;
 	}
-	rc = sql_update(proc->N, cobj1->val->d.str);
-	return rc;
-}
-
-static NSP_FUNCTION(htnsp_sqlgetsequence)
-{
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	int rc = -1;
-
-	if (cobj1->val->type != NT_STRING) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
-		nsp_setnum(N, &N->r, "", rc);
-		return 0;
-	}
-	rc = sql_getsequence(proc->N, cobj1->val->d.str);
-	nsp_setnum(N, &N->r, "", rc);
+	rc = sql_update(proc->N, NULL, cobj1->val->d.str);
 	return rc;
 }
 
@@ -103,6 +137,7 @@ int smtp_nsp_init(CONN *conn)
 	obj_t *reqobj;
 	//obj_t *recobj;
 	obj_t *hsobj, *cobj;
+	obj_t *tobj;
 	char varname[64];
 
 	conn->N = nsp_newstate();
@@ -129,9 +164,12 @@ int smtp_nsp_init(CONN *conn)
 	nsp_linkval(conn->N, nsp_settable(conn->N, &conn->N->g, "MASTERGLOBAL"), &proc->N->g);
 
 	nsp_setcfunc(conn->N, &conn->N->g, "logaccess", (NSP_CFUNC)smtpnsp_logaccess);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlquery", (NSP_CFUNC)htnsp_sqlquery);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlupdate", (NSP_CFUNC)htnsp_sqlupdate);
-	nsp_setcfunc(conn->N, &conn->N->g, "sqlgetsequence", (NSP_CFUNC)htnsp_sqlgetsequence);
+
+	tobj = nsp_settable(conn->N, &conn->N->g, "sql");
+	nsp_setcfunc(conn->N, tobj, "escape", (NSP_CFUNC)htnsp_sql_escape);
+	nsp_setcfunc(conn->N, tobj, "getsequence", (NSP_CFUNC)htnsp_sql_getsequence);
+	nsp_setcfunc(conn->N, tobj, "query", (NSP_CFUNC)htnsp_sql_query);
+	nsp_setcfunc(conn->N, tobj, "update", (NSP_CFUNC)htnsp_sql_update);
 
 	smtp_nsp_receive(conn);
 	return 0;
@@ -144,6 +182,21 @@ int smtp_nsp_prefilter(CONN *conn)
 
 	if (nsp_isnull(tobj)) return 0;
 	robj = nsp_eval(conn->N, "_smtp_events.prefilter();");
+	if (nsp_isnum(robj)) return (int)nsp_tonum(conn->N, robj);
+	return 0;
+}
+
+int smtp_nsp_addfilter(CONN *conn, char *reason)
+{
+	char cmd[128];
+	obj_t *tobj = nsp_getobj(conn->N, nsp_settable(conn->N, &conn->N->g, "_smtp_events"), "addfilter");
+	obj_t *robj;
+
+	if (nsp_isnull(tobj)) return 0;
+	snprintf(cmd, sizeof(cmd) - 1, "_smtp_events.addfilter(\"%s\");", reason);
+	robj = nsp_eval(conn->N, cmd);
+	//robj = nsp_evalf(conn->N, "_smtp_events.addfilter(\"%s\");", reason);
+	//Sep 16 14:20:57 - [1] Unexpected signal [6] received - caused by evalf?
 	if (nsp_isnum(robj)) return (int)nsp_tonum(conn->N, robj);
 	return 0;
 }

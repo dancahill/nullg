@@ -1,4 +1,7 @@
+include_template("class.datetime.ns");
+include_template("class.html_form.ns");
 include_template("class.html_table.ns");
+include_template("class.html_tabset.ns");
 include_template("class.pop3_sync.ns");
 include_template("class.sqlcommand.ns");
 include_template("common.html.ns");
@@ -7,3 +10,4 @@ include_template("db.schema.ns");
 include_template("encoding.ns");
 include_template("mime.ns");
 include_template("tzones.ns");
+include_template("timezones.ns");

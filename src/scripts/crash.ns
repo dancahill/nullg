@@ -2,7 +2,7 @@
 
 dl.load("net");
 
-file.append("crash.log", time.sqldatetime()+" stuff happened\r\n");
+file.append("crash.log", time.sqltime()+" stuff happened\r\n");
 system("TASKKILL /F /IM NULLSD.EXE");
 system("NET STOP NULLSD");
 sleep(2);

@@ -46,7 +46,7 @@ int db_log_activity(CONN *conn, char *category, int indexid, char *action, const
 	strncatf(query, sizeof(query) - strlen(query) - 1, "'%d', ", indexid);
 	strncatf(query, sizeof(query) - strlen(query) - 1, "'%s', ", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0]) - 1, action));
 	strncatf(query, sizeof(query) - strlen(query) - 1, "'%s')", str2sql(getbuffer(conn), sizeof(conn->dat->smallbuf[0]) - 1, details));
-	return sql_update(proc->N, query);
+	return sql_update(proc->N, NULL, query);
 }
 
 void log_htaccess(CONN *conn)

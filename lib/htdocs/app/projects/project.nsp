@@ -1,26 +1,253 @@
 <?nsp
-include("projects.lib.ns");
-projects.html.headermenu(0);
-print("Projects - The project app is not started yet.");
-print("<center>\r\n");
-print("<table class='contenttable'><thead>\r\n");
-print("<tr><th>Projects</th></tr>\r\n");
-print("</thead><tbody>\r\n");
 
-ui=new db.userinfo();
-query=sprintf("SELECT * FROM gw_projects WHERE obj_did = %d ORDER BY startdate DESC", ui.domainid);
-sqr=sqlquery(query);
-sqrlen=sqr['_rows'].length();
-//if (sqrlen<1) continue;
-for (i=0;i<sqrlen;i++) {
-	rec=sqr['_rows'][i];
-	id=tonumber(rec['projectid']);
-	printf("<tr><td>");
-	printf("<a href=\"javascript:ns.projects.view(event, %d);\">%s</a>", id, rec['projectname']);
-	printf("</td></tr>");
+class project {
+	function summary(id, rec) {
+		local function showevents(id, rec) {
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Events<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/calendar/event?id=0&projectid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2 style='padding:0px'>");
+			query=sprintf("SELECT * FROM gw_events WHERE obj_did = %d and projectid=%d ORDER BY status ASC, priority DESC", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen<1) {
+				print("<br/></td></tr>");
+				return;
+			}
+			print("<div style='max-height:210px;overflow:scroll;overflow-x:hidden'><table id=eventtable border=0 class='contenttable' style='width:100%'>");
+			print("<thead><tr style='height:8px'><th title='Event Name'></th></th><th title='Priority'></th><th title='Status'></th></tr></thead>");
+			print("<tbody>");
+			for (i=0;i<sqrlen;i++) {
+				rec=sqr.rows[i];
+				print("<tr"); if (tonumber(rec['status'])==1) print(" style='background-color:#d0d0d0'"); print(">");
+				url=sprintf("/app/calendar/event?id=%d", tonumber(rec['eventid']));
+				print("<td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%>");
+				printf("<a class='dialog' href=\"%s\">%s</a>", url, strtohtml(rec['eventname']));
+				printf("</td><td>%s</td><td>%s</td></tr>", projects.html.htview_priority(rec['priority']), projects.html.htview_status(rec['status']));
+			}
+			print("</tbody>");
+			print("</table></div>");
+			print("</td></tr>");
+		}
+		local function showtasks(id, rec) {
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Tasks<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/tasks/task?id=0&projectid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2 style='padding:0px'>");
+			query=sprintf("SELECT * FROM gw_tasks WHERE obj_did = %d and projectid=%d ORDER BY status ASC, priority DESC, duedate ASC, taskid ASC", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen<1) {
+				print("<br/></td></tr>");
+				return;
+			}
+			print("<div style='max-height:210px;overflow:scroll;overflow-x:hidden'><table id=tasktable border=0 class='contenttable' style='width:100%'>");
+			print("<thead><tr style='height:8px'><th title='Task Name'></th><th title='Due Date'></th><th title='Progress'></th><th title='Priority'></th><th title='Status'></th></tr></thead>");
+			print("<tbody>");
+			for (i=0;i<sqrlen;i++) {
+				rec=sqr.rows[i];
+				title=rec['taskname'];
+				u=projects.html.htview_user(rec['assignedto']);
+				if (u!="") title+="\nAssigned to "+u;
+				title+="\nDue "+rec['duedate'].sub(0, 10);
+				print("<tr"); if (tonumber(rec['status'])==1) print(" style='background-color:#d0d0d0'"); print(">");
+				url=sprintf("/app/tasks/task?id=%d", tonumber(rec['taskid']));
+				printf("<td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%s title=\"%s\">", '%', strtohtml(title));
+				printf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(rec['taskname']));
+				printf("<td style='text-align:right'>%s</td>", rec['duedate'].sub(0, 10));
+				printf("<td style='text-align:right'>%d%s</td>", tonumber(rec['progress']), '%');
+				printf("<td>%s</td><td>%s</td></tr>", projects.html.htview_priority(rec['priority']), projects.html.htview_status(rec['status']));
+			}
+			print("</tbody>");
+			print("</table></div>");
+			print("</td></tr>");
+		}
+		local function shownotes(id, rec) {
+			ui=new db.userinfo();
+			printf("<tr><th colspan=2>Notes<span style='float:right;font-size:14px'><a class='dialog' style=\"color:#ffffff;text-decoration:none;\" href=\"/app/notes/note?id=0&projectid=%d\">&nbsp;&plus;&nbsp;</a></span></th></tr>\r\n", id);
+			print("<tr><td colspan=2 style='padding:0px'>");
+			query=sprintf("SELECT * FROM gw_notes WHERE obj_did = %d AND tablename='projects' AND tableindex=%d", ui.domainid, id);
+			sqr=sql.query(query);
+			sqrlen=sqr.rows.length();
+			if (sqrlen<1) {
+				print("<br/></td></tr>");
+				return;
+			}
+			print("<div style='max-height:210px;overflow:scroll;overflow-x:hidden'><table border=0 class='contenttable' style='width:100%'>");
+			for (i=0;i<sqrlen;i++) {
+				rec=sqr.rows[i];
+				url=sprintf("/app/notes/note?id=%d", tonumber(rec['noteid']));
+				print("<tr><td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%>");
+				printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['notetitle']));
+			}
+			print("</table></div>");
+			print("</td></tr>");
+		}
+		print("<table class='contenttable' style='width:100%'><thead>\r\n");
+		printf("<tr><th colspan=2>%s</th></tr>\r\n", strtohtml(rec['projectname']));
+		print("</thead><tbody>\r\n");
+		printf("<tr><th class='subheader' width='1%s'>Project Name</th><td>%s</td></tr>", '%', strtohtml(rec['projectname']));
+		printf("<tr><th class='subheader'>Project Admin</th><td>%s</td></tr>", projects.html.htview_user(rec['projectadmin']));
+		printf("<tr><th class='subheader'>Start Date</th><td>%s</td></tr>", rec['projectstart'].sub(0, 10));
+		printf("<tr><th class='subheader'>Finish Date</th><td>%s</td></tr>", rec['projectfinish'].sub(0, 10));
+		printf("<tr><th class='subheader'>Status</th><td>%s</td></tr>", projects.html.htview_status(rec['status']));
+		printf("<tr><th colspan=2>Details</th></tr>");
+		printf("<tr><td colspan=2 style='white-space:normal'>");
+		details=strtohtml(rec['details']).replace("\n", "<br/>\n");
+		print(details);
+		if (details.length()==0) print("<br/>");
+		printf("</td></tr>");
+		showevents(id, rec);
+		showtasks(id, rec);
+		shownotes(id, rec);
+		printf("</table>");
+	}
+
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['PROJECTID']:_GET['ID']);
+		Q=db.projects.get(id);
+		PROJECT=Q.rows[0];
+		if (Q==null || PROJECT==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		var form=new html_form(PROJECT);
+		var tabset=new html_tabset({activepage=1,minheight=190});
+		//if (id==0) tabset.activepage=2;
+		if (id>0) tabset.addtab("SUMMARY");
+		tabset.addtab("DETAILS");
+		tabset.addtab("PERMISSIONS");
+		tabset.showtabs();
+		print("<form id=projectedit name=projectedit METHOD=POST ACTION=\"/app/projects/project\" onsubmit=\"return ns.dialog.submit(event, 'project', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="projectid", type="hidden"});
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		if (id>0) {
+			tabset.pagebegin();
+			print("<table class=\"contenttable\" style=\"width:100%\">\r\n");
+			print("<tr><td>");
+			this.summary(id, PROJECT);
+			print("</td></tr>");
+			print("</table>\r\n");
+			tabset.pageend();
+		}
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style='width:100%'>\r\n");
+		form.addfield({name="projectname", label="Project Name", required=false});
+		form.addfield({name="projectadmin", label="Project Admin", type="select", handler=projects.html.htselect_user});
+		form.addfield({name="projectstart", label="Project Start", required=true, handler=projects.html.htselect_date});
+		form.addfield({name="projectfinish", label="Project Finish", required=true, handler=projects.html.htselect_date});
+		form.addfield({name="status", label="Status", type="select", handler=projects.html.htselect_status});
+		form.addfield({name="details", label="Details", type="textarea", style="min-height:"+(tabset.minheight-32)+"px;width:100%", required=true});
+		form.validate("gw_projects");
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style='width:100%'>\r\n");
+		print("<tr><td>not done yet</td></tr>");
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>");
+		print("<div style='clear:both;text-align:center'>");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=Reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title=PROJECT['projectname'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_project_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	$(\"#eventtable\").tablesorter({sortList:[[2,1]]});\r\n");
+		printf("	$(\"#tasktable\").tablesorter({sortList:[[4,1]]});\r\n");
+		printf("	$('#projectstart').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	$('#projectfinish').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		Q=null;
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['PROJECTID']);
+		Q=db.projects.get(id);
+		PROJECT=Q.rows[0];
+		if (Q==null || PROJECT==null) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+			return;
+		}
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(PROJECT, "projectname");
+			addfield(PROJECT, "projectadmin");
+			addfield(PROJECT, "projectstart");
+			addfield(PROJECT, "projectfinish");
+			addfield(PROJECT, "status");
+			addfield(PROJECT, "details");
+			if (!this.validate(PROJECT)) {
+				this.view(PROJECT['projectid']);
+				return;
+			}
+			if (!db.projects.set(PROJECT)) {
+				printf("error saving record");
+				return;
+			}
+			printf("<script>\r\nns.status.show(\"project %d saved\", 5);\r\n</script>\r\n", PROJECT['projectid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_project_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/projects/project?id=%d\");\r\n", PROJECT['projectid']);
+				print("}, 50);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(PROJECT['projectid']);
+			}
+			break;
+		case 'delete':
+			if (!db.projects.remove(PROJECT)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>project %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"project %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_project_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
+		return;
+	}
 }
 
-print("</tbody></table>\r\n");
-print("</center>\r\n");
-//print("<div style='text-align:left'><pre>month = ", serialize(month),"</pre><hr></div>");
+try {
+	include_template("common.ns");
+	include("projects.lib.ns");
+	p=new project();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		p.save();
+	} else {
+		p.view();
+	}
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
 ?>

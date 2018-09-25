@@ -1,4 +1,6 @@
 include_template("common.ns");
+include_template("timezones.ns");
+include_template("class.datetime.ns");
 
 namespace projects {
 }
@@ -13,11 +15,79 @@ namespace projects.html {
 		//var userid = tonumber(_USER['userid']);
 
 		var menuitems = {
-			{ text="PROJECTS";     href="/app/projects/list?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="NEW PROJECT";  href="/app/projects/edit?userid="+userid; onclick="return ns.ModalForm(event, 'project', 0);"; };
+			{ text="PROJECTS";    cls='main';   href="/app/projects/list?userid="+userid+"&status=0"; };
+			{ text="NEW PROJECT"; cls='dialog'; href="/app/projects/project?userid="+userid;          };
 		};
 
 		//var menuitems = null;
 		html.headersubmenu(menuitems);
+	}
+
+	function htview_user(selected) {
+		ui = new db.userinfo();
+		selected=tonumber(selected);
+		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d AND userid = %d order by username ASC", ui.domainid, selected);
+		//printf("[%s]", query);
+		sqr=sql.query(query);
+		sqrlen=sqr.rows.length();
+		if (sqrlen<1) return "";
+		//printf("%s (%d)", strtohtml(sqr.rows[0]['username']), tonumber(sqr.rows[0]['userid']));
+		return sqr.rows[0]['username'];
+	}
+
+	function htview_priority(selected) {
+		selected=tonumber(selected);
+		priorities = { "Lowest", "Low", "Normal", "High", "Highest" };
+		return priorities[selected];
+	}
+
+	function htview_status(selected) {
+		selected=tonumber(selected);
+		statuses = {'Open', 'Closed'};
+		return statuses[selected];
+	}
+
+	function htselect_user(selected) {
+		ui = new db.userinfo();
+		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", ui.domainid);
+		sqr=sql.query(query);
+		printf("<option value='0'></option>\r\n");
+		foreach (row in sqr.rows) {
+			ts=tonumber(selected)==tonumber(row['userid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(row['userid']), ts, strtohtml(row['username']));
+		}
+	}
+
+	function htselect_date(value) {
+		t=value.sub(0, 10);
+		print(strtohtml(t));
+	}
+
+	function htselect_status(selected) {
+		var option = { "Open", "Closed" };
+		for (i=0;i<option.length();i++) {
+			ts=tonumber(selected)==i?" selected":"";
+			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
+		}
+	}
+
+	function htselect_statusfilter() {
+		script_name="/app/projects/list";
+		status = tonumber(_GET['STATUS']);
+		print("<script>");
+		print("function go1() {\r\n");
+		print("	var status=document.projectfilter.status;\r\n");
+		print("	var url=status.options[status.selectedIndex].value;\r\n");
+		print("	if (url!='') ns.GoTo(url);\r\n");
+		print("}\r\n");
+		print("</script>");
+		print("<form name='projectfilter'>");
+		print("<select name='status' onChange='go1()'>");
+		statuses = { "Open", "Closed", "All" };
+		printf("<option value='%s?status=%d'%s>%s</option>\r\n", script_name, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
+		printf("<option value='%s?status=%d'%s>%s</option>\r\n", script_name, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
+		printf("<option value='%s?status=%d'%s>%s</option>\r\n", script_name, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
+		print("</select>");
+		print("</form>");
 	}
 }

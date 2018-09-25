@@ -1,8 +1,15 @@
-include_template("common.ns");
-include_template("timezones.ns");
-include_template("class.datetime.ns");
+//include_template("common.ns");
+//include_template("timezones.ns");
+//include_template("class.datetime.ns");
 
 namespace calendar {
+	function today() {
+		d1=new datetime();
+		d1.unixtime+=d1.gettzoffset();
+		d1.unixtime-=d1.unixtime%86400;
+		return d1.unixtime;
+	}
+
 	function tz_utc2user(dt) {
 		tz=_SERVER['TIMEZONES'][tonumber(_USER['preftimezone'])];
 		o=tz.o;
@@ -38,15 +45,14 @@ namespace calendar {
 			for (wd=0;wd<7;wd++) {
 				dt=time.gmtime(d*86400);
 				mon[w][wd]={
-					//t=d*86400;
 					tm_mday=dt.tm_mday;
 					tm_mon=dt.tm_mon;
 					tm_year=dt.tm_year;
 					tm_isdst=dt.tm_isdst;
-					//dt=dt;
 				};
 				d++;
 			}
+			dt=time.gmtime(d*86400);
 			if (dt.tm_mon>t.tm_mon || dt.tm_year>t.tm_year) break;
 		}
 		return mon;
@@ -54,7 +60,7 @@ namespace calendar {
 }
 
 namespace calendar.html {
-	function headermenu(folderid) {
+	function headermenu(day) {
 		ui=new db.userinfo();
 		var userid = tonumber(_GET['userid']);
 		if (userid==0) {
@@ -63,13 +69,13 @@ namespace calendar.html {
 		//var userid = tonumber(_USER['userid']);
 
 		var menuitems = {
-			{ text="DAY";          href="/app/calendar/dlist?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="WEEK";         href="/app/calendar/wlist?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="MONTH";        href="/app/calendar/mlist?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="YEAR";         href="/app/calendar/ylist?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="AVAILABILITY"; href="/app/calendar/avail?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";          };
-			{ text="NEW EVENT";    href="/app/calendar/event?userid="+userid; onclick="return ns.ModalForm(event, 'event', 0);"; };
-			{ text="NEW TASK";     href="/app/tasks/task?userid="+userid; onclick="return ns.ModalForm(event, 'task', 0);";   };
+			{ text="DAY";          cls="main",   href="/app/calendar/dlist?day="+day+"&userid="+userid+"&status=0"; };
+			{ text="WEEK";         cls="main",   href="/app/calendar/wlist?day="+day+"&userid="+userid+"&status=0"; };
+			{ text="MONTH";        cls="main",   href="/app/calendar/mlist?day="+day+"&userid="+userid+"&status=0"; };
+			{ text="YEAR";         cls="main",   href="/app/calendar/ylist?day="+day+"&userid="+userid+"&status=0"; };
+			{ text="AVAILABILITY"; cls="main",   href="/app/calendar/avail?userid="+userid+"&status=0"; };
+			{ text="NEW EVENT";    cls="dialog", href="/app/calendar/event?userid="+userid; };
+			{ text="NEW TASK";     cls="dialog", href="/app/tasks/task?userid="+userid; };
 		};
 
 		//var menuitems = null;
@@ -77,33 +83,33 @@ namespace calendar.html {
 	}
 
 	function htselect_user(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT userid, username FROM gw_users WHERE domainid = %d order by username ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['userid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['userid']), ts, strtohtml(row['username']));
 		}
 	}
 
 	function htselect_eventtype(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT eventtypeid, eventtypename FROM gw_events_types ORDER BY eventtypename ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT eventtypeid, eventtypename FROM gw_events_types ORDER BY eventtypename ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['eventtypeid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['eventtypeid']), ts, strtohtml(row['eventtypename']));
 		}
 	}
 
 	function htselect_contact(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT contactid, surname, givenname FROM gw_contacts WHERE obj_did = %d order by surname, givenname ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['contactid'])?" selected":"";
 			sn=row['surname']; gn=row['givenname']; cn=sn+((sn!=""&&gn!="")?", ":"")+gn;
 			printf("<option value='%d'%s>%s</option>", tonumber(row['contactid']), ts, strtohtml(cn));
@@ -111,11 +117,11 @@ namespace calendar.html {
 	}
 
 	function htselect_project(selected) {
-		var userinfo = db.getuserinfo();
-		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", userinfo.domainid);
-		sqr=sqlquery(query);
+		ui = new db.userinfo();
+		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", ui.domainid);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['projectid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['projectid']), ts, strtohtml(row['projectname']));
 		}
@@ -123,7 +129,6 @@ namespace calendar.html {
 
 	function htselect_priority(selected) {
 		var option = { "Lowest", "Low", "Normal", "High", "Highest" };
-		printf("<option value='0'></option>\r\n");
 		for (i=0;i<option.length();i++) {
 			ts=tonumber(selected)==i?" selected":"";
 			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(option[i]));
@@ -147,11 +152,10 @@ namespace calendar.html {
 	}
 
 	function htselect_closingstatus(selected) {
-		var userinfo = db.getuserinfo();
 		query=sprintf("SELECT eventclosingid, closingname FROM gw_events_closings ORDER BY closingname ASC");
-		sqr=sqlquery(query);
+		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
-		foreach (row in sqr['_rows']) {
+		foreach (row in sqr.rows) {
 			ts=tonumber(selected)==tonumber(row['eventclosingid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['eventclosingid']), ts, strtohtml(row['closingname']));
 		}
@@ -234,97 +238,67 @@ namespace calendar.html {
 	}
 
 	function htselect_userfilter() {
-		//x=_SERVER['REQUEST_URI'].split('?');
-		var script_name="/app/calendar/"+_filename;
-
 		ui=new db.userinfo();
-		var userid = tonumber(_GET['USERID']);
-		var groupid = tonumber(_GET['GROUPID']);
-		var status = tonumber(_GET['STATUS']);
+		script_name="/app/calendar/"+_filename;
+		userid = tonumber(_GET['USERID']);
+		groupid = tonumber(_GET['GROUPID']);
+		status = tonumber(_GET['STATUS']);
+
+		day = tonumber(_GET['DAY']);
+		if (day==0) {
+			t=calendar.today();
+			day=t/86400;
+		//} else {
+		//	t=day*86400;
+		}
 
 		if (userid==0 && groupid==0) userid=ui.userid;
 
-		// print("<pre style='text-align:left'>");
-		// print("script_name=",serialize(script_name),"<br/>");
-		// print("_GET=",serialize(_GET),"<br/>");
-		// print("_SERVER=",serialize(_SERVER),"<br/>");
-		// print("_GLOBALS=",serialize(_GLOBALS),"<br/>");
-		// print("</pre><br/>");
+//		d1=new datetime();
+//		d1.unixtime+=d1.gettzoffset();
+//		if (day>0) d1.unixtime=day*86400;
+//		d1.unixtime-=d1.unixtime%86400;
+//		day = d1.unixtime/86400;
 
-		//print("script_name=",serialize(script_name),"<br/>");
-
-		sqr1=sqlquery("SELECT * FROM gw_groups WHERE obj_did="+ui.domainid+" ORDER BY groupname");
-		sqr2=sqlquery("SELECT * FROM gw_users WHERE obj_did="+ui.domainid+" ORDER BY username");
-
-		//ns.GoTo('/app/bookmarks/list?folderid='+%d);
+		sqr1=sql.query("SELECT * FROM gw_groups WHERE obj_did="+ui.domainid+" ORDER BY groupname");
+		sqr2=sql.query("SELECT * FROM gw_users WHERE obj_did="+ui.domainid+" ORDER BY username");
 
 		print("<script>");
 print("
 function go1() {
-	if (document.eventfilter.userid.options[document.eventfilter.userid.selectedIndex].value!='') {
-		//location=
-		ns.GoTo(document.eventfilter.userid.options[document.eventfilter.userid.selectedIndex].value);
-	}
+	var userid=document.eventfilter.userid;
+	var url=userid.options[userid.selectedIndex].value;
+	if (url!='') ns.GoTo(url);
 }
 function go2() {
-	ns.GoTo(document.eventfilter.status.options[document.eventfilter.status.selectedIndex].value);
+	var status=document.eventfilter.status;
+	var url=status.options[status.selectedIndex].value;
+	if (url!='') ns.GoTo(url);
 }
 ");
-
-
-/*
-<!--
-function go1() {
-	if (document.eventfilter.userid.options[document.eventfilter.userid.selectedIndex].value!="") {
-		location=document.eventfilter.userid.options[document.eventfilter.userid.selectedIndex].value
-	}
-}
-function go2() {
-	location=document.eventfilter.status.options[document.eventfilter.status.selectedIndex].value
-}
-document.write('<SELECT NAME=userid onChange="go1()">');
-document.write("<OPTION VALUE='/calendar/list?groupid=1&status=0'>Administrators");
-document.write("<OPTION VALUE='/calendar/list?userid=1&status=0' SELECTED>&nbsp;&nbsp;dcahill");
-document.write("<OPTION VALUE='/calendar/list?groupid=2&status=0'>Users");
-document.write("<OPTION VALUE='/calendar/list?userid=2&status=0'>&nbsp;&nbsp;nobody");
-document.write("<OPTION VALUE='/calendar/list?userid=4&status=0'>*bacon");
-document.write("<OPTION VALUE='/calendar/list?userid=3&status=0'>*null2");
-document.write('</SELECT>');
-document.write('<SELECT NAME=status onChange="go2()">');
-document.write('<OPTION VALUE="/calendar/list?userid=1&status=2">All');
-document.write('<OPTION VALUE="/calendar/list?userid=1&status=0" SELECTED>Open');
-document.write('<OPTION VALUE="/calendar/list?userid=1&status=1">Closed');
-document.write('</SELECT>');
-//-->
-*/
-
 		print("</script>");
-
 		print("<form name='eventfilter'>");
 		print("<select name='userid' onChange='go1()'>");
-		foreach (row in sqr1['_rows']) {
-			ts="";
-			if (tonumber(row['groupid'])==groupid) ts=" SELECTED";
+		foreach (row in sqr1.rows) {
+			if (tonumber(row['groupid'])==groupid) ts=" SELECTED"; else ts="";
 			printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, tonumber(row['groupid']), status, ts, strtohtml(row['groupname']));
-			foreach (urow in sqr2['_rows']) {
+			foreach (urow in sqr2.rows) {
 				if (tonumber(urow['groupid'])!=tonumber(row['groupid'])) continue;
-				ts="";
-				if (tonumber(urow['userid'])==userid) ts=" SELECTED";
-				printf("<option value='%s?userid=%d&status=%d'%s>&nbsp;&nbsp;%s</option>\r\n", script_name, tonumber(urow['userid']), status, ts, strtohtml(urow['username']));
+				if (tonumber(urow['userid'])==userid) ts=" SELECTED"; else ts="";
+				printf("<option value='%s?day=%d&userid=%d&status=%d'%s>&nbsp;&nbsp;%s</option>\r\n", script_name, day, tonumber(urow['userid']), status, ts, strtohtml(urow['username']));
 			}
 		}
 		print("</select>");
-
 		print("<select name='status' onChange='go2()'>");
 		statuses = { "Open", "Closed", "All" };
 		if (groupid>0) {
-			printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
-			printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
-			printf("<option value='%s?groupid=%d&status=%d'%s>%s</option>\r\n", script_name, groupid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
+			printf("<option value='%s?day=%d&groupid=%d&status=%d'%s>%s</option>\r\n", script_name, day, groupid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
+			printf("<option value='%s?day=%d&groupid=%d&status=%d'%s>%s</option>\r\n", script_name, day, groupid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
+			printf("<option value='%s?day=%d&groupid=%d&status=%d'%s>%s</option>\r\n", script_name, day, groupid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
 		} else {
-			printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
-			printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
-			printf("<option value='%s?userid=%d&status=%d'%s>%s</option>\r\n", script_name, userid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
+			printf("<option value='%s?day=%d&userid=%d&status=%d'%s>%s</option>\r\n", script_name, day, userid, 2, status==2?" SELECTED":"", strtohtml(statuses[2]));
+			printf("<option value='%s?day=%d&userid=%d&status=%d'%s>%s</option>\r\n", script_name, day, userid, 0, status==0?" SELECTED":"", strtohtml(statuses[0]));
+			printf("<option value='%s?day=%d&userid=%d&status=%d'%s>%s</option>\r\n", script_name, day, userid, 1, status==1?" SELECTED":"", strtohtml(statuses[1]));
 		}
 		print("</select>");
 		print("</form>");

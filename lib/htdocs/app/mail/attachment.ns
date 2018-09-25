@@ -3,7 +3,7 @@ function send_file() {
 	var userid   = tonumber(_USER['userid']);
 	var headerid = tonumber(_GET['ID']);
 	Q=db.mailheaders.get(headerid);
-	row=Q['_rows'][0];
+	row=Q.rows[0];
 	if (Q==null || row==null) {
 		printf("<br><b>could not find mail header for id %d</b>\r\n", headerid);
 		return;

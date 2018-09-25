@@ -1,15 +1,16 @@
+<?nsp
 include("mail/mail.lib.ns");
 
 function update_accounts() {
 	query=sprintf("SELECT * FROM gw_email_accounts WHERE obj_uid = %d ORDER BY mailaccountid;", tonumber(_USER['userid']));
-	sqr=sqlquery(query);
+	sqr=sql.query(query);
 	// sync the pop3 mailboxes first
-	foreach (row in sqr['_rows']) {
+	foreach (row in sqr.rows) {
 		t1=time.mktime(row['lastcheck']);
 		t2=time.mktime(time.sqltime());
 
-		file.append("/usr/local/nullsd/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
-		file.append("/usr/local/nullsd/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
+		//file.append("/usr/local/nullsd/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
+		//file.append("/usr/local/nullsd/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
 		/*
 		[2018-07-25 23:59:36] [2018-07-26 13:25:18] t1=1830769236 t2=1701133218 t2-t1=-129636018
 		[2018-07-25 23:59:38] [2018-07-26 13:25:18] t1=1830769238 t2=1701133218 t2-t1=-129636020
@@ -26,7 +27,7 @@ function update_accounts() {
 		}
 	}
 	// then try to send stuff
-	foreach (row in sqr['_rows']) {
+	foreach (row in sqr.rows) {
 		t1=time.mktime(row['lastcheck']);
 		t2=time.mktime(time.sqltime());
 		if (t2-t1<120) continue;
@@ -40,3 +41,4 @@ function update_accounts() {
 }
 
 update_accounts();
+?>

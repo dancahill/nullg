@@ -141,8 +141,8 @@ int sanity_checkdirs()
 	}
 	if (sql_numtuples(proc.N, &qobj) < 1) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "no domains exist"); exit(-1);
-		sql_update(proc.N, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (1, 0, 1, \"default domain\", \"organization\", \"{}\");");
-		sql_update(proc.N, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (2, 1, 1, \"localhost\", \"associatedDomain\", \"{}\");");
+		sql_update(proc.N, NULL, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (1, 0, 1, \"default domain\", \"organization\", \"{}\");");
+		sql_update(proc.N, NULL, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (2, 1, 1, \"localhost\", \"associatedDomain\", \"{}\");");
 	}
 	for (i = 0;i < sql_numtuples(proc.N, &qobj);i++) {
 		domainid = atoi(sql_getvalue(proc.N, &qobj, i, 0));

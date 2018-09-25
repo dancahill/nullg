@@ -42,7 +42,7 @@ namespace nsd.core {
 				if (!file.exists(fname)) system(sprintf("touch %s", fname));
 			};
 			var logpath=CONFIG.paths.var_log;
-			var d=time.sqldate().replace('-', '');
+			var d=time.sqltime().sub(0, 10).replace('-', '');
 			touchfile(sprintf("%s/all-%s.log", logpath, d));
 			touchfile(sprintf("%s/core-access-%s.log", logpath, d));
 			touchfile(sprintf("%s/core-error-%s.log", logpath, d));
@@ -58,7 +58,7 @@ namespace nsd.core {
 				if (file.exists(fname)) file.unlink(fname);
 			};
 			var logpath=CONFIG.paths.var_log;
-			var d=time.sqldate(time.now()-86400*8).replace('-', '');
+			var d=time.sqltime(time.now()-86400*8).sub(0, 10).replace('-', '');
 			deletefile(sprintf("%s/all-%s.log", logpath, d));
 			deletefile(sprintf("%s/core-access-%s.log", logpath, d));
 			deletefile(sprintf("%s/core-error-%s.log", logpath, d));
