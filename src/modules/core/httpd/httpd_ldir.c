@@ -335,6 +335,7 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 		}
 		else if (name) {
 			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_users WHERE username = '%s';", name);
+			return qobj1;
 		}
 	}
 	else if (strcmp(oc, "contact") == 0) {

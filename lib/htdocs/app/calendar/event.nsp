@@ -30,11 +30,11 @@ class event {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['EVENTID']:_GET['ID']);
 		Q=db.events.get(id);
-		EVENT=Q.rows[0];
-		if (Q==null || EVENT==null) {
-			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		EVENT=Q.rows[0];
 		if (id==0) {
 			EVENT['contactid']=tonumber(_GET['CONTACTID']);
 			EVENT['projectid']=tonumber(_GET['PROJECTID']);
@@ -49,8 +49,8 @@ class event {
 		tabset.showtabs();
 		print("<form id=eventedit name=eventedit METHOD=POST ACTION=\"/app/calendar/event\" onsubmit=\"return ns.dialog.submit(event, 'event', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="eventid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", strtohtml(method=='POST'?_POST['FORMURL']:_SERVER['REQUEST_URI']));
 		print("<div style='width:100%;background-color:#f0f0f0'>");
-
 		if (id>0) {
 			tabset.pagebegin();
 			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
@@ -58,7 +58,6 @@ class event {
 			print("</table>\r\n");
 			tabset.pageend();
 		}
-
 		tabset.pagebegin();
 		print("<table class=\"contentform\" style='width:100%'><tr><td>\r\n");
 		print("<div style='float:left'>");
@@ -85,21 +84,17 @@ class event {
 		print("</div>");
 		print("</td></tr></table>");
 		tabset.pageend();
-
 		tabset.pagebegin();
 		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
 		form.addfield({name="details", label="Details", type="textarea", style="min-height:"+(tabset.minheight-32)+"px;width:100%", required=true});
 		print("</table>\r\n");
 		tabset.pageend();
-
 		tabset.pagebegin();
 		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
 		print("<tr><td>permissions not done yet</td></tr>");
 		print("</table>\r\n");
 		tabset.pageend();
-
 		print("</div>");
-
 		print("<div style='clear:both;text-align:center'>");
 		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
 		printnotes(id);
@@ -112,7 +107,7 @@ class event {
 		print("</form>\r\n");
 		form.validate("gw_events");
 
-		title=EVENT['eventname'];
+		title="Event: "+EVENT['eventname'];
 		if (method=='POST') title+=" (Saved)";
 		divname=sprintf("dialog_event_%d", id);
 		printf("<script>\r\n$(document).ready(function() {\r\n");
@@ -145,11 +140,11 @@ class event {
 		if (_SERVER['REQUEST_METHOD']!='POST') return;
 		id=tonumber(_POST['EVENTID']);
 		Q=db.events.get(id);
-		EVENT=Q.rows[0];
-		if (Q==null || EVENT==null) {
-			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		EVENT=Q.rows[0];
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
 			addfield(EVENT, "assignedby");
@@ -180,18 +175,11 @@ class event {
 				printf("error saving record");
 				return;
 			}
-			printf("<script>\r\nns.status.show(\"event %d saved\", 5);\r\n</script>\r\n", EVENT['eventid']);
-			if (id==0) {
-				// close this dialog and open the new id
-				print("<script>\r\n");
-				print("setTimeout(function() {\r\n");
-				printf("	$('#dialog_event_%d').dialog('close');\r\n", id);
-				printf("	ns.dialog.create(\"/app/calendar/event?id=%d\");\r\n", EVENT['eventid']);
-				print("}, 50);\r\n");
-				print("</script>\r\n");
-			} else {
-				this.view(EVENT['eventid']);
-			}
+			printf("<script>\r\n");
+			printf("ns.status.show('event %d saved', 5);\r\n", EVENT['eventid']);
+			if (id==0) printf("ns.dialog.reopen('dialog_event_%d','/app/calendar/event?id=%d');\r\n", id, EVENT['eventid']);
+			printf("</script>\r\n");
+			if (id>0) this.view(EVENT['eventid']);
 			break;
 		case 'delete':
 			if (!db.events.remove(EVENT)) {
@@ -201,12 +189,13 @@ class event {
 			printf("<center>event %d deleted</center>", id);
 			printf("<script>\r\n");
 			printf("ns.status.show(\"event %d deleted\", 5);\r\n", id);
-			printf("setTimeout(function() {\r\n");
-			printf("	$('#dialog_event_%d').dialog('close');\r\n", id);
-			printf("}, 500);\r\n");
+			printf("ns.dialog.close('dialog_event_%d');\r\n", id);
 			printf("</script>\r\n");
 			break;
 		}
+		printf("<script>\r\n");
+		printf("ns.dialog.refreshparent('dialog_event_%d', 'dialog_event_%d');\r\n", EVENT['eventid'], id);
+		printf("</script>\r\n");
 		return;
 	}
 }
@@ -214,11 +203,11 @@ class event {
 try {
 	include_template("common.ns");
 	include("calendar.lib.ns");
-	rec=new event();
+	e=new event();
 	if (_SERVER['REQUEST_METHOD']=='POST') {
-		rec.save();
+		e.save();
 	} else {
-		rec.view();
+		e.view();
 	}
 } catch (ex) {
 	print("Exception: [",ex.description,"]");

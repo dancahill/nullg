@@ -30,6 +30,7 @@ namespace profile.html {
 
 	function htselect_geozone(selected, rec) {
 		sqr=sql.query(sprintf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d", tonumber(rec['domainid'])));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
 		for (i=0;i<sqr.rows.length();i++) {
 			ts=tonumber(selected)==tonumber(sqr.rows[i]['zoneid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['zoneid']), ts, strtohtml(sqr.rows[i]['zonename']));
@@ -39,6 +40,7 @@ namespace profile.html {
 	function htselect_mailcurrent(selected) {
 		ui = new db.userinfo();
 		sqr=sql.query(sprintf("SELECT mailaccountid, accountname FROM gw_email_accounts WHERE obj_did = %d AND obj_uid = %d", ui.domainid, ui.userid));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
 		for (i=0;i<sqr.rows.length();i++) {
 			ts=tonumber(selected)==tonumber(sqr.rows[i]['mailaccountid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['mailaccountid']), ts, strtohtml(sqr.rows[i]['accountname']));

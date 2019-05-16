@@ -15,6 +15,7 @@ global bookmarkhtml = {
 		print("<div style='margin:auto;text-align:right;'>");
 		print("<form id=bookmarksearch name=bookmarksearch method=post action=\"/app/bookmarks/list\" onsubmit=\"return ns.dialog.submit(event, 'bookmarksearch', 'save');\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Bookmarks' required='required' autocorrect='off'>");
+		print("<input type=hidden name=submitaction value=''>\r\n");
 		//print("<input type=submit class=frmbutton name=search value='search'>\r\n");
 		print("</form>");
 		print("</div>\r\n");

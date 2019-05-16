@@ -37,14 +37,15 @@ function show_day(utime) {
 		x="0"+n;
 		return x.sub(-2, 2);
 	}
+	ui=new db.userinfo();
+
 
 	d1=new datetime(utime);
+	d1.unixtime-=d1.gettzoffset();
 	d2=d1.adddays(1);
-
 	var userid = tonumber(_GET['USERID']);
 	var groupid = tonumber(_GET['GROUPID']);
 	var status = tonumber(_GET['STATUS']);
-
 	sqr=db.events.getlist(d1.tostring(), d2.tostring(), userid, groupid, status);
 	sqrlen=sqr.rows.length();
 	printf("<tr><th colspan=2 style='text-align:left'>");

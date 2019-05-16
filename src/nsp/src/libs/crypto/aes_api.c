@@ -453,7 +453,7 @@ int cipherUpdateRounds(cipherInstance *cipher, keyInstance *key,
 
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -506,11 +506,11 @@ static int prep_key(keyInstance *key, int keylen, BYTE dir, char *keytext, int k
 
 NSP_FUNCTION(libnsp_crypto_aes_encrypt)
 {
-	char *fname = nsp_getstr(N, &N->l, "0");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4");
+	char *fname = nsp_getstr(N, &N->context->l, "0");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4");
 	obj_t *robj;
 	char *iv = NULL;
 	keyInstance keyInst;
@@ -565,11 +565,11 @@ NSP_FUNCTION(libnsp_crypto_aes_encrypt)
 
 NSP_FUNCTION(libnsp_crypto_aes_decrypt)
 {
-	char *fname = nsp_getstr(N, &N->l, "0");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4");
+	char *fname = nsp_getstr(N, &N->context->l, "0");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4");
 	obj_t *robj;
 	char *iv = NULL;
 	keyInstance keyInst;

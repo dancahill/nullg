@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 {
 #define __FN__ __FILE__ ":libnsp_net_http_client_send()"
 	char tmpbuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET sock;
 	unsigned short use_tls = 0;
@@ -153,12 +153,12 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 static void parseurl(nsp_state *N)
 {
 #define __FN__ __FILE__ ":parseurl()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	char *p1, *p2;
 	int port = 80;
 
-	cobj = nsp_getobj(N, &N->l, "1");
+	cobj = nsp_getobj(N, &N->context->l, "1");
 	if (!nsp_isstr(cobj) || cobj->val->size < 1) return;
 	p1 = cobj->val->d.str;
 	if (strncasecmp(p1, "http://", 7) == 0) {
@@ -210,7 +210,7 @@ static void parseurl(nsp_state *N)
 NSP_CLASSMETHOD(libnsp_net_http_client_client)
 {
 #define __FN__ __FILE__ ":libnsp_net_http_client_client()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	//obj_t *cobj;
 
 	nsp_setbool(N, thisobj, "use_tls", 0);

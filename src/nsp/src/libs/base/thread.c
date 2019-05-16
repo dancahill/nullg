@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ void mutex_murder(nsp_state *N, obj_t *cobj)
 NSP_FUNCTION(libnsp_base_thread_mutex_mutex)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_mutex_mutex()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_MUTEX *mutex;
 
@@ -71,12 +71,12 @@ NSP_FUNCTION(libnsp_base_thread_mutex_mutex)
 NSP_FUNCTION(libnsp_base_thread_mutex_lock)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_mutex_lock()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_MUTEX *mutex;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_mutex"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a mutex");
@@ -97,12 +97,12 @@ NSP_FUNCTION(libnsp_base_thread_mutex_lock)
 NSP_FUNCTION(libnsp_base_thread_mutex_unlock)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_mutex_unlock()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_MUTEX *mutex;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_mutex"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a mutex");
@@ -123,12 +123,12 @@ NSP_FUNCTION(libnsp_base_thread_mutex_unlock)
 NSP_FUNCTION(libnsp_base_thread_mutex_free)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_mutex_unlock()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_MUTEX *mutex;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_mutex"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a mutex");
@@ -168,7 +168,7 @@ void thread_murder(nsp_state *N, obj_t *cobj)
 NSP_FUNCTION(libnsp_base_thread_thread)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_thread()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_THREAD *thread;
 
@@ -215,7 +215,7 @@ static void *thread_main(void *x)
 	thread->id = pthread_self();
 	pthread_detach(thread->id);
 #endif
-	thisobj = nsp_setbool(thread->N, &thread->N->l, "this", 0);
+	thisobj = nsp_setbool(thread->N, &thread->N->context->l, "this", 0);
 	nsp_linkval(thread->N, thisobj, &thread->this);
 
 	fobj = nsp_getobj(thread->N, thisobj, "fn");
@@ -227,10 +227,10 @@ static void *thread_main(void *x)
 	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "thread") != 0)
 		n_error(thread->N, NE_SYNTAX, "", "expected a thread");
 
-	p = thread->N->readptr;
-	thread->N->readptr = (uchar *)"";
-	n_execfunction(thread->N, fobj, thisobj, 0);
-	thread->N->readptr = p;
+	p = thread->n_context_readptr;
+	thread->n_context_readptr = (uchar *)"";
+	n_execfunction(thread->N, fobj, thisobj, function);
+	thread->n_context_readptr = p;
 
 	//nsp_exec(thread->N, "do_thread_stuff(this);");
 
@@ -255,12 +255,12 @@ static void *thread_main(void *x)
 NSP_FUNCTION(libnsp_base_thread_start)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_start()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_THREAD *thread;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_thread"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a thread");
@@ -285,12 +285,12 @@ NSP_FUNCTION(libnsp_base_thread_start)
 NSP_FUNCTION(libnsp_base_thread_finish)
 {
 #define __FN__ __FILE__ ":libnsp_base_thread_finish()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	OS_THREAD *thread;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_thread"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a thread");

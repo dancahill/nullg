@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ typedef struct SQLITE_CONN {
 
 static SQLITE_CONN *getconn(nsp_state *N)
 {
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SQLITE_CONN *conn;
 
@@ -171,13 +171,13 @@ static void store_field(nsp_state *N, sqlite3_stmt *stm, int column, obj_t *tobj
 NSP_CLASSMETHOD(libnsp_data_sqlite_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_sqlite_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SQLITE_CONN *conn;
 	int rc;
 	char *db = NULL;
 
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		db = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
@@ -205,7 +205,7 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_open)
 NSP_CLASSMETHOD(libnsp_data_sqlite_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_sqlite_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SQLITE_CONN *conn = getconn(N);
 
@@ -226,14 +226,14 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_close)
 NSP_CLASSMETHOD(libnsp_data_sqlite_query)
 {
 #define __FN__ __FILE__ ":libnsp_data_sqlite_query()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SQLITE_CONN *conn = getconn(N);
 	int rc;
 	char *sqlquery = NULL;
 	short expect_results = 1;
 
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
@@ -242,7 +242,7 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_query)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
-	if (nsp_isbool((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		expect_results = nsp_tobool(N, cobj);
 	}
 	rc = sqlite3_prepare(conn->db3, sqlquery, -1, &conn->stm, NULL);
@@ -303,7 +303,7 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_getnext)
 NSP_CLASSMETHOD(libnsp_data_sqlite_endquery)
 {
 #define __FN__ __FILE__ ":libnsp_data_sqlite_endquery()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	SQLITE_CONN *conn = getconn(N);
 	int rc;
 
@@ -359,18 +359,18 @@ NSP_CLASS(libnsp_data_sqlite_client)
 #define __FN__ __FILE__ ":libnsp_data_sqlite_client()"
 	obj_t *tobj, *cobj;
 
-	nsp_setstr(N, &N->l, "database", "", 0);
-	nsp_setbool(N, &N->l, "connection", 0);
-	if (nsp_istable((tobj = nsp_getobj(N, &N->l, "1")))) {
+	nsp_setstr(N, &N->context->l, "database", "", 0);
+	nsp_setbool(N, &N->context->l, "connection", 0);
+	if (nsp_istable((tobj = nsp_getobj(N, &N->context->l, "1")))) {
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "database")))) {
-			nsp_setstr(N, &N->l, "database", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "database", cobj->val->d.str, cobj->val->size);
 		}
 	}
 	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sqlite");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.sqlite not found");
 	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sql"), "common");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.sql.common not found");
 	return 0;
 #undef __FN__

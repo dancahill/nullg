@@ -223,11 +223,11 @@ select {
 
 .calendar {
 	border-collapse: collapse;
-	width:100%;
+	width: 100%;
 	/* width: 600px; */
 	/* style=' height:600px' */
 	/* height: calc(100% - 2px); */
-	height:800px;
+	height: 800px;
 	/* height: calc(100% - 50px); */
 	background-color: #f0f0f0;
 }
@@ -254,9 +254,10 @@ select {
 		padding: 2px;
 		width: 14.28%;
 	}
-	.calendar td:hover {
-		/* background-color: #c1d9ff; */
-	}
+
+		.calendar td:hover {
+			/* background-color: #c1d9ff; */
+		}
 
 	.calendar span {
 		border-radius: 3px;
@@ -269,9 +270,9 @@ select {
 	background-color: #f0f0f0;
 }
 
-	.contenttable tr:hover {
+	/* .contenttable tr:hover {
 		background-color: #c1d9ff;
-	}
+	} */
 
 	.contenttable th {
 		border: 1px solid black;
@@ -281,6 +282,10 @@ select {
 		white-space: nowrap;
 		padding: 2px;
 	}
+
+		.contenttable th a {
+			color: white;
+		}
 
 	.contenttable .subheader {
 		border: 1px solid black;
@@ -301,6 +306,14 @@ select {
 		font-size: 12px;
 		font-style: normal;
 		padding: 2px;
+	}
+
+	.contenttable tr .closed {
+		background-color: #d0d0d0;
+	}
+
+	.contenttable tr:hover {
+		background-color: #c1d9ff;
 	}
 
 	.contenttable .unread {
@@ -367,17 +380,33 @@ select {
 		padding: 2px;
 	}
 
-		.contentform td select,
-		.contentform td input:not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]) {
-			width: 400px;
-			border-style: solid;
-			border-width: 1px;
-			padding: 0px;
+	.contentform .formname {
+		font-weight: bold;
+		min-width: 85px;
+	}
+
+	.contentform .formval {
+		font-weight: bold;
+		min-width: 100px;
+		width: 90%;
+	}
+
+		.contentform .formval a {
+			font-weight: bold;
+			color: blue;
 		}
 
-		.contentform td input[type=checkbox] {
-			margin: 0px;
-		}
+	.contentform td select,
+	.contentform td input:not([type=submit]):not([type=reset]):not([type=file]):not([type=checkbox]) {
+		width: 400px;
+		border-style: solid;
+		border-width: 1px;
+		padding: 0px;
+	}
+
+	.contentform td input[type=checkbox] {
+		margin: 0px;
+	}
 
 .contentform2 {
 	border-collapse: collapse;
@@ -391,12 +420,11 @@ select {
 		border-style: solid;
 		border-width: 1px;
 		padding: 0px;
-}
+	}
 
 fieldset {
 	border-width: 0px;
 	padding: 0px;
-
 }
 
 /* @media all and (min-width: 600px) and (max-width: 767px) { */
@@ -407,21 +435,21 @@ fieldset {
 		display: none;
 	}
 }
-	
+
 @media only screen and (max-width: 600px) {
 	.contenttable {
 		/* width: 600px; */
 		width: calc(100% - 2px);
 	}
 
-	.contenttable th.r60max, td.r60max {
-		--display: none;
-	}
+		.contenttable th.r60max, td.r60max {
+			--display: none;
+		}
 
-	/* r600 requires at least 600 width or it's hidden */
-	.contenttable th.r60, td.r60 {
-		display: none;
-	}
+		/* r600 requires at least 600 width or it's hidden */
+		.contenttable th.r60, td.r60 {
+			display: none;
+		}
 
 	.contentview {
 		/* width: 600px; */
@@ -435,10 +463,10 @@ fieldset {
 	font-style: normal;
 }
 
-	.maillist th.col0, td.col0 {
-		text-align: left;
-		padding: 0px;
-	}
+.maillist th.col0, td.col0 {
+	text-align: left;
+	padding: 0px;
+}
 /*
 	.maillist td.col0 {
 		--width: 18px;

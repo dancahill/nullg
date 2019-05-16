@@ -1,3 +1,4 @@
+<?nsp
 
 function list_mailaccounts() {
 	var maxlist   = tonumber(_USER['pref']['maxlist']);
@@ -16,22 +17,25 @@ function list_mailaccounts() {
 	t.tableclass="contenttable";
 	t.autoaddcolumns=false;
 	fn=function (row, column) {
-		url=sprintf("/app/mail/accounts/account?id=%d", tonumber(row['mailaccountid']));
+		url=sprintf("/app/mail/mailaccount?id=%d", tonumber(row['mailaccountid']));
 		text="<td onclick=\"return ns.dialog.create('"+url+"');\">";
 		text+=sprintf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(row['accountname']));
 		return text;
 	};
 	t.addcolumn("accountname", "E-Mail Account", fn);
 	t.write();
+	printf("<a class=\"dialog\" href=\"/app/mail/mailaccount?id=0\">%s</a>", strtohtml("New Account"));
 	return;
 }
 
 try {
 	include_template("common.ns");
-	include("../mail.lib.ns");
+	include("mail.lib.ns");
 	print("<center>\r\n");
 	list_mailaccounts();
 	print("</center>\r\n");
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }
+
+?>

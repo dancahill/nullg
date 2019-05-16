@@ -1,17 +1,25 @@
 <?nsp
+
 class zone {
 	function view(id) {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['ZONEID']:_GET['ID']);
 		Q=db.admin.zones.get(id);
-		rec=Q.rows[0];
-		if (Q==null || rec==null) {
+		if (Q==null || Q.rows.length()!=1) {
 			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
+		}
+		rec=Q.rows[0];
+		ui=new db.userinfo();
+		if (ui.auth('domainadmin', 'admin') && _GET['DOMAINID']!=null) {
+			rec['obj_did'] = tonumber(_GET['DOMAINID']);
 		}
 		var form=new html_form(rec);
 		print("<form id=zoneedit name=zoneedit METHOD=POST ACTION=\"/app/admin/zone\" onsubmit=\"return ns.dialog.submit(event, 'zone', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="zoneid", type="hidden"});
+		if (ui.auth('domainadmin', 'admin')) {
+			form.addfield({name="obj_did", type="hidden"});
+		}
 		print("<table class=\"contentform\">\r\n");
 		form.addfield({name="zonename", label="Zone Name", required=true});
 		print("</table>\r\n");
@@ -43,9 +51,13 @@ class zone {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
+		ui=new db.userinfo();
 		folderid=tonumber(rec['folderid']);
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
+			if (ui.auth('domainadmin', 'admin')) {
+				addfield(rec, "obj_did");
+			}
 			addfield(rec, "zonename");
 			db.admin.zones.set(rec);
 			printf("zone %d saved", rec['zoneid']);

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 static void pop3_lasterr(nsp_state *N, char *msg)
 {
-	nsp_setstr(N, nsp_getobj(N, &N->l, "this"), "last_err", msg, -1);
+	nsp_setstr(N, nsp_getobj(N, &N->context->l, "this"), "last_err", msg, -1);
 	return;
 }
 
@@ -32,7 +32,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_open()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	unsigned short use_tls = 0;
@@ -44,7 +44,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 
 	nsp_setbool(N, &N->r, "", 0);
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
@@ -53,7 +53,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
 	}
 	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
@@ -62,7 +62,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "3")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
@@ -71,7 +71,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "4")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
@@ -179,7 +179,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_close)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_close()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -213,7 +213,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_stat)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_stat()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -257,7 +257,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_uidl)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_uidl()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -269,7 +269,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_uidl)
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "sock4") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		msg = (unsigned short)nsp_tonum(N, cobj);
 		tcp_fprintf(N, sock, "UIDL %d\r\n", msg);
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
@@ -327,7 +327,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_top)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_top()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -339,9 +339,9 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_top)
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "sock4") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		msg = (unsigned short)nsp_tonum(N, cobj);
-		if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) {
+		if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 			lines = (unsigned short)nsp_tonum(N, cobj);
 		}
 		tcp_fprintf(N, sock, "TOP %d %d\r\n", msg, lines);
@@ -382,7 +382,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_retr)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_retr()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -393,7 +393,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_retr)
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "sock4") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		msg = (unsigned short)nsp_tonum(N, cobj);
 		tcp_fprintf(N, sock, "RETR %d\r\n", msg);
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
@@ -433,7 +433,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_dele)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_dele()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -446,7 +446,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_dele)
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
 	/* dele */
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		msg = (unsigned short)nsp_tonum(N, cobj);
 		tcp_fprintf(N, sock, "DELE %d\r\n", msg);
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
@@ -472,7 +472,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_list)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_list()"
 	char iobuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -484,7 +484,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_list)
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "sock4") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
 	sock = (TCP_SOCKET *)cobj->val->d.str;
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		msg = (unsigned short)nsp_tonum(N, cobj);
 		tcp_fprintf(N, sock, "LIST %d\r\n", msg);
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
@@ -542,7 +542,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_list)
 NSP_CLASSMETHOD(libnsp_net_pop3_client_client)
 {
 #define __FN__ __FILE__ ":libnsp_net_pop3_client_client()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	//obj_t *cobj;
 
 	nsp_setbool(N, thisobj, "socket", 0);

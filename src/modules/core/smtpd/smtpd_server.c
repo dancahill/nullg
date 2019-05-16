@@ -594,7 +594,7 @@ void smtp_dorequest(CONN *conn)
 		}
 		else if (conn->state == 1) {
 			if (strncasecmp(line, "auth", 4) == 0) {
-				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
+				//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
 				smtp_send(conn, "502 Unknown Command");
 				smtp_nsp_addfilter(conn, "AUTH LOGIN ATTEMPT");
 			}
@@ -617,7 +617,7 @@ void smtp_dorequest(CONN *conn)
 				smtp_noop(conn);
 			}
 			else {
-				log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
+				//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s:%d UNKNOWN COMMAND: '%s'", conn->dat->RemoteAddr, conn->dat->RemotePort, line);
 				smtp_send(conn, "502 Unknown Command");
 				smtp_nsp_addfilter(conn, "502 Unknown Command");
 			}

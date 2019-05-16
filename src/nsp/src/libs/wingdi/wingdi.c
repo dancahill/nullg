@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -154,7 +154,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 NSP_CLASSMETHOD(libnsp_wingdi_update)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_update()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj, *tobj;
 	WINDOW *win;
 	MSG msg;
@@ -191,7 +191,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_update)
 NSP_CLASSMETHOD(libnsp_wingdi_create)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_create()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 	char *title = NULL;
@@ -199,7 +199,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 	unsigned short height;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		title = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "title")))) {
@@ -208,7 +208,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for title");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		width = (unsigned short)nsp_tonum(N, cobj);
 	}
 	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "width")))) {
@@ -217,7 +217,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for width");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "3")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		height = (unsigned short)nsp_tonum(N, cobj);
 	}
 	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "height")))) {
@@ -256,7 +256,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 NSP_CLASSMETHOD(libnsp_wingdi_destroy)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_destroy()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 
@@ -291,7 +291,7 @@ end:
 NSP_CLASSMETHOD(libnsp_wingdi_getsize)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_getsize()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	WINDOW *win;
@@ -320,7 +320,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_getsize)
 NSP_CLASSMETHOD(libnsp_wingdi_setbrush)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_setbrush()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 
@@ -343,7 +343,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_setbrush)
 NSP_CLASSMETHOD(libnsp_wingdi_setfont)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_setfont()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 
@@ -367,7 +367,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_setfont)
 NSP_CLASSMETHOD(libnsp_wingdi_setpen)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_setpen()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 	DWORD color;
@@ -380,7 +380,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_setpen)
 	if (win->hPen) {
 		if (!DeleteObject(win->hPen)) n_warn(N, __FN__, "DeleteObject failed");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		color = (DWORD)cobj->val->d.num;
 		color = (color >> 16 & 255) + ((color >> 8 & 255) << 8) + ((color & 255) << 16);
 	}
@@ -398,7 +398,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_setpen)
 NSP_CLASSMETHOD(libnsp_wingdi_fillrect)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_fillrect()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 	RECT rect;
@@ -410,13 +410,13 @@ NSP_CLASSMETHOD(libnsp_wingdi_fillrect)
 		n_error(N, NE_SYNTAX, __FN__, "expected a window");
 	win = (WINDOW *)cobj->val->d.str;
 
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
 	rect.left = (long)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 	rect.right = (long)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
 	rect.top = (long)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "4")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg4");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "4")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg4");
 	rect.bottom = (long)cobj->val->d.num;
 
 	hDC = GetDC(win->hwnd);
@@ -434,7 +434,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_fillrect)
 NSP_CLASSMETHOD(libnsp_wingdi_print)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_print()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 	HDC hDC;
@@ -447,11 +447,11 @@ NSP_CLASSMETHOD(libnsp_wingdi_print)
 		n_error(N, NE_SYNTAX, __FN__, "expected a window");
 	win = (WINDOW *)cobj->val->d.str;
 
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
 	x = (unsigned short)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 	y = (unsigned short)cobj->val->d.num;
-	if (!nsp_isstr((cobj = nsp_getobj(N, &N->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg3");
+	if (!nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg3");
 
 	//	hDC=BeginPaint(win->hwnd, &ps);
 	hDC = GetDC(win->hwnd);
@@ -473,7 +473,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_print)
 NSP_CLASSMETHOD(libnsp_wingdi_drawline)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_drawline()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	WINDOW *win;
 	HDC hDC;
@@ -485,13 +485,13 @@ NSP_CLASSMETHOD(libnsp_wingdi_drawline)
 		n_error(N, NE_SYNTAX, __FN__, "expected a window");
 	win = (WINDOW *)cobj->val->d.str;
 
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg1");
 	x1 = (unsigned short)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 	y1 = (unsigned short)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
 	x2 = (unsigned short)cobj->val->d.num;
-	if (!nsp_isnum((cobj = nsp_getobj(N, &N->l, "4")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg4");
+	if (!nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "4")))) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg4");
 	y2 = (unsigned short)cobj->val->d.num;
 
 	hDC = GetDC(win->hwnd);
@@ -511,20 +511,20 @@ NSP_CLASSMETHOD(libnsp_wingdi_drawline)
 NSP_CLASS(libnsp_wingdi_window)
 {
 #define __FN__ __FILE__ ":libnsp_wingdi_window()"
-	nsp_setcfunc(N, &N->l, "create", (NSP_CFUNC)libnsp_wingdi_create);
-	nsp_setcfunc(N, &N->l, "destroy", (NSP_CFUNC)libnsp_wingdi_destroy);
-	nsp_setcfunc(N, &N->l, "update", (NSP_CFUNC)libnsp_wingdi_update);
-	nsp_setcfunc(N, &N->l, "getsize", (NSP_CFUNC)libnsp_wingdi_getsize);
-	nsp_setcfunc(N, &N->l, "setbrush", (NSP_CFUNC)libnsp_wingdi_setbrush);
-	nsp_setcfunc(N, &N->l, "setfont", (NSP_CFUNC)libnsp_wingdi_setfont);
-	nsp_setcfunc(N, &N->l, "setpen", (NSP_CFUNC)libnsp_wingdi_setpen);
-	nsp_setcfunc(N, &N->l, "fillrect", (NSP_CFUNC)libnsp_wingdi_fillrect);
-	nsp_setcfunc(N, &N->l, "print", (NSP_CFUNC)libnsp_wingdi_print);
-	nsp_setcfunc(N, &N->l, "drawline", (NSP_CFUNC)libnsp_wingdi_drawline);
-	nsp_setstr(N, &N->l, "title", "untitled", -1);
-	nsp_setnum(N, &N->l, "width", 320);
-	nsp_setnum(N, &N->l, "height", 240);
-	nsp_setbool(N, &N->l, "window", 0);
+	nsp_setcfunc(N, &N->context->l, "create", (NSP_CFUNC)libnsp_wingdi_create);
+	nsp_setcfunc(N, &N->context->l, "destroy", (NSP_CFUNC)libnsp_wingdi_destroy);
+	nsp_setcfunc(N, &N->context->l, "update", (NSP_CFUNC)libnsp_wingdi_update);
+	nsp_setcfunc(N, &N->context->l, "getsize", (NSP_CFUNC)libnsp_wingdi_getsize);
+	nsp_setcfunc(N, &N->context->l, "setbrush", (NSP_CFUNC)libnsp_wingdi_setbrush);
+	nsp_setcfunc(N, &N->context->l, "setfont", (NSP_CFUNC)libnsp_wingdi_setfont);
+	nsp_setcfunc(N, &N->context->l, "setpen", (NSP_CFUNC)libnsp_wingdi_setpen);
+	nsp_setcfunc(N, &N->context->l, "fillrect", (NSP_CFUNC)libnsp_wingdi_fillrect);
+	nsp_setcfunc(N, &N->context->l, "print", (NSP_CFUNC)libnsp_wingdi_print);
+	nsp_setcfunc(N, &N->context->l, "drawline", (NSP_CFUNC)libnsp_wingdi_drawline);
+	nsp_setstr(N, &N->context->l, "title", "untitled", -1);
+	nsp_setnum(N, &N->context->l, "width", 320);
+	nsp_setnum(N, &N->context->l, "height", 240);
+	nsp_setbool(N, &N->context->l, "window", 0);
 	return 0;
 #undef __FN__
 }

@@ -196,7 +196,7 @@ namespace mail {
 		c = new sqlcommand("INSERT INTO gw_email_headers (mailheaderid,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountid,folder,status,size,uidl,hdr_from,"+
 			"hdr_replyto,hdr_to,hdr_cc,hdr_bcc,hdr_subject,hdr_date,hdr_messageid,hdr_inreplyto,hdr_contenttype,hdr_boundary,hdr_encoding,hdr_scanresult)"+
 			" VALUES (?,?,0,?,0,0,?,?,'n',?,?,?,?,?,'','',?,?,?,?,?,?,?,'');");
-		c.addvalue('mailheaderid', 0);
+		c.addvalue('mailheaderid', null);
 		c.addvalue('obj_uid', userid);
 		c.addvalue('obj_did', domainid);
 		c.addvalue('accountid', accountid);
@@ -214,9 +214,10 @@ namespace mail {
 		c.addvalue('hdr_boundary', boundary);
 		c.addvalue('hdr_encoding', encoding);
 		sqr=sql.update(c.tostring());
-		if (sqr.lastinsertedid<1) throw "sqr.lastinsertedid is invalid";
-		//message['mailheaderid']=sqr.lastinsertedid;
-		return sqr.lastinsertedid;
+		db.checksqlerror(sqr);
+		if (sqr.lastid<1) throw "sqr.lastid is invalid";
+		//message['mailheaderid']=sqr.lastid;
+		return sqr.lastid;
 	}
 	function save_outbound() {
 		local function strtohtml(s) {
@@ -650,7 +651,7 @@ namespace mail.html {
 			{ text="LIST";     cls='main'; href="/app/mail/list";          };
 			{ text="COMPOSE";              href="/app/mail/compose"; onclick="return ns.mail.compose(0);"; };
 			{ text="SYNC";     cls='main'; href="/app/mail/sync";          };
-			{ text="ACCOUNTS"; cls='main'; href="/app/mail/accounts/list"; };
+			{ text="ACCOUNTS"; cls='main'; href="/app/mail/mailaccountlist"; };
 		};
 		html.headersubmenu(menuitems);
 	}
@@ -729,5 +730,75 @@ namespace mail.html {
 		printf("</select>\r\n");
 		printf("</form>\r\n");
 		return;
+	}
+
+	function htselect_hosttype(selected) {
+		options = { {v="POP3", t="POP3"}, {v="IMAP", t="IMAP"} };
+		foreach (option in options) {
+			ts=selected==option.v?" selected":"";
+			printf("<option value='%s'%s>%s</option>", option.v, ts, strtohtml(option.t));
+		}
+	}
+
+	function htselect_remove(selected) {
+		selected=tonumber(selected);
+		options = { {v=0, t="never"}, {v=1, t="when retrieved"}, {v=2, t="when deleted from 'Trash'"} };
+		foreach (option in options) {
+			ts=selected==option.v?" selected":"";
+			printf("<option value='%d'%s>%s</option>", option.v, ts, strtohtml(option.t));
+		}
+	}
+
+	function htselect_smtpauth(selected) {
+		options = { {v="n", t="No"}, {v="y", t="Yes"} };
+		foreach (option in options) {
+			ts=selected==option.v?" selected":"";
+			printf("<option value='%s'%s>%s</option>", option.v, ts, strtohtml(option.t));
+		}
+	}
+
+
+	function htselect_showdebug(selected) {
+		options = { {v="n", t="No"}, {v="y", t="Yes"} };
+		foreach (option in options) {
+			ts=selected==option.v?" selected":"";
+			printf("<option value='%s'%s>%s</option>", option.v, ts, strtohtml(option.t));
+		}
+	}
+
+	function htselect_usesssl(selected) {
+		selected=tonumber(selected);
+		options = { {v=0, t="No"}, {v=1, t="Yes"} };
+		foreach (option in options) {
+			ts=selected==option.v?" selected":"";
+			printf("<option value='%d'%s>%s</option>", option.v, ts, strtohtml(option.t));
+		}
+	}
+
+	function htselect_mailfolder_r(rec, sqr, depth, parentfolderid, selected) {
+		foldercount=0;
+		// printf("rec=[%s]", serialize(rec));
+		foreach (row in sqr.rows) {
+			pid=tonumber(row['parentfolderid']);
+			if (pid==parentfolderid) {
+				fid=tonumber(row['mailfolderid']);
+				// printf("[%s]", serialize(row));
+				if (tonumber(rec['mailfolderid'])>0 && tonumber(rec['mailfolderid'])==tonumber(row['mailfolderid'])) continue;
+				printf("<option value='%d'%s>", fid, fid==selected?" SELECTED":"");
+				for (j=0;j<depth;j++) printf("&nbsp;&nbsp;&nbsp;&nbsp;");
+				printf("%s</option>\r\n", strtohtml(row['foldername']));
+				foldercount+=mail.html.htselect_mailfolder_r(rec, sqr, depth+1, fid, selected);
+			}
+		}
+		return foldercount;
+	};
+	function htselect_mailfolder(selected, rec) {
+		// printf("[%s][%s]", serialize(selected), serialize(rec));
+		selected=tonumber(selected);
+		ui = new db.userinfo();
+		query=sprintf("SELECT mailfolderid, parentfolderid, foldername FROM gw_email_folders WHERE obj_did = %d AND accountid = %d ORDER BY parentfolderid ASC, foldername ASC", ui.domainid, tonumber(rec['accountid']));
+		sqr=sql.query(query);
+		printf("<option value='0'>Root Folder</option>\r\n");
+		mail.html.htselect_mailfolder_r(rec, sqr, 1, 0, selected);
 	}
 }

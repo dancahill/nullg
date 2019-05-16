@@ -30,8 +30,9 @@ ns.login.PrepForm();
 	html.printmenu();
 	print("</div>\r\n");
 	print("<div id=\"main\">\r\n");
-	html.headersubmenu(null);
-	html.motd();
+//	html.headersubmenu(null);
+//	html.motd();
+	exec(convertnsp(file.readall(_filepath+"/app/motd.nsp")));
 	print("</div>\r\n");
 	//ui=new db.userinfo();
 	//_USER['pref']['menustyle']

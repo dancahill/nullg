@@ -27,7 +27,7 @@ static CONN *get_conn()
 
 	if (htproc.conn != NULL) {
 		maxconn = (int)nsp_getnum(proc->N, nsp_getobj(proc->N, nsp_getobj(proc->N, nsp_getobj(proc->N, &proc->N->g, "CONFIG"), "modules"), "httpd"), "max_connections");
-		for (i = 0;i < maxconn;i++) {
+		for (i = 0; i < maxconn; i++) {
 			if (htproc.conn[i].id == pthread_self()) return &htproc.conn[i];
 		}
 	}
@@ -36,7 +36,8 @@ static CONN *get_conn()
 
 NSP_FUNCTION(htnsp_dl_load)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	CONN *conn = get_conn();
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj, *tobj;
 	NSP_CFUNC cfunc;
 #ifdef WIN32
@@ -62,6 +63,7 @@ NSP_FUNCTION(htnsp_dl_load)
 		if (!nsp_isstr(cobj)) continue;
 		memset(namebuf, 0, sizeof(namebuf));
 		snprintf(namebuf, sizeof(namebuf) - 1, "%s/libnsp_%s.%s", cobj->val->d.str, cobj1->val->d.str, ext);
+		//prints(conn, "<HR><B>[namebuf: %s]</B>\r\n", namebuf);
 		lib_error();
 		if ((l = lib_open(namebuf)) != NULL) {
 			lib_error();
@@ -108,8 +110,8 @@ int htnsp_flush(nsp_state *N)
 static NSP_FUNCTION(htnsp_lang_gets)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 
 	nsp_setstr(N, &N->r, "", lang_gets(conn, nsp_tostr(N, cobj1), nsp_tostr(N, cobj2)), -1);
 	return 0;
@@ -118,7 +120,7 @@ static NSP_FUNCTION(htnsp_lang_gets)
 static NSP_FUNCTION(htnsp_auth_md5pass)
 {
 	//	CONN *conn=get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char itoa64[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	char salt[10];
 	char pass[40];
@@ -131,7 +133,7 @@ static NSP_FUNCTION(htnsp_auth_md5pass)
 	memset(salt, 0, sizeof(salt));
 	memset(pass, 0, sizeof(pass));
 	srand(time(NULL));
-	for (i = 0;i < 8;i++) salt[i] = itoa64[(rand() % 64)];
+	for (i = 0; i < 8; i++) salt[i] = itoa64[(rand() % 64)];
 	md5_crypt(pass, cobj1->val->d.str, salt);
 	nsp_setstr(N, &N->r, "", pass, -1);
 	return 0;
@@ -140,13 +142,13 @@ static NSP_FUNCTION(htnsp_auth_md5pass)
 static NSP_FUNCTION(htnsp_sql_escape)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *ss, *se;
 	char *s2;
 	int l2;
 
 	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	//if (!nsp_isstr(cobj1)) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
@@ -156,7 +158,7 @@ static NSP_FUNCTION(htnsp_sql_escape)
 	s2 = "'";
 	l2 = 1;
 	for (; *se; se++) {
-		if (nc_strncmp(se, s2, l2) != 0) continue;
+		if (strncmp(se, s2, l2) != 0) continue;
 		nsp_strcat(N, &N->r, ss, se - ss);
 		nsp_strcat(N, &N->r, "''", 2);
 		ss = se += l2;
@@ -173,11 +175,11 @@ static NSP_FUNCTION(htnsp_sql_escape)
 static NSP_FUNCTION(htnsp_sql_getsequence)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	int rc = -1;
 
 	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		nsp_setnum(N, &N->r, "", rc);
 		return 0;
 	}
@@ -189,12 +191,12 @@ static NSP_FUNCTION(htnsp_sql_getsequence)
 static NSP_FUNCTION(htnsp_sql_query)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *qobj = NULL;
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	rc = sql_query(proc->N, &qobj, cobj1->val->d.str);
@@ -207,12 +209,12 @@ static NSP_FUNCTION(htnsp_sql_query)
 static NSP_FUNCTION(htnsp_sql_update)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *qobj = NULL;
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	rc = sql_update(proc->N, &qobj, cobj1->val->d.str);
@@ -225,12 +227,12 @@ static NSP_FUNCTION(htnsp_sql_update)
 static NSP_FUNCTION(htnsp_dirlist)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *tobj = NULL;
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	rc = dir_list(N, &tobj, cobj1->val->d.str);
@@ -318,12 +320,14 @@ static unsigned short isutf(uchar *str)
 
 static NSP_FUNCTION(htnsp_strtohtml)
 {
+	CONN *conn = get_conn();
 	const char *hex = "0123456789ABCDEF";
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *robj;
 	uchar *cp;
 	char *dest;
-	int i, j;
+	unsigned int i;
+	int j;
 	int di;
 	unsigned int outlen;
 	unsigned short utflen;
@@ -336,15 +340,20 @@ static NSP_FUNCTION(htnsp_strtohtml)
 		nsp_setnum(N, &N->r, "", cobj1->val->d.num);
 		return 0;
 	}
-	n_expect_argtype(N, NT_STRING, 1, cobj1, 1);
+	//n_expect_argtype(N, NT_STRING, 1, cobj1, 1);
+	if (!nsp_isstr(cobj1)) {
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
+		nsp_setstr(N, &N->r, "", NULL, 0);
+		return 0;
+	}
 	if (cobj1->val->size == 0) {
 		nsp_setstr(N, &N->r, "", NULL, 0);
 		return 0;
 	}
 	cp = (uchar *)cobj1->val->d.str;
 	outlen = 0;
-	for (i = 0;i < cobj1->val->size;i++) {
-		for (j = 0;htmltags[j].len != 0;j++) {
+	for (i = 0; i < cobj1->val->size; i++) {
+		for (j = 0; htmltags[j].len != 0; j++) {
 			if (cp[i] != htmltags[j].symbol) continue;
 			outlen += htmltags[j].len;
 			goto match1;
@@ -363,14 +372,20 @@ static NSP_FUNCTION(htnsp_strtohtml)
 	match1:
 		continue;
 	}
-	if ((dest = n_alloc(N, outlen + 1, 0)) == NULL) return 0;
+	//if ((dest = n_alloc(N, outlen + 1, 0)) == NULL) return 0;
+	dest = malloc(outlen + 1);
+	if (N) {
+		N->allocs++;
+		N->allocmem += outlen + 1;
+		if (N->allocmem - N->freemem > N->peakmem) N->peakmem = N->allocmem - N->freemem;
+	}
 	dest[outlen] = '\0';
 	robj = nsp_setstr(N, &N->r, "", NULL, 0);
 	robj->val->size = outlen;
 	robj->val->d.str = dest;
 	di = 0;
-	for (i = 0;i < cobj1->val->size;i++) {
-		for (j = 0;htmltags[j].len != 0;j++) {
+	for (i = 0; i < cobj1->val->size; i++) {
+		for (j = 0; htmltags[j].len != 0; j++) {
 			if (cp[i] != htmltags[j].symbol) continue;
 			strcpy(dest + di, htmltags[j].code);
 			di += htmltags[j].len;
@@ -424,7 +439,7 @@ NSP_FUNCTION(htnsp_include_template)
 {
 	CONN *conn = get_conn();
 	obj_t *confobj = nsp_getobj(proc->N, &proc->N->g, "CONFIG");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	uchar *p;
 	struct stat sb;
 	int n = -1;
@@ -437,26 +452,26 @@ NSP_FUNCTION(htnsp_include_template)
 	snprintf(fname, sizeof(fname) - 1, "%s/domains/%04d/scripts/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), conn->dat->did, nsp_tostr(N, cobj1));
 	fixslashes(fname);
 	if (stat(fname, &sb) == 0) {
-		p = N->readptr;
+		p = N->context->readptr;
 		n = nsp_execfile(N, fname);
-		N->readptr = p;
+		N->context->readptr = p;
 	}
 	if (n) {
 		snprintf(fname, sizeof(fname) - 1, "%s/scripts/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), nsp_tostr(N, cobj1));
 		fixslashes(fname);
 		if (stat(fname, &sb) == 0) {
-			p = N->readptr;
+			p = N->context->readptr;
 			n = nsp_execfile(N, fname);
-			N->readptr = p;
+			N->context->readptr = p;
 		}
 	}
 	if (n) {
 		snprintf(fname, sizeof(fname) - 1, "%s/scripts/%s", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "lib"), nsp_tostr(N, cobj1));
 		fixslashes(fname);
 		if (stat(fname, &sb) == 0) {
-			p = N->readptr;
+			p = N->context->readptr;
 			n = nsp_execfile(N, fname);
-			N->readptr = p;
+			N->context->readptr = p;
 		}
 	}
 	nsp_setnum(N, &N->r, "", n);
@@ -467,13 +482,13 @@ static int htnsp_system(nsp_state *N)
 {
 	CONN *conn = get_conn();
 	obj_t *confobj = nsp_getobj(proc->N, &proc->N->g, "CONFIG");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char tempname[512];
 	char line[512];
 	FILE *fp;
 
 	if (!nsp_isstr(cobj1)) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	snprintf(tempname, sizeof(tempname) - 1, "%s/tmp/exec-%d.tmp", nsp_getstr(proc->N, nsp_settable(proc->N, confobj, "paths"), "var"), (int)(time(NULL) % 999));
@@ -499,17 +514,17 @@ static int htnsp_system(nsp_state *N)
 NSP_FUNCTION(htnsp_convertnsp)
 {
 	CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *ss, *se;
 
 	if (!nsp_isstr(cobj1)) {
-		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	if (cobj1->val->d.str == NULL) return 0;
 	nsp_setstr(N, &N->r, "", "print(\"", 7);
 	se = ss = cobj1->val->d.str;
-	for (;*se;se++) {
+	for (; *se; se++) {
 		if (strncmp(se, "?>", 2) == 0) {
 			nsp_strcat(N, &N->r, ss, se - ss);
 			nsp_strcat(N, &N->r, "print(\"", 7);
@@ -567,10 +582,10 @@ static void preppath(nsp_state *N, char *name)
 		strcat(buf, "/");
 		strcat(buf, name);
 	}
-	for (j = 0;j < strlen(buf);j++) {
+	for (j = 0; j < strlen(buf); j++) {
 		if (buf[j] == '\\') buf[j] = '/';
 	}
-	for (j = strlen(buf) - 1;j > 0;j--) {
+	for (j = strlen(buf) - 1; j > 0; j--) {
 		if (buf[j] == '/') { buf[j] = '\0'; p = buf + j + 1; break; }
 	}
 	nsp_setstr(N, &N->g, "_filename", p, strlen(p));
@@ -604,20 +619,23 @@ static int htnsp_initenv(CONN *conn)
 	nsp_setcfunc(conn->N, tobj, "load", (NSP_CFUNC)htnsp_dl_load);
 	tobj2 = nsp_settable(conn->N, tobj, "path");
 
-	nsp_setcfunc(conn->N, &conn->N->g, "auth_md5pass", (NSP_CFUNC)htnsp_auth_md5pass);
-
-#ifdef WIN32
-	//	nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
-	//	GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
-	//	GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
-	GetWindowsDirectory(libbuf, sizeof(libbuf));
-	_snprintf(libbuf + strlen(libbuf), sizeof(libbuf) - strlen(libbuf) - 1, "\\NSP");
-	nsp_setstr(conn->N, tobj2, "0", libbuf, -1);
-#else
-	//nsp_setstr(conn->N, tobj2, "0", "/usr/lib/nsp", -1);
 	snprintf(libbuf, sizeof(libbuf) - 1, "%s/nsp", nsp_getstr(proc->N, nsp_settable(proc->N, nsp_getobj(proc->N, &proc->N->g, "CONFIG"), "paths"), "lib"));
 	nsp_setstr(conn->N, tobj2, "0", libbuf, -1);
-#endif
+
+//#ifdef WIN32
+//	//	nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
+//	//	GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
+//	//	GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
+//	GetWindowsDirectory(libbuf, sizeof(libbuf));
+//	_snprintf(libbuf + strlen(libbuf), sizeof(libbuf) - strlen(libbuf) - 1, "\\NSP");
+//	nsp_setstr(conn->N, tobj2, "0", libbuf, -1);
+//#else
+//	//nsp_setstr(conn->N, tobj2, "0", "/usr/lib/nsp", -1);
+//	snprintf(libbuf, sizeof(libbuf) - 1, "%s/shared", nsp_getstr(proc->N, nsp_settable(proc->N, nsp_getobj(proc->N, &proc->N->g, "CONFIG"), "paths"), "lib"));
+//	nsp_setstr(conn->N, tobj2, "0", libbuf, -1);
+//#endif
+
+	nsp_setcfunc(conn->N, &conn->N->g, "auth_md5pass", (NSP_CFUNC)htnsp_auth_md5pass);
 	//	tobj=nsp_settable(conn->N, &conn->N->g, "ldir");
 	//	tobj->val->attr|=NST_HIDDEN;
 	//	nsp_setcfunc(conn->N, tobj,       "deleteentry",      (NSP_CFUNC)htnsp_ldir_deleteentry);
@@ -664,7 +682,7 @@ static int htnsp_runscript(CONN *conn, char *file)
 	if ((p2 = strrchr(file, '/')) != NULL) p = p2 + 1;
 	log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 2, "htnsp_runscript [%s]", p);
 	p = strrchr(file, '.');
-	if (p != NULL&&strcmp(p, ".nsp") == 0) {
+	if (p != NULL && strcmp(p, ".nsp") == 0) {
 		char hackbuf[512];
 
 		snprintf(hackbuf, sizeof(hackbuf) - 1, "exec(convertnsp(file.readall(\"%s\")));", file);

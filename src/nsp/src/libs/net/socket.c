@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 NSP_FUNCTION(libnsp_net_socket_accept)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_accept()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	TCP_SOCKET *asock, *bsock;
@@ -64,11 +64,11 @@ NSP_FUNCTION(libnsp_net_socket_accept)
 NSP_FUNCTION(libnsp_net_socket_bind)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_bind()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* host */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* port */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* SSL */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* host */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* port */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* SSL */
 	TCP_SOCKET *bsock;
 	int rc;
 
@@ -89,7 +89,7 @@ NSP_FUNCTION(libnsp_net_socket_bind)
 	bsock->use_tls = 0;
 	if (nsp_tobool(N, cobj3)) {
 #ifdef HAVE_TLS
-		obj_t *tobj = nsp_getobj(N, &N->l, "4"); /* ssl opts */
+		obj_t *tobj = nsp_getobj(N, &N->context->l, "4"); /* ssl opts */
 		char *pc = NULL, *pk = NULL, *cf = NULL;
 
 		if (nsp_istable(tobj)) {
@@ -117,12 +117,12 @@ NSP_FUNCTION(libnsp_net_socket_bind)
 NSP_FUNCTION(libnsp_net_socket_close)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket")))
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	if (!nsp_istable(thisobj))
 		return 0;
 	cobj = nsp_getobj(N, thisobj, "_socket");
@@ -142,20 +142,20 @@ NSP_FUNCTION(libnsp_net_socket_close)
 NSP_FUNCTION(libnsp_net_socket_connect)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_connect()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* host */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* port */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* SSL  */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* host */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* port */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* SSL  */
 	obj_t *cobj;
 	unsigned short use_tls = 0;
 	TCP_SOCKET *sock;
 	int rc;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
-		cobj1 = nsp_getobj(N, &N->l, "2"); /* host */
-		cobj2 = nsp_getobj(N, &N->l, "3"); /* port */
-		cobj3 = nsp_getobj(N, &N->l, "4"); /* SSL  */
+		thisobj = nsp_getobj(N, &N->context->l, "1");
+		cobj1 = nsp_getobj(N, &N->context->l, "2"); /* host */
+		cobj2 = nsp_getobj(N, &N->context->l, "3"); /* port */
+		cobj3 = nsp_getobj(N, &N->context->l, "4"); /* SSL  */
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
@@ -188,14 +188,14 @@ NSP_FUNCTION(libnsp_net_socket_connect)
 NSP_FUNCTION(libnsp_net_socket_gets)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_gets()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
 	char *buf;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
@@ -220,7 +220,7 @@ NSP_FUNCTION(libnsp_net_socket_gets)
 NSP_FUNCTION(libnsp_net_socket_gettype)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_gettype()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
@@ -236,7 +236,7 @@ NSP_FUNCTION(libnsp_net_socket_gettype)
 NSP_FUNCTION(libnsp_net_socket_info)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_info()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	TCP_SOCKET *sock;
@@ -269,7 +269,7 @@ NSP_FUNCTION(libnsp_net_socket_info)
 NSP_FUNCTION(libnsp_net_socket_read)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_read()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
@@ -277,7 +277,7 @@ NSP_FUNCTION(libnsp_net_socket_read)
 	char *p;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");
@@ -305,9 +305,9 @@ NSP_FUNCTION(libnsp_net_socket_read)
 NSP_FUNCTION(libnsp_net_socket_setsockopt)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_setsockopt()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	char *opt;
@@ -352,7 +352,7 @@ NSP_FUNCTION(libnsp_net_socket_setsockopt)
 NSP_FUNCTION(libnsp_net_socket_socket)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_socket()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 
@@ -374,8 +374,8 @@ NSP_FUNCTION(libnsp_net_socket_tlsaccept)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_tlsaccept()"
 #ifdef HAVE_TLS
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *tobj = nsp_getobj(N, &N->l, "1"); /* ssl opts */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *tobj = nsp_getobj(N, &N->context->l, "1"); /* ssl opts */
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	char *pc = NULL, *pk = NULL, *cf = NULL;
@@ -411,7 +411,7 @@ NSP_FUNCTION(libnsp_net_socket_tlsconnect)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_tlsconnect()"
 #ifdef HAVE_TLS
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 
@@ -432,15 +432,15 @@ NSP_FUNCTION(libnsp_net_socket_tlsconnect)
 NSP_FUNCTION(libnsp_net_socket_write)
 {
 #define __FN__ __FILE__ ":libnsp_net_socket_write()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	TCP_SOCKET *sock;
 	int rc;
 
 	if (!nsp_istable(thisobj) || nsp_isnull(nsp_getobj(N, thisobj, "_socket"))) {
-		thisobj = nsp_getobj(N, &N->l, "1");
-		cobj1 = nsp_getobj(N, &N->l, "2");
+		thisobj = nsp_getobj(N, &N->context->l, "1");
+		cobj1 = nsp_getobj(N, &N->context->l, "2");
 	}
 	if (!nsp_istable(thisobj))
 		n_error(N, NE_SYNTAX, __FN__, "expected a socket");

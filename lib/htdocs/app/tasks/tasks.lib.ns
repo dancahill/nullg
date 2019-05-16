@@ -10,14 +10,10 @@ namespace tasks.html {
 		if (userid==0) {
 			userid=ui.userid;
 		}
-		//var userid = tonumber(_USER['userid']);
-
 		var menuitems = {
-			{ text="TASKS";        href="/app/tasks/list?userid="+userid+"&status=0"; onclick="return ns.GoTo(event);";     };
-			{ text="NEW TASK";     href="/app/tasks/view?userid="+userid; onclick="return ns.dialog.create(event, 'task', 0);"; };
+			{ text="TASKS";    cls="main",   href="/app/tasks/list?userid="+userid+"&status=0"; };
+			{ text="NEW TASK"; cls="dialog", href="/app/tasks/view?userid="+userid;             };
 		};
-
-		//var menuitems = null;
 		html.headersubmenu(menuitems);
 	}
 
@@ -45,12 +41,13 @@ namespace tasks.html {
 	}
 
 	function htselect_project(selected) {
+		selected=tonumber(selected);
 		ui = new db.userinfo();
-		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", ui.domainid);
+		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d AND (status = 0 OR projectid = %d) ORDER BY projectname ASC", ui.domainid, selected);
 		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
 		foreach (row in sqr.rows) {
-			ts=tonumber(selected)==tonumber(row['projectid'])?" selected":"";
+			ts=selected==tonumber(row['projectid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['projectid']), ts, strtohtml(row['projectname']));
 		}
 	}
@@ -64,6 +61,7 @@ namespace tasks.html {
 	}
 
 	function htselect_duedate(value) {
+		if (value==null || value=='') value=time.sqltime().sub(0, 10);
 		t=time.mktime(value);
 		if (t<=0) t=time.now();
 		print(time.sqltime(t).sub(0, 10));
@@ -133,5 +131,14 @@ namespace tasks.html {
 				continue;
 			}
 		}
+	}
+
+	function htselect_totaltime(value) {
+		// if (value==null || value=='') value=time.sqltime().sub(0, 10);
+		// t=time.mktime(value);
+		// if (t<=0) t=time.now();
+		// print(time.sqltime(t).sub(0, 10));
+		t=tonumber(value)/3600;
+		printf("%f", t);
 	}
 }

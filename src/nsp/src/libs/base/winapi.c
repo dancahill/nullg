@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,8 +67,8 @@ static int winsystem(WORD show_hide, const char *format, ...)
 
 NSP_FUNCTION(libnsp_winapi_beep)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 
 	Beep((unsigned long)(nsp_isnum(cobj1) ? cobj1->val->d.num : 0), (unsigned long)(nsp_isnum(cobj1) ? cobj2->val->d.num : 0));
 	return 0;
@@ -76,8 +76,8 @@ NSP_FUNCTION(libnsp_winapi_beep)
 
 NSP_FUNCTION(libnsp_winapi_createprocess)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	WORD show_hide = SW_SHOW;
 
 	if (cobj2 != NULL&&cobj2->val != NULL) {
@@ -94,20 +94,20 @@ NSP_FUNCTION(libnsp_winapi_createprocess)
 
 NSP_FUNCTION(libnsp_winapi_messagebox)
 {
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
 	UINT uType = 0;
 	int rc;
 
 	if (cobj3->val->type == NT_NUMBER) uType = (int)cobj3->val->d.num;
-	rc = MessageBox(NULL, nsp_getstr(N, &N->l, "1"), nsp_getstr(N, &N->l, "2"), uType);
+	rc = MessageBox(NULL, nsp_getstr(N, &N->context->l, "1"), nsp_getstr(N, &N->context->l, "2"), uType);
 	nsp_setnum(N, &N->r, "", rc);
 	return 0;
 }
 
 NSP_FUNCTION(libnsp_winapi_playsound)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	int opt = SND_ASYNC | SND_NODEFAULT | SND_FILENAME;
 	int rc = 0;
 
@@ -120,7 +120,7 @@ NSP_FUNCTION(libnsp_winapi_playsound)
 
 NSP_FUNCTION(libnsp_winapi_shellexecute)
 {
-	ShellExecute(NULL, "open", nsp_getstr(N, &N->l, "1"), NULL, NULL, SW_SHOWMAXIMIZED);
+	ShellExecute(NULL, "open", nsp_getstr(N, &N->context->l, "1"), NULL, NULL, SW_SHOWMAXIMIZED);
 	nsp_setnum(N, &N->r, "", 0);
 	return 0;
 }

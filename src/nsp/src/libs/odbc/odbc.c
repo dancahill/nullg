@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ typedef struct ODBC_CONN {
 
 static ODBC_CONN *getconn(nsp_state *N)
 {
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	ODBC_CONN *conn;
 
@@ -130,7 +130,7 @@ void odbc_murder(nsp_state *N, obj_t *cobj)
 NSP_CLASSMETHOD(libnsp_data_odbc_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_odbc_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	ODBC_CONN *conn;
 	RETCODE rc;
@@ -163,7 +163,7 @@ NSP_CLASSMETHOD(libnsp_data_odbc_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_odbc_close()"
 	ODBC_CONN *conn = getconn(N);
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 
 	cobj = nsp_getobj(N, thisobj, "connection");
@@ -186,7 +186,7 @@ NSP_CLASSMETHOD(libnsp_data_odbc_close)
 NSP_CLASSMETHOD(libnsp_data_odbc_query)
 {
 #define __FN__ __FILE__ ":libnsp_data_odbc_query()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	ODBC_CONN *conn = getconn(N);
 	SQLSMALLINT pccol;
@@ -198,7 +198,7 @@ NSP_CLASSMETHOD(libnsp_data_odbc_query)
 	char *sqlquery = NULL;
 	short expect_results = 1;
 
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
@@ -207,7 +207,7 @@ NSP_CLASSMETHOD(libnsp_data_odbc_query)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
-	if (nsp_isbool((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		expect_results = nsp_tobool(N, cobj);
 	}
 	if (conn->hSTMT == NULL) {
@@ -272,7 +272,7 @@ NSP_CLASSMETHOD(libnsp_data_odbc_query)
 NSP_CLASSMETHOD(libnsp_data_odbc_getnext)
 {
 #define __FN__ __FILE__ ":libnsp_data_odbc_getnext()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	ODBC_CONN *conn;
@@ -329,18 +329,18 @@ NSP_CLASS(libnsp_data_odbc_client)
 #define __FN__ __FILE__ ":libnsp_data_odbc_client()"
 	obj_t *tobj, *cobj;
 
-	nsp_setstr(N, &N->l, "dsn", "", 0);
-	nsp_setbool(N, &N->l, "connection", 0);
-	if (nsp_istable((tobj = nsp_getobj(N, &N->l, "1")))) {
+	nsp_setstr(N, &N->context->l, "dsn", "", 0);
+	nsp_setbool(N, &N->context->l, "connection", 0);
+	if (nsp_istable((tobj = nsp_getobj(N, &N->context->l, "1")))) {
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "dsn")))) {
-			nsp_setstr(N, &N->l, "dsn", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "dsn", cobj->val->d.str, cobj->val->size);
 		}
 	}
 	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "odbc");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.odbc not found");
 	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sql"), "common");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.sql.common not found");
 	return 0;
 #undef __FN__

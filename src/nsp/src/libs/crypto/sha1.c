@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -311,7 +311,7 @@ static void sha1_final(SHA1_CTX* context, uint8 digest[20])
 NSP_FUNCTION(libnsp_crypto_sha1_file)
 {
 #define __FN__ __FILE__ ":libnsp_crypto_sha1_file()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *hex = "0123456789abcdef";
 	unsigned char buffer[1024];
 	unsigned char md[SHA1_DIGEST_LENGTH];
@@ -343,7 +343,7 @@ NSP_FUNCTION(libnsp_crypto_sha1_file)
 NSP_FUNCTION(libnsp_crypto_sha1_string)
 {
 #define __FN__ __FILE__ ":libnsp_crypto_sha1_string()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *hex = "0123456789abcdef";
 	unsigned char md[SHA1_DIGEST_LENGTH];
 	char token[64]; /* should only need 32+'\0' */

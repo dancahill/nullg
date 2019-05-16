@@ -66,8 +66,6 @@ namespace calendar.html {
 		if (userid==0) {
 			userid=ui.userid;
 		}
-		//var userid = tonumber(_USER['userid']);
-
 		var menuitems = {
 			{ text="DAY";          cls="main",   href="/app/calendar/dlist?day="+day+"&userid="+userid+"&status=0"; };
 			{ text="WEEK";         cls="main",   href="/app/calendar/wlist?day="+day+"&userid="+userid+"&status=0"; };
@@ -77,8 +75,6 @@ namespace calendar.html {
 			{ text="NEW EVENT";    cls="dialog", href="/app/calendar/event?userid="+userid; };
 			{ text="NEW TASK";     cls="dialog", href="/app/tasks/task?userid="+userid; };
 		};
-
-		//var menuitems = null;
 		html.headersubmenu(menuitems);
 	}
 
@@ -117,12 +113,13 @@ namespace calendar.html {
 	}
 
 	function htselect_project(selected) {
+		selected=tonumber(selected);
 		ui = new db.userinfo();
-		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d order by projectname ASC", ui.domainid);
+		query=sprintf("SELECT projectid, projectname FROM gw_projects WHERE obj_did = %d AND (status = 0 OR projectid = %d) ORDER BY projectname ASC", ui.domainid, selected);
 		sqr=sql.query(query);
 		printf("<option value='0'></option>\r\n");
 		foreach (row in sqr.rows) {
-			ts=tonumber(selected)==tonumber(row['projectid'])?" selected":"";
+			ts=selected==tonumber(row['projectid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(row['projectid']), ts, strtohtml(row['projectname']));
 		}
 	}

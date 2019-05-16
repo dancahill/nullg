@@ -1,0 +1,225 @@
+<?nsp
+
+class mailaccount {
+	function showsubfolders(flist, outlist, parentid, depth) {
+		foreach (row in flist) {
+			if (tonumber(row['parentfolderid'])==parentid) {
+				outlist[outlist.length()] = { id=tonumber(row['mailfolderid']), parentid=tonumber(row['parentfolderid']), depth=depth, name=row['foldername'], sub={} };
+				// this.showsubfolders(flist, outlist[outlist.length()-1]['sub'], tonumber(row['mailfolderid']), depth+1);
+				this.showsubfolders(flist, outlist, tonumber(row['mailfolderid']), depth+1);
+			}
+		}
+	}
+	function showfolders(id, rec) {
+		ui=new db.userinfo();
+		query=sprintf("SELECT mailfolderid,parentfolderid,foldername FROM gw_email_folders WHERE obj_did = %d AND accountid = %d", ui.domainid, id);
+		sqr=sql.query(query);
+		if (sqr.rows.length()<1) {
+			throw "email account has no folders";
+		}
+		outlist = {};
+		dt={};
+		this.showsubfolders(sqr.rows, outlist, 0, 0);
+		len=outlist.length();
+		for (i=0;i<len;i++) {
+			row=outlist[i];
+			// id=row['id'];
+			// depth=row['depth'];
+			// dt[depth]=id;
+			printf("<tr><td>");
+			// if (row['depth']==0) {
+			// 	if (i<len && outlist[i+1]['parentid']==row['id']) {
+			// 		printf("<img align=top border=0 src=\"/lib/images/tree-m.png\" height=21 width=9>");
+			// 	} else {
+			// 		printf("<img align=top border=0 src=\"/lib/images/tree-o.png\" height=21 width=9>");
+			// 	}
+			// } else {
+			// 	printf("<img align=top border=0 src=\"/lib/images/blank.png\" height=21 width=%d>", row['depth']*9);
+			// }
+			// printf("[%s]", serialize(row));
+			// printf("[%s]", serialize(row));
+			printf("<img align=top border=0 src=\"/lib/images/blank.png\" height=21 width=%d>", row['depth']*9);
+			printf("<a class=\"dialog\" href=\"/app/mail/mailfolder?id=%d&accountid=%d\">%s</a>", row['id'], id, strtohtml(row['name']));
+			printf("</td></tr>\r\n");
+		}
+		printf("<tr><td style='text-align:center'><a class=\"dialog\" href=\"/app/mail/mailfolder?id=0&accountid=%d\">%s</a></td></tr>\r\n", id, strtohtml("New Folder"));
+
+		// for (i=0;i<outlist.length();i++) {
+		// 	row=outlist[i];
+		// 	printf("<tr><td>[%s]</td></tr>", serialize(row));
+		// }
+
+		//		}
+		// print("<tr><td>not started yet</td></tr>");
+		// printf("<tr><td><div style='white-space:pre'>%s</div></td></tr>", serialize(outlist).replace('\n', '\n<br>'));
+		// printf("<tr><td><div style='white-space:pre'>%s</div></td></tr>", serialize(outlist));
+	}
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['MAILACCOUNTID']:_GET['ID']);
+		Q=db.mailaccounts.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		MAILACCOUNT=Q.rows[0];
+		var form=new html_form(MAILACCOUNT);
+		var tabset=new html_tabset({activepage=1,minheight=150});
+		//if (id==0) tabset.activepage=2;
+		tabset.addtab("GENERAL");
+		tabset.addtab("SERVERS");
+		tabset.addtab("ADVANCED");
+		tabset.addtab("SIGNATURE");
+		tabset.addtab("FOLDERS");
+		tabset.addtab("FILTERS");
+		tabset.showtabs();
+		print("<form id=mailaccountedit name=mailaccountedit METHOD=POST ACTION=\"/app/mail/mailaccount\" onsubmit=\"return ns.dialog.submit(event, 'mailaccount', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="mailaccountid", type="hidden"});
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="accountname",  label="Account Name", required=true});
+		form.addfield({name="realname",     label="Real Name"});
+		form.addfield({name="organization", label="Organization"});
+		form.addfield({name="address",      label="E-Mail Address"});
+		form.addfield({name="replyto",      label="Reply Address"});
+		print("</table>\r\n");
+		tabset.pageend();
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="hosttype",     label="Host Type", type="select", handler=mail.html.htselect_hosttype});
+		form.addfield({name="pophost",      label="POP3 Host"});
+		form.addfield({name="smtphost",     label="SMTP Host"});
+		form.addfield({name="popusername",  label="POP3 Username"});
+		form.addfield({name="poppassword",  label="POP3 Password", type="password"});
+		form.addfield({name="smtpauth",     label="SMTP Auth", type="select", handler=mail.html.htselect_smtpauth});
+		print("</table>\r\n");
+		tabset.pageend();
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="popport",      label="POP3 Port"});
+		form.addfield({name="popssl",       label="POP3 Uses SSL", type="select", handler=mail.html.htselect_usesssl});
+		form.addfield({name="smtpport",     label="SMTP Port"});
+		form.addfield({name="smtpssl",      label="SMTP Uses SSL", type="select", handler=mail.html.htselect_usesssl});
+		form.addfield({name="notify",       label="Check for new mail"});
+		form.addfield({name="remove",       label="Remove from server", type="select", handler=mail.html.htselect_remove});
+		form.addfield({name="showdebug",    label="Show Debug", type="select", handler=mail.html.htselect_showdebug});
+		print("</table>\r\n");
+		tabset.pageend();
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		//form.addfield({name="details", label="Details", type="textarea", style="min-height:"+(tabset.minheight-32)+"px;width:100%", required=true});
+		form.addfield({name="signature",    label="Signature", type="textarea", style="min-height:"+(tabset.minheight-32)+"px;width:100%", required=true});
+		form.addfield({name="lastcount", type="placeholder"});
+		form.addfield({name="lastcheck", type="placeholder"});
+		print("</table>\r\n");
+		tabset.pageend();
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		this.showfolders(id, MAILACCOUNT);
+		print("</table>\r\n");
+		tabset.pageend();
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		print("<tr><td>not started yet</td></tr>");
+		print("</table>\r\n");
+		tabset.pageend();
+
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		form.validate("gw_email_accounts");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title="Mail Account: "+MAILACCOUNT['accountname'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_mailaccount_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		Q=null;
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['MAILACCOUNTID']);
+		Q=db.mailaccounts.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		MAILACCOUNT=Q.rows[0];
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(MAILACCOUNT, "accountname");
+			addfield(MAILACCOUNT, "realname");
+			addfield(MAILACCOUNT, "organization");
+			MAILACCOUNT['address']     =_POST['ADDRESS'];
+			MAILACCOUNT['replyto']     =_POST['REPLYTO'];
+			MAILACCOUNT['hosttype']    =_POST['HOSTTYPE'];
+			MAILACCOUNT['popusername'] =_POST['POPUSERNAME'];
+			if (_POST['POPPASSWORD'].length()>0) {
+				MAILACCOUNT['poppassword']=net.mime.base64.encode(_POST['POPPASSWORD']);
+			}
+			MAILACCOUNT['pophost']     =_POST['POPHOST'];
+			MAILACCOUNT['popport']     =_POST['POPPORT'];
+			MAILACCOUNT['popssl']      =_POST['POPSSL'];
+			MAILACCOUNT['smtpauth']    =_POST['SMTPAUTH'];
+			MAILACCOUNT['smtphost']    =_POST['SMTPHOST'];
+			MAILACCOUNT['smtpport']    =_POST['SMTPPORT'];
+			MAILACCOUNT['smtpssl']     =_POST['SMTPSSL'];
+			MAILACCOUNT['notify']      =_POST['NOTIFY'];
+			MAILACCOUNT['remove']      =_POST['REMOVE'];
+			MAILACCOUNT['showdebug']   =_POST['SHOWDEBUG'];
+			MAILACCOUNT['signature']   =_POST['SIGNATURE'];
+			db.mailaccounts.set(MAILACCOUNT);
+			printf("mailaccount %d saved", MAILACCOUNT['mailaccountid']);
+			this.view(MAILACCOUNT['mailaccountid']);
+			break;
+		case 'delete':
+			db.mailaccounts.remove(MAILACCOUNT);
+			printf("mail account %d removed", MAILACCOUNT['mailaccountid']);
+			break;
+		}
+		printf("<script>\r\nns.GoTo('/app/mail/mailaccountlist');\r\n</script>\r\n");
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("mail.lib.ns");
+	ma=new mailaccount();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		ma.save();
+	} else {
+		ma.view();
+	}
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

@@ -1,23 +1,37 @@
 namespace admin {
 	function checkperms() {
-		authdomainadmin=tonumber(_USER['authdomainadmin']);
-		authadmin=tonumber(_USER['authadmin']);
-		if (!authdomainadmin && !authadmin) {
+		ui=new db.userinfo();
+		//printf("[%s,%s,%s]", ui.auth('domainadmin', 'admin'), ui.auth('admin', 'none'), ui.auth('admin', 'admin'));
+		//authdomainadmin=tonumber(_USER['authdomainadmin']);
+		//authadmin=tonumber(_USER['authadmin']);
+		if (!ui.auth('domainadmin', 'admin') && !ui.auth('admin', 'admin')) {
 			html.headersubmenu(null);
-			throw "admin access required";
+			//throw "admin access required";
 		}
 	}
 }
 
 namespace admin.html {
 	function headermenu(folderid) {
-		var menuitems = {
-			{ text="DOMAINS"; cls="main", href="/app/admin/domainlist"; };
-			{ text="USERS";   cls="main", href="/app/admin/userlist";   };
-			{ text="GROUPS";  cls="main", href="/app/admin/grouplist";  };
-			{ text="ZONES";   cls="main", href="/app/admin/zonelist";   };
-			{ text="SMTP";    cls="main", href="/app/admin/smtp";       };
-		};
+		ui=new db.userinfo();
+		if (ui.auth('domainadmin', 'admin')) {
+			ui=new db.userinfo();
+			domainid=ui.domainid;
+			if (_GET['DOMAINID']!=null) domainid = tonumber(_GET['DOMAINID']);
+			menuitems = {
+				{ text="DOMAINS"; cls="main", href="/app/admin/domainlist"; };
+				{ text="USERS";   cls="main", href="/app/admin/userlist?domainid="+domainid;  };
+				{ text="GROUPS";  cls="main", href="/app/admin/grouplist?domainid="+domainid; };
+				{ text="ZONES";   cls="main", href="/app/admin/zonelist?domainid="+domainid;  };
+				{ text="SMTP";    cls="main", href="/app/admin/smtp";       };
+			};
+		} else {
+			menuitems = {
+				{ text="USERS";   cls="main", href="/app/admin/userlist";   };
+				{ text="GROUPS";  cls="main", href="/app/admin/grouplist";  };
+				{ text="ZONES";   cls="main", href="/app/admin/zonelist";   };
+			};
+		}
 		html.headersubmenu(menuitems);
 	}
 
@@ -37,7 +51,12 @@ namespace admin.html {
 	}
 
 	function htselect_domain(selected, rec) {
-		sqr=sql.query(sprintf("SELECT domainid, domainname FROM gw_domains"));
+		ui=new db.userinfo();
+		if (ui.auth('domainadmin', 'admin')) {
+			sqr=sql.query("SELECT domainid, domainname FROM gw_domains");
+		} else {
+			sqr=sql.query("SELECT domainid, domainname FROM gw_domains WHERE obj_did = "+ui.domainid);
+		}
 		for (i=0;i<sqr.rows.length();i++) {
 			ts=tonumber(selected)==tonumber(sqr.rows[i]['domainid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['domainid']), ts, strtohtml(sqr.rows[i]['domainname']));
@@ -61,9 +80,18 @@ namespace admin.html {
 		}
 	}
 
+	function htselect_user(selected, rec) {
+		sqr=sql.query(sprintf("SELECT userid, username FROM gw_users WHERE obj_did = %d", tonumber(rec['obj_did'])));
+		if (sqr.rows.length()==0 || selected==0) printf("<option value='0'></option>");
+		for (i=0;i<sqr.rows.length();i++) {
+			ts=tonumber(selected)==tonumber(sqr.rows[i]['userid'])?" selected":"";
+			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['userid']), ts, strtohtml(sqr.rows[i]['username']));
+		}
+	}
+
 	function htselect_group(selected, rec) {
-		sqr=sql.query(sprintf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d", tonumber(rec['domainid'])));
-		if (sqr.rows.length()==0) printf("<option value='0'></option>");
+		sqr=sql.query(sprintf("SELECT groupid, groupname FROM gw_groups WHERE obj_did = %d", tonumber(rec['obj_did'])));
+		if (sqr.rows.length()==0 || selected==0) printf("<option value='0'></option>");
 		for (i=0;i<sqr.rows.length();i++) {
 			ts=tonumber(selected)==tonumber(sqr.rows[i]['groupid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['groupid']), ts, strtohtml(sqr.rows[i]['groupname']));
@@ -131,6 +159,42 @@ namespace admin.html {
 			printf("<option value='%d'%s>%s</option>", i, ts, strtohtml(_SERVER['TIMEZONES'][i].n));
 		}
 	}
+
+	function htselect_domainfilter() {
+		ui=new db.userinfo();
+		if (!ui.auth('domainadmin', 'admin')) {
+			print("<br/>");
+			return;
+		}
+		print("<div style='text-align:left'>");
+		script_name="/app/admin/"+_filename;
+		domainid = tonumber(_GET['DOMAINID']);
+		if (domainid==0) domainid=ui.domainid;
+		sqr=sql.query("SELECT * FROM gw_domains ORDER BY domainname");
+		print("<script>");
+print("
+function go1() {
+	var domainid=document.domainfilter.domainid;
+	var url=domainid.options[domainid.selectedIndex].value;
+	if (url!='') ns.GoTo(url);
+}
+");
+		print("</script>");
+		print("<form name='domainfilter'>");
+		print("<select name='domainid' onChange='go1()'>");
+		foreach (row in sqr.rows) {
+			if (tonumber(row['domainid'])==domainid) ts=" SELECTED"; else ts="";
+			printf("<option value='%s?domainid=%d'%s>%s</option>\r\n", script_name, tonumber(row['domainid']), ts, strtohtml(row['domainname']));
+		}
+		print("</select>");
+		print("</form>");
+		print("</div>");
+	}
 }
 
-admin.checkperms();
+//admin.checkperms();
+ui=new db.userinfo();
+if (!ui.auth('domainadmin', 'admin') && !ui.auth('admin', 'admin')) {
+	html.headersubmenu(null);
+	throw "admin access required";
+}

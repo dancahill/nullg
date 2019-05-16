@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@
 NSP_FUNCTION(libnsp_base_file_chdir)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_chdir()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	int rc;
 
 	settrace();
@@ -59,8 +59,8 @@ NSP_FUNCTION(libnsp_base_file_chdir)
 NSP_FUNCTION(libnsp_base_file_mkdir)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_mkdir()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 #if !defined(_MSC_VER) && !defined(__BORLANDC__) && !defined( __TURBOC__)
 	mode_t umask = 0755;
 #endif
@@ -82,8 +82,8 @@ NSP_FUNCTION(libnsp_base_file_mkdir)
 NSP_FUNCTION(libnsp_base_file_readall)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_readall()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	obj_t *robj;
 	struct stat sb;
 	char *p;
@@ -125,8 +125,8 @@ NSP_FUNCTION(libnsp_base_file_readall)
 NSP_FUNCTION(libnsp_base_file_rename)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_rename()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	struct stat sb;
 
 	settrace();
@@ -144,7 +144,7 @@ NSP_FUNCTION(libnsp_base_file_rename)
 NSP_FUNCTION(libnsp_base_file_stat)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_stat()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t tobj;
 	struct stat sb;
 	int rc;
@@ -194,14 +194,14 @@ NSP_FUNCTION(libnsp_base_file_stat)
 NSP_FUNCTION(libnsp_base_file_unlink)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_unlink()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	int rc = -1;
 	int i;
 
 	settrace();
 	if (cobj1->val->type != NT_STRING || cobj1->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	for (i = 1;; i++) {
-		cobj1 = nsp_getobj(N, &N->l, n_ntoa(N, N->numbuf, i, 10, 0));
+		cobj1 = nsp_getobj(N, &N->context->l, n_ntoa(N, N->numbuf, i, 10, 0));
 		if (cobj1->val->type != NT_STRING || cobj1->val->size < 1) break;
 		rc = unlink(cobj1->val->d.str);
 		if (rc) break;
@@ -214,10 +214,10 @@ NSP_FUNCTION(libnsp_base_file_unlink)
 NSP_FUNCTION(libnsp_base_file_writeall)
 {
 #define __FN__ __FILE__ ":libnsp_base_file_writeall()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
-	char *fname = nsp_getstr(N, &N->l, "0");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
+	char *fname = nsp_getstr(N, &N->context->l, "0");
 	int fd = -1;
 	int w = 0;
 	int offset = 0;

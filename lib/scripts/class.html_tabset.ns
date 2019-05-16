@@ -47,6 +47,7 @@ class html_tabset {
 		print("<DIV class=tabpage ID=page1 name=page1 STYLE='display:"+((activetab==1)?'block':'none')+";min-height:"+minheight+"px'>\r\n");
 */
 		printf("<div class=tabpage ID=page"+this.currentpage+" name=page"+this.currentpage+" style='display:"+((this.currentpage==this.activepage)?'block':'none')+";min-height:"+this.minheight+"px'>\r\n");
+//		printf("<div class=tabpage ID=page"+this.currentpage+" name=page"+this.currentpage+" style='display:block;min-height:"+this.minheight+"px'>\r\n");
 	}
 
 	function pageend() {

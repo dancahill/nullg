@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ static void dbf_murder(nsp_state *N, obj_t *cobj)
 NSP_CLASSMETHOD(libnsp_data_dbf_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj = NULL;
 	obj_t tobj;
 	DBF_CONN *dbconn;
@@ -130,7 +130,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_open)
 	}
 	nc_strncpy(dbconn->obj_type, "dbf-conn", sizeof(dbconn->obj_type) - 1);
 	dbconn->obj_term = (NSP_CFREE)dbf_murder;
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		dbfile = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
@@ -198,7 +198,7 @@ done:
 NSP_CLASSMETHOD(libnsp_data_dbf_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	DBF_CONN *dbconn;
 
@@ -219,7 +219,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_close)
 NSP_CLASSMETHOD(libnsp_data_dbf_query)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_query()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	//DBF_CONN *dbconn;
 
@@ -235,7 +235,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_query)
 NSP_CLASSMETHOD(libnsp_data_dbf_getnext)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_getnext()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	DBF_CONN *dbconn;
@@ -297,14 +297,14 @@ NSP_CLASSMETHOD(libnsp_data_dbf_getnext)
 NSP_CLASSMETHOD(libnsp_data_dbf_freerow)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_freerow()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	cobj = nsp_getobj(N, thisobj, "db");
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "dbf-conn") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a dbf-conn");
-	if (nsp_istable((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_istable((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		nsp_freetable(N, cobj);
 	}
 	return 0;
@@ -314,7 +314,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_freerow)
 NSP_CLASSMETHOD(libnsp_data_dbf_endquery)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_endquery()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	//DBF_CONN *dbconn;
 
@@ -330,14 +330,14 @@ NSP_CLASSMETHOD(libnsp_data_dbf_endquery)
 NSP_CLASS(libnsp_data_dbf_reader)
 {
 #define __FN__ __FILE__ ":libnsp_data_dbf_reader()"
-	nsp_setcfunc(N, &N->l, "open", (NSP_CFUNC)libnsp_data_dbf_open);
-	nsp_setcfunc(N, &N->l, "close", (NSP_CFUNC)libnsp_data_dbf_close);
-	nsp_setcfunc(N, &N->l, "query", (NSP_CFUNC)libnsp_data_dbf_query);
-	nsp_setcfunc(N, &N->l, "getnext", (NSP_CFUNC)libnsp_data_dbf_getnext);
-	nsp_setcfunc(N, &N->l, "freerow", (NSP_CFUNC)libnsp_data_dbf_freerow);
-	nsp_setcfunc(N, &N->l, "endquery", (NSP_CFUNC)libnsp_data_dbf_endquery);
-	nsp_setstr(N, &N->l, "dbfile", "", 0);
-	nsp_setbool(N, &N->l, "db", 0);
+	nsp_setcfunc(N, &N->context->l, "open", (NSP_CFUNC)libnsp_data_dbf_open);
+	nsp_setcfunc(N, &N->context->l, "close", (NSP_CFUNC)libnsp_data_dbf_close);
+	nsp_setcfunc(N, &N->context->l, "query", (NSP_CFUNC)libnsp_data_dbf_query);
+	nsp_setcfunc(N, &N->context->l, "getnext", (NSP_CFUNC)libnsp_data_dbf_getnext);
+	nsp_setcfunc(N, &N->context->l, "freerow", (NSP_CFUNC)libnsp_data_dbf_freerow);
+	nsp_setcfunc(N, &N->context->l, "endquery", (NSP_CFUNC)libnsp_data_dbf_endquery);
+	nsp_setstr(N, &N->context->l, "dbfile", "", 0);
+	nsp_setbool(N, &N->context->l, "db", 0);
 	return 0;
 #undef __FN__
 }

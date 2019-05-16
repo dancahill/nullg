@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,7 +62,8 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 /* debug.c */
 void     n_decompile(nsp_state *N, uchar *start, uchar *end, char *errbuf, unsigned short errmax);
 /* exec.c */
-obj_t   *n_execfunction(nsp_state *N, obj_t *fobj, obj_t *pobj, uchar isnewobject);
+enum n_execfunctiontype { function, constructor, coroutine };
+obj_t   *n_execfunction(nsp_state *N, obj_t *fobj, obj_t *pobj, enum n_execfunctiontype ftype);
 obj_t   *n_execbasemethod(nsp_state *N, char *name, obj_t *pobj);
 void     n_execconstructor(nsp_state *N, obj_t *cobj, obj_t *pobj);
 void     n_execdestructor(nsp_state *N, obj_t *cobj, char *cname);
@@ -108,6 +109,9 @@ NSP_FUNCTION(nl_break);
 NSP_FUNCTION(nl_flush);
 NSP_FUNCTION(nl_print);
 NSP_FUNCTION(nl_write);
+
+NSP_FUNCTION(nl_coroutine_constructor);
+NSP_FUNCTION(nl_coroutine);
 NSP_FUNCTION(nl_dl_load);
 NSP_FUNCTION(nl_filemkdir);
 NSP_FUNCTION(nl_filechdir);
@@ -192,7 +196,12 @@ void     n_storeval(nsp_state *N, obj_t *cobj);
 
 #define  striprn(s)      { int n=nc_strlen(s)-1; while (n>-1&&(s[n]=='\r'||s[n]=='\n')) s[n--]='\0'; }
 
-#define  n_peekop(N)     (*N->readptr!=OP_LINENUM?*N->readptr:n_skip_ws(N))
+#define  n_context_savjmp   N->savjmp
+#define  n_context_blockptr N->context->blockptr
+#define  n_context_blockend N->context->blockend
+#define  n_context_readptr  N->context->readptr
+
+#define  n_peekop(N)     (*n_context_readptr!=OP_LINENUM?*n_context_readptr:n_skip_ws(N))
 #define  n_expect(N,f,o) if (n_peekop(N)!=o) _n_expect(N, f, o);
 
 int n_expect_argtype(nsp_state *N, unsigned short type, unsigned short argnum, obj_t *obj, unsigned short allow_blank);

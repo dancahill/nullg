@@ -24,7 +24,7 @@ static void auth_dumpvars(nsp_state *N, obj_t *tobj, char *buf, int len)
 	char *l;
 	int x;
 
-	for (;cobj;cobj = cobj->next) {
+	for (; cobj; cobj = cobj->next) {
 		if ((cobj->val->attr&NST_HIDDEN) || (cobj->val->attr&NST_SYSTEM)) continue;
 		l = (cobj->next) ? "," : "";
 		if (isdigit(cobj->name[0])) b = 1; else b = 0;
@@ -80,21 +80,32 @@ static int auth_checkpass(CONN *conn, char *password)
 	if ((strlen(conn->dat->username) == 0) || (strlen(password) == 0)) {
 		return -1;
 	}
-	if ((qobj = ldir_getentry(conn->N, "user", conn->dat->username, 0, conn->dat->did)) == NULL) {
+
+
+	//	if ((qobj = ldir_getentry(conn->N, "user", conn->dat->username, 0, conn->dat->did)) == NULL) {
+	//		return -1;
+	//	}
+		//if (ldir_numentries(&qobj) != 1) {
+		//	ldir_freeresult(&qobj);
+		//	return -1;
+		//}
+		//conn->dat->uid = atoi(ldir_getval(&qobj, 0, "userid"));
+	sql_queryf(proc->N, &qobj, "SELECT * FROM gw_users WHERE username = '%s' AND obj_did = %d AND enabled = 1;", conn->dat->username, conn->dat->did);
+	if (sql_numtuples(conn->N, &qobj) != 1) {
+		sql_freeresult(conn->N, &qobj);
 		return -1;
 	}
-	if (ldir_numentries(&qobj) != 1) {
-		ldir_freeresult(&qobj);
-		return -1;
-	}
-	conn->dat->uid = atoi(ldir_getval(&qobj, 0, "userid"));
+	conn->dat->uid = atoi(sql_getvaluebyname(conn->N, &qobj, 0, "userid"));
+	//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "checkpass() domain test [%d @ %d]", conn->dat->uid, conn->dat->did);
+
+
 	strncpy(cpassword, ldir_getval(&qobj, 0, "password"), sizeof(cpassword) - 1);
 	ldir_freeresult(&qobj);
 	memset(salt, 0, sizeof(salt));
 	memset(cpass, 0, sizeof(cpass));
 	rc = -1;
 	if (strncmp(cpassword, "$1$", 3) == 0) {
-		for (i = 0;i < 8;i++) salt[i] = cpassword[i + 3];
+		for (i = 0; i < 8; i++) salt[i] = cpassword[i + 3];
 		md5_crypt(cpass, password, salt);
 		if (strcmp(cpassword, cpass) == 0) rc = 0;
 	}
@@ -234,7 +245,7 @@ char *auth_setpass(CONN *conn, char *rpassword)
 
 	memset(salt, 0, sizeof(salt));
 	srand(time(NULL));
-	for (i = 0;i < 8;i++) salt[i] = itoa64[(rand() % 64)];
+	for (i = 0; i < 8; i++) salt[i] = itoa64[(rand() % 64)];
 	md5_crypt(cpassword, rpassword, salt);
 	return cpassword;
 }
@@ -274,19 +285,32 @@ int auth_setcookie(CONN *conn)
 		/* it's a GET */
 		if ((ptemp = getgetenv(conn, "USERNAME")) != NULL) strncpy(conn->dat->username, ptemp, sizeof(conn->dat->username) - 1);
 		if ((ptemp = getgetenv(conn, "PASSWORD")) != NULL) strncpy(password, ptemp, sizeof(password) - 1);
-		if ((ptemp = getgetenv(conn, "DOMAIN")) != NULL) conn->dat->did = domain_getid(ptemp);
+		//if ((ptemp = getgetenv(conn, "DOMAIN")) != NULL) conn->dat->did = domain_getid(ptemp);
 	}
 	else {
 		/* either POST or XML */
 		if ((ptemp = getxmlparam(conn, 1, "string")) == NULL) ptemp = getpostenv(conn, "USERNAME"); else xml++;
-		if (ptemp) strncpy(conn->dat->username, ptemp, sizeof(conn->dat->username) - 1);
+		if (ptemp) {
+			strncpy(conn->dat->username, ptemp, sizeof(conn->dat->username) - 1);
+			if ((ptemp = strchr(conn->dat->username, '@')) != NULL) {
+				*ptemp = '\0';
+				ptemp++;
+				conn->dat->did = domain_getid(ptemp);
+			}
+			else {
+				if ((ptemp = getxmlparam(conn, 3, "string")) == NULL) ptemp = getpostenv(conn, "DOMAIN"); else xml++;
+				conn->dat->did = domain_getid(ptemp);
+			}
+		}
 		if ((ptemp = getxmlparam(conn, 2, "string")) == NULL) ptemp = getpostenv(conn, "PASSWORD"); else xml++;
 		if (ptemp) strncpy(password, ptemp, sizeof(password) - 1);
-		if ((ptemp = getxmlparam(conn, 3, "string")) == NULL) ptemp = getpostenv(conn, "DOMAIN"); else xml++;
-		conn->dat->did = domain_getid(ptemp);
+		//if ((ptemp = getxmlparam(conn, 3, "string")) == NULL) ptemp = getpostenv(conn, "DOMAIN"); else xml++;
+		//conn->dat->did = domain_getid(ptemp);
 	}
-	if (conn->dat->did < 0) conn->dat->did = 1;
+	//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "setcookie() domain test [%s @ %d]", conn->dat->username, conn->dat->did);
+	if (conn->dat->did < 1) conn->dat->did = 1;
 	ptemp = domain_getname(domain, sizeof(domain) - 1, conn->dat->did);
+	//log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "setcookie() domain_getname() domain test [%s]", ptemp);
 	strncpy(conn->dat->domainname, ptemp ? ptemp : "NULL", sizeof(conn->dat->domainname) - 1);
 	result = auth_checkpass(conn, password);
 	if (result == 0) {
@@ -297,12 +321,12 @@ int auth_setcookie(CONN *conn)
 		}
 		md5_final(&(md[0]), &c);
 		memset(conn->dat->token, 0, sizeof(conn->dat->token));
-		for (i = 0;i < MD5_SIZE;i++) strncatf(conn->dat->token, sizeof(conn->dat->token) - strlen(conn->dat->token) - 1, "%02x", md[i]);
+		for (i = 0; i < MD5_SIZE; i++) strncatf(conn->dat->token, sizeof(conn->dat->token) - strlen(conn->dat->token) - 1, "%02x", md[i]);
 		memset(password, 0, sizeof(password));
 		if (xml) return auth_renewcookie(conn, 0);
 		if (sql_queryf(proc->N, &qobj, "SELECT sessionid FROM gw_users_sessions WHERE obj_uid = %d AND obj_did = %d ORDER BY obj_mtime DESC", conn->dat->uid, conn->dat->did) < 0) return -1;
 		limit = (int)nsp_getnum(proc->N, hobj, "session_limit");
-		for (i = limit - 1;i < sql_numtuples(proc->N, &qobj);i++) {
+		for (i = limit - 1; i < sql_numtuples(proc->N, &qobj); i++) {
 			if (i < 0) continue;
 			sql_updatef(proc->N, NULL, "DELETE FROM gw_users_sessions WHERE sessionid = %d AND obj_uid = %d AND obj_did = %d", atoi(sql_getvalue(proc->N, &qobj, i, 0)), conn->dat->uid, conn->dat->did);
 		}

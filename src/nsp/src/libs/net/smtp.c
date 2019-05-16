@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -95,16 +95,16 @@ static int _base64_encode_send(nsp_state *N, TCP_SOCKET *sock, obj_t *cobj)
 static void smtp_lasterr(nsp_state *N, char *msg)
 {
 	striprn(msg);
-	nsp_setstr(N, nsp_getobj(N, &N->l, "this"), "last_err", msg, -1);
+	nsp_setstr(N, nsp_getobj(N, &N->context->l, "this"), "last_err", msg, -1);
 	return;
 }
 
 NSP_CLASSMETHOD(libnsp_net_smtp_client_attach)
 {
 #define __FN__ __FILE__ ":libnsp_net_smtp_client_attach()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* attachment name */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* attachment */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* attachment name */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* attachment */
 	obj_t *tobj, *cobj;
 	int size = 0;
 
@@ -127,7 +127,7 @@ NSP_CLASSMETHOD(libnsp_net_smtp_client_send)
 {
 #define __FN__ __FILE__ ":libnsp_net_smtp_client_send()"
 	char tmpbuf[1024];
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t *aobj;
 	TCP_SOCKET sock;
@@ -298,7 +298,7 @@ quit:
 NSP_CLASSMETHOD(libnsp_net_smtp_client_client)
 {
 #define __FN__ __FILE__ ":libnsp_net_smtp_client_client()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	//obj_t *cobj;
 
 	nsp_setstr(N, thisobj, "host", "localhost", 9);

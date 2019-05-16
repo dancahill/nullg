@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ static void csv_murder(nsp_state *N, obj_t *cobj)
 NSP_CLASSMETHOD(libnsp_data_csv_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_csv_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj = NULL;
 	CSV_CONN *dbconn;
 	char *dbfile = NULL;
@@ -58,7 +58,7 @@ NSP_CLASSMETHOD(libnsp_data_csv_open)
 	}
 	nc_strncpy(dbconn->obj_type, "csv-conn", sizeof(dbconn->obj_type) - 1);
 	dbconn->obj_term = (NSP_CFREE)csv_murder;
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		dbfile = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
@@ -82,7 +82,7 @@ NSP_CLASSMETHOD(libnsp_data_csv_open)
 NSP_CLASSMETHOD(libnsp_data_csv_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_csv_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	CSV_CONN *dbconn;
 
@@ -104,7 +104,7 @@ NSP_CLASSMETHOD(libnsp_data_csv_close)
 NSP_CLASSMETHOD(libnsp_data_csv_getnext)
 {
 #define __FN__ __FILE__ ":libnsp_data_csv_getnext()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	CSV_CONN *dbconn;
 	char buf[MAXBUF + 1];
@@ -196,13 +196,13 @@ NSP_CLASSMETHOD(libnsp_data_csv_endquery)
 NSP_FUNCTION(libnsp_data_csv_reader)
 {
 #define __FN__ __FILE__ ":libnsp_data_csv_reader()"
-	nsp_setcfunc(N, &N->l, "open", (NSP_CFUNC)libnsp_data_csv_open);
-	nsp_setcfunc(N, &N->l, "close", (NSP_CFUNC)libnsp_data_csv_close);
-	nsp_setcfunc(N, &N->l, "query", (NSP_CFUNC)libnsp_data_csv_query);
-	nsp_setcfunc(N, &N->l, "getnext", (NSP_CFUNC)libnsp_data_csv_getnext);
-	nsp_setcfunc(N, &N->l, "endquery", (NSP_CFUNC)libnsp_data_csv_endquery);
-	nsp_setstr(N, &N->l, "dbfile", "", 0);
-	nsp_setbool(N, &N->l, "db", 0);
+	nsp_setcfunc(N, &N->context->l, "open", (NSP_CFUNC)libnsp_data_csv_open);
+	nsp_setcfunc(N, &N->context->l, "close", (NSP_CFUNC)libnsp_data_csv_close);
+	nsp_setcfunc(N, &N->context->l, "query", (NSP_CFUNC)libnsp_data_csv_query);
+	nsp_setcfunc(N, &N->context->l, "getnext", (NSP_CFUNC)libnsp_data_csv_getnext);
+	nsp_setcfunc(N, &N->context->l, "endquery", (NSP_CFUNC)libnsp_data_csv_endquery);
+	nsp_setstr(N, &N->context->l, "dbfile", "", 0);
+	nsp_setbool(N, &N->context->l, "db", 0);
 	return 0;
 #undef __FN__
 }

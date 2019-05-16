@@ -75,7 +75,7 @@ BEGIN
             VALUE "ProductVersion",   "0.9.4\0"
             VALUE "InternalName",     "NSP.EXE\0"
             VALUE "OriginalFilename", "NSP.EXE\0"
-            VALUE "LegalCopyright",   "Copyright © 2007-2018\0"
+            VALUE "LegalCopyright",   "Copyright © 2007-2019\0"
         END
     END
     BLOCK "VarFileInfo"

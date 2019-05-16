@@ -1,4 +1,5 @@
 <?nsp
+
 function search_bookmarks() {
 	local function aa(url) { return sprintf("<a href=\"%s\" onclick='return ns.GoTo(\"%s\");'>", url.replace("\"", "'"), url.replace("\"", "'")); };
 	local function a(url, module, id) { return sprintf("<a class='dialog' href=\"%s\">", url.replace("\"", "'")); };
@@ -42,7 +43,12 @@ function list_bookmarks() {
 	var currentfolder=db.bookmarks.getcurrentfolder();
 	bookmarkhtml.headermenu(currentfolder.id);
 	bookmarkhtml.show_searchform();
-	//print("<br>\r\n");
+	q1=db.bookmarks.getfolderlist(currentfolder.id);
+	q2=db.bookmarks.getlist(currentfolder.id);
+	if (currentfolder.id==0 && q1.rows.length()==0 && q2.rows.length()==0) {
+		printf("NO ROWS");
+		return;
+	}
 	print("<table id='contenttable' class='contenttable'>\r\n");
 	printf("<thead>\r\n");
 	printf("<tr><th colspan=2 style='text-align:center'>%s</th></tr>\r\n", currentfolder.name);
@@ -51,23 +57,18 @@ function list_bookmarks() {
 	if (currentfolder.parentid!=-1) {
 		printf("<tr><td colspan=2>"+aa(sprintf("/app/bookmarks/list?folderid=%d", currentfolder.parentid))+"<img align=top border=0 src=/lib/images/file-foldero.png height=16 width=16>&nbsp;Parent Directory</a></td></tr>\r\n", currentfolder.parentid);
 	}
-	q1=db.bookmarks.getfolderlist(currentfolder.id);
 	foreach (row in q1.rows) {
-		//printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/bookmarkfolder?id=%d", tonumber(row['folderid'])), tonumber(row['folderid']))+"edit</a></td>");
-		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/bookmarkfolder?id="+tonumber(row['folderid']), 'bookmarkfolder', tonumber(row['folderid']))+"edit</a></td>");
-		printf("<td style='width:99%%'>"+aa(sprintf("/app/bookmarks/list?folderid=%d", tonumber(row['folderid'])))+"<img align=top border=0 src=/lib/images/file-folder.png height=16 width=16>&nbsp;%s</a></td></tr>\r\n", strtohtml(row['foldername']));
+		id=tonumber(row['folderid']);
+		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/bookmarkfolder?id="+id, 'bookmarkfolder', id)+"edit</a></td>");
+		printf("<td style='width:99%%'>"+aa(sprintf("/app/bookmarks/list?folderid=%d", id))+"<img align=top border=0 src=/lib/images/file-folder.png height=16 width=16>&nbsp;%s</a></td></tr>\r\n", strtohtml(row['foldername']));
 	}
-	q1=db.bookmarks.getlist(currentfolder.id);
-	foreach (row in q1.rows) {
-//		printf("<tr><td style='width:1%%'>"+a(sprintf("/app/bookmarks/bookmark?id=%d", tonumber(row['folderid'])))+"edit</a></td>");
-		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/bookmark?id="+tonumber(row['bookmarkid']), 'bookmark', tonumber(row['bookmarkid']))+"edit</a></td>");
-		//printf("<td style='width:99%%'><a class=external href=\"%s\" target=\"_blank\">%s</a></td></tr>\r\n", row['bookmarkurl'], strtohtml(row['bookmarkname']));
+	foreach (row in q2.rows) {
+		id=tonumber(row['bookmarkid']);
+		printf("<tr><td style='width:1%%'>"+a("/app/bookmarks/bookmark?id="+id, 'bookmark', id)+"edit</a></td>");
 		printf("<td style='width:99%%'><a class=external href=\"%s\">%s</a></td></tr>\r\n", row['bookmarkurl'], strtohtml(row['bookmarkname']));
 	}
 	printf("</tbody>\r\n");
 	printf("</table>\r\n");
-	//printf("<script>\r\nbookmarks.lastfolderid=%d;\r\n</script>\r\n", currentfolder.id);
-	//printf("<script>\r\nns.GoTo('/app/bookmarks/list?folderid='+%d);\r\n</script>\r\n", currentfolder.id);
 	return;
 }
 
@@ -84,5 +85,5 @@ try {
 } catch (e) {
 	print("Exception: [",e.description,"]");
 }
-//printf("<pre>%s</pre>", strtohtml(serialize(_GLOBALS)));
+
 ?>

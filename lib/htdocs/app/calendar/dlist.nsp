@@ -24,6 +24,7 @@ function show_day(utime) {
 	daystart=ui.pref("daystart");
 	daylength=ui.pref("daylength");
 	d1=new datetime(utime);
+	d1.unixtime-=d1.gettzoffset();
 	d2=d1.adddays(1);
 	var userid = tonumber(_GET['USERID']);
 	var groupid = tonumber(_GET['GROUPID']);

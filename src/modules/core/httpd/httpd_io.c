@@ -70,7 +70,7 @@ void flushheader(CONN *conn)
 		if ((cobj->val->type != NT_STRING) && (cobj->val->type != NT_NUMBER)) continue;
 		strncpy(tmpnam, cobj->name, sizeof(tmpnam) - 1);
 		if (strcmp(tmpnam, "CONTENT_TYPE") == 0) ctype = 1;
-		for (p = tmpnam;p[0];p++) {
+		for (p = tmpnam; p[0]; p++) {
 			if (p[0] == '_') {
 				p[0] = '-';
 				if (isalpha(p[1])) { p++; continue; }
@@ -211,19 +211,22 @@ int filesend(CONN *conn, char *file)
 	send_header(conn, 1, 200, "1", get_mime_type(conn, file), sb.st_size, sb.st_mtime);
 	flushheader(conn);
 	/* sendfile() can't be used without screwing up our timeouts, so we do this */
-	fileblock = n_alloc(conn->N, MAX_FILESEND_WRITE_SIZE, 1);
-	for (;;) {
-		if (bytesleft <= 0) break;
-		blocksize = MAX_FILESEND_WRITE_SIZE;
-		if (bytesleft < blocksize) bytesleft = blocksize;
-		blocksize = read(fp, fileblock, blocksize);
-		if (blocksize < 1) break;
-		bytesleft -= blocksize;
-		bs = tcp_send(&conn->socket, fileblock, blocksize, 0);
-		if (bs < 0) break;
-		if (bs > 0) conn->socket.atime = time(NULL);
+	fileblock = malloc(MAX_FILESEND_WRITE_SIZE);
+	if (fileblock != NULL) {
+		for (;;) {
+			if (bytesleft <= 0) break;
+			blocksize = MAX_FILESEND_WRITE_SIZE;
+			if (bytesleft < blocksize) bytesleft = blocksize;
+			blocksize = read(fp, fileblock, blocksize);
+			if (blocksize < 1) break;
+			bytesleft -= blocksize;
+			bs = tcp_send(&conn->socket, fileblock, blocksize, 0);
+			if (bs < 0) break;
+			if (bs > 0) conn->socket.atime = time(NULL);
+		}
+		free(fileblock);
+		fileblock = NULL;
 	}
-	n_free(conn->N, (void *)&fileblock, MAX_FILESEND_WRITE_SIZE);
 	close(fp);
 	//fileend:
 	conn->dat->out_headdone = 1;

@@ -5,14 +5,21 @@ standard version in lib/scripts/smtp/events.ns
 */
 namespace nsd.smtp {
 	class events {
+		function events() {
+			try {
+				this.location=this.ip2location();
+			} catch (ex) {
+				logaccess(sprintf("events() EXCEPTION: %s", ex.description));
+			}
+		}
 		function prefilter() {
 			try {
-				r=this.ip2location();
+				// r=this.ip2location();
 				cc=_SERVER['REMOTE_COUNTRY_CODE'].tostring();
 				if (cc=="RU"||cc=="CN") {
 					reason=sprintf("%s (%s) banned", _SERVER['REMOTE_COUNTRY_NAME'], _SERVER['REMOTE_COUNTRY_CODE']);
 					q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], time.sqltime(time.now()+43200), reason.sub(0, 60));
-					logaccess(sprintf("%s:%d -- %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], q));
+					logaccess(sprintf("%s:%d -- DENIED - %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], sql.escape(reason)));
 					sql.update(q);
 				}
 			} catch (ex) {
@@ -22,10 +29,10 @@ namespace nsd.smtp {
 		}
 		function addfilter(reason) {
 			try {
-				r=this.ip2location();
+				// r=this.ip2location();
 				reason=sprintf("%s from %s (%s)", reason, _SERVER['REMOTE_COUNTRY_NAME'], _SERVER['REMOTE_COUNTRY_CODE']);
 				q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], time.sqltime(time.now()+3600), reason.sub(0, 60));
-				logaccess(sprintf("%s:%d -- %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], q));
+				logaccess(sprintf("%s:%d -- DENIED - %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], sql.escape(reason)));
 				sql.update(q);
 			} catch (ex) {
 				logaccess(sprintf("addfilter() EXCEPTION: %s", ex.description));

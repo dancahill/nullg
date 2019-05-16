@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -306,31 +306,31 @@ short n_getop(nsp_state *N, char *name)
 	short i;
 
 	settrace();
-	if (N->readptr == NULL) n_error(N, NE_SYNTAX, __FN__, "NULL readptr");
-	if (*N->readptr > 127) {
+	if (n_context_readptr == NULL) n_error(N, NE_SYNTAX, __FN__, "NULL readptr");
+	if (*n_context_readptr > 127) {
 		name[0] = 0;
-		return *N->readptr++;
+		return *n_context_readptr++;
 	}
-	else if (IS_DATA(*N->readptr)) {
+	else if (IS_DATA(*n_context_readptr)) {
 		name[0] = 0;
-		if (*N->readptr == '\'' || *N->readptr == '\"')
+		if (*n_context_readptr == '\'' || *n_context_readptr == '\"')
 			return OP_STRDATA;
-		else if (*N->readptr == '`')
+		else if (*n_context_readptr == '`')
 			return OP_ESTRDATA;
-		else if (N->readptr[0] == '@') {
-			if (N->readptr[1] == '\'' || N->readptr[1] == '\"')
+		else if (n_context_readptr[0] == '@') {
+			if (n_context_readptr[1] == '\'' || n_context_readptr[1] == '\"')
 				return OP_STRDATA;
-			else if (N->readptr[1] == '`')
+			else if (n_context_readptr[1] == '`')
 				return OP_ESTRDATA;
 		}
-		else if (nc_isdigit(*N->readptr))
+		else if (nc_isdigit(*n_context_readptr))
 			return OP_NUMDATA;
 	}
-	else if (IS_LABEL(*N->readptr)) {
-		name[0] = *N->readptr++;
+	else if (IS_LABEL(*n_context_readptr)) {
+		name[0] = *n_context_readptr++;
 		for (i = 1; i < MAX_OBJNAMELEN; i++) {
-			if (!IS_LABEL(*N->readptr) && !nc_isdigit(*N->readptr)) break;
-			name[i] = *N->readptr++;
+			if (!IS_LABEL(*n_context_readptr) && !nc_isdigit(*n_context_readptr)) break;
+			name[i] = *n_context_readptr++;
 		}
 		name[i] = 0;
 		for (i = OP_KEXIT; i <= OP_KBREAK; i++) {
@@ -338,25 +338,25 @@ short n_getop(nsp_state *N, char *name)
 		}
 		return OP_LABEL;
 	}
-	else if (IS_PUNCOP(*N->readptr)) {
-		name[0] = *N->readptr++;
+	else if (IS_PUNCOP(*n_context_readptr)) {
+		name[0] = *n_context_readptr++;
 		name[1] = 0;
 		for (i = OP_PHASH; i <= OP_POBRACE; i++) {
 			if (nc_strcmp(oplist[i].name, name) == 0) return oplist[i].value;
 		}
 	}
-	else if (IS_MATHOP(*N->readptr)) {
+	else if (IS_MATHOP(*n_context_readptr)) {
 		i = 0;
-		name[i++] = *N->readptr++;
-		if (IS_MATHOP(*N->readptr)) {
+		name[i++] = *n_context_readptr++;
+		if (IS_MATHOP(*n_context_readptr)) {
 			if (name[0] == '=') {
-				if (N->readptr[0] == '=') {
-					name[i++] = *N->readptr++;
-					if (N->readptr[0] == '=') name[i++] = *N->readptr++;
+				if (n_context_readptr[0] == '=') {
+					name[i++] = *n_context_readptr++;
+					if (n_context_readptr[0] == '=') name[i++] = *n_context_readptr++;
 				}
 			}
 			else {
-				name[i++] = *N->readptr++;
+				name[i++] = *n_context_readptr++;
 			}
 		}
 		name[i] = 0;
@@ -428,18 +428,18 @@ uchar n_skip_ws(nsp_state *N)
 {
 #define __FN__ __FILE__ ":n_skip_ws()"
 	settrace();
-	while (*N->readptr == OP_LINENUM) {
-		N->line_num = readi4((N->readptr + 1)); N->readptr += 5;
+	while (*n_context_readptr == OP_LINENUM) {
+		N->context->linenum = readi4((n_context_readptr + 1)); n_context_readptr += 5;
 #if defined(WIN32) && defined(_DEBUG)
 		// this is useful -> http://www.cprogramming.com/tutorial/visual_studio_trace_log_messages.html
 		char *f = NULL;
-		if (N->file && N->file[0] != '\0') {
-			f = (char *)N->file + nc_strlen(N->file) - 1;
-			while (*f && f > N->file) { if (*f == '\\' || *f == '/') { f++; break; } f--; }
+		if (N->context->filename && N->context->filename[0] != '\0') {
+			f = (char *)N->context->filename + nc_strlen(N->context->filename) - 1;
+			while (*f && f > N->context->filename) { if (*f == '\\' || *f == '/') { f++; break; } f--; }
 		}
-		_RPT1(_CRT_WARN, "N->file='%s' N->line_num=%d N->func='%s'\r\n", f ? f : "", N->line_num, N->func ? N->func : "");
+		_RPT1(_CRT_WARN, "N->file='%s' N->line_num=%d N->func='%s'\r\n", f ? f : "", N->context->linenum, N->context->funcname ? N->context->funcname : "");
 #endif
 	}
-	return *N->readptr;
+	return *n_context_readptr;
 #undef __FN__
 }

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ static unsigned long cdb_hash(const void *buf, unsigned long len)
 NSP_FUNCTION(libnsp_data_cdb_read)
 {
 #define __FN__ __FILE__ ":libnsp_data_cdb_read()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	obj_t tobj;
 	char namebuf[MAX_OBJNAMELEN + 1];
@@ -143,8 +143,8 @@ NSP_FUNCTION(libnsp_data_cdb_read)
 NSP_FUNCTION(libnsp_data_cdb_write)
 {
 #define __FN__ __FILE__ ":libnsp_data_cdb_write()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	obj_t *cobj;
 	char nbuf[4];
 	char *p;

@@ -19,23 +19,23 @@ class html_form {
 		}
 
 		if (field.type=="textarea") {
-			//"notetext<br><textarea name=notetext style='height:600px;width:600px'>"+strtohtml(NOTE['notetext'])+"</textarea><br>",
-			printf("<tr><td colspan=2><b>%s</b></td></tr><tr><td colspan=2>", field.label);
-			//printf("<textarea id=%s name=%s wrap=virtual rows=5 cols=50>", field.name, field.name);
+			printf("<tr><td class='formname' colspan=2>%s</td></tr><tr><td colspan=2>", field.label);
+			printf("<textarea id=\"%s\" name=\"%s\"", field.name, field.name);
 			if (field.style!=null) {
-				printf("<textarea id=%s name=%s style=\"%s\">", field.name, field.name, field.style);
+				printf(" style=\"%s\">", field.style);
 			} else {
-				printf("<textarea id=%s name=%s wrap=virtual rows=5 cols=50>", field.name, field.name);
+				printf(" wrap=virtual rows=5 cols=50>");
 			}
 			print(strtohtml(this.record[field.name].tostring()));
 			printf("</textarea></td></tr>");
 			return;
 		}
 
-		printf("<tr><td><b>%s</b></td>", field.label);
+		printf("<tr><td class='formname'>%s</td>", field.label);
 		printf("<td>");
+		disabled=(field.disabled==true)?" disabled":"";
 		if (field.type=="select") {
-			printf("<select id=%s name=%s>\r\n", field.name, field.name);
+			printf("<select id=%s name=%s%s>\r\n", field.name, field.name, disabled);
 			v=this.record[(field.src!=null?field.src:field.name)];
 			if (typeof(field.handler)=='function') {
 				field.handler(v, this.record);
@@ -50,10 +50,6 @@ class html_form {
 			//printf(" autocomplete='new-password'");// google ignores 'off'
 			//printf(" autocomplete='fuck-you-google'");// google ignores 'off'
 			printf(">");
-		//} else if (field.type=="textarea") {
-			//printf("<textarea wrap=virtual id=%s name=%s rows=5 cols=50>", field.name, field.name);
-			//print(strtohtml(this.record[field.name].tostring()));
-			//printf("</textarea>");
 		} else {
 			printf("<input type=text id=%s name=%s value=\"", field.name, field.name);
 			v=this.record[(field.src!=null?field.src:field.name)];
@@ -66,7 +62,7 @@ class html_form {
 			if (field.required===true) printf(" required='required'");
 			if (field.autocorrect!==true) printf(" spellcheck='false' autocorrect='off'");
 			//printf(" autocomplete='off'");// google ignores 'off'
-			printf(">");
+			printf("%s>", disabled);
 		}
 		printf("</td></tr>\r\n");
 	}

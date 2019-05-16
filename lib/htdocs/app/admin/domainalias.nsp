@@ -1,0 +1,118 @@
+<?nsp
+
+class domainalias {
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['DOMAINALIASID']:_GET['ID']);
+		if (domainid==null) domainid=tonumber((method=='POST')?_POST['DOMAINID']:_GET['DOMAINID']);
+		Q=db.admin.domainaliases.get(id);
+		// print(serialize(Q));
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		if (id==0) rec['domainid']=tonumber(domainid);
+		var form=new html_form(rec);
+		var tabset=new html_tabset({activepage=1,minheight=0});
+//		tabset.addtab("GENERAL");
+//		tabset.showtabs();
+		print("<form id=domainaliasedit name=domainaliasedit METHOD=POST ACTION=\"/app/admin/domainalias\" onsubmit=\"return ns.dialog.submit(event, 'domainalias', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="domainaliasid", type="hidden"});
+		form.addfield({name="domainid", type="hidden"});
+		tabset.pagebegin();
+		print("<table class=\"contentform contentform2\" style=\"width:100%\">\r\n");
+		form.addfield({name="domainname", label="Domain Alias", required=true});
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		form.validate("gw_domains_aliases");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title="Domain Alias: "+rec['domainname'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_domainalias_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		if (rec['domainname'].length()<1) {
+			print("<b>domain name is too short</b><br/>");
+			isvalid=false;
+		}
+		sqr=sql.query(sprintf("SELECT domainname FROM gw_domains WHERE domainname = '%s'", sql.escape(rec['domainname'])));
+		if (sqr.rows.length()>0) {
+			printf("<b>domain name \"%s\" is already in use</b><br/>", strtohtml(rec['domainname']));
+			//printf("sqr=%s", serialize(sqr));
+			isvalid=false;
+		}
+		sqr=sql.query(sprintf("SELECT domainname FROM gw_domains_aliases WHERE domainaliasid <> %d AND domainname = '%s'", tonumber(rec['domainaliasid']), sql.escape(rec['domainname'])));
+		if (sqr.rows.length()>0) {
+			printf("<b>domain name \"%s\" is already in use</b><br/>", strtohtml(rec['domainname']));
+			//printf("sqr=%s", serialize(sqr));
+			isvalid=false;
+		}
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['DOMAINALIASID']);
+		Q=db.admin.domainaliases.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(rec, "domainid");
+			addfield(rec, "domainname");
+			if (!this.validate(rec)) {
+				this.view(rec['domainaliasid'], rec);
+				return;
+			}
+			db.admin.domainaliases.set(rec);
+			printf("domain alias %d saved", rec['domainaliasid']);
+			this.view(rec['domainaliasid']);
+			break;
+		case 'delete':
+			db.admin.domainaliases.remove(rec);
+			printf("domain alias %d removed", rec['domainaliasid']);
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	da=new domainalias();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		da.save();
+	} else {
+		da.view();
+	}
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

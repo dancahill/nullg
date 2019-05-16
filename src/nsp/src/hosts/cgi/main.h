@@ -1,6 +1,6 @@
 /*
     nsp.cgi -- simple Nesla CGI host
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

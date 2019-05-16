@@ -1,23 +1,12 @@
 namespace html {
 	function headersubmenu(menuitems) {
-/*
-		var menuitems = {
-			{ href="/app/mail/list"; onclick="return ns.GoTo(event);"; text="LIST"; };
-			{ href="/app/mail/compose"; onclick="return ns.mail.compose(0);"; text="COMPOSE";   };
-			{ href="/app/mail/sync"; onclick="return ns.GoTo(event);"; text="SYNC";     };
-			{ href="/app/mail/purge"; onclick="return ns.GoTo(event);"; text="PURGE";     };
-		};
-*/
 		print("<div class=\"tbar\" style=\"text-align:left;width:100%\">\r\n");
-		first=true;
-
 		//print("<span style="font-size:30px;cursor:pointer" onclick="ns.openNav()">&#9776; open</span>
-
 		print("<span class=\"tbar-navlink\" style=\"font-size:22px;cursor:pointer\" onclick=\"ns.openNav()\">&#9776");
 		if (menuitems!=null) print("&nbsp;&middot;&nbsp;");
 		print("</span>");
-
 		if (menuitems!=null) {
+			first=true;
 			foreach (item in menuitems) {
 				if (!first) print("&nbsp;&middot;&nbsp;"); else first=false;
 				if (item.cls!=null) {
@@ -102,137 +91,9 @@ namespace html {
 		print("</TABLE>\n");
 		print("</CENTER>\n");
 	}
-	function motd() {
-
-		local function show_day(utime, text) {
-			local function print_datelink(day, text) {
-				userid=0;
-				status=0;
-				printf("<a class='main' href='/app/calendar/dlist?day=%d&userid=%d&status=%d'>%s</a>", day, userid, status, strtohtml(text));
-			}
-			local function pad(n) {
-				x="0"+n;
-				return x.sub(-2, 2);
-			}
-			d1=new datetime(utime);
-			d2=d1.adddays(1);
-			ui=new db.userinfo();
-			sqr=db.events.getlist(d1.tostring(), d2.tostring(), ui.userid, 0, 0);
-			sqrlen=sqr.rows.length();
-			printf("<tr><td colspan=2><b>");
-			print_datelink(utime/86400, text);
-			printf("</b></td></tr>\r\n");
-			found=false;
-			for (j=0;j<sqrlen;j++) {
-				rec=sqr.rows[j];
-				found=true;
-				id=tonumber(rec['eventid']);
-				et = new datetime(time.mktime(rec['eventstart']));
-				//calendar.tz_utc2user(et);
-				et.unixtime+=et.gettzoffset();
-				ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
-				et2 = new datetime(time.mktime(rec['eventfinish']));
-				//calendar.tz_utc2user(et2);
-				et2.unixtime+=et2.gettzoffset();
-				ts2=""+(et2.gethours()==0?12:(et2.gethours()>12)?(et2.gethours()-12):et2.gethours())+":"+pad(et2.getminutes())+(et2.gethours()>=12?"pm":"am");
-				printf("<tr><td style='text-align:right'>%s - %s</td><td width=100%s><span>", ts, ts2, '%');
-				printf("<a class='dialog' href=\"/app/calendar/event?id=%d\">%s</a>", id, strtohtml(rec['eventname']));
-				printf("</span></td></tr>");
-				rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
-			}
-			if (!found) {
-				//ts=""+(i==0?12:(i>12)?(i-12):i)+":"+pad(0)+(i>=12?"pm":"am");
-				printf("<tr><td colspan=2>&nbsp;</td></tr>\r\n");
-			}
-		}
-
-		local function show_tasks() {
-			ui=new db.userinfo();
-			//query="SELECT * FROM gw_tasks WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
-			query="SELECT * FROM gw_tasks WHERE obj_did = "+ui.domainid;
-			query+=sprintf(" AND assignedto = %d", ui.userid);
-			query+=sprintf(" AND status = 0");
-			query+=" ORDER BY status ASC, priority DESC, duedate ASC, taskname ASC";
-			//print(query);
-			sqr=sql.query(query);
-			sqrlen=sqr.rows.length();
-			//if (sqrlen<1) continue;
-			//printf("<div style='position:absolute;top:0px;right:0px;max-width:200px;overflow:scroll;overflow-x:hidden'>");
-			printf("<div style='margin-top:5px;float:right;clear:right;max-width:200px'>");
-			printf("<table id=\"T3\" class=\"contenttable\" style='width:200px;overflow:scroll;overflow-x:hidden'>");
-
-			print("<tr><th style='text-align:left'>Tasks</th></tr>\r\n");
-			found=false;
-			for (i=0;i<sqrlen;i++) {
-				rec=sqr.rows[i];
-				found=true;
-				id=tonumber(rec['taskid']);
-				url=sprintf("/app/tasks/task?id=%d", id);
-				title=rec['taskname'];
-				title+="\nDue "+rec['duedate'].sub(0, 10);
-				printf("<tr><td style='max-width:194px;overflow:hidden' title=\"%s\" onclick=\"return ns.dialog.create('%s');\"'>", strtohtml(title), url);
-				printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['taskname']));
-				rec=null;// this avoids a bug where unlinking a table actually deletes the table - MUST FIX
-			}
-			if (!found) {
-				printf("<tr><td>...</td></tr>\r\n");
-			}
-			printf("</table></div>");
-		}
-
-		if (_USER==null) {
-			print("Shouldn't you be logged in or something?<BR>");
-			return;
-		}
-
-		try {
-			include_template("common.ns");
-			include_template("timezones.ns");
-			include_template("class.datetime.ns");
-			ui=new db.userinfo();
-			d1=new datetime();
-			d1.unixtime+=d1.gettzoffset();
-			d1.unixtime-=d1.unixtime%86400;
-
-			print("<br />\r\n");
-			print("<center><div style='width:calc(90%)'>\r\n");
-			print("<table class=\"contentview\" style=\"width:100%;margin:0 auto;\">\r\n");
-			print("<tr><th>");
-			print("<span style='float:left'>Welcome, ",strtohtml(_USER.username),".&nbsp;</span>");
-			print("<span style='float:right'>&nbsp;",d1.tostring().sub(0, 10),"</span>");
-			print("</th></tr>\r\n");
-			print("<tr class=\"fieldval\"><td style='border-style:solid;white-space:normal' contenteditable=true>");
-			sqr=sql.query(sprintf("SELECT motd FROM gw_groups WHERE obj_did = %d AND groupid = %d", ui.domainid, ui.groupid));
-			if (sqr.rows.length()==1) {
-				printf("%s", sqr.rows[0].motd);
-			}
-			print("<br />");
-			print("</td></tr>\r\n</table>");
-
-			print("<div style='margin-top:5px;float:left;width:calc(100% - 200px - 5px)'>\r\n");
-			print("<table id=\"T1\" class=\"contenttable\" style='width:100%'>");
-			print("<tr><th colspan=2 style='text-align:left'>Calendar</th></tr>");
-			show_day(d1.unixtime, "Today");
-			show_day(d1.unixtime+86400, "Tomorrow");
-			printf("</table></div>");
-
-			show_tasks();
-
-			print("</div></center>\r\n");
-
-			print("<hr><center>\r\n");
-			print("<button onclick=\"return _null.showAlert('test 1 body', 'test 1 title');\">test 1</button>");
-			print(" <button onclick=\"return _null.toastAlert('test 2');\">test 2</button>");
-			print(" <button onclick=\"return _null.vibrate();\">test 3</button>");
-			print(" <button onclick=\"return _null.speak('stop poking me, dammit');\">test 4</button>");
-			print(" <button onclick=\"return _null.setNotification('This is a test!', 'Null Device Test Title');\">test 5</button>");
-			print("</center>\r\n");
-		} catch (ex) {
-			print("Exception: [",ex.description,"]");
-		}
-	}
 
 	function printmenu() {
+		ui=new db.userinfo();
 		//var mailcurrent = tonumber(_USER['pref']['mailcurrent']);
 		//var maildefault = tonumber(_USER['pref']['maildefault']);
 		//var maxlist     = tonumber(_USER['pref']['maxlist']);
@@ -242,6 +103,10 @@ namespace html {
 		print("<span class=\"tbar\">");
 		foreach(mod in _CONFIG.MODULES) {
 			if (mod.name==null || mod.name.length()==0) continue;
+
+			//if (!ui.auth('domainadmin', 'admin') && !ui.auth('admin', 'admin')) {
+			if (mod.perm!=null && ui.auth(mod.perm, 'none')) continue;
+
 			//printf("<a href=\"%s\" onclick=\"return ns.GoTo(event);\">", mod['uri']);
 			printf("<a class='main' href=\"%s\">", mod['uri']);
 			print("<img style=\"border:0;\" height=24 width=24 src=\"/lib/images/icons/",mod['pic'],"\" title=\"",mod['name'],"\"></a>&nbsp;");
@@ -355,7 +220,7 @@ namespace html {
 					print("<a TARGET=gwmain HREF=/mail/search onClick=\"return ns.GoTo('/mail/search');\");return false;\">SEARCH</A>");
 				}
 				if (cnt++) print("&nbsp;&middot;&nbsp;");
-				print("<a TARGET=gwmain HREF=\"/mail/accounts/list\" onClick=\"return ns.GoTo('/mail/accounts/list');\");return false;\">ACCOUNTS</A>");
+				print("<a TARGET=gwmain HREF=\"/mail/mailaccountlist\" onClick=\"return ns.GoTo('/mail/mailaccountlist');\");return false;\">ACCOUNTS</A>");
 			} else {
 				if (mailcurrent>0) {
 					if (cnt++) print("&nbsp;&middot;&nbsp;");
@@ -368,7 +233,7 @@ namespace html {
 					print("<a HREF=/mail/search>SEARCH</A>");
 				}
 				if (cnt++) print("&nbsp;&middot;&nbsp;");
-				print("<a HREF=/mail/accounts/list>ACCOUNTS</A>");
+				print("<a HREF=/mail/mailaccountlist>ACCOUNTS</A>");
 			}
 			if (mailcurrent>0) {
 				if (cnt++) print("&nbsp;&middot;&nbsp;");

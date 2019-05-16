@@ -1,0 +1,107 @@
+<?nsp
+
+class mailfolder {
+	function view(id) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['MAILFOLDERID']:_GET['ID']);
+		if (accountid==null) accountid=tonumber((method=='POST')?_POST['ACCOUNTID']:_GET['ACCOUNTID']);
+		Q=db.mailfolders.get(accountid, id);
+		// print(serialize(Q));
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		rec['accountid']=accountid;
+		var form=new html_form(rec);
+		var tabset=new html_tabset({activepage=1,minheight=150});
+		//if (id==0) tabset.activepage=2;
+		tabset.addtab("GENERAL");
+		tabset.showtabs();
+		print("<form id=mailfolderedit name=mailfolderedit METHOD=POST ACTION=\"/app/mail/mailfolder\" onsubmit=\"return ns.dialog.submit(event, 'mailfolder', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="mailfolderid", type="hidden"});
+		form.addfield({name="accountid", type="hidden"});
+
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="parentfolderid", label="Parent Folder", type="select", handler=mail.html.htselect_mailfolder});
+		form.addfield({name="foldername",     label="Folder Name", required=true});
+		print("</table>\r\n");
+		tabset.pageend();
+
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		form.validate("gw_email_folders");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title="Mail Folder: "+rec['foldername'];
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_mailfolder_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		Q=null;
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['MAILFOLDERID']);
+		accountid=tonumber(_POST['ACCOUNTID']);
+		Q=db.mailfolders.get(accountid, id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			addfield(rec, "accountid");
+			addfield(rec, "parentfolderid");
+			addfield(rec, "foldername");
+			db.mailfolders.set(rec);
+			printf("mailfolder %d saved", rec['mailfolderid']);
+			this.view(rec['mailfolderid']);
+			break;
+		case 'delete':
+			db.mailfolders.remove(rec);
+			printf("mail folder %d removed", rec['mailfolderid']);
+			break;
+		}
+		// printf("<script>\r\nns.GoTo('/app/mail/mailfolderlist');\r\n</script>\r\n");
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("mail.lib.ns");
+	mf=new mailfolder();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		mf.save();
+	} else {
+		mf.view();
+	}
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -199,7 +199,7 @@ void do_preload(nsp_state *N)
 NSP_FUNCTION(nsp_flush)
 {
 #define __FN__ __FILE__ ":nsp_flush()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 
 	if (N == NULL || N->outbuflen == 0) return 0;
 	N->outbuffer[N->outbuflen] = '\0';
@@ -633,8 +633,8 @@ LRESULT CALLBACK DlgTextInput(HWND wnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_INITDIALOG: {
-		obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-		obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+		obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+		obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 
 		SetWindowText(wnd, nsp_tostr(N, cobj2));
 		SetDlgItemText(wnd, IDC_EDIT1, nsp_tostr(N, cobj1));
@@ -785,8 +785,8 @@ void traynoticethread(void *x)
 
 NSP_FUNCTION(nsp_traynotice)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 
 	IconNotify(NIM_MODIFY, nsp_isstr(cobj1) ? cobj1->val->d.str : NULL, nsp_isstr(cobj2) ? cobj2->val->d.str : NULL);
 	return 0;
@@ -800,10 +800,10 @@ NSP_FUNCTION(nsp_traynotice2)
 	RECT rcWork;
 	//	unsigned long int threadid;
 
-	cobj1 = nsp_getobj(N, &N->l, "1");
-	cobj2 = nsp_getobj(N, &N->l, "2");
-	cobj3 = nsp_getobj(N, &N->l, "3");
-	cobj4 = nsp_getobj(N, &N->l, "4");
+	cobj1 = nsp_getobj(N, &N->context->l, "1");
+	cobj2 = nsp_getobj(N, &N->context->l, "2");
+	cobj3 = nsp_getobj(N, &N->context->l, "3");
+	cobj4 = nsp_getobj(N, &N->context->l, "4");
 	TNS.t = nsp_isnum(cobj3) ? (int)nsp_tonum(N, cobj3) : 5;
 	TNS.x = 0;
 	TNS.y = 0;

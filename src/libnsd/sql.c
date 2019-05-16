@@ -174,11 +174,13 @@ typedef	int(*SQLITE3_OPEN)(const char *, sqlite3 **);
 typedef	int(*SQLITE3_EXEC)(sqlite3 *, const char *, sqlite3_callback, void *, char **);
 typedef	void(*SQLITE3_CLOSE)(sqlite3 *);
 typedef sqlite_int64(*SQLITE3_LASTID)(sqlite3 *);
+typedef int(*SQLITE3_CHANGES)(sqlite3*);
 static struct {
 	SQLITE3_OPEN   open;
 	SQLITE3_CLOSE  close;
 	SQLITE3_EXEC   exec;
 	SQLITE3_LASTID lastid;
+	SQLITE3_CHANGES changes;
 } libsqlite3;
 static sqlite3 *db3;
 #endif
@@ -917,11 +919,11 @@ static int fbsqlUpdate(nsp_state *N, obj_t *qobj, char *sqlquery)
 		ra = fbsql_rows_affected();
 		if (sql_numtuples(N, &qobj) > 0) {
 			long int i = atoi(sql_getvalue(N, &qobj, 0, 0));
-			nsp_setnum(N, qobj, "lastinsertedid", i);
-			//log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d lastinsertedid=%d rowsaffected=%d numfields=%d numtuples=%d\r\n\tquery=%s\r\n", __LINE__, i, ra, numfields, numtuples, sqlquery);
-			//log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d lastinsertedid=%d rowsaffected=%d numfields=%d numtuples=%d", __LINE__, i, ra, numfields, numtuples);
+			nsp_setnum(N, qobj, "lastid", i);
+			//log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d lastid=%d changes=%d numfields=%d numtuples=%d\r\n\tquery=%s\r\n", __LINE__, i, ra, numfields, numtuples, sqlquery);
+			//log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d lastid=%d changes=%d numfields=%d numtuples=%d", __LINE__, i, ra, numfields, numtuples);
 		}
-		nsp_setnum(N, qobj, "rowsaffected", ra);
+		nsp_setnum(N, qobj, "changes", ra);
 	}
 	fbsql_endquery(N, qobj);
 	//log_error(N, "sql", __FILE__, __LINE__, 1, "line %d\r\n", __LINE__);
@@ -955,8 +957,8 @@ static int fbsqlQuery(nsp_state *N, obj_t *qobj, char *sqlquery)
 		}
 	}
 	ra = fbsql_rows_affected();
-	if (ra) log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d rowsaffected=%d numfields=%d numtuples=%d query=%s\r\n", __LINE__, ra, numfields, numtuples, sqlquery);
-	nsp_setnum(N, qobj, "rowsaffected", ra);
+	if (ra) log_error(N, "sql", __FILE__, __LINE__, 1, "line=%d changes=%d numfields=%d numtuples=%d query=%s\r\n", __LINE__, ra, numfields, numtuples, sqlquery);
+	nsp_setnum(N, qobj, "changes", ra);
 
 	fbsql_endquery(N, qobj);
 	nsp_setnum(NULL, qobj, "_tuples", numtuples);
@@ -1005,6 +1007,12 @@ static int mysqlDLLInit(nsp_state *N, char *libdir)
 	fixslashes(libname);
 	if ((hinstLib = lib_open(libname)) != NULL) goto found;
 	snprintf(libname, sizeof(libname) - 1, "libmysqlclient.%s", LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib = lib_open(libname)) != NULL) goto found;
+	snprintf(libname, sizeof(libname) - 1, "libmysqlclient.%s.18", LIBEXT);
+	fixslashes(libname);
+	if ((hinstLib = lib_open(libname)) != NULL) goto found;
+	snprintf(libname, sizeof(libname) - 1, "libmysqlclient.%s.16", LIBEXT);
 	fixslashes(libname);
 	if ((hinstLib = lib_open(libname)) != NULL) goto found;
 	snprintf(libname, sizeof(libname) - 1, "libmysqlclient.%s.15", LIBEXT);
@@ -1073,12 +1081,15 @@ static int mysqlConnect(nsp_state *N)
 	return 0;
 }
 
-static int mysqlUpdate(nsp_state *N, char *sqlquery)
+static int mysqlUpdate(nsp_state *N, obj_t* qobj, char *sqlquery)
 {
+	obj_t* cobj;
 	int rc;
 
+	nsp_setstr(NULL, qobj, "query", sqlquery, strlen(sqlquery));
 	if (libmysql.query(mysock, sqlquery)) {
-		log_error(N, "sql", __FILE__, __LINE__, 1, "MYSQL error: %s", libmysql.error(&mysql));
+		cobj = nsp_setstr(NULL, qobj, "error", libmysql.error(&mysql), -1);
+		log_error(N, "sql", __FILE__, __LINE__, 1, "MYSQL error: %s", nsp_tostr(NULL, cobj));
 		log_error(N, "sql", __FILE__, __LINE__, 2, "MYSQL: [%s]", sqlquery);
 		return -1;
 	}
@@ -1105,13 +1116,13 @@ static int mysqlQuery(nsp_state *N, obj_t *qobj, char *sqlquery)
 		return -1;
 	}
 	if (libmysql.query(mysock, sqlquery)) {
-		cobj = nsp_setstr(NULL, qobj, "_error", libmysql.error(&mysql), -1);
+		cobj = nsp_setstr(NULL, qobj, "error", libmysql.error(&mysql), -1);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "MYSQL error: %s", nsp_tostr(NULL, cobj));
 		log_error(N, "sql", __FILE__, __LINE__, 2, "MYSQL: [%s]", sqlquery);
 		return -1;
 	}
 	if (!(myres = libmysql.use_result(mysock))) {
-		cobj = nsp_setstr(NULL, qobj, "_error", libmysql.error(&mysql), -1);
+		cobj = nsp_setstr(NULL, qobj, "error", libmysql.error(&mysql), -1);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "MYSQL error: %s", nsp_tostr(NULL, cobj));
 		return -1;
 	}
@@ -1516,7 +1527,7 @@ static int sqlite2Connect(nsp_state *N)
 	return 0;
 }
 
-static int sqlite2Update(nsp_state *N, char *sqlquery)
+static int sqlite2Update(nsp_state *N, obj_t *qobj, char *sqlquery)
 {
 	char *zErrMsg = 0;
 	int rc;
@@ -1527,6 +1538,7 @@ static int sqlite2Update(nsp_state *N, char *sqlquery)
 	switch (rc) {
 	case SQLITE_OK:
 		rc = (int)libsqlite2.lastid(db2);
+		nsp_setnum(N, qobj, "lastid", rc);
 		return rc;
 	case SQLITE_BUSY:
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite busy error?: %s", zErrMsg);
@@ -1631,6 +1643,7 @@ found:
 	if ((libsqlite3.exec = (SQLITE3_EXEC)lib_sym(hinstLib, "sqlite3_exec")) == NULL) goto fail;
 	if ((libsqlite3.close = (SQLITE3_CLOSE)lib_sym(hinstLib, "sqlite3_close")) == NULL) goto fail;
 	if ((libsqlite3.lastid = (SQLITE3_LASTID)lib_sym(hinstLib, "sqlite3_last_insert_rowid")) == NULL) goto fail;
+	if ((libsqlite3.changes = (SQLITE3_CHANGES)lib_sym(hinstLib, "sqlite3_changes")) == NULL) goto fail;
 	return 0;
 fail:
 	log_error(N, "sql", __FILE__, __LINE__, 0, "ERROR: Failed to load %s", libname);
@@ -1672,26 +1685,32 @@ static int sqlite3Connect(nsp_state *N)
 	return 0;
 }
 
-static int sqlite3Update(nsp_state *N, char *sqlquery)
+static int sqlite3Update(nsp_state *N, obj_t *qobj, char *sqlquery)
 {
-	//	obj_t *cobj;
 	char *zErrMsg = 0;
 	int rc;
 	//	short int retries=10;
 
 	//retry:
 	rc = libsqlite3.exec(db3, sqlquery, NULL, 0, &zErrMsg);
+	if (qobj) nsp_setnum(N, qobj, "_fields", 0);
+	if (qobj) nsp_setnum(N, qobj, "_tuples", 0);
+	if (qobj) nsp_setstr(N, qobj, "query", sqlquery, strlen(sqlquery));
+	if (qobj) nsp_setnum(N, qobj, "changes", libsqlite3.changes(db3));
 	switch (rc) {
 	case SQLITE_OK:
 		rc = (int)libsqlite3.lastid(db3);
+		if (qobj) nsp_setnum(N, qobj, "lastid", rc);
 		return rc;
 	case SQLITE_BUSY:
-		//		cobj=nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+		//		cobj=nsp_setstr(NULL, qobj, "error", zErrMsg, -1);
+		if (qobj) nsp_setstr(N, qobj, "error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite busy error?: %s", zErrMsg);
 		//		if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	case SQLITE_CORRUPT:
-		//		cobj=nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+		//		cobj=nsp_setstr(NULL, qobj, "error", zErrMsg, -1);
+		if (qobj) nsp_setstr(N, qobj, "error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite corrupt error?: %s", zErrMsg);
 		//		if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
@@ -1699,7 +1718,8 @@ static int sqlite3Update(nsp_state *N, char *sqlquery)
 		break;
 	}
 	if (rc != SQLITE_OK) {
-		//		cobj=nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+		//		cobj=nsp_setstr(NULL, qobj, "error", zErrMsg, -1);
+		if (qobj) nsp_setstr(N, qobj, "error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite error: %d %s", rc, zErrMsg);
 		log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite: [%s]", sqlquery);
 		return -1;
@@ -1719,20 +1739,29 @@ static int sqlite3Callback(void *vptr, int argc, char **argv, char **azColName)
 
 	numfields = argc;
 	numtuples = (int)nsp_getnum(NULL, qobj, "_tuples");
-	tobj = nsp_getobj(NULL, qobj, "rows");
-	if (tobj->val->type != NT_TABLE) return -1;
 	memset(name, 0, sizeof(name));
-	sprintf(name, "%d", numtuples);
-	/* get pointer to this record table */
-	tobj = nsp_settable(NULL, tobj, name);
-	tobj->val->attr &= ~NST_AUTOSORT;
-	if (numtuples == 0) nsp_setnum(NULL, qobj, "_fields", numfields);
-	for (field = 0; field < numfields; field++) {
-		if (argv == NULL) continue;
-		p = argv[field] ? argv[field] : "NULL";
-		nsp_setstr(NULL, tobj, azColName[field], p, strlen(p));
+	if (numtuples == 0) {
+		tobj = nsp_getobj(NULL, qobj, "columns");
+		if (!nsp_istable(tobj)) return -1;
+		for (field = 0; field < numfields; field++) {
+			sprintf(name, "%d", field);
+			nsp_setstr(NULL, tobj, name, azColName[field], -1);
+		}
 	}
-	if (argv != NULL) nsp_setnum(NULL, qobj, "_tuples", numtuples + 1);
+	if (numtuples == 0) nsp_setnum(NULL, qobj, "_fields", numfields);
+	if (argv != NULL) {
+		tobj = nsp_getobj(NULL, qobj, "rows");
+		if (!nsp_istable(tobj)) return -1;
+		sprintf(name, "%d", numtuples);
+		tobj = nsp_settable(NULL, tobj, name);
+		tobj->val->attr &= ~NST_AUTOSORT;
+		for (field = 0; field < numfields; field++) {
+			//if (argv == NULL) continue;
+			p = argv[field] ? argv[field] : "NULL";
+			nsp_setstr(NULL, tobj, azColName[field], p, strlen(p));
+		}
+		nsp_setnum(NULL, qobj, "_tuples", numtuples + 1);
+	}
 	return 0;
 }
 
@@ -1746,25 +1775,28 @@ static int sqlite3Query(nsp_state *N, obj_t *qobj, char *sqlquery)
 	nsp_setnum(NULL, qobj, "_fields", 0);
 	nsp_setnum(NULL, qobj, "_tuples", 0);
 	nsp_setstr(NULL, qobj, "query", sqlquery, strlen(sqlquery));
+	tobj = nsp_settable(NULL, qobj, "columns");
 	tobj = nsp_settable(NULL, qobj, "rows");
 	if (tobj->val->type != NT_TABLE) return -1;
 	//retry:
 	rc = libsqlite3.exec(db3, sqlquery, sqlite3Callback, qobj, &zErrMsg);
+	nsp_setnum(N, qobj, "changes", libsqlite3.changes(db3));
 	switch (rc) {
 	case SQLITE_OK:
 		return 0;
 	case SQLITE_BUSY:
 	case SQLITE_CORRUPT:
-		cobj = nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+		//nsp_setstr(N, qobj, "error", zErrMsg, -1);
+		cobj = nsp_setstr(N, qobj, "error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 2, "SQLite: busy or corrupt %d %s", rc, nsp_tostr(NULL, cobj));
 		//if (retries>0) { retries--; msleep(5); goto retry; }
 		break;
 	default:
-		cobj = nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+		cobj = nsp_setstr(N, qobj, "error", zErrMsg, -1);
 		log_error(N, "sql", __FILE__, __LINE__, 2, "SQLite: unknown error %d %s", rc, nsp_tostr(NULL, cobj));
 		break;
 	}
-	cobj = nsp_setstr(NULL, qobj, "_error", zErrMsg, -1);
+	cobj = nsp_setstr(N, qobj, "error", zErrMsg, -1);
 	log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite error: %d %s", rc, nsp_tostr(NULL, cobj));
 	log_error(N, "sql", __FILE__, __LINE__, 1, "SQLite: [%s]", sqlquery);
 	return -1;
@@ -1858,7 +1890,7 @@ int _sql_update(nsp_state *N, obj_t **qobj, char *sqlquery)
 	obj_t *tobj;
 	int rc = -1;
 
-	log_error(N, "sql", __FILE__, __LINE__, 4, "SQL line %d", __LINE__);
+	//log_error(N, "sql", __FILE__, __LINE__, 4, "SQL line %d", __LINE__);
 	if (qobj != NULL && *qobj == NULL) {
 		tobj = *qobj = calloc(1, sizeof(obj_t));
 		nsp_linkval(N, tobj, NULL);
@@ -1866,6 +1898,11 @@ int _sql_update(nsp_state *N, obj_t **qobj, char *sqlquery)
 		tobj->val->attr &= ~NST_AUTOSORT;
 	}
 	log_error(N, "sql", __FILE__, __LINE__, 2, "SQL update: %s", sqlquery);
+	if (sqlquery == NULL || sqlquery[0] == '\0') {
+		if (qobj) nsp_setstr(N, *qobj, "error", "Query is empty", -1);
+		log_error(N, "sql", __FILE__, __LINE__, 1, "Query is empty");
+		return -1;
+	}
 	if (strcmp(sqltype, "FBSQL") == 0) {
 #ifdef HAVE_FBSQL
 		if (fbsqlConnect(N) < 0) return -1;
@@ -1874,13 +1911,13 @@ int _sql_update(nsp_state *N, obj_t **qobj, char *sqlquery)
 		}
 		else {
 			rc = fbsqlUpdate(N, NULL, sqlquery);
-		}
-#endif
 	}
+#endif
+}
 	else if (strcmp(sqltype, "MYSQL") == 0) {
 #ifdef HAVE_MYSQL
 		if (mysqlConnect(N) < 0) return -1;
-		rc = mysqlUpdate(N, sqlquery);
+		rc = mysqlUpdate(N, *qobj, sqlquery);
 #endif
 	}
 	else if (strcmp(sqltype, "ODBC") == 0) {
@@ -1898,20 +1935,26 @@ int _sql_update(nsp_state *N, obj_t **qobj, char *sqlquery)
 	else if (strcmp(sqltype, "SQLITE2") == 0) {
 #ifdef HAVE_SQLITE2
 		if (sqlite2Connect(N) < 0) return -1;
-		rc = sqlite2Update(N, sqlquery);
+		rc = sqlite2Update(N, *qobj, sqlquery);
 #endif
 	}
 	else if ((strcmp(sqltype, "SQLITE3") == 0) || (strcmp(sqltype, "SQLITE") == 0)) {
 #ifdef HAVE_SQLITE3
 		if (sqlite3Connect(N) < 0) return -1;
-		rc = sqlite3Update(N, sqlquery);
+		if (qobj != NULL) {
+			rc = sqlite3Update(N, *qobj, sqlquery);
+		}
+		else {
+			log_error(N, "sql", __FILE__, __LINE__, 1, "NULL UPDATE: [%s]", sqlquery);
+			rc = sqlite3Update(N, NULL, sqlquery);
+		}
 #endif
 	}
 	/*	log_error(N, "sql", __FILE__, __LINE__, 1, "lastid = %d", rc); */
 	return rc;
 }
 
-int _sql_query(nsp_state *N, obj_t **qobj, char *query)
+int _sql_query(nsp_state *N, obj_t **qobj, char *sqlquery)
 {
 	char *sqltype = nsp_getstr(N, nsp_settable(N, nsp_settable(N, &N->g, "CONFIG"), "sql"), "sql_server_type");
 	obj_t *tobj;
@@ -1923,43 +1966,47 @@ int _sql_query(nsp_state *N, obj_t **qobj, char *query)
 		tobj->val->type = NT_TABLE;
 		tobj->val->attr &= ~NST_AUTOSORT;
 	}
-	//log_error(N, "sql", __FILE__, __LINE__, 3, "SQL query: [0x%08X] %s", *qobj, query);
-	log_error(N, "sql", __FILE__, __LINE__, 3, "SQL query: %s", query);
+	log_error(N, "sql", __FILE__, __LINE__, 3, "SQL query: %s", sqlquery);
+	if (sqlquery == NULL || sqlquery[0] == '\0') {
+		if (qobj) nsp_setstr(N, *qobj, "error", "Query is empty", -1);
+		log_error(N, "sql", __FILE__, __LINE__, 1, "Query is empty");
+		return -1;
+	}
 	if (strcmp(sqltype, "FBSQL") == 0) {
 #ifdef HAVE_FBSQL
-		if (fbsqlConnect(N) < 0) 	return -1;
-		if ((rc = fbsqlQuery(N, *qobj, query)) < 0) fbsqlDisconnect(N);
+		if (fbsqlConnect(N) < 0) return -1;
+		if ((rc = fbsqlQuery(N, *qobj, sqlquery)) < 0) fbsqlDisconnect(N);
 #endif
-	}
+}
 	else if (strcmp(sqltype, "MYSQL") == 0) {
 #ifdef HAVE_MYSQL
 		if (mysqlConnect(N) < 0) 	return -1;
-		if ((rc = mysqlQuery(N, *qobj, query)) < 0) mysqlDisconnect();
+		if ((rc = mysqlQuery(N, *qobj, sqlquery)) < 0) mysqlDisconnect();
 #endif
 	}
 	else if (strcmp(sqltype, "ODBC") == 0) {
 #ifdef HAVE_ODBC
 		if (odbcConnect(N) < 0) return -1;
-		if ((rc = odbcQuery(N, *qobj, query)) < 0) odbcDisconnect();
+		if ((rc = odbcQuery(N, *qobj, sqlquery)) < 0) odbcDisconnect();
 	}
 #endif
 	}
 	 else if (strcmp(sqltype, "PGSQL") == 0) {
 #ifdef HAVE_PGSQL
 	 if (pgsqlConnect(N) < 0) return -1;
-	 if ((rc = pgsqlQuery(N, *qobj, query)) < 0) pgsqlDisconnect();
+	 if ((rc = pgsqlQuery(N, *qobj, sqlquery)) < 0) pgsqlDisconnect();
 #endif
 	 }
 	 else if (strcmp(sqltype, "SQLITE2") == 0) {
 #ifdef HAVE_SQLITE2
 	 if (sqlite2Connect(N) < 0) return -1;
-	 if ((rc = sqlite2Query(N, *qobj, query)) < 0) sqlite2Disconnect();
+	 if ((rc = sqlite2Query(N, *qobj, sqlquery)) < 0) sqlite2Disconnect();
 #endif
 	 }
 	 else if ((strcmp(sqltype, "SQLITE3") == 0) || (strcmp(sqltype, "SQLITE") == 0)) {
 #ifdef HAVE_SQLITE3
 	 if (sqlite3Connect(N) < 0) return -1;
-	 if ((rc = sqlite3Query(N, *qobj, query)) < 0) sqlite3Disconnect();
+	 if ((rc = sqlite3Query(N, *qobj, sqlquery)) < 0) sqlite3Disconnect();
 #endif
 	 }
 	 return rc;

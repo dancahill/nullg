@@ -19,7 +19,7 @@ function projects_list() {
 		printf("<tr>");
 		url=sprintf("/app/projects/project?id=%d", id);
 
-		printf("<td onclick=\"return ns.dialog.create('%s');\">", url);
+		printf("<td onclick=\"return ns.dialog.create(event, '%s');\">", url);
 		printf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(rec['projectname']));
 		printf("<td>%s</td>", projects.html.htview_user(rec['projectadmin']));
 		printf("<td>%s</td>", rec['projectstart'].sub(0, 10));

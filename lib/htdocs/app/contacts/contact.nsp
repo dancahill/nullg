@@ -112,11 +112,11 @@ class contact {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['CONTACTID']:_GET['ID']);
 		Q=db.contacts.get(id);
-		CONTACT=Q.rows[0];
-		if (Q==null || CONTACT==null) {
+		if (Q==null || Q.rows.length()!=1) {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
+		CONTACT=Q.rows[0];
 
 	//	print("<TR BGCOLOR=LIGHTBLUE><TD COLSPAN=4><PRE>",serialize(CONTACT),"</PRE></TD></TR>");
 
@@ -425,13 +425,13 @@ class contact {
 		//db.createtemplate('gw_contacts');
 		id=tonumber(_POST['CONTACTID']);
 		Q=db.contacts.get(id);
-		CONTACT=Q.rows[0];
-		//printf("<hr><pre>_POST=[%s]</pre>", serialize(_POST));
-		//printf("<hr><pre>CONTACT=[%s]</pre>", serialize(CONTACT));
-		if (Q==null || CONTACT==null) {
+		if (Q==null || Q.rows.length()!=1) {
 			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		CONTACT=Q.rows[0];
+		//printf("<hr><pre>_POST=[%s]</pre>", serialize(_POST));
+		//printf("<hr><pre>CONTACT=[%s]</pre>", serialize(CONTACT));
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
 			CONTACT["folderid"] = _POST["FOLDERID"];

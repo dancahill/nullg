@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 NSP_FUNCTION(libnsp_crypto_md5_file)
 {
 #define __FN__ __FILE__ ":libnsp_crypto_md5_file()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *hex = "0123456789abcdef";
 	unsigned char buffer[1024];
 	unsigned char md[MD5_SIZE];
@@ -445,7 +445,7 @@ NSP_FUNCTION(libnsp_crypto_md5_file)
 NSP_FUNCTION(libnsp_crypto_md5_string)
 {
 #define __FN__ __FILE__ ":libnsp_crypto_md5_string()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *hex = "0123456789abcdef";
 	unsigned char md[MD5_SIZE];
 	char token[64]; /* should only need 32+'\0' */
@@ -468,8 +468,8 @@ NSP_FUNCTION(libnsp_crypto_md5_string)
 NSP_FUNCTION(libnsp_crypto_md5_passwd)
 {
 #define __FN__ __FILE__ ":libnsp_crypto_md5_passwd()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	char pass[80];
 	char salt[12];
 

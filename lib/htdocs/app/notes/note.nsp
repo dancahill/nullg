@@ -115,6 +115,7 @@ class note {
 		tabset.showtabs();
 		print("<form id=noteedit name=noteedit METHOD=POST ACTION=\"/app/notes/note\" onsubmit=\"return ns.dialog.submit(event, 'note', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="noteid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", method=='POST'?_POST['FORMURL']:_SERVER['REQUEST_URI']);
 		form.addfield({name="tablename", type="hidden"});
 		form.addfield({name="tableindex", type="hidden"});
 		print("<div style='width:100%;background-color:#f0f0f0'>");
@@ -176,7 +177,7 @@ class note {
 		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
 		print("</div>");
 		print("</form>\r\n");
-		title=NOTE['notetitle'];
+		title="Note: "+NOTE['notetitle'];
 		if (method=='POST') title+=" (Saved)";
 		divname=sprintf("dialog_note_%d", id);
 		printf("<script>\r\n$(document).ready(function() {\r\n");
@@ -204,11 +205,11 @@ class note {
 		if (_SERVER['REQUEST_METHOD']!='POST') return;
 		id=tonumber(_POST['NOTEID']);
 		Q=db.notes.get(id);
-		NOTE=Q.rows[0];
-		if (Q==null || NOTE==null) {
-			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		NOTE=Q.rows[0];
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
 			addfield(NOTE, "tablename");
@@ -223,18 +224,11 @@ class note {
 				printf("error saving record");
 				return;
 			}
-			printf("<script>\r\nns.status.show(\"note %d saved\", 5);\r\n</script>\r\n", NOTE['noteid']);
-			if (id==0) {
-				// close this dialog and open the new id
-				print("<script>\r\n");
-				print("setTimeout(function() {\r\n");
-				printf("	$('#dialog_note_%d').dialog('close');\r\n", id);
-				printf("	ns.dialog.create(\"/app/notes/note?id=%d\");\r\n", NOTE['noteid']);
-				print("}, 50);\r\n");
-				print("</script>\r\n");
-			} else {
-				this.view(NOTE['noteid']);
-			}
+			printf("<script>\r\n");
+			printf("ns.status.show(\"note %d saved\", 5);\r\n", NOTE['noteid']);
+			if (id==0) printf("ns.dialog.reopen('dialog_note_%d','/app/notes/note?id=%d');\r\n", id, NOTE['noteid']);
+			printf("</script>\r\n");
+			if (id>0) this.view(NOTE['noteid']);
 			break;
 		case 'delete':
 			if (!db.notes.remove(NOTE)) {
@@ -244,12 +238,13 @@ class note {
 			printf("<center>note %d deleted</center>", id);
 			printf("<script>\r\n");
 			printf("ns.status.show(\"note %d deleted\", 5);\r\n", id);
-			printf("setTimeout(function() {\r\n");
-			printf("	$('#dialog_note_%d').dialog('close');\r\n", id);
-			printf("}, 500);\r\n");
+			printf("ns.dialog.close('dialog_note_%d');\r\n", id);
 			printf("</script>\r\n");
 			break;
 		}
+		printf("<script>\r\n");
+		printf("ns.dialog.refreshparent('dialog_note_%d', 'dialog_note_%d');\r\n", NOTE['noteid'], id);
+		printf("</script>\r\n");
 		return;
 	}
 }
@@ -259,9 +254,9 @@ try {
 	include("notes.lib.ns");
 	n=new note();
 	if (_SERVER['REQUEST_METHOD']=='POST') {
-		note.save();
+		n.save();
 	} else {
-		note.view();
+		n.view();
 	}
 } catch (ex) {
 	print("Exception: [",ex.description,"]");

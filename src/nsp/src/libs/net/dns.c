@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -265,7 +265,7 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 NSP_FUNCTION(libnsp_net_dns_addr2name)
 {
 #define __FN__ __FILE__ ":libnsp_net_dns_addr2name()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t tobj;
 	uchar ip[4];
 	char ipname[32];
@@ -303,7 +303,7 @@ NSP_FUNCTION(libnsp_net_dns_addr2name)
 NSP_FUNCTION(libnsp_net_dns_name2addr)
 {
 #define __FN__ __FILE__ ":libnsp_net_dns_name2addr()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t tobj;
 
 	if (cobj1->val->type != NT_STRING) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");

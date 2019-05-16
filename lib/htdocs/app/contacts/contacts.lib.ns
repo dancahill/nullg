@@ -21,6 +21,7 @@ namespace contacts.html {
 	function htselect_geozone(selected) {
 		ui=new db.userinfo();
 		sqr=sql.query(sprintf("SELECT zoneid, zonename FROM gw_zones WHERE obj_did = %d", ui.domainid));
+		if (sqr.rows.length()==0) printf("<option value='0'></option>");
 		for (i=0;i<sqr.rows.length();i++) {
 			ts=tonumber(selected)==tonumber(sqr.rows[i]['zoneid'])?" selected":"";
 			printf("<option value='%d'%s>%s</option>", tonumber(sqr.rows[i]['zoneid']), ts, strtohtml(sqr.rows[i]['zonename']));
@@ -39,6 +40,7 @@ namespace contacts.html {
 		print("<div style='margin:auto;text-align:right;'>");
 		print("<form id=contactsearch name=contactsearch method=post action=\"/app/contacts/list\" onsubmit=\"return ns.dialog.submit(event, 'contactsearch', 'save');\" enctype='multipart/form-data'>");
 		print("<input type=text name=searchtext value=\"\" placeholder='Search Contacts' required='required' autocorrect='off'>");
+		print("<input type=hidden name=submitaction value=''>\r\n");
 		print("</form>");
 		print("</div>\r\n");
 	}

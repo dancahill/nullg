@@ -43,7 +43,7 @@ namespace notes {
 					print("</tr>\r\n");
 				}
 			} else {
-				printf("%s", strtohtml(line).replace(" ", "&nbsp;"));
+				printf("%s", strtohtml(line).replace("  ", " &nbsp;").replace("\t", "&nbsp;"*8));
 				print("<br>\r\n");
 			}
 		}

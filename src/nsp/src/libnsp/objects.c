@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,6 +73,10 @@ void n_free(nsp_state *N, void **p, int osize)
 {
 #define __FN__ __FILE__ ":n_free()"
 	settrace();
+	if ((long int)p == 0x10) {
+		n_error(N, NE_MEM, __FN__, "ptr is invalid 0x%08X", p);
+		return;
+	}
 	if (!*p) n_error(N, NE_MEM, __FN__, "freeing 0x%08X twice", *p);
 #ifdef RECORD_MEMUSAGE
 	if (N) {
@@ -297,8 +301,14 @@ void nsp_setvaltype(nsp_state *N, obj_t *cobj, unsigned short type)
 		cobj->val = n_newval(N, type);
 	}
 	else if (cobj->val->type != NT_NULL) {
-		n_freeval(N, cobj);
-		cobj->val->type = type;
+		if (nsp_istable(cobj)) {
+			nsp_unlinkval(N, cobj);
+			cobj->val = n_newval(N, type);
+		}
+		else {
+			n_freeval(N, cobj);
+			cobj->val->type = type;
+		}
 	}
 	else {
 		cobj->val->type = type;
@@ -500,8 +510,8 @@ obj_t *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short foll
 	settrace();
 	if (foundz) *foundz = 0;
 	if (tobj == &N->r) return tobj;
-	if (N != NULL&&tobj == NULL) {
-		for (cobj = N->l.val->d.table.f; cobj; cobj = cobj->next) {
+	if (N != NULL && tobj == NULL) {
+		for (cobj = N->context->l.val->d.table.f; cobj; cobj = cobj->next) {
 			/* printf("%s oname=%s 0x%08X %s\n", __FN__, oname, cobj, cobj->name); */
 			//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 			if (cobj->hash == hash) {
@@ -509,7 +519,7 @@ obj_t *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short foll
 				if (*a == *b) return cobj;
 			}
 
-			if (cobj->hash == thishash&&nc_strcmp(cobj->name, "this") == 0) thisobj = cobj;
+			if (cobj->hash == thishash && nc_strcmp(cobj->name, "this") == 0) thisobj = cobj;
 		}
 		if (nsp_istable(thisobj)) {
 			for (cobj = thisobj->val->d.table.f; cobj; cobj = cobj->next) {
@@ -620,6 +630,28 @@ obj_t *nsp_setiobj(nsp_state *N, obj_t *tobj, int index, unsigned short otype, N
 #undef __FN__
 }
 
+obj_t *nsp_appendobj(nsp_state *N, obj_t *tobj, char *name)
+{
+	obj_t *cobj;
+
+	if (tobj->val->d.table.f == NULL) {
+		cobj = tobj->val->d.table.f = (obj_t *)n_alloc(N, sizeof(obj_t), 0);
+		cobj->prev = NULL;
+		cobj->next = NULL;
+	}
+	else {
+		cobj = tobj->val->d.table.l;
+		cobj->next = (obj_t *)n_alloc(N, sizeof(obj_t), 0);
+		cobj->next->prev = cobj;
+		cobj->next->next = NULL;
+		cobj = cobj->next;
+	}
+	tobj->val->d.table.l = cobj;
+	if (name != NULL) n_setname(N, cobj, name);
+	cobj->val = NULL;
+	return cobj;
+}
+
 void nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len)
 {
 #define __FN__ __FILE__ ":nsp_strcat()"
@@ -628,7 +660,7 @@ void nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len)
 	char *p;
 
 	settrace();
-	if (ctype != NT_STRING&&ctype != NT_NFUNC&&ctype != NT_CDATA) return;
+	if (ctype != NT_STRING && ctype != NT_NFUNC && ctype != NT_CDATA) return;
 	if (len == -1 && str != NULL) len = nc_strlen(str);
 	if (len < 1) return;
 	olen = cobj->val->size;
@@ -652,12 +684,12 @@ void nsp_strmul(nsp_state *N, obj_t *cobj, unsigned long n)
 	settrace();
 	if (!nsp_isstr(cobj) || n < 2) return;
 	olen = cobj->val->size;
-	tlen = olen*n;
+	tlen = olen * n;
 	p = olen ? n_realloc(N, (void *)&cobj->val->d.str, tlen + 1, olen + 1, 0) : n_alloc(N, tlen + 1, 0);
 	if (p == NULL) n_error(N, NE_MEM, __FN__, "can't alloc %d bytes", tlen + 1);
 	cobj->val->size = tlen;
 	cobj->val->d.str = p;
-	for (i = 1; i < n; i++) nc_memcpy(p + olen*i, cobj->val->d.str, olen);
+	for (i = 1; i < n; i++) nc_memcpy(p + olen * i, cobj->val->d.str, olen);
 	cobj->val->d.str[tlen] = 0;
 	return;
 #undef __FN__

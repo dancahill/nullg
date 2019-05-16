@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ typedef struct MYSQL_CONN {
 
 static MYSQL_CONN *getconn(nsp_state *N)
 {
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	MYSQL_CONN *conn;
 
@@ -98,10 +98,10 @@ void mysql_murder(nsp_state *N, obj_t *cobj)
 NSP_CLASSMETHOD(libnsp_data_mysql_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_mysql_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-//	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	//obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+//	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	//obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	//obj_t tobj;
 	MYSQL_CONN *conn;
 	unsigned short port = 0;
@@ -112,7 +112,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	int rc;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
@@ -124,7 +124,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
 	}
 	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
@@ -133,7 +133,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "3")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
@@ -142,7 +142,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "4")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
@@ -151,7 +151,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "5")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "5")))) {
 		db = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
@@ -184,7 +184,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 NSP_CLASSMETHOD(libnsp_data_mysql_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_mysql_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	MYSQL_CONN *conn;
 
@@ -205,13 +205,13 @@ NSP_CLASSMETHOD(libnsp_data_mysql_close)
 NSP_CLASSMETHOD(libnsp_data_mysql_query)
 {
 #define __FN__ __FILE__ ":libnsp_data_mysql_query()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	MYSQL_CONN *conn = getconn(N);
 	obj_t *cobj;
 	char *sqlquery = NULL;
 	//short expect_results = 1;
 
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
@@ -220,7 +220,7 @@ NSP_CLASSMETHOD(libnsp_data_mysql_query)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
-	//if (nsp_isbool((cobj = nsp_getobj(N, &N->l, "2")))) {
+	//if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 	//	expect_results = nsp_tobool(N, cobj);
 	//}
 	if (mysql_ping(conn->mysock) != 0) {
@@ -398,35 +398,35 @@ NSP_CLASS(libnsp_data_mysql_client)
 #define __FN__ __FILE__ ":libnsp_data_mysql_client()"
 	obj_t *tobj, *cobj;
 
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", 3306);
-	nsp_setstr(N, &N->l, "username", "root", 4);
-	nsp_setstr(N, &N->l, "password", "", 0);
-	nsp_setstr(N, &N->l, "database", "", 0);
-	nsp_setbool(N, &N->l, "connection", 0);
-	if (nsp_istable((tobj = nsp_getobj(N, &N->l, "1")))) {
+	nsp_setstr(N, &N->context->l, "host", "localhost", 9);
+	nsp_setnum(N, &N->context->l, "port", 3306);
+	nsp_setstr(N, &N->context->l, "username", "root", 4);
+	nsp_setstr(N, &N->context->l, "password", "", 0);
+	nsp_setstr(N, &N->context->l, "database", "", 0);
+	nsp_setbool(N, &N->context->l, "connection", 0);
+	if (nsp_istable((tobj = nsp_getobj(N, &N->context->l, "1")))) {
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "username")))) {
-			nsp_setstr(N, &N->l, "username", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "username", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "password")))) {
-			nsp_setstr(N, &N->l, "password", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "password", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "hostname")))) {
-			nsp_setstr(N, &N->l, "host", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "host", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "host")))) {
-			nsp_setstr(N, &N->l, "host", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "host", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "database")))) {
-			nsp_setstr(N, &N->l, "database", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "database", cobj->val->d.str, cobj->val->size);
 		}
 	}
 
 	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "mysql");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.mysql not found");
 	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sql"), "common");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.sql.common not found");
 	return 0;
 #undef __FN__

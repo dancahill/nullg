@@ -17,10 +17,15 @@
 */
 #include "libnsd.h"
 
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+
 void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 {
 	obj_t *tobj=nsp_getobj(N, &N->g, "CONFIG");
-	char *logpath=nsp_getstr(N, nsp_getobj(N, tobj, "paths"), "var_log");
+	obj_t* varlog;
+	char *logpath;
 	int conflog;
 	char file[200];
 	char logbuf[1024];
@@ -33,7 +38,9 @@ void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 	struct timezone tzone;
 	struct tm *timeptr;
 
-	if (tobj->val->type!=NT_TABLE) return;
+	if (!nsp_istable(tobj)) return;
+	varlog = nsp_getobj(N, nsp_getobj(N, tobj, "paths"), "var_log");
+	logpath = nsp_isstr(varlog) ? nsp_tostr(N, varlog) : ".";
 	conflog=(int)nsp_getnum(N, tobj, "log_level");
 	va_start(ap, format);
 	vsnprintf(logbuf, sizeof(logbuf)-1, format, ap);
@@ -69,6 +76,7 @@ void log_access(nsp_state *N, char *logsrc, const char *format, ...)
 void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel, const char *format, ...)
 {
 	obj_t *tobj=nsp_getobj(N, &N->g, "CONFIG");
+	obj_t *varlog;
 	char *logpath;
 	int conflog;
 	char file[512];
@@ -83,9 +91,10 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 	struct tm *timeptr;
 	char *ptemp;
 
-	if (tobj->val->type!=NT_TABLE) return;
-	logpath=nsp_getstr(N, nsp_getobj(N, tobj, "paths"), "var_log");
-	conflog=(int)nsp_getnum(N, tobj, "log_level");
+	if (!nsp_istable(tobj)) return;
+	varlog = nsp_getobj(N, nsp_getobj(N, tobj, "paths"), "var_log");
+	logpath = nsp_isstr(varlog) ? nsp_tostr(N, varlog) : ".";
+	conflog = (int)nsp_getnum(N, tobj, "log_level");
 	//if ((loglevel>conflog)||(conflog<1)) return;
 	va_start(ap, format);
 	vsnprintf(logbuf, sizeof(logbuf)-1, format, ap);
@@ -119,10 +128,14 @@ void log_error(nsp_state *N, char *logsrc, char *srcfile, int line, int loglevel
 	if ((loglevel>conflog)||(conflog<1)) return;
 	snprintf(file, sizeof(file)-1, "%s/%s-error-%s.log", logpath, logsrc, timebuf2);
 	fixslashes(file);
-	fd=open(file, O_WRONLY|O_BINARY|O_CREAT|O_APPEND, S_IREAD|S_IWRITE);
-	if (fd>-1) {
-		write(fd, logbuf2, strlen(logbuf2));
-		close(fd);
+	if (nsp_isnull(varlog)) {
+		if (loglevel <= 1) write(STDOUT_FILENO, logbuf2, strlen(logbuf2));
+	} else {
+		fd = open(file, O_WRONLY | O_BINARY | O_CREAT | O_APPEND, S_IREAD | S_IWRITE);
+		if (fd > -1) {
+			write(fd, logbuf2, strlen(logbuf2));
+			close(fd);
+		}
 	}
 	return;
 }

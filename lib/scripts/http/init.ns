@@ -10,9 +10,13 @@ local function test_access() {
 }
 
 local function load_libs() {
+	//dl.path={"C:/nullsd/lib/shared"};
 	local libs = { "base", "crypto", "data", "net" };
 	foreach (lib in libs) {
-		if (!dl.load(lib)) throw "failed to load "+lib+"";
+		if (!dl.load(lib)) {
+			// printf("dl.path=%s", serialize(dl.path));
+			throw "failed to load "+lib+" ["+dl.last_error+"]";
+		}
 	}
 }
 

@@ -1,21 +1,46 @@
 <?nsp
+
 class group {
-	function view(id) {
+	function view(id, rec) {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['GROUPID']:_GET['ID']);
-		Q=db.admin.groups.get(id);
-		rec=Q.rows[0];
-		if (Q==null || rec==null) {
-			print("<center>No matching record found for ",id,"</center>\r\n");
-			return;
+		if (rec==null) {
+			Q=db.admin.groups.get(id);
+			if (Q==null || Q.rows.length()!=1) {
+				print("<center>No matching record found for ",id,"</center>\r\n");
+				return;
+			}
+			rec=Q.rows[0];
+		}
+		ui=new db.userinfo();
+		if (ui.auth('domainadmin', 'admin') && _GET['DOMAINID']!=null) {
+			rec['obj_did'] = tonumber(_GET['DOMAINID']);
 		}
 		var form=new html_form(rec);
 		print("<form id=groupedit name=groupedit METHOD=POST ACTION=\"/app/admin/group\" onsubmit=\"return ns.dialog.submit(event, 'group', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="groupid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", strtohtml(method=='POST'?_POST['FORMURL']:_SERVER['REQUEST_URI']));
+		if (ui.auth('domainadmin', 'admin')) {
+			form.addfield({name="obj_did", type="hidden"});
+		}
 		print("<table class=\"contentform\">\r\n");
 		form.addfield({name="groupname", label="Group Name", required=true});
 		form.addfield({name="availability", label="Availability", required=true});
 		form.addfield({name="motd", label="motd", type="textarea", required=true});
+		if (id>0) {
+			sqr=sql.query(sprintf(
+			"SELECT gm.GROUPMEMBERID, gm.USERID, gm.GROUPID,u.USERNAME, g.GROUPNAME  FROM GW_GROUPS_MEMBERS gm"+
+			" LEFT JOIN gw_users u ON gm.userid=u.USERID"+
+			" LEFT JOIN GW_GROUPS g ON gm.groupid=g.groupid"+
+			" WHERE gm.OBJ_DID = %d AND u.OBJ_DID = %d AND g.OBJ_DID = %d AND g.groupid = %d", rec['obj_did'], rec['obj_did'], rec['obj_did'], rec['groupid']));
+			printf("<tr><td class=\"formname\">Users</td>");
+			if (sqr.rows.length()<1) printf("<td>none</td></tr>\r\n");
+			for (i=0;i<sqr.rows.length();i++) {
+				if (i>0) printf("<tr><td></td>");
+				printf("<td class=\"formval\"><a class=\"dialog\" href=\"/app/admin/groupuser?id=%d&domainid=%d&groupid=%d\">%s</a></td></tr>\r\n", sqr.rows[i]['groupmemberid'], rec['obj_did'], rec['groupid'], strtohtml(sqr.rows[i]['username']));
+			}
+			printf("<tr><td style='text-align:center' colspan=2><a class=\"dialog\" href=\"/app/admin/groupuser?id=0&domainid=%d&groupid=%d\">%s</a></td></tr>\r\n", rec['obj_did'], rec['groupid'], strtohtml("New User"));
+		}
 		print("</table>\r\n");
 		form.validate("gw_groups");
 		//db.createtemplate("gw_groups");
@@ -45,9 +70,13 @@ class group {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
+		ui=new db.userinfo();
 		folderid=tonumber(rec['folderid']);
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
+			if (ui.auth('domainadmin', 'admin')) {
+				addfield(rec, "obj_did");
+			}
 			addfield(rec, "groupname");
 			addfield(rec, "availability");
 			addfield(rec, "motd");

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ void dumpsyms(nsp_state *N, char *file, long line, uchar *ptr, long count)
 	long i = 0;
 
 	settrace();
-	n_warn(N, __FN__, "%s:%d next %d ops 0x%08x [%d]", file, line, count, N->readptr, *N->readptr);
+	n_warn(N, __FN__, "%s:%d next %d ops 0x%08x [%d]", file, line, count, n_context_readptr, *n_context_readptr);
 	do {
 		switch (*ptr) {
 		case 0: n_warn(N, __FN__, "EOF"); return;
@@ -50,9 +50,9 @@ void dumpsyms(nsp_state *N, char *file, long line, uchar *ptr, long count)
 void n_decompile(nsp_state *N, uchar *start, uchar *end, char *errbuf, unsigned short errmax)
 {
 #define __FN__ __FILE__ ":n_decompile()"
-	uchar *oldbptr = N->blockptr;
-	uchar *oldrptr = N->readptr;
-	uchar *oldbend = N->blockend;
+	uchar *oldbptr = n_context_blockptr;
+	uchar *oldrptr = n_context_readptr;
+	uchar *oldbend = n_context_blockend;
 	uchar *p;
 	uchar *offset = NULL;
 	long len;
@@ -62,32 +62,32 @@ void n_decompile(nsp_state *N, uchar *start, uchar *end, char *errbuf, unsigned 
 	settrace();
 	subchunk = (start&&end) ? 1 : 0;
 	nl_flush(N);
-	if (N->blockptr == NULL) { nc_printf(N, " N->blockptr is NULL\n"); return; }
-	if (N->readptr == NULL) { nc_printf(N, " N->readptr is NULL\n"); return; }
-	if (N->blockend == NULL) { nc_printf(N, " N->blockend is NULL\n"); return; }
+	if (n_context_blockptr == NULL) { nc_printf(N, " N->blockptr is NULL\n"); return; }
+	if (n_context_blockend == NULL) { nc_printf(N, " N->blockend is NULL\n"); return; }
+	if (n_context_readptr == NULL) { nc_printf(N, " N->readptr is NULL\n"); return; }
 	if (subchunk) {
-		N->blockptr = start;
-		N->readptr = start;
-		N->blockend = end;
+		n_context_blockptr = start;
+		n_context_blockend = end;
+		n_context_readptr = start;
 	}
 	if (!subchunk) nc_printf(N, "\n----\nrecomposed source is:\n\n");
-	if (!subchunk) nc_printf(N, " 0x%08lX\n 0x%08lX <-you are here\n 0x%08lX\n\n", (unsigned long)N->blockptr, (unsigned long)N->readptr, (unsigned long)N->blockend);
-	if (N->readptr > N->blockend) {
-		nc_printf(N, " N->readptr is %ld bytes past the end of the block\n\n", (unsigned long)(N->readptr - N->blockend));
-		N->blockptr = N->readptr;
+	if (!subchunk) nc_printf(N, " 0x%08lX\n 0x%08lX <-you are here\n 0x%08lX\n\n", (unsigned long)n_context_blockptr, (unsigned long)n_context_readptr, (unsigned long)n_context_blockend);
+	if (n_context_readptr > n_context_blockend) {
+		nc_printf(N, " N->readptr is %ld bytes past the end of the block\n\n", (unsigned long)(n_context_readptr - n_context_blockend));
+		n_context_blockptr = n_context_readptr;
 	}
-	else if (N->readptr < N->blockptr) {
-		nc_printf(N, " N->readptr is %ld bytes before the block\n\n", (unsigned long)(N->blockptr - N->readptr));
-		N->blockptr = N->readptr;
+	else if (n_context_readptr < n_context_blockptr) {
+		nc_printf(N, " N->readptr is %ld bytes before the block\n\n", (unsigned long)(n_context_blockptr - n_context_readptr));
+		n_context_blockptr = n_context_readptr;
 	}
 	else {
-		offset = N->readptr;
+		offset = n_context_readptr;
 	}
 	if (subchunk) {
-		p = N->blockptr;
+		p = n_context_blockptr;
 	}
 	else {
-		p = N->blockptr + readi4((N->blockptr + 12));
+		p = n_context_blockptr + readi4((n_context_blockptr + 12));
 	}
 	for (; *p; p++) {
 		if (subchunk&&p > end) break;
@@ -136,9 +136,9 @@ void n_decompile(nsp_state *N, uchar *start, uchar *end, char *errbuf, unsigned 
 	}
 	if (!subchunk) nc_printf(N, "\n\n----\n");
 	if (subchunk) {
-		N->blockptr = oldbptr;
-		N->readptr = oldrptr;
-		N->blockend = oldbend;
+		n_context_blockptr = oldbptr;
+		n_context_blockend = oldbend;
+		n_context_readptr = oldrptr;
 	}
 	if (errbuf == NULL) nc_printf(N, "\n");
 	return;

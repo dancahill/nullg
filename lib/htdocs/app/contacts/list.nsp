@@ -6,15 +6,14 @@ function search_contacts() {
 	var menustyle = tonumber(_USER['pref']['menustyle']);
 	var userid    = tonumber(_USER['userid']);
 	global Q=db.contacts.getlist();
+	//printf("<div style='white-space:pre;text-align:left'>[%s]</div>", serialize(Q));
 	if (Q.rows.length()<1) {
 		print("<b>Found 0 matching contacts</b>\r\n");
 		return;
 	}
-
 	print("<table id=\"T2\" class=\"contenttable\">");
 	print("<thead><tr><th class=\"header r60max\"></th><th class=\"header r60 headerSortDown\">Contact Name</th><th class=\"header r60\">Company Name</th><th class=\"header r60\">Work Number</th><th class=\"header r60\">E-Mail</th><th class=\"header r60\">Web</th></tr>");
 	print("</thead><tbody>");
-
 	foreach (row in Q.rows) {
 		print("<tr>");
 

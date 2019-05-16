@@ -61,7 +61,7 @@ BEGIN
             VALUE "FileDescription", "NSP Tray Host\0"
             VALUE "FileVersion", "0.9.4\0"
             VALUE "InternalName", "NTRAY.EXE\0"
-            VALUE "LegalCopyright", "Copyright © 2007-2018\0"
+            VALUE "LegalCopyright", "Copyright © 2007-2019\0"
             VALUE "OriginalFilename", "NTRAY.EXE\0"
             VALUE "ProductName", "NSP Tray Host\0"
             VALUE "ProductVersion", "0.9.4\0"

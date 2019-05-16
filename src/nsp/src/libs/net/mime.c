@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -310,7 +310,7 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 NSP_FUNCTION(libnsp_net_mime_read)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_read()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	obj_t tobj;
 	char *inptr = NULL;
@@ -340,7 +340,7 @@ NSP_FUNCTION(libnsp_net_mime_read)
 NSP_FUNCTION(libnsp_net_mime_write)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_write()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 
 	if (cobj1->val->type != NT_TABLE) n_error(N, NE_SYNTAX, __FN__, "expected a table for arg1");
 	nsp_setnum(N, &N->r, "", 0);
@@ -351,7 +351,7 @@ NSP_FUNCTION(libnsp_net_mime_write)
 NSP_FUNCTION(libnsp_net_mime_base64_decode)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_base64_decode()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *robj;
 	char *src;
 	char *dest;
@@ -421,8 +421,8 @@ NSP_FUNCTION(libnsp_net_mime_base64_decode)
 NSP_FUNCTION(libnsp_net_mime_base64_encode)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_base64_encode()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	obj_t *robj;
 	char *dest;
 	uchar a, b, c, d, *cp;
@@ -492,7 +492,7 @@ NSP_FUNCTION(libnsp_net_mime_base64_encode)
 NSP_FUNCTION(libnsp_net_mime_qp_decode)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_qp_decode()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	obj_t tobj;
 	char *s, *d;
@@ -546,7 +546,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 	respectively).
 	*/
 	const char *hex = "0123456789ABCDEF";
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *robj;
 	uchar *cp;
 	char *dest;
@@ -616,7 +616,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_rfc2047_decode()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	obj_t tobj;
 	char *s, *d;
@@ -720,7 +720,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
 {
 #define __FN__ __FILE__ ":libnsp_net_mime_rfc2047_encode()"
 	const char *hex = "0123456789ABCDEF";
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *robj;
 	uchar *cp;
 	char *dest;

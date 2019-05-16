@@ -1,14 +1,14 @@
 <?nsp
 
 function list_users() {
-//	var maxlist   = tonumber(_USER['pref']['maxlist']);
-//	var menustyle = tonumber(_USER['pref']['menustyle']);
-//	var userid    = tonumber(_USER['userid']);
-	Q=db.admin.users.getlist();
-//	global Q=db.contacts.getlist();
-	print("<br>\r\n");
+	ui=new db.userinfo();
+	domainid=ui.domainid;
+	if (ui.auth('domainadmin', 'admin') && _GET['DOMAINID']!=null) {
+		domainid = tonumber(_GET['DOMAINID']);
+	}
+	Q=db.admin.users.getlist(domainid);
 	if (Q.rows.length()<1) {
-		print("<b>Found 0 matching users</b>\r\n");
+		print("<b>Found 0 matching users</b><br/>\r\n");
 		return;
 	}
 	t=new html_table();
@@ -18,10 +18,9 @@ function list_users() {
 	t.autoaddcolumns=false;
 	//t.autoaddcolumns=true;
 
-
 	fntd=function (row, column) {
 		url=sprintf("/app/admin/user?id=%d", tonumber(row['userid']));
-		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\">", url);
 	};
 	fn=function (row, column) {
 		url=sprintf("/app/admin/user?id=%d", tonumber(row['userid']));
@@ -38,7 +37,7 @@ function list_users() {
 
 /*
 	fntd=function (row, column) {
-		return sprintf("<td onclick=\"javascript:ns.contacts.view(event, %d)\"'>", tonumber(row['contactid']));
+		return sprintf("<td onclick=\"javascript:ns.contacts.view(event, %d)\">", tonumber(row['contactid']));
 	};
 	fn=function (row, column) { id=tonumber(row['contactid']); sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn; if (name=="") return "";
 		return sprintf("<a href=\"javascript:ns.contacts.view(event, %d);\">%s</a>", id, strtohtml(name));
@@ -66,7 +65,7 @@ function list_users() {
 	t.addcolumn("website", "Web", fn);
 */
 	t.write();
-	printf("<a class=\"dialog\" href=\"/app/admin/user?id=0\">%s</a>", strtohtml("New User"));
+	printf("<a class=\"dialog\" href=\"/app/admin/user?id=0&domainid=%d\">%s</a>", domainid, strtohtml("New User"));
 	return;
 }
 
@@ -74,6 +73,7 @@ try {
 	include_template("common.ns");
 	include("admin.lib.ns");
 	admin.html.headermenu();
+	admin.html.htselect_domainfilter();
 	print("<center>\r\n");
 	list_users();
 	print("</center>\r\n");

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,10 +40,10 @@
 NSP_FUNCTION(libnsp_net_ldap_search)
 {
 #define __FN__ __FILE__ ":libnsp_net_ldap_search()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* host   */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* port   */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* basedn */
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4"); /* search */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* host   */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* port   */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* basedn */
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4"); /* search */
 	obj_t qobj, *robj, *tobj;
 	LDAP *ld;
 	LDAPMessage *e, *res;

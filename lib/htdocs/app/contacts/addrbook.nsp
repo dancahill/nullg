@@ -22,7 +22,7 @@ function search_contacts() {
 	};
 	fntd=function (row, column) {
 		url=sprintf("/app/contacts/contact?id=%d", tonumber(row['contactid']));
-		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\">", url);
 	};
 	fn=function (row, column) { id=tonumber(row['contactid']); sn=row['surname']; gn=row['givenname']; name=sn+((sn!=""&&gn!="")?", ":"")+gn; if (name=="") return "";
 		url=sprintf("/app/contacts/contact?id=%d", tonumber(row['contactid']));

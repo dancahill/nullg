@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -468,7 +468,7 @@ void fbsql_murder(nsp_state *N, obj_t *cobj)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	FBSQL_CONN *conn;
 	unsigned short port = 0;
@@ -479,7 +479,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	int rc;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "1")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
@@ -491,7 +491,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
-	if (nsp_isnum((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
 	}
 	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
@@ -500,7 +500,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "3")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
@@ -509,7 +509,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "4")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
@@ -518,7 +518,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
-	if (nsp_isstr((cobj = nsp_getobj(N, &N->l, "5")))) {
+	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "5")))) {
 		db = cobj->val->d.str;
 	}
 	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
@@ -545,7 +545,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_close)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	FBSQL_CONN *conn;
 
@@ -565,8 +565,8 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_close)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_query)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_query()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj;
 	FBSQL_CONN *conn;
 	char *sqlquery;
@@ -588,7 +588,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_query)
 	if (cobj1->val->type != NT_STRING) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	sqlquery = cobj1->val->d.str;
 
-	if (nsp_isbool((cobj = nsp_getobj(N, &N->l, "2")))) {
+	if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		expect_results = nsp_tobool(N, cobj);
 	}
 
@@ -752,7 +752,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_query)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_getnext)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_getnext()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	obj_t tobj;
 	FBSQL_CONN *conn;
@@ -781,8 +781,8 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_getnext)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_endquery)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_endquery()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->l, "this"), "connection");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->context->l, "this"), "connection");
 	FBSQL_CONN *conn;
 
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "fbsql-conn") != 0))
@@ -817,7 +817,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_endquery)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_begin)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_begin()"
-	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->l, "this"), "connection");
+	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->context->l, "this"), "connection");
 	FBSQL_CONN *conn;
 
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "fbsql-conn") != 0))
@@ -837,7 +837,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_begin)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_commit)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_commit()"
-	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->l, "this"), "connection");
+	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->context->l, "this"), "connection");
 	FBSQL_CONN *conn;
 
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "fbsql-conn") != 0))
@@ -861,7 +861,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_commit)
 NSP_CLASSMETHOD(libnsp_data_sql_fbsql_rollback)
 {
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_rollback()"
-	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->l, "this"), "connection");
+	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->context->l, "this"), "connection");
 	FBSQL_CONN *conn;
 
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "fbsql-conn") != 0))
@@ -887,35 +887,35 @@ NSP_CLASS(libnsp_data_sql_fbsql_client)
 #define __FN__ __FILE__ ":libnsp_data_sql_fbsql_client()"
 	obj_t *tobj, *cobj;
 
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", 3050);
-	nsp_setstr(N, &N->l, "username", "SYSDBA", 6);
-	nsp_setstr(N, &N->l, "password", "", 0);
-	nsp_setstr(N, &N->l, "database", "", 0);
-	nsp_setbool(N, &N->l, "connection", 0);
-	if (nsp_istable((tobj = nsp_getobj(N, &N->l, "1")))) {
+	nsp_setstr(N, &N->context->l, "host", "localhost", 9);
+	nsp_setnum(N, &N->context->l, "port", 3050);
+	nsp_setstr(N, &N->context->l, "username", "SYSDBA", 6);
+	nsp_setstr(N, &N->context->l, "password", "", 0);
+	nsp_setstr(N, &N->context->l, "database", "", 0);
+	nsp_setbool(N, &N->context->l, "connection", 0);
+	if (nsp_istable((tobj = nsp_getobj(N, &N->context->l, "1")))) {
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "username")))) {
-			nsp_setstr(N, &N->l, "username", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "username", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "password")))) {
-			nsp_setstr(N, &N->l, "password", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "password", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "hostname")))) {
-			nsp_setstr(N, &N->l, "host", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "host", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "host")))) {
-			nsp_setstr(N, &N->l, "host", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "host", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "database")))) {
-			nsp_setstr(N, &N->l, "database", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "database", cobj->val->d.str, cobj->val->size);
 		}
 	}
 
 	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "fbsql");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.fbsql not found");
 	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sql"), "common");
-	if (nsp_istable(cobj)) nsp_zlink(N, &N->l, cobj);
+	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
 	else n_warn(N, __FN__, "data.sql.common not found");
 	return 0;
 #undef __FN__

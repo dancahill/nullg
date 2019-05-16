@@ -1,6 +1,0 @@
-<?nsp
-/* FIX THIS */
-_HEADER['STATUS']=302;
-_HEADER['LOCATION']='list';
-include("list.ns");
-?>

@@ -2,7 +2,7 @@
 #p1 {
 	position: absolute;
 	left: 2px;
-	top: 2px;
+	top: 25px;
 	bottom: 0px;
 	width: 110px;
 	overflow: scroll;
@@ -18,12 +18,11 @@
 	float: right;
 }
 </style>
-<div id='p1'></div>
-<div id="timelinemap"></div>
 <?nsp
+
 include_template("common.ns");
-include_template("timezones.ns");
-include_template("class.datetime.ns");
+//include_template("timezones.ns");
+//include_template("class.datetime.ns");
 
 function tz_utc2user(unixtime) {
 	local function isdst(unixtime) {
@@ -49,24 +48,59 @@ function tz_user2utc(unixtime) {
 	return unixtime;
 }
 
-id=tonumber(_GET['ID']);
-Q=db.contacts.get(id);
-CONTACT=Q.rows[0];
-if (Q==null || CONTACT==null) {
-	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
-	return;
+if (_GET['DATE']!=null) {
+	tldate=_GET['DATE'];
+	d1=new datetime(time.mktime(tldate));
+	//d1=new datetime();
+	//d1.unixtime+=d1.gettzoffset();
+	//d1.unixtime-=d1.unixtime%86400;
+	d1.unixtime-=d1.gettzoffset();
+//d1.unixtime=tz_utc2user(d1.unixtime);
+	//tldate=time.sqltime().sub(0, 10);
+} else {
+//	tldate=time.sqltime().sub(0, 10);
+//	d1=new datetime(time.mktime(tldate));
+//	d1.unixtime=tz_utc2user(d1.unixtime);
+	d1=new datetime();
+	//d1=new datetime();
+	d1.unixtime+=d1.gettzoffset();
+	d1.unixtime-=d1.unixtime%86400;
+	d1.unixtime-=d1.gettzoffset();
+	tldate=d1.tostring().sub(0, 10);
 }
-//gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
-//name=gn+((gn!=""&&sn!="")?" ":"")+sn;
-
 
 // convert to user's local time, round down to midnight, then back to utc for the query
-d1=new datetime();
-d1.unixtime=tz_utc2user(d1.unixtime);
+//d1=new datetime(time.mktime(tldate));
+//d1.unixtime=tz_utc2user(d1.unixtime);
 day=time.gmtime(d1.unixtime);
 day.tm_hour=0;day.tm_min=0;day.tm_sec=0;
 d1.unixtime=tz_user2utc(time.mktime(day));
 d2=d1.adddays(1);
+
+tldate=d1.tostring().sub(0, 10);
+
+?>
+<input type=text value="" style="border:0;max-width:0"><input type=text id=locationdate name=locationdate value="<?nsp print(tldate); ?>" onchange="ns.contacts.location.reload();" style="width:75px">
+<br/>
+<div id='p1'></div>
+<div id="timelinemap"></div>
+<script>
+$(document).ready(function() {
+	$('#locationdate').datepicker({ dateFormat: 'yy-mm-dd' });
+});
+</script>
+<?nsp
+
+id=tonumber(_GET['ID']);
+Q=db.contacts.get(id);
+if (Q==null || Q.rows.length()!=1) {
+	print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+	return;
+}
+CONTACT=Q.rows[0];
+//gn=CONTACT['givenname'].tostring(); sn=CONTACT['surname'].tostring();
+//name=gn+((gn!=""&&sn!="")?" ":"")+sn;
+
 
 //query="SELECT * FROM gw_events WHERE eventstart >= '"+d1.tostring()+"' AND eventstart < '"+d2.tostring()+"' ORDER BY eventstart";
 
@@ -109,5 +143,6 @@ setTimeout(function() {
 	//map.invalidateSize();
 	ns.contacts.location.list_history(gpsdata);
 	ns.contacts.location.map_history(gpsdata);
+	ns.settitle("dialog_timeline_x", "Timeline for <?nsp print(tldate); ?>");
 }, 10);
 </script>

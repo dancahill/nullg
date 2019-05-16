@@ -30,39 +30,57 @@ class task {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['TASKID']:_GET['ID']);
 		Q=db.tasks.get(id);
-		TASK=Q.rows[0];
-		if (Q==null || TASK==null) {
-			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		TASK=Q.rows[0];
 		if (id==0) {
 			TASK['contactid']=tonumber(_GET['CONTACTID']);
 			TASK['projectid']=tonumber(_GET['PROJECTID']);
 		}
 		var form=new html_form(TASK);
-		var tabset=new html_tabset({activepage=1,minheight=225});
+		var tabset=new html_tabset({activepage=1,minheight=190});
 		//if (id==0) tabset.activepage=2;
+		if (id>0) tabset.addtab("SUMMARY");
 		tabset.addtab("SETTINGS");
 		tabset.addtab("DETAILS");
 		tabset.addtab("PERMISSIONS");
 		tabset.showtabs();
 		print("<form id=taskedit name=taskedit METHOD=POST ACTION=\"/app/tasks/task\" onsubmit=\"return ns.dialog.submit(event, 'task', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="taskid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", strtohtml(method=='POST'?_POST['FORMURL']:_SERVER['REQUEST_URI']));
 		print("<div style='width:100%;background-color:#f0f0f0'>");
-	
+		if (id>0) {
+			tabset.pagebegin();
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			print("<tr><td>summary not done yet</td></tr>");
+			print("</table>\r\n");
+			tabset.pageend();
+		}
 		tabset.pagebegin();
-		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		print("<table class=\"contentform\" style='width:100%'><tr><td>\r\n");
+		print("<div style='float:left'>");
+		print("<table class=\"contentform contentform2\">\r\n");
 		form.addfield({name="taskname", label="Task Name", required=true});
 		form.addfield({name="assignedby", label="Assigned By", type="select", handler=tasks.html.htselect_user});
 		form.addfield({name="assignedto", label="Assigned To", type="select", handler=tasks.html.htselect_user});
 		form.addfield({name="contactid", label="Contact Name", type="select", handler=tasks.html.htselect_contact});
 		form.addfield({name="projectid", label="Project", type="select", handler=tasks.html.htselect_project});
 		form.addfield({name="priority", label="Priority", type="select", handler=tasks.html.htselect_priority});
-		form.addfield({name="progress", label="Progress %", required=true});
 		form.addfield({name="reminder", label="Reminder", type="select", handler=tasks.html.htselect_reminder});
+		print("</table>\r\n");
+		print("</div><div style='float:left'>");
+		print("<table class=\"contentform contentform2\">\r\n");
+		form.addfield({name="taskstart", label="Start Date", required=true, handler=tasks.html.htselect_duedate});
+		form.addfield({name="taskfinish", label="Finish Date", required=true, handler=tasks.html.htselect_duedate});
 		form.addfield({name="duedate", label="Due Date", required=true, handler=tasks.html.htselect_duedate});
+		form.addfield({name="totaltime", label="Total Hours", required=true, handler=tasks.html.htselect_totaltime});
+		form.addfield({name="progress", label="Progress %", required=true});
 		form.addfield({name="status", label="Status", type="select", handler=tasks.html.htselect_status});
 		print("</table>\r\n");
+		print("</div>");
+		print("</td></tr></table>");
 		tabset.pageend();
 		tabset.pagebegin();
 		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
@@ -74,9 +92,7 @@ class task {
 		print("<tr><td>permissions not done yet</td></tr>");
 		print("</table>\r\n");
 		tabset.pageend();
-
 		print("</div>");
-		
 		print("<div style='clear:both;text-align:center'>");
 		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
 		printnotes(id);
@@ -89,15 +105,14 @@ class task {
 		print("</form>\r\n");
 		form.validate("gw_tasks");
 	
-		title=TASK['taskname'];
+		title="Task: "+TASK['taskname'];
 		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_task_%d", id);
 		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	$('#taskstart').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
+		printf("	$('#taskfinish').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
 		printf("	$('#duedate').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
-		printf("	setTimeout(function() {\r\n"); // must give time for the dialog to be created
-		printf("		$(\"#dialog_task_%d\" ).dialog( \"option\", \"title\", \"Task: %s\" );\r\n", id, strtohtml(title));
-		printf("		ns.showtab(\"dialog_task_%d\", %d);\r\n", id, tabset.activepage);
-		printf("		document.taskedit.taskname.focus();\r\n");
-		printf("	}, 50);\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
 		printf("});\r\n</script>");
 		return;
 	}
@@ -120,11 +135,11 @@ class task {
 		if (_SERVER['REQUEST_METHOD']!='POST') return;
 		id=tonumber(_POST['TASKID']);
 		Q=db.tasks.get(id);
-		TASK=Q.rows[0];
-		if (Q==null || TASK==null) {
-			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
 			return;
 		}
+		TASK=Q.rows[0];
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
 			addfield(TASK, "assignedby");
@@ -132,12 +147,21 @@ class task {
 			addfield(TASK, "taskname");
 			addfield(TASK, "contactid");
 			addfield(TASK, "projectid");
-			addfield(TASK, "priority");
-			addfield(TASK, "progress");
-			addfield(TASK, "reminder");
 			t=time.mktime(_POST["DUEDATE"]);
 			if (t<=0) t=time.now();
 			addfield(TASK, "duedate", time.sqltime(t).sub(0, 10));
+			t=time.mktime(_POST["TASKSTART"]);
+			if (t<=0) t=time.now();
+			addfield(TASK, "taskstart", time.sqltime(t).sub(0, 10));
+			t=time.mktime(_POST["TASKFINISH"]);
+			if (t<=0) t=time.now();
+			addfield(TASK, "taskfinish", time.sqltime(t).sub(0, 10));
+			addfield(TASK, "priority");
+			// show totaltime in hours, but store it in seconds
+			t=tonumber(_POST["TOTALTIME"])*3600;
+			addfield(TASK, "totaltime", t);
+			addfield(TASK, "progress");
+			addfield(TASK, "reminder");
 			addfield(TASK, "status");
 			addfield(TASK, "details");
 			if (!this.validate(TASK)) {
@@ -148,18 +172,11 @@ class task {
 				printf("error saving record");
 				return;
 			}
-			printf("<script>\r\nns.status.show(\"task %d saved\", 5);\r\n</script>\r\n", TASK['taskid']);
-			if (id==0) {
-				// close this dialog and open the new id
-				print("<script>\r\n");
-				print("setTimeout(function() {\r\n");
-				printf("	$('#dialog_task_%d').dialog('close');\r\n", id);
-				printf("	ns.dialog.create(\"/app/tasks/task?id=%d\");\r\n", TASK['taskid']);
-				print("}, 200);\r\n");
-				print("</script>\r\n");
-			} else {
-				this.view(TASK['taskid']);
-			}
+			printf("<script>\r\n");
+			printf("ns.status.show('task %d saved', 5);\r\n", TASK['taskid']);
+			if (id==0) printf("ns.dialog.reopen('dialog_task_%d','/app/tasks/task?id=%d');\r\n", id, TASK['taskid']);
+			printf("</script>\r\n");
+			if (id>0) this.view(TASK['taskid']);
 			break;
 		case 'delete':
 			if (!db.tasks.remove(TASK)) {
@@ -169,30 +186,28 @@ class task {
 			printf("<center>task %d deleted</center>", id);
 			printf("<script>\r\n");
 			printf("ns.status.show(\"task %d deleted\", 5);\r\n", id);
-			printf("setTimeout(function() {\r\n");
-			printf("	$('#dialog_task_%d').dialog('close');\r\n", id);
-			printf("}, 500);\r\n");
+			printf("ns.dialog.close('dialog_task_%d');\r\n", id);
 			printf("</script>\r\n");
 			break;
 		}
+		printf("<script>\r\n");
+		printf("ns.dialog.refreshparent('dialog_task_%d', 'dialog_task_%d');\r\n", TASK['taskid'], id);
+		printf("</script>\r\n");
 		return;
 	}
 }
 
 try {
 	include_template("common.ns");
-	include_template("class.html_form.ns");
 	include("tasks.lib.ns");
-	//print("<center>\r\n");
 	t=new task();
 	if (_SERVER['REQUEST_METHOD']=='POST') {
 		t.save();
 	} else {
 		t.view();
 	}
-	//print("</center>\r\n");
-} catch (e) {
-	print("Exception: [",e.description,"]");
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
 }
 
 ?>

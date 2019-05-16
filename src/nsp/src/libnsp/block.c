@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@ void n_skipto(nsp_state *N, const char *fn, unsigned short c)
 {
 #define __FN__ __FILE__ ":n_skipto()"
 	settrace();
-	while (*N->readptr) {
-		if (*N->readptr == OP_LINENUM) n_skip_ws(N);
-		if (*N->readptr == c) return;
-		N->readptr = n_seekop(N, N->readptr, 1);
+	while (*n_context_readptr) {
+		if (*n_context_readptr == OP_LINENUM) n_skip_ws(N);
+		if (*n_context_readptr == c) return;
+		n_context_readptr = n_seekop(N, n_context_readptr, 1);
 	}
 	n_error(N, NE_SYNTAX, fn, "expected a '%s'", n_getsym(N, c));
 	return;
@@ -46,47 +46,47 @@ void n_if(nsp_state *N)
 	settrace();
 l1:
 	if (n_peekop(N) == OP_POPAREN) {
-		ce = N->readptr + readi2((N->readptr + 1)) + 3;
-		N->readptr = n_seekop(N, N->readptr, 0);
+		ce = n_context_readptr + readi2((n_context_readptr + 1)) + 3;
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		if (!done) {
-			t = (char)nsp_tobool(N, nsp_eval(N, (char *)N->readptr));
+			t = (char)nsp_tobool(N, nsp_eval(N, (char *)n_context_readptr));
 			if (N->r.val->refs > 1) nsp_unlinkval(N, &N->r);
 		}
-		N->readptr = ce;
+		n_context_readptr = ce;
 		n_expect(N, __FN__, OP_PCPAREN);
-		N->readptr++;
+		n_context_readptr++;
 	}
 l2:
 	if (!t || done) {
 		if (n_peekop(N) == OP_POBRACE) {
-			N->readptr += 5 + readi4((N->readptr + 1));
+			n_context_readptr += 5 + readi4((n_context_readptr + 1));
 			n_expect(N, __FN__, OP_PCBRACE);
-			N->readptr++;
+			n_context_readptr++;
 		}
 		else {
 			n_skipto(N, __FN__, OP_PSEMICOL);
-			if (n_peekop(N) == OP_PSEMICOL) N->readptr++;
+			if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
 		}
 	}
 	else {
 		done = 1;
 		if (n_peekop(N) == OP_POBRACE) {
-			uchar *be = N->readptr + 5 + readi4((N->readptr + 1));
-			nsp_exec(N, (char *)N->readptr);
-			N->readptr = be;
+			uchar *be = n_context_readptr + 5 + readi4((n_context_readptr + 1));
+			nsp_exec(N, (char *)n_context_readptr);
+			n_context_readptr = be;
 			n_expect(N, __FN__, OP_PCBRACE);
-			N->readptr++;
+			n_context_readptr++;
 		}
 		else {
 			N->single = 1;
-			nsp_exec(N, (char *)N->readptr);
-			if (n_peekop(N) == OP_PSEMICOL) N->readptr++;
+			nsp_exec(N, (char *)n_context_readptr);
+			if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
 		}
 	}
 	if (!N->ret && n_peekop(N) == OP_KELSE) {
-		N->readptr++;
+		n_context_readptr++;
 		if (n_peekop(N) == OP_KIF) {
-			N->readptr++;
+			n_context_readptr++;
 			goto l1;
 		}
 		t = 1;
@@ -108,15 +108,15 @@ void n_for(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	arginit = N->readptr = n_seekop(N, N->readptr, 0);
+	arginit = n_context_readptr = n_seekop(N, n_context_readptr, 0);
 	n_skipto(N, __FN__, OP_PSEMICOL);
-	argcomp = ++N->readptr;
+	argcomp = ++n_context_readptr;
 	n_skipto(N, __FN__, OP_PSEMICOL);
-	argexec = ++N->readptr;
+	argexec = ++n_context_readptr;
 	n_skipto(N, __FN__, OP_PCPAREN);
-	bs = ++N->readptr;
+	bs = ++n_context_readptr;
 	if (n_peekop(N) == OP_POBRACE) {
-		N->readptr += 5 + readi4((N->readptr + 1));
+		n_context_readptr += 5 + readi4((n_context_readptr + 1));
 		n_expect(N, __FN__, OP_PCBRACE);
 		single = 0;
 	}
@@ -124,27 +124,27 @@ void n_for(nsp_state *N)
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
-	be = ++N->readptr;
-	N->readptr = arginit;
-	n_readvar(N, &N->l, NULL);
+	be = ++n_context_readptr;
+	n_context_readptr = arginit;
+	n_readvar(N, &N->context->l, NULL);
 	for (;;) {
 		if (argcomp[0] != OP_PSEMICOL) {
 			cobj = nsp_eval(N, (char *)argcomp);
 			n_expect(N, __FN__, OP_PSEMICOL);
-			N->readptr++;
+			n_context_readptr++;
 			if (nsp_tonum(N, cobj) == 0) break;
 		}
-		N->readptr = bs;
+		n_context_readptr = bs;
 		N->single = single;
-		nsp_exec(N, (char *)N->readptr);
+		nsp_exec(N, (char *)n_context_readptr);
 		if (N->cnt) N->cnt = 0;
 		if (N->brk) { N->brk--; break; }
 		if (N->ret) break;
-		N->readptr = argexec;
-		n_readvar(N, &N->l, NULL);
+		n_context_readptr = argexec;
+		n_readvar(N, &N->context->l, NULL);
 	}
-	N->readptr = be;
-	if (single) --N->readptr;
+	n_context_readptr = be;
+	if (single) --n_context_readptr;
 	DEBUG_OUT();
 	return;
 #undef __FN__
@@ -166,14 +166,14 @@ void n_foreach(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	N->readptr = n_seekop(N, N->readptr, 0);
+	n_context_readptr = n_seekop(N, n_context_readptr, 0);
 	//	++N->readptr;
 	n_expect(N, __FN__, OP_LABEL);
 	//	n_getlabel(N, itemnamebuf1);
 	namep = NULL;
 	valp = n_getlabel(N, NULL);
 	if (n_peekop(N) == OP_PCOMMA) {
-		++N->readptr;
+		++n_context_readptr;
 		n_expect(N, __FN__, OP_LABEL);
 		//		n_getlabel(N, itemnamebuf2);
 		namep = valp;
@@ -189,7 +189,7 @@ void n_foreach(nsp_state *N)
 		n_error(N, NE_INTERNAL, __FN__, "expected 'in'");
 	}
 
-	sobj = nsp_eval(N, (char *)N->readptr);
+	sobj = nsp_eval(N, (char *)n_context_readptr);
 	if (!nsp_istable(sobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for set obj");
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	nsp_linkval(N, &tobj, sobj);
@@ -197,9 +197,9 @@ void n_foreach(nsp_state *N)
 	tsobj = sobj->val->d.table.f;
 
 	n_expect(N, __FN__, OP_PCPAREN);
-	bs = ++N->readptr;
+	bs = ++n_context_readptr;
 	if (n_peekop(N) == OP_POBRACE) {
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single = 0;
 	}
@@ -207,15 +207,15 @@ void n_foreach(nsp_state *N)
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
-	be = ++N->readptr;
+	be = ++n_context_readptr;
 	for (iobj = sobj->val->d.table.f; iobj; iobj = iobj->next) {
 		if (nsp_isnull(iobj) || iobj->val->attr&NST_SYSTEM) continue;
-		if (namep) nsp_setstr(N, &N->l, namep, iobj->name, -1);
-		N->readptr = bs;
+		if (namep) nsp_setstr(N, &N->context->l, namep, iobj->name, -1);
+		n_context_readptr = bs;
 		N->single = single;
-		xobj = nsp_setnum(N, &N->l, valp, 0);
+		xobj = nsp_setnum(N, &N->context->l, valp, 0);
 		nsp_linkval(N, xobj, iobj);
-		nsp_exec(N, (char *)N->readptr);
+		nsp_exec(N, (char *)n_context_readptr);
 		nsp_unlinkval(N, xobj);
 		if (sobj->val->type != NT_TABLE) {
 			nsp_unlinkval(N, &tobj);
@@ -231,8 +231,8 @@ void n_foreach(nsp_state *N)
 		if (N->ret) break;
 	}
 	nsp_unlinkval(N, &tobj);
-	N->readptr = be;
-	if (single) --N->readptr;
+	n_context_readptr = be;
+	if (single) --n_context_readptr;
 	DEBUG_OUT();
 	return;
 #undef __FN__
@@ -248,57 +248,57 @@ void n_switch(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	N->readptr = n_seekop(N, N->readptr, 0);
+	n_context_readptr = n_seekop(N, n_context_readptr, 0);
 	//	N->readptr++;
 	nc_memset((void *)&cobj, 0, sizeof(obj_t));
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
-	nsp_linkval(N, &tobj, nsp_eval(N, (char *)N->readptr));
+	nsp_linkval(N, &tobj, nsp_eval(N, (char *)n_context_readptr));
 	n_expect(N, __FN__, OP_PCPAREN);
-	N->readptr++;
+	n_context_readptr++;
 	n_expect(N, __FN__, OP_POBRACE);
-	bs = N->readptr = n_seekop(N, N->readptr, 0);
+	bs = n_context_readptr = n_seekop(N, n_context_readptr, 0);
 	n_skipto(N, __FN__, OP_PCBRACE);
-	be = ++N->readptr;
-	N->readptr = bs;
-	while (*N->readptr != OP_PCBRACE) {
-		switch (*N->readptr) {
+	be = ++n_context_readptr;
+	n_context_readptr = bs;
+	while (*n_context_readptr != OP_PCBRACE) {
+		switch (*n_context_readptr) {
 		case OP_KCASE:
-			N->readptr++;
+			n_context_readptr++;
 			//			switch (nsp_typeof((&tobj))) {
 			switch (tobj.val == NULL ? NT_NULL : tobj.val->type) {
 			case NT_STRING:
-				if (*N->readptr != OP_STRDATA) {
+				if (*n_context_readptr != OP_STRDATA) {
 					n_error(N, NE_SYNTAX, __FN__, "invalid comparison");
 				}
 				n_getstring(N, &cobj);
 				if (nc_strcmp(tobj.val->d.str, cobj.val->d.str) == 0) match = 1;
 				nsp_unlinkval(N, &cobj);
 				n_expect(N, __FN__, OP_MCOLON);
-				N->readptr++;
+				n_context_readptr++;
 				break;
 			case NT_NUMBER:
-				if (*N->readptr != OP_NUMDATA) {
+				if (*n_context_readptr != OP_NUMDATA) {
 					n_error(N, NE_SYNTAX, __FN__, "invalid comparison");
 				}
 				nsp_setnum(N, &cobj, NULL, n_getnumber(N));
 				if (tobj.val->d.num == cobj.val->d.num) match = 1;
 				nsp_unlinkval(N, &cobj);
 				n_expect(N, __FN__, OP_MCOLON);
-				N->readptr++;
+				n_context_readptr++;
 				break;
 			default:
 				n_error(N, NE_SYNTAX, __FN__, "invalid switch type");
 				break;
 			}
 			if (!match) {
-				while (*N->readptr != OP_KCASE && *N->readptr != OP_KDEFAULT && *N->readptr != OP_PCBRACE) {
-					N->readptr = n_seekop(N, N->readptr, 1);
+				while (*n_context_readptr != OP_KCASE && *n_context_readptr != OP_KDEFAULT && *n_context_readptr != OP_PCBRACE) {
+					n_context_readptr = n_seekop(N, n_context_readptr, 1);
 				}
 				continue;
 			}
-			while (*N->readptr != OP_KCASE && *N->readptr != OP_KDEFAULT && *N->readptr != OP_PCBRACE) {
+			while (*n_context_readptr != OP_KCASE && *n_context_readptr != OP_KDEFAULT && *n_context_readptr != OP_PCBRACE) {
 				N->single = 1;
-				nsp_exec(N, (char *)N->readptr);
+				nsp_exec(N, (char *)n_context_readptr);
 				if (N->brk) break;
 				if (N->ret) break;
 			}
@@ -306,12 +306,12 @@ void n_switch(nsp_state *N)
 			if (N->ret) goto _done;
 			break;
 		case OP_KDEFAULT:
-			N->readptr++;
+			n_context_readptr++;
 			n_expect(N, __FN__, OP_MCOLON);
-			N->readptr++;
-			while (*N->readptr != OP_PCBRACE) {
+			n_context_readptr++;
+			while (*n_context_readptr != OP_PCBRACE) {
 				N->single = 1;
-				nsp_exec(N, (char *)N->readptr);
+				nsp_exec(N, (char *)n_context_readptr);
 				if (N->brk) break;
 				if (N->ret) break;
 			}
@@ -324,7 +324,7 @@ void n_switch(nsp_state *N)
 		}
 	}
 _done:
-	N->readptr = be;
+	n_context_readptr = be;
 	nsp_unlinkval(N, &tobj);
 	DEBUG_OUT();
 	return;
@@ -341,45 +341,45 @@ void n_do(nsp_state *N)
 
 	DEBUG_IN();
 	settrace();
-	bs = N->readptr;
+	bs = n_context_readptr;
 	if (n_peekop(N) == OP_POBRACE) {
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
-		N->readptr++;
+		n_context_readptr++;
 		single = 0;
 	}
 	else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
-		N->readptr++;
+		n_context_readptr++;
 		single = 1;
 	}
-	be = N->readptr;
+	be = n_context_readptr;
 	for (;;) {
-		N->readptr = bs;
+		n_context_readptr = bs;
 		N->single = single;
-		nsp_exec(N, (char *)N->readptr);
+		nsp_exec(N, (char *)n_context_readptr);
 		if (N->cnt > 0) N->cnt = 0;
 		if (N->brk > 0) { N->brk--; break; }
 		if (N->ret) break;
-		N->readptr = be;
+		n_context_readptr = be;
 		n_expect(N, __FN__, OP_KWHILE);
-		N->readptr++;
+		n_context_readptr++;
 		n_expect(N, __FN__, OP_POPAREN);
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		//		N->readptr++;
-		argcomp = N->readptr;
+		argcomp = n_context_readptr;
 		cobj = nsp_eval(N, (char *)argcomp);
 		n_expect(N, __FN__, OP_PCPAREN);
 		if (nsp_tonum(N, cobj) == 0) break;
 	}
-	N->readptr = be;
+	n_context_readptr = be;
 
 	//	n_decompile(N, N->readptr, be, NULL, 0);
 	n_expect(N, __FN__, OP_KWHILE);
 	n_skipto(N, __FN__, OP_PSEMICOL);
 	n_expect(N, __FN__, OP_PSEMICOL);
 
-	if (single) --N->readptr;
+	if (single) --n_context_readptr;
 	DEBUG_OUT();
 	return;
 #undef __FN__
@@ -396,36 +396,36 @@ void n_while(nsp_state *N)
 	DEBUG_IN();
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
-	N->readptr = n_seekop(N, N->readptr, 0);
-	argcomp = N->readptr;
+	n_context_readptr = n_seekop(N, n_context_readptr, 0);
+	argcomp = n_context_readptr;
 	n_skipto(N, __FN__, OP_PCPAREN);
-	bs = ++N->readptr;
+	bs = ++n_context_readptr;
 	if (n_peekop(N) == OP_POBRACE) {
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
-		N->readptr++;
+		n_context_readptr++;
 		single = 0;
 	}
 	else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
-		N->readptr++;
+		n_context_readptr++;
 		single = 1;
 	}
-	be = N->readptr;
+	be = n_context_readptr;
 	for (;;) {
 		cobj = nsp_eval(N, (char *)argcomp);
 		n_expect(N, __FN__, OP_PCPAREN);
-		N->readptr++;
+		n_context_readptr++;
 		if (nsp_tonum(N, cobj) == 0) break;
-		N->readptr = bs;
+		n_context_readptr = bs;
 		N->single = single;
-		nsp_exec(N, (char *)N->readptr);
+		nsp_exec(N, (char *)n_context_readptr);
 		if (N->cnt > 0) N->cnt = 0;
 		if (N->brk > 0) { N->brk--; break; }
 		if (N->ret) break;
 	}
-	N->readptr = be;
-	if (single) --N->readptr;
+	n_context_readptr = be;
+	if (single) --n_context_readptr;
 	DEBUG_OUT();
 	return;
 #undef __FN__
@@ -442,9 +442,9 @@ void n_try(nsp_state *N)
 
 	DEBUG_IN();
 	settrace();
-	bs = N->readptr;
+	bs = n_context_readptr;
 	if (n_peekop(N) == OP_POBRACE) {
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single = 0;
 	}
@@ -452,32 +452,32 @@ void n_try(nsp_state *N)
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
-	N->readptr++;
-	be = N->readptr;
-	N->readptr = bs;
-	savjmp = N->savjmp;
-	N->savjmp = (jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
-	if (setjmp(*N->savjmp) == 0) {
-		nsp_exec(N, (char *)N->readptr);
+	n_context_readptr++;
+	be = n_context_readptr;
+	n_context_readptr = bs;
+	savjmp = n_context_savjmp;
+	n_context_savjmp = (jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
+	if (setjmp(*n_context_savjmp) == 0) {
+		nsp_exec(N, (char *)n_context_readptr);
 		except = 0;
 	}
 	else {
 		except = 1;
 	}
-	n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
-	N->savjmp = savjmp;
-	N->readptr = be;
+	n_free(N, (void *)&n_context_savjmp, sizeof(jmp_buf));
+	n_context_savjmp = savjmp;
+	n_context_readptr = be;
 	if (n_peekop(N) == OP_KCATCH) {
-		++N->readptr;
+		++n_context_readptr;
 		n_expect(N, __FN__, OP_POPAREN);
-		N->readptr = n_seekop(N, N->readptr, 0);
+		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		//		++N->readptr;
 		n_expect(N, __FN__, OP_LABEL);
 		n_getlabel(N, exnamebuf);
 		n_expect(N, __FN__, OP_PCPAREN);
-		bs = ++N->readptr;
+		bs = ++n_context_readptr;
 		if (n_peekop(N) == OP_POBRACE) {
-			N->readptr = n_seekop(N, N->readptr, 0);
+			n_context_readptr = n_seekop(N, n_context_readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single = 0;
 		}
@@ -485,35 +485,35 @@ void n_try(nsp_state *N)
 			n_skipto(N, __FN__, OP_PSEMICOL);
 			single = 1;
 		}
-		be = ++N->readptr;
+		be = ++n_context_readptr;
 		if (except) {
-			N->readptr = bs;
-			tobj = nsp_settable(N, &N->l, exnamebuf);
+			n_context_readptr = bs;
+			tobj = nsp_settable(N, &N->context->l, exnamebuf);
 			/* needing setvaltype is a bug */
 			nsp_setvaltype(N, tobj, NT_TABLE);
 			nsp_setnum(N, tobj, "errno", N->err);
 			nsp_setstr(N, tobj, "errtext", N->errbuf, -1);// this should be deprecated
 			nsp_setstr(N, tobj, "description", N->errbuf, -1);
 			N->err = 0;
-			savjmp = N->savjmp;
-			N->savjmp = (jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
-			if (setjmp(*N->savjmp) == 0) {
-				nsp_exec(N, (char *)N->readptr);
+			savjmp = n_context_savjmp;
+			n_context_savjmp = (jmp_buf *)n_alloc(N, sizeof(jmp_buf), 0);
+			if (setjmp(*n_context_savjmp) == 0) {
+				nsp_exec(N, (char *)n_context_readptr);
 				except = 0;
 			}
 			else {
 				except = 1;
 			}
-			n_free(N, (void *)&N->savjmp, sizeof(jmp_buf));
-			N->savjmp = savjmp;
-			n_freeval(N, nsp_getobj(N, &N->l, exnamebuf));
+			n_free(N, (void *)&n_context_savjmp, sizeof(jmp_buf));
+			n_context_savjmp = savjmp;
+			n_freeval(N, nsp_getobj(N, &N->context->l, exnamebuf));
 		}
-		N->readptr = be;
+		n_context_readptr = be;
 	}
 	if (n_peekop(N) == OP_KFINALLY) {
-		bs = ++N->readptr;
+		bs = ++n_context_readptr;
 		if (n_peekop(N) == OP_POBRACE) {
-			N->readptr = n_seekop(N, N->readptr, 0);
+			n_context_readptr = n_seekop(N, n_context_readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single = 0;
 		}
@@ -521,17 +521,17 @@ void n_try(nsp_state *N)
 			n_skipto(N, __FN__, OP_PSEMICOL);
 			single = 1;
 		}
-		be = ++N->readptr;
-		N->readptr = bs;
-		nsp_exec(N, (char *)N->readptr);
-		N->readptr = be;
+		be = ++n_context_readptr;
+		n_context_readptr = bs;
+		nsp_exec(N, (char *)n_context_readptr);
+		n_context_readptr = be;
 	}
 	if (except) {
 		char errbuf[sizeof(N->errbuf)];
 		nc_strncpy(errbuf, N->errbuf, sizeof(N->errbuf) - 1);
 		n_error(N, NE_SYNTAX, NULL, "%s", errbuf);
 	}
-	if (single) --N->readptr;
+	if (single) --n_context_readptr;
 	DEBUG_OUT();
 	return;
 #undef __FN__

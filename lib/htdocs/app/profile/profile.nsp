@@ -4,8 +4,7 @@ class profile {
 	function view() {
 		print("<BR>\r\n");
 		ui=new db.userinfo();
-		perm=ui.auth("profile");
-		if (!perm.modify) {
+		if (!ui.auth('profile', 'read')) {
 			printf("<br /><center>%s</center><br />\r\n", "Access Denied");
 			return;
 		}
@@ -32,8 +31,9 @@ class profile {
 		form.addfield({name="preflanguage", label="Language", type="select", handler=profile.html.htselect_language});
 		form.addfield({name="preftheme", label="Theme", type="select", handler=profile.html.htselect_theme});
 		print("</table>\r\n");
-		print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
-		print("<INPUT TYPE=RESET CLASS=frmButton NAME=Reset VALUE='Reset'>\r\n");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		//print("<INPUT TYPE=RESET CLASS=frmButton NAME=reset VALUE='Reset'>\r\n");
 		print("</form>\r\n");
 		print("</center>");
 
@@ -110,7 +110,7 @@ class profile {
 		print("</TD></TR>");
 		print("<TR><TD ALIGN=CENTER>\r\n");
 	//	if (module_exists("mod_email")&&(auth_priv(conn, "email")>0)) {
-	//		print("[<A HREF=%s/mail/accounts/list>Edit Mail Accounts</A>]\r\n", ScriptName);
+	//		print("[<A HREF=%s/mail/mailaccountlist>Edit Mail Accounts</A>]\r\n", ScriptName);
 	//	}
 	//	if (module_exists("mod_calendar")&&(auth_priv(conn, "calendar")>0)) {
 	//		print("[<A HREF=%s/profile/timeedit>Edit Availability</A>]\r\n", ScriptName);
@@ -135,8 +135,7 @@ class profile {
 		}
 		if (_SERVER['REQUEST_METHOD']!='POST') return;
 		ui=new db.userinfo();
-		perm=ui.auth("profile");
-		if (!perm.modify) {
+		if (!ui.auth('profile', 'modify')) {
 			printf("<br /><center>%s</center><br />\r\n", "Access Denied");
 			return;
 		}

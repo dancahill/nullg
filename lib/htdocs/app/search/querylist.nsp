@@ -1,0 +1,43 @@
+<?nsp
+
+function search_queries() {
+	//print("<br>\r\n");
+	ui=new db.userinfo();
+	querylist=db.queries.getlist(userid, tablename, tableindex);
+	if (querylist.rows.length()<1) {
+		print("<b>Found 0 matching queries</b></center>\r\n");
+		return;
+	}
+	t=new html_table();
+	t.datasource=querylist;
+	t.tablename="T2";
+	t.tableclass="contenttable";
+	t.autoaddcolumns=false;
+	fntd=function (row, column) {
+		return sprintf("<td width=100%s onclick=\"return ns.dialog.create('/app/search/query?id=%d');\">", '%', tonumber(row['queryid']));
+	};
+	fn=function (row, column) { id=tonumber(row['queryid']); if (row['queryname']=="") return "";
+		return sprintf("<a class=\"dialog\" href=\"/app/search/query?id=%d\">%s</a>", id, strtohtml(row['queryname']));
+	};
+	t.addcolumn("queryname", "Query Name", fn, fntd);
+	t.write();
+	return;
+}
+
+try {
+	include_template("common.ns");
+	include("search.lib.ns");
+	search.html.headermenu();
+	// print("<div style='text-align:left'>");
+	// notes.html.htselect_userfilter();
+	// print("</div>");
+	print("<br/>");
+	print("<center>\r\n");
+	search_queries();
+	printf("<a class=\"dialog\" href=\"/app/search/query?id=0\">%s</a>", strtohtml("New Query"));
+	print("</center>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

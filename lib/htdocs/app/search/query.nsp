@@ -1,0 +1,161 @@
+<?nsp
+
+class query {
+	function view(id, rec) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['QUERYID']:_GET['ID']);
+		if (rec==null) {
+			Q=db.queries.get(id);
+			if (Q==null || Q.rows.length()!=1) {
+				print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
+				return;
+			}
+			rec=Q.rows[0];
+		}
+		var form=new html_form(rec);
+		var tabset=new html_tabset({activepage=1,minheight=100});
+		//if (id==0) tabset.activepage=2;
+		if (id>0) tabset.addtab("SUMMARY");
+		tabset.addtab("EDIT");
+		tabset.addtab("PERMISSIONS");
+		tabset.showtabs();
+		print("<form id=queryedit name=queryedit METHOD=POST ACTION=\"/app/search/query\" onsubmit=\"return ns.dialog.submit(event, 'query', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="queryid", type="hidden"});
+		print("<div style='width:100%;background-color:#f0f0f0'>");
+		if (id>0) {
+			tabset.pagebegin();
+			print("<TABLE BORDER=0 CELLPADDING=2 CELLSPACING=0 WIDTH=\"100%\">\r\n");
+			//print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP width='1%'><B>&nbsp;Query Title&nbsp;</B></TD><TD NOWRAP WIDTH=\"100%\">",strtohtml(rec['queryname']),"&nbsp;</TD></TR>\r\n");
+			//print("<TR CLASS=\"EDITFORM\"><TD ALIGN=RIGHT NOWRAP width='1%'><B>&nbsp;Query Text&nbsp;</B></TD><td></td></TR>\r\n");
+			print("<TR CLASS=\"EDITFORM\"><TD ALIGN=left NOWRAP colspan=2 WIDTH=\"100%\" style='white-space:normal'>");
+			search.runquery(id, rec['query']);
+			print("</TD></TR>\r\n");
+			print("</TABLE>\r\n");
+			tabset.pageend();
+		}
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		form.addfield({name="queryname", label="Query Name", required=true});
+		form.addfield({name="query", label="Query", type="textarea", style="height:200px;width:100%", required=true});
+		form.validate("gw_queries");
+		print("</table>\r\n");
+		tabset.pageend();
+		tabset.pagebegin();
+		print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+		print("<tr><td>permissions not done yet</td></tr>");
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		if (id>0) {
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			//printnotes(id);
+			print("</table>\r\n");
+		}
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Save'>\r\n");
+		print("<input type=submit class=frmButton name=submit value='Run'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		//print("<input type=reset class=frmButton name=reset value='Reset'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title="Query: "+rec['queryname'];
+		if (method=='POST' && this.saved) title+=" (Saved)";
+		divname=sprintf("dialog_query_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		Q=null;
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['QUERYID']);
+		Q=db.queries.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		switch (_POST['SUBMITACTION']) {
+		case 'run':
+			addfield(rec, "queryname");
+			addfield(rec, "query");
+			// if (!this.validate(rec)) {
+			// 	this.view(rec['queryid']);
+			// 	return;
+			// }
+			this.view(rec['queryid'], rec);
+			break;
+		case 'save':
+			addfield(rec, "queryname");
+			addfield(rec, "query");
+			if (!this.validate(rec)) {
+				this.view(rec['queryid']);
+				return;
+			}
+			if (!db.queries.set(rec)) {
+				printf("error saving record");
+				return;
+			}
+			this.saved=true;
+			printf("<script>\r\nns.status.show(\"query %d saved\", 5);\r\n</script>\r\n", rec['queryid']);
+			if (id==0) {
+				// close this dialog and open the new id
+				print("<script>\r\n");
+				print("setTimeout(function() {\r\n");
+				printf("	$('#dialog_query_%d').dialog('close');\r\n", id);
+				printf("	ns.dialog.create(\"/app/search/query?id=%d\");\r\n", rec['queryid']);
+				print("}, 50);\r\n");
+				print("</script>\r\n");
+			} else {
+				this.view(rec['queryid']);
+			}
+			break;
+		case 'delete':
+			if (!db.queries.remove(rec)) {
+				printf("error deleting record");
+				return;
+			}
+			printf("<center>query %d deleted</center>", id);
+			printf("<script>\r\n");
+			printf("ns.status.show(\"query %d deleted\", 5);\r\n", id);
+			printf("setTimeout(function() {\r\n");
+			printf("	$('#dialog_query_%d').dialog('close');\r\n", id);
+			printf("}, 500);\r\n");
+			printf("</script>\r\n");
+			break;
+		}
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("search.lib.ns");
+	q=new query();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		q.save();
+	} else {
+		q.view();
+	}
+} catch (ex) {
+	print("Exception: [",ex.description,"]");
+}
+
+?>

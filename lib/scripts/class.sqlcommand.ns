@@ -18,7 +18,9 @@ class sqlcommand {
 			q+=c[i];
 			if (i==clen-1) break;
 			x=this.parameters[i].val;
-			if (x.gettype()=='string') {
+			if (x.gettype()=='null') {
+				x="null";
+			} else if (x.gettype()=='string') {
 				x="'"+x.tostring().replace("'", "''")+"'";
 			} else {
 				x=x.tostring();

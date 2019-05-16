@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -108,13 +108,13 @@ void ssh_murder(nsp_state *N, obj_t *cobj)
 
 static void ssh_clearerr(nsp_state *N)
 {
-	nsp_setstr(N, nsp_getobj(N, &N->l, "this"), "last_err", NULL, 0);
+	nsp_setstr(N, nsp_getobj(N, &N->context->l, "this"), "last_err", NULL, 0);
 	return;
 }
 
 static void ssh_lasterr(nsp_state *N, SSH_CONN *sshconn)
 {
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	char *err = NULL;
 
 	if (sshconn && sshconn->session) {
@@ -272,10 +272,10 @@ static int ssh_close(nsp_state *N, SSH_CONN *sshconn)
 NSP_CLASSMETHOD(libnsp_net_ssh_open)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_open()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* host */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* port */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* host */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* port */
 	unsigned short port = 22;
 	SSH_CONN *sshconn;
 	int rc;
@@ -308,7 +308,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_open)
 NSP_CLASSMETHOD(libnsp_net_ssh_close)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_close()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 
@@ -335,7 +335,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_close)
 NSP_CLASSMETHOD(libnsp_net_ssh_hostkey)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_hostkey()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 	char fpbuf[50];
@@ -362,9 +362,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_hostkey)
 NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_auth()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* user */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* pass or keyset */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* user */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* pass or keyset */
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 	//	char rsapub[256];
@@ -446,7 +446,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 NSP_CLASSMETHOD(libnsp_net_ssh_authenticated)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_authenticated()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 
@@ -466,9 +466,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_authenticated)
 NSP_CLASSMETHOD(libnsp_net_ssh_cmd)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_cmd()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* command */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* max milliseconds*10 to wait */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* command */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* max milliseconds*10 to wait */
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 	int rc = 0;
@@ -562,11 +562,11 @@ NSP_CLASSMETHOD(libnsp_net_ssh_cmd)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_get()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote file */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* local file */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* progress meter */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote file */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* local file */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* progress meter */
 	SSH_CONN *sshconn;
 	LIBSSH2_SFTP_HANDLE *handle;
 	LIBSSH2_SFTP_ATTRIBUTES attrs;
@@ -685,8 +685,8 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_ls)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_ls()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote dir */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote dir */
 	obj_t *cobj;
 	obj_t tobj;
 	obj_t *tobj2;
@@ -772,8 +772,8 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_ls)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_mkdir)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_mkdir()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote dir */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote dir */
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 	int rc = 0;
@@ -824,11 +824,11 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_mkdir)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_put)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_put()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	char *fname = nsp_getstr(N, &N->l, "0");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote file */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* string */
+	char *fname = nsp_getstr(N, &N->context->l, "0");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote file */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* string */
 	SSH_CONN *sshconn;
 	LIBSSH2_SFTP_HANDLE *handle;
 	LIBSSH2_SFTP_ATTRIBUTES attrs;
@@ -940,9 +940,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_put)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_rename)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_rename()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* source */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* dest */
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* source */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* dest */
 	obj_t *cobj;
 	SSH_CONN *sshconn;
 	int rc = 0;
@@ -972,9 +972,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_rename)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_rmdir)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_rmdir()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote dir */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote dir */
 	SSH_CONN *sshconn;
 	int rc = 0;
 
@@ -1003,9 +1003,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_rmdir)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_stat)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_stat()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote file/dir */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote file/dir */
 	SSH_CONN *sshconn;
 	LIBSSH2_SFTP_ATTRIBUTES attrs;
 	int rc = 0;
@@ -1064,9 +1064,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_stat)
 NSP_CLASSMETHOD(libnsp_net_ssh_sftp_unlink)
 {
 #define __FN__ __FILE__ ":libnsp_net_ssh_sftp_unlink()"
-	obj_t *thisobj = nsp_getobj(N, &N->l, "this");
+	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj;
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* remote file */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* remote file */
 	SSH_CONN *sshconn;
 	int rc = 0;
 
@@ -1097,35 +1097,35 @@ NSP_CLASS(libnsp_net_ssh_client)
 #define __FN__ __FILE__ ":libnsp_net_ssh_client()"
 	obj_t *tobj, *cobj;
 
-	nsp_setcfunc(N, &N->l, "open", (NSP_CFUNC)libnsp_net_ssh_open);
-	nsp_setcfunc(N, &N->l, "close", (NSP_CFUNC)libnsp_net_ssh_close);
-	nsp_setcfunc(N, &N->l, "hostkey", (NSP_CFUNC)libnsp_net_ssh_hostkey);
-	nsp_setcfunc(N, &N->l, "auth", (NSP_CFUNC)libnsp_net_ssh_auth);
-	nsp_setcfunc(N, &N->l, "authenticated", (NSP_CFUNC)libnsp_net_ssh_authenticated);
-	nsp_setcfunc(N, &N->l, "cmd", (NSP_CFUNC)libnsp_net_ssh_cmd);
-	nsp_setcfunc(N, &N->l, "sftp_get", (NSP_CFUNC)libnsp_net_ssh_sftp_get);
-	nsp_setcfunc(N, &N->l, "sftp_ls", (NSP_CFUNC)libnsp_net_ssh_sftp_ls);
-	nsp_setcfunc(N, &N->l, "sftp_mkdir", (NSP_CFUNC)libnsp_net_ssh_sftp_mkdir);
-	nsp_setcfunc(N, &N->l, "sftp_put", (NSP_CFUNC)libnsp_net_ssh_sftp_put);
-	nsp_setcfunc(N, &N->l, "sftp_put_mem", (NSP_CFUNC)libnsp_net_ssh_sftp_put);
-	nsp_setcfunc(N, &N->l, "sftp_rename", (NSP_CFUNC)libnsp_net_ssh_sftp_rename);
-	nsp_setcfunc(N, &N->l, "sftp_rmdir", (NSP_CFUNC)libnsp_net_ssh_sftp_rmdir);
-	nsp_setcfunc(N, &N->l, "sftp_stat", (NSP_CFUNC)libnsp_net_ssh_sftp_stat);
-	nsp_setcfunc(N, &N->l, "sftp_unlink", (NSP_CFUNC)libnsp_net_ssh_sftp_unlink);
-	nsp_setstr(N, &N->l, "host", "localhost", 9);
-	nsp_setnum(N, &N->l, "port", 22);
-	nsp_setstr(N, &N->l, "username", "root", 4);
-	nsp_setstr(N, &N->l, "password", "", 0);
-	nsp_setbool(N, &N->l, "connection", 0);
-	if (nsp_istable((tobj = nsp_getobj(N, &N->l, "1")))) {
+	nsp_setcfunc(N, &N->context->l, "open", (NSP_CFUNC)libnsp_net_ssh_open);
+	nsp_setcfunc(N, &N->context->l, "close", (NSP_CFUNC)libnsp_net_ssh_close);
+	nsp_setcfunc(N, &N->context->l, "hostkey", (NSP_CFUNC)libnsp_net_ssh_hostkey);
+	nsp_setcfunc(N, &N->context->l, "auth", (NSP_CFUNC)libnsp_net_ssh_auth);
+	nsp_setcfunc(N, &N->context->l, "authenticated", (NSP_CFUNC)libnsp_net_ssh_authenticated);
+	nsp_setcfunc(N, &N->context->l, "cmd", (NSP_CFUNC)libnsp_net_ssh_cmd);
+	nsp_setcfunc(N, &N->context->l, "sftp_get", (NSP_CFUNC)libnsp_net_ssh_sftp_get);
+	nsp_setcfunc(N, &N->context->l, "sftp_ls", (NSP_CFUNC)libnsp_net_ssh_sftp_ls);
+	nsp_setcfunc(N, &N->context->l, "sftp_mkdir", (NSP_CFUNC)libnsp_net_ssh_sftp_mkdir);
+	nsp_setcfunc(N, &N->context->l, "sftp_put", (NSP_CFUNC)libnsp_net_ssh_sftp_put);
+	nsp_setcfunc(N, &N->context->l, "sftp_put_mem", (NSP_CFUNC)libnsp_net_ssh_sftp_put);
+	nsp_setcfunc(N, &N->context->l, "sftp_rename", (NSP_CFUNC)libnsp_net_ssh_sftp_rename);
+	nsp_setcfunc(N, &N->context->l, "sftp_rmdir", (NSP_CFUNC)libnsp_net_ssh_sftp_rmdir);
+	nsp_setcfunc(N, &N->context->l, "sftp_stat", (NSP_CFUNC)libnsp_net_ssh_sftp_stat);
+	nsp_setcfunc(N, &N->context->l, "sftp_unlink", (NSP_CFUNC)libnsp_net_ssh_sftp_unlink);
+	nsp_setstr(N, &N->context->l, "host", "localhost", 9);
+	nsp_setnum(N, &N->context->l, "port", 22);
+	nsp_setstr(N, &N->context->l, "username", "root", 4);
+	nsp_setstr(N, &N->context->l, "password", "", 0);
+	nsp_setbool(N, &N->context->l, "connection", 0);
+	if (nsp_istable((tobj = nsp_getobj(N, &N->context->l, "1")))) {
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "username")))) {
-			nsp_setstr(N, &N->l, "username", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "username", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "password")))) {
-			nsp_setstr(N, &N->l, "password", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "password", cobj->val->d.str, cobj->val->size);
 		}
 		if (nsp_isstr((cobj = nsp_getobj(N, tobj, "host")))) {
-			nsp_setstr(N, &N->l, "host", cobj->val->d.str, cobj->val->size);
+			nsp_setstr(N, &N->context->l, "host", cobj->val->d.str, cobj->val->size);
 		}
 	}
 	return 0;

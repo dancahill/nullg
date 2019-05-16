@@ -1,0 +1,51 @@
+namespace search {
+	function runquery(id, querytext) {
+		if (querytext.toupper().startswith("SELECT ")) {
+			sqr=sql.query(querytext);
+		} else {
+			sqr=sql.update(querytext);
+		}
+		//printf("<div style=\"white-space:pre\">sqr=[%s]</div>", serialize(sqr));
+		try {
+			db.checksqlerror(sqr);
+			if (sqr.rows.length()>0) {
+				printf("<table id='query_%d' class='contenttable' style='width:100%s'>", id, '%');
+				print("<thead><tr>");
+				foreach (n, v in sqr.rows[0]) {
+					printf("<th>%s</th>", strtohtml(n));
+				}
+				print("</tr></thead>\r\n");
+				print("<tbody>\r\n");
+				foreach (row in sqr.rows) {
+					print("<tr>");
+					foreach (n, v in row) {
+						printf("<td>%s</td>", strtohtml(v.trim()));
+					}
+					print("</tr>\r\n");
+				}
+				print("</tbody>\r\n");
+				print("</table>");
+				printf("<script type=\"text/javascript\">\r\n");
+				printf("$(function() {\r\n");
+				printf("	$(\"#%s\").tablesorter();\r\n", "query_"+id);
+				printf("});\r\n");
+				printf("</script>");
+			} else {
+				print("no rows to print");
+			}
+			if (sqr.lastid!=null) printf("[sqr.lastid = %d]", sqr.lastid);
+		} catch (ex) {
+			printf("[[Exception: %s]]", ex.description);
+		}
+	}
+};
+
+namespace search.html {
+	function headermenu() {
+		var menuitems = {
+			{ text="SEARCHES";    cls='main'; href="/app/search/"; };
+			{ text="SQL QUERIES"; cls='main'; href="/app/search/querylist";   };
+		};
+		html.headersubmenu(menuitems);
+	}
+}

@@ -20,13 +20,13 @@
 static NSP_FUNCTION(htnsp_sql_escape)
 {
 	//CONN *conn = get_conn();
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	char *ss, *se;
 	char *s2;
 	int l2;
 
 	if (cobj1->val->type != NT_STRING) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		//prints(conn, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
 		return 0;
 	}
@@ -53,11 +53,11 @@ static NSP_FUNCTION(htnsp_sql_escape)
 
 static NSP_FUNCTION(htnsp_sql_getsequence)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	int rc = -1;
 
 	if (cobj1->val->type != NT_STRING) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		nsp_setnum(N, &N->r, "", rc);
 		return 0;
 	}
@@ -68,12 +68,12 @@ static NSP_FUNCTION(htnsp_sql_getsequence)
 
 static NSP_FUNCTION(htnsp_sql_query)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *qobj = NULL;
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	rc = sql_query(proc->N, &qobj, cobj1->val->d.str);
@@ -85,11 +85,11 @@ static NSP_FUNCTION(htnsp_sql_query)
 
 static NSP_FUNCTION(htnsp_sql_update)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	int rc;
 
 	if (cobj1->val->type != NT_STRING) {
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->l, "0"));
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "%s() expected a string for arg1\r\n", nsp_getstr(N, &N->context->l, "0"));
 		return 0;
 	}
 	rc = sql_update(proc->N, NULL, cobj1->val->d.str);
@@ -98,7 +98,7 @@ static NSP_FUNCTION(htnsp_sql_update)
 
 static NSP_FUNCTION(smtpnsp_logaccess)
 {
-	log_access(proc->N, MODSHORTNAME, "%s", nsp_getstr(N, &N->l, "1"));
+	log_access(proc->N, MODSHORTNAME, "%s", nsp_getstr(N, &N->context->l, "1"));
 	return 0;
 }
 

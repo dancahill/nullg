@@ -76,7 +76,7 @@ static NSP_FUNCTION(libnsp_dl_load)
 
 static NSP_FUNCTION(corensp_logaccess)
 {
-	log_access(proc.N, "core", "%s", nsp_getstr(N, &N->l, "1"));
+	log_access(proc.N, "core", "%s", nsp_getstr(N, &N->context->l, "1"));
 	return 0;
 }
 

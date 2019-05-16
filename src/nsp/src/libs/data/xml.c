@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -193,7 +193,7 @@ static char *libnsp_data_xml_readsub(nsp_state *N, obj_t *tobj, char *ptr, char 
 				p2++;
 				e = p2;
 			}
-			//			nl_flush(N);cobj=nsp_setstr(N, &N->l, "debug", b, e-b);printf("tag %d[%s]\n", is_end, nsp_tostr(N, cobj));
+			//			nl_flush(N);cobj=nsp_setstr(N, &N->context->l, "debug", b, e-b);printf("tag %d[%s]\n", is_end, nsp_tostr(N, cobj));
 			b = e;
 			if (!is_end) {
 				b = libnsp_data_xml_readsub(N, nobj, b, tagbuf, eb);
@@ -211,7 +211,7 @@ static char *libnsp_data_xml_readsub(nsp_state *N, obj_t *tobj, char *ptr, char 
 		e = p2;
 		if (is_dat) {
 			nsp_setstr(N, nobj, "value", b, e - b);
-			//			nl_flush(N);cobj=nsp_setstr(N, &N->l, "debug", b, e-b);	printf("dat %d[%s]\n", is_dat, nsp_tostr(N, cobj));
+			//			nl_flush(N);cobj=nsp_setstr(N, &N->context->l, "debug", b, e-b);	printf("dat %d[%s]\n", is_dat, nsp_tostr(N, cobj));
 		}
 		b = e;
 		/*
@@ -328,8 +328,8 @@ static char *libnsp_data_xml_readsub(nsp_state *N, obj_t *tobj, char *ptr, char 
 NSP_FUNCTION(libnsp_data_xml_read)
 {
 #define __FN__ __FILE__ ":libnsp_data_xml_read()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	obj_t tobj;
 	int eb = 0;
 	int trim = 1;

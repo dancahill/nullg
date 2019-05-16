@@ -1,0 +1,133 @@
+<?nsp
+
+function form_inet_script() {
+	print(
+		"<script>\n",
+		"function startSearch(e) {\n",
+		"	e.preventDefault();\n",
+		"	console.log('startSearch()');\n",
+		"	searchString = document.searchForm.searchText.value;\n",
+		"	if (searchString=='') return;\n",
+		"	searchEngine = document.searchForm.whichEngine.selectedIndex + 1;\n",
+		"	finalSearchString = '';\n",
+		"	if (searchEngine == 1)\n",
+		"		finalSearchString = 'https://www.bing.com/search?q=' + searchString;\n",
+		"	else if (searchEngine == 2)\n",
+		"		finalSearchString = 'https://duckduckgo.com/?q=' + searchString + '&ia=web';\n",
+		"	else if (searchEngine == 3)\n",
+		"		finalSearchString = 'http://msxml.excite.com/search/web?q=' + searchString;\n",
+		"	else if (searchEngine == 4)\n",
+		"		finalSearchString = 'https://www.google.com/search?q=' + searchString;\n",
+		"	else if (searchEngine == 5)\n",
+		"		finalSearchString = 'https://www.hotbot.com/web?q=' + searchString;\n",
+		"	else if (searchEngine == 6)\n",
+		"		finalSearchString = 'http://search.lycos.com/web/?q=' + searchString;\n",
+		"	else if (searchEngine == 7)\n",
+		"		finalSearchString = 'https://search.yahoo.com/search?p=' + searchString;\n",
+		"	window.open(finalSearchString, '_blank');\n",
+		"}\n",
+		"</script>\n"
+	);
+};
+
+function form_inet() {
+	print("<form id=searchForm name=searchForm method=post action=\"/app/searches/null\" onsubmit=\"return startSearch(event);\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+	print("<table class=\"contentform contentform2\">\r\n");
+	// print("<table class='contentform' border=0 cellpadding=2 cellspacing=0>\r\n");
+	print(
+		//"<form name='searchForm' action='/blah' onsubmit=\"console.log('asdf');\">\r\n",
+		//"<FORM NAME='searchForm' ACTION=javascript:startSearch()>\n",
+		"<TR><TH COLSPAN=3>Internet Search Form</TH></TR>\n",
+		"<TR CLASS=\"EDITFORM\"><TD>\n",
+		"<select name='whichEngine'>\n",
+		"<option>Bing</option>\n",
+		"<option>DuckDuckGo</option>\n",
+		"<option>Excite</option>\n",
+		"<option selected>Google</option>\n",
+		"<option>Hotbot</option>\n",
+		"<option>Lycos</option>\n",
+		"<option>Yahoo!</option>\n",
+		"</select></TD>\n",
+		"<TD><INPUT TYPE=TEXT NAME='searchText' SIZE=20></TD>\n",
+		"<TD><INPUT TYPE=SUBMIT CLASS=frmButton VALUE='Search'></TD></TR>\n"
+	);
+	print("</table>\r\n");
+	print("</form>\n");
+}
+
+function form_contacts() {
+
+	// print("<form id=contactsearch name=contactsearch method=post action=\"/app/contacts/list\" onsubmit=\"return ns.dialog.submit(event, 'contactsearch', 'save');\" enctype='multipart/form-data'>");
+	// print("<input type=text name=searchtext value=\"\" placeholder='Search Contacts' required='required' autocorrect='off'>");
+	// print("<input type=hidden name=submitaction value=''>\r\n");
+	// print("</form>\r\n");
+
+	print("<form id=contactsearch name=contactsearch method=post action=\"/app/contacts/list\" onsubmit=\"return ns.dialog.submit(event, 'contactsearch', 'save');\" enctype='multipart/form-data'>");
+	// print("<FORM METHOD=GET ACTION=\"contacts.ns\" NAME=contactsearch>\n");
+	print("<table class=\"contentform contentform2\">\r\n");
+	// print("<table class='contentform' border=0 cellpadding=2 cellspacing=0>\r\n");
+	print(
+		//"<TR><TD COLSPAN=3>&nbsp;</TD></TR>\n",
+		"<TR><TH COLSPAN=3>Contact Search Form</TH></TR>\n",
+		"<TR CLASS=\"EDITFORM\"><TD><SELECT NAME=column>\n",
+		"<OPTION SELECTED>All Columns\n",
+		"<OPTION>contactid\n",
+		"<OPTION>folderid\n",
+		"<OPTION>username\n",
+		"<OPTION>surname\n",
+		"<OPTION>givenname\n",
+		"<OPTION>salutation\n",
+		"<OPTION>contacttype\n",
+		"<OPTION>referredby\n",
+		"<OPTION>altcontact\n",
+		"<OPTION>prefbilling\n",
+		"<OPTION>website\n",
+		"<OPTION>email\n",
+		"<OPTION>homenumber\n",
+		"<OPTION>worknumber\n",
+		"<OPTION>faxnumber\n",
+		"<OPTION>mobilenumber\n",
+		"<OPTION>jobtitle\n",
+		"<OPTION>organization\n",
+		"<OPTION>homeaddress\n",
+		"<OPTION>homelocality\n",
+		"<OPTION>homeregion\n",
+		"<OPTION>homecountry\n",
+		"<OPTION>homepostalcode\n",
+		"<OPTION>workaddress\n",
+		"<OPTION>worklocality\n",
+		"<OPTION>workregion\n",
+		"<OPTION>workcountry\n",
+		"<OPTION>workpostalcode\n",
+		"</SELECT></TD>\n",
+		"<TD><INPUT TYPE=TEXT NAME=searchtext value='' SIZE=20></TD>\n",
+		"<TD><INPUT TYPE=SUBMIT CLASS=frmButton NAME=Submit VALUE='Search'></TD></TR>\n"
+	);
+	print("</table>\r\n");
+	print("<input type=hidden name=submitaction value=''>\r\n");
+	print("</form>\n");
+}
+
+try {
+	include_template("common.ns");
+	include("search.lib.ns");
+	//include_template("db.ns");
+	html.headersubmenu(null);
+	search.html.headermenu(0);
+	ui = new db.userinfo();
+	print("<br/>\r\n");
+	form_inet_script();
+	print("<center>\r\n");
+	form_inet();
+	//if (auth_priv(conn, "contacts")&A_READ) {
+		print("<br/>\r\n");
+		form_contacts();
+	//}
+	print("</center>\r\n");
+	print("<script>\r\ndocument.searchForm.searchText.focus();\r\n</script>\r\n");
+	//print("<SCRIPT LANGUAGE=\"JavaScript\" TYPE=\"text/javascript\">\r\n<!--\r\ndocument.searchForm.searchText.focus();\r\n// -->\r\n</SCRIPT>\r\n");
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

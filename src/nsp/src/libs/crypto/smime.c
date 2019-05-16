@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,10 +82,10 @@ err:
 NSP_FUNCTION(libnsp_openssl_smime_decrypt)
 {
 #define __FN__ __FILE__ ":libnsp_openssl_smime_decrypt()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* privkey.pem */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* cert.pem */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* infile */
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4"); /* outfile */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* privkey.pem */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* cert.pem */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* infile */
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4"); /* outfile */
 	PKCS7 *pkcs7;
 	X509 *cert;
 	EVP_PKEY *pkey;
@@ -135,10 +135,10 @@ err:
 NSP_FUNCTION(libnsp_openssl_smime_encrypt)
 {
 #define __FN__ __FILE__ ":libnsp_openssl_smime_encrypt()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* privkey.pem */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* cert.pem */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* infile */
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4"); /* outfile */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* privkey.pem */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* cert.pem */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* infile */
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4"); /* outfile */
 	PKCS7 *pkcs7;
 	const EVP_CIPHER *cipher;
 	STACK_OF(X509) *certs;
@@ -194,10 +194,10 @@ err:
 NSP_FUNCTION(libnsp_openssl_smime_sign)
 {
 #define __FN__ __FILE__ ":libnsp_openssl_smime_sign()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* privkey.pem */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* cert.pem */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* infile */
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4"); /* outfile */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* privkey.pem */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* cert.pem */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* infile */
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4"); /* outfile */
 	X509 *cert;
 	EVP_PKEY *pkey;
 	STACK_OF(X509) *chain = NULL;
@@ -264,10 +264,10 @@ err:
 NSP_FUNCTION(libnsp_openssl_smime_verify)
 {
 #define __FN__ __FILE__ ":libnsp_openssl_smime_verify()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1"); /* privkey.pem */
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2"); /* cert.pem */
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3"); /* infile */
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4"); /* outfile */
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1"); /* privkey.pem */
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2"); /* cert.pem */
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3"); /* infile */
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4"); /* outfile */
 	X509 *cert;
 	STACK_OF(X509) *chain = NULL;
 	X509_STORE *store = NULL;

@@ -299,7 +299,7 @@ namespace db {
 			name         = "gw_email_filters";
 			index        = "mailfilterid";
 			sequencename = "mfilid_seq";
-			primarykey   = "mailfilterid,accountid";
+			primarykey   = "mailfilterid";
 			fields = {
 				{ "mailfilterid",   "integer",         "NOT NULL", null                };
 				{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
@@ -322,7 +322,7 @@ namespace db {
 			name         = "gw_email_folders";
 			index        = "mailfolderid";
 			sequencename = "mfdrid_seq";
-			primarykey   = "mailfolderid,accountid";
+			primarykey   = "accountid,mailfolderid";
 			fields = {
 				{ "mailfolderid",   "integer",         "NOT NULL", null                };
 				{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
@@ -341,7 +341,7 @@ namespace db {
 			name         = "gw_email_headers";
 			index        = "mailheaderid";
 			sequencename = "mhdrid_seq";
-			primarykey   = "mailheaderid,accountid";
+			primarykey   = "mailheaderid";
 			fields = {
 				{ "mailheaderid",   "integer",         "NOT NULL", null                };
 				{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
@@ -616,7 +616,7 @@ namespace db {
 			name         = "gw_forums_posts";
 			index        = "messageid";
 			sequencename = null;
-			primarykey   = "messageid,forumid";
+			primarykey   = "messageid";
 			fields = {
 				{ "messageid",      "integer",         "NOT NULL", null                };
 				{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
@@ -833,7 +833,10 @@ namespace db {
 				{ "contactid",      "integer",         "NOT NULL", "0"                 };
 				{ "projectid",      "integer",         "NOT NULL", "0"                 };
 				{ "duedate",        "timestamp",       "NOT NULL", "current_timestamp" };
+				{ "taskstart",      "timestamp",       "NOT NULL", "current_timestamp" };
+				{ "taskfinish",     "timestamp",       "NOT NULL", "current_timestamp" };
 				{ "priority",       "integer",         "NOT NULL", "0"                 };
+				{ "totaltime",      "integer",         "NOT NULL", "0"                 };
 				{ "progress",       "integer",         "NOT NULL", "0"                 };
 				{ "reminder",       "integer",         "NOT NULL", "0"                 };
 				{ "status",         "integer",         "NOT NULL", "0"                 };
@@ -931,7 +934,7 @@ namespace db {
 			name         = "gw_weblog_comments";
 			index        = "commentid";
 			sequencename = "weblog_commentid_seq";
-			primarykey   = "commentid,entryid";
+			primarykey   = "commentid";
 			fields = {
 				{ "commentid",      "integer",         "NOT NULL", null                };
 				{ "obj_ctime",      "timestamp",       "NOT NULL", "current_timestamp" };
@@ -1012,6 +1015,15 @@ namespace db {
 		"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('4', '2008-01-01', '2008-01-01', '0', '2', '1', '2', '1', '2', 'Users');",
 		"INSERT INTO gw_bookmarks_folders (folderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, parentid, foldername) VALUES ('5', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '1', 'administrator');",
 		"INSERT INTO gw_email_accounts (mailaccountid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountname, realname, organization, address, replyto, hosttype, pophost, popport, popssl, smtphost, smtpport, smtpssl, popusername, poppassword, smtpauth, lastcount, notify, remove, lastcheck, showdebug, signature) VALUES ('1', '2008-01-01', '2008-01-01', '1', '0', '1', '0', '0', 'Local Mail', 'Groupware Administrator', '', 'administrator@localhost', '', 'POP3', 'localhost', '110', '0', 'localhost', '25', '0', 'administrator@localhost', 'dmlzdWFs', 'n', '0', '60', '2', '2008-01-01', 'n', '');",
+
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('1', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Inbox');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('2', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Outbox');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('3', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Sent Items');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('4', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Trash');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('5', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Drafts');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('6', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Saved Items');",
+		"INSERT INTO gw_email_folders (mailfolderid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, accountid, parentfolderid, foldername) VALUES ('7', '2004-01-01', '2004-01-01', '1', '0', '1', '0', '0', '1', '0', 'Quarantine');",
+
 		"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('1', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '/files/', 'users', 'dir', '2008-01-01', '2008-01-01', '0', '');",
 		"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('2', '2008-01-01', '2008-01-01', '1', '1', '1', '1', '1', '/files/', 'groups', 'dir', '2008-01-01', '2008-01-01', '0', '');",
 		"INSERT INTO gw_files (fileid, obj_ctime, obj_mtime, obj_uid, obj_gid, obj_did, obj_gperm, obj_operm, filepath, filename, filetype, uldate, lastdldate, numdownloads, description) VALUES ('3', '2008-01-01', '2008-01-01', '0', '1', '1', '2', '1', '/files/groups/', 'Administrators', 'dir', '2008-01-01', '2008-01-01', '0', '');",

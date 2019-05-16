@@ -1,0 +1,124 @@
+<?nsp
+
+class groupuser {
+	function view(id, rec) {
+		var method=_SERVER['REQUEST_METHOD'];
+		if (id==null) id=tonumber((method=='POST')?_POST['GROUPMEMBERID']:_GET['ID']);
+		if (rec==null) {
+			if (domainid==null) domainid=tonumber((method=='POST')?_POST['DOMAINID']:_GET['DOMAINID']);
+			if (groupid==null) groupid=tonumber((method=='POST')?_POST['GROUPID']:_GET['GROUPID']);
+			Q=db.admin.groupmembers.get(id);
+			if (Q==null || Q.rows.length()!=1) {
+				print("<center>No matching record found for ",id,"</center>\r\n");
+				return;
+			}
+			rec=Q.rows[0];
+			if (id==0) {
+				rec['obj_did']=tonumber(domainid);
+				rec['groupid']=tonumber(groupid);
+			}
+		}
+		var form=new html_form(rec);
+		var tabset=new html_tabset({activepage=1,minheight=0});
+		// tabset.addtab("GENERAL");
+		// tabset.showtabs();
+		print("<form id=groupuseredit name=groupuseredit METHOD=POST ACTION=\"/app/admin/groupuser\" onsubmit=\"return ns.dialog.submit(event, 'groupuser', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
+		form.addfield({name="groupmemberid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", strtohtml(method=='POST'?_POST['FORMURL']:_SERVER['REQUEST_URI']));
+		form.addfield({name="obj_did", type="hidden"});
+		form.addfield({name="groupid", type="hidden"});
+		tabset.pagebegin();
+		print("<table class=\"contentform contentform2\" style=\"width:100%\">\r\n");
+		form.addfield({name="groupidx", src="groupid", label="Group", type="select", handler=admin.html.htselect_group, disabled=true});
+		form.addfield({name="userid", label="User", type="select", handler=admin.html.htselect_user});
+		print("</table>\r\n");
+		tabset.pageend();
+		print("</div>\r\n");
+		print("<div style='clear:both;text-align:center'>");
+		form.validate("gw_groups_members");
+		print("<input type=hidden name=submitaction value=''>\r\n");
+		print("<input type=submit class=frmButton name=Submit value='Save'>\r\n");
+		if (id>0) print("<input type=submit class=frmButton name=submit value='Delete'>\r\n");
+		print("</div>");
+		print("</form>\r\n");
+		title="Group Member: "+"asdf";
+		if (method=='POST') title+=" (Saved)";
+		divname=sprintf("dialog_groupuser_%d", id);
+		printf("<script>\r\n$(document).ready(function() {\r\n");
+		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+		printf("});\r\n</script>");
+		return;
+	}
+
+	function validate(rec) {
+		isvalid=true;
+		if (tonumber(rec['userid']<1)) {
+			print("<b>user id is invalid</b><br/>");
+			isvalid=false;
+		}
+		return isvalid;
+	}
+
+	function save() {
+		local function addfield(record, name, value) {
+			if (value==null) {
+				if (_POST[name.toupper()]==null) {
+					throw sprintf("field '%s'is missing in post data", name);
+				}
+				value = _POST[name.toupper()];
+			}
+			record[name.tolower()] = value;
+		}
+		if (_SERVER['REQUEST_METHOD']!='POST') return;
+		id=tonumber(_POST['GROUPMEMBERID']);
+		Q=db.admin.groupmembers.get(id);
+		if (Q==null || Q.rows.length()!=1) {
+			print("<center>No matching record found for ",id,"</center>\r\n");
+			return;
+		}
+		rec=Q.rows[0];
+		ui=new db.userinfo();
+		switch (_POST['SUBMITACTION']) {
+		case 'save':
+			if (id==0) {
+				if (ui.auth('domainadmin', 'admin')) {
+					addfield(rec, "obj_did");
+				}
+				addfield(rec, "groupid");
+			}
+			addfield(rec, "userid");
+			if (!this.validate(rec)) {
+				this.view(rec['groupmemberid'], rec);
+				return;
+			}
+			db.admin.groupmembers.set(rec);
+			printf("group member %d saved", rec['groupmemberid']);
+			this.view(rec['groupmemberid'], rec);
+			break;
+		case 'delete':
+			db.admin.groupmembers.remove(rec);
+			printf("group member %d removed", rec['groupmemberid']);
+			break;
+		}
+		printf("<script>\r\n");
+		printf("ns.dialog.close('dialog_groupuser_%d');\r\n", id);
+		printf("ns.dialog.refreshparent('dialog_groupuser_%d', 'dialog_groupuser_%d');\r\n", rec['groupmemberid'], id);
+		printf("</script>\r\n");
+		return;
+	}
+}
+
+try {
+	include_template("common.ns");
+	include("admin.lib.ns");
+	gu=new groupuser();
+	if (_SERVER['REQUEST_METHOD']=='POST') {
+		gu.save();
+	} else {
+		gu.view();
+	}
+} catch (e) {
+	print("Exception: [",e.description,"]");
+}
+
+?>

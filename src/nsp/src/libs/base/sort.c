@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -139,9 +139,9 @@ end:
 NSP_FUNCTION(libnsp_base_sort_byname)
 {
 #define __FN__ __FILE__ ":libnsp_base_sort_byname()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
 	int order = 1;
 	int rec = 0;
 
@@ -157,10 +157,10 @@ NSP_FUNCTION(libnsp_base_sort_byname)
 NSP_FUNCTION(libnsp_base_sort_bykey)
 {
 #define __FN__ __FILE__ ":libnsp_base_sort_bykey()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
-	obj_t *cobj4 = nsp_getobj(N, &N->l, "4");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
+	obj_t *cobj4 = nsp_getobj(N, &N->context->l, "4");
 	int order = 1;
 	char *subkey = NULL;
 

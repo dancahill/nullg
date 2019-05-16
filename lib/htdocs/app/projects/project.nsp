@@ -18,9 +18,10 @@ class project {
 			print("<tbody>");
 			for (i=0;i<sqrlen;i++) {
 				rec=sqr.rows[i];
-				print("<tr"); if (tonumber(rec['status'])==1) print(" style='background-color:#d0d0d0'"); print(">");
+				// print("<tr"); if (tonumber(rec['status'])==1) print(" style='background-color:#d0d0d0'"); print(">");
+				printf("<tr%s>", (rec['status']==1?" class='closed'":""));
 				url=sprintf("/app/calendar/event?id=%d", tonumber(rec['eventid']));
-				print("<td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%>");
+				print("<td onclick=\"return ns.dialog.create(event, '"+url+"');\"' width=100%>");
 				printf("<a class='dialog' href=\"%s\">%s</a>", url, strtohtml(rec['eventname']));
 				printf("</td><td>%s</td><td>%s</td></tr>", projects.html.htview_priority(rec['priority']), projects.html.htview_status(rec['status']));
 			}
@@ -48,9 +49,9 @@ class project {
 				u=projects.html.htview_user(rec['assignedto']);
 				if (u!="") title+="\nAssigned to "+u;
 				title+="\nDue "+rec['duedate'].sub(0, 10);
-				print("<tr"); if (tonumber(rec['status'])==1) print(" style='background-color:#d0d0d0'"); print(">");
+				printf("<tr%s>", (rec['status']==1?" class='closed'":""));
 				url=sprintf("/app/tasks/task?id=%d", tonumber(rec['taskid']));
-				printf("<td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%s title=\"%s\">", '%', strtohtml(title));
+				printf("<td onclick=\"return ns.dialog.create(event, '"+url+"');\"' width=100%s title=\"%s\">", '%', strtohtml(title));
 				printf("<a class='dialog' href=\"%s\">%s</a></td>", url, strtohtml(rec['taskname']));
 				printf("<td style='text-align:right'>%s</td>", rec['duedate'].sub(0, 10));
 				printf("<td style='text-align:right'>%d%s</td>", tonumber(rec['progress']), '%');
@@ -75,21 +76,23 @@ class project {
 			for (i=0;i<sqrlen;i++) {
 				rec=sqr.rows[i];
 				url=sprintf("/app/notes/note?id=%d", tonumber(rec['noteid']));
-				print("<tr><td onclick=\"return ns.dialog.create('"+url+"');\"' width=100%>");
+				print("<tr><td onclick=\"return ns.dialog.create(event, '"+url+"');\"' width=100%>");
 				printf("<a class='dialog' href=\"%s\">%s</a></td></tr>", url, strtohtml(rec['notetitle']));
 			}
 			print("</table></div>");
 			print("</td></tr>");
 		}
-		print("<table class='contenttable' style='width:100%'><thead>\r\n");
+		//print("<table class='contentform' style='width:100%'><thead>\r\n");
 		printf("<tr><th colspan=2>%s</th></tr>\r\n", strtohtml(rec['projectname']));
-		print("</thead><tbody>\r\n");
-		printf("<tr><th class='subheader' width='1%s'>Project Name</th><td>%s</td></tr>", '%', strtohtml(rec['projectname']));
-		printf("<tr><th class='subheader'>Project Admin</th><td>%s</td></tr>", projects.html.htview_user(rec['projectadmin']));
-		printf("<tr><th class='subheader'>Start Date</th><td>%s</td></tr>", rec['projectstart'].sub(0, 10));
-		printf("<tr><th class='subheader'>Finish Date</th><td>%s</td></tr>", rec['projectfinish'].sub(0, 10));
-		printf("<tr><th class='subheader'>Status</th><td>%s</td></tr>", projects.html.htview_status(rec['status']));
-		printf("<tr><th colspan=2>Details</th></tr>");
+		//print("</thead><tbody>\r\n");
+		//printf("<tr><th style='padding-left:5px;text-align:left;width:1%s'><b>Project Name</b></th><td>%s</td></tr>", '%', strtohtml(rec['projectname']));
+		print("<tr><th style='padding-left:5px;text-align:left;width:1%'>Project Admin</th><td style='width:99%'>"+projects.html.htview_user(rec['projectadmin'])+"</td></tr>");
+		print("<tr><th style='padding-left:5px;text-align:left;width:1%'>Start Date</th><td>"+rec['projectstart'].sub(0, 10)+"</td></tr>");
+		print("<tr><th style='padding-left:5px;text-align:left;width:1%'>Finish Date</th><td>"+rec['projectfinish'].sub(0, 10)+"</td></tr>");
+		print("<tr><th style='padding-left:5px;text-align:left;width:1%'>Status</th><td>"+projects.html.htview_status(rec['status'])+"</td></tr>");
+		print("<tr><th style='padding-left:5px' colspan=2><b>Details</b>");
+		print("<span style='float:right;font-size:14px'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></th></tr>\r\n");
+		//printf("</th></tr>");
 		printf("<tr><td colspan=2 style='white-space:normal'>");
 		details=strtohtml(rec['details']).replace("\n", "<br/>\n");
 		print(details);
@@ -98,34 +101,173 @@ class project {
 		showevents(id, rec);
 		showtasks(id, rec);
 		shownotes(id, rec);
-		printf("</table>");
+		//printf("</table>");
+	}
+
+	function charts(id, rec) {
+		local function chart1(id) {
+			ui=new db.userinfo();
+			print("function drawChart1() {\r\n");
+			print("	var data1 = google.visualization.arrayToDataTable([\r\n");
+			print("		['Tasks', 'By Status'],\r\n");
+			sqr=sql.query(sprintf("SELECT status, COUNT(*) AS c FROM gw_tasks WHERE obj_did = %d AND projectid = %d GROUP BY status ORDER BY status", ui.domainid, id));
+			foreach (row in sqr.rows) if (row['status']==0) printf("		['Open', %d],\r\n", row['c']);
+			foreach (row in sqr.rows) if (row['status']==1) printf("		['Closed', %d],\r\n", row['c']);
+			foreach (row in sqr.rows) if (row['status']!=0 && row['status']!=1) printf("		['Unknown', %d],\r\n", row['c']);
+			print("	]);\r\n");
+			print("	var options1 = {\r\n");
+			print("		title: 'Count By Status',\r\n");
+			print("		height: 300,\r\n");
+			print("		width: 450,\r\n");
+			print("		is3D: true\r\n");
+			print("	};\r\n");
+			print("	var chart1 = new google.visualization.PieChart(document.getElementById('piechart1'));\r\n");
+			print("	chart1.draw(data1, options1);\r\n");
+			print("}\r\n");
+		}
+		local function chart2(id) {
+			ui=new db.userinfo();
+			print("function drawChart2() {\r\n");
+			print("	var data2 = google.visualization.arrayToDataTable([\r\n");
+			print("		['Task', 'Hours per Day'],\r\n");
+			sqr=sql.query(sprintf("SELECT taskname, totaltime FROM gw_tasks WHERE obj_did = %d AND projectid = %d ORDER BY totaltime DESC, taskname", ui.domainid, id));
+			foreach (row in sqr.rows) printf("		[\"%s\", %f],\r\n", row['taskname'], tonumber(row['totaltime'])/3600);
+			print("	]);\r\n");
+			print("	var options2 = {\r\n");
+			print("		title: 'Hours By Task',\r\n");
+			print("		height: 300,\r\n");
+			print("		width: 450,\r\n");
+			print("		is3D: true\r\n");
+			print("	};\r\n");
+			print("	var chart2 = new google.visualization.PieChart(document.getElementById('piechart2'));\r\n");
+			print("	chart2.draw(data2, options2);\r\n");
+			print("}\r\n");
+		}
+		local function chart3(id) {
+			ui=new db.userinfo();
+			// print("function daysToMilliseconds(days) {\r\n");
+			// print("	return days * 24 * 60 * 60 * 1000;\r\n");
+			// print("}\r\n");
+			print("function drawChart3() {\r\n");
+			// print("	var data3 = google.visualization.arrayToDataTable([\r\n");
+			// print("		['Task', 'Hours per Day'],\r\n");
+			// sqr=sql.query(sprintf("SELECT taskname, 2 AS hours FROM gw_tasks WHERE obj_did = %d AND projectid = %d ORDER BY hours, taskname", ui.domainid, id));
+			// foreach (row in sqr.rows) printf("		['%s', %d],\r\n", strtohtml(row['taskname']), row['hours']);
+			// print("	]);\r\n");
+
+			print("var data3 = new google.visualization.DataTable();\r\n");
+			print("data3.addColumn('string', 'Task ID');\r\n");
+			print("data3.addColumn('string', 'Task Name');\r\n");
+			print("data3.addColumn('string', 'Resource');\r\n");
+			print("data3.addColumn('date', 'Start Date');\r\n");
+			print("data3.addColumn('date', 'End Date');\r\n");
+			print("data3.addColumn('number', 'Duration');\r\n");
+			print("data3.addColumn('number', 'Percent Complete');\r\n");
+			print("data3.addColumn('string', 'Dependencies');\r\n");
+		  
+			print("data3.addRows([\r\n");
+			// print("	['Research', 'Find sources', new Date(2015, 0, 1), new Date(2015, 0, 5), null,  100,  null],\r\n");
+			// print("	['Write', 'Write paper', null, new Date(2015, 0, 9), daysToMilliseconds(3), 25, 'Research,Outline'],\r\n");
+			// print("	['Cite', 'Create bibliography', null, new Date(2015, 0, 7), daysToMilliseconds(1), 20, 'Research'],\r\n");
+			// print("	['Complete', 'Hand in paper', null, new Date(2015, 0, 10), daysToMilliseconds(1), 0, 'Cite,Write'],\r\n");
+			// print("	['Outline', 'Outline paper', null, new Date(2015, 0, 6), daysToMilliseconds(1), 100, 'Research']\r\n");
+			// sqr=sql.query(sprintf("SELECT taskid, taskname, obj_ctime, duedate, 2 AS duration, progress FROM gw_tasks WHERE obj_did = %d AND projectid = %d ORDER BY obj_ctime", ui.domainid, id));
+			sqr=sql.query(sprintf("SELECT taskid, taskname, assignedto, taskstart, taskfinish, totaltime, progress FROM gw_tasks WHERE obj_did = %d AND projectid = %d ORDER BY taskstart, assignedto, taskid", ui.domainid, id));
+			db.checksqlerror(sqr);
+			foreach (row in sqr.rows) {
+				st=time.mktime(row['taskstart']);
+				et=time.mktime(row['taskfinish']);
+				if (et<st+86400) et=st+86400;
+
+				sd=time.gmtime(st);
+				ed=time.gmtime(et);
+
+				//sd=time.gmtime(time.mktime(ed)-(tonumber(row['totaltime'])*3600));
+				// printf("sd=%s ed=%s\r\n", serialize(sd), serialize(ed));
+				tn=row['taskname'].sub(0, 42);
+				if (row['taskname'].length()>tn.length()) tn+="...";
+				// printf("sd=%s", serialize(sd));
+				// printf("ed=%s", serialize(ed));
+				printf("	[\"%d\", \"%s\", \"%s\", new Date(%d, %d, %d, %d, %d, %d), new Date(%d, %d, %d, %d, %d, %d), %d, %d, null],\r\n"
+				///printf("	['%d', '%s', null, new Date(%d, %d, %d), %d, %d, null],\r\n"
+					, row['taskid']
+					, tn
+					, projects.html.htview_user(row['assignedto'])
+					, sd.tm_year, sd.tm_mon-1, sd.tm_mday, sd.tm_hour, sd.tm_min, sd.tm_sec
+					, ed.tm_year, ed.tm_mon-1, ed.tm_mday, ed.tm_hour, ed.tm_min, ed.tm_sec
+					, tonumber(row['totaltime'])
+					, tonumber(row['progress'])
+				);
+			}
+			print("]);\r\n");
+
+			print("	var options3 = {\r\n");
+			printf("	height:%d,\r\n", (sqr.rows.length()*20)+40);
+//			printf("	width:800,\r\n");
+			print("		gantt: { barHeight:15, trackHeight:20 }\r\n");
+			print("	};\r\n");
+			print("	chart3 = new google.visualization.Gantt(document.getElementById('chart3'));\r\n");
+			print("	chart3.draw(data3, options3);\r\n");
+			print("	function selectHandler(e) {\r\n");
+			print("		var selectedItem = chart3.getSelection()[0];\r\n");
+			print("		if (selectedItem) {\r\n");
+			print("		var value = data3.getValue(selectedItem.row, 0);\r\n");
+			print("		ns.dialog.create('/app/tasks/task?id='+value);\r\n");
+			print("	}\r\n");
+			print("}\r\n");
+			print("google.visualization.events.addListener(chart3, 'select', selectHandler);\r\n");
+			print("}\r\n");
+		}
+		print("<script type='text/javascript'>\r\n");
+		print("google.charts.load('current', {'packages':['corechart','gantt']});\r\n");
+		//print("google.charts.load('current', {'packages':['gantt']});\r\n");
+		//print("google.charts.setOnLoadCallback(drawCharts);\r\n");
+		chart1(id);
+		chart2(id);
+		chart3(id);
+		print("function drawCharts() {\r\n");
+		print("	console.log('drawCharts();');\r\n");
+		print("	drawChart3();\r\n");
+		print("	drawChart1();\r\n");
+		print("	drawChart2();\r\n");
+		print("	return false;\r\n");
+		print("}\r\n");
+		print("</script>\r\n");
+		print("<tr><td colspan=2>");
+		print("<center><b><a href='' onclick='return drawCharts();'>Gantt diagram</a></b><br/><div id='chart3' style='width:100%'></div></center>\r\n");
+		print("</td></tr>");
+		print("<tr><td><center>");
+		print("<div id='piechart1'></div>\r\n");
+		print("</center></td><td><center>");
+		print("<div id='piechart2'></div>\r\n");
+		print("</center></td></tr>");
 	}
 
 	function view(id) {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['PROJECTID']:_GET['ID']);
 		Q=db.projects.get(id);
-		PROJECT=Q.rows[0];
-		if (Q==null || PROJECT==null) {
+		if (Q==null || Q.rows.length()!=1) {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
+		PROJECT=Q.rows[0];
 		var form=new html_form(PROJECT);
 		var tabset=new html_tabset({activepage=1,minheight=190});
 		//if (id==0) tabset.activepage=2;
 		if (id>0) tabset.addtab("SUMMARY");
 		tabset.addtab("DETAILS");
 		tabset.addtab("PERMISSIONS");
+		if (id>0) tabset.addtab("CHARTS");
 		tabset.showtabs();
 		print("<form id=projectedit name=projectedit METHOD=POST ACTION=\"/app/projects/project\" onsubmit=\"return ns.dialog.submit(event, 'project', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="projectid", type="hidden"});
+		printf("<input type=hidden name=formurl value=\"%s\">\r\n", strtohtml(_SERVER['REQUEST_URI']));
 		print("<div style='width:100%;background-color:#f0f0f0'>");
 		if (id>0) {
 			tabset.pagebegin();
 			print("<table class=\"contenttable\" style=\"width:100%\">\r\n");
-			print("<tr><td>");
 			this.summary(id, PROJECT);
-			print("</td></tr>");
 			print("</table>\r\n");
 			tabset.pageend();
 		}
@@ -145,6 +287,13 @@ class project {
 		print("<tr><td>not done yet</td></tr>");
 		print("</table>\r\n");
 		tabset.pageend();
+		if (id>0) {
+			tabset.pagebegin();
+			print("<table class=\"contentform\" style=\"width:100%\">\r\n");
+			this.charts(id, PROJECT);
+			print("</table>\r\n");
+			tabset.pageend();
+		}
 		print("</div>");
 		print("<div style='clear:both;text-align:center'>");
 		print("<input type=hidden name=submitaction value=''>\r\n");
@@ -153,7 +302,7 @@ class project {
 		//print("<input type=reset class=frmButton name=Reset value='Reset'>\r\n");
 		print("</div>");
 		print("</form>\r\n");
-		title=PROJECT['projectname'];
+		title="Project: "+PROJECT['projectname'];
 		if (method=='POST') title+=" (Saved)";
 		divname=sprintf("dialog_project_%d", id);
 		printf("<script>\r\n$(document).ready(function() {\r\n");
@@ -162,6 +311,7 @@ class project {
 		printf("	$('#projectstart').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
 		printf("	$('#projectfinish').datepicker({ dateFormat: 'yy-mm-dd' });\r\n");
 		printf("	ns.dialog.setup(\"%s\", \"%s\", %d);\r\n", divname, strtohtml(title), tabset.activepage);
+
 		printf("});\r\n</script>");
 		Q=null;
 		return;

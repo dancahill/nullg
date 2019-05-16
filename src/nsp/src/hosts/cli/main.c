@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ static void sig_trap(int sig)
 			}
 		}
 #endif
-		if ((N) && (N->readptr)) printf("[%s][%.40s]\r\n", N->tracefn, N->readptr);
+		if ((N) && (n_context_readptr)) printf("[%s][%.40s]\r\n", N->context->tracefn, n_context_readptr);
 #if defined(linux)
 		{
 #define SIZE 100
@@ -103,6 +103,7 @@ static void sig_trap(int sig)
 				free(strings);
 			}
 		}
+		if (N && N->context) printf("[%s][%ld]\r\n", N->context->filename, N->context->linenum);
 #endif
 		exit(-1);
 	case 13: /* SIGPIPE */
@@ -133,7 +134,7 @@ static void timeout(int i) {
 
 static NSP_FUNCTION(neslib_io_gets)
 {
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 #if !defined(WIN32)&&!defined(__TURBOC__)
 	struct sigaction sa;
 	int err = 0;
@@ -229,7 +230,7 @@ void set_console_title(nsp_state *N)
 
 void do_banner() {
 	printf("\r\nNullLogic Embedded Scripting Language Version " NSP_VERSION);
-	printf("\r\nCopyright (C) 2007-2018 Dan Cahill\r\n\r\n");
+	printf("\r\nCopyright (C) 2007-2019 Dan Cahill\r\n\r\n");
 	return;
 }
 

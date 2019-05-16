@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -140,13 +140,23 @@ typedef struct nsp_objrec {
 	signed long nval;
 	char name[MAX_OBJNAMELEN + 1];
 } nsp_objrec;
-typedef struct nsp_state {
+typedef struct nsp_execcontext {
+	obj_t l; // local variables
+	obj_t t; // 'this' object
 	uchar *blockptr;
 	uchar *blockend;
 	uchar *readptr;
-	obj_t g;
-	obj_t l;
-	obj_t r;
+	uchar yielded;
+	char *funcname;
+	char *filename;
+	char *tracefn;
+	long int linenum;
+} nsp_execcontext;
+typedef struct nsp_state {
+	jmp_buf *savjmp;
+	nsp_execcontext *context; // local execution context
+	obj_t g; // global variables
+	obj_t r; // return variable
 	short brk;
 	short cnt;
 	short ret;
@@ -154,22 +164,18 @@ typedef struct nsp_state {
 	short signal; /* intended for external signals to the parser.  for now, non-zero just means to shut down */
 	short debug;
 	short single;
+	short yielded;
 	short strict;
 	short warnings;
 	short maxwarnings;
 	char warnformat;
-	jmp_buf *savjmp;
 	struct timeval ttime;
 	char numbuf[128];
 	char *outbuffer;
 	unsigned short outbuflen;
 	unsigned short outbufmax;
 	char errbuf[256];
-	char *func;
-	char *file;
-	char *tracefn;
 	/* debug info */
-	long int line_num;
 	long int allocs;
 	long int allocmem;
 	long int frees;
@@ -194,6 +200,7 @@ obj_t     *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short 
 obj_t     *nsp_getobj(nsp_state *N, obj_t *tobj, char *oname);
 obj_t     *nsp_getiobj(nsp_state *N, obj_t *tobj, unsigned long oindex);
 obj_t     *nsp_setobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, NSP_CFUNC _fptr, num_t _num, char *_str, size_t _slen);
+obj_t     *nsp_appendobj(nsp_state *N, obj_t *tobj, char *name);
 void       nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len);
 void       nsp_strmul(nsp_state *N, obj_t *cobj, unsigned long n);
 short      nsp_tobool(nsp_state *N, obj_t *cobj);
@@ -294,7 +301,7 @@ public:
 	}
 	obj_t *getL()
 	{
-		return &this->N->l;
+		return &this->N->context->l;
 	}
 	nsp_t *getN()
 	{

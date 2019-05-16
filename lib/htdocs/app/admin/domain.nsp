@@ -4,16 +4,26 @@ class domain {
 		var method=_SERVER['REQUEST_METHOD'];
 		if (id==null) id=tonumber((method=='POST')?_POST['DOMAINID']:_GET['ID']);
 		Q=db.admin.domains.get(id);
-		rec=Q.rows[0];
-		if (Q==null || rec==null) {
-			print("<center>No matching record found for ",id,"</center>\r\n");
+		if (Q==null || Q.rows.length()!=1) {
+			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
+		rec=Q.rows[0];
 		var form=new html_form(rec);
 		print("<form id=domainedit name=domainedit METHOD=POST ACTION=\"/app/admin/domain\" onsubmit=\"return ns.dialog.submit(event, 'domain', 'save');\" enctype='multipart/form-data' autocomplete='off'>\r\n");
 		form.addfield({name="domainid", type="hidden"});
 		print("<table class=\"contentform\">\r\n");
 		form.addfield({name="domainname", label="Domain Name", required=true});
+		if (id>0) {
+			sqr=sql.query(sprintf("SELECT * FROM gw_domains_aliases WHERE domainid = %d", rec['domainid']));
+			printf("<tr><td class=\"formname\">Aliases</td>");
+			if (sqr.rows.length()<1) printf("<td>none</td></tr>\r\n");
+			for (i=0;i<sqr.rows.length();i++) {
+				if (i>0) printf("<tr><td></td>");
+				printf("<td class=\"formval\"><a class=\"dialog\" href=\"/app/admin/domainalias?id=%d\">%s</a></td></tr>\r\n", sqr.rows[i]['domainaliasid'], strtohtml(sqr.rows[i]['domainname']));
+			}
+			printf("<tr><td style='text-align:center' colspan=2><a class=\"dialog\" href=\"/app/admin/domainalias?id=0&domainid=%d\">%s</a></td></tr>\r\n", id, strtohtml("New Alias"));
+		}
 		print("</table>\r\n");
 		form.validate("gw_domains");
 		print("<input type=hidden name=submitaction value=''>\r\n");
@@ -37,12 +47,11 @@ class domain {
 		if (_SERVER['REQUEST_METHOD']!='POST') return;
 		id=tonumber(_POST['DOMAINID']);
 		Q=db.admin.domains.get(id);
-		rec=Q.rows[0];
-		if (Q==null || rec==null) {
+		if (Q==null || Q.rows.length()!=1) {
 			print("<CENTER>No matching record found for ",id,"</CENTER>\r\n");
 			return;
 		}
-		folderid=tonumber(rec['folderid']);
+		rec=Q.rows[0];
 		switch (_POST['SUBMITACTION']) {
 		case 'save':
 			addfield(rec, "domainname");

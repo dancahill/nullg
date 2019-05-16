@@ -14,7 +14,7 @@ function list_domains() {
 	t.autoaddcolumns=false;
 	fntd=function (row, column) {
 		url=sprintf("/app/admin/domain?id=%d", tonumber(row['domainid']));
-		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\">", url);
 	};
 	fn=function (row, column) {
 		url=sprintf("/app/admin/domain?id=%d", tonumber(row['domainid']));

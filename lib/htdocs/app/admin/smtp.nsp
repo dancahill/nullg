@@ -15,7 +15,7 @@ function list_smtp() {
 	t.autoaddcolumns=false;
 	// fntd=function (row, column) {
 	// 	url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));
-	// 	return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+	// 	return sprintf("<td onclick=\"return ns.dialog.create('%s');\">", url);
 	// };
 	// fn=function (row, column) {
 	// 	url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));

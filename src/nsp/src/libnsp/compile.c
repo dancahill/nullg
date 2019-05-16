@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ static obj_t *n_newobj(nsp_state *N, cstate *state)
 static void n_skipblank(nsp_state *N, cstate *state)
 {
 #define __FN__ __FILE__ ":n_skipblank()"
-	uchar *p = N->readptr;
+	uchar *p = n_context_readptr;
 
 	settrace();
 	while (*p) {
@@ -159,7 +159,7 @@ static void n_skipblank(nsp_state *N, cstate *state)
 		if (!nc_isspace(*p)) break;
 		p++;
 	}
-	N->readptr = p;
+	n_context_readptr = p;
 	return;
 #undef __FN__
 }
@@ -169,19 +169,19 @@ static void n_skipquote(nsp_state *N, unsigned short c, cstate *state, unsigned 
 {
 #define __FN__ __FILE__ ":n_skipquote()"
 	settrace();
-	while (*N->readptr) {
-		if (*N->readptr == '\\' && !verbatim) {
-			N->readptr++;
+	while (*n_context_readptr) {
+		if (*n_context_readptr == '\\' && !verbatim) {
+			n_context_readptr++;
 		}
-		else if (*N->readptr == c) {
-			N->readptr++;
+		else if (*n_context_readptr == c) {
+			n_context_readptr++;
 			break;
 		}
-		else if (*N->readptr == '\n') {
+		else if (*n_context_readptr == '\n') {
 			++state->lineno;
 		}
-		N->readptr++;
-		if (!*N->readptr) n_error(N, NE_SYNTAX, __FN__, "unterminated string");
+		n_context_readptr++;
+		if (!*n_context_readptr) n_error(N, NE_SYNTAX, __FN__, "unterminated string");
 	}
 	return;
 #undef __FN__
@@ -192,7 +192,7 @@ static obj_t *n_extractquote(nsp_state *N, cstate *state, unsigned short verbati
 {
 #define __FN__ __FILE__ ":n_extractquote()"
 	obj_t *cobj;
-	char q = *N->readptr;
+	char q = *n_context_readptr;
 	char *qs, *qe;
 	obj_t tobj;
 	int n;
@@ -204,10 +204,10 @@ static obj_t *n_extractquote(nsp_state *N, cstate *state, unsigned short verbati
 		DEBUG_OUT();
 		return NULL;
 	}
-	N->readptr++;
-	qs = (char *)N->readptr;
+	n_context_readptr++;
+	qs = (char *)n_context_readptr;
 	n_skipquote(N, q, state, verbatim);
-	qe = (char *)N->readptr;
+	qe = (char *)n_context_readptr;
 
 	if (verbatim) {
 		cobj = nsp_setstr(N, &N->r, "", qs, qe - qs - 1);
@@ -233,12 +233,12 @@ static void n_decompose_sub(nsp_state *N, cstate *state)
 	short prevop = 0;
 
 	settrace();
-	while (*N->readptr) {
+	while (*n_context_readptr) {
 		n_skipblank(N, state);
 		op = n_getop(N, lastname);
 		n_skipblank(N, state);
 		if (op == OP_UNDEFINED) {
-			n_warn(N, __FN__, "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, N->readptr[0], lastname);
+			n_warn(N, __FN__, "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, n_context_readptr[0], lastname);
 			return;
 		}
 		else if (op == OP_LABEL) {
@@ -266,24 +266,24 @@ static void n_decompose_sub(nsp_state *N, cstate *state)
 				state->lobj1->val->attr = op;
 			}
 		}
-		else if (N->readptr[0] == '\"' || N->readptr[0] == '\'' || N->readptr[0] == '`') {
-			op = N->readptr[0];
+		else if (n_context_readptr[0] == '\"' || n_context_readptr[0] == '\'' || n_context_readptr[0] == '`') {
+			op = n_context_readptr[0];
 			n_newobj(N, state);
 			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 0));
 			state->lobj1->val->attr = op == '`' ? OP_ESTRDATA : OP_STRDATA;
 		}
-		else if (N->readptr[0] == '@' && (N->readptr[1] == '\"' || N->readptr[1] == '\'' || N->readptr[1] == '`')) {
-			op = N->readptr[1];
-			N->readptr++;
+		else if (n_context_readptr[0] == '@' && (n_context_readptr[1] == '\"' || n_context_readptr[1] == '\'' || n_context_readptr[1] == '`')) {
+			op = n_context_readptr[1];
+			n_context_readptr++;
 			n_newobj(N, state);
 			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 1));
 			state->lobj1->val->attr = op == '`' ? OP_ESTRDATA : OP_STRDATA;
 		}
-		else if (nc_isdigit(*N->readptr)) {
-			p = (char *)N->readptr;
-			while (nc_isdigit(*N->readptr) || *N->readptr == '.') N->readptr++;
+		else if (nc_isdigit(*n_context_readptr)) {
+			p = (char *)n_context_readptr;
+			while (nc_isdigit(*n_context_readptr) || *n_context_readptr == '.') n_context_readptr++;
 			n_newobj(N, state);
-			nsp_setstr(N, state->lobj1, NULL, p, (char *)N->readptr - p);
+			nsp_setstr(N, state->lobj1, NULL, p, (char *)n_context_readptr - p);
 			state->lobj1->val->attr = OP_NUMDATA;
 		}
 		prevop = op;
@@ -324,7 +324,7 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 	state.lineno = 1;
 	state.destmax = 1024;
 	state.destbuf = (uchar *)n_alloc(N, state.destmax, 0);
-	N->readptr = srctext;
+	n_context_readptr = srctext;
 	tobj = nsp_settable(N, &N->g, "decomped_script");
 	nsp_freetable(N, tobj);
 	state.tobj1 = nsp_settable(N, tobj, "code");

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2018 Dan Cahill
+    Copyright (C) 2007-2019 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ void pipe_murder(nsp_state *N, obj_t *cobj)
 NSP_FUNCTION(libnsp_base_pipe_open)
 {
 #define __FN__ __FILE__ ":libnsp_base_pipe_open()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	obj_t *cobj3 = nsp_getobj(N, &N->l, "3");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
+	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
 	PIPE_CONN *conn;
 
 #ifdef WIN32
@@ -181,7 +181,7 @@ NSP_FUNCTION(libnsp_base_pipe_open)
 NSP_FUNCTION(libnsp_base_pipe_read)
 {
 #define __FN__ __FILE__ ":libnsp_base_pipe_read()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	PIPE_CONN *conn;
 	int bytesin;
 	char szBuffer[BUFF_SIZE];
@@ -210,8 +210,8 @@ NSP_FUNCTION(libnsp_base_pipe_read)
 NSP_FUNCTION(libnsp_base_pipe_write)
 {
 #define __FN__ __FILE__ ":libnsp_base_pipe_write()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
+	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	PIPE_CONN *conn;
 	char *p;
 	int pl;
@@ -241,7 +241,7 @@ NSP_FUNCTION(libnsp_base_pipe_write)
 NSP_FUNCTION(libnsp_base_pipe_close)
 {
 #define __FN__ __FILE__ ":libnsp_base_pipe_close()"
-	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	PIPE_CONN *conn;
 #ifdef WIN32
 	DWORD exitcode = 0;

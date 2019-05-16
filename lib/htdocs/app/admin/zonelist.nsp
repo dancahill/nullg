@@ -1,10 +1,14 @@
 <?nsp
 
 function list_zones() {
-	Q=db.admin.zones.getlist();
-	print("<br>\r\n");
+	ui=new db.userinfo();
+	domainid=ui.domainid;
+	if (ui.auth('domainadmin', 'admin') && _GET['DOMAINID']!=null) {
+		domainid = tonumber(_GET['DOMAINID']);
+	}
+	Q=db.admin.zones.getlist(domainid);
 	if (Q.rows.length()<1) {
-		print("<b>Found 0 matching domains</b>\r\n");
+		print("<b>Found 0 matching zones</b><br/>\r\n");
 		return;
 	}
 	t=new html_table();
@@ -14,7 +18,7 @@ function list_zones() {
 	t.autoaddcolumns=false;
 	fntd=function (row, column) {
 		url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));
-		return sprintf("<td onclick=\"return ns.dialog.create('%s');\"'>", url);
+		return sprintf("<td onclick=\"return ns.dialog.create('%s');\">", url);
 	};
 	fn=function (row, column) {
 		url=sprintf("/app/admin/zone?id=%d", tonumber(row['zoneid']));
@@ -22,7 +26,7 @@ function list_zones() {
 	};
 	t.addcolumn("zonename", "Zone Name", fn, fntd);
 	t.write();
-	printf("<a class=\"dialog\" href=\"/app/admin/zone?id=0\">%s</a>", strtohtml("New Zone"));
+	printf("<a class=\"dialog\" href=\"/app/admin/zone?id=0&domainid=%d\">%s</a>", domainid, strtohtml("New Zone"));
 	return;
 }
 
@@ -30,6 +34,7 @@ try {
 	include_template("common.ns");
 	include("admin.lib.ns");
 	admin.html.headermenu();
+	admin.html.htselect_domainfilter();
 	print("<center>\r\n");
 	list_zones();
 	print("</center>\r\n");
