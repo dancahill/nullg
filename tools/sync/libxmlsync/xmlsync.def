@@ -1,8 +1,0 @@
-LIBRARY		xmlsync
-VERSION		1.3.29
-EXPORTS
-	xmlrpc_contact_listopen
-	xmlrpc_contact_listread
-	xmlrpc_contact_listclose
-	xmlrpc_contact_read
-	xmlrpc_contact_write

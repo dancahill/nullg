@@ -1,0 +1,36 @@
+# NullLogic Embedded Scripting Language
+# MS Visual C++ Makefile
+# run 'nmake.exe -f Makefile.vc'
+
+CC      = cl.exe
+LINK    = link.exe
+MAKE    = nmake.exe /C /S /Y /F
+#NESLITE = .\bin\neslite.exe
+
+all:
+#	@echo Run 'make targets' to list more options.
+#	@if not exist distrib\bin mkdir distrib\bin
+#	@if not exist distrib\lib mkdir distrib\lib
+	@CD SRC
+	@CD LIBNESLA
+	NMAKE /C /S /F MAKEFILE.VC
+	@CD ..
+	@CD WIN\GWMON
+	NMAKE /C /S /F GWMON.MAK
+	@CD ..\..
+	@CD CONFUTIL
+	NMAKE /C /S /F CONFUTIL.MAK
+	@CD ..\DBUTIL
+	NMAKE /C /S /F DBUTIL.MAK
+	@CD ..\SERVER
+	NMAKE /C /S /F SERVER.MAK
+	@CD ..\MODULES\CORE
+	NMAKE /C /S /F VC.MAK
+	@CD ..\GHTTPD
+	NMAKE /C /S /F VC.MAK
+	@CD ..\HTTPD
+	NMAKE /C /S /F VC.MAK
+	@CD ..\..
+	COPY \NullLogic\gw\libs\libsqlite3.dll ..\distrib\lib
+	COPY \NullLogic\gw\libs\libeay32.dll ..\distrib\lib
+	COPY \NullLogic\gw\libs\ssleay32.dll ..\distrib\lib

@@ -1,0 +1,156 @@
+#!/bin/sh
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+DEST_BIN="@bindir@"
+DEST_ETC="@sysconfdir@"
+DEST_LIB="@libdir@"
+DEST_VAR="@localstatedir@"
+
+set_permissions() {
+	SERVER_UID="`./nullgw-confutil show global uid`"
+	SERVER_GID="`./nullgw-confutil show global gid`"
+	if [ -z $SERVER_UID ]; then
+		SERVER_UID="nullgw"
+	fi
+	if [ -z $SERVER_GID ]; then
+		SERVER_GID="nullgw"
+	fi
+	if [ -x "/usr/sbin/useradd" ]; then
+		/usr/sbin/groupadd $SERVER_GID 1>/dev/null 2>&1
+		/usr/sbin/useradd -c "NullLogic Groupware" -d $DEST_ETC -g $SERVER_GID $SERVER_UID 1>/dev/null 2>&1
+	elif [ -x "/usr/sbin/pw" ]; then
+		pw group add $SERVER_GID      1>/dev/null 2>&1
+		pw user add $SERVER_UID       1>/dev/null 2>&1
+	fi
+	chown -R $SERVER_UID:$SERVER_GID $DEST_ETC 1>/dev/null 2>/dev/null
+	chown -R $SERVER_UID:$SERVER_GID $DEST_VAR 1>/dev/null 2>/dev/null
+	chmod 0600 $DEST_ETC/groupware.conf
+	chmod 0600 $DEST_VAR/log/*.log
+}
+
+do_copying() {
+	mkdir -p $DEST_BIN
+	mkdir -p $DEST_ETC
+	mkdir -p $DEST_LIB
+	mkdir -p $DEST_VAR
+	mkdir -p $DEST_VAR/backup
+	mkdir -p $DEST_VAR/share/cgi-bin
+	mkdir -p $DEST_VAR/db
+	mkdir -p $DEST_VAR/domains
+	mkdir -p $DEST_VAR/share/htdocs
+	mkdir -p $DEST_VAR/log
+	mkdir -p $DEST_VAR/spool
+	mkdir -p $DEST_VAR/tmp
+	cp -pR bin/* $DEST_BIN
+	cp -pR etc/* $DEST_ETC
+	cp -pR lib/* $DEST_LIB
+	cp -pR var/* $DEST_VAR
+	touch $DEST_VAR/db/groupware.db
+	touch $DEST_VAR/log/core-access.log
+	touch $DEST_VAR/log/core-error.log
+	touch $DEST_VAR/log/ghttpd-access.log
+	touch $DEST_VAR/log/ghttpd-error.log
+	touch $DEST_VAR/log/httpd-access.log
+	touch $DEST_VAR/log/httpd-error.log
+	touch $DEST_VAR/log/pop3d-access.log
+	touch $DEST_VAR/log/pop3d-error.log
+	touch $DEST_VAR/log/smtpd-access.log
+	touch $DEST_VAR/log/smtpd-error.log
+	touch $DEST_VAR/log/sql-error.log
+	if [ "`whoami`" = "root" ]; then
+		chmod 0755 $DEST_BIN
+		chmod 0770 $DEST_ETC
+		chmod 0755 $DEST_LIB
+		chmod 0770 $DEST_VAR
+	fi
+	sleep 1
+}
+
+do_dbinit() {
+	if [ ! -s $DEST_VAR/db/groupware.db ]; then
+		OLDDIR=`pwd`
+		echo -n "Password for the new administrator account: "
+		read TMP
+		cd $DEST_BIN
+		if [ ! -z $TMP ]; then
+			./nullgw-dbutil init $TMP
+		else
+			./nullgw-dbutil init
+		fi
+		cd $OLDDIR
+	fi
+}
+
+setup_console() {
+	clear 2>/dev/null
+	echo "NullLogic Groupware Installation"
+	echo "================================"
+	echo -n "Install to what BIN directory? [$DEST_BIN]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		DEST_BIN=$TMP
+	fi
+	echo -n "Install to what ETC directory? [$DEST_ETC]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		DEST_ETC=$TMP
+	fi
+	echo -n "Install to what LIB directory? [$DEST_LIB]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		DEST_LIB=$TMP
+	fi
+	echo -n "Install to what VAR directory? [$DEST_VAR]: "
+	read TMP
+	if [ ! -z $TMP ]; then
+		DEST_VAR=$TMP
+	fi
+}
+
+case "$1" in
+upgrade)
+	setup_console
+	echo
+	if [ -x /etc/init.d/nullgroupware ]; then
+		/etc/init.d/nullgroupware stop
+	fi
+	# Copy files to destination
+	echo ""
+	echo -n "Copying files  ... "
+	do_copying
+	echo "done."
+	cd $DEST_BIN ; ./nullgw-confutil upgrade
+	set_permissions
+	echo
+	if [ -x /etc/init.d/nullgroupware ]; then
+		/etc/init.d/nullgroupware start
+	fi
+	echo
+	;;
+*)
+	echo
+	echo "Press enter to read the README file."
+	read TMP
+	less README
+	setup_console
+	# Copy files to destination
+	echo ""
+	echo -n "Copying files  ... "
+	do_copying
+	echo "done."
+	echo
+	if [ -x /etc/init.d/nullgroupware ]; then
+		/etc/init.d/nullgroupware stop
+	fi
+	echo
+	cd $DEST_BIN ; ./nullgw-confutil
+	set_permissions
+	echo
+	do_dbinit
+	echo
+	echo "To reconfigure the server, run 'nullgw-confutil'."
+	echo "To start the server, run 'nullgw-init.sh start'."
+	echo
+esac
+exit

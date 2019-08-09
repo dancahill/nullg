@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Schema">
+      <UniqueIdentifier>{201df3a7-88ed-4171-8a01-4efd91083bbc}</UniqueIdentifier>
+      <Extensions>*.h</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\schema\mysql.h">
+      <Filter>Schema</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\schema\odbc.h">
+      <Filter>Schema</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\schema\pgsql.h">
+      <Filter>Schema</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\schema\sqlite.h">
+      <Filter>Schema</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="config.c" />
+    <ClCompile Include="dbio.c" />
+    <ClCompile Include="dbiov2.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="md5.c" />
+    <ClCompile Include="sql.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\misc\icons\dbutil.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="dbutil.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\lib\libnsp.lib" />
+  </ItemGroup>
+</Project>

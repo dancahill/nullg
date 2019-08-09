@@ -1,0 +1,15 @@
+# Makefile for NullLogic Groupware HTTPd
+
+include ../Rules.mak
+
+CFLAGS  = $(BIN_CFLAGS)
+OBJECTS = config.o dns.o domains.o format.o language.o lib.o log.o main.o md5.o modctl.o sanity.o server.o sql.o ssl.o sys.o tcp.o
+TARGET  = $(BIN_TARGETDIR)/nullgw-server
+
+all: _nullgroupware
+
+_nullgroupware: $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(BIN_LDFLAGS_T) -lresolv
+
+clean:
+	rm -f $(TARGET) $(OBJECTS) *~

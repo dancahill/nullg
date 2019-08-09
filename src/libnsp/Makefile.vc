@@ -1,0 +1,35 @@
+# Makefile for NullLogic Embedded Scripting Language
+
+OBJDIR  = ..\..\obj
+INTDIR  = $(OBJDIR)\libnsp
+
+CC            = cl.exe
+LINK          = link.exe
+MAKE          = nmake.exe /C /S /Y /F
+
+LIB_CFLAGS    = /nologo /W3 /O2 /MD /EHsc /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /c
+LIB_LDFLAGS   = -lib
+LIB_TARGETDIR = ..\..\lib
+
+CFLAGS  = $(LIB_CFLAGS)
+OBJECTS = $(INTDIR)\block.obj $(INTDIR)\compile.obj $(INTDIR)\debug.obj $(INTDIR)\exec.obj $(INTDIR)\libc.obj $(INTDIR)\libn.obj $(INTDIR)\objects.obj $(INTDIR)\opcodes.obj $(INTDIR)\parser.obj
+TARGET  = $(LIB_TARGETDIR)\libnsp.lib
+
+all: _dirs _libnsp
+
+_dirs:
+	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
+	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+_libnsp: $(OBJECTS)
+	$(LINK) $(LIB_LDFLAGS) /nologo /out:$(TARGET) $(OBJECTS)
+
+clean:
+	@-erase "$(TARGET)" 2>nul
+	@-erase "$(INTDIR)\*.obj" 2>nul
+	@-erase "$(INTDIR)\*.idb" 2>nul
+	@if exist "$(INTDIR)" rmdir "$(INTDIR)"
+
+.c{$(INTDIR)}.obj:
+	$(CC) $(CFLAGS) $<

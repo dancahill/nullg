@@ -1,6 +1,6 @@
 # Makefile for NullLogic Groupware @PACKAGE_VERSION@
 
-include Rules.mak
+include src/Rules.mak
 
 all: _all
 	@echo ""
@@ -29,98 +29,175 @@ all: _all
 	@echo "Thank you for using NullLogic Groupware."
 	@echo ""
 
-_all: _misc _sqlite _dbutil _server _core_modules _ghttpd_modules _httpd_modules
-
-_sqlite:
-	@echo "sqlite"
-	@cd sqlite;./libsqlite_make build
+_all: _misc _sqlite _libnsp _confutil _dbutil _server _core_modules _ghttpd_modules _httpd_modules
 
 _misc:
 	@cp -p Documentation/COPYING distrib/COPYING
 	@cp -p Documentation/COPYRIGHT distrib/COPYRIGHT
 	@cp -p Documentation/README distrib/README
-	@cp -p scripts/setup distrib/setup
-	@cp -p scripts/nullgw-backup distrib/bin/nullgw-backup
-	@cp -p scripts/nullgw-config distrib/bin/nullgw-config
-	@cp -p scripts/nullgw-init distrib/bin/nullgw-init
-	@cp -p scripts/nullgw-init debian/nullgroupware.init
+	@cp -p src/scripts/setup.sh distrib/setup
+	@cp -p src/scripts/nullgw-backup.sh distrib/bin/nullgw-backup.sh
+	@cp -p src/scripts/nullgw-init.sh distrib/bin/nullgw-init.sh
+	@cp -p src/scripts/nullgw-scanfile.sh distrib/bin/nullgw-scanfile.sh
+	@cp -p src/scripts/nullgw-scanfile.sh distrib/bin/nullgw-scanmbox.sh
+	@cp -p src/scripts/nullgw-scanfile.sh distrib/bin/nullgw-scansmtp.sh
 	@chmod 0644 distrib/COPYING distrib/COPYRIGHT distrib/README
-	@chmod 0755 distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/nullgw-init
+	@chmod 0755 distrib/setup distrib/bin/nullgw-backup.sh distrib/bin/nullgw-init.sh distrib/bin/nullgw-scanfile.sh distrib/bin/nullgw-scanmbox.sh distrib/bin/nullgw-scansmtp.sh
+	@echo ""
+	@echo "CC            = $(CC)"
+	@echo "MAKE          = $(MAKE)"
+	@echo "BIN_CFLAGS    = $(BIN_CFLAGS)"
+	@echo "BIN_LDFLAGS   = $(BIN_LDFLAGS)"
+	@echo "BIN_LDFLAGS_T = $(BIN_LDFLAGS_T)"
+	@echo "LIB_CFLAGS    = $(LIB_CFLAGS)"
+	@echo "LIB_LDFLAGS   = $(LIB_LDFLAGS)"
+	@echo "MOD_CFLAGS    = $(MOD_CFLAGS)"
+	@echo "MOD_LDFLAGS   = $(MOD_LDFLAGS)"
+	@echo ""
+
+_sqlite:
+	@echo "sqlite"
+	@cd src/sqlite;./libsqlite_make build
+
+_libnsp:
+	@echo "libnsp"
+	@mkdir -p lib
+	@cd src/libnsp;$(MAKE)
+
+_confutil:
+	@echo "confutil"
+	@cd src/confutil;$(MAKE)
 
 _dbutil:
 	@echo "dbutil"
-	@cd dbutil;$(MAKE)
+	@cd src/dbutil;$(MAKE)
 
 _server:
 	@echo "server"
-	@cd server;$(MAKE)
+	@cd src/server;$(MAKE)
 
 _core_modules:
 	@echo "core_modules"
 	@mkdir -p distrib/lib/core
-	@cd modules/core_modules;$(MAKE)
+	@echo " ghttpd"         ; cd src/modules/core/ghttpd           ; $(MAKE)
+	@echo " httpd"          ; cd src/modules/core/httpd            ; $(MAKE)
+	@echo " pop3d"          ; cd src/modules/core/pop3d            ; $(MAKE)
+	@echo " smtpd"          ; cd src/modules/core/smtpd            ; $(MAKE)
+	@echo " smtpq"          ; cd src/modules/core/smtpq            ; $(MAKE)
+
 
 _ghttpd_modules:
 	@echo "ghttpd_modules"
 	@mkdir -p distrib/lib/ghttpd
-	@cd modules/ghttpd_modules;$(MAKE)
+	@echo " mod_admin"      ; cd src/modules/ghttpd/mod_admin      ; $(MAKE)
+	@echo " mod_bookmarks"  ; cd src/modules/ghttpd/mod_bookmarks  ; $(MAKE)
+	@echo " mod_calendar"   ; cd src/modules/ghttpd/mod_calendar   ; $(MAKE)
+	@echo " mod_calls"      ; cd src/modules/ghttpd/mod_calls      ; $(MAKE)
+	@echo " mod_cgi"        ; cd src/modules/ghttpd/mod_cgi        ; $(MAKE)
+	@echo " mod_contacts"   ; cd src/modules/ghttpd/mod_contacts   ; $(MAKE)
+	@echo " mod_email"      ; cd src/modules/ghttpd/mod_email      ; $(MAKE)
+	@echo " mod_files"      ; cd src/modules/ghttpd/mod_files      ; $(MAKE)
+	@echo " mod_finance"    ; cd src/modules/ghttpd/mod_finance    ; $(MAKE)
+	@echo " mod_forums"     ; cd src/modules/ghttpd/mod_forums     ; $(MAKE)
+	@echo " mod_html"       ; cd src/modules/ghttpd/mod_html       ; $(MAKE)
+	@echo " mod_messages"   ; cd src/modules/ghttpd/mod_messages   ; $(MAKE)
+	@echo " mod_notes"      ; cd src/modules/ghttpd/mod_notes      ; $(MAKE)
+	@echo " mod_profile"    ; cd src/modules/ghttpd/mod_profile    ; $(MAKE)
+	@echo " mod_projects"   ; cd src/modules/ghttpd/mod_projects   ; $(MAKE)
+	@echo " mod_searches"   ; cd src/modules/ghttpd/mod_searches   ; $(MAKE)
+	@echo " mod_spellcheck" ; cd src/modules/ghttpd/mod_spellcheck ; $(MAKE)
+	@echo " mod_tasks"      ; cd src/modules/ghttpd/mod_tasks      ; $(MAKE)
+	@echo " mod_weblog"     ; cd src/modules/ghttpd/mod_weblog     ; $(MAKE)
+	@echo " mod_xmlrpc"     ; cd src/modules/ghttpd/mod_xmlrpc     ; $(MAKE)
 
 _httpd_modules:
 	@echo "httpd_modules"
 	@mkdir -p distrib/lib/httpd
-	@cd modules/httpd_modules;$(MAKE)
+	@echo " mod_cgi"        ; cd src/modules/httpd/mod_cgi         ; $(MAKE)
 
 sslcert:
 	openssl req -new -x509 -nodes -out distrib/etc/ssl-cert.pem -keyout distrib/etc/ssl-priv.pem -days 365
+	@chmod 600 distrib/etc/ssl-cert.pem distrib/etc/ssl-priv.pem
 
 clean:
-	@cd dbutil;$(MAKE) clean
-	@cd server;$(MAKE) clean
-	@cd modules/core_modules;$(MAKE) clean
-	@cd modules/ghttpd_modules;$(MAKE) clean
-	@cd modules/httpd_modules;$(MAKE) clean
+	@cd src/confutil;$(MAKE) clean
+	@cd src/dbutil;$(MAKE) clean
+	@cd src/libnsp;$(MAKE) clean
+	@cd src/server;$(MAKE) clean
+
+	@cd src/modules/core/ghttpd ; $(MAKE) clean
+	@cd src/modules/core/httpd  ; $(MAKE) clean
+	@cd src/modules/core/pop3d  ; $(MAKE) clean
+	@cd src/modules/core/smtpd  ; $(MAKE) clean
+	@cd src/modules/core/smtpq  ; $(MAKE) clean
+
+	@cd src/modules/ghttpd/mod_admin      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_bookmarks  ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_calendar   ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_calls      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_cgi        ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_contacts   ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_email      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_files      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_finance    ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_forums     ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_html       ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_messages   ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_notes      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_profile    ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_projects   ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_searches   ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_spellcheck ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_tasks      ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_weblog     ; $(MAKE) clean
+	@cd src/modules/ghttpd/mod_xmlrpc     ; $(MAKE) clean
+
+	@cd src/modules/httpd/mod_cgi         ; $(MAKE) clean
+
 	@rm -f distrib/bin/* distrib/lib/*.so distrib/lib/ghttpd/*.so distrib/lib/httpd/*.so *~
 	@rm -f distrib/etc/ssl-cert.pem distrib/etc/ssl-priv.pem
 
+	@rm -rf obj
+	@rm -f groupware.ncb groupware*.suo
+
 distclean: clean
-	@cd sqlite;./libsqlite_make clean
+	@cd src/sqlite;./libsqlite_make clean
 	@chmod -R 0755 distrib
 	@chmod -R 0755 distrib/bin
 	@chmod -R 0770 distrib/etc
 	@chmod -R 0755 distrib/lib
 	@chmod -R 0770 distrib/var
-	@chmod -R 0755 distrib/var/htdocs
-	@chmod -R 0755 distrib/var/lang
-	@chmod -R 0660 `find distrib/etc -name '*' -type f`
+	@chmod -R 0755 distrib/var/share/htdocs
+	@chmod -R 0755 distrib/var/share/locale
+	@chmod -R 0600 `find distrib/etc -name '*' -type f`
 	@chmod -R 0660 `find distrib/var -name '*' -type f`
-	@chmod -R 0644 `find distrib/var/htdocs -name '*' -type f`
-	@chmod -R 0644 `find distrib/var/lang -name '*' -type f`
+	@chmod -R 0644 `find distrib/var/share/htdocs -name '*' -type f`
+	@chmod -R 0644 `find distrib/var/share/locale -name '*' -type f`
 	@chown -R 0:0 *
 	@rm -f distrib/COPYING distrib/COPYRIGHT distrib/README
-	@rm -f distrib/setup distrib/bin/nullgw-backup distrib/bin/nullgw-config distrib/bin/nullgw-init
-	@rm -f build-stamp config.log config.status include/config.h Makefile Rules.mak
-	@rm -f `find -name *~`
+	@rm -f distrib/setup distrib/bin/nullgw-backup.sh distrib/bin/nullgw-init.sh distrib/bin/nullgw-scanfile.sh distrib/bin/nullgw-scanmbox.sh distrib/bin/nullgw-scansmtp.sh
+	@rm -f build-stamp config.log config.status include/nullgw/config.h Makefile src/Rules.mak src/scripts/setup.sh src/scripts/nullgw-backup.sh src/scripts/nullgw-init.sh src/scripts/nullgw-scanfile.sh
+	@rm -f `find . -name *~`
 	@rm -rf autom4te.cache
+	@ cp -p Makefile.no Makefile
+	@rm -f `find . -name *.null.user`
 
 install: _all
 	@chown -R 0:0 distrib/*
 	@cd distrib;./setup
-
-debinstall: _all
-	@chown -R 0:0 distrib/*
-	@cd distrib;./setup debian
 
 upgrade: _all
 	@chown -R 0:0 distrib/*
 	@cd distrib;./setup upgrade
 
 wc:
-	wc `find . -name *.[ch] ! -path './sqlite/*'`
+	wc `find . -name *.[ch] ! -path './src/sqlite/*'`
 
 dist:
 	@$(MAKE)
-	@./scripts/pack pack
+	openssl req -new -x509 -nodes -out distrib/etc/ssl-cert.pem-sample -keyout distrib/etc/ssl-priv.pem-sample -days 365
+	@./src/scripts/pack pack
 
 slackdist:
 	@$(MAKE)
-	@./scripts/pack slackpack
+	@./src/scripts/pack slackpack

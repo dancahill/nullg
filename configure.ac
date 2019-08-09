@@ -1,0 +1,110 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT(nullgroupware, 1.3.30, nulllogic@users.sourceforge.net)
+AC_CONFIG_HEADER([include/nullgw/config.h])
+AC_CANONICAL_HOST
+
+AC_PROG_CC
+
+TOP_BUILD_DIR=`pwd`
+AC_SUBST(TOP_BUILD_DIR)
+
+AC_PREFIX_DEFAULT(/usr/local/nullgroupware)
+
+# Checks for libraries.
+AC_CHECK_LIB([dl], [dlopen])
+UTIL_LIBS=$LIBS
+AC_SUBST(UTIL_LIBS)
+
+case "$host" in
+	*-*-freebsd*)
+		LIBS="$LIBS -pthread"
+		check_pthread=no
+	;;
+esac
+if test "$check_pthread" != no; then
+	AC_CHECK_LIB([pthread], [pthread_create])
+fi
+
+AC_CHECK_LIB([resolv], [dn_expand])
+#AC_CHECK_LIB([crypto], [main])
+#AC_CHECK_LIB([ssl], [main])
+AC_CHECK_FUNC(gethostent, , AC_CHECK_LIB(nsl, gethostent))
+AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
+
+#AC_CHECK_TYPE([socklen_t],, [AC_DEFINE([socklen_t], [size_t], [Define to `size_t' if `socklen_t' is missing.])], [
+AC_CHECK_TYPE(socklen_t, , AC_DEFINE(socklen_t, int, [Define to `int' if `socklen_t' is missing.]))
+
+# Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([		\
+	arpa/inet.h		\
+	arpa/nameser_compat.h	\
+	dlfcn.h			\
+	fcntl.h			\
+	netdb.h			\
+	netinet/in.h		\
+	pthread/mit/pthread.h	\
+	paths.h			\
+	stdlib.h		\
+	string.h		\
+	sys/file.h		\
+	sys/socket.h		\
+	sys/time.h		\
+	sys/timeb.h		\
+	unistd.h		\
+	mysql/mysql.h		\
+	postgresql/libpq-fe.h	\
+	openssl/ssl.h		\
+])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+# Checks for library functions.
+AC_FUNC_ERROR_AT_LINE
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_SETVBUF_REVERSED
+AC_TYPE_SIGNAL
+AC_FUNC_STAT
+AC_FUNC_STRFTIME
+AC_CHECK_FUNCS([			\
+	dup2				\
+	endpwent			\
+	ftime				\
+	getcwd				\
+	gethostbyname			\
+	gettimeofday			\
+	inet_ntoa			\
+	memmove				\
+	memset				\
+	mkdir				\
+	rmdir				\
+	socket				\
+	strcasecmp			\
+	strchr				\
+	strncasecmp			\
+	strrchr				\
+	strstr				\
+	strcasestr			\
+	pthread_attr_setstacksize	\
+])
+
+AC_CONFIG_FILES([Makefile src/Rules.mak include/nullgw/config-nt.h src/scripts/nullgw-backup.sh src/scripts/nullgw-init.sh src/scripts/nullgw-scanfile.sh src/scripts/setup.sh])
+AC_OUTPUT
+
+echo
+echo "Configuring SQLite"
+echo
+cd src/sqlite;./libsqlite_make configure;cd ..
+
+echo
+echo "Configuration completed."
+echo
+echo "Now run 'make'."
+echo

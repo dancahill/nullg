@@ -1,0 +1,94 @@
+# Makefile for NullLogic Groupware ghttpd mods
+MAKE=NMAKE /C /S /Y /F
+
+all:
+	if not exist "..\..\..\obj" mkdir "..\..\..\obj"
+	if not exist "..\..\..\obj\modules" mkdir "..\..\..\obj\modules"
+	if not exist "..\..\..\obj\modules\ghttpd" mkdir "..\..\..\obj\modules\ghttpd"
+	if not exist "..\..\..\distrib" mkdir "..\..\..\distrib"
+	if not exist "..\..\..\distrib\lib" mkdir "..\..\..\distrib\lib"
+	if not exist "..\..\..\distrib\lib\ghttpd" mkdir "..\..\..\distrib\lib\ghttpd"
+	@CD MOD_ADMIN
+	@$(MAKE) MOD_ADMIN.MAK
+	@CD ..\MOD_BOOKMARKS
+	@$(MAKE) MOD_BOOKMARKS.MAK
+	@CD ..\MOD_CALENDAR
+	@$(MAKE) MOD_CALENDAR.MAK
+	@CD ..\MOD_CALLS
+	@$(MAKE) MOD_CALLS.MAK
+	@CD ..\MOD_CGI
+	@$(MAKE) MOD_CGI.MAK
+	@CD ..\MOD_CONTACTS
+	@$(MAKE) MOD_CONTACTS.MAK
+	@CD ..\MOD_EMAIL
+	@$(MAKE) MOD_EMAIL.MAK
+	@CD ..\MOD_FILES
+	@$(MAKE) MOD_FILES.MAK
+	@CD ..\MOD_FINANCE
+	@$(MAKE) MOD_FINANCE.MAK
+	@CD ..\MOD_FORUMS
+	@$(MAKE) MOD_FORUMS.MAK
+	@CD ..\MOD_HTML
+	@$(MAKE) MOD_HTML.MAK
+	@CD ..\MOD_MESSAGES
+	@$(MAKE) MOD_MESSAGES.MAK
+	@CD ..\MOD_NOTES
+	@$(MAKE) MOD_NOTES.MAK
+	@CD ..\MOD_PROFILE
+	@$(MAKE) MOD_PROFILE.MAK
+	@CD ..\MOD_PROJECTS
+	@$(MAKE) MOD_PROJECTS.MAK
+	@CD ..\MOD_SEARCHES
+	@$(MAKE) MOD_SEARCHES.MAK
+	@CD ..\MOD_SPELLCHECK
+	@$(MAKE) MOD_SPELLCHECK.MAK
+	@CD ..\MOD_TASKS
+	@$(MAKE) MOD_TASKS.MAK
+	@CD ..\MOD_WEBLOG
+	@$(MAKE) MOD_WEBLOG.MAK
+	@CD ..\MOD_XMLRPC
+	@$(MAKE) MOD_XMLRPC.MAK
+	@CD ..
+
+clean:
+	@CD MOD_ADMIN
+	@$(MAKE) MOD_ADMIN.MAK CLEAN
+	@CD ..\MOD_BOOKMARKS
+	@$(MAKE) MOD_BOOKMARKS.MAK CLEAN
+	@CD ..\MOD_CALENDAR
+	@$(MAKE) MOD_CALENDAR.MAK CLEAN
+	@CD ..\MOD_CALLS
+	@$(MAKE) MOD_CALLS.MAK CLEAN
+	@CD ..\MOD_CGI
+	@$(MAKE) MOD_CGI.MAK CLEAN
+	@CD ..\MOD_CONTACTS
+	@$(MAKE) MOD_CONTACTS.MAK CLEAN
+	@CD ..\MOD_EMAIL
+	@$(MAKE) MOD_EMAIL.MAK CLEAN
+	@CD ..\MOD_FILES
+	@$(MAKE) MOD_FILES.MAK CLEAN
+	@CD ..\MOD_FINANCE
+	@$(MAKE) MOD_FINANCE.MAK CLEAN
+	@CD ..\MOD_FORUMS
+	@$(MAKE) MOD_FORUMS.MAK CLEAN
+	@CD ..\MOD_HTML
+	@$(MAKE) MOD_HTML.MAK CLEAN
+	@CD ..\MOD_MESSAGES
+	@$(MAKE) MOD_MESSAGES.MAK CLEAN
+	@CD ..\MOD_NOTES
+	@$(MAKE) MOD_NOTES.MAK CLEAN
+	@CD ..\MOD_PROFILE
+	@$(MAKE) MOD_PROFILE.MAK CLEAN
+	@CD ..\MOD_PROJECTS
+	@$(MAKE) MOD_PROJECTS.MAK CLEAN
+	@CD ..\MOD_SEARCHES
+	@$(MAKE) MOD_SEARCHES.MAK CLEAN
+	@CD ..\MOD_SPELLCHECK
+	@$(MAKE) MOD_SPELLCHECK.MAK CLEAN
+	@CD ..\MOD_TASKS
+	@$(MAKE) MOD_TASKS.MAK CLEAN
+	@CD ..\MOD_WEBLOG
+	@$(MAKE) MOD_WEBLOG.MAK CLEAN
+	@CD ..\MOD_XMLRPC
+	@$(MAKE) MOD_XMLRPC.MAK CLEAN
+	@CD ..

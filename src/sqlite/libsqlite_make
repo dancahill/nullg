@@ -1,0 +1,45 @@
+#!/bin/sh
+VERSION="3.7.3"
+
+do_configure() {
+	if [ ! -r "sqlite-amalgamation-$VERSION.tar.gz" ]; then
+		echo "sqlite source not found"
+		exit 0
+	fi
+	if [ ! -r "sqlite-$VERSION/configure" ]; then
+		tar zxf sqlite-amalgamation-$VERSION.tar.gz
+	fi
+	if [ ! -r "sqlite-$VERSION/Makefile" ]; then
+		cd sqlite-$VERSION && CFLAGS="-Os" ./configure && cd ..
+	fi
+}
+#exit 0
+case "$1" in
+'build')
+	do_configure
+	if [ "`uname`" != "Linux" ]; then
+		cd sqlite-$VERSION && gmake -s && cd ..
+	else
+		cd sqlite-$VERSION && make -s && cd ..
+	fi
+	if [ -r "sqlite-$VERSION/.libs/libsqlite3.so.0.8.6" ]; then
+		strip sqlite-$VERSION/.libs/libsqlite3.so.0.8.6
+		cp -p sqlite-$VERSION/.libs/libsqlite3.so.0.8.6 ../../distrib/lib/libsqlite3.so
+	elif [ -r "sqlite-$VERSION/.libs/libsqlite3.so.8.6" ]; then
+		strip sqlite-$VERSION/.libs/libsqlite3.so.8.6
+		cp -p sqlite-$VERSION/.libs/libsqlite3.so.8.6 ../../distrib/lib/libsqlite3.so
+	elif [ -r "sqlite-$VERSION/.libs/libsqlite3.so.8" ]; then
+		strip sqlite-$VERSION/.libs/libsqlite3.so.8
+		cp -p sqlite-$VERSION/.libs/libsqlite3.so.8 ../../distrib/lib/libsqlite3.so
+	fi
+	;;
+'clean')
+	rm -rf sqlite-$VERSION
+	;;
+'configure')
+	do_configure
+	;;
+*)
+	echo "Usage: $0 {build|clean|configure}"
+esac
+exit 0

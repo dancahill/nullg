@@ -6,16 +6,15 @@
    umask             = 007
    log level         = 1
 ;  host name         = fqdn.hostname.com
-   base path         = /usr/local/nullgroupware
    bin path          = /usr/local/nullgroupware/bin
    etc path          = /usr/local/nullgroupware/etc
    lib path          = /usr/local/nullgroupware/lib
    var path          = /usr/local/nullgroupware/var
    var_backup path   = /usr/local/nullgroupware/var/backup
-   var_cgi path      = /usr/local/nullgroupware/var/cgi-bin
+   var_cgi path      = /usr/local/nullgroupware/var/share/cgi-bin
    var_db path       = /usr/local/nullgroupware/var/db
    var_domains path  = /usr/local/nullgroupware/var/domains
-   var_htdocs path   = /usr/local/nullgroupware/var/htdocs
+   var_htdocs path   = /usr/local/nullgroupware/var/share/htdocs
    var_log path      = /usr/local/nullgroupware/var/log
    var_spool path    = /usr/local/nullgroupware/var/spool
    var_tmp path      = /usr/local/nullgroupware/var/tmp
@@ -51,15 +50,16 @@
    load module       = mod_calls
    load module       = mod_cgi
    load module       = mod_contacts
-   load module       = mod_mail
+   load module       = mod_email
    load module       = mod_files
+;  load module       = mod_finance
    load module       = mod_forums
    load module       = mod_messages
    load module       = mod_notes
-;  load module       = mod_orders
    load module       = mod_profile
 ;  load module       = mod_projects
    load module       = mod_searches
+   load module       = mod_spellcheck
    load module       = mod_tasks
    load module       = mod_xmlrpc
 
@@ -90,11 +90,11 @@
    max connections   = 50
    max idle          = 120
    retry delay       = 300
-;  filter program    = /usr/local/nullgroupware/bin/scan_smtp.sh
+;  filter program    = /usr/local/nullgroupware/bin/nullgw-scansmtp.sh
+
+[mod_email]
+;  filter program    = /usr/local/nullgroupware/bin/nullgw-scanmbox.sh
+   max idle          = 120
 
 [mod_files]
-;  filter program    = /usr/local/nullgroupware/bin/scan_file.sh
-
-[mod_mail]
-;  filter program    = /usr/local/nullgroupware/bin/scan_mail.sh
-   max idle          = 120
+;  filter program    = /usr/local/nullgroupware/bin/nullgw-scanfile.sh

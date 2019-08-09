@@ -1,0 +1,21 @@
+#!/bin/sh
+diff -Nr httpd/httpd_auth.c   ghttpd/ghttpd_auth.c
+diff -Nr httpd/httpd_conf.c   ghttpd/ghttpd_conf.c
+diff -Nr httpd/httpd_format.c ghttpd/ghttpd_format.c
+diff -Nr httpd/httpd_html.c   ghttpd/ghttpd_html.c
+diff -Nr httpd/httpd_http.c   ghttpd/ghttpd_http.c
+diff -Nr httpd/httpd_io.c     ghttpd/ghttpd_io.c
+diff -Nr httpd/httpd_lang.c   ghttpd/ghttpd_lang.c
+diff -Nr httpd/httpd_lang.h   ghttpd/ghttpd_lang.h
+diff -Nr httpd/httpd_log.c    ghttpd/ghttpd_log.c
+diff -Nr httpd/httpd_main.c   ghttpd/ghttpd_main.c
+diff -Nr httpd/httpd_main.h   ghttpd/ghttpd_main.h
+diff -Nr httpd/httpd_modctl.c ghttpd/ghttpd_modctl.c
+diff -Nr httpd/httpd_sql.c    ghttpd/ghttpd_sql.c
+echo "=================================================================================="
+echo "=================================================================================="
+echo "=================================================================================="
+diff -Nr smtpd/smtpd_bounce.c smtpq/smtpq_bounce.c
+diff -Nr smtpd/smtpd_client.c smtpq/smtpq_client.c
+diff -Nr smtpd/smtpd_conf.c   smtpq/smtpq_conf.c
+diff -Nr smtpd/smtpd_lang.c   smtpq/smtpq_lang.c

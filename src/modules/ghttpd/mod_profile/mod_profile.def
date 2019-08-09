@@ -1,0 +1,6 @@
+LIBRARY		mod_profile
+VERSION		1.3
+EXPORTS
+	mod_init
+	mod_main
+	mod_exit
