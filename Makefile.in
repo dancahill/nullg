@@ -160,6 +160,7 @@ distclean: clean
 	@chmod -R 0755 lib/locale
 	@chmod -R 0755 lib/scripts
 	@chmod -R 0770 var
+	@mkdir -p var/share/htdocs
 	@chmod -R 0755 var/share/htdocs
 	@chmod -R 0600 `find etc -name '*' -type f`
 	@chmod -R 0660 `find var -name '*' -type f`

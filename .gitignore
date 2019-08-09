@@ -167,3 +167,9 @@ $RECYCLE.BIN/
 *.lib
 *.exp
 /.vs
+/include/nullg/config.h
+/src/scripts/nullg-backup.sh
+/src/scripts/nullg-init.sh
+/src/scripts/nullg-scanfile.sh
+/src/scripts/setup.sh
+/src/Rules.mak

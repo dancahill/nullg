@@ -96,7 +96,7 @@ AC_CHECK_FUNCS([			\
 	pthread_attr_setstacksize	\
 ])
 
-AC_CONFIG_FILES([Makefile src/Rules.mak include/nullg/config-nt.h src/scripts/nullg-backup.sh src/scripts/nullg-init.sh src/scripts/nullg-scanfile.sh src/scripts/setup.sh])
+AC_CONFIG_FILES([Makefile src/Rules.mak src/scripts/nullg-backup.sh src/scripts/nullg-init.sh src/scripts/nullg-scanfile.sh src/scripts/setup.sh include/nullg/config-nt.h])
 AC_OUTPUT
 chmod 0755 src/scripts/*.sh
 

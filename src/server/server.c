@@ -18,6 +18,7 @@
 #include "main.h"
 #if defined(linux)
 #include <execinfo.h>
+#include <paths.h>
 #endif
 
 #ifndef WIN32
