@@ -13,6 +13,7 @@ Features include:
 - project management and scheduling
 - shared web bookmarks
 - notes
+- fine-grained access control
 
 Server services:
 - HTTPS and HTTP
