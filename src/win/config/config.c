@@ -36,7 +36,7 @@
 
 #include "resource.h"
 
-#define DEFAULT_SERVER_USERNAME		"nullsd"
+#define DEFAULT_SERVER_USERNAME		"nullg"
 
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
@@ -180,16 +180,16 @@ int config_read(CONFIG *config)
 	/* try to open the config file */
 	/* try the current directory first, then ../etc/, then the default etc/ */
 	if (fp==NULL) {
-		snprintf(config_filename, sizeof(config_filename)-1, "nullsd.conf");
+		snprintf(config_filename, sizeof(config_filename)-1, "nullg.conf");
 		fp=fopen(config_filename, "r");
 	}
 	if (fp==NULL) {
-		snprintf(config_filename, sizeof(config_filename)-1, "../etc/nullsd.conf");
+		snprintf(config_filename, sizeof(config_filename)-1, "../etc/nullg.conf");
 		fixslashes(config_filename);
 		fp=fopen(config_filename, "r");
 	}
 	if (fp==NULL) {
-		snprintf(config_filename, sizeof(config_filename)-1, "%s/nullsd.conf", config->server_dir_etc);
+		snprintf(config_filename, sizeof(config_filename)-1, "%s/nullg.conf", config->server_dir_etc);
 		fixslashes(config_filename);
 		fp=fopen(config_filename, "r");
 	}
@@ -502,7 +502,7 @@ BOOL CALLBACK DbdumpDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return (TRUE);
 		case IDC_BUTTON1:
 			GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullsd-dbutil dump \"%s\"", buffer);
+			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullg-dbutil dump \"%s\"", buffer);
 			system(cmdbuffer);
 			return (TRUE);
 		case IDC_BUTTON2:
@@ -540,7 +540,7 @@ BOOL CALLBACK DbinitDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_BUTTON1:
 			if (MessageBox(0, "Initialising the database will destroy any previously stored data.  Are you sure you want to do this?", "Init confirmation", MB_YESNO)==IDYES) {
 				GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-				snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullsd-dbutil init \"%s\"", buffer);
+				snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullg-dbutil init \"%s\"", buffer);
 				system(cmdbuffer);
 			}
 			return (TRUE);
@@ -578,7 +578,7 @@ BOOL CALLBACK DbrestDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return (TRUE);
 		case IDC_BUTTON1:
 			GetDlgItemText(hDlg, IDC_EDIT2, buffer, sizeof(buffer)-1);
-			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullsd-dbutil restore \"%s\"", buffer);
+			snprintf(cmdbuffer, sizeof(cmdbuffer)-1, ".\\nullg-dbutil restore \"%s\"", buffer);
 			system(cmdbuffer);
 			return (TRUE);
 		case IDC_BUTTON2:

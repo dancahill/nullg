@@ -41,7 +41,7 @@
     <OutDir>../../bin/</OutDir>
     <IntDir>../../obj/server/</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>nullsd</TargetName>
+    <TargetName>nullg</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\NullLogic\utils\VS2017\include;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;C:\NullLogic\utils\VS2017\lib</LibraryPath>
   </PropertyGroup>
@@ -49,7 +49,7 @@
     <OutDir>../../bin/</OutDir>
     <IntDir>../../obj/server/</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>nullsd</TargetName>
+    <TargetName>nullg</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -64,7 +64,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>../../bin/nullsd.exe</OutputFile>
+      <OutputFile>../../bin/nullg.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -81,7 +81,7 @@
       <DebugInformationFormat />
     </ClCompile>
     <Link>
-      <OutputFile>../../bin/nullsd.exe</OutputFile>
+      <OutputFile>../../bin/nullg.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -107,7 +107,7 @@
     <ClCompile Include="tcp.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libnsd\libnsd.vcxproj">
+    <ProjectReference Include="..\libnullg\libnullg.vcxproj">
       <Project>{523f6d91-428f-4331-bd21-78f838e50bb2}</Project>
     </ProjectReference>
     <ProjectReference Include="..\nsp\src\libnsp\libnsp.vcxproj">

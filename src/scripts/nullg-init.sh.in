@@ -1,0 +1,118 @@
+#!/bin/sh
+#
+# Init script to start/stop/restart the NullLogic GroupServer servers.
+# On SYSV init systems, this script is usually called 'nullg',
+# and located in '/etc/init.d'.
+#
+# chkconfig: 2345 80 10
+# description: NullLogic GroupServer Server.
+# processname: nullg
+# pidfile: /var/run/nullg.pid
+
+# Source function library.
+if [ -x /etc/rc.d/init.d/functions ]; then
+	. /etc/rc.d/init.d/functions
+fi
+# Source networking configuration.
+if [ -x /etc/sysconfig/network ]; then
+	. /etc/sysconfig/network
+fi
+# Include nullg defaults if available
+if [ -f /etc/default/nullg ]; then
+	. /etc/default/nullg
+fi
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+BINDIR="@bindir@"
+ETCDIR="@sysconfdir@"
+LIBDIR="@libdir@"
+VARDIR="@localstatedir@"
+PATH=$BINDIR:$PATH
+LD_LIBRARY_PATH=$LIBDIR:$LD_LIBRARY_PATH
+pidfile="/var/run/nullg.pid"
+
+check_status() {
+	if [ -f ${pidfile} ]; then
+		if [ -f "/proc/`cat ${pidfile}`/status" ]; then
+			SERVER_STATUS="running"
+		else
+			SERVER_STATUS="not running"
+		fi
+	else
+		SERVER_STATUS="not running"
+	fi
+#	RC=`lsof -t -a -i :8086 -i :8112 -sTCP:LISTEN`
+#	RC=`ps ax | grep -v grep | grep -c [n]ullsd`
+#	if test ${RC} -gt 0; then
+}
+
+nullg_start() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "NullLogic GroupServer appears to be running already."
+	else
+		echo -n "Starting NullLogic GroupServer services: "
+		cd ${BINDIR}
+# You can either load all the servers as one process,
+		echo -n "OK" ; nullg
+# or you can load them separately.
+#		echo -n "httpd " ; nullg httpd
+#		echo -n "pop3d " ; nullg pop3d
+#		echo -n "smtpd " ; nullg smtpd
+#		echo -n "smtpq " ; nullg smtpq
+		echo ""
+	fi
+}
+
+nullg_stop() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "Stopping NullLogic GroupServer services"
+		if [ -f /var/run/nullg.pid ]; then
+			kill -15 `cat /var/run/nullg.pid`
+			sleep 2
+			kill -9 `cat /var/run/nullg.pid` 1>/dev/null 2>&1
+			rm -f /var/run/nullg.pid
+		else
+			killall -15 nullg 2>/dev/null
+			sleep 2
+			killall -9 nullg 2>/dev/null
+		fi
+	else
+		echo "NullLogic GroupServer does not appear to be running."
+	fi
+}
+
+nullg_status() {
+	if [ "$SERVER_STATUS" = "running" ]; then
+		echo "NullLogic GroupServer appears to be running"
+	else
+		echo "NullLogic GroupServer does not appear to be running."
+	fi
+}
+
+nullg_restart() {
+	nullg_stop
+	check_status
+	nullg_start
+}
+
+check_status
+case "$1" in
+start)
+	nullg_start
+	;;
+stop)
+	nullg_stop
+	exit 0
+	;;
+status)
+	nullg_status
+	;;
+restart|reload)
+	nullg_restart
+	;;
+*)
+	echo "Usage: $0 {start|stop|status|restart|reload}"
+esac
+
+exit $?

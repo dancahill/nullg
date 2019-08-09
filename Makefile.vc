@@ -19,8 +19,8 @@ all:
 	@ECHO libnsp
 	@CD SRC\LIBNSP
 	@NMAKE /C /S /F MAKEFILE.VC
-	@ECHO libnsd
-	@CD ..\LIBNSD
+	@ECHO libnullg
+	@CD ..\LIBNULLG
 	@NMAKE /C /S /F MAKEFILE.VC
 	@ECHO confutil
 	@CD ..\CONFUTIL

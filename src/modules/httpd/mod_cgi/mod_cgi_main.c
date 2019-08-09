@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #define SRVMOD_MAIN 1
-#include "nullsd/httpd_mod.h"
+#include "nullg/httpd_mod.h"
 #ifndef WIN32
 #include <sys/wait.h>
 #endif

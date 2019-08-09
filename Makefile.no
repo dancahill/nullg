@@ -4,9 +4,9 @@ all:
 	@echo "You should try running ./configure first."
 
 redhat:
-	./configure --bindir=/usr/bin --sysconfdir=/etc/nullsd --libdir=/usr/lib/nullsd --localstatedir=/var/lib/nullsd
+	./configure --bindir=/usr/bin --sysconfdir=/etc/nullg --libdir=/usr/lib/nullg --localstatedir=/var/lib/nullg
 
 local:
-	./configure --bindir=/usr/local/nullsd/bin --sysconfdir=/usr/local/nullsd/etc --libdir=/usr/local/nullsd/lib --localstatedir=/usr/local/nullsd/var
+	./configure --bindir=/usr/local/nullg/bin --sysconfdir=/usr/local/nullg/etc --libdir=/usr/local/nullg/lib --localstatedir=/usr/local/nullg/var
 
 distclean: all

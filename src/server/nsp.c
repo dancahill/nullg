@@ -80,7 +80,7 @@ static NSP_FUNCTION(corensp_logaccess)
 	return 0;
 }
 
-void nsdevents_start(nsp_state *N)
+void nullg_events_start(nsp_state *N)
 {
 	obj_t *confobj = nsp_getobj(N, &N->g, "CONFIG");
 	char fname[255];
@@ -101,7 +101,7 @@ void nsdevents_start(nsp_state *N)
 		log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
 		return;
 	}
-	nsp_exec(N, "if (typeof(nsd.core.events)=='table') global _core_events=new nsd.core.events();");
+	nsp_exec(N, "if (typeof(nullg.core.events)=='table') global _core_events=new nullg.core.events();");
 	if (N->err) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 1, "errno=%d :: %s", N->err, N->errbuf);
 		return;
@@ -113,7 +113,7 @@ void nsdevents_start(nsp_state *N)
 	}
 }
 
-void nsdevents_timer()
+void nullg_events_timer()
 {
 	//char libbuf[80];
 	//nsp_state *N;

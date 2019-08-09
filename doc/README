@@ -44,7 +44,7 @@ may be much better suited to its desired task.
 
 NullLogic GroupServer can be configured to use an SQL server such as MySQL
 or PostgreSQL.  To initialise, backup, or restore a NullLogic GroupServer
-database, use the command line tool 'NULLSD-DBUTIL.EXE' or 'nullsd-dbutil'
+database, use the command line tool 'NULLG-DBUTIL.EXE' or 'nullg-dbutil'
 (on Windows and Linux respectively).
 
 To log in to NullLogic GroupServer for the first time, the username is
@@ -69,13 +69,13 @@ create databases and users, but it should have permission to create new
 tables.
 
 After you have configured the new database and user, change the SQL
-server type in 'nullsd.conf' to match the appropriate settings.
+server type in 'nullg.conf' to match the appropriate settings.
 
-The command line tool 'nullsd-dbutil' can be used to initialise the
+The command line tool 'nullg-dbutil' can be used to initialise the
 database for either MySQL or PostgreSQL.  Note that the NullLogic
 GroupServer database must be created (not the tables, just the bare
-database) prior to running nullsd-dbutil if you are using MySQL or
-PostgreSQL.  The nullsd-dbutil program will create and populate all
+database) prior to running nullg-dbutil if you are using MySQL or
+PostgreSQL.  The nullg-dbutil program will create and populate all
 of the necessary tables.
 
 ------------------

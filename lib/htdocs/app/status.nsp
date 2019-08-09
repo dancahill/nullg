@@ -9,8 +9,8 @@ function update_accounts() {
 		t1=time.mktime(row['lastcheck']);
 		t2=time.mktime(time.sqltime());
 
-		//file.append("/usr/local/nullsd/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
-		//file.append("/usr/local/nullsd/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
+		//file.append("/usr/local/nullg/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
+		//file.append("/usr/local/nullg/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
 		/*
 		[2018-07-25 23:59:36] [2018-07-26 13:25:18] t1=1830769236 t2=1701133218 t2-t1=-129636018
 		[2018-07-25 23:59:38] [2018-07-26 13:25:18] t1=1830769238 t2=1701133218 t2-t1=-129636020

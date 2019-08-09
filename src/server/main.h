@@ -16,10 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullsd/config-nt.h"
+#include "nullg/config-nt.h"
 #define _USE_32BIT_TIME_T
 #else
-#include "nullsd/config.h"
+#include "nullg/config.h"
 #endif
 /* #includes */
 #include <ctype.h>
@@ -72,12 +72,12 @@
 	#include <sys/wait.h>
 	#define closesocket close
 #endif
-#include "nullsd/ssl.h"
+#include "nullg/ssl.h"
 
-#include "nullsd/defines.h"
+#include "nullg/defines.h"
 #include "nsp/nsp.h"
-#include "nullsd/nsd.h"
-#include "nullsd/typedefs.h"
+#include "nullg/nullg.h"
+#include "nullg/typedefs.h"
 
 #ifdef MAIN_GLOBALS
 	LOCKS   Lock;
@@ -125,8 +125,8 @@ int     modules_exit(void);
 int     modules_cron(void);
 int     module_load(char *modname);
 /* nsp.c functions */
-void    nsdevents_start(nsp_state *N);
-void    nsdevents_timer();
+void    nullg_events_start(nsp_state *N);
+void    nullg_events_timer();
 /* sanity.c functions */
 int     sanity_checkdb(void);
 int     sanity_checkdirs(void);

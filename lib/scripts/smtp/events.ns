@@ -1,9 +1,9 @@
 /*
-nsd smtp event class
+nullg smtp event class
 custom version in var/share/scripts/smtp/events.ns
 standard version in lib/scripts/smtp/events.ns
 */
-namespace nsd.smtp {
+namespace nullg.smtp {
 	class events {
 		function events() {
 			try {
@@ -48,7 +48,7 @@ namespace nsd.smtp {
 		}
 		function ip2location() {
 			try {
-				db="/usr/local/nullsd/var/db/ip2location.db";
+				db="/usr/local/nullg/var/db/ip2location.db";
 				if (file.stat(db)==null) return null;
 				ip2=_SERVER['REMOTE_ADDR'];
 				ip2=ip2.split('.');

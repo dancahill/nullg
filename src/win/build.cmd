@@ -8,8 +8,8 @@ COPY \NullLogic\gw\libs\ssleay32.dll ..\..\lib
 @ECHO libnsp
 CD ..\LIBNSP
 NMAKE /C /S /F MAKEFILE.VC
-@ECHO libnsd
-CD ..\LIBNGS
+@ECHO libnullg
+CD ..\LIBNULLG
 NMAKE /C /S /F MAKEFILE.VC
 @ECHO confutil
 CD ..\CONFUTIL

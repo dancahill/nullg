@@ -9,7 +9,7 @@ CFLAGS  = $(LIB_CFLAGS)
 OBJECTS = $(INTDIR)/pop3d_auth.obj $(INTDIR)/pop3d_conf.obj $(INTDIR)/pop3d_lang.obj $(INTDIR)/pop3d_main.obj $(INTDIR)/pop3d_server.obj
 TARGET  = $(LIB_TARGETDIR)/core/pop3d.dll
 
-all: _dirs _nullsd
+all: _dirs _nullg
 
 _dirs:
 	@if not exist "$(LIB_TARGETDIR)" mkdir "$(LIB_TARGETDIR)"
@@ -19,7 +19,7 @@ _dirs:
 	@if not exist "$(OBJDIR)/modules/core" mkdir "$(OBJDIR)/modules/core"
 	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 
-_nullsd: $(OBJECTS)
+_nullg: $(OBJECTS)
 	$(LINK) $(LIB_LDFLAGS) /out:$(TARGET) /implib:$(INTDIR)/pop3d.lib $(OBJECTS)
 
 clean:

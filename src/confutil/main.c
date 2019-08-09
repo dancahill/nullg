@@ -16,9 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullsd/config-nt.h"
+#include "nullg/config-nt.h"
 #else
-#include "nullsd/config.h"
+#include "nullg/config.h"
 #endif
 #include <stdio.h>
 #include <time.h>
@@ -38,10 +38,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #endif
-#include "nullsd/defines.h"
+#include "nullg/defines.h"
 
 #include "nsp/nsp.h"
-#include "nullsd/nsd.h"
+#include "nullg/nullg.h"
 
 FILE *fp = NULL;
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 		sql_port = (int)nsp_getnum(N, tobj, "sql_port");
 		if (sql_port == 0) sql_port = 3306;
 		snprintf(sql_db, sizeof(sql_db) - 1, "%s", nsp_getstr(N, tobj, "sql_database_name"));
-		if (strlen(sql_db) == 0) snprintf(sql_db, sizeof(sql_db) - 1, "nullsd");
+		if (strlen(sql_db) == 0) snprintf(sql_db, sizeof(sql_db) - 1, "nullg");
 		snprintf(sql_user, sizeof(sql_user) - 1, "%s", nsp_getstr(N, tobj, "sql_user_name"));
 		if (strlen(sql_user) == 0) snprintf(sql_user, sizeof(sql_user) - 1, "nobody");
 		snprintf(sql_pass, sizeof(sql_pass) - 1, "%s", nsp_getstr(N, tobj, "sql_password"));
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 		sql_port = (int)nsp_getnum(N, tobj, "sql_port");
 		if (sql_port == 0) sql_port = 5432;
 		snprintf(sql_db, sizeof(sql_db) - 1, "%s", nsp_getstr(N, tobj, "sql_database_name"));
-		if (strlen(sql_db) == 0) snprintf(sql_db, sizeof(sql_db) - 1, "nullsd");
+		if (strlen(sql_db) == 0) snprintf(sql_db, sizeof(sql_db) - 1, "nullg");
 		snprintf(sql_user, sizeof(sql_user) - 1, "%s", nsp_getstr(N, tobj, "sql_user_name"));
 		if (strlen(sql_user) == 0) snprintf(sql_user, sizeof(sql_user) - 1, "nobody");
 		snprintf(sql_pass, sizeof(sql_pass) - 1, "%s", nsp_getstr(N, tobj, "sql_password"));
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 			printf("  createdb %s\r\n", sql_db);
 		}
 		printf("\r\n");
-		printf("After creating the database, please run nullsd-dbutil to\r\n");
+		printf("After creating the database, please run nullg-dbutil to\r\n");
 		printf("initialise the database.\r\n");
 		printf("\r\n");
 	}

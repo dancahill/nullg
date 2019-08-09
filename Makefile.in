@@ -23,15 +23,15 @@ all: _all
 	@echo "Thank you for using NullLogic GroupServer."
 	@echo ""
 
-_all: _misc _sqlite _nsp _libnsd _confutil _dbutil _server _core_modules _httpd_modules
+_all: _misc _sqlite _nsp _libnullg _confutil _dbutil _server _core_modules _httpd_modules
 
 _misc:
 	@mkdir -p bin
 	@mkdir -p lib
-	@cp -p src/scripts/nullsd-backup.sh   bin/nullsd-backup.sh
-	@cp -p src/scripts/nullsd-init.sh     bin/nullsd-init.sh
-	@cp -p src/scripts/nullsd-scanfile.sh bin/nullsd-scanfile.sh
-	@chmod 0755 bin/nullsd-backup.sh bin/nullsd-init.sh bin/nullsd-scanfile.sh
+	@cp -p src/scripts/nullg-backup.sh   bin/nullg-backup.sh
+	@cp -p src/scripts/nullg-init.sh     bin/nullg-init.sh
+	@cp -p src/scripts/nullg-scanfile.sh bin/nullg-scanfile.sh
+	@chmod 0755 bin/nullg-backup.sh bin/nullg-init.sh bin/nullg-scanfile.sh
 	@echo ""
 	@echo "CC            = $(CC)"
 	@echo "MAKE          = $(MAKE)"
@@ -57,9 +57,9 @@ _nsp:
 	@cp -a src/nsp/lib/shared/libnsp_*.so lib/nsp/
 	@echo
 
-_libnsd:
-	@echo "libnsd"
-	@cd src/libnsd && $(MAKE) && cd ../..
+_libnullg:
+	@echo "libnullg"
+	@cd src/libnullg && $(MAKE) && cd ../..
 
 _confutil:
 	@echo "confutil"
@@ -112,7 +112,7 @@ clean:
 	@cd src/confutil && $(MAKE) clean && cd ../..
 	@cd src/dbutil   && $(MAKE) clean && cd ../..
 #	@cd src/libnsp   && $(MAKE) clean && cd ../..
-	@cd src/libnsd   && $(MAKE) clean && cd ../..
+	@cd src/libnullg   && $(MAKE) clean && cd ../..
 	@cd src/server   && $(MAKE) clean && cd ../..
 
 	@cd src/nsp      && $(MAKE) distclean && cd ../..
@@ -151,7 +151,7 @@ distclean: clean
 	@rm -rf bin int obj
 	@rm -rf lib/core lib/httpd lib/nsp lib/shared
 	@rm -rf .vs
-	@rm -f nsd.ncb nsd.suo nsd.v12.suo
+	@rm -f nullg.ncb nullg.suo nullg.v12.suo
 	@cd src/sqlite && ./libsqlite_make clean && cd ../..
 #	@chmod -R 0755 bin
 #	@chmod -R 0770 etc
@@ -169,8 +169,8 @@ distclean: clean
 #	@chmod -R 0644 `find var/share/htdocs -name '*' -type f`
 	@find . -name ~AutoRecover.*.vcxproj
 	@chown -R 0:0 *
-	@rm -f bin/nullsd-backup.sh bin/nullsd-init.sh bin/nullsd-scanfile.sh
-	@rm -f build-stamp config.log config.status include/nullsd/config.h Makefile src/Rules.mak src/scripts/setup.sh src/scripts/nullsd-backup.sh src/scripts/nullsd-init.sh src/scripts/nullsd-scanfile.sh
+	@rm -f bin/nullg-backup.sh bin/nullg-init.sh bin/nullg-scanfile.sh
+	@rm -f build-stamp config.log config.status include/nullg/config.h Makefile src/Rules.mak src/scripts/setup.sh src/scripts/nullg-backup.sh src/scripts/nullg-init.sh src/scripts/nullg-scanfile.sh
 	@rm -f `find . -name *~`
 	@rm -rf autom4te.cache
 	@ cp -p Makefile.no Makefile
@@ -183,9 +183,9 @@ install: _all
 upgrade: _all
 	@touch bin/*
 	@chown -R 0:0 bin etc lib var
-#	/etc/init.d/nullsd stop
+#	/etc/init.d/nullg stop
 	@/bin/sh ./src/scripts/setup.sh upgrade
-#	/etc/init.d/nullsd start
+#	/etc/init.d/nullg start
 
 wc:
 	wc `find . -name *.[ch] ! -path './src/sqlite/*'`

@@ -41,7 +41,7 @@
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\dbutil\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>nullsd-dbutil</TargetName>
+    <TargetName>nullg-dbutil</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\NullLogic\utils\VS2017\include;</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;C:\NullLogic\utils\VS2017\lib</LibraryPath>
   </PropertyGroup>
@@ -49,7 +49,7 @@
     <OutDir>..\..\bin\</OutDir>
     <IntDir>..\..\obj\dbutil\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>nullsd-dbutil</TargetName>
+    <TargetName>nullg-dbutil</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -64,8 +64,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libnsd.lib;libnsp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../../bin/nullsd-dbutil.exe</OutputFile>
+      <AdditionalDependencies>libnullg.lib;libnsp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../../bin/nullg-dbutil.exe</OutputFile>
       <AdditionalLibraryDirectories>../../lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -83,8 +83,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libnsd.lib;libnsp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../../bin/nullsd-dbutil.exe</OutputFile>
+      <AdditionalDependencies>libnullg.lib;libnsp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../../bin/nullg-dbutil.exe</OutputFile>
       <AdditionalLibraryDirectories>../../lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>

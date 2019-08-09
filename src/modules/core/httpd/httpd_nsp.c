@@ -623,7 +623,7 @@ static int htnsp_initenv(CONN *conn)
 	nsp_setstr(conn->N, tobj2, "0", libbuf, -1);
 
 //#ifdef WIN32
-//	//	nsp_setstr(conn->N, tobj2, "0", "C:\\nullsd\\lib\\shared", -1);
+//	//	nsp_setstr(conn->N, tobj2, "0", "C:\\nullg\\lib\\shared", -1);
 //	//	GetSystemWindowsDirectory(libbuf, sizeof(libbuf));
 //	//	GetEnvironmentVariable("SystemRoot", libbuf, sizeof(libbuf));
 //	GetWindowsDirectory(libbuf, sizeof(libbuf));

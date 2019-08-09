@@ -156,7 +156,7 @@
 
 1.3.11
 ------
-- renamed dbutil and groupware to nullsd-dbutil and nullsd-server to help
+- renamed dbutil and groupware to nullg-dbutil and nullg-server to help
   resolve naming conflicts
 - added domain aliases
 - added domain integrity checks to syscheck

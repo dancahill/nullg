@@ -10,7 +10,7 @@ local function test_access() {
 }
 
 local function load_libs() {
-	//dl.path={"C:/nullsd/lib/shared"};
+	//dl.path={"C:/nullg/lib/shared"};
 	local libs = { "base", "crypto", "data", "net" };
 	foreach (lib in libs) {
 		if (!dl.load(lib)) {

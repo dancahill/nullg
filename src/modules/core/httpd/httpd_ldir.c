@@ -127,7 +127,7 @@ int ldir_deleteentry(char *oc, int id, int did)
 {
 	int rc;
 
-	rc = sql_updatef(proc->N, NULL, "DELETE FROM nullsd_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
+	rc = sql_updatef(proc->N, NULL, "DELETE FROM nullg_entries WHERE class = '%s' AND id = %d AND did = %d", oc, id, did);
 	return rc;
 }
 
@@ -218,7 +218,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 	strftime(curdate, sizeof(curdate) - 1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
 	if (id == 0) {
 		//log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
-		len = snprintf(query, MAX_TUPLE_SIZE - 1, "INSERT INTO nullsd_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', '%s', '%s', '{ ", pid, did, curdate, curdate, oc, name);
+		len = snprintf(query, MAX_TUPLE_SIZE - 1, "INSERT INTO nullg_entries (pid, did, ctime, mtime, class, name, data) VALUES (%d, %d, '%s', '%s', '%s', '%s', '{ ", pid, did, curdate, curdate, oc, name);
 		len += dump_sub(conn->N, query + len, MAX_TUPLE_SIZE - len, dobj);
 		strncatf(query + len, MAX_TUPLE_SIZE - len - 1, "}');");
 		len += strlen(query + len);
@@ -227,7 +227,7 @@ int ldir_saveentry(CONN *conn, int id, char *oc, obj_t **qobj)
 	}
 	else {
 		//log_error(proc->N, "shit", __FILE__, __LINE__, 1, "[%s:%d]", __FILE__, __LINE__);
-		len = snprintf(query, MAX_TUPLE_SIZE - 1, "UPDATE nullsd_entries SET pid=%d, did=%d, mtime='%s', class='%s', name='%s', data='{ ", pid, did, curdate, oc, name);
+		len = snprintf(query, MAX_TUPLE_SIZE - 1, "UPDATE nullg_entries SET pid=%d, did=%d, mtime='%s', class='%s', name='%s', data='{ ", pid, did, curdate, oc, name);
 		len += dump_sub(conn->N, query + len, MAX_TUPLE_SIZE - len, dobj);
 		strncatf(query + len, MAX_TUPLE_SIZE - len - 1, "}' WHERE id=%d;", id);
 		len += strlen(query + len);
@@ -253,11 +253,11 @@ obj_t *ldir_getlist(nsp_state *N, char *oc, int pid, int did)
 	if (oc == NULL) oc = "";
 	//	if ((priv&A_ADMIN)) {
 	//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND obj_did = %d ORDER BY bookmarkname ASC", pid, conn->dat->did)<0) return;
-	//		if (sql_queryf(proc->N, &qobj, "SELECT id, name, data FROM nullsd_entries WHERE class = 'bookmark' AND pid = %d AND did = %d ORDER BY name ASC", pid, conn->dat->did)<0) return;
+	//		if (sql_queryf(proc->N, &qobj, "SELECT id, name, data FROM nullg_entries WHERE class = 'bookmark' AND pid = %d AND did = %d ORDER BY name ASC", pid, conn->dat->did)<0) return;
 	//	} else {
 	//		if (sql_queryf(proc->N, &qobj, "SELECT bookmarkid, bookmarkname, bookmarkurl FROM gw_bookmarks WHERE folderid = %d AND (obj_uid = %d or (obj_gid = %d and obj_gperm>=1) or obj_operm>=1) AND obj_did = %d ORDER BY bookmarkname ASC", pid, conn->dat->uid, conn->dat->gid, conn->dat->did)<0) return;
 	if (pid) {
-		rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC;", oc, pid, did);
+		rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND pid = %d AND did = %d ORDER BY name ASC;", oc, pid, did);
 	}
 	else if (strlen(oc) > 0) {
 		if (strcmp(oc, "domain") == 0) {
@@ -351,31 +351,31 @@ obj_t *ldir_getentry(nsp_state *N, char *oc, char *name, int id, int did)
 			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM gw_queries WHERE obj_did = %d AND queryid = %d;", did, id);
 		}
 		else if (name) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	}
 	else if (strcmp(oc, "bookmarkfolder") == 0) {
 		if (id) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		}
 		else if (name) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	}
 	else if (strcmp(oc, "bookmark") == 0) {
 		if (id) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		}
 		else if (name) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	}
 	else {
 		if (id) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND id = %d;", oc, did, id);
 		}
 		else if (name) {
-			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullsd_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
+			rc = sql_queryf(proc->N, &qobj1, "SELECT * FROM nullg_entries WHERE class = '%s' AND did = %d AND name = '%s';", oc, did, name);
 		}
 	}
 	if (sql_numtuples(proc->N, &qobj1) != 1) {

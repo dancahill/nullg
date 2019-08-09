@@ -68,7 +68,7 @@ short installService(void)
 
 	memset(cCurDir, 0, sizeof(cCurDir));
 	GetCurrentDirectory(256, cCurDir);
-	strcat(cCurDir, cCurDir[strlen(cCurDir) - 1] == 92 ? "nullsd.exe" : "\\nullsd.exe");
+	strcat(cCurDir, cCurDir[strlen(cCurDir) - 1] == 92 ? "nullg.exe" : "\\nullg.exe");
 	scHndl = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if (scHndl == NULL) {
 		printf("Error in installService-OpenSCManager!\r\n");
@@ -223,7 +223,7 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 			printf("Error in RegisterServiceCtrlHandler!\r\n");
 			DebugBreak();
 		}
-		ghevDoForever = CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
+		ghevDoForever = CreateEvent(NULL, FALSE, FALSE, "nullgRunEvent");
 		memset(&gStatus, 0x00, sizeof(gStatus));
 		gStatus.dwServiceType = SERVICE_WIN32;
 		gStatus.dwCurrentState = SERVICE_RUNNING;
@@ -348,18 +348,18 @@ int main(int argc, char *argv[], char *envp[])
 			if (modules_exec() != 0) exit(-2);
 			if (startlisteners() != 0) exit(-2);
 			if (modules_cron() != 0) exit(-2);
-			if ((ghevDoForever = OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent")) != 0) {
+			if ((ghevDoForever = OpenEvent(SYNCHRONIZE, FALSE, "nullgRunEvent")) != 0) {
 				printf("NullLogic GroupServer is already running.\r\n");
 				CloseHandle(ghevDoForever);
 				exit(-2);
 			}
-			ghevDoForever = CreateEvent(NULL, FALSE, FALSE, "nullsdRunEvent");
+			ghevDoForever = CreateEvent(NULL, FALSE, FALSE, "nullgRunEvent");
 			WaitForSingleObject(ghevDoForever, INFINITE);
 			exit(-2);
 		}
 		/*	memset(&gStatus, 0x00, sizeof(gStatus)); */
 		ghevDoForever = NULL;
-		if ((ghevDoForever = OpenEvent(SYNCHRONIZE, FALSE, "nullsdRunEvent")) != 0) {
+		if ((ghevDoForever = OpenEvent(SYNCHRONIZE, FALSE, "nullgRunEvent")) != 0) {
 			printf("NullLogic GroupServer is already running.\r\n");
 			CloseHandle(ghevDoForever);
 			exit(-2);
@@ -466,7 +466,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 		endpwent();
-		if ((fp = fopen("/var/run/nullsd.pid", "w")) != NULL) {
+		if ((fp = fopen("/var/run/nullg.pid", "w")) != NULL) {
 			fprintf(fp, "%d\n", getpid());
 			fclose(fp);
 		}

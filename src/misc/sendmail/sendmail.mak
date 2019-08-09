@@ -32,7 +32,7 @@ INTDIR=.\..\obj\sendmail
 OutDir=.\..\distrib\bin
 # End Custom Macros
 
-ALL : "$(OUTDIR)\nullsd-sendmail.exe"
+ALL : "$(OUTDIR)\nullg-sendmail.exe"
 
 
 CLEAN :
@@ -43,7 +43,7 @@ CLEAN :
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\sql.obj"
 	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\nullsd-sendmail.exe"
+	-@erase "$(OUTDIR)\nullg-sendmail.exe"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -56,7 +56,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\sendmail.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /out:"$(OUTDIR)\nullsd-sendmail.exe" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /pdb:none /machine:I386 /out:"$(OUTDIR)\nullg-sendmail.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\config.obj" \
 	"$(INTDIR)\dbio.obj" \
@@ -65,7 +65,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\sql.obj" \
 	"$(INTDIR)\sendmail.res"
 
-"$(OUTDIR)\nullsd-sendmail.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+"$(OUTDIR)\nullg-sendmail.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<

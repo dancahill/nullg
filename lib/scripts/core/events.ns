@@ -1,9 +1,9 @@
 /*
-nsd core event class
+nullg core event class
 custom version in var/share/scripts/core/events.ns
 standard version in lib/scripts/core/events.ns
 */
-namespace nsd.core {
+namespace nullg.core {
 	class events {
 		function events() {
 			//logaccess("events() constructor");

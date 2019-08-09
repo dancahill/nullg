@@ -7,16 +7,16 @@ include ../Rules.mak.vc
 
 CFLAGS  = $(BIN_CFLAGS)
 OBJECTS = $(INTDIR)/config.obj $(INTDIR)/domains.obj $(INTDIR)/format.obj $(INTDIR)/language.obj $(INTDIR)/main.obj $(INTDIR)/modctl.obj $(INTDIR)/nsp.obj $(INTDIR)/sanity.obj $(INTDIR)/server.obj $(INTDIR)/sql.obj $(INTDIR)/ssl.obj $(INTDIR)/tcp.obj
-TARGET  = $(BIN_TARGETDIR)/nullsd.exe
+TARGET  = $(BIN_TARGETDIR)/nullg.exe
 
-all: _dirs _nullsd
+all: _dirs _nullg
 
 _dirs:
 	@if not exist "$(BIN_TARGETDIR)" mkdir "$(BIN_TARGETDIR)"
 	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 
-_nullsd: $(OBJECTS)
+_nullg: $(OBJECTS)
 	$(LINK) $(BIN_LDFLAGS) /out:$(TARGET) $(OBJECTS)
 
 clean:

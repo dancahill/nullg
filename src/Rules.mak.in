@@ -11,8 +11,8 @@ libdir=@libdir@
 localstatedir=@localstatedir@
 
 BIN_CFLAGS    = -Wall -O2 -I../../include -I../../src/nsp/include -DBINDIR=\"$(bindir)\" -DETCDIR=\"$(sysconfdir)\" -DLIBDIR=\"$(libdir)\" -DVARDIR=\"$(localstatedir)\"
-BIN_LDFLAGS   = -rdynamic -L../../lib -lnsp -lnsd -s @UTIL_LIBS@
-BIN_LDFLAGS_T = -rdynamic -L../../lib -lnsp -lnsd -s @LIBS@
+BIN_LDFLAGS   = -rdynamic -L../../lib -lnsp -lnullg -s @UTIL_LIBS@
+BIN_LDFLAGS_T = -rdynamic -L../../lib -lnsp -lnullg -s @LIBS@
 BIN_TARGETDIR = ../../bin
 
 LIB_CFLAGS    = -Wall -O2 -fPIC -I../../../../include -I../../../../src/nsp/include

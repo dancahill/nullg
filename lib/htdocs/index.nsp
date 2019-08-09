@@ -13,7 +13,7 @@
 <script type="text/javascript" src="/lib/scripts/jquery-ui.js"></script>
 <script type="text/javascript" src="/lib/scripts/jquery.tablesorter.js"></script>
 <script type="text/javascript" src="/lib/scripts/leaflet/leaflet.js"></script>
-<script type="text/javascript" src="/lib/scripts/nullsd.js"></script>
+<script type="text/javascript" src="/lib/scripts/nullg.js"></script>
 </head>
 <body onLoad="ns.init();" onResize="ns.ResizeEvents();">
 <div id="container"></div>

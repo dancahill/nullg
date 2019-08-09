@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(nullsd, 1.3.30, nulllogic@users.sourceforge.net)
-AC_CONFIG_HEADER([include/nullsd/config.h])
+AC_INIT(nullg, 1.3.30, nulllogic@users.sourceforge.net)
+AC_CONFIG_HEADER([include/nullg/config.h])
 AC_CANONICAL_HOST
 
 AC_PROG_CC
@@ -8,7 +8,7 @@ AC_PROG_CC
 TOP_BUILD_DIR=`pwd`
 AC_SUBST(TOP_BUILD_DIR)
 
-AC_PREFIX_DEFAULT(/usr/local/nullsd)
+AC_PREFIX_DEFAULT(/usr/local/nullg)
 
 # Checks for libraries.
 AC_CHECK_LIB([dl], [dlopen])
@@ -96,7 +96,7 @@ AC_CHECK_FUNCS([			\
 	pthread_attr_setstacksize	\
 ])
 
-AC_CONFIG_FILES([Makefile src/Rules.mak include/nullsd/config-nt.h src/scripts/nullsd-backup.sh src/scripts/nullsd-init.sh src/scripts/nullsd-scanfile.sh src/scripts/setup.sh])
+AC_CONFIG_FILES([Makefile src/Rules.mak include/nullg/config-nt.h src/scripts/nullg-backup.sh src/scripts/nullg-init.sh src/scripts/nullg-scanfile.sh src/scripts/setup.sh])
 AC_OUTPUT
 chmod 0755 src/scripts/*.sh
 

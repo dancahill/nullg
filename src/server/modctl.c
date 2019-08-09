@@ -132,7 +132,7 @@ void *cronloop(void *x)
 		newt = (time(NULL) / 60) * 60;
 		if (newt > oldt) {
 			oldt = newt;
-			nsdevents_timer();
+			nullg_events_timer();
 		}
 		sleep(1);
 		for (i = 0;i < MAX_MOD_FUNCTIONS;i++) {

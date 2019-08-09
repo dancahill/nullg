@@ -3,15 +3,15 @@
 dl.load("net");
 
 file.append("crash.log", time.sqltime()+" stuff happened\r\n");
-system("TASKKILL /F /IM NULLSD.EXE");
-system("NET STOP NULLSD");
+system("TASKKILL /F /IM NULLG.EXE");
+system("NET STOP NULLG");
 sleep(2);
-system("NET START NULLSD");
+system("NET START NULLG");
 /*
-@TASKKILL /F /IM nullsd.exe
-@net stop nullsd
+@TASKKILL /F /IM nullg.exe
+@net stop nullg
 @TIMEOUT /NOBREAK /T 2
-@net start nullsd
+@net start nullg
 @pause
 */
 
@@ -19,7 +19,7 @@ x=new net.smtp.client();
 x.host="192.168.2.1";
 x.from="\"System Monitor\" <service@nowhere.com>";
 x.contenttype="text/html";
-x.subject="[STATUS] NULLSD CRASHED";
+x.subject="[STATUS] NULLG CRASHED";
 x.body="<HR>ASDF<HR>";
 x.rcpt="dcahill@nowhere.com"; x.send();
 delete x;

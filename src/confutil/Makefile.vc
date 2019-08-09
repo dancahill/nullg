@@ -7,16 +7,16 @@ include ../Rules.mak.vc
 
 CFLAGS  = $(BIN_CFLAGS)
 OBJECTS = $(INTDIR)/main.obj
-TARGET  = $(BIN_TARGETDIR)/nullsd-confutil.exe
+TARGET  = $(BIN_TARGETDIR)/nullg-confutil.exe
 
-all: _dirs _nullsd
+all: _dirs _nullg
 
 _dirs:
 	@if not exist "$(BIN_TARGETDIR)" mkdir "$(BIN_TARGETDIR)"
 	@if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 
-_nullsd: $(OBJECTS)
+_nullg: $(OBJECTS)
 	rc.exe /l 0x409 /fo"$(INTDIR)/confutil.res" /d "NDEBUG" confutil.rc
 	$(LINK) $(BIN_LDFLAGS) /out:$(TARGET) $(OBJECTS) $(INTDIR)/confutil.res
 

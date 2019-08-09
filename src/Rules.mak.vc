@@ -12,8 +12,8 @@ MAKE          = nmake.exe /C /S /Y /F
 #localstatedir=${prefix}/var
 
 BIN_CFLAGS    = /W3 /O2 /MD /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /I "../../include" /c
-#BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"libc" advapi32.lib kernel32.lib libcmt.lib ../../lib/libnsd.lib ../../lib/libnsp.lib
-BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 advapi32.lib kernel32.lib ../../lib/libnsd.lib ../../lib/libnsp.lib
+#BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"libc" advapi32.lib kernel32.lib libcmt.lib ../../lib/libnullg.lib ../../lib/libnsp.lib
+BIN_LDFLAGS   = /subsystem:console /pdb:none /machine:I386 advapi32.lib kernel32.lib ../../lib/libnullg.lib ../../lib/libnsp.lib
 BIN_TARGETDIR = ../../bin
 
 LIB_CFLAGS    = /W3 /O2 /MD /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)/" /Fd"$(INTDIR)/" /FD /I "../../../../include" /c

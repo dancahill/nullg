@@ -18,7 +18,7 @@
 #ifdef WIN32
 #define DEFAULT_BASE_DIR "C:\\Program Files\\NullLogic GroupServer"
 #else
-#define DEFAULT_BASE_DIR "/usr/local/nullsd"
+#define DEFAULT_BASE_DIR "/usr/local/nullg"
 #endif
 
 #ifdef WIN32

@@ -60,7 +60,7 @@ void auth_savesession(CONN *conn)
 		auth_dumpvars(conn->N, tobj->val->d.table.f, data, MAX_FIELD_SIZE - 1);
 	}
 	/* log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 0, "[%s]", data); */
-//	sql_updatef(proc->N, "UPDATE nullsd_sessions SET mtime = '%s', data = '{ %s}' WHERE token = '%s' AND uid = %d AND did = %d", timebuffer, str2sql(conn->dat->largebuf, sizeof(conn->dat->largebuf)-1, data), conn->dat->token, conn->dat->uid, conn->dat->did);
+//	sql_updatef(proc->N, "UPDATE nullg_sessions SET mtime = '%s', data = '{ %s}' WHERE token = '%s' AND uid = %d AND did = %d", timebuffer, str2sql(conn->dat->largebuf, sizeof(conn->dat->largebuf)-1, data), conn->dat->token, conn->dat->uid, conn->dat->did);
 	if (conn->dat->uid > 0) {
 		sql_updatef(proc->N, NULL, "UPDATE gw_users_sessions SET obj_mtime = '%s' WHERE token = '%s' AND obj_uid = %d AND obj_did = %d", timebuffer, conn->dat->token, conn->dat->uid, conn->dat->did);
 	}

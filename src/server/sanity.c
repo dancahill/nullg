@@ -81,9 +81,9 @@ int sanity_checkdb()
 		fixslashes(dbfile);
 		if ((stat(dbfile, &sb) != 0) || (sb.st_size == 0)) {
 #ifdef WIN32
-			snprintf(cmdline, sizeof(cmdline) - 1, "./nullsd-dbutil.exe init");
+			snprintf(cmdline, sizeof(cmdline) - 1, "./nullg-dbutil.exe init");
 #else
-			snprintf(cmdline, sizeof(cmdline) - 1, "./nullsd-dbutil init");
+			snprintf(cmdline, sizeof(cmdline) - 1, "./nullg-dbutil init");
 #endif
 			fixslashes(cmdline);
 #ifndef WIN32
@@ -95,7 +95,7 @@ int sanity_checkdb()
 	}
 	i = 0;
 	if (proc.debug) printf("Testing DB tables\r\n");
-	while (sql_query(proc.N, &qobj, "SELECT COUNT(*) FROM nullsd_entries") < 0) {
+	while (sql_query(proc.N, &qobj, "SELECT COUNT(*) FROM nullg_entries") < 0) {
 		if (proc.debug) printf("%s %d blah\r\n", __FILE__, __LINE__);
 		sleep(2);
 		i++;
@@ -109,8 +109,8 @@ int sanity_checkdb()
 	}
 	sql_freeresult(proc.N, &qobj);
 	if (proc.debug) printf("Testing more DB tables\r\n");
-	if (sanity_dbcheck_table("nullsd_entries", "id", 8) == -1) errs++;
-	if (sanity_dbcheck_table("nullsd_sessions", "id", 8) == -1) errs++;
+	if (sanity_dbcheck_table("nullg_entries", "id", 8) == -1) errs++;
+	if (sanity_dbcheck_table("nullg_sessions", "id", 8) == -1) errs++;
 	if (errs != 0) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "Please use dbutil to dump and restore the database");
 		exit(-2);
@@ -135,14 +135,14 @@ int sanity_checkdirs()
 	if (sanity_dircheck("%s/mqinfo", nsp_getstr(proc.N, tobj, "var_spool")) != 0) exit(-2);
 	if (sanity_dircheck("%s", nsp_getstr(proc.N, tobj, "var_tmp")) != 0) exit(-2);
 	return 0;
-	if (sql_query(proc.N, &qobj, "SELECT id, name FROM nullsd_entries WHERE class = 'organization'") < 0) {
+	if (sql_query(proc.N, &qobj, "SELECT id, name FROM nullg_entries WHERE class = 'organization'") < 0) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "Could not retrieve domain list");
 		exit(-1);
 	}
 	if (sql_numtuples(proc.N, &qobj) < 1) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 0, "no domains exist"); exit(-1);
-		sql_update(proc.N, NULL, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (1, 0, 1, \"default domain\", \"organization\", \"{}\");");
-		sql_update(proc.N, NULL, "INSERT INTO nullsd_entries (id, pid, did, name, class, data) VALUES (2, 1, 1, \"localhost\", \"associatedDomain\", \"{}\");");
+		sql_update(proc.N, NULL, "INSERT INTO nullg_entries (id, pid, did, name, class, data) VALUES (1, 0, 1, \"default domain\", \"organization\", \"{}\");");
+		sql_update(proc.N, NULL, "INSERT INTO nullg_entries (id, pid, did, name, class, data) VALUES (2, 1, 1, \"localhost\", \"associatedDomain\", \"{}\");");
 	}
 	for (i = 0;i < sql_numtuples(proc.N, &qobj);i++) {
 		domainid = atoi(sql_getvalue(proc.N, &qobj, i, 0));

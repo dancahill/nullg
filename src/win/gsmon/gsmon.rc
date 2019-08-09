@@ -30,8 +30,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "..\\..\\misc\\icons\\nullsd.ico"
-IDI_ICON2               ICON    DISCARDABLE     "..\\..\\misc\\icons\\nullsd.ico"
+IDI_ICON1               ICON    DISCARDABLE     "..\\..\\misc\\icons\\nullg.ico"
+IDI_ICON2               ICON    DISCARDABLE     "..\\..\\misc\\icons\\nullg.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

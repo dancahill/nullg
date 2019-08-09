@@ -16,9 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #ifdef WIN32
-#include "nullsd/config-nt.h"
+#include "nullg/config-nt.h"
 #else
-#include "nullsd/config.h"
+#include "nullg/config.h"
 #endif
 #include <stdio.h>
 #include <time.h>
@@ -37,9 +37,9 @@
 //#include <unistd.h>
 //#include <sys/stat.h>
 #endif
-#include "nullsd/defines.h"
+#include "nullg/defines.h"
 #include "nsp/nsp.h"
-#include "nullsd/nsd.h"
+#include "nullg/nullg.h"
 
 static NSP_FUNCTION(nsp_sql_escape)
 {

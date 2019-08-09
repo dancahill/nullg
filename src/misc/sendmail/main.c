@@ -17,7 +17,7 @@
 */
 #include "main.h"
 
-#define SPOOL_DIR "/usr/local/nullsd/var/spool"
+#define SPOOL_DIR "/usr/local/nullg/var/spool"
 
 void fixslashes(char *string)
 {
@@ -64,12 +64,12 @@ void usage(char *arg0)
 	printf("    DUMP     Dumps the data from the current database to a file\r\n");
 	printf("    RESTORE  Restores the current database from a file\r\n");
 	printf("\r\nThe INIT command is used to initialize a new NullLogic GroupServer database\r\n");
-	printf("(as defined in nullsd.conf).  No parameter is required.\r\n");
+	printf("(as defined in nullg.conf).  No parameter is required.\r\n");
 	printf("\r\nThe DUMP command is used to export the contents of the current database\r\n");
-	printf("(as defined in nullsd.conf) to a text file.  The parameter for this function\r\n");
+	printf("(as defined in nullg.conf) to a text file.  The parameter for this function\r\n");
 	printf("is the name of the file to which the data is to be saved.\r\n");
 	printf("\r\nThe RESTORE command is used to restore a previous database dump to the current\r\n");
-	printf("database (as defined in nullsd.conf).  The parameter for this function is the\r\n");
+	printf("database (as defined in nullg.conf).  The parameter for this function is the\r\n");
 	printf("name of the file from which the data is to be restored.\r\n");
 	printf("\r\nNOTE: The INIT and RESTORE commands WILL destroy any current database before\r\n");
 	printf("recreating it.  Be sure to use DUMP to make a backup prior to using the INIT\r\n");

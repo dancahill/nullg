@@ -125,7 +125,7 @@ static int smtp_nsp_receive(CONN *conn)
 		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 1, "smtp_nsp_receive exception: [%s]", conn->N->errbuf);
 	}
 	else {
-		nsp_exec(conn->N, "if (typeof(nsd.smtp.events)=='table') global _smtp_events=new nsd.smtp.events();");
+		nsp_exec(conn->N, "if (typeof(nullg.smtp.events)=='table') global _smtp_events=new nullg.smtp.events();");
 	}
 	return conn->N->err;
 }
