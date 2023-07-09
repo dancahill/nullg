@@ -174,21 +174,17 @@ int main(int argc, char* argv[])
 		}
 		if (strcmp(function, "init") == 0) {
 			nsp_exec(N, "dbutil.init();");
-		}
-		else if (strcmp(function, "dump") == 0) {
+		} else if (strcmp(function, "dump") == 0) {
 			nsp_exec(N, "dbutil.dump();");
-		}
-		else if (strcmp(function, "restore") == 0) {
+		} else if (strcmp(function, "restore") == 0) {
 			nsp_exec(N, "dbutil.restore();");
-		}
-		else {
+		} else {
 			nsp_exec(N, "dbutil.usage();");
 		}
-	}
-	else {
+	} else {
 		nsp_exec(N, "dbutil.usage();");
 	}
-	nsp_exec(N, "io.flush();");
+	nsp_exec(N, "lib.io.flush();");
 	if (N->err) {
 		printf("\r\nerrno=%d :: \"%s\"\r\n", N->err, N->errbuf);
 	}
