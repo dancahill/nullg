@@ -12,7 +12,7 @@ DEST_VAR="@localstatedir@"
 TEMPDIR=/tmp
 CURDATE=`date +%Y%m%d-%H`
 OLDDATE=`date +%Y%m%d -d '7 days ago'`
-umask 0077
+umask 0007
 
 cd ${DEST_BIN}
 rm -f ${DEST_VAR}/backup/backup-${OLDDATE}-??.tgz
@@ -22,8 +22,7 @@ ${DEST_BIN}/nullg-dbutil dump ${DEST_VAR}/backup-${CURDATE}.sql
 gzip ${DEST_VAR}/backup-${CURDATE}.sql
 echo -n "Archiving backup tarball..."
 cd ${DEST_VAR}
-#tar zchf backup/backup-${CURDATE}.tgz --directory . --exclude=backup ${DEST_ETC} ${DEST_VAR}
 tar zcf backup/backup-${CURDATE}.tgz --directory . --exclude=backup ${DEST_ETC} ${DEST_VAR}
 rm -f ${DEST_VAR}/backup-${CURDATE}.sql ${DEST_VAR}/backup-${CURDATE}.sql.gz
-chmod 600 ${DEST_VAR}/backup/backup-${CURDATE}.tgz
+chmod 660 ${DEST_VAR}/backup/backup-${CURDATE}.tgz
 echo "done."
