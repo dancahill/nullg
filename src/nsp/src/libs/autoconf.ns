@@ -1,35 +1,41 @@
 #!../../bin/nsp -b
 
 function expect(msg, a, b) {
-	print("  ", string.sub(msg+"                      ", 0, 20), " ");
+	print("  ", lib.string.sub(msg+"                      ", 0, 20), " ");
 	if (b==true) print("pass\n"); else print("fail\n");
 	return;
 }
 
 function testsub(title, l, c, showfail) {
-	file.unlink("conftest.c");
-	file.unlink("conftest.exe");
-	file.unlink("conftest.out");
-	file.unlink("conftest.obj");
+	if (_ostype_.startswith("MacOS") && (title=="DNS" || title=="LDAP")) {
+		printf("autofailing %s on %s\r\n", title, _ostype_);
+		expect("testing "+title, true, false);
+		return 0;
+	}
+	lib.file.unlink("conftest.c");
+	lib.file.unlink("conftest.exe");
+	lib.file.unlink("conftest.out");
+	lib.file.unlink("conftest.obj");
 	if (ostype=='posix') {
-		file.writeall("conftest.c", c);
-		r1=system(cc+" conftest.c "+l+" -o conftest.out 2>/dev/null");
-		if (r1==0) r2=file.stat("conftest.out");
+		lib.file.writeall("conftest.c", c);
+		r1=lib.system(cc+" conftest.c "+l+" -o conftest.out 2>/dev/null");
+		//r1=lib.system(cc+" conftest.c "+l+" -o conftest.out");
+		if (r1==0) r2=lib.file.stat("conftest.out");
 	} else if (ostype=='windows') {
-		file.writeall("conftest.c", c);
-//		r1=system(cc+" -nologo conftest.c "+l+" -o conftest.exe > nul");
-		r1=system(cc+" -nologo conftest.c "+l+" /Feconftest.exe > nul");
-		if (r1==0) r2=file.stat("conftest.exe");
+		lib.file.writeall("conftest.c", c);
+//		r1=lib.system(cc+" -nologo conftest.c "+l+" -o conftest.exe > nul");
+		r1=lib.system(cc+" -nologo conftest.c "+l+" /Feconftest.exe > nul");
+		if (r1==0) r2=lib.file.stat("conftest.exe");
 	} else {
 		print("unknown ostype '", ostype, "'[", _ENV['OS'], "][", _ENV['OSTYPE'], "]\n");
 		print(serialize(_GLOBALS));
 		expect("testing "+title, true, false);
 		return 0;
 	}
-	file.unlink("conftest.c");
-	file.unlink("conftest.exe");
-	file.unlink("conftest.out");
-	file.unlink("conftest.obj");
+	lib.file.unlink("conftest.c");
+	lib.file.unlink("conftest.exe");
+	lib.file.unlink("conftest.out");
+	lib.file.unlink("conftest.obj");
 	if ((r1==0)&&(typeof(r2)=='table')) {
 		expect("testing "+title, true, true);
 		return 1;
@@ -44,7 +50,8 @@ function dotests() {
 	//if (_ARGS[3]!=null) global ostype=_ARGS[3];
 	if (_ARGS[3]!=null) global cctype=_ARGS[3];
 	if (_ARGS[4]!=null) global ostype=_ARGS[4];
-	// print("\t[", cctype, "][", ostype, "]\n");
+	//print("\t[", cctype, "][", ostype, "]\n");
+	//printf("[_ostype_=%s]\r\n", _ostype_);
 	if (ostype==null) {
 		if (_ENV['OS']=='Windows_NT') {
 			if (_ENV['MAKE_MODE']=='unix') {
@@ -59,8 +66,8 @@ function dotests() {
 	}
 
 	if (ostype=='windows') {
-		x1=file.stat(_filepath+"/../../include/nsp/config-win.h");
-		x2=file.stat(_filepath+"/../config-win.mak");
+		x1=lib.file.stat(_filepath+"/../../include/nsp/config-win.h");
+		x2=lib.file.stat(_filepath+"/../config-win.mak");
 		if (typeof(x1)!='table') {
 			printf("config-win.h does not exist\r\n");
 		} else if (x1.size<1) {
@@ -74,7 +81,7 @@ function dotests() {
 			return;
 		}
 	} else {
-		x=file.stat("../config.mak");
+		x=lib.file.stat("../config.mak");
 		if (typeof(x)=='table') if (x.size>0) return;
 	}
 
@@ -84,7 +91,7 @@ function dotests() {
 	config_inc=0;
 	config={};
 	if (ostype=='dos') {
-		if ((x=system("tcc.exe 1>nul 2>nul"))==0) {
+		if ((x=lib.system("tcc.exe 1>nul 2>nul"))==0) {
 			print("  found TurboC++ on DOS\n");
 			global cc="tcc.exe";
 			memmodel="l";
@@ -106,8 +113,8 @@ function dotests() {
 		}
 	}
 	if (ostype=='windows') {
-		if (system("cl.exe 1>nul 2>nul")==0) {
-			//system("cl.exe");
+		if (lib.system("cl.exe 1>nul 2>nul")==0) {
+			//lib.system("cl.exe");
 			print("  found VC on Win32 OS\n");
 			global cc="cl.exe";
 			config_mak+="CC     = "+cc+"\n";
@@ -118,7 +125,7 @@ function dotests() {
 			config_nsp+="global CFLAGS  = \"/nologo /W3 /O2 /MD /EHsc /DWIN32 /DNDEBUG /D_MBCS /D_LIB /FD\";\n";
 			config_nsp+="if (_LINKAGE_==='shared') CFLAGS+=\" /DPIC\";\n";
 			config_nsp+="global LDFLAGS = \"\";\n\n";
-		} else if (system("gcc --version > nul")==0) {
+		} else if (lib.system("gcc --version > nul")==0) {
 			print("  found GCC on Win32 OS (MinGW?)\n");
 			global cc="gcc";
 			// not a good hack, but i'm lazy
@@ -129,7 +136,7 @@ function dotests() {
 		}
 	}
 	if (ostype=='posix') {
-		if (system("gcc --version 1>/dev/null 2>/dev/null")==0) {
+		if (lib.system("gcc --version 1>/dev/null 2>/dev/null")==0) {
 			print("  found GCC on posix OS\n");
 			global cc="gcc";
 			config_mak+="CC = "+cc+"\n";
@@ -261,6 +268,22 @@ function dotests() {
 			config_ne2+="\thave_mbedtls=true";
 			config.have_mbedtls=true;
 		}
+
+		//gcc -o hello_mongoc hello_mongoc.c \
+		//    -I/usr/local/include/libbson-1.0 -I/usr/local/include/libmongoc-1.0 \
+		//    -lmongoc-1.0 -lbson-1.0
+
+		//cc test.c -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0 -lmongoc-1.0 -lbson-1.0
+		if (testsub("MONGODB", "-lmongoc-1.0 -lbson-1.0 -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0", "#include <libbson-1.0/bson.h>\n#include <libmongoc-1.0/mongoc.h>\nint main() { return 0; }\n")) {
+			config_mak+="CFLAGS  += -DHAVE_MONGODB -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0\n";
+			//if (build_fat) config_mak+="LDFLAGS += -lnsp_mongodb -lmongodb\n\n";
+			config_nsp+="CFLAGS  += \" -DHAVE_MONGODB -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0\";\n";
+			//if (build_fat) config_nsp+="LDFLAGS += \" -lnsp_mongodb -lmongodb\";\n\n";
+			if (config_inc++) config_ne2+=",\n";
+			config_ne2+="\thave_mongodb=true";
+			config.have_mongodb=true;
+		}
+
 		if (testsub("MYSQL", "-lmysqlclient", "#include <mysql/mysql.h>\nint main() { return 0; }\n", false)) {
 			config_mak+="CFLAGS  += -DHAVE_MYSQL\n";
 			if (build_fat) config_mak+="LDFLAGS += -lnsp_mysql -lmysqlclient\n";
@@ -390,7 +413,7 @@ function dotests() {
 			config.have_odbc=true;
 		}
 		/* OpenSSL doesn't conflict with mbed TLS, but it does override it... */
-		if (testsub("OPENSSL", "", "#include <openssl/ssl.h>\n#pragma comment(lib, \"libeay32MD.lib\")\n#pragma comment(lib, \"ssleay32MD.lib\")\nint main() { return 0; }\n")) {
+		if (testsub("OPENSSL", "", "#include <openssl/ssl.h>\n#pragma comment(lib, \"libcrypto64MD.lib\")\n#pragma comment(lib, \"libssl64MD.lib\")\nint main() { return 0; }\n")) {
 //			config_mak+="CFLAGS  += -DHAVE_OPENSSL\n";
 //			if (build_fat) config_mak+="LDFLAGS += -lcrypto -lssl\n\n";
 //			config_nsp+="CFLAGS  += \" -DHAVE_OPENSSL\";\n";
@@ -448,6 +471,7 @@ function dotests() {
 	config_h+=sprintf("%s#define CONFIG_HAVE_LDAP 1\r\n",    config.have_ldap    ?"":"// ");
 	config_h+=sprintf("%s#define CONFIG_HAVE_MATH 1\r\n",    config.have_math    ?"":"// ");
 	config_h+=sprintf("%s#define CONFIG_HAVE_MBEDTLS 1\r\n", config.have_mbedtls ?"":"// ");
+	config_h+=sprintf("%s#define CONFIG_HAVE_MONGODB 1\r\n", config.have_mongodb ?"":"// ");
 	config_h+=sprintf("%s#define CONFIG_HAVE_MYSQL 1\r\n",   config.have_mysql   ?"":"// ");
 	config_h+=sprintf("%s#define CONFIG_HAVE_ODBC 1\r\n",    config.have_odbc    ?"":"// ");
 	config_h+=sprintf("%s#define CONFIG_HAVE_OPENSSL 1\r\n", config.have_openssl ?"":"// ");
@@ -461,13 +485,13 @@ function dotests() {
 	config_h+=sprintf("%s#define CONFIG_MISSING_SOCKLEN 1\r\n", config.missing_socklen ?"":"// ");
 
 	if (ostype=='windows') {
-		file.writeall(_filepath+"/../config-win.mak", config_mak);
-		file.writeall(_filepath+"/../config-win.ns", config_ne2+config_nsp);
-		file.writeall(_filepath+"/../../include/nsp/config-win.h", config_h);
+		lib.file.writeall(_filepath+"/../config-win.mak", config_mak);
+		lib.file.writeall(_filepath+"/../config-win.ns", config_ne2+config_nsp);
+		lib.file.writeall(_filepath+"/../../include/nsp/config-win.h", config_h);
 	} else {
-		file.writeall(_filepath+"/../config.mak", config_mak);
-		file.writeall(_filepath+"/../config.ns", config_ne2+config_nsp);
-		file.writeall(_filepath+"/../../include/nsp/config.h", config_h);
+		lib.file.writeall(_filepath+"/../config.mak", config_mak);
+		lib.file.writeall(_filepath+"/../config.ns", config_ne2+config_nsp);
+		lib.file.writeall(_filepath+"/../../include/nsp/config.h", config_h);
 	}
 	print("\n");
 	return;

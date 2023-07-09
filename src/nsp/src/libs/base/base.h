@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include "nsp/config-win.h"
 #else
 #include "nsp/config.h"
@@ -33,7 +33,7 @@ extern "C" {
 
 #ifdef HAVE_THREADS
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <process.h>
 #else
 #include <pthread.h>
@@ -44,7 +44,7 @@ typedef struct {
 	char      obj_type[16]; /* tell us all about yourself in 15 characters or less */
 	NSP_CFREE obj_term;     /* now tell us how to kill you */
 				/* now begin the stuff that's mutex-specific */
-#ifdef WIN32
+#ifdef _WIN32
 	CRITICAL_SECTION mutex;
 #else
 	pthread_mutex_t mutex;
@@ -56,7 +56,7 @@ typedef struct {
 	char      obj_type[16]; /* tell us all about yourself in 15 characters or less */
 	NSP_CFREE obj_term;     /* now tell us how to kill you */
 				/* now begin the stuff that's thread-specific */
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE handle;
 	unsigned int id;
 #else
@@ -109,7 +109,7 @@ NSP_FUNCTION(libnsp_base_thread_start);
 NSP_FUNCTION(libnsp_base_thread_thread);
 #endif
 /* winapi.c */
-#ifdef WIN32
+#ifdef _WIN32
 NSP_FUNCTION(libnsp_winapi_beep);
 NSP_FUNCTION(libnsp_winapi_createprocess);
 NSP_FUNCTION(libnsp_winapi_messagebox);

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,15 +23,9 @@ int nspbase_register_all(nsp_state *N)
 {
 	obj_t *tobj, *tobj2;
 
-	tobj = nsp_settable(N, &N->g, "base64");
-	tobj->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj, "decode", (NSP_CFUNC)libnsp_base_base64_decode);
-	nsp_setcfunc(N, tobj, "encode", (NSP_CFUNC)libnsp_base_base64_encode);
+	nsp_setcfunc(N, nsp_settable(N, &N->g, "lib"), "dirlist", (NSP_CFUNC)libnsp_base_dirlist);
 
-	nsp_setcfunc(N, &N->g, "dirlist", (NSP_CFUNC)libnsp_base_dirlist);
-
-	tobj = nsp_getobj(N, &N->g, "file");
-	if (!nsp_istable(tobj)) tobj = nsp_settable(N, &N->g, "file");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "file");
 	tobj->val->attr |= NST_HIDDEN;
 	//nsp_setcfunc(N, tobj, "append", (NSP_CFUNC)libnsp_base_file_writeall);
 	//nsp_setcfunc(N, tobj, "chdir", (NSP_CFUNC)libnsp_base_file_chdir);
@@ -42,42 +36,47 @@ int nspbase_register_all(nsp_state *N)
 	//nsp_setcfunc(N, tobj, "unlink", (NSP_CFUNC)libnsp_base_file_unlink);
 	//nsp_setcfunc(N, tobj, "writeall", (NSP_CFUNC)libnsp_base_file_writeall);
 
-	tobj = nsp_settable(N, &N->g, "pipe");
+#ifdef HAVE_PIPE
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "pipe");
 	tobj->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj, "close", (NSP_CFUNC)libnsp_base_pipe_close);
 	nsp_setcfunc(N, tobj, "open", (NSP_CFUNC)libnsp_base_pipe_open);
 	nsp_setcfunc(N, tobj, "read", (NSP_CFUNC)libnsp_base_pipe_read);
 	nsp_setcfunc(N, tobj, "write", (NSP_CFUNC)libnsp_base_pipe_write);
-	nsp_setcfunc(N, tobj, "close", (NSP_CFUNC)libnsp_base_pipe_close);
+#endif
 
-	nsp_setcfunc(N, &N->g, "rot13", (NSP_CFUNC)libnsp_base_rot13);
-
-	tobj = nsp_settable(N, &N->g, "regex");
-	tobj->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj, "match", (NSP_CFUNC)libnsp_regex_match);
-	nsp_setcfunc(N, tobj, "replace", (NSP_CFUNC)libnsp_regex_replace);
-
-
-	tobj = nsp_settable(N, &N->g, "table");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "table");
 	tobj->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj, "sortbyname", (NSP_CFUNC)libnsp_base_sort_byname);
 	nsp_setcfunc(N, tobj, "sortbykey", (NSP_CFUNC)libnsp_base_sort_bykey);
 
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "text");
+	tobj->val->attr |= NST_HIDDEN;
+	tobj2 = nsp_settable(N, tobj, "base64");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "decode", (NSP_CFUNC)libnsp_base_base64_decode);
+	nsp_setcfunc(N, tobj2, "encode", (NSP_CFUNC)libnsp_base_base64_encode);
+	tobj2 = nsp_settable(N, tobj, "regex");
+	tobj2->val->attr |= NST_HIDDEN;
+	nsp_setcfunc(N, tobj2, "match", (NSP_CFUNC)libnsp_regex_match);
+	nsp_setcfunc(N, tobj2, "replace", (NSP_CFUNC)libnsp_regex_replace);
+	nsp_setcfunc(N, tobj, "rot13", (NSP_CFUNC)libnsp_base_rot13);
+
 #ifdef HAVE_THREADS
-	tobj = nsp_settable(N, &N->g, "thread");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "thread");
 	tobj->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj, "thread", (NSP_CFUNC)libnsp_base_thread_thread);
-	nsp_setcfunc(N, tobj, "start",  (NSP_CFUNC)libnsp_base_thread_start);
+	nsp_setcfunc(N, tobj, "start", (NSP_CFUNC)libnsp_base_thread_start);
 	nsp_setcfunc(N, tobj, "finish", (NSP_CFUNC)libnsp_base_thread_finish);
 	tobj2 = nsp_settable(N, tobj, "mutex");
 	tobj2->val->attr |= NST_HIDDEN;
-	nsp_setcfunc(N, tobj2, "mutex",  (NSP_CFUNC)libnsp_base_thread_mutex_mutex);
-	nsp_setcfunc(N, tobj2, "lock",   (NSP_CFUNC)libnsp_base_thread_mutex_lock);
+	nsp_setcfunc(N, tobj2, "mutex", (NSP_CFUNC)libnsp_base_thread_mutex_mutex);
+	nsp_setcfunc(N, tobj2, "lock", (NSP_CFUNC)libnsp_base_thread_mutex_lock);
 	nsp_setcfunc(N, tobj2, "unlock", (NSP_CFUNC)libnsp_base_thread_mutex_unlock);
-	nsp_setcfunc(N, tobj2, "free",   (NSP_CFUNC)libnsp_base_thread_mutex_free);
+	nsp_setcfunc(N, tobj2, "free", (NSP_CFUNC)libnsp_base_thread_mutex_free);
 #endif
-
-#ifdef WIN32
-	tobj = nsp_settable(N, &N->g, "win");
+#ifdef _WIN32
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "Windows");
 	tobj->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj, "Beep", (NSP_CFUNC)libnsp_winapi_beep);
 	nsp_setcfunc(N, tobj, "CreateProcess", (NSP_CFUNC)libnsp_winapi_createprocess);
@@ -85,7 +84,6 @@ int nspbase_register_all(nsp_state *N)
 	nsp_setcfunc(N, tobj, "PlaySound", (NSP_CFUNC)libnsp_winapi_playsound);
 	nsp_setcfunc(N, tobj, "ShellExecute", (NSP_CFUNC)libnsp_winapi_shellexecute);
 #endif
-
 	return 0;
 }
 

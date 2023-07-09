@@ -33,8 +33,7 @@ NSP_FUNCTION(libnsp_base_rot13)
 	while (*p) {
 		if (nc_islower(*p)) {
 			if (*p > 'm') *p -= 13; else *p += 13;
-		}
-		else if (nc_isupper(*p)) {
+		} else if (nc_isupper(*p)) {
 			if (*p > 'M') *p -= 13; else *p += 13;
 		}
 		p++;

@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ NSP_FUNCTION(libnsp_base_thread_mutex_mutex)
 	cobj = nsp_setcdata(N, thisobj, "_mutex", NULL, 0);
 	cobj->val->d.str = (void *)mutex;
 	cobj->val->size = sizeof(OS_MUTEX) + 1;
-#ifdef WIN32
+#ifdef _WIN32
 	InitializeCriticalSection(&mutex->mutex);
 #else
 	pthread_mutex_init(&mutex->mutex, NULL);
@@ -84,7 +84,7 @@ NSP_FUNCTION(libnsp_base_thread_mutex_lock)
 	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "mutex") != 0)
 		n_error(N, NE_SYNTAX, __FN__, "expected a mutex");
 	mutex = (OS_MUTEX *)cobj->val->d.str;
-#ifdef WIN32
+#ifdef _WIN32
 	EnterCriticalSection(&mutex->mutex);
 #else
 	pthread_mutex_lock(&mutex->mutex);
@@ -110,7 +110,7 @@ NSP_FUNCTION(libnsp_base_thread_mutex_unlock)
 	if (cobj->val->type != NT_CDATA || cobj->val->d.str == NULL || nc_strcmp(cobj->val->d.str, "mutex") != 0)
 		n_error(N, NE_SYNTAX, __FN__, "expected a mutex");
 	mutex = (OS_MUTEX *)cobj->val->d.str;
-#ifdef WIN32
+#ifdef _WIN32
 	LeaveCriticalSection(&mutex->mutex);
 #else
 	pthread_mutex_unlock(&mutex->mutex);
@@ -197,7 +197,7 @@ NSP_FUNCTION(libnsp_base_thread_thread)
 #undef __FN__
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 static unsigned _stdcall thread_main(void *x)
 #else
 static void *thread_main(void *x)
@@ -209,7 +209,7 @@ static void *thread_main(void *x)
 	obj_t *fobj;
 	uchar *p;
 
-#ifdef WIN32
+#ifdef _WIN32
 	thread->id = GetCurrentThreadId();
 #else
 	thread->id = pthread_self();
@@ -271,7 +271,7 @@ NSP_FUNCTION(libnsp_base_thread_start)
 
 	nsp_linkval(N, &thread->this, thisobj);
 
-#ifdef WIN32
+#ifdef _WIN32
 	unsigned long int id;
 	thread->handle = (HANDLE)_beginthreadex(NULL, 0, thread_main, thread, 0, &id);
 #else

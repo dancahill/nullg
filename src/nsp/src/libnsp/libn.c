@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 			nsp_strcat(N, robj, buf, buflen);
 			buflen = 0;
 		}
-		if (nsp_isnull(cobj) || cobj->val->attr&NST_HIDDEN || cobj->val->attr&NST_SYSTEM) continue;
+		if (nsp_isnull(cobj) || cobj->val->attr & NST_HIDDEN || cobj->val->attr & NST_SYSTEM) continue;
 		g = (depth < 1) ? "global " : "";
 
 		b = 0;
@@ -108,8 +108,7 @@ void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s%s%s%s = ", g, b ? "[\"" : "", cobj->name, b ? "\"]" : "");
 			}
 			buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s", nsp_tostr(N, cobj));
-		}
-		else if (cobj->val->type == NT_STRING) {
+		} else if (cobj->val->type == NT_STRING) {
 			if (ent++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s\n", depth ? "," : "");
 			if (depth) {
 				for (i = 0; i < depth; i++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\t");
@@ -120,8 +119,7 @@ void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 			buflen = 0;
 			n_escape(N, cobj->val->d.str ? cobj->val->d.str : "", cobj->val->size);
 			buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\"");
-		}
-		else if (cobj->val->type == NT_TABLE) {
+		} else if (cobj->val->type == NT_TABLE) {
 			if (nc_strcmp(cobj->name, "_GLOBALS") == 0) continue;
 			/* if (nc_strcmp(cobj->name, "this")==0) continue; */
 			if (ent++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s\n", depth ? "," : "");
@@ -137,8 +135,7 @@ void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 				n_dumpvars(N, cobj->val->d.table.f, depth + 1);
 				for (i = 0; i < depth; i++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\t");
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "}");
-			}
-			else {
+			} else {
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, " }");
 			}
 		}
@@ -160,7 +157,7 @@ NSP_FUNCTION(nl_flush)
 	int rc;
 
 	if (N == NULL || N->outbuflen == 0) return 0;
-	cobj = &N->g;
+	cobj = nsp_settable(N, &N->g, "lib");
 	if (!nsp_istable(cobj)) goto flush;
 	for (cobj = cobj->val->d.table.f; cobj; cobj = cobj->next) {
 		if (nc_strcmp(cobj->name, "io") != 0) continue;
@@ -176,7 +173,7 @@ flush:
 	if (N->outbuflen == 0) return 0;
 	N->outbuffer[N->outbuflen] = '\0';
 	if ((rc = write(STDOUT_FILENO, N->outbuffer, N->outbuflen)) != N->outbuflen) {
-#if defined(WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 		_RPT1(_CRT_WARN, "nl_flush write() wrote less bytes than expected\r\n", "");
 #endif
 		N->outbuflen = 0;
@@ -198,8 +195,7 @@ static int writestr(nsp_state *N, obj_t *cobj)
 	if (nsp_isstr(cobj)) {
 		p = cobj->val->d.str;
 		len = cobj->val->size;
-	}
-	else {
+	} else {
 		p = nsp_tostr(N, cobj);
 		len = nc_strlen(p);
 	}
@@ -246,15 +242,20 @@ NSP_FUNCTION(nl_write)
 NSP_FUNCTION(nl_break)
 {
 #define __FN__ __FILE__ ":nl_break()"
-#if defined(WIN32)
+	obj_t *cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "debug"), "break2");
+	if (nsp_typeof(cobj) == NT_CFUNC) {
+		cobj->val->d.cfunc(N);
+	} else {
+#if defined(_WIN32)
 #if defined(_DEBUG)
-	__debugbreak();
-	//DebugBreak();
+		__debugbreak();
+		//DebugBreak();
 #endif
 #else
-	//__builtin_trap();
-	raise(SIGINT);
+		//__builtin_trap();
+		raise(SIGINT);
 #endif
+	}
 	return 0;
 #undef __FN__
 }
@@ -291,6 +292,8 @@ static COROUTINE *getcoroutineconn(nsp_state *N)
 	conn = (COROUTINE *)cobj->val->d.str;
 	return conn;
 }
+
+void n_freeexeccontext(nsp_state *N, nsp_execcontext **context);
 
 static void coroutine_murder(nsp_state *N, obj_t *cobj)
 {
@@ -375,8 +378,7 @@ NSP_FUNCTION(nl_coroutine)
 
 	settrace();
 	if (nc_strcmp(fname, "coroutine") == 0) {
-	}
-	else if (nc_strcmp(fname, "resume") == 0) {
+	} else if (nc_strcmp(fname, "resume") == 0) {
 		//n_dumpvars(N, &N->context->l, 0);
 		//n_warn(N, __FN__, "coroutine resumed: &N->context->l='%s'", N->r.val->d.str);
 		//nsp_unlinkval(N, &N->r);
@@ -397,8 +399,7 @@ NSP_FUNCTION(nl_coroutine)
 		if (conn->firstrun) {
 			//n_warn(N, __FN__, "coroutine resumed - first run, context=0x%08x readptr=0x%08x", N->context, n_context_readptr);
 			conn->lastreadptr = n_context_readptr;
-		}
-		else {
+		} else {
 			//n_warn(N, __FN__, "coroutine resumed, context=0x%08x readptr=0x%08x", N->context, n_context_readptr);
 			n_context_readptr = conn->lastreadptr;
 		}
@@ -430,15 +431,13 @@ NSP_FUNCTION(nl_coroutine)
 			obj_t *cobj = nsp_getobj(N, thisobj, "costate");
 			if (cobj) coroutine_murder(N, cobj);
 			nsp_setstr(N, thisobj, "status", "done", -1);
-		}
-		else {
+		} else {
 			nsp_setstr(N, thisobj, "status", "waiting", -1);
 		}
 		N->yielded = 0;
 		N->context = oldctx;
 		//n_warn(N, __FN__, "coroutine resume: done");
-	}
-	else if (nc_strcmp(fname, "yield") == 0) {
+	} else if (nc_strcmp(fname, "yield") == 0) {
 		//if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
 		N->yielded = 1;
 		//n_warn(N, __FN__, "coroutine yield");
@@ -449,12 +448,10 @@ NSP_FUNCTION(nl_coroutine)
 		n_dumpvars(N, &N->context->l, 0);
 		//n_warn(N, __FN__, "coroutine yield: &newctx->l='%s'", N->r.val->d.str);
 		nsp_unlinkval(N, &N->r);
-	}
-	else if (nc_strcmp(fname, "status") == 0) {
+	} else if (nc_strcmp(fname, "status") == 0) {
 		conn = getcoroutineconn(N);
 		n_warn(N, __FN__, "coroutine '%s' empty", fname);
-	}
-	else {
+	} else {
 		n_warn(N, __FN__, "coroutine method '%s' missing?", fname);
 	}
 	return 0;
@@ -466,7 +463,7 @@ NSP_FUNCTION(nl_coroutine)
  */
 
 #include <stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
@@ -474,8 +471,11 @@ NSP_FUNCTION(nl_coroutine)
 #ifdef HAVE_DL
 
  //#include "libdl.h"
-#ifdef WIN32
+#if defined(_WIN32)
 #define LIBEXT "dll"
+#elif defined(__APPLE__)
+#include <dlfcn.h>
+#define LIBEXT "dylib"
 #else
 #include <dlfcn.h>
 #define LIBEXT "so"
@@ -483,7 +483,7 @@ NSP_FUNCTION(nl_coroutine)
 
 static void *lib_open(const char *file)
 {
-#ifdef WIN32
+#if defined WIN32
 	return LoadLibraryA(file);
 #else
 	return dlopen(file, RTLD_NOW);
@@ -492,7 +492,7 @@ static void *lib_open(const char *file)
 
 static void *lib_sym(void *handle, const char *name)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return GetProcAddress(handle, name);
 #else
 	return dlsym(handle, name);
@@ -501,30 +501,46 @@ static void *lib_sym(void *handle, const char *name)
 
 static char *lib_error(nsp_state *N)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	LPTSTR lpMsgBuf;
 	DWORD rc;
 
 	rc = GetLastError();
 	if (!rc) return "";
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, rc, 0, (LPTSTR)&lpMsgBuf, 0, NULL);
-	nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", lpMsgBuf, -1);
+	nsp_setstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error", lpMsgBuf, -1);
 	LocalFree(lpMsgBuf);
 	SetLastError(0);
-	return nsp_getstr(N, nsp_getobj(N, &N->g, "dl"), "last_error");
+	return nsp_getstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error");
 #else
-	nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", dlerror(), -1);
-	return nsp_getstr(N, nsp_getobj(N, &N->g, "dl"), "last_error");
+	nsp_setstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error", dlerror(), -1);
+	return nsp_getstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error");
 #endif
 }
 
 static int lib_close(void *handle)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return FreeLibrary(handle);
 #else
 	return dlclose(handle);
 #endif
+}
+
+static unsigned short lib_isloaded(nsp_state *N, char *libname, unsigned short setloaded)
+{
+	obj_t *cobj, *tobj;
+
+	tobj = nsp_settable(N, nsp_settable(N, nsp_settable(N, &N->g, "lib"), "dl"), "loaded");
+	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
+		if (!nsp_isstr(cobj)) continue;
+		if (nc_strcmp(cobj->name, libname) == 0) return 1;
+	}
+	if (setloaded) {
+		nsp_setbool(N, tobj, libname, 1);
+		return 1;
+	}
+	return 0;
 }
 
 NSP_FUNCTION(nl_dl_load)
@@ -533,23 +549,20 @@ NSP_FUNCTION(nl_dl_load)
 	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	obj_t *cobj, *tobj;
 	NSP_CFUNC cfunc;
-#ifdef WIN32
+#ifdef _WIN32
 	HINSTANCE l;
 #else
 	void *l;
 #endif
 	char namebuf[512];
 
-	nsp_setnull(N, nsp_getobj(N, &N->g, "dl"), "last_error");
+	nsp_setnull(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error");
 	nsp_setbool(N, &N->r, "", 0);
-
-	if (!nsp_isstr(cobj1) || cobj1->val->size < 1) {
-		return 0;
-}
-	tobj = nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "path");
+	n_expect_argtype(N, NT_STRING, 1, cobj1, 0);
+	tobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "path");
 	if (!nsp_istable(tobj)) {
-		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "dl.path not found", -1);
-		n_error(N, NE_SYNTAX, __FN__, "dl.path not found");
+		nsp_setstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error", "lib.dl.path not found", -1);
+		n_error(N, NE_SYNTAX, __FN__, "lib.dlpath not found");
 		return 0;
 	}
 	nsp_setbool(N, &N->r, "", 0);
@@ -561,19 +574,24 @@ NSP_FUNCTION(nl_dl_load)
 			if ((cfunc = (NSP_CFUNC)lib_sym(l, "nsplib_init")) != NULL) {
 				cfunc(N);
 				nsp_setbool(N, &N->r, "", 1);
+				lib_isloaded(N, cobj1->val->d.str, 1);
 				return 0;
-			}
-			else {
+			} else {
 				lib_error(N);
 				lib_close(l);
-				n_error(N, NE_SYNTAX, __FN__, "%s", nsp_getstr(N, nsp_getobj(N, &N->g, "dl"), "last_error"));
+				n_error(N, NE_SYNTAX, __FN__, "failed to open library '%s'. Missing nsplib_init", cobj1->val->d.str);
 				return 0;
 			}
+		} else {
+			lib_error(N);
+			if (l) lib_close(l);
+			n_error(N, NE_SYNTAX, __FN__, "failed to open library '%s'. %s", cobj1->val->d.str, nsp_getstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error"));
+			return 0;
 		}
 	}
-	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "dl"), "last_error");
+	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error");
 	if (nsp_isnull(cobj)) {
-		nsp_setstr(N, nsp_getobj(N, &N->g, "dl"), "last_error", "failed to open library", -1);
+		nsp_setstr(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "dl"), "last_error", "failed to open library", -1);
 	}
 	n_error(N, NE_SYNTAX, __FN__, "%s", nsp_tostr(N, cobj));
 	return 0;
@@ -611,7 +629,7 @@ NSP_FUNCTION(nl_fileexists)
 	settrace();
 	n_expect_argtype(N, NT_STRING, 1, cobj1, 0);
 	file = cobj1->val->d.str;
-#if defined(WIN32) || defined(__TURBOC__)
+#if defined(_WIN32) || defined(__TURBOC__)
 	rc = stat(file, &sb);
 #else
 	rc = lstat(file, &sb);
@@ -728,7 +746,7 @@ NSP_FUNCTION(nl_filestat)
 	//if (cobj1->val->type != NT_STRING || cobj1->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	n_expect_argtype(N, NT_STRING, 1, cobj1, 0);
 	file = cobj1->val->d.str;
-#if defined(WIN32) || defined(__TURBOC__)
+#if defined(_WIN32) || defined(__TURBOC__)
 	rc = stat(file, &sb);
 	if (rc != 0) {
 		nsp_setnum(N, &N->r, "", rc);
@@ -740,7 +758,7 @@ NSP_FUNCTION(nl_filestat)
 		nsp_setnum(N, &N->r, "", rc);
 		return 0;
 	}
-	if (!(~sb.st_mode&S_IFLNK)) {
+	if (!(~sb.st_mode & S_IFLNK)) {
 		sym = 1;
 		if (stat(file, &sb) != 0) sym = 2;
 	}
@@ -750,12 +768,10 @@ NSP_FUNCTION(nl_filestat)
 	if (sym == 2) {
 		nsp_setnum(N, &tobj, "size", 0);
 		nsp_setstr(N, &tobj, "type", "broken", 6);
-	}
-	else if ((sb.st_mode&S_IFDIR)) {
+	} else if ((sb.st_mode & S_IFDIR)) {
 		nsp_setnum(N, &tobj, "size", 0);
 		nsp_setstr(N, &tobj, "type", sym ? "dirp" : "dir", sym ? 4 : 3);
-	}
-	else {
+	} else {
 		nsp_setnum(N, &tobj, "size", sb.st_size);
 		nsp_setstr(N, &tobj, "type", sym ? "filep" : "file", sym ? 5 : 4);
 	}
@@ -803,8 +819,7 @@ NSP_FUNCTION(nl_filewriteall)
 	n_expect_argtype(N, NT_STRING, 1, cobj1, 0);
 	if (nc_strcmp(fname, "writeall") == 0) {
 		fd = open(cobj1->val->d.str, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
-	}
-	else if (nc_strcmp(fname, "append") == 0) {
+	} else if (nc_strcmp(fname, "append") == 0) {
 		fd = open(cobj1->val->d.str, O_WRONLY | O_BINARY | O_CREAT | O_APPEND, S_IREAD | S_IWRITE);
 	}
 	if (fd == -1) {
@@ -849,75 +864,59 @@ NSP_FUNCTION(nl_math)
 	n_expect_argtype(N, NT_NUMBER, 1, cobj1, 0);
 	if (nc_strcmp(fname, "abs") == 0) {
 		n = fabs(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "ceil") == 0) {
+	} else if (nc_strcmp(fname, "ceil") == 0) {
 		n = cobj1->val->d.num;
 		if ((int)n < n) n = (int)n + 1; else n = (int)n;
-	}
-	else if (nc_strcmp(fname, "floor") == 0) {
+	} else if (nc_strcmp(fname, "floor") == 0) {
 		n = (int)cobj1->val->d.num;
-	}
-	else if (nc_strcmp(fname, "ceil") == 0) {
+	} else if (nc_strcmp(fname, "ceil") == 0) {
 		n = ceil(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "floor") == 0) {
+	} else if (nc_strcmp(fname, "floor") == 0) {
 		n = floor(cobj1->val->d.num);
 	}
 	/* add trig functions */
 	else if (nc_strcmp(fname, "acos") == 0) {
 		n = acos(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "asin") == 0) {
+	} else if (nc_strcmp(fname, "asin") == 0) {
 		n = asin(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "atan") == 0) {
+	} else if (nc_strcmp(fname, "atan") == 0) {
 		n = atan(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "atan2") == 0) {
+	} else if (nc_strcmp(fname, "atan2") == 0) {
 		//if (cobj2->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, fname, "expected a number for arg2");
 		n_expect_argtype(N, NT_NUMBER, 2, cobj2, 0);
 		n = atan2(cobj1->val->d.num, cobj2->val->d.num);
-	}
-	else if (nc_strcmp(fname, "cos") == 0) {
+	} else if (nc_strcmp(fname, "cos") == 0) {
 		n = cos(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "sin") == 0) {
+	} else if (nc_strcmp(fname, "sin") == 0) {
 		n = sin(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "tan") == 0) {
+	} else if (nc_strcmp(fname, "tan") == 0) {
 		n = tan(cobj1->val->d.num);
 	}
 	/* add exp and log functions */
 	else if (nc_strcmp(fname, "exp") == 0) {
 		n = exp(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "log") == 0) {
+	} else if (nc_strcmp(fname, "log") == 0) {
 		if (cobj1->val->d.num <= 0) n_error(N, NE_SYNTAX, fname, "arg must not be zero");
 		n = log(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "log10") == 0) {
+	} else if (nc_strcmp(fname, "log10") == 0) {
 		if (cobj1->val->d.num <= 0) n_error(N, NE_SYNTAX, fname, "arg must not be zero");
 		n = log10(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "pow") == 0) {
+	} else if (nc_strcmp(fname, "pow") == 0) {
 		if (cobj2->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, fname, "expected a number for arg2");
 		n = pow(cobj1->val->d.num, cobj2->val->d.num);
 	}
 	/* add hyperbolic functions */
 	else if (nc_strcmp(fname, "cosh") == 0) {
 		n = cosh(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "sinh") == 0) {
+	} else if (nc_strcmp(fname, "sinh") == 0) {
 		n = sinh(cobj1->val->d.num);
-	}
-	else if (nc_strcmp(fname, "tanh") == 0) {
+	} else if (nc_strcmp(fname, "tanh") == 0) {
 		n = tanh(cobj1->val->d.num);
 	}
 	/* add other functions */
 	else if (nc_strcmp(fname, "sqrt") == 0) {
 		n = sqrt(cobj1->val->d.num);
-	}
-	else {
+	} else {
 		n = 0;
 	}
 	nsp_setnum(N, &N->r, "", n);
@@ -955,8 +954,7 @@ NSP_FUNCTION(nl_tostring)
 		d = (unsigned short)cobj2->val->d.num;
 		if (d > sizeof(N->numbuf) - 2) d = sizeof(N->numbuf) - 2;
 		p = n_ntoa(N, N->numbuf, cobj1->val->d.num, 10, d);
-	}
-	else {
+	} else {
 		p = nsp_tostr(N, cobj1);
 	}
 	nsp_setstr(N, &N->r, "", p, p ? nc_strlen(p) : 0);
@@ -1036,26 +1034,22 @@ NSP_FUNCTION(nl_strcmp)
 	if (cobj1->val->d.str == NULL) {
 		if (cobj2->val->d.str == NULL) rval = 0; else rval = (int)cobj2->val->d.str[0];
 		nsp_setnum(N, &N->r, "", rval); return 0;
-	}
-	else if (cobj2->val->d.str == NULL) {
+	} else if (cobj2->val->d.str == NULL) {
 		rval = -(int)cobj1->val->d.str[0];
 		nsp_setnum(N, &N->r, "", rval); return 0;
 	}
 	if (nc_strcmp(fname, "cmp") == 0) {
 		rval = nc_strcmp(cobj1->val->d.str, cobj2->val->d.str);
-	}
-	else if (nc_strcmp(fname, "ncmp") == 0) {
+	} else if (nc_strcmp(fname, "ncmp") == 0) {
 		if (cobj3->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
 		rval = nc_strncmp(cobj1->val->d.str, cobj2->val->d.str, (int)cobj3->val->d.num);
-	}
-	else if (nc_strcmp(fname, "icmp") == 0) {
+	} else if (nc_strcmp(fname, "icmp") == 0) {
 		s1 = (uchar *)cobj1->val->d.str; s2 = (uchar *)cobj2->val->d.str;
 		do {
 			if ((rval = (nc_tolower(*s1) - nc_tolower(*s2))) != 0) break;
 			s1++; s2++;
 		} while (*s1 != 0);
-	}
-	else if (nc_strcmp(fname, "nicmp") == 0) {
+	} else if (nc_strcmp(fname, "nicmp") == 0) {
 		if (cobj3->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg3");
 		s1 = (uchar *)cobj1->val->d.str; s2 = (uchar *)cobj2->val->d.str; i = (int)cobj3->val->d.num;
 		do {
@@ -1089,8 +1083,7 @@ NSP_FUNCTION(nl_strcontains)
 	if (cobj1->val->size < cobj2->val->size) {
 		nsp_setbool(N, &N->r, "", 0);
 		return 0;
-	}
-	else if (cobj1->val->size == 0 && cobj2->val->size == 0) {
+	} else if (cobj1->val->size == 0 && cobj2->val->size == 0) {
 		nsp_setbool(N, &N->r, "", 1);
 		return 0;
 	}
@@ -1100,22 +1093,20 @@ NSP_FUNCTION(nl_strcontains)
 			if (cobj2->val->d.str[j] == '\0') { j = 0; break; }
 			if (cobj2->val->d.str[j] != cobj1->val->d.str[i]) j = -1;
 		}
-	}
-	else if (nc_strcmp(fname, "endswith") == 0) {
+	} else if (nc_strcmp(fname, "endswith") == 0) {
 		for (i = cobj1->val->size - cobj2->val->size, j = 0; i < cobj1->val->size; i++, j++) {
 			if (j == cobj2->val->size) break;
 			if (cobj2->val->d.str[j] == '\0') { j = 0; break; }
 			if (cobj2->val->d.str[j] != cobj1->val->d.str[i]) j = -1;
 		}
-	}
-	else if (nc_strcmp(fname, "startswith") == 0) {
+	} else if (nc_strcmp(fname, "startswith") == 0) {
 		for (i = 0, j = 0; i < cobj1->val->size && i < cobj2->val->size; i++, j++) {
 			if (j == cobj2->val->size) break;
 			if (cobj2->val->d.str[j] == '\0') { j = 0; break; }
 			if (cobj2->val->d.str[j] != cobj1->val->d.str[i]) j = -1;
 		}
 	}
-	nsp_setbool(N, &N->r, "", (i <= cobj1->val->size&&j == cobj2->val->size) ? 1 : 0);
+	nsp_setbool(N, &N->r, "", (i <= cobj1->val->size && j == cobj2->val->size) ? 1 : 0);
 	return 0;
 #undef __FN__
 }
@@ -1143,8 +1134,7 @@ NSP_FUNCTION(nl_strjoin)
 		if (cobj->val->type == NT_STRING) {
 			len1 += cobj->val->size;
 			cnt++;
-		}
-		else if (cobj->val->type == NT_NUMBER) {
+		} else if (cobj->val->type == NT_NUMBER) {
 			len1++;
 			cnt++;
 		}
@@ -1152,30 +1142,28 @@ NSP_FUNCTION(nl_strjoin)
 	robj = nsp_setstr(N, &N->r, "", NULL, 0);
 	if (cnt == 0) return 0;
 	if (cnt > 1) {
-		robj->val->size = len1 + ((cnt - 1)*len2);
+		robj->val->size = len1 + ((cnt - 1) * len2);
 		robj->val->d.str = (char *)n_alloc(N, robj->val->size + 1, 0);
 		p2 = robj->val->d.str;
 		for (cobj = cobj1->val->d.table.f; cobj; cobj = cobj->next) {
 			if (cobj->val->type == NT_STRING) {
 				nc_memcpy(p2, cobj->val->d.str, cobj->val->size);
 				p2 += cobj->val->size;
-				if (--cnt&&p) {
+				if (--cnt && p) {
 					nc_memcpy(p2, p, len2);
 					p2 += len2;
 				}
-			}
-			else if (cobj->val->type == NT_NUMBER) {
+			} else if (cobj->val->type == NT_NUMBER) {
 				p2[0] = (uchar)cobj->val->d.num & 255;
 				p2++;
-				if (--cnt&&p) {
+				if (--cnt && p) {
 					nc_memcpy(p2, p, len2);
 					p2 += len2;
 				}
 			}
 		}
 		robj->val->d.str[robj->val->size] = 0;
-	}
-	else {
+	} else {
 		robj->val->size = len1;
 		robj->val->d.str = (char *)n_alloc(N, robj->val->size + 1, 0);
 		for (cobj = cobj1->val->d.table.f; cobj; cobj = cobj->next) {
@@ -1241,15 +1229,15 @@ NSP_FUNCTION(nl_strrep)
 	l2 = cobj2->val->size;
 	for (; *se; se++) {
 		if (nc_strncmp(se, s2, l2) != 0) continue;
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 		nsp_strcat(N, &N->r, cobj3->val->d.str, cobj3->val->size);
 		ss = se += l2;
 		if (*se) { --se; continue; }
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 		break;
 	}
 	if (se > ss) {
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 	}
 	return 0;
 #undef __FN__
@@ -1337,18 +1325,16 @@ NSP_FUNCTION(nl_strstr)
 			if (cobj2->val->d.str[j] == '\0') { j = 0; break; }
 			if (cobj2->val->d.str[j] != cobj1->val->d.str[i]) j = -1;
 		}
-	}
-	else if (nc_strcmp(fname, "istr") == 0) {
+	} else if (nc_strcmp(fname, "istr") == 0) {
 		for (i = 0, j = 0; i < cobj1->val->size; i++, j++) {
 			if (j == cobj2->val->size) break;
 			if (cobj2->val->d.str[j] == '\0') { j = 0; break; }
 			if (nc_tolower(cobj2->val->d.str[j]) != nc_tolower(cobj1->val->d.str[i])) j = -1;
 		}
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "................");
 	}
-	if (i <= cobj1->val->size&&j == cobj2->val->size) {
+	if (i <= cobj1->val->size && j == cobj2->val->size) {
 		nsp_setstr(N, &N->r, "", cobj1->val->d.str + i - j, cobj1->val->size - i + j);
 	}
 	return 0;
@@ -1375,8 +1361,7 @@ NSP_FUNCTION(nl_strsub)
 	if (cobj2->val->type != NT_NUMBER) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 	if (cobj2->val->d.num < 0) {
 		offset = cobj1->val->size - abs((int)cobj2->val->d.num);
-	}
-	else {
+	} else {
 		offset = (int)cobj2->val->d.num;
 	}
 	if (cobj3->val->type == NT_NUMBER) max = (int)cobj3->val->d.num; else max = cobj1->val->size;
@@ -1410,8 +1395,7 @@ NSP_FUNCTION(nl_strtolower)
 		i = robj->val->size - 1;
 		if (nc_strcmp(fname, "tolower") == 0) {
 			for (; i > -1; i--) robj->val->d.str[i] = nc_tolower(cobj1->val->d.str[i]);
-		}
-		else if (nc_strcmp(fname, "toupper") == 0) {
+		} else if (nc_strcmp(fname, "toupper") == 0) {
 			for (; i > -1; i--) robj->val->d.str[i] = nc_toupper(cobj1->val->d.str[i]);
 		}
 		robj->val->d.str[robj->val->size] = 0;
@@ -1426,7 +1410,7 @@ NSP_FUNCTION(nl_strtrim)
 	obj_t *basetype = nsp_getobj(N, &N->context->l, "basetype");
 	obj_t *thisobj = nsp_getobj(N, &N->context->l, "this");
 	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
-	//	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+//	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
 	char *fname = nsp_getstr(N, &N->context->l, "0");
 	char *p;
 	int plen;
@@ -1478,21 +1462,18 @@ NSP_FUNCTION(nl_asctime)
 	}
 	if (cobj1->val->type == NT_NUMBER) {
 		ttime.tv_sec = (long)cobj1->val->d.num;
-	}
-	else {
+	} else {
 		nc_gettimeofday(&ttime, NULL);
 	}
 	t = ttime.tv_sec;
-	//	if (nc_strcmp(fname, "sqldate") == 0) {
-	//		strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d", gmtime(&t));
-	//	}
-	//	else if (nc_strcmp(fname, "sqltime") == 0) {
-	//		strftime(timebuf, sizeof(timebuf) - 1, "%H:%M:%S", gmtime(&t));
-	//	}
-	//	else {
-			//strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", localtime((time_t *)&ttime.tv_sec)); <- this crashes in VS now because tv_sec is expected to be LONG
+//	if (nc_strcmp(fname, "sqldate") == 0) {
+//		strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d", gmtime(&t));
+//	} else if (nc_strcmp(fname, "sqltime") == 0) {
+//		strftime(timebuf, sizeof(timebuf) - 1, "%H:%M:%S", gmtime(&t));
+//	} else {
+	//strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", localtime((time_t *)&ttime.tv_sec)); <- this crashes in VS now because tv_sec is expected to be LONG
 	strftime(timebuf, sizeof(timebuf) - 1, "%Y-%m-%d %H:%M:%S", gmtime(&t));
-	//	}
+//	}
 	nsp_setstr(N, &N->r, "", timebuf, -1);
 	return 0;
 #undef __FN__
@@ -1512,8 +1493,7 @@ static int getunixtime(int y, int m, int d, int hh, int mm, int ss)
 		if ((i / 4.0f) == (int)(i / 4)) {
 			if ((i / 400.0f) == (int)(i / 400)) {
 				unixdate++;
-			}
-			else if ((i / 100.0f) != (int)(i / 100)) {
+			} else if ((i / 100.0f) != (int)(i / 100)) {
 				unixdate++;
 			}
 		}
@@ -1524,8 +1504,7 @@ static int getunixtime(int y, int m, int d, int hh, int mm, int ss)
 		if ((y / 4.0f) == (int)(y / 4)) {
 			if ((y / 400.0f) == (int)(y / 400)) {
 				unixdate++;
-			}
-			else if ((y / 100.0f) != (int)(y / 100)) {
+			} else if ((y / 100.0f) != (int)(y / 100)) {
 				unixdate++;
 			}
 		}
@@ -1598,8 +1577,7 @@ NSP_FUNCTION(nl_mktime)
 		int m = (int)nsp_getnum(N, cobj1, "tm_min");
 		int s = (int)nsp_getnum(N, cobj1, "tm_sec");
 		nsp_setnum(N, &N->r, "", getunixtime(yy, mm, dd, h, m, s));
-	}
-	else {
+	} else {
 		if (!nsp_isstr(cobj1)) n_error(N, NE_SYNTAX, __FN__, "expected a table or string for arg1");
 		if (cobj1->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "zero length arg1");
 		nsp_setnum(N, &N->r, "", getunixfromstring(cobj1->val->d.str));
@@ -1629,19 +1607,16 @@ NSP_FUNCTION(nl_gmtime)
 	settrace();
 	if (cobj1->val->type == NT_NUMBER) {
 		t = (time_t)cobj1->val->d.num;
-	}
-	else if (cobj1->val->type == NT_STRING) {
+	} else if (cobj1->val->type == NT_STRING) {
 		t = (time_t)getunixfromstring(cobj1->val->d.str);
-	}
-	else {
+	} else {
 		t = time(NULL);
 	}
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
 	if (nc_strcmp(fname, "localtime") == 0) {
 		tp = localtime(&t);
-	}
-	else {
+	} else {
 		tp = gmtime(&t);
 	}
 	if (tp->tm_year < 1900) tp->tm_year += 1900;
@@ -1669,11 +1644,11 @@ NSP_FUNCTION(nl_gettimeofday)
 	struct timeval ttime;
 
 	settrace();
-	//	if (cobj1->val->type==NT_NUMBER) {
-	//		t=(time_t)cobj1->val->d.num;
-	//	} else {
-	//		t=time(NULL);
-	//	}
+//	if (cobj1->val->type==NT_NUMBER) {
+//		t=(time_t)cobj1->val->d.num;
+//	} else {
+//		t=time(NULL);
+//	}
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
 	nc_gettimeofday(&ttime, NULL);
@@ -1709,7 +1684,7 @@ NSP_FUNCTION(nl_sleep)
 	if (cobj1->val->type == NT_NUMBER) n = cobj1->val->d.num;
 #if defined(__BORLANDC__)
 	sleep(n);
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	Sleep((DWORD)(n * 1000.0));
 #else
 	usleep(n * 1000000.0);
@@ -1756,8 +1731,7 @@ NSP_FUNCTION(nl_eval)
 		n_context_blockptr = oldbptr;
 		n_context_blockend = oldbend;
 		n_context_readptr = oldrptr;
-	}
-	else {
+	} else {
 		nsp_linkval(N, &N->r, cobj1);
 	}
 	return 0;
@@ -1800,8 +1774,7 @@ NSP_FUNCTION(nl_exec)
 		n_context_blockptr = oldbptr;
 		n_context_blockend = oldbend;
 		n_context_readptr = oldrptr;
-	}
-	else {
+	} else {
 		nsp_linkval(N, &N->r, cobj1);
 	}
 	return 0;
@@ -1821,8 +1794,7 @@ NSP_FUNCTION(nl_iname)
 	cobj = nsp_getiobj(N, cobj1, (int)cobj2->val->d.num);
 	if (nsp_isnull(cobj)) {
 		nsp_setnum(N, &N->r, "", 0);
-	}
-	else {
+	} else {
 		nsp_setstr(N, &N->r, "", cobj->name, -1);
 	}
 	return 0;
@@ -1848,9 +1820,9 @@ NSP_FUNCTION(nl_ival)
 NSP_FUNCTION(nl_include)
 {
 #define __FN__ __FILE__ ":nl_include()"
-	//	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
-	//	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
-	//	uchar *p;
+//	obj_t *cobj1 = nsp_getobj(N, &N->l, "1");
+//	obj_t *cobj2 = nsp_getobj(N, &N->l, "2");
+//	uchar *p;
 	int n = 0;
 	//n_execfunction hijacks the actual execution of this function - fix later
 
@@ -1877,8 +1849,7 @@ NSP_FUNCTION(nl_serialize)
 	settrace();
 	if (!nsp_isnull(cobj1)) {
 		n_dumpvars(N, cobj1, 0);
-	}
-	else {
+	} else {
 		nsp_setstr(N, &N->r, "", "N U L L", -1);
 	}
 	return 0;
@@ -1909,7 +1880,7 @@ NSP_FUNCTION(nl_sizeof)
 	case NT_CFUNC: size = 1; break;
 	case NT_TABLE:
 		for (cobj1 = cobj1->val->d.table.f; cobj1; cobj1 = cobj1->next) {
-			if (cobj1->val && cobj1->val->attr&NST_SYSTEM) { size--; continue; }
+			if (cobj1->val && cobj1->val->attr & NST_SYSTEM) { size--; continue; }
 			if (!nsp_isnull(cobj1)) size++;
 		}
 		break;
@@ -1997,7 +1968,7 @@ NSP_FUNCTION(nl_printf)
 		if (!esc) {
 			if (*s == '%') {
 				esc = 1;
-				nsp_strcat(N, &N->r, ss, s - ss);
+				nsp_strcat(N, &N->r, ss, (unsigned long)(s - ss));
 				ss = s;
 			}
 			continue;
@@ -2029,7 +2000,7 @@ NSP_FUNCTION(nl_printf)
 		ss = s + 1;
 		esc = 0;
 	}
-	nsp_strcat(N, &N->r, ss, s - ss);
+	nsp_strcat(N, &N->r, ss, (unsigned long)(s - ss));
 	if (nc_strcmp(fname, "printf") == 0) {
 		writestr(N, robj);
 		nsp_setnum(N, robj, "", robj->val->size);
@@ -2098,38 +2069,31 @@ NSP_CLASSMETHOD(nl_base_method)
 	nsp_setnum(N, &N->context->l, "basetype", ftype);
 	if (nc_strcmp(fname, "gettype") == 0) return nl_typeof(N);
 	if (ftype == NT_STRING) {
-		obj_t *cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "string"), fname);
+		obj_t *cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "string"), fname);
 		if (nsp_typeof(cobj) == NT_CFUNC) {
 			return cobj->val->d.cfunc(N);
-		}
-		else if (nsp_typeof(cobj) == NT_NFUNC) {
+		} else if (nsp_typeof(cobj) == NT_NFUNC) {
 			uchar *p = n_context_readptr;
 			nsp_exec(N, (char *)cobj->val->d.str);
 			n_context_readptr = p;
 			return 0;
-		}
-		else if (nc_strcmp(fname, "len") == 0 || nc_strcmp(fname, "length") == 0) {
+		} else if (nc_strcmp(fname, "len") == 0 || nc_strcmp(fname, "length") == 0) {
 			return nl_sizeof(N);
-		}
-		else {
+		} else {
 			n_warn(N, __FN__, "string method '%s' missing?", fname);
 		}
-	}
-	else if (ftype == NT_TABLE) {
+	} else if (ftype == NT_TABLE) {
 		if (nc_strcmp(fname, "join") == 0) {
 			return nl_strjoin(N);
-		}
-		else if (nc_strcmp(fname, "inherit") == 0) {
+		} else if (nc_strcmp(fname, "inherit") == 0) {
 			return nl_zlink(N);
-		}
-		else if (nc_strcmp(fname, "append") == 0) {
+		} else if (nc_strcmp(fname, "append") == 0) {
 			return nl_append(N);
 		}
 	}
 	if (nc_strcmp(fname, "tostr") == 0 || nc_strcmp(fname, "tostring") == 0) {
 		return nl_tostring(N);
-	}
-	else if (nc_strcmp(fname, "len") == 0 || nc_strcmp(fname, "length") == 0) {
+	} else if (nc_strcmp(fname, "len") == 0 || nc_strcmp(fname, "length") == 0) {
 		return nl_sizeof(N);
 	}
 	n_error(N, NE_SYNTAX, __FN__, "object has no method named '%s'.", fname);

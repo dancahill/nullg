@@ -18,7 +18,7 @@
 */
 #include "nsp/nsplib.h"
 #include "base.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include <mmsystem.h>
 #include <shellapi.h>
 #include <stdio.h>
@@ -80,7 +80,7 @@ NSP_FUNCTION(libnsp_winapi_createprocess)
 	obj_t *cobj2 = nsp_getobj(N, &N->context->l, "2");
 	WORD show_hide = SW_SHOW;
 
-	if (cobj2 != NULL&&cobj2->val != NULL) {
+	if (cobj2 != NULL && cobj2->val != NULL) {
 		if ((cobj2->val->type == NT_BOOLEAN) || (cobj2->val->type == NT_NUMBER)) {
 			if (cobj2->val->d.num == 0) show_hide = SW_HIDE;
 		}

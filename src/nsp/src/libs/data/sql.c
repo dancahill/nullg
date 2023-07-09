@@ -34,17 +34,17 @@ NSP_FUNCTION(libnsp_data_sql_common_escape)
 	se = ss = cobj1->val->d.str;
 	s2 = "'";
 	l2 = 1;
-	for (;*se;se++) {
+	for (; *se; se++) {
 		if (nc_strncmp(se, s2, l2) != 0) continue;
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 		nsp_strcat(N, &N->r, "''", 2);
 		ss = se += l2;
 		if (*se) { --se; continue; }
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 		break;
 	}
 	if (se > ss) {
-		nsp_strcat(N, &N->r, ss, se - ss);
+		nsp_strcat(N, &N->r, ss, (unsigned long)(se - ss));
 	}
 	return 0;
 #undef __FN__

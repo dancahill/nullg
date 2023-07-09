@@ -34,13 +34,13 @@ struct timezone { int tz_minuteswest; int tz_dsttime; };
 struct timezone { int tz_minuteswest; int tz_dsttime; };
 #pragma warning(disable:4996)
 #define WIN32_LEAN_AND_MEAN
-#define _USE_32BIT_TIME_T
+//#define _USE_32BIT_TIME_T
 /* always include winsock2 before windows */
 #include <winsock2.h>
 #include <windows.h>
 #include <time.h>
 
-#if defined(WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 #include <crtdbg.h>
 #endif
 
@@ -52,6 +52,8 @@ struct timezone { int tz_minuteswest; int tz_dsttime; };
 #include <setjmp.h>
 
 /* need to add size sanity here */
+typedef signed long long int   int64;
+typedef unsigned long long int uint64;
 #if defined(__TURBOC__)
 typedef signed long int   int32;
 typedef unsigned long int uint32;
@@ -201,7 +203,7 @@ obj_t     *nsp_getobj(nsp_state *N, obj_t *tobj, char *oname);
 obj_t     *nsp_getiobj(nsp_state *N, obj_t *tobj, unsigned long oindex);
 obj_t     *nsp_setobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, NSP_CFUNC _fptr, num_t _num, char *_str, size_t _slen);
 obj_t     *nsp_appendobj(nsp_state *N, obj_t *tobj, char *name);
-void       nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len);
+void       nsp_strcat(nsp_state *N, obj_t *cobj, char *str, unsigned long len);
 void       nsp_strmul(nsp_state *N, obj_t *cobj, unsigned long n);
 short      nsp_tobool(nsp_state *N, obj_t *cobj);
 num_t      nsp_tonum(nsp_state *N, obj_t *cobj);
@@ -298,6 +300,10 @@ public:
 	obj_t *getG()
 	{
 		return &this->N->g;
+	}
+	obj_t *getT()
+	{
+		return &this->N->context->t;
 	}
 	obj_t *getL()
 	{

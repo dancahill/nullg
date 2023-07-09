@@ -24,8 +24,8 @@
 //void pipe_murder(nsp_state *N, obj_t *cobj);
 
 typedef struct {
-	int in;
-	int out;
+	long long in;
+	long long out;
 } pipe_fd;
 
 typedef struct PIPE_CONN {
@@ -35,7 +35,7 @@ typedef struct PIPE_CONN {
 	/* now begin the stuff that's pipe-specific */
 	pipe_fd local;
 	pipe_fd remote;
-#ifdef WIN32
+#ifdef _WIN32
 	PROCESS_INFORMATION pi;
 #endif
 } PIPE_CONN;
@@ -44,7 +44,7 @@ typedef struct PIPE_CONN {
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #else
 #include <unistd.h>
@@ -56,12 +56,12 @@ typedef struct PIPE_CONN {
 void pipe_murder(nsp_state *N, obj_t *cobj)
 {
 #define __FN__ __FILE__ ":pipe_murder()"
-	//	PIPE_CONN *conn;
+//	PIPE_CONN *conn;
 
 	n_warn(N, __FN__, "reaper is claiming another lost soul");
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "pipe-conn") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a pipe conn");
-	//	conn=(PIPE_CONN *)cobj->val->d.str;
+//	conn=(PIPE_CONN *)cobj->val->d.str;
 	n_free(N, (void *)&cobj->val->d.str, sizeof(PIPE_CONN) + 1);
 	return;
 #undef __FN__
@@ -75,7 +75,7 @@ NSP_FUNCTION(libnsp_base_pipe_open)
 	obj_t *cobj3 = nsp_getobj(N, &N->context->l, "3");
 	PIPE_CONN *conn;
 
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE hMyProcess = GetCurrentProcess();
 	SECURITY_ATTRIBUTES saAttr;
 	STARTUPINFO si;
@@ -99,13 +99,13 @@ NSP_FUNCTION(libnsp_base_pipe_open)
 	conn->obj_term = (NSP_CFREE)pipe_murder;
 	strcpy(conn->obj_type, "pipe-conn");
 
-	//	fixslashes(aspell_loc);
-	//	if (strlen(searchstring)<1) return 0;
+//	fixslashes(aspell_loc);
+//	if (strlen(searchstring)<1) return 0;
 	memset(args, 0, sizeof(args));
 	args[0] = cobj1->val->d.str;
 	if (cobj2->val->type == NT_STRING) args[1] = cobj2->val->d.str;
 	if (cobj3->val->type == NT_STRING) args[2] = cobj3->val->d.str;
-#ifdef WIN32
+#ifdef _WIN32
 	memset(Command, 0, sizeof(Command));
 	ZeroMemory(&conn->pi, sizeof(conn->pi));
 	ZeroMemory(&si, sizeof(si));
@@ -155,8 +155,7 @@ NSP_FUNCTION(libnsp_base_pipe_open)
 	if (pid < 0) {
 		n_warn(N, __FN__, "fork() error");
 		return 0;
-	}
-	else if (pid == 0) {
+	} else if (pid == 0) {
 		close(conn->local.in);
 		close(conn->local.out);
 		dup2(conn->remote.in, fileno(stdin));
@@ -164,8 +163,7 @@ NSP_FUNCTION(libnsp_base_pipe_open)
 		execve(args[0], &args[0], NULL);
 		n_warn(N, __FN__, "execve() error [%s]", args[0]);
 		//		exit(0);
-	}
-	else {
+	} else {
 		close(conn->remote.in);
 		close(conn->remote.out);
 	}
@@ -192,7 +190,7 @@ NSP_FUNCTION(libnsp_base_pipe_read)
 	nsp_setstr(N, &N->r, "", NULL, 0);
 	do {
 		memset(szBuffer, 0, sizeof(szBuffer));
-#ifdef WIN32
+#ifdef _WIN32
 		ReadFile((HANDLE)conn->local.in, szBuffer, sizeof(szBuffer) - 1, &bytesin, NULL);
 #else
 		bytesin = read(conn->local.in, szBuffer, sizeof(szBuffer) - 1);
@@ -201,8 +199,8 @@ NSP_FUNCTION(libnsp_base_pipe_read)
 		nsp_strcat(N, &N->r, szBuffer, bytesin);
 		if (bytesin < 1) break;
 	} while (0);
-	//	} while (strchr(szBuffer, '\n')==NULL);
-	//	nsp_setstr(N, &N->r, "", szBuffer, bytesin);
+//	} while (strchr(szBuffer, '\n')==NULL);
+//	nsp_setstr(N, &N->r, "", szBuffer, bytesin);
 	return 0;
 #undef __FN__
 }
@@ -223,7 +221,7 @@ NSP_FUNCTION(libnsp_base_pipe_write)
 	p = cobj2->val->d.str;
 	pl = cobj2->val->size;
 	do {
-#ifdef WIN32
+#ifdef _WIN32
 		WriteFile((HANDLE)conn->local.out, p, pl, &bytesout, NULL);
 #else
 		bytesout = write(conn->local.out, p, pl);
@@ -243,7 +241,7 @@ NSP_FUNCTION(libnsp_base_pipe_close)
 #define __FN__ __FILE__ ":libnsp_base_pipe_close()"
 	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
 	PIPE_CONN *conn;
-#ifdef WIN32
+#ifdef _WIN32
 	DWORD exitcode = 0;
 #else
 	int status;
@@ -252,7 +250,7 @@ NSP_FUNCTION(libnsp_base_pipe_close)
 	if ((cobj1->val->type != NT_CDATA) || (cobj1->val->d.str == NULL) || (strcmp(cobj1->val->d.str, "pipe-conn") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a pipe-conn for arg1");
 	conn = (PIPE_CONN *)cobj1->val->d.str;
-#ifdef WIN32
+#ifdef _WIN32
 	GetExitCodeProcess(conn->pi.hProcess, &exitcode);
 	if (exitcode == STILL_ACTIVE) TerminateProcess(conn->pi.hProcess, 1);
 	CloseHandle(conn->pi.hThread);

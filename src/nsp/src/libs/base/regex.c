@@ -134,8 +134,7 @@ char *dest;
 			if (c == '\\' && (*src == '\\' || *src == '&'))
 				c = *src++;
 			*dst++ = c;
-		}
-		else if (prog->startp[no] != NULL && prog->endp[no] != NULL &&
+		} else if (prog->startp[no] != NULL && prog->endp[no] != NULL &&
 			prog->endp[no] > prog->startp[no]) {
 			len = prog->endp[no] - prog->startp[no];
 			(void)strncpy(dst, prog->startp[no], len);
@@ -368,7 +367,7 @@ const char *exp;
 		* and avoiding duplication strengthens checking.  Not a
 		* strong reason, but sufficient in the absence of others.
 		*/
-		if (flags&SPSTART) {
+		if (flags & SPSTART) {
 			register char *longest = NULL;
 			register size_t len = 0;
 
@@ -426,16 +425,16 @@ int *flagp;
 		regtail(cp, ret, br);	/* OPEN -> first. */
 	else
 		ret = br;
-	*flagp &= ~(~flags&HASWIDTH);	/* Clear bit if bit 0. */
-	*flagp |= flags&SPSTART;
+	*flagp &= ~(~flags & HASWIDTH);	/* Clear bit if bit 0. */
+	*flagp |= flags & SPSTART;
 	while (*cp->regparse == '|') {
 		cp->regparse++;
 		br = regbranch(N, cp, &flags);
 		if (br == NULL)
 			return(NULL);
 		regtail(cp, ret, br);	/* BRANCH -> BRANCH. */
-		*flagp &= ~(~flags&HASWIDTH);
-		*flagp |= flags&SPSTART;
+		*flagp &= ~(~flags & HASWIDTH);
+		*flagp |= flags & SPSTART;
 	}
 
 	/* Make a closing node, and hook it on the end. */
@@ -449,12 +448,10 @@ int *flagp;
 	/* Check for proper termination. */
 	if (paren && *cp->regparse++ != ')') {
 		FAIL("unterminated ()");
-	}
-	else if (!paren && *cp->regparse != '\0') {
+	} else if (!paren && *cp->regparse != '\0') {
 		if (*cp->regparse == ')') {
 			FAIL("unmatched ()");
-		}
-		else
+		} else
 			FAIL("internal error: junk on end");
 		/* NOTREACHED */
 	}
@@ -487,15 +484,15 @@ int *flagp;
 		latest = regpiece(N, cp, &flags);
 		if (latest == NULL)
 			return(NULL);
-		*flagp |= flags&HASWIDTH;
+		*flagp |= flags & HASWIDTH;
 		if (chain == NULL)		/* First piece. */
-			*flagp |= flags&SPSTART;
+			*flagp |= flags & SPSTART;
 		else
 			regtail(cp, chain, latest);
 		chain = latest;
 	}
 	if (chain == NULL)			/* Loop ran zero times. */
-		(void) regnode(cp, NOTHING);
+		(void)regnode(cp, NOTHING);
 
 	return(ret);
 }
@@ -530,7 +527,7 @@ int *flagp;
 		return(ret);
 	}
 
-	if (!(flags&HASWIDTH) && op != '?')
+	if (!(flags & HASWIDTH) && op != '?')
 		FAIL("*+ operand could be empty");
 	switch (op) {
 	case '*':	*flagp = WORST | SPSTART;			break;
@@ -538,7 +535,7 @@ int *flagp;
 	case '?':	*flagp = WORST;				break;
 	}
 
-	if (op == '*' && (flags&SIMPLE))
+	if (op == '*' && (flags & SIMPLE))
 		reginsert(cp, STAR, ret);
 	else if (op == '*') {
 		/* Emit x* as (x&|), where & means "self". */
@@ -547,8 +544,7 @@ int *flagp;
 		regoptail(cp, ret, ret);		/* back */
 		regtail(cp, ret, regnode(cp, BRANCH));	/* or */
 		regtail(cp, ret, regnode(cp, NOTHING));	/* null. */
-	}
-	else if (op == '+' && (flags&SIMPLE))
+	} else if (op == '+' && (flags & SIMPLE))
 		reginsert(cp, PLUS, ret);
 	else if (op == '+') {
 		/* Emit x+ as x(&|), where & means "self". */
@@ -557,8 +553,7 @@ int *flagp;
 		regtail(cp, regnode(cp, BACK), ret);	/* loop back */
 		regtail(cp, next, regnode(cp, BRANCH));	/* or */
 		regtail(cp, ret, regnode(cp, NOTHING));	/* null. */
-	}
-	else if (op == '?') {
+	} else if (op == '?') {
 		/* Emit x? as (x|) */
 		reginsert(cp, BRANCH, ret);		/* Either x */
 		regtail(cp, ret, regnode(cp, BRANCH));	/* or */
@@ -611,8 +606,7 @@ int *flagp;
 		if (*cp->regparse == '^') {	/* Complement of range. */
 			ret = regnode(cp, ANYBUT);
 			cp->regparse++;
-		}
-		else
+		} else
 			ret = regnode(cp, ANYOF);
 		if ((c = *cp->regparse) == ']' || c == '-') {
 			regc(cp, c);
@@ -643,7 +637,7 @@ int *flagp;
 		ret = reg(N, cp, 1, &flags);
 		if (ret == NULL)
 			return(NULL);
-		*flagp |= flags&(HASWIDTH | SPSTART);
+		*flagp |= flags & (HASWIDTH | SPSTART);
 		break;
 	case '\0':
 	case '|':
@@ -775,7 +769,7 @@ char *val;
 	for (scan = p; (temp = regnext(scan)) != NULL; scan = temp)
 		continue;
 
-	offset = (OP(scan) == BACK) ? scan - val : val - scan;
+	offset = (OP(scan) == BACK) ? (unsigned long)(scan - val) : (unsigned long)(val - scan);
 	*(scan + 1) = (offset >> 8) & 0177;
 	*(scan + 2) = offset & 0377;
 }
@@ -867,8 +861,7 @@ const char *str;
 			if (regtry(N, &ex, prog, s))
 				return(1);
 		return(0);
-	}
-	else {
+	} else {
 		/* We don't -- general case. */
 		for (s = string; !regtry(N, &ex, prog, s); s++)
 			if (*s == '\0')
@@ -904,8 +897,7 @@ char *string;
 		prog->startp[0] = string;
 		prog->endp[0] = ep->reginput;
 		return(1);
-	}
-	else
+	} else
 		return(0);
 }
 
@@ -997,8 +989,7 @@ char *prog;
 				if (ep->regstartp[no] == NULL)
 					ep->regstartp[no] = input;
 				return(1);
-			}
-			else
+			} else
 				return(0);
 			break;
 		}
@@ -1017,8 +1008,7 @@ char *prog;
 				if (ep->regendp[no] == NULL)
 					ep->regendp[no] = input;
 				return(1);
-			}
-			else
+			} else
 				return(0);
 			break;
 		}
@@ -1252,7 +1242,7 @@ char *op;
 		break;
 	}
 	if (p != NULL)
-		(void) strcat(buf, p);
+		(void)strcat(buf, p);
 	return(buf);
 }
 #endif
@@ -1284,8 +1274,7 @@ NSP_FUNCTION(libnsp_regex_match)
 	p2 = cobj2->val->d.str ? cobj2->val->d.str : "";
 	if ((r = _regcomp(N, p2)) == NULL) {
 		n_warn(N, "regex.match", "regcomp failure in '%s'", p2);
-	}
-	else {
+	} else {
 		rc = _regexec(N, r, p1);
 		free((char *)r);
 	}
@@ -1316,16 +1305,14 @@ NSP_FUNCTION(libnsp_regex_replace)
 		n_warn(N, "regex.replace", "regcomp failure in '%s'", p2);
 		nsp_setnum(N, &N->r, "", -1);
 		return 0;
-	}
-	else {
+	} else {
 		if (_regexec(N, r, p1)) {
 			char dbuf[BUFSIZE];
 
 			dbuf[0] = 0;
 			_regsub(N, r, p3, dbuf);
 			nsp_setstr(N, &N->r, "", dbuf, -1);
-		}
-		else {
+		} else {
 			n_warn(N, "regex.replace", "regexec failure in `%s'", p2);
 			nsp_setstr(N, &N->r, "", p1, cobj2->val->size);
 		}

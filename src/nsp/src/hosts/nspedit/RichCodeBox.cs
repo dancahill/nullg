@@ -52,6 +52,7 @@ namespace NSPEdit
 		DateTime LastUpdate;
 		Stack<UndoStep> undoList = new Stack<UndoStep>(100);
 		RichTextBox richTextBox2;
+		public ScriptThread scriptThread = null;
 
 		public string LastSavedText = "";
 
@@ -194,24 +195,34 @@ namespace NSPEdit
 		{
 			try
 			{
+				if (scriptThread != null && scriptThread.IsAlive())
+				{
+					scriptThread.Resume();
+					return;
+				}
 				Program.MainForm.ClearOutput();
 				if (this.TextLength == 0) throw new Exception("script is empty");
 				string srcfile = Program.MainForm.GetScriptFileName();
 				if (srcfile != "") Directory.SetCurrentDirectory(Path.GetDirectoryName(srcfile));
-				NSP N = new NSP();
-				NSP.WriteBuffer = WriteBuffer;
-				/* try to use the right richTextBox2 for WriteBuffer
-				* this doesn't work yet because WriteBuffer is static
-				* and richTextBox2 can change mid-execution...
-				*/
+
 				richTextBox2 = Program.MainForm.richTextBox2;
-				N.ExecScript(this.Text, srcfile);
+				scriptThread = new ScriptThread(this.Text, srcfile)
+				{
+					WriteBuffer = WriteBuffer
+				};
+				scriptThread.Run();
 			}
 			catch (Exception ex)
 			{
 				Program.MainForm.AppendOutput(ex.Message);
 				MessageBox.Show(ex.Message, "RunScript()");
 			}
+		}
+
+		public void ContinueScript()
+		{
+			if (scriptThread == null) return;
+			scriptThread.Resume();
 		}
 
 		private void WriteBuffer(string outstr)
@@ -425,7 +436,7 @@ namespace NSPEdit
 
 			int ss = SelectionStart;
 			int sl = SelectionLength;
-//			Point p = AutoScrollOffset;
+			//			Point p = AutoScrollOffset;
 			Select(charindex, 0);
 			color = SelectionColor;
 			font = SelectionFont;

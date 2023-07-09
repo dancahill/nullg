@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #define strcasecmp stricmp
@@ -179,11 +179,9 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_open)
 
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		db = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
 		db = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for database");
 	}
 	conn = n_alloc(N, sizeof(SQLITE_CONN) + 1, 1);
@@ -235,11 +233,9 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_query)
 
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
 	if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
@@ -291,7 +287,7 @@ NSP_CLASSMETHOD(libnsp_data_sqlite_getnext)
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
-	for (i = 0;i < numfields;i++) {
+	for (i = 0; i < numfields; i++) {
 		store_field(N, conn->stm, i, &tobj);
 	}
 	nsp_linkval(N, &N->r, &tobj);
@@ -366,12 +362,12 @@ NSP_CLASS(libnsp_data_sqlite_client)
 			nsp_setstr(N, &N->context->l, "database", cobj->val->d.str, cobj->val->size);
 		}
 	}
-	cobj = nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sqlite");
+	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "data"), "sqlite");
 	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
-	else n_warn(N, __FN__, "data.sqlite not found");
-	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "data"), "sql"), "common");
+	else n_warn(N, __FN__, "lib.data.sqlite not found");
+	cobj = nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, nsp_getobj(N, &N->g, "lib"), "data"), "sql"), "common");
 	if (nsp_istable(cobj)) nsp_zlink(N, &N->context->l, cobj);
-	else n_warn(N, __FN__, "data.sql.common not found");
+	else n_warn(N, __FN__, "lib.data.sql.common not found");
 	return 0;
 #undef __FN__
 }
@@ -380,7 +376,7 @@ int nspsqlite_register_all(nsp_state *N)
 {
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "data");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "data");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "sqlite");
 	tobj->val->attr |= NST_HIDDEN;

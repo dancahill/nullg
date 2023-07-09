@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <firebird/ibase.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #define strcasecmp stricmp
@@ -104,7 +104,7 @@ typedef struct FBSQL_CONN {
 #define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
 #endif
 
-#if (defined(_MSC_VER) && defined(WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
+#if (defined(_MSC_VER) && defined(_WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
 #define FB_ALIGN(n,b)          ((n + b - 1) & ~(b - 1))
 #endif
 
@@ -123,7 +123,7 @@ typedef struct vary {
 /* Define a format string for printf.  Printing of 64-bit integers
    is not standard between platforms */
 #ifndef ISC_INT64_FORMAT
-#if (defined(_MSC_VER) && defined(WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
+#if (defined(_MSC_VER) && defined(_WIN32)) || (defined(__BORLANDC__) && defined(__WIN32__))
 #define	ISC_INT64_FORMAT	"I64"
 #else
 #define	ISC_INT64_FORMAT	"ll"
@@ -136,7 +136,7 @@ static void print_warning(nsp_state *N, const ISC_STATUS *pvector, const char *_
 	long int rc;
 	obj_t *cobj;
 
-	cobj = nsp_setstr(N, nsp_settable(N, nsp_settable(N, &N->g, "data"), "firebird"), "last_error", (char *)errstr, -1);
+	cobj = nsp_setstr(N, nsp_settable(N, nsp_settable(N, nsp_getobj(N, &N->g, "lib"), "data"), "firebird"), "last_error", (char *)errstr, -1);
 	while ((rc = fb_interpret(errbuf, sizeof(errbuf), &pvector)) > 0) {
 		nsp_strcat(N, cobj, "\r\n\t", 3);
 		nsp_strcat(N, cobj, errbuf, rc);
@@ -264,7 +264,7 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 	short dtype;
 	struct tm times;
 
-	dtype = var->sqltype&~1;
+	dtype = var->sqltype & ~1;
 	/* Null handling.  If the column is nullable and null */
 	if ((var->sqltype & 1) && (*var->sqlind < 0)) {
 		nsp_setstr(N, tobj, var->aliasname, NULL, 0);
@@ -290,17 +290,17 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 
 		switch (dtype) {
 		case SQL_SHORT:
-			value = (ISC_INT64)*(short ISC_FAR *) var->sqldata;
+			value = (ISC_INT64) * (short ISC_FAR *) var->sqldata;
 			field_width = 6;
 			break;
 		case SQL_LONG:
 			// breaks on Linux x86_64 due to wrong assumption about size of long
 			//value = (ISC_INT64) *(long ISC_FAR *) var->sqldata;
-			value = (ISC_INT64)*(int ISC_FAR *) var->sqldata;
+			value = (ISC_INT64) * (int ISC_FAR *) var->sqldata;
 			field_width = 11;
 			break;
 		case SQL_INT64:
-			value = (ISC_INT64)*(ISC_INT64 ISC_FAR *) var->sqldata;
+			value = (ISC_INT64) * (ISC_INT64 ISC_FAR *) var->sqldata;
 			field_width = 21;
 			break;
 		}
@@ -318,11 +318,9 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 				sprintf(buf, "%*" ISC_INT64_FORMAT "d.%0*" ISC_INT64_FORMAT "d", field_width - 1 + dscale, (ISC_INT64)(value / tens), -dscale, (ISC_INT64)-(value % tens));
 			else
 				sprintf(buf, "%*s.%0*" ISC_INT64_FORMAT "d", field_width - 1 + dscale, "-0", -dscale, (ISC_INT64)-(value % tens));
-		}
-		else if (dscale) {
+		} else if (dscale) {
 			sprintf(buf, "%*" ISC_INT64_FORMAT "d%0*d", field_width, (ISC_INT64)value, dscale, 0);
-		}
-		else {
+		} else {
 			//sprintf(buf, "%" ISC_INT64_FORMAT "d", (ISC_INT64)value);
 			nsp_setnum(N, tobj, var->aliasname, (double)value);
 			return;
@@ -347,7 +345,7 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 			times.tm_hour,
 			times.tm_min,
 			times.tm_sec
-			);
+		);
 		nsp_setstr(N, tobj, var->aliasname, date_s, -1);
 		return;
 	case SQL_TYPE_DATE:
@@ -364,7 +362,7 @@ static void store_field(nsp_state *N, FBSQL_CONN *conn, XSQLVAR ISC_FAR *var, ob
 			times.tm_hour,
 			times.tm_min,
 			times.tm_sec
-			);
+		);
 		nsp_setstr(N, tobj, var->aliasname, date_s, -1);
 		return;
 	case SQL_BLOB: {
@@ -432,12 +430,11 @@ static int fbsqlConnect(nsp_state *N, FBSQL_CONN *conn, char *host, char *user, 
 	short len = 0;
 	long rc;
 
-	if (user&&pass) {
+	if (user && pass) {
 		len = snprintf(buf, sizeof(buf), "%c%c%c%s%c%c%s", isc_dpb_version1, isc_dpb_user_name, (int)strlen(user), user, isc_dpb_password, (int)strlen(pass), pass);
 		snprintf(buf2, sizeof(buf2), "%s:%s", host, db);
 		rc = isc_attach_database(conn->status, 0, buf2, &conn->db, len, buf);
-	}
-	else {
+	} else {
 		snprintf(buf2, sizeof(buf2), "%s:%s", host, db);
 		rc = isc_attach_database(conn->status, 0, buf2, &conn->db, 0, NULL);
 	}
@@ -481,50 +478,39 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_open)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
 		host = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
 		user = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
 		pass = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "5")))) {
 		db = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
 		db = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	conn = n_alloc(N, sizeof(FBSQL_CONN) + 1, 1);
@@ -697,10 +683,10 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_query)
 		conn->numfields = conn->sqlda->sqld;
 	}
 	conn->numtuples = 0;
-	//	cobj = nsp_settable(N, thisobj, "last_query");
-	//	nsp_setstr(N, cobj, "_query", sqlquery, -1);
-	//	nsp_setnum(N, cobj, "_fields", conn->numfields);
-	//	nsp_setstr(N, cobj, "_tuples", "firebird does not support this", -1);
+//	cobj = nsp_settable(N, thisobj, "last_query");
+//	nsp_setstr(N, cobj, "_query", sqlquery, -1);
+//	nsp_setnum(N, cobj, "_fields", conn->numfields);
+//	nsp_setstr(N, cobj, "_tuples", "firebird does not support this", -1);
 	nsp_setstr(N, thisobj, "last_query", sqlquery, -1);
 	if (expect_results) {
 		nsp_setnum(N, thisobj, "changes", -1);
@@ -713,8 +699,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_query)
 		type = var->sqltype & ~1;
 		if (type == SQL_TEXT) {
 			alignment = 1;
-		}
-		else if (type == SQL_VARYING) {
+		} else if (type == SQL_VARYING) {
 			length += sizeof(short) + 1;
 			alignment = sizeof(short);
 		}
@@ -768,8 +753,8 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_getnext)
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
-	for (field = 0;field < conn->numfields;field++) {
-		store_field(N, conn, (XSQLVAR ISC_FAR *)&conn->sqlda->sqlvar[field], &tobj);
+	for (field = 0; field < conn->numfields; field++) {
+		store_field(N, conn, (XSQLVAR ISC_FAR *) & conn->sqlda->sqlvar[field], &tobj);
 	}
 	conn->numtuples++;
 	nsp_linkval(N, &N->r, &tobj);
@@ -850,8 +835,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_commit)
 		}
 		conn->trans_block = 0;
 		conn->trans = 0;
-	}
-	else {
+	} else {
 		n_warn(N, __FN__, "no transaction in progress");
 	}
 	return 0;
@@ -874,8 +858,7 @@ NSP_CLASSMETHOD(libnsp_data_sql_fbsql_rollback)
 		}
 		conn->trans_block = 0;
 		conn->trans = 0;
-	}
-	else {
+	} else {
 		n_warn(N, __FN__, "no transaction in progress");
 	}
 	return 0;
@@ -925,7 +908,7 @@ int nspfbsql_register_all(nsp_state *N)
 {
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "data");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "data");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "fbsql");
 	tobj->val->attr |= NST_HIDDEN;

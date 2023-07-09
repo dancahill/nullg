@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #ifdef __TURBOC__
@@ -172,8 +172,7 @@ static void md5_final(struct MD5Context *ctx, unsigned char digest[16])
 		md5_transform(ctx->buf, (uint32 *)ctx->in);
 		/* Now fill the next block with 56 bytes */
 		memset(ctx->in, 0, 56);
-	}
-	else {
+	} else {
 		/* Pad block to 56 bytes */
 		memset(p, 0, count - 8);
 	}
@@ -314,7 +313,7 @@ static char *md5_crypt(char *cpass, char *pw, char *salt)
 	/* If it starts with the magic string, then skip that */
 	if (!strncmp(sp, magic, strlen(magic))) sp += strlen(magic);
 	/* It stops at the first '$', max 8 chars */
-	for (ep = sp;*ep&&*ep != '$'&&ep < (sp + 8);ep++) continue;
+	for (ep = sp; *ep && *ep != '$' && ep < (sp + 8); ep++) continue;
 	/* get the length of the true salt */
 	sl = ep - sp;
 	md5_init(&ctx);
@@ -351,7 +350,7 @@ static char *md5_crypt(char *cpass, char *pw, char *salt)
 	 * On a 60 Mhz Pentium this takes 34 msec, so you would
 	 * need 30 seconds to build a 1000 entry dictionary...
 	 */
-	for (i = 0;i < 1000;i++) {
+	for (i = 0; i < 1000; i++) {
 		md5_init(&ctx1);
 		if (i & 1)
 			md5_update(&ctx1, (unsigned char *)pw, strlen(pw));
@@ -436,7 +435,7 @@ NSP_FUNCTION(libnsp_crypto_md5_file)
 	md5_final(&c, md);
 	close(fd);
 	memset(token, 0, sizeof(token));
-	for (i = 0;i < MD5_SIZE;i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
+	for (i = 0; i < MD5_SIZE; i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
 	nsp_setstr(N, &N->r, "", token, -1);
 	return 0;
 #undef __FN__
@@ -459,7 +458,7 @@ NSP_FUNCTION(libnsp_crypto_md5_string)
 	md5_update(&c, (uchar *)p, cobj1->val->size);
 	md5_final(&c, &(md[0]));
 	memset(token, 0, sizeof(token));
-	for (i = 0;i < MD5_SIZE;i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
+	for (i = 0; i < MD5_SIZE; i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
 	nsp_setstr(N, &N->r, "", token, -1);
 	return 0;
 #undef __FN__
@@ -477,8 +476,7 @@ NSP_FUNCTION(libnsp_crypto_md5_passwd)
 	memset(salt, 0, sizeof(salt));
 	if ((cobj1->val->type == NT_STRING) && (cobj1->val->size == 8)) {
 		strncpy(salt, cobj2->val->d.str, 8);
-	}
-	else {
+	} else {
 		strncpy(salt, "abcdefgh", 8);
 	}
 	md5_crypt(pass, cobj1->val->d.str, cobj2->val->d.str);

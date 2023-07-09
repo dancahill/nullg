@@ -61,7 +61,7 @@ typedef struct DBF_CONN {
 	unsigned long recbufoffset;
 } DBF_CONN;
 
-static short get_short(u_char *cp)
+static short get_short(uchar *cp)
 {
 	short ret;
 
@@ -70,7 +70,7 @@ static short get_short(u_char *cp)
 	return ret;
 }
 
-static long get_long(u_char *cp)
+static long get_long(uchar *cp)
 {
 	long ret;
 
@@ -81,13 +81,13 @@ static long get_long(u_char *cp)
 	return ret;
 }
 /*
-static void put_short(u_char *cp, short sval)
+static void put_short(uchar *cp, short sval)
 {
 	cp[0] = sval & 0xff;
 	cp[1] = (sval >> 8) & 0xff;
 }
 
-static void put_long(u_char *cp, long lval)
+static void put_long(uchar *cp, long lval)
 {
 	cp[0] = lval & 0xff;
 	cp[1] = (lval >> 8) & 0xff;
@@ -104,7 +104,7 @@ static void dbf_murder(nsp_state *N, obj_t *cobj)
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (nc_strcmp(cobj->val->d.str, "dbf-conn") != 0))
 		n_error(N, NE_SYNTAX, __FN__, "expected a dbf conn");
 	dbconn = (DBF_CONN *)cobj->val->d.str;
-	if (dbconn->recbuf != NULL) n_free(N, (void *)&dbconn->recbuf, dbconn->rowsize*DBF_RECBUFROWS);
+	if (dbconn->recbuf != NULL) n_free(N, (void *)&dbconn->recbuf, dbconn->rowsize * DBF_RECBUFROWS);
 	n_free(N, (void *)&cobj->val->d.str, sizeof(DBF_CONN) + 1);
 	return;
 #undef __FN__
@@ -132,11 +132,9 @@ NSP_CLASSMETHOD(libnsp_data_dbf_open)
 	dbconn->obj_term = (NSP_CFREE)dbf_murder;
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		dbfile = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
 		dbfile = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for dbfile");
 	}
 	if ((dbconn->fd = open(dbfile, O_RDONLY | O_BINARY)) == -1) {
@@ -164,8 +162,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_open)
 				nsp_unlinkval(N, &N->r);
 				nsp_unlinkval(N, &tobj);
 				return 0;
-			}
-			else {
+			} else {
 				n_warn(N, __FN__, "end of fields...ERROR");
 				goto err;
 			}
@@ -208,7 +205,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_close)
 		n_error(N, NE_SYNTAX, __FN__, "expected a dbf-conn");
 	dbconn = (DBF_CONN *)cobj->val->d.str;
 	close(dbconn->fd);
-	if (dbconn->recbuf != NULL) n_free(N, (void *)&dbconn->recbuf, dbconn->rowsize*DBF_RECBUFROWS);
+	if (dbconn->recbuf != NULL) n_free(N, (void *)&dbconn->recbuf, dbconn->rowsize * DBF_RECBUFROWS);
 	n_free(N, (void *)&cobj->val->d.str, sizeof(DBF_CONN) + 1);
 	cobj->val->size = 0;
 	nsp_setbool(N, thisobj, "db", 0);
@@ -253,14 +250,14 @@ NSP_CLASSMETHOD(libnsp_data_dbf_getnext)
 	tobj.val->attr &= ~NST_AUTOSORT;
 	if (dbconn->recbuf == NULL) {
 		//		n_warn(N, __FN__, "allocing buffer size of %d", dbconn->rowsize*DBF_RECBUFROWS+DBF_RECBUFROWS);
-		dbconn->recbuf = n_alloc(N, dbconn->rowsize*DBF_RECBUFROWS + DBF_RECBUFROWS, 0);
+		dbconn->recbuf = n_alloc(N, dbconn->rowsize * DBF_RECBUFROWS + DBF_RECBUFROWS, 0);
 		dbconn->recbuflen = 0;
 		dbconn->recbufoffset = 0;
 	}
 	if (dbconn->recbuflen - dbconn->recbufoffset == 0) {
 		dbconn->recbuflen = 0;
 		dbconn->recbufoffset = 0;
-		dbconn->recbuflen = read(dbconn->fd, dbconn->recbuf, dbconn->rowsize*DBF_RECBUFROWS + DBF_RECBUFROWS);
+		dbconn->recbuflen = read(dbconn->fd, dbconn->recbuf, dbconn->rowsize * DBF_RECBUFROWS + DBF_RECBUFROWS);
 		if (dbconn->recbuflen < 0) dbconn->recbuflen = 0;
 	}
 	r = dbconn->recbuflen - dbconn->recbufoffset;
@@ -281,7 +278,7 @@ NSP_CLASSMETHOD(libnsp_data_dbf_getnext)
 	}
 	p1 = dbconn->recbuf + dbconn->recbufoffset + 1;
 	dbconn->recbufoffset += dbconn->rowsize + 1;
-	for (i = 0;i < dbconn->nfields;i++) {
+	for (i = 0; i < dbconn->nfields; i++) {
 		plen = dbconn->field[i].dbf_flen;
 		while (plen > 1 && p1[plen - 1] == ' ') plen--;
 		nsp_setstr(N, &tobj, (char *)dbconn->field[i].dbf_name, p1, plen);

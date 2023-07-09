@@ -33,7 +33,7 @@
 
 #include <limits.h>
 
-    /* *printf() */
+/* *printf() */
 static const char nchars[] = "0123456789ABCDEF";
 
 int nc_vsnprintf(nsp_state *N, char *dest, int max, const char *format, va_list ap)
@@ -141,7 +141,7 @@ int _nc_strlen(const char *s)
 	char *p = (char *)s;
 
 	while (*p) p++;
-	return p - (char *)s;
+	return (unsigned long)(p - (char *)s);
 }
 
 char *_nc_strchr(const char *s, int c)
@@ -174,7 +174,7 @@ int _nc_strcmp(const char *s1, const char *s2)
 	if (s1 == s2) return 0;
 	if (!s1) return -(uchar)*s2;
 	if (!s2) return +(uchar)*s1;
-	for (a = (uchar *)s1, b = (uchar *)s2; *a&&*a == *b; a++, b++);
+	for (a = (uchar *)s1, b = (uchar *)s2; *a && *a == *b; a++, b++);
 	return *a - *b;
 }
 
@@ -213,10 +213,10 @@ void n_error(nsp_state *N, short int err, const char *fname, const char *format,
 			char *p = (char *)N->context->funcname + nc_strlen(N->context->funcname) - 1;
 			while (*p && p > N->context->funcname) { if (*p == '\\' || *p == '/') { p++; break; } p--; }
 
-			//			char *p1, *p2;
-			//			p1 = strrchr(N->func, '/');
-			//			p2 = strrchr((p1 != NULL) ? p1 : N->func, '\\');
-			//			p1 = (p2 != NULL) ? p2 : (p1 != NULL) ? p1 : N->func;
+//			char *p1, *p2;
+//			p1 = strrchr(N->func, '/');
+//			p2 = strrchr((p1 != NULL) ? p1 : N->func, '\\');
+//			p1 = (p2 != NULL) ? p2 : (p1 != NULL) ? p1 : N->func;
 
 			//			n_warn(N, __FN__, "%s", p1);
 			//n_warn(N, __FN__, "%d %d", p1, p2);
@@ -226,27 +226,24 @@ void n_error(nsp_state *N, short int err, const char *fname, const char *format,
 			//len = nc_snprintf(N, N->errbuf, sizeof(N->errbuf) - 1, "%s() line %d, ", N->func, N->line_num);
 			//n_warn(N, __FN__, "zz1 '%s'", N->file);
 			len = nc_snprintf(N, N->errbuf, sizeof(N->errbuf) - 1, "%s%s%s() line %d, ", N->context->filename != NULL ? N->context->filename : "", N->context->filename != NULL ? ":" : "", p, N->context->linenum);
-		}
-		else {
+		} else {
 			//len=nc_snprintf(N, N->errbuf, sizeof(N->errbuf)-1, "%-15s : line %d, ", fname, N->line_num);
 			len = nc_snprintf(N, N->errbuf, sizeof(N->errbuf) - 1, "line %d, ", N->context->linenum);
 		}
-	}
-	else {
+	} else {
 		N->errbuf[0] = '\0';
 		len = 0;
 	}
 	va_start(ap, format);
 	len += nc_vsnprintf(N, N->errbuf + len, sizeof(N->errbuf) - len - 1, format, ap);
 	va_end(ap);
-#if defined(WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 	_RPT1(_CRT_WARN, "NSP Exception: %s\r\n", N->errbuf);
 #endif
 	nl_flush(N);
 	if (n_context_savjmp != NULL) {
 		longjmp(*n_context_savjmp, 1);
-	}
-	else {
+	} else {
 		n_warn(N, __FN__, "jmp ptr not set - errno=%d :: \r\n%s", N->err, N->errbuf);
 	}
 	return;
@@ -284,10 +281,10 @@ void n_warn(nsp_state *N, const char *fname, const char *format, ...)
 	va_list ap;
 	int len;
 
-	//	char *p1 = strrchr(fname, '/');
-	//	char *p2 = strrchr(fname, '\\');
-	//	n_warn(N, __FN__, "%d %d", p1, p2);
-	//	p1 = p1 > p2 ? p1 + 1 : p2 != NULL ? p2 + 1 : fname;
+//	char *p1 = strrchr(fname, '/');
+//	char *p2 = strrchr(fname, '\\');
+//	n_warn(N, __FN__, "%d %d", p1, p2);
+//	p1 = p1 > p2 ? p1 + 1 : p2 != NULL ? p2 + 1 : fname;
 	char *p = (char *)fname + nc_strlen(fname) - 1;
 	while (*p && p > fname) { if (*p == '\\' || *p == '/') { p++; break; } p--; }
 
@@ -297,18 +294,16 @@ void n_warn(nsp_state *N, const char *fname, const char *format, ...)
 
 	if (N->warnformat == 'a') {
 		nc_printf(N, "\r\n[01;33;40m%s : line %d, ", p, N->context->linenum);
-	}
-	else if (N->warnformat == 'h') {
+	} else if (N->warnformat == 'h') {
 		nc_printf(N, "<BR /><B>%s : line %d, ", p, N->context->linenum);
-	}
-	else {
+	} else {
 		nc_printf(N, "\r\n%s : line %d, ", p, N->context->linenum);
 	}
 	va_start(ap, format);
 	len = nc_vsnprintf(N, N->outbuffer + N->outbuflen, N->outbufmax - N->outbuflen, format, ap);
 	va_end(ap);
 
-#if defined(WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 	_RPT1(_CRT_WARN, "NSP Warning: %s : line %d, [%s]\r\n", p, N->context->linenum, N->outbuffer + N->outbuflen);
 #endif
 	N->outbuflen += len;
@@ -316,11 +311,9 @@ void n_warn(nsp_state *N, const char *fname, const char *format, ...)
 
 	if (N->warnformat == 'a') {
 		nc_printf(N, "\r\n[00m");
-	}
-	else if (N->warnformat == 'h') {
+	} else if (N->warnformat == 'h') {
 		nc_printf(N, "</B><BR />");
-	}
-	else {
+	} else {
 		nc_printf(N, "\r\n");
 	}
 	nl_flush(N);
@@ -352,7 +345,7 @@ num_t n_aton(nsp_state *N, const char *str)
 	if (*s == '.') {
 		s++;
 		while (nc_isdigit(*s)) {
-			rval += (*s++ - '0')*rdot;
+			rval += (*s++ - '0') * rdot;
 			rdot *= 0.1;
 		}
 	}
@@ -363,13 +356,13 @@ num_t n_aton(nsp_state *N, const char *str)
 char *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec)
 {
 #define __FN__ __FILE__ ":n_ntoa()"
-	/*
-	#  define LLONG_MAX	9223372036854775807LL
-	#  define ULONG_MAX     0xffffffffUL  / * maximum unsigned long value * /
+/*
+#  define LLONG_MAX	9223372036854775807LL
+#  define ULONG_MAX     0xffffffffUL  / * maximum unsigned long value * /
 
-	#  define LONG_MAX	2147483647L
-	#  define LONG_MIN	(-LONG_MAX - 1L)
-	*/
+#  define LONG_MAX	2147483647L
+#  define LONG_MIN	(-LONG_MAX - 1L)
+*/
 
 #if defined (LLONG_MAX)
 	long long int n = (long long int)num;
@@ -392,15 +385,15 @@ char *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec)
 #else
 	if (num > ULONG_MAX) n_warn(N, __FN__, "broken number display...");
 #endif
-	/*
-		if (isinf(f)) {
+/*
+	if (isinf(f)) {
 		nc_strncpy(str, "inf", 4);
 		return str;
-		} else if (isnan(f)) {
+	} else if (isnan(f)) {
 		nc_strncpy(str, "nan", 4);
 		return str;
-		}
-		*/
+	}
+*/
 	if (base < 0) {
 		if (num < 0) {
 			sign = '-';
@@ -411,12 +404,12 @@ char *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec)
 	}
 	p = q = str;
 	/* need a _real_ fix */
-	if (n%base < 0) {
+	if (n % base < 0) {
 		nc_strncpy(str, "nan", 4);
 		return str;
 	}
 	do {
-		*p++ = nchars[n%base];
+		*p++ = nchars[n % base];
 	} while ((n /= base) > 0);
 	if (sign == '-') *p++ = '-';
 	*p = '\0';
@@ -431,7 +424,7 @@ char *n_ntoa(nsp_state *N, char *str, num_t num, short base, unsigned short dec)
 		*p++ = '.';
 		for (i = 0; i < dec; i++) {
 			f *= base;
-			*p++ = nchars[(int)f%base];
+			*p++ = nchars[(int)f % base];
 		}
 		*p = '\0';
 		/* insert rounding stuff around here.. */

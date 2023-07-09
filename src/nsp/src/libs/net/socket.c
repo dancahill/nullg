@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ NSP_FUNCTION(libnsp_net_socket_accept)
 	obj_t *cobj;
 	obj_t tobj;
 	TCP_SOCKET *asock, *bsock;
-	int rc;
+	uint64 rc;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	cobj = nsp_getobj(N, thisobj, "_socket");
@@ -96,7 +96,7 @@ NSP_FUNCTION(libnsp_net_socket_bind)
 			cobj1 = nsp_getobj(N, tobj, "certfile");
 			cobj2 = nsp_getobj(N, tobj, "keyfile");
 			cobj3 = nsp_getobj(N, tobj, "chainfile");
-			if (cobj1->val->type == NT_STRING&&cobj2->val->type == NT_STRING&&cobj1->val->size > 0 && cobj2->val->size > 0) {
+			if (cobj1->val->type == NT_STRING && cobj2->val->type == NT_STRING && cobj1->val->size > 0 && cobj2->val->size > 0) {
 				pc = cobj1->val->d.str;
 				pk = cobj2->val->d.str;
 			}
@@ -208,8 +208,7 @@ NSP_FUNCTION(libnsp_net_socket_gets)
 	if (rc > -1) {
 		striprn(buf);
 		nsp_setstr(N, &N->r, "", buf, -1);
-	}
-	else {
+	} else {
 		nsp_setnum(N, &N->r, "", rc);
 	}
 	n_free(N, (void *)&buf, MAX_TCP_READ_SIZE);
@@ -291,8 +290,7 @@ NSP_FUNCTION(libnsp_net_socket_read)
 		rc = sock->recvbufsize;
 		sock->recvbufoffset = 0;
 		sock->recvbufsize = 0;
-	}
-	else {
+	} else {
 		p = buf;
 		rc = tcp_recv(N, sock, buf, MAX_TCP_READ_SIZE - 1, 0);
 	}
@@ -323,7 +321,7 @@ NSP_FUNCTION(libnsp_net_socket_setsockopt)
 	if (nc_strcmp(opt, "SO_RCVTIMEO") == 0) {
 		if (!nsp_isnum(cobj2)) n_error(N, NE_SYNTAX, __FN__, "expected a number for arg2");
 		{
-#ifdef WIN32
+#ifdef _WIN32
 			DWORD timeout = (long)(cobj2->val->d.num);
 			setsockopt(sock->socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout));
 #else
@@ -337,8 +335,7 @@ NSP_FUNCTION(libnsp_net_socket_setsockopt)
 			int lowat = 1;
 			setsockopt(sock->socket, SOL_SOCKET, SO_RCVLOWAT, (void *)&lowat, sizeof(lowat));
 		}
-	}
-	else if (nc_strcmp(opt, "SO_KEEPALIVE") == 0) {
+	} else if (nc_strcmp(opt, "SO_KEEPALIVE") == 0) {
 		int keepalive;
 
 		if (!nsp_isbool(cobj2) && !nsp_isnum(cobj2)) n_error(N, NE_SYNTAX, __FN__, "expected a boolean for arg2");
@@ -389,7 +386,7 @@ NSP_FUNCTION(libnsp_net_socket_tlsaccept)
 		obj_t *cobj1 = nsp_getobj(N, tobj, "certfile");
 		obj_t *cobj2 = nsp_getobj(N, tobj, "keyfile");
 		obj_t *cobj3 = nsp_getobj(N, tobj, "chainfile");
-		if (cobj1->val->type == NT_STRING&&cobj2->val->type == NT_STRING&&cobj1->val->size > 0 && cobj2->val->size > 0) {
+		if (cobj1->val->type == NT_STRING && cobj2->val->type == NT_STRING && cobj1->val->size > 0 && cobj2->val->size > 0) {
 			pc = cobj1->val->d.str;
 			pk = cobj2->val->d.str;
 		}
@@ -453,8 +450,7 @@ NSP_FUNCTION(libnsp_net_socket_write)
 	rc = tcp_send(N, sock, cobj1->val->d.str, cobj1->val->size, 0);
 	if (rc > -1) {
 		nsp_setnum(N, &N->r, "", rc);
-	}
-	else {
+	} else {
 		nsp_setnum(N, &N->r, "", rc);
 	}
 	return 0;

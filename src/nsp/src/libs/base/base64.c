@@ -45,20 +45,15 @@ NSP_FUNCTION(libnsp_base_base64_decode)
 		if (ch == '=') break;
 		if (nc_isupper(ch)) {
 			x = ch - 'A';
-		}
-		else if (nc_islower(ch)) {
+		} else if (nc_islower(ch)) {
 			x = ch - 'a' + 26;
-		}
-		else if (nc_isdigit(ch)) {
+		} else if (nc_isdigit(ch)) {
 			x = ch - '0' + 52;
-		}
-		else if (ch == '+') {
+		} else if (ch == '+') {
 			x = 62;
-		}
-		else if (ch == '/') {
+		} else if (ch == '/') {
 			x = 63;
-		}
-		else {
+		} else {
 			return 0;
 		}
 		switch (state) {
@@ -115,7 +110,7 @@ NSP_FUNCTION(libnsp_base_base64_encode)
 	i = i * 2 + 5;
 	if ((dest = n_alloc(N, enclen * 4 + i, 0)) == NULL) return 0;
 	robj->val->d.str = dest;
-	for (i = 0;i < enclen;i++) {
+	for (i = 0; i < enclen; i++) {
 		a = (cp[0] >> 2);
 		b = (cp[0] << 4) & 0x30;
 		b |= (cp[1] >> 4);
@@ -144,8 +139,7 @@ NSP_FUNCTION(libnsp_base_base64_encode)
 		dest[dst + 2] = '=';
 		dest[dst + 3] = '=';
 		dst += 4;
-	}
-	else if (remlen == 2) {
+	} else if (remlen == 2) {
 		a = (cp[0] >> 2);
 		b = (cp[0] << 4) & 0x30;
 		b |= (cp[1] >> 4);

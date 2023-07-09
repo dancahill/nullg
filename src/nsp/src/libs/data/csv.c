@@ -60,11 +60,9 @@ NSP_CLASSMETHOD(libnsp_data_csv_open)
 	dbconn->obj_term = (NSP_CFREE)csv_murder;
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		dbfile = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "dbfile")))) {
 		dbfile = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for dbfile");
 	}
 	if ((dbconn->fd = open(dbfile, O_RDONLY | O_BINARY)) == -1) {
@@ -133,11 +131,11 @@ NSP_CLASSMETHOD(libnsp_data_csv_getnext)
 	se = ss = buf;
 	s2 = separator;
 	l2 = nc_strlen(separator);
-	for (;*se;) {
+	for (; *se;) {
 		if (*se == '"') {
 			dbconn->offset++;
 			ss = ++se;
-			for (;*se;se++, dbconn->offset++) {
+			for (; *se; se++, dbconn->offset++) {
 				if (*se != '"') continue;
 				nsp_setstr(N, &tobj, n_ntoa(N, namebuf, i++, 10, 0), ss, se - ss);
 				ss = ++se; dbconn->offset++;

@@ -16,7 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#ifdef WIN32
+#ifdef _WIN32
 #include "nsp/nsplib.h"
 
 // libbase->base.c
@@ -53,7 +53,7 @@
 #define vsnprintf _vsnprintf
 
 #pragma comment(lib, "winmm.lib")
-#define CONFFILE "ntray.conf"
+#define CONFFILE "ntray-config.ns"
 
 #define TITLE_PREFIX "NTray: "
 
@@ -99,19 +99,19 @@ void preppath(nsp_state *N, char *name)
 	}
 	else if (name[0] == '.') {
 		/* looks relative... */
-		getcwd(buf, sizeof(buf) - strlen(name) - 2);
+		getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2));
 		strcat(buf, "/");
 		strcat(buf, name);
 	}
 	else {
-		getcwd(buf, sizeof(buf) - strlen(name) - 2);
+		getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2));
 		strcat(buf, "/");
 		strcat(buf, name);
 	}
 	for (j = 0;j < strlen(buf);j++) {
 		if (buf[j] == '\\') buf[j] = '/';
 	}
-	for (j = strlen(buf) - 1;j > 0;j--) {
+	for (j = (unsigned long)strlen(buf) - 1;j > 0;j--) {
 		if (buf[j] == '/') { buf[j] = '\0'; p = buf + j + 1; break; }
 	}
 	nsp_setstr(N, &N->g, "_filename", p, -1);
@@ -138,8 +138,8 @@ static void log_error(nsp_state *N, const char *format, ...)
 	strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S - ", localtime(&t));
 	fd = open(file, O_WRONLY | O_BINARY | O_CREAT | O_APPEND, S_IREAD | S_IWRITE);
 	if (fd != -1) {
-		write(fd, timebuf, strlen(timebuf));
-		write(fd, logbuf, strlen(logbuf));
+		write(fd, timebuf, (unsigned long)strlen(timebuf));
+		write(fd, logbuf, (unsigned long)strlen(logbuf));
 		write(fd, "\r\n", 2);
 		close(fd);
 	}
@@ -162,10 +162,10 @@ void new_menu(nsp_state *N)
 {
 	char *newmenutext =
 		"global MENUITEMS = {\r\n"\
-		"\t{ name=\"NullLogic &Nesla\", type=\"ShellExecute\",  command=\"http://nulllogic.ca/nsp/\"                  };\r\n"\
-		"\t{ name=\"separator\",        type=\"separator\"                                                          };\r\n"\
-		"\t{ name=\"&Configuration\",   type=\"CreateProcess\", command=\"rundll32 shell32,OpenAs_RunDLL ntray.conf\" };\r\n"\
-		"\t{ name=\"E&xit\",            type=\"Exit\",          command=\"Exit\"                                      };\r\n"\
+		"\t{ name=\"NullLogic &NSP\",  type=\"ShellExecute\",  command=\"https://nulllogic.ca/nsp/\"                      };\r\n"\
+		"\t{ name=\"separator\",       type=\"separator\"                                                                 };\r\n"\
+		"\t{ name=\"&Configuration\",  type=\"CreateProcess\", command=\"rundll32 shell32,OpenAs_RunDLL ntray-config.ns\" };\r\n"\
+		"\t{ name=\"E&xit\",           type=\"Exit\",          command=\"Exit\"                                           };\r\n"\
 		"};\r\n\r\n"\
 		"class NTrayClass {\r\n"\
 		"\tfunction onload() {\r\n\t\treturn;\r\n\t};\r\n"\
@@ -175,7 +175,7 @@ void new_menu(nsp_state *N)
 		"\tfunction ontimer() {\r\n\t\treturn;\r\n\t};\r\n"\
 		"}\r\n"
 		;
-	int textlen = strlen(newmenutext);
+	int textlen = (unsigned long)strlen(newmenutext);
 	int fd;
 	struct stat sb;
 
@@ -253,7 +253,7 @@ void init_stuff(nsp_state *N)
 
 	nsp_setcfunc(N, &N->g, "print", nsp_print);
 
-	tobj = nsp_settable(N, &N->g, "io");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "io");
 	nsp_setcfunc(N, tobj, "flush", (NSP_CFUNC)nsp_flush);
 
 	nsp_setcfunc(N, &N->g, "TextInput", nsp_textinput);
@@ -485,7 +485,7 @@ void PopupMenuDrawSub(HMENU hMenu, obj_t *tobj)
 		if (stricmp(p, "menu") == 0) {
 			if ((hMenuSub = CreateMenu()) == NULL) continue;
 			PopupMenuDrawSub(hMenuSub, nsp_getobj(N, tobj, "table"));
-			ret = AppendMenu(hMenu, MF_POPUP | MF_BYPOSITION, (DWORD)hMenuSub, nsp_getstr(N, tobj, "name"));
+			ret = AppendMenu(hMenu, MF_POPUP | MF_BYPOSITION, (UINT_PTR)hMenuSub, nsp_getstr(N, tobj, "name"));
 		}
 		else if (stricmp(p, "separator") == 0) {
 			ret = AppendMenu(hMenu, MF_SEPARATOR, 0, "");
@@ -868,13 +868,13 @@ DWORD do_filter(EXCEPTION_POINTERS *eps)
 		_snprintf(errbuf, sizeof(errbuf) - 1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
 		break;
 	case EXCEPTION_ACCESS_VIOLATION:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 		break;
 	case EXCEPTION_STACK_OVERFLOW:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 		break;
 	default:
-		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+		_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 		break;
 	}
 	log_error(N, "SEH Exception [%s]", errbuf);
@@ -991,4 +991,4 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 	return 0;
 }
-#endif //WIN32
+#endif //_WIN32

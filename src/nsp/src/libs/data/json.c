@@ -70,7 +70,7 @@ static void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 			nsp_strcat(N, robj, buf, buflen);
 			buflen = 0;
 		}
-		if (nsp_isnull(cobj) || cobj->val->attr&NST_HIDDEN || cobj->val->attr&NST_SYSTEM) continue;
+		if (nsp_isnull(cobj) || cobj->val->attr & NST_HIDDEN || cobj->val->attr & NST_SYSTEM) continue;
 		g = (depth < 1) ? "global " : "";
 
 		b = 0;
@@ -89,8 +89,7 @@ static void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s%s%s%s: ", g, b ? "\"" : "", cobj->name, b ? "\"" : "");
 			}
 			buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s", nsp_tostr(N, cobj));
-		}
-		else if (cobj->val->type == NT_STRING) {
+		} else if (cobj->val->type == NT_STRING) {
 			if (ent++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s\n", depth ? "," : "");
 			if (depth) {
 				for (i = 0; i < depth; i++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\t");
@@ -101,8 +100,7 @@ static void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 			buflen = 0;
 			n_escape(N, cobj->val->d.str ? cobj->val->d.str : "", cobj->val->size);
 			buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\"");
-		}
-		else if (cobj->val->type == NT_TABLE) {
+		} else if (cobj->val->type == NT_TABLE) {
 			if (nc_strcmp(cobj->name, "_GLOBALS") == 0) continue;
 			/* if (nc_strcmp(cobj->name, "this")==0) continue; */
 			if (ent++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "%s\n", depth ? "," : "");
@@ -118,8 +116,7 @@ static void n_dumpvars(nsp_state *N, obj_t *tobj, int depth)
 				n_dumpvars(N, cobj->val->d.table.f, depth + 1);
 				for (i = 0; i < depth; i++) buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "\t");
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, "}");
-			}
-			else {
+			} else {
 				buflen += nc_snprintf(N, buf + buflen, sizeof(buf) - buflen, " }");
 			}
 		}
@@ -139,8 +136,7 @@ NSP_FUNCTION(libnsp_data_json_encode)
 	settrace();
 	if (!nsp_isnull(cobj1)) {
 		n_dumpvars(N, cobj1, 0);
-	}
-	else {
+	} else {
 		nsp_setstr(N, &N->r, "", "N U L L", -1);
 	}
 	return 0;

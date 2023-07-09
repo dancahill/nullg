@@ -154,7 +154,7 @@ NSP_FUNCTION(libnsp_base_file_stat)
 	settrace();
 	if (cobj1->val->type != NT_STRING || cobj1->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	file = cobj1->val->d.str;
-#if defined(WIN32) || defined(__TURBOC__)
+#if defined(_WIN32) || defined(__TURBOC__)
 	rc = stat(file, &sb);
 	if (rc != 0) {
 		nsp_setnum(N, &N->r, "", rc);
@@ -166,7 +166,7 @@ NSP_FUNCTION(libnsp_base_file_stat)
 		nsp_setnum(N, &N->r, "", rc);
 		return 0;
 	}
-	if (!(~sb.st_mode&S_IFLNK)) {
+	if (!(~sb.st_mode & S_IFLNK)) {
 		sym = 1;
 		if (stat(file, &sb) != 0) sym = 2;
 	}
@@ -176,12 +176,10 @@ NSP_FUNCTION(libnsp_base_file_stat)
 	if (sym == 2) {
 		nsp_setnum(N, &tobj, "size", 0);
 		nsp_setstr(N, &tobj, "type", "broken", 6);
-	}
-	else if ((sb.st_mode&S_IFDIR)) {
+	} else if ((sb.st_mode & S_IFDIR)) {
 		nsp_setnum(N, &tobj, "size", 0);
 		nsp_setstr(N, &tobj, "type", sym ? "dirp" : "dir", sym ? 4 : 3);
-	}
-	else {
+	} else {
 		nsp_setnum(N, &tobj, "size", sb.st_size);
 		nsp_setstr(N, &tobj, "type", sym ? "filep" : "file", sym ? 5 : 4);
 	}
@@ -227,8 +225,7 @@ NSP_FUNCTION(libnsp_base_file_writeall)
 	if (cobj1->val->type != NT_STRING || cobj1->val->size < 1) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg1");
 	if (nc_strcmp(fname, "writeall") == 0) {
 		fd = open(cobj1->val->d.str, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
-	}
-	else if (nc_strcmp(fname, "append") == 0) {
+	} else if (nc_strcmp(fname, "append") == 0) {
 		fd = open(cobj1->val->d.str, O_WRONLY | O_BINARY | O_CREAT | O_APPEND, S_IREAD | S_IWRITE);
 	}
 	if (fd == -1) {

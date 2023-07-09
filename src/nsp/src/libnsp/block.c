@@ -21,7 +21,7 @@
 #endif
 #include "opcodes.h"
 
-    /* Advance readptr to next specified char */
+/* Advance readptr to next specified char */
 void n_skipto(nsp_state *N, const char *fn, unsigned short c)
 {
 #define __FN__ __FILE__ ":n_skipto()"
@@ -62,13 +62,11 @@ l2:
 			n_context_readptr += 5 + readi4((n_context_readptr + 1));
 			n_expect(N, __FN__, OP_PCBRACE);
 			n_context_readptr++;
-		}
-		else {
+		} else {
 			n_skipto(N, __FN__, OP_PSEMICOL);
 			if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
 		}
-	}
-	else {
+	} else {
 		done = 1;
 		if (n_peekop(N) == OP_POBRACE) {
 			uchar *be = n_context_readptr + 5 + readi4((n_context_readptr + 1));
@@ -76,8 +74,7 @@ l2:
 			n_context_readptr = be;
 			n_expect(N, __FN__, OP_PCBRACE);
 			n_context_readptr++;
-		}
-		else {
+		} else {
 			N->single = 1;
 			nsp_exec(N, (char *)n_context_readptr);
 			if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
@@ -119,8 +116,7 @@ void n_for(nsp_state *N)
 		n_context_readptr += 5 + readi4((n_context_readptr + 1));
 		n_expect(N, __FN__, OP_PCBRACE);
 		single = 0;
-	}
-	else {
+	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
@@ -153,8 +149,8 @@ void n_for(nsp_state *N)
 void n_foreach(nsp_state *N)
 {
 #define __FN__ __FILE__ ":n_foreach()"
-	//	char itemnamebuf1[MAX_OBJNAMELEN+1];
-	//	char itemnamebuf2[MAX_OBJNAMELEN+1];
+//	char itemnamebuf1[MAX_OBJNAMELEN+1];
+//	char itemnamebuf2[MAX_OBJNAMELEN+1];
 	obj_t *iobj, *sobj, *xobj;
 	obj_t tobj;
 	obj_t *tsobj;
@@ -167,22 +163,22 @@ void n_foreach(nsp_state *N)
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
 	n_context_readptr = n_seekop(N, n_context_readptr, 0);
-	//	++N->readptr;
+//	++N->readptr;
 	n_expect(N, __FN__, OP_LABEL);
-	//	n_getlabel(N, itemnamebuf1);
+//	n_getlabel(N, itemnamebuf1);
 	namep = NULL;
 	valp = n_getlabel(N, NULL);
 	if (n_peekop(N) == OP_PCOMMA) {
 		++n_context_readptr;
 		n_expect(N, __FN__, OP_LABEL);
-		//		n_getlabel(N, itemnamebuf2);
+//		n_getlabel(N, itemnamebuf2);
 		namep = valp;
 		valp = n_getlabel(N, NULL);
-		//		namep=itemnamebuf1;
-		//		valp=itemnamebuf2;
-		//	} else {
-		//		namep=NULL;
-		//		valp=itemnamebuf1;
+//		namep=itemnamebuf1;
+//		valp=itemnamebuf2;
+//	} else {
+//		namep=NULL;
+//		valp=itemnamebuf1;
 	}
 	n_expect(N, __FN__, OP_LABEL);
 	if (nc_strcmp(n_getlabel(N, NULL), "in") != 0) {
@@ -202,14 +198,13 @@ void n_foreach(nsp_state *N)
 		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single = 0;
-	}
-	else {
+	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
 	be = ++n_context_readptr;
 	for (iobj = sobj->val->d.table.f; iobj; iobj = iobj->next) {
-		if (nsp_isnull(iobj) || iobj->val->attr&NST_SYSTEM) continue;
+		if (nsp_isnull(iobj) || iobj->val->attr & NST_SYSTEM) continue;
 		if (namep) nsp_setstr(N, &N->context->l, namep, iobj->name, -1);
 		n_context_readptr = bs;
 		N->single = single;
@@ -221,8 +216,7 @@ void n_foreach(nsp_state *N)
 			nsp_unlinkval(N, &tobj);
 			n_error(N, NE_SYNTAX, __FN__, "expected a table for set obj");
 			break;
-		}
-		else 	if (sobj->val->d.table.f != tsobj) {
+		} else 	if (sobj->val->d.table.f != tsobj) {
 			n_warn(N, __FN__, "sobj->val!=sval");
 		}
 
@@ -249,7 +243,7 @@ void n_switch(nsp_state *N)
 	settrace();
 	n_expect(N, __FN__, OP_POPAREN);
 	n_context_readptr = n_seekop(N, n_context_readptr, 0);
-	//	N->readptr++;
+//	N->readptr++;
 	nc_memset((void *)&cobj, 0, sizeof(obj_t));
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	nsp_linkval(N, &tobj, nsp_eval(N, (char *)n_context_readptr));
@@ -264,7 +258,7 @@ void n_switch(nsp_state *N)
 		switch (*n_context_readptr) {
 		case OP_KCASE:
 			n_context_readptr++;
-			//			switch (nsp_typeof((&tobj))) {
+//			switch (nsp_typeof((&tobj))) {
 			switch (tobj.val == NULL ? NT_NULL : tobj.val->type) {
 			case NT_STRING:
 				if (*n_context_readptr != OP_STRDATA) {
@@ -347,8 +341,7 @@ void n_do(nsp_state *N)
 		n_skipto(N, __FN__, OP_PCBRACE);
 		n_context_readptr++;
 		single = 0;
-	}
-	else {
+	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		n_context_readptr++;
 		single = 1;
@@ -366,7 +359,7 @@ void n_do(nsp_state *N)
 		n_context_readptr++;
 		n_expect(N, __FN__, OP_POPAREN);
 		n_context_readptr = n_seekop(N, n_context_readptr, 0);
-		//		N->readptr++;
+//		N->readptr++;
 		argcomp = n_context_readptr;
 		cobj = nsp_eval(N, (char *)argcomp);
 		n_expect(N, __FN__, OP_PCPAREN);
@@ -374,7 +367,7 @@ void n_do(nsp_state *N)
 	}
 	n_context_readptr = be;
 
-	//	n_decompile(N, N->readptr, be, NULL, 0);
+//	n_decompile(N, N->readptr, be, NULL, 0);
 	n_expect(N, __FN__, OP_KWHILE);
 	n_skipto(N, __FN__, OP_PSEMICOL);
 	n_expect(N, __FN__, OP_PSEMICOL);
@@ -405,8 +398,7 @@ void n_while(nsp_state *N)
 		n_skipto(N, __FN__, OP_PCBRACE);
 		n_context_readptr++;
 		single = 0;
-	}
-	else {
+	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		n_context_readptr++;
 		single = 1;
@@ -447,8 +439,7 @@ void n_try(nsp_state *N)
 		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		n_skipto(N, __FN__, OP_PCBRACE);
 		single = 0;
-	}
-	else {
+	} else {
 		n_skipto(N, __FN__, OP_PSEMICOL);
 		single = 1;
 	}
@@ -460,8 +451,7 @@ void n_try(nsp_state *N)
 	if (setjmp(*n_context_savjmp) == 0) {
 		nsp_exec(N, (char *)n_context_readptr);
 		except = 0;
-	}
-	else {
+	} else {
 		except = 1;
 	}
 	n_free(N, (void *)&n_context_savjmp, sizeof(jmp_buf));
@@ -471,7 +461,7 @@ void n_try(nsp_state *N)
 		++n_context_readptr;
 		n_expect(N, __FN__, OP_POPAREN);
 		n_context_readptr = n_seekop(N, n_context_readptr, 0);
-		//		++N->readptr;
+//		++N->readptr;
 		n_expect(N, __FN__, OP_LABEL);
 		n_getlabel(N, exnamebuf);
 		n_expect(N, __FN__, OP_PCPAREN);
@@ -480,8 +470,7 @@ void n_try(nsp_state *N)
 			n_context_readptr = n_seekop(N, n_context_readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single = 0;
-		}
-		else {
+		} else {
 			n_skipto(N, __FN__, OP_PSEMICOL);
 			single = 1;
 		}
@@ -492,7 +481,7 @@ void n_try(nsp_state *N)
 			/* needing setvaltype is a bug */
 			nsp_setvaltype(N, tobj, NT_TABLE);
 			nsp_setnum(N, tobj, "errno", N->err);
-			nsp_setstr(N, tobj, "errtext", N->errbuf, -1);// this should be deprecated
+			nsp_setstr(N, tobj, "errtext", N->errbuf, -1); // this should be deprecated
 			nsp_setstr(N, tobj, "description", N->errbuf, -1);
 			N->err = 0;
 			savjmp = n_context_savjmp;
@@ -500,8 +489,7 @@ void n_try(nsp_state *N)
 			if (setjmp(*n_context_savjmp) == 0) {
 				nsp_exec(N, (char *)n_context_readptr);
 				except = 0;
-			}
-			else {
+			} else {
 				except = 1;
 			}
 			n_free(N, (void *)&n_context_savjmp, sizeof(jmp_buf));
@@ -516,8 +504,7 @@ void n_try(nsp_state *N)
 			n_context_readptr = n_seekop(N, n_context_readptr, 0);
 			n_skipto(N, __FN__, OP_PCBRACE);
 			single = 0;
-		}
-		else {
+		} else {
 			n_skipto(N, __FN__, OP_PSEMICOL);
 			single = 1;
 		}

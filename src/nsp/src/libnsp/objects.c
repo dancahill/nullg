@@ -19,7 +19,9 @@
 #ifndef _NSPLIB_H
 #include "nsp/nsplib.h"
 #endif
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <stdlib.h>
 #define RECORD_MEMUSAGE 1
 
@@ -73,7 +75,7 @@ void n_free(nsp_state *N, void **p, int osize)
 {
 #define __FN__ __FILE__ ":n_free()"
 	settrace();
-	if ((long int)p == 0x10) {
+	if ((long long)p == 0x10) {
 		n_error(N, NE_MEM, __FN__, "ptr is invalid 0x%08X", p);
 		return;
 	}
@@ -101,8 +103,7 @@ void n_copytable(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 		if (oobj != NULL) {
 			oobj->next = cobj;
 			cobj->prev = oobj;
-		}
-		else {
+		} else {
 			cobj1->val->d.table.f = cobj;
 			cobj->prev = NULL;
 		}
@@ -113,7 +114,7 @@ void n_copytable(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 	}
 	cobj1->val->d.table.i = cobj1->val->d.table.f;
 	cobj1->val->d.table.l = oobj;
-	cobj1->val->attr |= cobj2->val->attr&NST_AUTOSORT;
+	cobj1->val->attr |= cobj2->val->attr & NST_AUTOSORT;
 	return;
 #undef __FN__
 }
@@ -128,8 +129,7 @@ void n_copyval(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 	if (cobj1->val) {
 		n_freeval(N, cobj1);
 		cobj1->val->type = type2;
-	}
-	else {
+	} else {
 		cobj1->val = n_newval(N, type2);
 	}
 	switch (type2) {
@@ -157,8 +157,7 @@ void n_moveval(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 	if (cobj1->val) {
 		n_freeval(N, cobj1);
 		cobj1->val->type = type2;
-	}
-	else {
+	} else {
 		cobj1->val = n_newval(N, type2);
 	}
 	switch (type2) {
@@ -169,7 +168,7 @@ void n_moveval(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 		cobj1->val->d.table.f = cobj2->val->d.table.f;
 		cobj1->val->d.table.i = cobj1->val->d.table.f;
 		cobj1->val->d.table.l = cobj2->val->d.table.l;
-		cobj1->val->attr |= cobj2->val->attr&NST_AUTOSORT;
+		cobj1->val->attr |= cobj2->val->attr & NST_AUTOSORT;
 		break;
 	case NT_CDATA:
 	case NT_STRING:
@@ -204,11 +203,10 @@ void n_freeval(nsp_state *N, obj_t *cobj)
 	}
 	case NT_STRING:
 	case NT_NFUNC:
-		if (cobj->val->attr&NST_LINK) {
+		if (cobj->val->attr & NST_LINK) {
 			cobj->val->attr ^= NST_LINK;
 			cobj->val->d.str = NULL;
-		}
-		else if (cobj->val->d.str != NULL) {
+		} else if (cobj->val->d.str != NULL) {
 			n_free(N, (void *)&cobj->val->d.str, cobj->val->size + 1);
 		}
 		break;
@@ -273,8 +271,7 @@ obj_t *n_setname(nsp_state *N, obj_t *cobj, const char *name)
 
 		for (p = cobj->name; nc_isdigit(*p); p++);
 		if (!*p) cobj->nval = (signed long)n_aton(N, cobj->name); else cobj->nval = -1;
-	}
-	else cobj->nval = -1;
+	} else cobj->nval = -1;
 	return cobj;
 #undef __FN__
 }
@@ -299,18 +296,15 @@ void nsp_setvaltype(nsp_state *N, obj_t *cobj, unsigned short type)
 	settrace();
 	if (cobj->val == NULL) {
 		cobj->val = n_newval(N, type);
-	}
-	else if (cobj->val->type != NT_NULL) {
+	} else if (cobj->val->type != NT_NULL) {
 		if (nsp_istable(cobj)) {
 			nsp_unlinkval(N, cobj);
 			cobj->val = n_newval(N, type);
-		}
-		else {
+		} else {
 			n_freeval(N, cobj);
 			cobj->val->type = type;
 		}
-	}
-	else {
+	} else {
 		cobj->val->type = type;
 	}
 	if (type == NT_TABLE) cobj->val->attr |= NST_AUTOSORT;
@@ -327,8 +321,7 @@ void nsp_linkval(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 		nsp_unlinkval(N, cobj1);
 		cobj1->val = n_newval(N, NT_NULL);
 		return;
-	}
-	else {
+	} else {
 		if (cobj1->val == cobj2->val) return;
 		if (cobj1->val) nsp_unlinkval(N, cobj1);
 		if (cobj2 == &N->r) {
@@ -357,7 +350,7 @@ void nsp_unlinkval(nsp_state *N, obj_t *cobj)
 		}
 		if (cobj->val != NULL && --cobj->val->refs < 1) {
 			n_freeval(N, cobj);
-			if (!(cobj->val->attr&NST_STACKVAL)) {
+			if (!(cobj->val->attr & NST_STACKVAL)) {
 				n_free(N, (void *)&cobj->val, sizeof(val_t));
 			}
 		}
@@ -392,7 +385,7 @@ static obj_t *n_locateobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short
 {
 #define __FN__ __FILE__ ":n_locateobj()"
 	obj_t *cobj, *oobj;
-	unsigned short sortattr = tobj->val->attr&NST_AUTOSORT ? 1 : 0;
+	unsigned short sortattr = tobj->val->attr & NST_AUTOSORT ? 1 : 0;
 	signed long cmp = -1;
 	signed long nval = -1;
 	char *p;
@@ -405,41 +398,36 @@ static obj_t *n_locateobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short
 	}
 	if (sortattr) {
 		cobj = oobj = tobj->val->d.table.i ? tobj->val->d.table.i : tobj->val->d.table.f;
-		//		cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
+//		cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
 		if (nval > -1) {
 			cmp = cobj->nval - nval;
-		}
-		else {
-			for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+		} else {
+			for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 			cmp = *a - *b;
 		}
-	}
-	else {
+	} else {
 		oobj = tobj->val->d.table.f;
 	}
 	if (cmp < 0) {
 		for (cobj = oobj; cobj; oobj = cobj, cobj = cobj->next) {
-			//			cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
+//			cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
 			if (nval > -1) {
 				cmp = cobj->nval - nval;
-			}
-			else {
-				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+			} else {
+				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 				cmp = *a - *b;
 			}
 			if (cmp == 0 || (cmp > 0 && sortattr)) break;
 			tobj->val->d.table.i = cobj;
 		}
 		if (!setobj && cmp) return NULL;
-	}
-	else if (sortattr && cmp > 0) {
+	} else if (sortattr && cmp > 0) {
 		for (cobj = oobj; cobj; oobj = cobj, cobj = cobj->prev) {
-			//			cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
+//			cmp=nval>-1?cobj->nval-nval:nc_strcmp(cobj->name, oname);
 			if (nval > -1) {
 				cmp = cobj->nval - nval;
-			}
-			else {
-				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+			} else {
+				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 				cmp = *a - *b;
 			}
 			if (cmp <= 0) {
@@ -453,8 +441,7 @@ static obj_t *n_locateobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short
 			oobj = cobj;
 			if (cobj->next) cobj = cobj->next;
 			cmp = 1;
-		}
-		else if (cmp > 0) {
+		} else if (cmp > 0) {
 			cobj = oobj;
 		}
 	}
@@ -470,22 +457,19 @@ static obj_t *n_locateobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short
 		cobj->val = n_newval(N, otype);
 		n_setname(N, cobj, oname);
 		if (cobj->next == NULL) tobj->val->d.table.l = cobj;
-	}
-	else if (cobj == NULL) {
+	} else if (cobj == NULL) {
 		cobj = (obj_t *)n_alloc(N, sizeof(obj_t), 0);
 		if (oobj != NULL) {
 			oobj->next = cobj;
 			cobj->prev = oobj;
-		}
-		else {
+		} else {
 			cobj->prev = NULL;
 		}
 		cobj->next = NULL;
 		cobj->val = n_newval(N, otype);
 		n_setname(N, cobj, oname);
 		if (cobj->next == NULL) tobj->val->d.table.l = cobj;
-	}
-	else {
+	} else {
 		switch (nsp_typeof(cobj)) {
 		case NT_TABLE:
 			cobj->val->type = otype;
@@ -513,9 +497,9 @@ obj_t *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short foll
 	if (N != NULL && tobj == NULL) {
 		for (cobj = N->context->l.val->d.table.f; cobj; cobj = cobj->next) {
 			/* printf("%s oname=%s 0x%08X %s\n", __FN__, oname, cobj, cobj->name); */
-			//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
+//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 			if (cobj->hash == hash) {
-				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 				if (*a == *b) return cobj;
 			}
 
@@ -523,26 +507,25 @@ obj_t *nsp_getobj_ex(nsp_state *N, obj_t *tobj, char *oname, unsigned short foll
 		}
 		if (nsp_istable(thisobj)) {
 			for (cobj = thisobj->val->d.table.f; cobj; cobj = cobj->next) {
-				//				if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
+//				if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 				if (cobj->hash == hash) {
-					for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+					for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 					if (*a == *b) return cobj;
 				}
 			}
 		}
 		for (cobj = N->g.val->d.table.f; cobj; cobj = cobj->next) {
-			//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
+//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
 			if (cobj->hash == hash) {
-				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a&&*a == *b; a++, b++);
+				for (a = (uchar *)cobj->name, b = (uchar *)oname; *a && *a == *b; a++, b++);
 				if (*a == *b) return cobj;
 			}
 		}
-	}
-	else if (nsp_istable(tobj)) {
+	} else if (nsp_istable(tobj)) {
 		if ((cobj = n_locateobj(N, tobj, oname, 0, 0)) != NULL) return cobj;
-		//		for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
-		//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
-		//		}
+//		for (cobj=tobj->val->d.table.f; cobj; cobj=cobj->next) {
+//			if (cobj->hash==hash&&nc_strcmp(cobj->name, oname)==0) return cobj;
+//		}
 		if (followz && nsp_istable(tobj->val->ztable)) {
 			for (cobj = tobj->val->ztable->val->d.table.f; cobj; cobj = cobj->next) {
 				if (!nsp_istable(cobj)) continue;
@@ -574,7 +557,7 @@ obj_t *nsp_getiobj(nsp_state *N, obj_t *tobj, unsigned long oindex)
 	settrace();
 	if (!nsp_istable(tobj)) return &_nullobj;
 	for (cobj = tobj->val->d.table.f; cobj; cobj = cobj->next) {
-		if (nsp_isnull(cobj) || cobj->val->attr&NST_SYSTEM) continue;
+		if (nsp_isnull(cobj) || cobj->val->attr & NST_SYSTEM) continue;
 		if (i == oindex) return cobj;
 		i++;
 	}
@@ -597,13 +580,11 @@ obj_t *nsp_setobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 			cobj->next = NULL;
 			cobj->val = n_newval(N, otype);
 			n_setname(N, cobj, oname);
-			cobj->val->attr |= tobj->val->attr&NST_AUTOSORT;
-		}
-		else {
+			cobj->val->attr |= tobj->val->attr & NST_AUTOSORT;
+		} else {
 			cobj = n_locateobj(N, tobj, oname, 1, otype);
 		}
-	}
-	else {
+	} else {
 		cobj = tobj;
 		if (cobj == NULL) n_error(N, NE_MEM, __FN__, "cobj=NULL,oname=%s", oname);
 		nsp_setvaltype(N, cobj, otype);
@@ -614,7 +595,7 @@ obj_t *nsp_setobj(nsp_state *N, obj_t *tobj, char *oname, unsigned short otype, 
 	case NT_CFUNC: cobj->val->d.cfunc = _fptr; break;
 	case NT_STRING:
 	case NT_NFUNC:
-	case NT_CDATA: nsp_strcat(N, cobj, _str, _slen); break;
+	case NT_CDATA: nsp_strcat(N, cobj, _str, (unsigned long)_slen); break;
 	}
 	return cobj;
 #undef __FN__
@@ -638,8 +619,7 @@ obj_t *nsp_appendobj(nsp_state *N, obj_t *tobj, char *name)
 		cobj = tobj->val->d.table.f = (obj_t *)n_alloc(N, sizeof(obj_t), 0);
 		cobj->prev = NULL;
 		cobj->next = NULL;
-	}
-	else {
+	} else {
 		cobj = tobj->val->d.table.l;
 		cobj->next = (obj_t *)n_alloc(N, sizeof(obj_t), 0);
 		cobj->next->prev = cobj;
@@ -652,7 +632,7 @@ obj_t *nsp_appendobj(nsp_state *N, obj_t *tobj, char *name)
 	return cobj;
 }
 
-void nsp_strcat(nsp_state *N, obj_t *cobj, char *str, long len)
+void nsp_strcat(nsp_state *N, obj_t *cobj, char *str, unsigned long len)
 {
 #define __FN__ __FILE__ ":nsp_strcat()"
 	unsigned short ctype = nsp_typeof(cobj);
@@ -760,8 +740,7 @@ char *nsp_zlink(nsp_state *N, obj_t *cobj1, obj_t *cobj2)
 		cobj->val = NULL;
 		n_setnamei(N, cobj, i);
 		cobj1->val->ztable->val->d.table.l = cobj;
-	}
-	else {
+	} else {
 		for (cobj = cobj1->val->ztable->val->d.table.f; cobj; cobj = cobj->next, i++) {
 			if (cobj->next != NULL) continue;
 			cobj->next = (obj_t *)n_alloc(N, sizeof(obj_t), 0);

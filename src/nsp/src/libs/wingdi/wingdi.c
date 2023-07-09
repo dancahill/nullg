@@ -18,7 +18,7 @@
 */
 #include "nsp/nsplib.h"
 #include "wingdi.h"
-#ifdef WIN32
+#ifdef _WIN32
 //#include <mmsystem.h>
 //#include <shellapi.h>
 #include <wingdi.h>
@@ -80,10 +80,10 @@ static void winerror(int line)
 		(LPTSTR)&lpMsgBuf,
 		0,
 		NULL
-		);
+	);
 
-	//	printf("%d rc=0x%x\r\n", line, rc);
-	//	if (lpMsgBuf) {
+//	printf("%d rc=0x%x\r\n", line, rc);
+//	if (lpMsgBuf) {
 	printf("rc %d, %s\r\n", rc, (char *)lpMsgBuf);
 	LocalFree(lpMsgBuf);
 	//	}
@@ -94,61 +94,61 @@ static void winerror(int line)
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	//	winerror(__LINE__);
-	//	if (uMsg>=WM_CREATE && uMsg<=WM_SHOWWINDOW)
-	//		return DefWindowProc(hwnd, uMsg, wParam, lParam);
-	//	if (uMsg>=WM_CONTEXTMENU && uMsg<=WM_NCPAINT)
-	//		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+//	winerror(__LINE__);
+//	if (uMsg>=WM_CREATE && uMsg<=WM_SHOWWINDOW)
+//		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+//	if (uMsg>=WM_CONTEXTMENU && uMsg<=WM_NCPAINT)
+//		return DefWindowProc(hwnd, uMsg, wParam, lParam);
 
 
-	/*	winerror(__LINE__);
-		printf("0x%x\r\n", uMsg);
-		switch(uMsg) {
-		case WM_MOUSEMOVE:
-			MouseX=GET_X_LPARAM(lParam);
-			MouseY=GET_Y_LPARAM(lParam);
-			break;
-		}
-	*/
+/*	winerror(__LINE__);
+	printf("0x%x\r\n", uMsg);
+	switch(uMsg) {
+	case WM_MOUSEMOVE:
+		MouseX=GET_X_LPARAM(lParam);
+		MouseY=GET_Y_LPARAM(lParam);
+		break;
+	}
+*/
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 
 
-	//	WM_SETCURSOR 0x20
-	//	WM_NCHITTEST 0x84
-	//	WM_MOUSEMOVE 0x200
+//	WM_SETCURSOR 0x20
+//	WM_NCHITTEST 0x84
+//	WM_MOUSEMOVE 0x200
 
-	/*
+/*
 
-		switch(uMsg) {
-		case WM_KEYUP:
-			printf("WM_KEYUP\r\n");
-			return FALSE;
-		case WM_MOUSEFIRST:
-			printf("WM_MOUSEFIRST\r\n");
-			return FALSE;
-	//	case WM_SETREDRAW:
-		case WM_WINDOWPOSCHANGING:
-		case WM_WINDOWPOSCHANGED:
-		case WM_GETMINMAXINFO:
-		case WM_NCCREATE:
-		case WM_NCACTIVATE:
-		case WM_NCDESTROY:
-		case WM_ACTIVATE:
-		case WM_GETICON:
-
-		case WM_ACTIVATEAPP:
-		case WM_IME_SETCONTEXT:
-		case WM_IME_NOTIFY:
-		case WM_PAINT:
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			break;
-		default:
-			printf("0x%x\r\n", uMsg);winerror(__LINE__);
-		}
+	switch(uMsg) {
+	case WM_KEYUP:
+		printf("WM_KEYUP\r\n");
 		return FALSE;
-	*/
+	case WM_MOUSEFIRST:
+		printf("WM_MOUSEFIRST\r\n");
+		return FALSE;
+//	case WM_SETREDRAW:
+	case WM_WINDOWPOSCHANGING:
+	case WM_WINDOWPOSCHANGED:
+	case WM_GETMINMAXINFO:
+	case WM_NCCREATE:
+	case WM_NCACTIVATE:
+	case WM_NCDESTROY:
+	case WM_ACTIVATE:
+	case WM_GETICON:
+
+	case WM_ACTIVATEAPP:
+	case WM_IME_SETCONTEXT:
+	case WM_IME_NOTIFY:
+	case WM_PAINT:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		printf("0x%x\r\n", uMsg);winerror(__LINE__);
+	}
+	return FALSE;
+*/
 }
 
 NSP_CLASSMETHOD(libnsp_wingdi_update)
@@ -201,29 +201,23 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		title = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "title")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "title")))) {
 		title = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for title");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		width = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "width")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "width")))) {
 		width = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for width");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		height = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "height")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "height")))) {
 		height = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for height");
 	}
 	win = n_alloc(N, sizeof(WINDOW) + 1, 1);
@@ -236,7 +230,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_create)
 
 	memset(&win->wndClass, 0, sizeof(win->wndClass));
 	win->wndClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	//	win->wndClass.hIcon = LoadIcon(hInst, "AppIcon");
+//	win->wndClass.hIcon = LoadIcon(hInst, "AppIcon");
 	win->wndClass.lpfnWndProc = WndProc;
 	win->wndClass.hInstance = NULL;
 	win->wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -264,7 +258,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_destroy)
 	cobj = nsp_getobj(N, thisobj, "window");
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "window") != 0))
 		goto end;
-	//		n_error(N, NE_SYNTAX, __FN__, "expected a window");
+//		n_error(N, NE_SYNTAX, __FN__, "expected a window");
 	win = (WINDOW *)cobj->val->d.str;
 	DestroyWindow(win->hwnd);
 	if (win->hBrush) {
@@ -383,8 +377,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_setpen)
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		color = (DWORD)cobj->val->d.num;
 		color = (color >> 16 & 255) + ((color >> 8 & 255) << 8) + ((color & 255) << 16);
-	}
-	else {
+	} else {
 		color = RGB(0, 255, 0);
 	}
 	win->hPen = CreatePen(PS_SOLID, 1, color);
@@ -423,7 +416,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_fillrect)
 	if (hDC == NULL) n_error(N, NE_SYNTAX, __FN__, "GetDC failed");
 	SelectObject(hDC, win->hBrush);
 	FillRect(hDC, &rect, win->hBrush);
-	//	SelectObject(hDC, GetStockObject(BLACK_BRUSH));
+//	SelectObject(hDC, GetStockObject(BLACK_BRUSH));
 	ReleaseDC(win->hwnd, hDC);
 
 	nsp_setnum(N, &N->r, "", 0);
@@ -438,7 +431,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_print)
 	obj_t *cobj;
 	WINDOW *win;
 	HDC hDC;
-	//	PAINTSTRUCT ps;
+//	PAINTSTRUCT ps;
 	unsigned short x, y;
 
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
@@ -453,7 +446,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_print)
 	y = (unsigned short)cobj->val->d.num;
 	if (!nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for arg3");
 
-	//	hDC=BeginPaint(win->hwnd, &ps);
+//	hDC=BeginPaint(win->hwnd, &ps);
 	hDC = GetDC(win->hwnd);
 	if (!hDC) n_error(N, NE_SYNTAX, __FN__, "GetDC failed");
 	if (win->hFont == NULL) n_error(N, NE_SYNTAX, __FN__, "win->hFont=NULL");
@@ -461,8 +454,8 @@ NSP_CLASSMETHOD(libnsp_wingdi_print)
 	SetBkMode(hDC, TRANSPARENT);
 	SetTextColor(hDC, RGB(0, 0, 255));
 	TextOut(hDC, x, y, cobj->val->d.str, cobj->val->size);
-	//	SelectObject(hDC, GetStockObject(ANSI_VAR_FONT));
-	//	EndPaint(win->hwnd, &ps);
+//	SelectObject(hDC, GetStockObject(ANSI_VAR_FONT));
+//	EndPaint(win->hwnd, &ps);
 	ReleaseDC(win->hwnd, hDC);
 
 	nsp_setnum(N, &N->r, "", 0);
@@ -500,7 +493,7 @@ NSP_CLASSMETHOD(libnsp_wingdi_drawline)
 	SelectObject(hDC, win->hPen);
 	MoveToEx(hDC, x1, y1, NULL);
 	LineTo(hDC, x2, y2);
-	//	SelectObject(hDC, GetStockObject(BLACK_PEN));
+//	SelectObject(hDC, GetStockObject(BLACK_PEN));
 	ReleaseDC(win->hwnd, hDC);
 
 	nsp_setnum(N, &N->r, "", 0);
@@ -533,10 +526,10 @@ NSP_CLASS(libnsp_wingdi_window)
 
 int nspwingdi_register_all(nsp_state *N)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "win");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "win");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "gdi");
 	tobj->val->attr |= NST_HIDDEN;

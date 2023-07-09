@@ -5,7 +5,7 @@ CFLAGS  = CFLAGS+" -I../../../include ";
 if (CC=='cl.exe') CFLAGS=CFLAGS+"/c /Fo";
 else if (CC=='tcc.exe') CFLAGS=CFLAGS+"-c -o";
 else CFLAGS=CFLAGS+"-c -o ";
-OBJECTS = "dns.o ftp.o http.o mime.o net.o pop3.o smtp.o socket.o tls.o tcp.o tnef.o";
+OBJECTS = "dns.o ftp.o http.o httpd.o httpd_http.o httpd_io.o httpd_nsp.o mime.o net.o pop3.o smtp.o socket.o tls.o tcp.o tnef.o";
 TNAME   = "libnsp_net";
 if (cmd==null) if (_ARGS[2]=='clean') cmd='clean'; else cmd='build';
 if (cmd=='build') {

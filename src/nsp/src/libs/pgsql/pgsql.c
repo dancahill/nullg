@@ -226,50 +226,39 @@ NSP_CLASSMETHOD(libnsp_data_pgsql_open)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
 		host = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
 		user = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
 		pass = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "5")))) {
 		db = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
 		db = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	conn = n_alloc(N, sizeof(PGSQL_CONN) + 1, 1);
@@ -321,11 +310,9 @@ NSP_CLASSMETHOD(libnsp_data_pgsql_query)
 
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
 	if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
@@ -372,13 +359,12 @@ NSP_CLASSMETHOD(libnsp_data_pgsql_getnext)
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
-	for (field = 0;field < numfields;field++) {
+	for (field = 0; field < numfields; field++) {
 		p = PQgetvalue(conn->pgresult, conn->last_row, field);
 		if (p == NULL) {
 			p = "NULL";
 			plen = 4;
-		}
-		else {
+		} else {
 			plen = PQgetlength(conn->pgresult, conn->last_row, field);
 		}
 		nsp_setstr(N, &tobj, PQfname(conn->pgresult, field), p, plen);
@@ -475,7 +461,7 @@ int nsppgsql_register_all(nsp_state *N)
 {
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "data");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "data");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "pgsql");
 	tobj->val->attr |= NST_HIDDEN;

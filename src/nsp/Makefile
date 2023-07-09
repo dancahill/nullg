@@ -39,6 +39,7 @@ static_libs: deps
 	@cd src/libs/data    && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/fbsql   && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/ldap    && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
+	@cd src/libs/mongodb && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/mysql   && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/net     && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/odbc    && ../../../$(NSPCLI) -b -e "global _LINKAGE_='static';include('Makefile.ns');" && cd ../../..
@@ -55,6 +56,7 @@ shared_libs: deps
 	@cd src/libs/data     && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/fbsql    && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/ldap     && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
+	@cd src/libs/mongodb  && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/mysql    && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/net      && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
 	@cd src/libs/odbc     && ../../../$(NSPCLI) -b -e "global _LINKAGE_='shared';include('Makefile.ns');" && cd ../../..
@@ -73,9 +75,13 @@ cli: libnsp
 	@cd src/hosts/cli     && $(MAKE) -s && cd ../../..
 	@echo
 	@echo -n "Interpreter built"
-	@./bin/nsp -b -e "var x='gnikrow dna ';for (i=string.len(x);i>=0;i--) print(string.sub(x, i, 1));"
+	@./bin/nsp -b -e "var x='gnikrow dna ';for (i=lib.string.len(x);i>=0;i--) print(lib.string.sub(x, i, 1));"
 	@echo
 	@echo
+
+wasm: cli
+	@cd src/hosts/wasm     && $(MAKE) && cd ../../..
+
 
 # rules for everything else
 clean:
@@ -98,13 +104,14 @@ clean:
 	@rm -rf bin int lib obj Debug
 
 distclean: clean
-	@chown root.root * -R
+	@chown root:root * -R
 	@setfacl -b `find . -name "*"`
 	@chmod 755 `find . -type d`
 	@chmod 644 `find . -type f`
 	@chmod 755 `find . -type f \( -name "*.ns" \)`
 #	@setfacl -b `find . -type f \( -name "*.c" -o -name "*.h" -o -name "*.cpp" \)`
 	@rm -rf .vs
+	@rm -rf src/hosts/ntray.net/obj
 	@rm -f NSP.ncb NSP.suo NSP.v12.suo
 	@rm -f include/nsp/config*.h src/config*.mak src/config*.ns
 	@rm -f src/preconf.mak

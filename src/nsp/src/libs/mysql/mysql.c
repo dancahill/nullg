@@ -114,50 +114,39 @@ NSP_CLASSMETHOD(libnsp_data_mysql_open)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "hostname")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
 		host = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
 		user = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
 		pass = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "5")))) {
 		db = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "database")))) {
 		db = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 
@@ -213,11 +202,9 @@ NSP_CLASSMETHOD(libnsp_data_mysql_query)
 
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "sqlquery")))) {
 		sqlquery = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for sqlquery");
 	}
 	//if (nsp_isbool((cobj = nsp_getobj(N, &N->context->l, "2")))) {
@@ -263,55 +250,55 @@ NSP_CLASSMETHOD(libnsp_data_mysql_getnext)
 	nc_memset((void *)&tobj, 0, sizeof(obj_t));
 	tobj.val = n_newval(N, NT_TABLE);
 	tobj.val->attr &= ~NST_AUTOSORT;
-	for (field = 0;field < numfields;field++) {
+	for (field = 0; field < numfields; field++) {
 		p = MYrow[field] ? MYrow[field] : "NULL";
 		MYfield = mysql_fetch_field_direct(conn->myres, field);
-		/*
-				Type Value		Type Description
-				MYSQL_TYPE_TINY		TINYINT field
-				MYSQL_TYPE_SHORT	SMALLINT field
-				MYSQL_TYPE_LONG	INTEGER field
-				MYSQL_TYPE_INT24	MEDIUMINT field
-				MYSQL_TYPE_LONGLONG	BIGINT field
-				MYSQL_TYPE_DECIMAL	DECIMAL or NUMERIC field
-				MYSQL_TYPE_NEWDECIMAL	Precision math DECIMAL or NUMERIC field (MySQL 5.0.3 and up)
-				MYSQL_TYPE_FLOAT	FLOAT field
-				MYSQL_TYPE_DOUBLE	DOUBLE or REAL field
-				MYSQL_TYPE_BIT		BIT field (MySQL 5.0.3 and up)
-				MYSQL_TYPE_TIMESTAMP	TIMESTAMP field
-				MYSQL_TYPE_DATE		DATE field
-				MYSQL_TYPE_TIME		TIME field
-				MYSQL_TYPE_DATETIME	DATETIME field
-				MYSQL_TYPE_YEAR		YEAR field
-				MYSQL_TYPE_STRING	CHAR or BINARY field
-				MYSQL_TYPE_VAR_STRING	VARCHAR or VARBINARY field
-				MYSQL_TYPE_BLOB		BLOB or TEXT field (use max_length to determine the maximum length)
-				MYSQL_TYPE_SET		SET field
-				MYSQL_TYPE_ENUM		ENUM field
-				MYSQL_TYPE_GEOMETRY	Spatial field
-				MYSQL_TYPE_NULL		NULL-type field
-				----
-				enum enum_field_types { MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY,
-				MYSQL_TYPE_SHORT,  MYSQL_TYPE_LONG,
-				MYSQL_TYPE_FLOAT,  MYSQL_TYPE_DOUBLE,
-				MYSQL_TYPE_NULL,   MYSQL_TYPE_TIMESTAMP,
-				MYSQL_TYPE_LONGLONG,MYSQL_TYPE_INT24,
-				MYSQL_TYPE_DATE,   MYSQL_TYPE_TIME,
-				MYSQL_TYPE_DATETIME, MYSQL_TYPE_YEAR,
-				MYSQL_TYPE_NEWDATE, MYSQL_TYPE_VARCHAR,
-				MYSQL_TYPE_BIT,
-				MYSQL_TYPE_NEWDECIMAL=246,
-				MYSQL_TYPE_ENUM=247,
-				MYSQL_TYPE_SET=248,
-				MYSQL_TYPE_TINY_BLOB=249,
-				MYSQL_TYPE_MEDIUM_BLOB=250,
-				MYSQL_TYPE_LONG_BLOB=251,
-				MYSQL_TYPE_BLOB=252,
-				MYSQL_TYPE_VAR_STRING=253,
-				MYSQL_TYPE_STRING=254,
-				MYSQL_TYPE_GEOMETRY=255
-				};
-		*/
+/*
+		Type Value		Type Description
+		MYSQL_TYPE_TINY		TINYINT field
+		MYSQL_TYPE_SHORT	SMALLINT field
+		MYSQL_TYPE_LONG	INTEGER field
+		MYSQL_TYPE_INT24	MEDIUMINT field
+		MYSQL_TYPE_LONGLONG	BIGINT field
+		MYSQL_TYPE_DECIMAL	DECIMAL or NUMERIC field
+		MYSQL_TYPE_NEWDECIMAL	Precision math DECIMAL or NUMERIC field (MySQL 5.0.3 and up)
+		MYSQL_TYPE_FLOAT	FLOAT field
+		MYSQL_TYPE_DOUBLE	DOUBLE or REAL field
+		MYSQL_TYPE_BIT		BIT field (MySQL 5.0.3 and up)
+		MYSQL_TYPE_TIMESTAMP	TIMESTAMP field
+		MYSQL_TYPE_DATE		DATE field
+		MYSQL_TYPE_TIME		TIME field
+		MYSQL_TYPE_DATETIME	DATETIME field
+		MYSQL_TYPE_YEAR		YEAR field
+		MYSQL_TYPE_STRING	CHAR or BINARY field
+		MYSQL_TYPE_VAR_STRING	VARCHAR or VARBINARY field
+		MYSQL_TYPE_BLOB		BLOB or TEXT field (use max_length to determine the maximum length)
+		MYSQL_TYPE_SET		SET field
+		MYSQL_TYPE_ENUM		ENUM field
+		MYSQL_TYPE_GEOMETRY	Spatial field
+		MYSQL_TYPE_NULL		NULL-type field
+		----
+		enum enum_field_types { MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY,
+		MYSQL_TYPE_SHORT,  MYSQL_TYPE_LONG,
+		MYSQL_TYPE_FLOAT,  MYSQL_TYPE_DOUBLE,
+		MYSQL_TYPE_NULL,   MYSQL_TYPE_TIMESTAMP,
+		MYSQL_TYPE_LONGLONG,MYSQL_TYPE_INT24,
+		MYSQL_TYPE_DATE,   MYSQL_TYPE_TIME,
+		MYSQL_TYPE_DATETIME, MYSQL_TYPE_YEAR,
+		MYSQL_TYPE_NEWDATE, MYSQL_TYPE_VARCHAR,
+		MYSQL_TYPE_BIT,
+		MYSQL_TYPE_NEWDECIMAL=246,
+		MYSQL_TYPE_ENUM=247,
+		MYSQL_TYPE_SET=248,
+		MYSQL_TYPE_TINY_BLOB=249,
+		MYSQL_TYPE_MEDIUM_BLOB=250,
+		MYSQL_TYPE_LONG_BLOB=251,
+		MYSQL_TYPE_BLOB=252,
+		MYSQL_TYPE_VAR_STRING=253,
+		MYSQL_TYPE_STRING=254,
+		MYSQL_TYPE_GEOMETRY=255
+		};
+*/
 		switch (MYfield->type) {
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_LONG:
@@ -436,7 +423,7 @@ int nspmysql_register_all(nsp_state *N)
 {
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "data");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "data");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "mysql");
 	tobj->val->attr |= NST_HIDDEN;

@@ -58,15 +58,13 @@ int makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
 
 	if ((direction == DIR_ENCRYPT) || (direction == DIR_DECRYPT)) {
 		key->direction = direction;
-	}
-	else {
+	} else {
 		return BAD_KEY_DIR;
 	}
 
 	if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) {
 		key->keyLen = keyLen;
-	}
-	else {
+	} else {
 		return BAD_KEY_MAT;
 	}
 
@@ -95,8 +93,7 @@ int makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
 	}
 	if (direction == DIR_ENCRYPT) {
 		key->Nr = rijndaelKeySetupEnc(key->rk, cipherKey, keyLen);
-	}
-	else {
+	} else {
 		key->Nr = rijndaelKeySetupDec(key->rk, cipherKey, keyLen);
 	}
 	rijndaelKeySetupEnc(key->ek, cipherKey, keyLen);
@@ -106,8 +103,7 @@ int makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
 int cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 	if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
 		cipher->mode = mode;
-	}
-	else {
+	} else {
 		return BAD_CIPHER_MODE;
 	}
 	if (IV != NULL) {
@@ -129,8 +125,7 @@ int cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 
 			cipher->IV[i] = (u8)j;
 		}
-	}
-	else {
+	} else {
 		memset(cipher->IV, 0, MAX_IV_SIZE);
 	}
 	return TRUE;
@@ -453,7 +448,7 @@ int cipherUpdateRounds(cipherInstance *cipher, keyInstance *key,
 
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -485,21 +480,20 @@ static int prep_key(keyInstance *key, int keylen, BYTE dir, char *keytext, int k
 	memset(keyMaterial, '0', keylen / 4);
 	if (memcmp(keytext, "hex:", 4) == 0) {
 		keytext += 4;
-		for (i = 0;i < keylen / 4;i++) {
+		for (i = 0; i < keylen / 4; i++) {
 			if (!keytext[i]) break;
 			keyMaterial[i] = keytext[i];
 		}
-	}
-	else {
-		for (i = 0;i < keylen / 8;i++) {
+	} else {
+		for (i = 0; i < keylen / 8; i++) {
 			if (!keytext[i] || !keytext[i + 1]) break;
 			keyMaterial[i * 2 + 0] = hex[keytext[i] >> 4];
 			keyMaterial[i * 2 + 1] = hex[keytext[i] & 15];
 		}
 	}
 	keyMaterial[keylen / 4] = 0;
-	//	printf("[%s][%s]\n", keyMaterial, keytext);
-	//	printf("[%s]\n", keyMaterial);
+//	printf("[%s][%s]\n", keyMaterial, keytext);
+//	printf("[%s]\n", keyMaterial);
 	makeKey(key, dir, keylen, (char *)keyMaterial);
 	return TRUE;
 }
@@ -539,12 +533,10 @@ NSP_FUNCTION(libnsp_crypto_aes_encrypt)
 	if (nc_strcmp(fname, "aes_cbc_encrypt") == 0) {
 		/* Cipher Block Chaining (CBC) Mode */
 		n = cipherInit(&cipherInst, MODE_CBC, iv);
-	}
-	else if (nc_strcmp(fname, "aes_ecb_encrypt") == 0) {
+	} else if (nc_strcmp(fname, "aes_ecb_encrypt") == 0) {
 		/* Electronic Codebook (ECB) Mode */
 		n = cipherInit(&cipherInst, MODE_ECB, iv);
-	}
-	else {
+	} else {
 		n = BAD_CIPHER_INSTANCE;
 	}
 	switch (n) {
@@ -557,7 +549,7 @@ NSP_FUNCTION(libnsp_crypto_aes_encrypt)
 	case BAD_CIPHER_STATE: n_error(N, NE_SYNTAX, fname, "Cipher in wrong state (e.g., not initialized)");
 	default: if (n < 0) n_error(N, NE_SYNTAX, fname, "broken size returned %d", n);
 	}
-	//	printf("e[%d][%d] %d %d\n", cobj1->val->size, n, sizeof(keyInst), sizeof(cipherInst));
+//	printf("e[%d][%d] %d %d\n", cobj1->val->size, n, sizeof(keyInst), sizeof(cipherInst));
 	robj->val->size = n;
 	robj->val->d.str[n] = '\0';
 	return 0;
@@ -598,12 +590,10 @@ NSP_FUNCTION(libnsp_crypto_aes_decrypt)
 	if (nc_strcmp(fname, "aes_cbc_decrypt") == 0) {
 		/* Cipher Block Chaining (CBC) Mode */
 		n = cipherInit(&cipherInst, MODE_CBC, iv);
-	}
-	else if (nc_strcmp(fname, "aes_ecb_decrypt") == 0) {
+	} else if (nc_strcmp(fname, "aes_ecb_decrypt") == 0) {
 		/* Electronic Codebook (ECB) Mode */
 		n = cipherInit(&cipherInst, MODE_ECB, iv);
-	}
-	else {
+	} else {
 		n = BAD_CIPHER_INSTANCE;
 	}
 	switch (n) {
@@ -627,7 +617,7 @@ NSP_FUNCTION(libnsp_crypto_aes_decrypt)
 			return -1;
 		}
 	}
-	//	printf("d[%d][%d] %d %d\n", cobj1->val->size, n, sizeof(keyInst), sizeof(cipherInst));
+//	printf("d[%d][%d] %d %d\n", cobj1->val->size, n, sizeof(keyInst), sizeof(cipherInst));
 	robj->val->size = n;
 	robj->val->d.str[n] = '\0';
 	return 0;

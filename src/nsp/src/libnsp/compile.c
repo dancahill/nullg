@@ -21,10 +21,10 @@
 #endif
 #include "opcodes.h"
 
-    /*
-     * calling this a compiler is something of a misnomer. it does not _compile_
-     * code from multiple sources.  it tokenizes and optimizes source chunks.  that's all.
-     */
+/*
+ * calling this a compiler is something of a misnomer. it does not _compile_
+ * code from multiple sources.  it tokenizes and optimizes source chunks.  that's all.
+ */
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -41,10 +41,10 @@ typedef struct cstate {
 	long offset;
 } cstate;
 
-static long n_unescape(nsp_state *N, char *src, char *dst, long len, cstate *state)
+static long n_unescape(nsp_state *N, char *src, char *dst, unsigned long len, cstate *state)
 {
 #define __FN__ __FILE__ ":n_unescape()"
-	long i, n;
+	unsigned long i, n;
 	short e = 0;
 
 	settrace();
@@ -53,8 +53,7 @@ static long n_unescape(nsp_state *N, char *src, char *dst, long len, cstate *sta
 		if (!e) {
 			if (src[i] == '\\') {
 				e = 1;
-			}
-			else {
+			} else {
 				dst[n++] = src[i];
 			}
 			continue;
@@ -88,8 +87,7 @@ static obj_t *n_newobj(nsp_state *N, cstate *state)
 	settrace();
 	if (state->lobj1 == NULL) {
 		state->lobj1 = state->tobj1->val->d.table.f = n_newiobj(N, state->index);
-	}
-	else {
+	} else {
 		state->lobj1->next = n_newiobj(N, state->index);
 		state->lobj1->next->prev = state->lobj1;
 		state->lobj1 = state->lobj1->next;
@@ -115,12 +113,10 @@ static void n_skipblank(nsp_state *N, cstate *state)
 					nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
 					state->lobj1->val->attr = OP_LINENUM;
 					break;
-				}
-				else if (*p == '\r') break;
+				} else if (*p == '\r') break;
 				p++;
 			}
-		}
-		else if (p[0] == '/'&&p[1] == '/') {
+		} else if (p[0] == '/' && p[1] == '/') {
 			p += 2;
 			while (*p) {
 				if (*p == '\n') {
@@ -128,16 +124,14 @@ static void n_skipblank(nsp_state *N, cstate *state)
 					nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
 					state->lobj1->val->attr = OP_LINENUM;
 					break;
-				}
-				else if (*p == '\r') break;
+				} else if (*p == '\r') break;
 				p++;
 			}
-		}
-		else if (p[0] == '/'&&p[1] == '*') {
+		} else if (p[0] == '/' && p[1] == '*') {
 			p += 2;
 			while (*p) {
 				if (*p == '\n') state->lineno++;
-				else if (p[0] == '*'&&p[1] == '/') {
+				else if (p[0] == '*' && p[1] == '/') {
 					p += 2;
 					if (*p == '\n') {
 						n_newobj(N, state);
@@ -148,8 +142,7 @@ static void n_skipblank(nsp_state *N, cstate *state)
 				}
 				p++;
 			}
-		}
-		else {
+		} else {
 			if (*p == '\n') {
 				n_newobj(N, state);
 				nsp_setnum(N, state->lobj1, NULL, ++state->lineno);
@@ -172,12 +165,10 @@ static void n_skipquote(nsp_state *N, unsigned short c, cstate *state, unsigned 
 	while (*n_context_readptr) {
 		if (*n_context_readptr == '\\' && !verbatim) {
 			n_context_readptr++;
-		}
-		else if (*n_context_readptr == c) {
+		} else if (*n_context_readptr == c) {
 			n_context_readptr++;
 			break;
-		}
-		else if (*n_context_readptr == '\n') {
+		} else if (*n_context_readptr == '\n') {
 			++state->lineno;
 		}
 		n_context_readptr++;
@@ -211,11 +202,10 @@ static obj_t *n_extractquote(nsp_state *N, cstate *state, unsigned short verbati
 
 	if (verbatim) {
 		cobj = nsp_setstr(N, &N->r, "", qs, qe - qs - 1);
-	}
-	else {
+	} else {
 		nc_memset((void *)&tobj, 0, sizeof(obj_t));
 		nsp_setstr(N, &tobj, "", NULL, qe - qs - 1);
-		n = n_unescape(N, qs, tobj.val->d.str, qe - qs - 1, state);
+		n = n_unescape(N, qs, tobj.val->d.str, (unsigned long)(qe - qs - 1), state);
 		cobj = nsp_setstr(N, &N->r, "", tobj.val->d.str, n);
 		nsp_unlinkval(N, &tobj);
 	}
@@ -240,13 +230,11 @@ static void n_decompose_sub(nsp_state *N, cstate *state)
 		if (op == OP_UNDEFINED) {
 			n_warn(N, __FN__, "bad op? index=%d line=%d op=%d:%d name='%s'", state->index, state->lineno, op, n_context_readptr[0], lastname);
 			return;
-		}
-		else if (op == OP_LABEL) {
+		} else if (op == OP_LABEL) {
 			n_newobj(N, state);
 			nsp_setstr(N, state->lobj1, NULL, lastname, -1);
 			state->lobj1->val->attr = op;
-		}
-		else if (OP_ISMATH(op) || OP_ISKEY(op) || OP_ISPUNC(op)) {
+		} else if (OP_ISMATH(op) || OP_ISKEY(op) || OP_ISPUNC(op)) {
 			if (OP_ISKEY(op) && prevop == OP_PDOT) {
 				// it's NOT a keyword!
 				int i;
@@ -259,27 +247,23 @@ static void n_decompose_sub(nsp_state *N, cstate *state)
 						break;
 					}
 				}
-			}
-			else {
+			} else {
 				n_newobj(N, state);
 				nsp_setstr(N, state->lobj1, NULL, n_getsym(N, op), -1);
 				state->lobj1->val->attr = op;
 			}
-		}
-		else if (n_context_readptr[0] == '\"' || n_context_readptr[0] == '\'' || n_context_readptr[0] == '`') {
+		} else if (n_context_readptr[0] == '\"' || n_context_readptr[0] == '\'' || n_context_readptr[0] == '`') {
 			op = n_context_readptr[0];
 			n_newobj(N, state);
 			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 0));
 			state->lobj1->val->attr = op == '`' ? OP_ESTRDATA : OP_STRDATA;
-		}
-		else if (n_context_readptr[0] == '@' && (n_context_readptr[1] == '\"' || n_context_readptr[1] == '\'' || n_context_readptr[1] == '`')) {
+		} else if (n_context_readptr[0] == '@' && (n_context_readptr[1] == '\"' || n_context_readptr[1] == '\'' || n_context_readptr[1] == '`')) {
 			op = n_context_readptr[1];
 			n_context_readptr++;
 			n_newobj(N, state);
 			nsp_linkval(N, state->lobj1, n_extractquote(N, state, 1));
 			state->lobj1->val->attr = op == '`' ? OP_ESTRDATA : OP_STRDATA;
-		}
-		else if (nc_isdigit(*n_context_readptr)) {
+		} else if (nc_isdigit(*n_context_readptr)) {
 			p = (char *)n_context_readptr;
 			while (nc_isdigit(*n_context_readptr) || *n_context_readptr == '.') n_context_readptr++;
 			n_newobj(N, state);
@@ -325,7 +309,7 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 	state.destmax = 1024;
 	state.destbuf = (uchar *)n_alloc(N, state.destmax, 0);
 	n_context_readptr = srctext;
-	tobj = nsp_settable(N, &N->g, "decomped_script");
+	tobj = nsp_settable(N, nsp_settable(N, nsp_settable(N, &N->g, "lib"), "debug"), "decomped_script");
 	nsp_freetable(N, tobj);
 	state.tobj1 = nsp_settable(N, tobj, "code");
 	n_decompose_sub(N, &state);
@@ -381,15 +365,13 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 			writei4(0, (state.destbuf + state.offset));
 			state.offset += 4;
 			continue;
-		}
-		else if (op == OP_POPAREN) {
+		} else if (op == OP_POPAREN) {
 			testgrow((long)(3));
 			state.destbuf[state.offset++] = op & 255;
 			writei2(0, (state.destbuf + state.offset));
 			state.offset += 2;
 			continue;
-		}
-		else if (op == OP_STRDATA || op == OP_ESTRDATA) {
+		} else if (op == OP_STRDATA || op == OP_ESTRDATA) {
 			testgrow((long)(6 + cobj->val->size));
 			state.destbuf[state.offset++] = op & 255;
 			writei4(cobj->val->size, (state.destbuf + state.offset));
@@ -397,24 +379,21 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 			nc_memcpy((char *)state.destbuf + state.offset, cobj->val->d.str, cobj->val->size);
 			state.offset += cobj->val->size;
 			state.destbuf[state.offset++] = 0;
-		}
-		else if (op == OP_NUMDATA) {
+		} else if (op == OP_NUMDATA) {
 			testgrow((long)(3 + cobj->val->size));
 			state.destbuf[state.offset++] = op & 255;
 			state.destbuf[state.offset++] = (uchar)(cobj->val->size & 255);
 			nc_memcpy((char *)state.destbuf + state.offset, cobj->val->d.str, cobj->val->size);
 			state.offset += cobj->val->size;
 			state.destbuf[state.offset++] = 0;
-		}
-		else if (op == OP_LABEL) {
+		} else if (op == OP_LABEL) {
 			testgrow((long)(3 + cobj->val->size));
 			state.destbuf[state.offset++] = op & 255;
 			state.destbuf[state.offset++] = (uchar)(cobj->val->size & 255);
 			nc_memcpy((char *)state.destbuf + state.offset, cobj->val->d.str, cobj->val->size);
 			state.offset += cobj->val->size;
 			state.destbuf[state.offset++] = '\0';
-		}
-		else if (OP_ISMATH(op) || OP_ISKEY(op) || OP_ISPUNC(op)) {
+		} else if (OP_ISMATH(op) || OP_ISKEY(op) || OP_ISPUNC(op)) {
 			testgrow(1);
 			state.destbuf[state.offset++] = op & 255;
 			if (op == OP_KFUNC) {
@@ -440,8 +419,7 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 				state.offset += nc_strlen(p);
 				state.destbuf[state.offset++] = '\0';
 			}
-		}
-		else {
+		} else {
 			n_warn(N, __FN__, "bad op?");
 		}
 	}
@@ -483,8 +461,7 @@ uchar   *n_decompose(nsp_state *N, char *srcfile, uchar *srctext, uchar **dsttex
 				//n_decompile(N, *dsttext+12, *dsttext+state.offset-4, NULL, 0);
 			}
 			writei4((p2 - p - 5), (p + 1));
-		}
-		else if (*p == OP_POPAREN) {
+		} else if (*p == OP_POPAREN) {
 			p2 = n_seekop(N, p, 1);
 			if (p2 <= p) {
 				n_warn(N, __FN__, "pointer did not progress");

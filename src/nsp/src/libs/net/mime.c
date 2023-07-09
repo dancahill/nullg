@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
@@ -34,8 +34,8 @@ static int hex2int(char *p)
 	int h = tolower(p[0]);
 	int l = tolower(p[1]);
 
-	if ('0' <= h&&h <= '9') h -= '0'; else if ('a' <= h&&h <= 'f') h -= ('a' - 10);
-	if ('0' <= l&&l <= '9') l -= '0'; else if ('a' <= l&&l <= 'f') l -= ('a' - 10);
+	if ('0' <= h && h <= '9') h -= '0'; else if ('a' <= h && h <= 'f') h -= ('a' - 10);
+	if ('0' <= l && l <= '9') l -= '0'; else if ('a' <= l && l <= 'f') l -= ('a' - 10);
 	return 16 * h + l;
 }
 
@@ -54,31 +54,29 @@ static time_t time_wmgetdate(char *src)
 	day = atoi(p);
 	while ((*p) && (!isalpha(*p))) p++;
 	month = -1;
-	for (i = 0;i < 12;i++) {
+	for (i = 0; i < 12; i++) {
 		if (strncasecmp(p, months[i], 3) == 0) month = i;
 	}
 	if (month == -1) return 0;
 	while ((*p) && (!isdigit(*p))) p++;
 	year = atoi(p);
-	for (i = 1970;i < year;i++) {
+	for (i = 1970; i < year; i++) {
 		unixdate += 365;
 		if ((i / 4.0f) == (int)(i / 4)) {
 			if ((i / 400.0f) == (int)(i / 400)) {
 				unixdate++;
-			}
-			else if ((i / 100.0f) != (int)(i / 100)) {
+			} else if ((i / 100.0f) != (int)(i / 100)) {
 				unixdate++;
 			}
 		}
 	}
-	for (i = 0;i < month;i++) {
+	for (i = 0; i < month; i++) {
 		unixdate += dim[i];
 		if (i != 1) continue;
 		if ((year / 4.0f) == (int)(year / 4)) {
 			if ((year / 400.0f) == (int)(year / 400)) {
 				unixdate++;
-			}
-			else if ((year / 100.0f) != (int)(year / 100)) {
+			} else if ((year / 100.0f) != (int)(year / 100)) {
 				unixdate++;
 			}
 		}
@@ -122,11 +120,10 @@ static void parseval(nsp_state *N, obj_t *cobj, obj_t *tobj, char *name)
 		if (*p1 == '\"') {
 			p1++;
 			p2 = p1;
-			while (*p2&&*p2 != '\"') p2++;
-		}
-		else {
+			while (*p2 && *p2 != '\"') p2++;
+		} else {
 			p2 = p1;
-			while (*p2&&*p2 != ';' && !isspace(*p2)) p2++;
+			while (*p2 && *p2 != ';' && !isspace(*p2)) p2++;
 		}
 		nsp_setstr(N, tobj, name, p1, p2 - p1);
 	}
@@ -156,7 +153,7 @@ static char *mime_read_head(nsp_state *N, obj_t *tobj, char *inptr)
 			inptr++;
 			if (*inptr == ' ') inptr++;
 			p = inptr;
-			while (*inptr&&*inptr != '\r'&&*inptr != '\n') inptr++;
+			while (*inptr && *inptr != '\r' && *inptr != '\n') inptr++;
 			cobj = nsp_getobj(N, ctobj, namebuf);
 			if (nsp_isstr(cobj)) {
 				p1s = cobj->val->size;
@@ -168,39 +165,34 @@ static char *mime_read_head(nsp_state *N, obj_t *tobj, char *inptr)
 				cobj->val->size = p1s;
 				cobj->val->d.str = p1;
 				cobj = nsp_setstr(N, iobj, n_ntoa(N, namebuf, 1, 10, 0), p, inptr - p);
-			}
-			else if (nsp_istable(cobj)) {
+			} else if (nsp_istable(cobj)) {
 				size = 0;
-				for (iobj = cobj->val->d.table.f;iobj;iobj = iobj->next) {
-					if (iobj->val->attr&NST_SYSTEM) { size--; continue; }
+				for (iobj = cobj->val->d.table.f; iobj; iobj = iobj->next) {
+					if (iobj->val->attr & NST_SYSTEM) { size--; continue; }
 					if (!nsp_isnull(iobj)) size++;
 				}
 				cobj = nsp_setstr(N, cobj, n_ntoa(N, namebuf, size, 10, 0), p, inptr - p);
-			}
-			else {
+			} else {
 				cobj = nsp_setstr(N, ctobj, namebuf, p, inptr - p);
 			}
 			if (*inptr == '\r') inptr++;
 			if (*inptr == '\n') inptr++;
-		}
-		else if (*inptr == ' ' || *inptr == '\t') {
+		} else if (*inptr == ' ' || *inptr == '\t') {
 			while (*inptr == ' ' || *inptr == '\t') inptr++;
 			p = inptr;
-			while (*inptr&&*inptr != '\r'&&*inptr != '\n') inptr++;
+			while (*inptr && *inptr != '\r' && *inptr != '\n') inptr++;
 			if (cobj) nsp_strcat(N, cobj, " ", 1);
-			if (cobj) nsp_strcat(N, cobj, p, inptr - p);
+			if (cobj) nsp_strcat(N, cobj, p, (unsigned long)(inptr - p));
 			if (*inptr == '\r') inptr++;
 			if (*inptr == '\n') inptr++;
-		}
-		else if (*inptr != '\r' && *inptr != '\n' && *inptr != '\0') {
+		} else if (*inptr != '\r' && *inptr != '\n' && *inptr != '\0') {
 			//char *x = inptr;
 			while (*inptr != '\r' && *inptr != '\n' && *inptr != '\0') inptr++;
 			if (*inptr == '\r') inptr++;
 			if (*inptr == '\n') inptr++;
 			//nsp_setstr(N, &N->g, "mime_bug", x, inptr - x);
 			continue;
-		}
-		else {
+		} else {
 			break;
 		}
 		if (nc_strcmp(namebuf, "date") == 0) {
@@ -215,24 +207,24 @@ static char *mime_read_head(nsp_state *N, obj_t *tobj, char *inptr)
 
 
 
-	/*
-		if (nsp_isstr(cobj) && (cobj->val->size > 0)) {
-			if ((p1 = strstr(cobj->val->d.str, "boundary=")) != NULL) {
-				p1 += 9;
-				if (*p1 == ' ') p1++;
-				if (*p1 == '\"') {
-					p1++;
-					p2 = p1;
-					while (*p2&&*p2 != '\"') p2++;
-				}
-				else {
-					p2 = p1;
-					while (*p2&&*p2 != ';' && !isspace(*p2)) p2++;
-				}
-				nsp_setstr(N, cvobj, "boundary", p1, p2 - p1);
+/*
+	if (nsp_isstr(cobj) && (cobj->val->size > 0)) {
+		if ((p1 = strstr(cobj->val->d.str, "boundary=")) != NULL) {
+			p1 += 9;
+			if (*p1 == ' ') p1++;
+			if (*p1 == '\"') {
+				p1++;
+				p2 = p1;
+				while (*p2&&*p2 != '\"') p2++;
 			}
+			else {
+				p2 = p1;
+				while (*p2&&*p2 != ';' && !isspace(*p2)) p2++;
+			}
+			nsp_setstr(N, cvobj, "boundary", p1, p2 - p1);
 		}
-	*/
+	}
+*/
 	return inptr;
 }
 
@@ -255,9 +247,9 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 	blen = (short)strlen(boundary);
 	b = 1;
 	while (*inptr) {
-		if (inptr[0] == '-'&&inptr[1] == '-'&&strncmp(inptr + 2, boundary, blen) == 0) {
+		if (inptr[0] == '-' && inptr[1] == '-' && strncmp(inptr + 2, boundary, blen) == 0) {
 			inptr += blen + 2;
-			if (inptr[0] == '-'&&inptr[1] == '-') {
+			if (inptr[0] == '-' && inptr[1] == '-') {
 				inptr += 2;
 				while (*inptr == '\r' || *inptr == '\n') inptr++;
 				return inptr;
@@ -265,10 +257,9 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 			if (*inptr == '\r') inptr++;
 			if (*inptr == '\n') inptr++;
 			break;
-		}
-		else inptr++;
+		} else inptr++;
 	}
-	for (i = 0;;i++) {
+	for (i = 0;; i++) {
 		if (!*inptr) break;
 		cobj = nsp_settable(NULL, ctobj, n_ntoa(N, name, i, 10, 0));
 		cobj->val->attr &= ~NST_AUTOSORT;
@@ -278,7 +269,7 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 		if (b) inptr = mime_read_body(N, cobj, inptr, bobj->val->d.str);
 		p = inptr;
 		while (*inptr) {
-			if (inptr[0] == '-'&&inptr[1] == '-'&&strncmp(inptr + 2, boundary, blen) == 0) {
+			if (inptr[0] == '-' && inptr[1] == '-' && strncmp(inptr + 2, boundary, blen) == 0) {
 				/* n_warn(N, __FN__, "bobj=%s, bound=%s, %s", nsp_tostr(N, bobj), boundary, inptr); */
 				if (!b) {
 					iobj = nsp_setstr(N, cobj, "body", p, inptr - p);
@@ -291,7 +282,7 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 					}
 				}
 				inptr += blen + 2;
-				if (inptr[0] == '-'&&inptr[1] == '-') {
+				if (inptr[0] == '-' && inptr[1] == '-') {
 					inptr += 2;
 					while (*inptr == '\r' || *inptr == '\n') inptr++;
 					return inptr;
@@ -299,8 +290,7 @@ static char *mime_read_body(nsp_state *N, obj_t *tobj, char *inptr, char *bounda
 				if (*inptr == '\r') inptr++;
 				if (*inptr == '\n') inptr++;
 				break;
-			}
-			else inptr++;
+			} else inptr++;
 		}
 	}
 	return inptr;
@@ -326,8 +316,7 @@ NSP_FUNCTION(libnsp_net_mime_read)
 		cobj = nsp_getobj(N, nsp_getobj(N, &tobj, "headvalues"), "boundary");
 		if (nsp_isstr(cobj) && (cobj->val->size > 0)) {
 			inptr = mime_read_body(N, &tobj, inptr, cobj->val->d.str);
-		}
-		else {
+		} else {
 			inptr = mime_read_body(N, &tobj, inptr, NULL);
 		}
 	}
@@ -372,20 +361,15 @@ NSP_FUNCTION(libnsp_net_mime_base64_decode)
 		if (ch == '=') break;
 		if (nc_isupper(ch)) {
 			x = ch - 'A';
-		}
-		else if (nc_islower(ch)) {
+		} else if (nc_islower(ch)) {
 			x = ch - 'a' + 26;
-		}
-		else if (nc_isdigit(ch)) {
+		} else if (nc_isdigit(ch)) {
 			x = ch - '0' + 52;
-		}
-		else if (ch == '+') {
+		} else if (ch == '+') {
 			x = 62;
-		}
-		else if (ch == '/') {
+		} else if (ch == '/') {
 			x = 63;
-		}
-		else {
+		} else {
 			return 0;
 		}
 		switch (state) {
@@ -442,7 +426,7 @@ NSP_FUNCTION(libnsp_net_mime_base64_encode)
 	i = i * 2 + 5;
 	if ((dest = n_alloc(N, enclen * 4 + i, 0)) == NULL) return 0;
 	robj->val->d.str = dest;
-	for (i = 0;i < enclen;i++) {
+	for (i = 0; i < enclen; i++) {
 		a = (cp[0] >> 2);
 		b = (cp[0] << 4) & 0x30;
 		b |= (cp[1] >> 4);
@@ -471,8 +455,7 @@ NSP_FUNCTION(libnsp_net_mime_base64_encode)
 		dest[dst + 2] = '=';
 		dest[dst + 3] = '=';
 		dst += 4;
-	}
-	else if (remlen == 2) {
+	} else if (remlen == 2) {
 		a = (cp[0] >> 2);
 		b = (cp[0] << 4) & 0x30;
 		b |= (cp[1] >> 4);
@@ -509,18 +492,15 @@ NSP_FUNCTION(libnsp_net_mime_qp_decode)
 			if (*s != '=') {
 				*d++ = *s++;
 				len++;
-			}
-			else {
+			} else {
 				s++;
 				if (isxdigit(s[0]) && isxdigit(s[1])) {
 					*d++ = (uchar)hex2int(s);
 					s += 2;
 					len++;
-				}
-				else if (s[0] == '\n') {
+				} else if (s[0] == '\n') {
 					s += 1;
-				}
-				else if (s[0] == '\r'&&s[1] == '\n') {
+				} else if (s[0] == '\r' && s[1] == '\n') {
 					s += 2;
 				}
 			}
@@ -563,7 +543,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 	}
 	cp = (uchar *)cobj1->val->d.str;
 	// calculate output size
-	for (i = 0;i < cobj1->val->size;i++) {
+	for (i = 0; i < cobj1->val->size; i++) {
 	breakline1:
 		if (linelen >= maxlinelen) {
 			outlen += 3;
@@ -573,8 +553,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 			linelen += 3;
 			if (linelen >= maxlinelen) goto breakline1;
 			outlen += 3;
-		}
-		else {
+		} else {
 			linelen += 1;
 			if (linelen >= maxlinelen) goto breakline1;
 			outlen += 1;
@@ -588,7 +567,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 	di = 0;
 	linelen = 0;
 	// create output string
-	for (i = 0;i < cobj1->val->size;i++) {
+	for (i = 0; i < cobj1->val->size; i++) {
 	breakline2:
 		if (linelen >= maxlinelen) {
 			dest[di++] = '=';
@@ -602,8 +581,7 @@ NSP_FUNCTION(libnsp_net_mime_qp_encode)
 			dest[di++] = '=';
 			dest[di++] = hex[(unsigned int)cp[i] / 16];
 			dest[di++] = hex[(unsigned int)cp[i] & 15];
-		}
-		else {
+		} else {
 			linelen += 1;
 			if (linelen >= maxlinelen) goto breakline2;
 			dest[di++] = cp[i];
@@ -638,15 +616,15 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 				len++;
 				continue;
 			}
-			while (*s&&*s != '?') s++;
+			while (*s && *s != '?') s++;
 			if (!*s) break;
 			s++;
 			/* we don't try to make sense of the charset */
-			while (*s&&*s != '?') s++;
+			while (*s && *s != '?') s++;
 			if (!*s) break;
 			s++;
 			if (*s == 'q' || *s == 'Q') {
-				while (*s&&*s != '?') s++;
+				while (*s && *s != '?') s++;
 				if (!*s) break;
 				s++;
 				while ((ch = *s++) != '\0') {
@@ -654,8 +632,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 					if (ch != '=') {
 						*d++ = (uchar)ch;
 						len++;
-					}
-					else {
+					} else {
 						if (isxdigit(s[0]) && isxdigit(s[1])) {
 							*d++ = (uchar)hex2int(s);
 							len++;
@@ -663,9 +640,8 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 						}
 					}
 				}
-			}
-			else if (*s == 'b' || *s == 'B') {
-				while (*s&&*s != '?') s++;
+			} else if (*s == 'b' || *s == 'B') {
+				while (*s && *s != '?') s++;
 				if (!*s) break;
 				s++;
 				state = 0;
@@ -700,7 +676,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_decode)
 				}
 			}
 			if (ch == '=') {
-				while (*s&&*s != '?') s++;
+				while (*s && *s != '?') s++;
 			}
 			if (!*s) break;
 			s++;
@@ -737,7 +713,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
 	}
 	cp = (uchar *)cobj1->val->d.str;
 	// calculate output size
-	for (i = 0;i < cobj1->val->size;i++) {
+	for (i = 0; i < cobj1->val->size; i++) {
 	breakline1:
 		if (linelen >= maxlinelen) {
 			outlen += 3;
@@ -747,8 +723,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
 			linelen += 3;
 			if (linelen >= maxlinelen) goto breakline1;
 			outlen += 3;
-		}
-		else {
+		} else {
 			linelen += 1;
 			if (linelen >= maxlinelen) goto breakline1;
 			outlen += 1;
@@ -765,7 +740,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
 	linelen = 0;
 	// create output string
 	nsp_strcat(N, robj, "=?UTF-8?Q?", -1);
-	for (i = 0;i < cobj1->val->size;i++) {
+	for (i = 0; i < cobj1->val->size; i++) {
 	breakline2:
 		if (linelen >= maxlinelen) {
 			dest[di++] = '=';
@@ -779,8 +754,7 @@ NSP_FUNCTION(libnsp_net_mime_rfc2047_encode)
 			dest[di++] = '=';
 			dest[di++] = hex[(unsigned int)cp[i] / 16];
 			dest[di++] = hex[(unsigned int)cp[i] & 15];
-		}
-		else {
+		} else {
 			linelen += 1;
 			if (linelen >= maxlinelen) goto breakline2;
 			dest[di++] = cp[i];

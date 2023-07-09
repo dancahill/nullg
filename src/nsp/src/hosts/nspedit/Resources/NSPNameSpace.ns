@@ -1,7 +1,7 @@
 // output nsp namespace to an xml file
 
 namespace nsp {
-	class ns2xml{
+	class ns2xml {
 		namespacename="NSPNameSpace";
 		inputfilename="";
 		outputfilename="";
@@ -11,10 +11,10 @@ namespace nsp {
 		function ns2xml() {
 			//printf("init\r\n");
 			// load libraries to fill namespace
-			if (_ostype_=="Windows/msvc" && _debug) dl.path = { @"N:\work\nsp\lib\shared" };
-			dl.load("base");
-			dl.load("net");
-			foreach (d in dl.path) {
+			if (_ostype_=="Windows/msvc" && lib.debug.attached) lib.dl.path = { @"N:\work\nsp\lib\shared" };
+			lib.load("base");
+			lib.load("net");
+			foreach (d in lib.dl.path) {
 				printf("lib dir=%s\r\n", d);
 /*
 				foreach (n,v in base.dirlist(d)) {
@@ -27,7 +27,7 @@ namespace nsp {
 			// done loading libs
 			this.inputfilename=this.namespacename+".dat.ns";
 			this.outputfilename=this.namespacename+".xml";
-			this.namespacedescriptions = eval(file.readall(this.inputfilename));
+			this.namespacedescriptions = lib.eval(lib.file.readall(this.inputfilename));
 			this.output="";
 		};
 
@@ -40,12 +40,12 @@ namespace nsp {
 		};
 
 		function writefiles() {
-			if (file.exists(this.outputfilename)) {
+			if (lib.file.exists(this.outputfilename)) {
 				printf("file %s already exists - renaming\r\n", this.outputfilename);
-				file.unlink(this.outputfilename+".old");
-				file.rename(this.outputfilename, this.outputfilename+".old");
+				lib.file.unlink(this.outputfilename+".old");
+				lib.file.rename(this.outputfilename, this.outputfilename+".old");
 			}
-			file.writeall(this.outputfilename, this.output);
+			lib.file.writeall(this.outputfilename, this.output);
 			//file.writeall("temp.ns", serialize(this.namespacedescriptions));
 			//printf("serialize(this.namespacedescriptions) = %s", serialize(this.namespacedescriptions));
 			//printf("this.output = %s", this.output);
@@ -126,3 +126,5 @@ x.printdepth({true=true, false=false, this={}, null=false}, 1, "");
 x.printdepth(_GLOBALS, 1, "");
 x.end();
 x.writefiles();
+lib.io.flush();
+lib.debug.break();

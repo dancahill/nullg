@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "nsp/nsplib.h"
 #include "net.h"
 #include <stdlib.h>
-#ifdef WIN32
+#ifdef _WIN32
 #endif
 
 static void pop3_lasterr(nsp_state *N, char *msg)
@@ -46,38 +46,30 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
 		host = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
 		user = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
 		pass = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	if (nsp_isbool((cobj = nsp_getobj(N, thisobj, "use_tls")))) use_tls = cobj->val->d.num ? 1 : 0;
@@ -103,7 +95,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_open)
 		}
 		striprn(iobuf);
 		if (N->debug) { n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "+OK", 3) != 0) {
 		pop3_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -199,7 +191,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_close)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		striprn(iobuf);
 		if (N->debug) { n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	tcp_close(N, sock, 1);
 	n_free(N, (void *)&cobj->val->d.str, sizeof(TCP_SOCKET) + 1);
 	cobj->val->size = 0;
@@ -285,8 +277,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_uidl)
 		while ((*p) && (*p != ' ')) p++;
 		p++;
 		nsp_setstr(N, &N->r, "", p, -1);
-	}
-	else {
+	} else {
 		obj_t tobj;
 		unsigned msg;
 		char numbuf[8];
@@ -362,16 +353,14 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_top)
 			if (iobuf[0] == '.') {
 				if ((nc_strcmp(iobuf, ".\r\n") == 0) || (nc_strcmp(iobuf, ".\n") == 0)) {
 					break;
-				}
-				else if (iobuf[1] == '.') {
+				} else if (iobuf[1] == '.') {
 					nsp_strcat(N, cobj, iobuf + 1, -1);
 					continue;
 				}
 			}
 			nsp_strcat(N, cobj, iobuf, -1);
 		} while (nc_strcmp(iobuf, ".") != 0);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for msg");
 	}
 	return 0;
@@ -413,16 +402,14 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_retr)
 			if (iobuf[0] == '.') {
 				if ((nc_strcmp(iobuf, ".\r\n") == 0) || (nc_strcmp(iobuf, ".\n") == 0)) {
 					break;
-				}
-				else if (iobuf[1] == '.') {
+				} else if (iobuf[1] == '.') {
 					nsp_strcat(N, cobj, iobuf + 1, -1);
 					continue;
 				}
 			}
 			nsp_strcat(N, cobj, iobuf, -1);
 		} while (nc_strcmp(iobuf, ".") != 0);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for msg");
 	}
 	return 0;
@@ -460,8 +447,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_dele)
 		while ((*p) && (*p != ' ')) p++;
 		p++;
 		nsp_setnum(N, &N->r, "", atoi(p));
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for msg");
 	}
 	return 0;
@@ -500,8 +486,7 @@ NSP_CLASSMETHOD(libnsp_net_pop3_client_list)
 		while ((*p) && (*p != ' ')) p++;
 		p++;
 		nsp_setnum(N, &N->r, "", atoi(p));
-	}
-	else {
+	} else {
 		obj_t tobj;
 		unsigned msg, size;
 		char numbuf[8];

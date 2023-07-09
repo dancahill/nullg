@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ void n_getfunction(nsp_state *N, obj_t *cobj)
 	uchar *as, *be;
 
 	settrace();
-	//	n_warn(N, __FN__, "line %d", __LINE__);
+//	n_warn(N, __FN__, "line %d", __LINE__);
 	n_expect(N, __FN__, OP_LABEL);
 	as = n_context_readptr;
 	//N->readptr++;
@@ -41,7 +41,7 @@ void n_getfunction(nsp_state *N, obj_t *cobj)
 
 	/* if (N->debug) n_warn(N, __FN__, "snorting lines from %s()", cobj->name); */
 	n_expect(N, __FN__, OP_POPAREN);
-	//	as = N->readptr;
+//	as = N->readptr;
 	n_context_readptr += readi2((n_context_readptr + 1)) + 3;
 	n_expect(N, __FN__, OP_PCPAREN);
 	n_context_readptr++;
@@ -51,7 +51,7 @@ void n_getfunction(nsp_state *N, obj_t *cobj)
 	n_skipto(N, __FN__, OP_PCBRACE);
 	be = ++n_context_readptr;
 	nsp_setnfunc(N, cobj, NULL, (char *)as, be - as);
-	//	n_warn(N, __FN__, "line %d", __LINE__);
+//	n_warn(N, __FN__, "line %d", __LINE__);
 	return;
 #undef __FN__
 }
@@ -132,20 +132,18 @@ obj_t *n_readindex(nsp_state *N, obj_t *tobj, char *lastname, unsigned short *z)
 		n_context_readptr++;
 		n_expect(N, __FN__, OP_LABEL);
 		p = n_getlabel(N, NULL);
-	}
-	else if (n_peekop(N) == OP_POBRACKET) {
+	} else if (n_peekop(N) == OP_POBRACKET) {
 		n_context_readptr++;
 		cobj = nsp_eval(N, (char *)n_context_readptr);
 		n_expect(N, __FN__, OP_PCBRACKET);
 		n_context_readptr++;
 		p = nsp_isnull(cobj) ? "" : nsp_tostr(N, cobj);
-	}
-	else {
+	} else {
 		cobj = tobj;
 		goto end;
 	}
 	cobj = nsp_getobj_ex(N, tobj, p, 1, z);
-	//	if (lastname&&cobj->val->type!=NT_TABLE) nc_strncpy(lastname, p, MAX_OBJNAMELEN);
+//	if (lastname&&cobj->val->type!=NT_TABLE) nc_strncpy(lastname, p, MAX_OBJNAMELEN);
 	if (lastname) nc_strncpy(lastname, p, MAX_OBJNAMELEN);
 end:
 	/* if (N->debug) n_warn(N, __FN__, "[%d '%s' '%s']", cobj->val->type, cobj->name, lastname?lastname:""); */
@@ -183,17 +181,14 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 				namebuf[0] = 0;
 				n_context_readptr = p;
 			}
-		}
-		else if (n_peekop(N) == OP_POBRACKET) {
+		} else if (n_peekop(N) == OP_POBRACKET) {
 			/* [ ] */
 			n_context_readptr++;
 			if (n_peekop(N) == OP_LABEL) {
 				n_getlabel(N, namebuf);
-			}
-			else if (n_peekop(N) == OP_NUMDATA) {
+			} else if (n_peekop(N) == OP_NUMDATA) {
 				n_ntoa(N, namebuf, n_getnumber(N), 10, 0);
-			}
-			else if (n_peekop(N) == OP_STRDATA) {
+			} else if (n_peekop(N) == OP_STRDATA) {
 				obj_t sobj;
 
 				sobj.val = NULL;
@@ -203,25 +198,20 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 			}
 			n_expect(N, __FN__, OP_PCBRACKET);
 			n_context_readptr++;
-		}
-		else if (n_peekop(N) == OP_PCBRACE) {
+		} else if (n_peekop(N) == OP_PCBRACE) {
 			goto end;
-		}
-		else if (n_peekop(N) == OP_NUMDATA || n_peekop(N) == OP_STRDATA) {
+		} else if (n_peekop(N) == OP_NUMDATA || n_peekop(N) == OP_STRDATA) {
 			goto data;
-		}
-		else if ((n_peekop(N) == OP_MSUB || n_peekop(N) == OP_MADD) && n_context_readptr[1] == OP_NUMDATA) {
+		} else if ((n_peekop(N) == OP_MSUB || n_peekop(N) == OP_MADD) && n_context_readptr[1] == OP_NUMDATA) {
 			goto data;
-		}
-		else if (n_peekop(N) == OP_KCLASS) {
+		} else if (n_peekop(N) == OP_KCLASS) {
 			n_context_readptr++;
 			if (n_peekop(N) == OP_LABEL) {
 				n_getlabel(N, namebuf);
 			}
 			n_expect(N, __FN__, OP_POBRACE);
 			goto data;
-		}
-		else if (n_peekop(N) == OP_KFUNC) {
+		} else if (n_peekop(N) == OP_KFUNC) {
 			uchar *p;
 
 			n_context_readptr++;
@@ -238,8 +228,7 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 			if (*n_context_readptr == OP_PCBRACE) break;
 			if (n_peekop(N) == OP_PSEMICOL) n_context_readptr++;
 			continue;
-		}
-		else {
+		} else {
 			n_warn(N, __FN__, "unhandled data or symbol.  probably an error [%d][%s]", *n_context_readptr, n_getsym(N, *n_context_readptr));
 		}
 		if (n_peekop(N) == OP_MEQ || n_peekop(N) == OP_MCOLON) n_context_readptr++;
@@ -251,15 +240,13 @@ void n_readtable(nsp_state *N, obj_t *tobj)
 			cobj = nsp_getobj(N, tobj, namebuf);
 			if (cobj->val->type != NT_TABLE) {
 				cobj = nsp_settable(N, tobj, namebuf);
-			}
-			else {
+			} else {
 				cobj = tobj;
 			}
 			n_readtable(N, cobj);
 			n_expect(N, __FN__, OP_PCBRACE);
 			n_context_readptr++;
-		}
-		else if (*n_context_readptr != OP_PCOMMA && *n_context_readptr != OP_PSEMICOL && *n_context_readptr != OP_PCBRACE) {
+		} else if (*n_context_readptr != OP_PCOMMA && *n_context_readptr != OP_PSEMICOL && *n_context_readptr != OP_PCBRACE) {
 			cobj = nsp_getobj(N, tobj, namebuf);
 			if (nsp_isnull(cobj)) cobj = nsp_setnum(N, tobj, namebuf, 0);
 			n_storeval(N, cobj);
@@ -326,8 +313,7 @@ obj_t *n_readvar(nsp_state *N, obj_t *tobj, obj_t *cobj)
 	if (cobj->val->type == NT_NUMBER) {
 		if (preop == OP_MADDADD) {
 			cobj->val->d.num++;
-		}
-		else if (preop == OP_MSUBSUB) {
+		} else if (preop == OP_MSUBSUB) {
 			cobj->val->d.num--;
 		}
 	}
@@ -362,8 +348,7 @@ void n_storeval(nsp_state *N, obj_t *cobj)
 			nobj = nsp_eval(N, (char *)n_context_readptr);
 			if (nsp_isstr(nobj)) {
 				nsp_strcat(N, cobj, nobj->val->d.str, nobj->val->size);
-			}
-			else {
+			} else {
 				nsp_strcat(N, cobj, nsp_tostr(N, nobj), -1);
 			}
 			return;
@@ -396,14 +381,12 @@ void n_storeval(nsp_state *N, obj_t *cobj)
 			n_context_readptr++;
 			n_evalobj(N, cobj, 1);
 			return;
-		}
-		else if (n_peekop(N) == OP_MAND) {
+		} else if (n_peekop(N) == OP_MAND) {
 			n_context_readptr++;
 			n_expect(N, __FN__, OP_LABEL);
 			nsp_linkval(N, cobj, nsp_getobj(N, NULL, n_getlabel(N, NULL)));
 			return;
-		}
-		else if (n_peekop(N) == OP_MMUL) {
+		} else if (n_peekop(N) == OP_MMUL) {
 			n_context_readptr++;
 			n_expect(N, __FN__, OP_LABEL);
 			nsp_linkval(N, cobj, nsp_eval(N, (char *)n_context_readptr));
@@ -460,8 +443,7 @@ static void n_evalobj(nsp_state *N, obj_t *cobj, uchar isnewobject)
 		n_expect(N, __FN__, OP_PCBRACE);
 		n_context_readptr++;
 		return;
-	}
-	else if (n_peekop(N) == OP_POPAREN) {
+	} else if (n_peekop(N) == OP_POPAREN) {
 		n_context_readptr = n_seekop(N, n_context_readptr, 0);
 		nsp_linkval(N, cobj, nsp_eval(N, (char *)n_context_readptr));
 		/* n_moveval(N, cobj, nsp_eval(N, (char *)N->readptr)); */
@@ -473,17 +455,14 @@ static void n_evalobj(nsp_state *N, obj_t *cobj, uchar isnewobject)
 	if (n_peekop(N) == OP_STRDATA) {
 		n_getstring(N, cobj);
 		return;
-	}
-	else if (n_peekop(N) == OP_ESTRDATA) {
+	} else if (n_peekop(N) == OP_ESTRDATA) {
 		//n_getexstring(N, cobj);
 		n_getstring(N, cobj);
 		return;
-	}
-	else if (n_peekop(N) == OP_NUMDATA) {
+	} else if (n_peekop(N) == OP_NUMDATA) {
 		nsp_setnum(N, cobj, NULL, (preop != OP_MSUB) ? +n_getnumber(N) : -n_getnumber(N));
 		return;
-	}
-	else if (n_peekop(N) == OP_LABEL) {
+	} else if (n_peekop(N) == OP_LABEL) {
 		uchar *p = n_context_readptr;
 		char *l = n_getlabel(N, NULL);
 		obj_t *nobj = nsp_getobj(N, NULL, l);
@@ -503,13 +482,11 @@ static void n_evalobj(nsp_state *N, obj_t *cobj, uchar isnewobject)
 				if (n_peekop(N) == OP_PDOT) goto x;
 				isnewobject = 0;
 				break;
-			}
-			else if (nsp_istable(nobj) && isnewobject) {
+			} else if (nsp_istable(nobj) && isnewobject) {
 				n_execconstructor(N, cobj, nobj);
 				isnewobject = 0;
 				return;
-			}
-			else {
+			} else {
 				nobj = n_execbasemethod(N, namebuf, pobj);
 				if (n_peekop(N) == OP_PDOT) goto x;
 				break;
@@ -540,8 +517,7 @@ static void n_evalobj(nsp_state *N, obj_t *cobj, uchar isnewobject)
 		case NT_TABLE: {
 			if (isnewobject) {
 				n_execconstructor(N, cobj, nobj);
-			}
-			else {
+			} else {
 				nsp_linkval(N, cobj, nobj); break;
 			}
 		}
@@ -614,7 +590,7 @@ static void n_evalop(nsp_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 		case NT_STRING:
 			switch (op) {
 			case OP_MCEEQ:
-			case OP_MCEQ: cobj->val->d.num = (cobj->val->d.num && (nobj->val->d.str&&nobj->val->d.str[0])) ? 1 : 0; break;
+			case OP_MCEQ: cobj->val->d.num = (cobj->val->d.num && (nobj->val->d.str && nobj->val->d.str[0])) ? 1 : 0; break;
 			default: goto unhandled;
 			}
 			return;
@@ -685,15 +661,13 @@ static void n_evalop(nsp_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			if (op == OP_MMUL) {
 				nsp_strmul(N, cobj, nobj->val->d.num < 0 ? 0 : (int)nobj->val->d.num);
 				return;
-			}
-			else {
+			} else {
 				nsp_setstr(N, nobj, "", n_ntoa(N, N->numbuf, nobj->val->d.num, 10, 6), -1);
 			}
 		case NT_STRING:
 			if (op == OP_MADD) {
 				nsp_strcat(N, cobj, nobj->val->d.str, nobj->val->size);
-			}
-			else {
+			} else {
 				int cmp = nc_strcmp(cobj->val->d.str, nobj->val->d.str);
 
 				nsp_setvaltype(N, cobj, NT_BOOLEAN);
@@ -713,7 +687,7 @@ static void n_evalop(nsp_state *N, obj_t *cobj, uchar op, obj_t *nobj)
 			switch (op) {
 			case OP_MCEEQ:
 			case OP_MCEQ:
-				nsp_setnum(N, cobj, "", ((cobj->val->d.str&&cobj->val->d.str[0]) ? 1 : 0) == (nobj->val->d.num ? 1 : 0) ? 1 : 0);
+				nsp_setnum(N, cobj, "", ((cobj->val->d.str && cobj->val->d.str[0]) ? 1 : 0) == (nobj->val->d.num ? 1 : 0) ? 1 : 0);
 				cobj->val->type = NT_BOOLEAN;
 				break;
 			default: goto unhandled;
@@ -783,16 +757,14 @@ static void n_evalsub(nsp_state *N, uchar op1, obj_t *obj1)
 					if (n_peekop(N) == OP_PCPAREN || n_peekop(N) == OP_PCOMMA || n_peekop(N) == OP_PSEMICOL) break;
 					n_context_readptr = n_seekop(N, n_context_readptr, 1);
 				}
-			}
-			else {
+			} else {
 				n_skipto(N, __FN__, OP_MCOLON);
 				n_context_readptr++;
 				n_evalobj(N, &obj2, 0);
 				n_evalsub(N, 0, &obj2);
 				n_moveval(N, obj1, &obj2);
 			}
-		}
-		else {
+		} else {
 			n_evalobj(N, &obj2, 0);
 			if (OP_ISMATH(*n_context_readptr) && oplist[(uchar)*n_context_readptr].priority > oplist[(uchar)op2].priority) {
 				n_evalsub(N, op2, &obj2);
@@ -827,8 +799,7 @@ obj_t *nsp_eval(nsp_state *N, const char *string)
 		n_context_readptr = (uchar *)string;
 		n_evalobj(N, &obj1, 0);
 		n_evalsub(N, 0, &obj1);
-	}
-	else {
+	} else {
 		uchar *p;
 		int psize;
 
@@ -857,8 +828,7 @@ obj_t *nsp_eval(nsp_state *N, const char *string)
 	case NT_CDATA:
 		if (obj1.val->refs > 1) {
 			nsp_linkval(N, &N->r, &obj1);
-		}
-		else {
+		} else {
 			n_moveval(N, &N->r, &obj1);
 		}
 		break;

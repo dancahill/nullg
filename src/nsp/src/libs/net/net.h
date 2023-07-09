@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,10 +17,25 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include "nsp/config-win.h"
 #else
 #include "nsp/config.h"
+#endif
+
+#ifdef _WIN32
+#define msleep(x) Sleep(x)
+#define strcasecmp stricmp
+//#define snprintf _snprintf
+//#define vsnprintf _vsnprintf
+typedef int socklen_t;
+#else
+#include <unistd.h>
+#define closesocket close
+#define msleep(x) usleep(x*1000)
+#ifdef MISSING_SOCKLEN
+typedef int socklen_t;
+#endif
 #endif
 
 #if defined(CONFIG_HAVE_DNS) && !defined(HAVE_DNS)
@@ -36,9 +51,9 @@
 #if !defined(HAVE_OPENSSL)
 #define HAVE_OPENSSL
 #endif
-#if defined(WIN32)
-#pragma comment(lib, "libeay32MD.lib")
-#pragma comment(lib, "ssleay32MD.lib")
+#if defined(_WIN32)
+#pragma comment(lib, "libcrypto64MD.lib")
+#pragma comment(lib, "libssl64MD.lib")
 #endif
 #elif defined(CONFIG_HAVE_MBEDTLS)
 #if !defined(HAVE_MBEDTLS)
@@ -50,14 +65,14 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #  pragma comment(lib, "ws2_32.lib")
 #  ifdef __CYGWIN__
 #    include <ws2tcpip.h>
 #  endif
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #else
 #include <sys/socket.h>
 #endif
@@ -93,12 +108,15 @@ typedef struct {
 	/* now begin the stuff that's socket-specific */
 	/* mbedtls dies a horrible and stupid death when using short ints.. */
 //	short int socket;
+#if defined _WIN32 && !defined _WIN64
 	int socket;
+#else
+	uint64 socket;
+#endif
 	short use_tls;
 #if defined(HAVE_OPENSSL)
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
-	const SSL_METHOD *ssl_meth;
 #elif defined(HAVE_MBEDTLS)
 	mbedtls_ssl_context ssl;
 	mbedtls_ssl_config conf;
@@ -165,6 +183,10 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_stor);
 /* http.c */
 NSP_CLASSMETHOD(libnsp_net_http_client_client);
 NSP_CLASSMETHOD(libnsp_net_http_client_send);
+/* httpd.c */
+NSP_CLASSMETHOD(libnsp_net_http_server_constructor);
+NSP_CLASSMETHOD(libnsp_net_http_server_start);
+NSP_CLASSMETHOD(libnsp_net_http_server_stop);
 /* mime.c */
 NSP_FUNCTION(libnsp_net_mime_read);
 NSP_FUNCTION(libnsp_net_mime_write);

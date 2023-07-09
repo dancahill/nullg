@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #ifdef HAVE_DNS
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <stdio.h>
 #include <stdlib.h>
 #include <windns.h>
@@ -51,7 +51,7 @@ typedef union {
 static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 {
 #define __FN__ __FILE__ ":dns_lookup()"
-#ifdef WIN32
+#ifdef _WIN32
 	DNS_FREE_TYPE freetype;
 	DNS_STATUS status;
 	PDNS_RECORD pDnsRecord;
@@ -122,7 +122,7 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 			cobj = nsp_setstr(N, stobj, "text", NULL, 0);
 			for (i = 0; i < pDnsCur->Data.TXT.dwStringCount; i++) {
 				if (i > 0) nsp_strcat(N, cobj, "\r\n", -1);
-				nsp_strcat(N, cobj, pDnsCur->Data.TXT.pStringArray[i], strlen(pDnsCur->Data.TXT.pStringArray[i]));
+				nsp_strcat(N, cobj, pDnsCur->Data.TXT.pStringArray[i], (unsigned long)strlen(pDnsCur->Data.TXT.pStringArray[i]));
 			}
 			break;
 		}
@@ -155,7 +155,7 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 	obj_t *stobj;
 
 	/* Query the nameserver to retrieve mx records for the given domain. */
-	n = res_search(domain, C_ANY, T_ANY, (u_char *)&answer, sizeof(answer));
+	n = res_search(domain, C_ANY, T_ANY, (uchar *)&answer, sizeof(answer));
 	if (n < 0) {
 		if (N->debug) n_warn(N, __FN__, "res_search failed");
 		return -1;
@@ -167,9 +167,9 @@ static int dns_lookup(nsp_state *N, obj_t *tobj, const char *domain)
 	hp = (HEADER *)&answer;
 	qdcount = ntohs((u_short)hp->qdcount);
 	ancount = ntohs((u_short)hp->ancount);
-	msg = (u_char *)&answer;
-	eom = (u_char *)&answer + n;
-	cp = (u_char *)&answer + HFIXEDSZ;
+	msg = (uchar *)&answer;
+	eom = (uchar *)&answer + n;
+	cp = (uchar *)&answer + HFIXEDSZ;
 	while (qdcount-- > 0 && cp < eom) {
 		n = dn_skipname(cp, eom);
 		if (n < 0) return -1;

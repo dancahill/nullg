@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include "nsp/config-win.h"
 #else
 #include "nsp/config.h"
@@ -28,7 +28,7 @@
 #endif
 
 #ifdef HAVE_FBSQL
-#if defined(WIN32)
+#if defined(_WIN32)
 #pragma comment(lib, "fbclient_ms.lib")
 #pragma comment(lib, "ib_util_ms.lib")
 #endif

@@ -34,8 +34,63 @@ using namespace System;
 using namespace System::Runtime::InteropServices;
 
 public delegate void WriteBufferDelegate(String ^outbuf);
+public delegate void SuspendScriptDelegate();
 
+static NSP_FUNCTION(nsp_edit_break);
 static NSP_FUNCTION(nsp_edit_flush);
+
+public ref class NSPObject {
+public:
+	obj_t *obj;
+	unsigned short type;
+	String^ name;
+	String^ value;
+
+	NSPObject() {
+		type = 0;
+		name = gcnew String("");
+		value = gcnew String("");
+	}
+
+	NSPObject(obj_t *o) {
+		obj = o;
+		if (obj && obj->val) {
+			type = obj->val->type;
+			name = gcnew String(obj->name);
+			if (obj->val->type == NT_NUMBER) {
+				char numbuf[128];
+				n_ntoa(NULL, numbuf, obj->val->d.num, -10, 6);
+				value = gcnew String(numbuf);
+			} else {
+				value = gcnew String(nsp_tostr(NULL, obj));
+			}
+		} else {
+			NSPObject();
+		}
+	}
+
+	~NSPObject() {
+	}
+protected:
+	!NSPObject() {
+	}
+public:
+	NSPObject^ GetFirst() {
+		if (obj->val->type == NT_TABLE) {
+			return gcnew NSPObject(obj->val->d.table.f);
+		} else {
+			return gcnew NSPObject();
+		}
+	}
+
+	NSPObject^ GetNext() {
+		return gcnew NSPObject(obj->next);
+	}
+
+	bool IsValid() {
+		return (obj);
+	}
+};
 
 public ref class NSP {
 public:
@@ -49,7 +104,24 @@ protected:
 	}
 public:
 	static WriteBufferDelegate ^WriteBuffer;
+	static SuspendScriptDelegate ^SuspendScript;
+	NSPState *NState;
 	char *srcfilename;
+
+	NSPObject^ GetGlobal() {
+		if (!NState) return nullptr;
+		return gcnew NSPObject(NState->getG());
+	}
+
+	NSPObject^ GetThis() {
+		if (!NState) return nullptr;
+		return gcnew NSPObject(NState->getT());
+	}
+
+	NSPObject^ GetLocal() {
+		if (!NState) return nullptr;
+		return gcnew NSPObject(NState->getL());
+	}
 
 	int ExecScript(String ^script, String ^filename) {
 		IntPtr ip = Marshal::StringToHGlobalAnsi(script);
@@ -59,7 +131,7 @@ public:
 		srcfilename = static_cast<char*>(ip2.ToPointer());
 		Beep(440, 250);
 		//__try {
-		NSPState *NState = new NSPState();
+		NState = new NSPState();
 		nsp_state *N = NState->getN();
 
 		init_stuff(N);
@@ -71,6 +143,7 @@ public:
 		nsp_freestate(N);
 		printstate(N);
 		nsp_endstate(N);
+		NState = NULL;
 		//}
 		//__except (do_filter(GetExceptionInformation())) {
 		//}
@@ -115,7 +188,7 @@ private:
 		N->debug = 0;
 		/* add env */
 		tobj = nsp_settable(N, &N->g, "_ENV");
-		for (i = 0;environ[i] != NULL;i++) {
+		for (i = 0; environ[i] != NULL; i++) {
 			strncpy(tmpbuf, environ[i], MAX_OBJNAMELEN);
 			p = strchr(tmpbuf, '=');
 			if (!p) continue;
@@ -128,7 +201,9 @@ private:
 			nsp_setstr(N, tobj, tmpbuf, p, -1);
 		}
 		preppath(N, srcfilename);
-		tobj = nsp_settable(N, &N->g, "io");
+		tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "debug");
+		nsp_setcfunc(N, tobj, "break2", nsp_edit_break);
+		tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "io");
 		nsp_setcfunc(N, tobj, "flush", nsp_edit_flush);
 		return;
 	}
@@ -144,28 +219,26 @@ private:
 		if ((name[0] == '/') || (name[0] == '\\') || (name[1] == ':')) {
 			/* it's an absolute path.... probably... */
 			strncpy(buf, name, sizeof(buf));
-		}
-		else if (name[0] == '.') {
+		} else if (name[0] == '.') {
 			/* looks relative... */
-			getcwd(buf, sizeof(buf) - strlen(name) - 2);
+			getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2));
+			strcat(buf, "/");
+			strcat(buf, name);
+		} else {
+			getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2));
 			strcat(buf, "/");
 			strcat(buf, name);
 		}
-		else {
-			getcwd(buf, sizeof(buf) - strlen(name) - 2);
-			strcat(buf, "/");
-			strcat(buf, name);
-		}
-		for (j = 0;j < strlen(buf);j++) {
+		for (j = 0; j < strlen(buf); j++) {
 			if (buf[j] == '\\') buf[j] = '/';
 		}
-		for (j = strlen(buf) - 1;j > 0;j--) {
+		for (j = (unsigned long)strlen(buf) - 1; j > 0; j--) {
 			if (buf[j] == '/') { buf[j] = '\0'; p = buf + j + 1; break; }
 		}
 		nsp_setstr(N, &N->g, "_filename", p, -1);
 		nsp_setstr(N, &N->g, "_filepath", buf, -1);
-#if defined(WIN32) && defined(_DEBUG)
-		nsp_setbool(N, &N->g, "_debug", 1);
+#if defined(_WIN32) && defined(_DEBUG)
+		nsp_setbool(N, nsp_settable(N, nsp_settable(N, &N->g, "lib"), "debug"), "attached", 1);
 #endif
 		return;
 	}
@@ -181,13 +254,13 @@ private:
 			_snprintf(errbuf, sizeof(errbuf) - 1, "Unknown C++ exception thrown. 0x%08X", er.ExceptionCode);
 			break;
 		case EXCEPTION_ACCESS_VIOLATION:
-			_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+			_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_ACCESS_VIOLATION (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 			break;
 		case EXCEPTION_STACK_OVERFLOW:
-			_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+			_snprintf(errbuf, sizeof(errbuf) - 1, "EXCEPTION_STACK_OVERFLOW (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 			break;
 		default:
-			_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%08X", er.ExceptionCode, (unsigned int)er.ExceptionAddress);
+			_snprintf(errbuf, sizeof(errbuf) - 1, "SEH Exception (0x%08X): ExceptionAddress=0x%p", er.ExceptionCode, er.ExceptionAddress);
 			break;
 		}
 		/*log_error(N, "SEH Exception [%s]", errbuf);*/
@@ -195,6 +268,12 @@ private:
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
 };
+
+static NSP_FUNCTION(nsp_edit_break)
+{
+	NSP::SuspendScript();
+	return 0;
+}
 
 static NSP_FUNCTION(nsp_edit_flush)
 {

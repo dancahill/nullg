@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #ifdef HAVE_TLS
 
-#ifdef WIN32
+#ifdef _WIN32
 #else
 #include <unistd.h>
 #include <sys/socket.h>
@@ -55,13 +55,9 @@ int _tls_init(nsp_state *N, TCP_SOCKET *sock, short srvmode, char *certfile, cha
 {
 #define __FN__ __FILE__ ":_tls_init()"
 #if defined HAVE_OPENSSL
-	long options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_1;
-
 	SSL_load_error_strings();
 	SSLeay_add_ssl_algorithms();
-	sock->ssl_meth = srvmode ? SSLv23_server_method() : SSLv23_client_method();
-	sock->ssl_ctx = SSL_CTX_new(sock->ssl_meth);
-	SSL_CTX_ctrl(sock->ssl_ctx, SSL_CTRL_OPTIONS, options, NULL);
+	sock->ssl_ctx = SSL_CTX_new(TLS_client_method());
 	if (!sock->ssl_ctx) {
 		n_warn(N, __FN__, "SSL Error");
 		return -1;
@@ -172,6 +168,12 @@ int _tls_connect(nsp_state *N, TCP_SOCKET *sock)
 	sock->ssl = SSL_new(sock->ssl_ctx);
 	SSL_set_fd(sock->ssl, sock->socket);
 	if ((rc = SSL_connect(sock->ssl)) == -1) {
+		//int err = SSL_get_error(sock->ssl, rc);
+		//if (err == SSL_ERROR_SSL) {
+		//	char msg[1024];
+		//	ERR_error_string_n(ERR_get_error(), msg, sizeof(msg));
+		//	printf("%s %s %s %s\n", msg, ERR_lib_error_string(0), ERR_func_error_string(0), ERR_reason_error_string(0));
+		//}
 		n_warn(N, __FN__, "SSL_connect error %d", rc);
 		return -1;
 	}
@@ -251,10 +253,9 @@ int _tls_close(nsp_state *N, TCP_SOCKET *sock)
 #define __FN__ __FILE__ ":_tls_close()"
 #if defined HAVE_OPENSSL
 	if (sock->ssl != NULL) {
-		if (SSL_get_shutdown(sock->ssl)&SSL_RECEIVED_SHUTDOWN) {
+		if (SSL_get_shutdown(sock->ssl) & SSL_RECEIVED_SHUTDOWN) {
 			SSL_shutdown(sock->ssl);
-		}
-		else {
+		} else {
 			SSL_clear(sock->ssl);
 		}
 	}

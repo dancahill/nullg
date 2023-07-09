@@ -37,6 +37,7 @@ namespace NSPEdit
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
+			//Environment.SetEnvironmentVariable("PATH", @"C:\NullLogic\utils\VS2019\lib;" + Environment.GetEnvironmentVariable("PATH"));
 			string[] args = Environment.GetCommandLineArgs();
 			SingleInstanceController controller = new SingleInstanceController();
 			controller.Run(args);

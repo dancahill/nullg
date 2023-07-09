@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #include "net.h"
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
@@ -39,9 +39,9 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 	unsigned short port;
 	char *host;
 	char *uri;
-	//	char *ctype;
-	//	char *body;
-	//	int blen=0;
+//	char *ctype;
+//	char *body;
+//	int blen=0;
 	int cl = -1, len = 0, rc;
 	obj_t tobj;
 	obj_t *tobj2;
@@ -58,13 +58,13 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 	uri = cobj->val->d.str;
 	if (!nsp_isstr((cobj = nsp_getobj(N, thisobj, "body")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for body");
 	//body=cobj->val->d.str;
-	//	blen=cobj->val->size;
-	//	if (!nsp_isstr((cobj=nsp_getobj(N, thisobj, "contenttype")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for contenttype");
-	//	ctype=cobj->val->d.str;
+//	blen=cobj->val->size;
+//	if (!nsp_isstr((cobj=nsp_getobj(N, thisobj, "contenttype")))) n_error(N, NE_SYNTAX, __FN__, "expected a string for contenttype");
+//	ctype=cobj->val->d.str;
 
 	nc_memset((char *)&sock, 0, sizeof(sock));
 	if ((rc = tcp_connect(N, &sock, host, port, use_tls)) < 0) {
-		nsp_setstr(N, &N->r, "", "tcp error", -1);
+		nsp_setstr(N, &N->r, "", "tcp_connect error", -1);
 		return -1;
 	}
 	/* why does php insert random data when i try to use HTTP/1.1? */
@@ -91,8 +91,7 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 			p = p1; while (nc_isdigit(*p)) p++;
 			if (*p) {
 				nsp_setstr(N, tobj2, "b", p1, -1);
-			}
-			else {
+			} else {
 				nsp_setnum(N, tobj2, "b", atoi(p1));
 			}
 			nsp_setstr(N, tobj2, "c", p2, -1);
@@ -112,20 +111,18 @@ NSP_CLASSMETHOD(libnsp_net_http_client_send)
 		p2 = nc_strchr(tmpbuf, ':');
 		if ((*p1) && (*p2)) {
 			*p2++ = '\0';
-			for (p = p1;*p;p++) *p = nc_tolower(*p);
+			for (p = p1; *p; p++) *p = nc_tolower(*p);
 			while (nc_isspace(*p2)) p2++;
 			/* printf("[%s][%s]\n", p1, p2); */
 			if (nc_strcmp(p1, "content-length") == 0) {
 				p = p2; while (nc_isdigit(*p)) p++;
 				if (*p) {
 					nsp_setstr(N, tobj2, p1, p2, -1);
-				}
-				else {
+				} else {
 					cl = atoi(p2);
 					nsp_setnum(N, tobj2, p1, cl);
 				}
-			}
-			else {
+			} else {
 				nsp_setstr(N, tobj2, p1, p2, -1);
 			}
 		}
@@ -164,22 +161,21 @@ static void parseurl(nsp_state *N)
 	if (strncasecmp(p1, "http://", 7) == 0) {
 		nsp_setbool(N, thisobj, "use_tls", 0);
 		port = 80;
+		nsp_setnum(N, thisobj, "port", port);
 		p1 += 7;
-	}
-	else if (strncasecmp(p1, "https://", 8) == 0) {
+	} else if (strncasecmp(p1, "https://", 8) == 0) {
 		nsp_setbool(N, thisobj, "use_tls", 1);
 		port = 443;
+		nsp_setnum(N, thisobj, "port", port);
 		p1 += 8;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "can't parse protocol");
 	}
 	p2 = p1;
 	while (isalnum(*p2) || *p2 == '-' || *p2 == '_' || *p2 == '.') p2++;
 	if (p2 > p1) {
 		nsp_setstr(N, thisobj, "host", p1, p2 - p1);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "can't parse host");
 	}
 	p1 = p2;
@@ -191,8 +187,7 @@ static void parseurl(nsp_state *N)
 		}
 		if (port) {
 			nsp_setnum(N, thisobj, "port", port);
-		}
-		else {
+		} else {
 			n_error(N, NE_SYNTAX, __FN__, "can't parse port");
 		}
 	}
@@ -200,8 +195,7 @@ static void parseurl(nsp_state *N)
 	while (*p2) p2++;
 	if (p2 > p1) {
 		nsp_setstr(N, thisobj, "uri", p1, p2 - p1);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "can't parse uri");
 	}
 #undef __FN__

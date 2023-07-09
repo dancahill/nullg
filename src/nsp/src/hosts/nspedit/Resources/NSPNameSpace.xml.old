@@ -11,217 +11,238 @@
 	<_filepath type="string" desc="path of running script" />
 	<_ostype_ type="string" desc="string describing the operating system" />
 	<_version_ type="string" desc="NSP version" />
-	<base64 type="table" desc="functions for working with base64 data">
-		<decode type="function" desc="returns decoded string of provided base64 data" params="" returns="" />
-		<encode type="function" desc="returns base64 encoded version of provided string" params="" returns="" />
-	</base64>
 	<copy type="function" desc="creates and returns a clone of var (including tables)" params="(object var)" returns="clone of var" />
-	<debug type="table" desc="misc debugging functions">
-		<break type="function" desc="break execution for debugging" params="none" returns="void" />
-	</debug>
-	<dirlist type="function" desc="returns a table of a specified directory's contents" params="" returns="" />
-	<dl type="table" desc="set of functions for loading dynamic libraries">
-		<load type="function" desc="load specified library" params="" returns="" />
-		<path type="table" desc="array of paths to search for libraries loaded by dl.load()">
-		</path>
-	</dl>
-	<eval type="function" desc="Evaluates a supplied expression." params="" returns="" />
-	<exec type="function" desc="Evaluates a supplied expression." params="" returns="" />
-	<file type="table" desc="collection of functions available for working with files">
-		<append type="function" desc="append string data to the specified file" params="" returns="" />
-		<chdir type="function" desc="change to specified directory" params="" returns="" />
-		<exists type="function" desc="used to check if a file or directory exists on disk" params="(string filename)" returns="true if filename exists, otherwise false" />
-		<mkdir type="function" desc="create a directory" params="" returns="" />
-		<readall type="function" desc="read the entire content of a file and return it as a string (binary-safe)" params="" returns="" />
-		<rename type="function" desc="rename a file on disk" params="" returns="" />
-		<stat type="function" desc="return a table describing the file" params="" returns="" />
-		<unlink type="function" desc="delete or 'unlink' a file/directory" params="" returns="" />
-		<writeall type="function" desc="write complete string to file, replacing any existing content of the file" params="" returns="" />
-	</file>
 	<include type="function" desc="load a script" params="" returns="" />
-	<io type="table" desc="input/output functions">
-		<print type="function" desc="print data to console - accepts one or more comma-separated parameters" params="" returns="" />
-		<write type="function" desc="write data to console" params="" returns="" />
-		<flush type="function" desc="flush any buffered data to console" params="" returns="" />
-	</io>
-	<math type="table" desc="math functions">
-		<abs type="function" desc="get absolute (positive) value of a number" params="" returns="" />
-		<ceil type="function" desc="round a number up to the nearest integer" params="" returns="" />
-		<floor type="function" desc="round a number down to the nearest integer" params="" returns="" />
-		<rand type="function" desc="return a random number in the requested range" params="" returns="" />
-		<acos type="function" desc="return the arc cosine of a value" params="" returns="" />
-		<asin type="function" desc="return the arc sine of a value" params="" returns="" />
-		<atan type="function" desc="return the arc tangent of a value" params="" returns="" />
-		<atan2 type="function" desc="calculates the principal value of the arc tangent of y/x, using the signs of the two arguments to determine the quadrant of the result." params="" returns="" />
-		<cos type="function" desc="returns the cosine of a value" params="" returns="" />
-		<sin type="function" desc="returns the sine of a value" params="" returns="" />
-		<tan type="function" desc="returns the tangent of a value" params="" returns="" />
-		<exp type="function" desc="returns the exponential value of a value" params="" returns="" />
-		<log type="function" desc="returns the logarithm of a value" params="" returns="" />
-		<log10 type="function" desc="returns the base 10 logarithm of a value" params="" returns="" />
-		<cosh type="function" desc="returns the hyperbolic cosine of a value" params="" returns="" />
-		<sinh type="function" desc="returns the hyperbolic sine of a value" params="" returns="" />
-		<tanh type="function" desc="returns the hyperbolic tangent of a value" params="" returns="" />
-		<sqrt type="function" desc="returns the square root of a value" params="" returns="" />
-	</math>
-	<net type="table" desc="collection of functions and classes available for working with network connections">
-		<have_tls type="boolean" desc="value is true if TLS (Transport Layer Security, aka. SSL) is available" />
-		<tls_type type="string" desc="name of TLS library in use (if available)" />
-		<dns type="table" desc="functions for accessing DNS (Domain Name System) data">
-			<name2addr type="function" desc="" params="" returns="" />
-			<addr2name type="function" desc="" params="" returns="" />
-		</dns>
-		<ftp type="table" desc="FTP classes and functions">
-			<client type="table" desc="class of functions for accessing FTP servers">
-				<client type="function" desc="constructor for net.ftp.client class" params="" returns="" />
-				<open type="function" desc="method to open a connection to an FTP server" params="" returns="" />
-				<close type="function" desc="method to close an open connection to an FTP server" params="" returns="" />
-				<ls type="function" desc="method to list files in a remote directory" params="" returns="" />
-				<retr type="function" desc="method to download a file from a server" params="" returns="" />
-				<stor type="function" desc="method to upload a file to a server" params="" returns="" />
-			</client>
-		</ftp>
-		<http type="table" desc="">
-			<client type="table" desc="">
-				<client type="function" desc="net.http.client.client()" params="null" returns="null" />
-				<send type="function" desc="net.http.client.send()" params="null" returns="null" />
-			</client>
-		</http>
-		<mime type="table" desc="">
-			<read type="function" desc="" params="" returns="" />
-			<write type="function" desc="" params="" returns="" />
-			<base64 type="table" desc="net.mime.base64 {}">
-				<decode type="function" desc="net.mime.base64.decode()" params="null" returns="null" />
-				<encode type="function" desc="net.mime.base64.encode()" params="null" returns="null" />
-			</base64>
-			<qp type="table" desc="net.mime.qp {}">
-				<decode type="function" desc="net.mime.qp.decode()" params="null" returns="null" />
-				<encode type="function" desc="net.mime.qp.encode()" params="null" returns="null" />
-			</qp>
-			<rfc2047 type="table" desc="net.mime.rfc2047 {}">
-				<decode type="function" desc="net.mime.rfc2047.decode()" params="null" returns="null" />
-			</rfc2047>
-		</mime>
-		<pop3 type="table" desc="">
-			<client type="table" desc="">
-				<client type="function" desc="net.pop3.client.client()" params="null" returns="null" />
-				<open type="function" desc="net.pop3.client.open()" params="null" returns="null" />
-				<close type="function" desc="net.pop3.client.close()" params="null" returns="null" />
-				<stat type="function" desc="net.pop3.client.stat()" params="null" returns="null" />
-				<uidl type="function" desc="net.pop3.client.uidl()" params="null" returns="null" />
-				<top type="function" desc="net.pop3.client.top()" params="null" returns="null" />
-				<retr type="function" desc="net.pop3.client.retr()" params="null" returns="null" />
-				<dele type="function" desc="net.pop3.client.dele()" params="null" returns="null" />
-				<list type="function" desc="net.pop3.client.list()" params="null" returns="null" />
-			</client>
-		</pop3>
-		<smtp type="table" desc="">
-			<client type="table" desc="">
-				<client type="function" desc="net.smtp.client.client()" params="null" returns="null" />
-				<attach type="function" desc="net.smtp.client.attach()" params="null" returns="null" />
-				<send type="function" desc="net.smtp.client.send()" params="null" returns="null" />
-			</client>
-		</smtp>
-		<socket type="table" desc="class of functions available for working with raw TCP/IP connections">
-			<accept type="function" desc="" params="" returns="" />
-			<bind type="function" desc="" params="" returns="" />
-			<close type="function" desc="" params="" returns="" />
-			<connect type="function" desc="" params="" returns="" />
-			<gets type="function" desc="" params="" returns="" />
-			<gettype type="function" desc="" params="" returns="" />
-			<info type="function" desc="" params="" returns="" />
-			<read type="function" desc="" params="" returns="" />
-			<setsockopt type="function" desc="" params="" returns="" />
-			<socket type="function" desc="constructor for objects of class net.socket" params="" returns="" />
-			<tlsaccept type="function" desc="" params="" returns="" />
-			<tlsconnect type="function" desc="" params="" returns="" />
-			<write type="function" desc="" params="" returns="" />
-		</socket>
-		<tnef type="table" desc="functions available for working with 'Transport Neutral Encapsulation Format' MIME attachments">
-			<debug type="function" desc="test function for TNEF decoding" params="" returns="" />
-		</tnef>
-	</net>
-	<pipe type="table" desc="functions for creating and working with pipes">
-		<open type="function" desc="create a process with read/write io pipes" params="(string exe[, string arg1, string arg2])" returns="pipe-conn object" />
-		<read type="function" desc="reads data from an open pipe" params="(pipe-conn pipe)" returns="input data string" />
-		<write type="function" desc="writes data to an open pipe" params="(pipe-conn pipe, string data)" returns="number of bytes sent" />
-		<close type="function" desc="closes pipe-conn" params="(pipe-conn pipe)" returns="void" />
-	</pipe>
-	<print type="function" desc="print one or more objects to console" params="([object])" returns="total length of output" />
-	<printf type="function" desc="print to console with formatting similar to the c function of the same name" params="(string format[, ...])" returns="total length of output string" />
-	<regex type="table" desc="functions available for using regular expressions to work with strings">
-		<match type="function" desc="" params="" returns="" />
-		<replace type="function" desc="" params="" returns="" />
-	</regex>
-	<rot13 type="function" desc="rotate characters in a string by 13 places" params="" returns="" />
-	<runtime type="function" desc="get the number of seconds the script has been running" params="" returns="" />
-	<serialize type="function" desc="returns the contents of a table in string format (with subtable)" params="(object arg1)" returns="string representation of arg1" />
-	<sizeof type="function" desc="returns size of object" params="(object arg1)" returns="size of object based on type. for strings, it's the length of a string. for tables, it's the number of items in the table." />
-	<sleep type="function" desc="causes script to sleep for a number of seconds (with millisecond precision)" params="(number seconds)" returns="void" />
-	<sprintf type="function" desc="print to buffer with formatting similar to the c function of the same name" params="(string format[, ...])" returns="string with formatting applied" />
-	<string type="table" desc="class of functions available for working with strings">
-		<atoi type="function" desc="get numeric value of character in a string" params="(string arg1[, number offset])" returns="numeric value of character in arg1 at offset" />
-		<itoa type="function" desc="convert number to its ascii character equivalent" params="(number arg1)" returns="string ascii value of arg1" />
-		<cat type="function" desc="append one string to another" params="(string arg1, string arg2)" returns="string with arg1 and arg2 combined" />
-		<cmp type="function" desc="case sensitive string comparison" params="(string str1, string str2)" returns="number - 0 if matches, or index of first non-matching character" />
-		<icmp type="function" desc="case insensitive string" params="(string str1, string str2)" returns="number" />
-		<ncmp type="function" desc="case sensitive substring comparison up to len characters" params="(string str1, string str2, number len)" returns="number" />
-		<nicmp type="function" desc="case insensitive substring comparison up to len characters" params="(string str1, string str2, number len)" returns="number" />
-		<contains type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if str1 contains an instance of str2" />
-		<endswith type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if the end of str1 matches str2" />
-		<startswith type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if the start of str1 matches str2" />
-		<join type="function" desc="merge the table str into a single string separated by sep" params="(table str, string sep)" returns="table" />
-		<len type="function" desc="get length of string (binary safe)" params="(string str)" returns="number" />
-		<replace type="function" desc="replace occurences in of arg2 with arg3" params="(string arg1, string arg2, string arg3)" returns="string result of arg1 with arg2 replaced" />
-		<split type="function" desc="split a string into substring" params="(string str, string sep)" returns="table of substrings in str separated by sep" />
-		<str type="function" desc="case sensitive substring search" params="(string stack, string needle)" returns="string stack starting where needle was found, or null if not found" />
-		<istr type="function" desc="case insensitive substring search" params="(string stack, string needle)" returns="string stack starting where needle was found, or null if not found" />
-		<sub type="function" desc="get a substring of str, starting at arg2 and ending at arg3.
+	<lib type="table" desc="collection of all classes and functions in the NSP libraries">
+		<Windows type="table" desc="collection of functions for Windows UI">
+			<Beep type="function" desc="beep at the requested frequency for the requested duratin (in milliseconds)" params="" returns="" />
+			<CreateProcess type="function" desc="function to execute a program" params="" returns="" />
+			<MessageBox type="function" desc="native windows function to display a messagebox" params="" returns="" />
+			<PlaySound type="function" desc="plays a sound file" params="" returns="" />
+			<ShellExecute type="function" desc="native windows function for opening a file with its associated application" params="" returns="" />
+		</Windows>
+		<coroutine type="table" desc="coroutine class">
+			<coroutine type="function" desc="lib.coroutine.coroutine()" params="null" returns="null" />
+			<resume type="function" desc="lib.coroutine.resume()" params="null" returns="null" />
+			<yield type="function" desc="lib.coroutine.yield()" params="null" returns="null" />
+			<status type="function" desc="lib.coroutine.status()" params="null" returns="null" />
+		</coroutine>
+		<debug type="table" desc="misc debugging functions">
+			<break type="function" desc="break execution for debugging" params="none" returns="void" />
+			<break2 type="function" desc="lib.debug.break2()" params="null" returns="null" />
+			<decomped_script type="table" desc="lib.debug.decomped_script {}" />
+			<runtime type="function" desc="get the number of seconds the script has been running" params="" returns="" />
+		</debug>
+		<dirlist type="function" desc="returns a table of a specified directory's contents" params="" returns="" />
+		<dl type="table" desc="settings for loading dynamic libraries">
+			<loaded type="table" desc="array of library names loaded by lib.load()">
+				<base type="boolean" desc="lib.dl.loaded.base" />
+				<net type="boolean" desc="lib.dl.loaded.net" />
+			</loaded>
+			<path type="table" desc="array of paths to search for libraries loaded by lib.load()">
+			</path>
+		</dl>
+		<eval type="function" desc="Evaluates a supplied expression." params="" returns="" />
+		<exec type="function" desc="Evaluates a supplied expression." params="" returns="" />
+		<file type="table" desc="collection of functions available for working with files">
+			<append type="function" desc="append string data to the specified file" params="" returns="" />
+			<chdir type="function" desc="change to specified directory" params="" returns="" />
+			<exists type="function" desc="used to check if a file or directory exists on disk" params="(string filename)" returns="true if filename exists, otherwise false" />
+			<mkdir type="function" desc="create a directory" params="" returns="" />
+			<readall type="function" desc="read the entire content of a file and return it as a string (binary-safe)" params="" returns="" />
+			<rename type="function" desc="rename a file on disk" params="" returns="" />
+			<stat type="function" desc="return a table describing the file" params="" returns="" />
+			<unlink type="function" desc="delete or 'unlink' a file/directory" params="" returns="" />
+			<writeall type="function" desc="write complete string to file, replacing any existing content of the file" params="" returns="" />
+		</file>
+		<io type="table" desc="input/output functions">
+			<print type="function" desc="print data to console - accepts one or more comma-separated parameters" params="" returns="" />
+			<write type="function" desc="write data to console" params="" returns="" />
+			<flush type="function" desc="flush any buffered data to console" params="" returns="" />
+		</io>
+		<load type="function" desc="load specified library" params="" returns="" />
+		<math type="table" desc="math functions">
+			<abs type="function" desc="get absolute (positive) value of a number" params="" returns="" />
+			<ceil type="function" desc="round a number up to the nearest integer" params="" returns="" />
+			<floor type="function" desc="round a number down to the nearest integer" params="" returns="" />
+			<rand type="function" desc="return a random number in the requested range" params="" returns="" />
+			<acos type="function" desc="return the arc cosine of a value" params="" returns="" />
+			<asin type="function" desc="return the arc sine of a value" params="" returns="" />
+			<atan type="function" desc="return the arc tangent of a value" params="" returns="" />
+			<atan2 type="function" desc="calculates the principal value of the arc tangent of y/x, using the signs of the two arguments to determine the quadrant of the result." params="" returns="" />
+			<cos type="function" desc="returns the cosine of a value" params="" returns="" />
+			<sin type="function" desc="returns the sine of a value" params="" returns="" />
+			<tan type="function" desc="returns the tangent of a value" params="" returns="" />
+			<exp type="function" desc="returns the exponential value of a value" params="" returns="" />
+			<log type="function" desc="returns the logarithm of a value" params="" returns="" />
+			<log10 type="function" desc="returns the base 10 logarithm of a value" params="" returns="" />
+			<cosh type="function" desc="returns the hyperbolic cosine of a value" params="" returns="" />
+			<sinh type="function" desc="returns the hyperbolic sine of a value" params="" returns="" />
+			<tanh type="function" desc="returns the hyperbolic tangent of a value" params="" returns="" />
+			<sqrt type="function" desc="returns the square root of a value" params="" returns="" />
+		</math>
+		<net type="table" desc="collection of functions and classes available for working with network connections">
+			<have_tls type="boolean" desc="value is true if TLS (Transport Layer Security, aka. SSL) is available" />
+			<tls_type type="string" desc="name of TLS library in use (if available)" />
+			<dns type="table" desc="functions for accessing DNS (Domain Name System) data">
+				<name2addr type="function" desc="" params="" returns="" />
+				<addr2name type="function" desc="" params="" returns="" />
+			</dns>
+			<ftp type="table" desc="FTP classes and functions">
+				<client type="table" desc="class of functions for accessing FTP servers">
+					<client type="function" desc="constructor for net.ftp.client class" params="" returns="" />
+					<open type="function" desc="method to open a connection to an FTP server" params="" returns="" />
+					<close type="function" desc="method to close an open connection to an FTP server" params="" returns="" />
+					<cwd type="function" desc="lib.net.ftp.client.cwd()" params="null" returns="null" />
+					<pwd type="function" desc="lib.net.ftp.client.pwd()" params="null" returns="null" />
+					<ls type="function" desc="method to list files in a remote directory" params="" returns="" />
+					<retr type="function" desc="method to download a file from a server" params="" returns="" />
+					<stor type="function" desc="method to upload a file to a server" params="" returns="" />
+				</client>
+			</ftp>
+			<http type="table" desc="">
+				<client type="table" desc="">
+					<client type="function" desc="lib.net.http.client.client()" params="null" returns="null" />
+					<send type="function" desc="lib.net.http.client.send()" params="null" returns="null" />
+				</client>
+			</http>
+			<mime type="table" desc="">
+				<read type="function" desc="" params="" returns="" />
+				<write type="function" desc="" params="" returns="" />
+				<base64 type="table" desc="lib.net.mime.base64 {}">
+					<decode type="function" desc="lib.net.mime.base64.decode()" params="null" returns="null" />
+					<encode type="function" desc="lib.net.mime.base64.encode()" params="null" returns="null" />
+				</base64>
+				<qp type="table" desc="lib.net.mime.qp {}">
+					<decode type="function" desc="lib.net.mime.qp.decode()" params="null" returns="null" />
+					<encode type="function" desc="lib.net.mime.qp.encode()" params="null" returns="null" />
+				</qp>
+				<rfc2047 type="table" desc="lib.net.mime.rfc2047 {}">
+					<decode type="function" desc="lib.net.mime.rfc2047.decode()" params="null" returns="null" />
+					<encode type="function" desc="lib.net.mime.rfc2047.encode()" params="null" returns="null" />
+				</rfc2047>
+			</mime>
+			<pop3 type="table" desc="">
+				<client type="table" desc="">
+					<client type="function" desc="lib.net.pop3.client.client()" params="null" returns="null" />
+					<open type="function" desc="lib.net.pop3.client.open()" params="null" returns="null" />
+					<close type="function" desc="lib.net.pop3.client.close()" params="null" returns="null" />
+					<stat type="function" desc="lib.net.pop3.client.stat()" params="null" returns="null" />
+					<uidl type="function" desc="lib.net.pop3.client.uidl()" params="null" returns="null" />
+					<top type="function" desc="lib.net.pop3.client.top()" params="null" returns="null" />
+					<retr type="function" desc="lib.net.pop3.client.retr()" params="null" returns="null" />
+					<dele type="function" desc="lib.net.pop3.client.dele()" params="null" returns="null" />
+					<list type="function" desc="lib.net.pop3.client.list()" params="null" returns="null" />
+				</client>
+			</pop3>
+			<smtp type="table" desc="">
+				<client type="table" desc="">
+					<client type="function" desc="lib.net.smtp.client.client()" params="null" returns="null" />
+					<attach type="function" desc="lib.net.smtp.client.attach()" params="null" returns="null" />
+					<send type="function" desc="lib.net.smtp.client.send()" params="null" returns="null" />
+				</client>
+			</smtp>
+			<socket type="table" desc="class of functions available for working with raw TCP/IP connections">
+				<accept type="function" desc="" params="" returns="" />
+				<bind type="function" desc="" params="" returns="" />
+				<close type="function" desc="" params="" returns="" />
+				<connect type="function" desc="" params="" returns="" />
+				<gets type="function" desc="" params="" returns="" />
+				<gettype type="function" desc="" params="" returns="" />
+				<info type="function" desc="" params="" returns="" />
+				<read type="function" desc="" params="" returns="" />
+				<setsockopt type="function" desc="" params="" returns="" />
+				<socket type="function" desc="constructor for objects of class net.socket" params="" returns="" />
+				<tlsaccept type="function" desc="" params="" returns="" />
+				<tlsconnect type="function" desc="" params="" returns="" />
+				<write type="function" desc="" params="" returns="" />
+			</socket>
+			<tnef type="table" desc="functions available for working with 'Transport Neutral Encapsulation Format' MIME attachments">
+				<debug type="function" desc="test function for TNEF decoding" params="" returns="" />
+			</tnef>
+		</net>
+		<pipe type="table" desc="functions for creating and working with pipes">
+			<close type="function" desc="closes pipe-conn" params="(pipe-conn pipe)" returns="void" />
+			<open type="function" desc="create a process with read/write io pipes" params="(string exe[, string arg1, string arg2])" returns="pipe-conn object" />
+			<read type="function" desc="reads data from an open pipe" params="(pipe-conn pipe)" returns="input data string" />
+			<write type="function" desc="writes data to an open pipe" params="(pipe-conn pipe, string data)" returns="number of bytes sent" />
+		</pipe>
+		<sleep type="function" desc="causes script to sleep for a number of seconds (with millisecond precision)" params="(number seconds)" returns="void" />
+		<string type="table" desc="class of functions available for working with strings">
+			<atoi type="function" desc="get numeric value of character in a string" params="(string arg1[, number offset])" returns="numeric value of character in arg1 at offset" />
+			<itoa type="function" desc="convert number to its ascii character equivalent" params="(number arg1)" returns="string ascii value of arg1" />
+			<cat type="function" desc="append one string to another" params="(string arg1, string arg2)" returns="string with arg1 and arg2 combined" />
+			<cmp type="function" desc="case sensitive string comparison" params="(string str1, string str2)" returns="number - 0 if matches, or index of first non-matching character" />
+			<icmp type="function" desc="case insensitive string" params="(string str1, string str2)" returns="number" />
+			<ncmp type="function" desc="case sensitive substring comparison up to len characters" params="(string str1, string str2, number len)" returns="number" />
+			<nicmp type="function" desc="case insensitive substring comparison up to len characters" params="(string str1, string str2, number len)" returns="number" />
+			<contains type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if str1 contains an instance of str2" />
+			<endswith type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if the end of str1 matches str2" />
+			<startswith type="function" desc="case sensitive substring search" params="(string str1, string str2)" returns="true if the start of str1 matches str2" />
+			<join type="function" desc="merge the table str into a single string separated by sep" params="(table str, string sep)" returns="table" />
+			<len type="function" desc="get length of string (binary safe)" params="(string str)" returns="number" />
+			<replace type="function" desc="replace occurences in of arg2 with arg3" params="(string arg1, string arg2, string arg3)" returns="string result of arg1 with arg2 replaced" />
+			<split type="function" desc="split a string into substring" params="(string str, string sep)" returns="table of substrings in str separated by sep" />
+			<str type="function" desc="case sensitive substring search" params="(string stack, string needle)" returns="string stack starting where needle was found, or null if not found" />
+			<istr type="function" desc="case insensitive substring search" params="(string stack, string needle)" returns="string stack starting where needle was found, or null if not found" />
+			<sub type="function" desc="get a substring of str, starting at arg2 and ending at arg3.
 if arg2 is negative it will be read as an index counting back from the end of the string.
 arg3 is implicitly the end of the string" params="(string str, number arg2[, number arg3])" returns="string starting at arg2 and ending at arg3" />
-		<tostring type="function" desc="generic method for objects to convert data to a string" params="(object arg1)" returns="string format of arg1" />
-		<tolower type="function" desc="get lowercase version of string" params="(string str)" returns="string" />
-		<toupper type="function" desc="get uppercase version of string" params="(string str)" returns="string" />
-	</string>
-	<system type="function" desc="execute a system function" params="" returns="" />
-	<table type="table" desc="class of functions for working with tables">
-		<iname type="function" desc="Returns the name of a table entry at a given index." params="" returns="" />
-		<ival type="function" desc="Returns a pointer to the value of a table entry at a given index." params="" returns="" />
-		<zlink type="function" desc="link one table to another in an overlapping manner, i.e. class inheritance" params="" returns="" />
-		<sortbyname type="function" desc="function for sorting table contents by name" params="" returns="" />
-		<sortbykey type="function" desc="function for sorting table by each item's subkey" params="" returns="" />
-	</table>
-	<thread type="table" desc="class of functions for working with threads (experimental)">
-		<thread type="function" desc="constructor for new threads" params="" returns="" />
-		<start type="function" desc="begin execution of thread function 'this.fn'" params="" returns="" />
-		<finish type="function" desc="called by the thread to finish execution" params="" returns="" />
-		<mutex type="table" desc="class of functions for working with thread mutexes (experimental)">
-			<mutex type="function" desc="constructor for new thread mutexes" params="" returns="" />
-			<lock type="function" desc="acquire a lock" params="" returns="" />
-			<unlock type="function" desc="release a lock" params="" returns="" />
-			<free type="function" desc="destroy the mutex" params="" returns="" />
-		</mutex>
-	</thread>
-	<time type="table" desc="functions for dealing with time">
-		<gmtime type="function" desc="get detailed structure describing a given time in seconds (or now) since 1970-01-01" params="([number seconds])" returns="table describing requested time in format
+			<tostring type="function" desc="generic method for objects to convert data to a string" params="(object arg1)" returns="string format of arg1" />
+			<tolower type="function" desc="get lowercase version of string" params="(string str)" returns="string" />
+			<toupper type="function" desc="get uppercase version of string" params="(string str)" returns="string" />
+			<trim type="function" desc="trim whitespace from start and end of string" params="(string str)" returns="string" />
+			<trimstart type="function" desc="trim whitespace from start of string" params="(string str)" returns="string" />
+			<trimend type="function" desc="trim whitespace from end of string" params="(string str)" returns="string" />
+		</string>
+		<system type="function" desc="execute a system function" params="" returns="" />
+		<table type="table" desc="class of functions for working with tables">
+			<iname type="function" desc="Returns the name of a table entry at a given index." params="" returns="" />
+			<ival type="function" desc="Returns a pointer to the value of a table entry at a given index." params="" returns="" />
+			<zlink type="function" desc="link one table to another in an overlapping manner, i.e. class inheritance" params="" returns="" />
+			<sortbyname type="function" desc="function for sorting table contents by name" params="" returns="" />
+			<sortbykey type="function" desc="function for sorting table by each item's subkey" params="" returns="" />
+		</table>
+		<text type="table" desc="functions for working with text data">
+			<base64 type="table" desc="functions for working with base64 data">
+				<decode type="function" desc="returns decoded string of provided base64 data" params="" returns="" />
+				<encode type="function" desc="returns base64 encoded version of provided string" params="" returns="" />
+			</base64>
+			<regex type="table" desc="functions available for using regular expressions to work with strings">
+				<match type="function" desc="" params="" returns="" />
+				<replace type="function" desc="" params="" returns="" />
+			</regex>
+			<rot13 type="function" desc="rotate characters in a string by 13 places" params="" returns="" />
+			<serialize type="function" desc="returns the contents of a table in string format (with subtable)" params="(object arg1)" returns="string representation of arg1" />
+		</text>
+		<thread type="table" desc="class of functions for working with threads (experimental)">
+			<thread type="function" desc="constructor for new threads" params="" returns="" />
+			<start type="function" desc="begin execution of thread function 'this.fn'" params="" returns="" />
+			<finish type="function" desc="called by the thread to finish execution" params="" returns="" />
+			<mutex type="table" desc="class of functions for working with thread mutexes (experimental)">
+				<mutex type="function" desc="constructor for new thread mutexes" params="" returns="" />
+				<lock type="function" desc="acquire a lock" params="" returns="" />
+				<unlock type="function" desc="release a lock" params="" returns="" />
+				<free type="function" desc="destroy the mutex" params="" returns="" />
+			</mutex>
+		</thread>
+		<time type="table" desc="functions for dealing with time">
+			<asctime type="function" desc="lib.time.asctime()" params="null" returns="null" />
+			<gettimeofday type="function" desc="get seconds and milliseconds since 1970-01-01 (aka unix time)" params="" returns="table representing time in format { tv_sec, tv_usec }" />
+			<gmtime type="function" desc="get detailed structure describing a given time in seconds (or now) since 1970-01-01" params="([number seconds])" returns="table describing requested time in format
  { tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst }" />
-		<gettimeofday type="function" desc="get seconds and milliseconds since 1970-01-01 (aka unix time)" params="" returns="table representing time in format { tv_sec, tv_usec }" />
-		<localtime type="function" desc="get detailed structure describing a given time in seconds (or now) since 1970-01-01" params="([number seconds])" returns="table describing requested time in format
+			<localtime type="function" desc="get detailed structure describing a given time in seconds (or now) since 1970-01-01" params="([number seconds])" returns="table describing requested time in format
  { tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst }" />
-		<sqldate type="function" desc="output date as a string from time.gmtime data or seconds since 1970-01-01" params="([table time]||[number time])" returns="string representing requested time in yyyy-MM-dd format" />
-		<sqltime type="function" desc="output time as a string from time.gmtime data or seconds since 1970-01-01" params="([table time]||[number time])" returns="string representing requested time in HH:mm:ss format" />
-		<sqldatetime type="function" desc="output date and time as a string from time.gmtime data or seconds since 1970-01-01" params="([table time]||[number time])" returns="string representing requested time in yyyy-MM-dd HH:mm:ss format" />
-		<sqltounix type="function" desc="get unix time from sql formatted time" params="(string sqltime)" returns="number of seconds since 1970-01-01" />
-		<now type="function" desc="get seconds since 1970-01-01 (aka unix time)" params="none" returns="number of seconds from 1970-01-01 to now" />
-	</time>
+			<mktime type="function" desc="lib.time.mktime()" params="null" returns="null" />
+			<now type="function" desc="get seconds since 1970-01-01 (aka unix time)" params="none" returns="number of seconds from 1970-01-01 to now" />
+			<sqltime type="function" desc="output time as a string from time.gmtime data or seconds since 1970-01-01" params="([table time]||[number time])" returns="string representing requested time in HH:mm:ss format" />
+		</time>
+	</lib>
+	<print type="function" desc="print one or more objects to console" params="([object])" returns="total length of output" />
+	<printf type="function" desc="print to console with formatting similar to the c function of the same name" params="(string format[, ...])" returns="total length of output string" />
+	<sizeof type="function" desc="returns size of object" params="(object arg1)" returns="size of object based on type. for strings, it's the length of a string. for tables, it's the number of items in the table." />
+	<sprintf type="function" desc="print to buffer with formatting similar to the c function of the same name" params="(string format[, ...])" returns="string with formatting applied" />
 	<tonumber type="function" desc="convert a string to its numeric value" params="" returns="" />
 	<typeof type="function" desc="get the type of a variable" params="(object arg1)" returns="string with the name of the base object type" />
-	<win type="table" desc="collection of functions for Windows UI">
-		<Beep type="function" desc="beep at the requested frequency for the requested duratin (in milliseconds)" params="" returns="" />
-		<CreateProcess type="function" desc="function to execute a program" params="" returns="" />
-		<MessageBox type="function" desc="native windows function to display a messagebox" params="" returns="" />
-		<PlaySound type="function" desc="plays a sound file" params="" returns="" />
-		<ShellExecute type="function" desc="native windows function for opening a file with its associated application" params="" returns="" />
-	</win>
 	<write type="function" desc="write a single unformatted string to console" params="(string arg1)" returns="number of bytes written" />
 </NSPNameSpace>

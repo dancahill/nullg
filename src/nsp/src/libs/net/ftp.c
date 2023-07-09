@@ -20,7 +20,7 @@
 #include "net.h"
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _WIN32
 #if _MSC_VER>=1900
 #define STDC99
 #else
@@ -54,7 +54,7 @@ static int get_pasvaddr(const char *line, char *ipbuf, unsigned short *port)
 	char *p = (char *)line;
 
 	nc_memset((char *)&ip, 0, sizeof(ip));
-	while (*p&&*p != '(') p++;
+	while (*p && *p != '(') p++;
 	if (*p != '(') return -1;
 	p++;
 	ip[0] = atoi(p);
@@ -96,38 +96,30 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 	if (!nsp_istable(thisobj)) n_error(N, NE_SYNTAX, __FN__, "expected a table for 'this'");
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "1")))) {
 		host = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "host")))) {
 		host = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for host");
 	}
 	if (nsp_isnum((cobj = nsp_getobj(N, &N->context->l, "2")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
+	} else if (nsp_isnum((cobj = nsp_getobj(N, thisobj, "port")))) {
 		port = (unsigned short)nsp_tonum(N, cobj);
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a number for port");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "3")))) {
 		user = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "username")))) {
 		user = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for username");
 	}
 	if (nsp_isstr((cobj = nsp_getobj(N, &N->context->l, "4")))) {
 		pass = cobj->val->d.str;
-	}
-	else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
+	} else if (nsp_isstr((cobj = nsp_getobj(N, thisobj, "password")))) {
 		pass = cobj->val->d.str;
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string for password");
 	}
 	sock = n_alloc(N, sizeof(TCP_SOCKET) + 1, 1);
@@ -151,7 +143,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "220", 3) != 0) {
 		ftp_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -166,7 +158,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "331", 3) != 0) {
 		ftp_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -181,7 +173,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "230", 3) != 0) {
 		ftp_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -198,7 +190,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "200", 3) != 0) {
 		ftp_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -219,7 +211,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_open)
 			nsp_setbool(N, thisobj, "use_mlsd", 1);
 		}
 		nsp_setstr(N, nsp_settable(N, thisobj, "features"), n_ntoa(N, N->numbuf, i++, 10, 0), iobuf, -1);
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "211", 3) != 0) {
 		ftp_lasterr(N, iobuf);
 		tcp_close(N, sock, 1);
@@ -252,7 +244,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_close)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	tcp_close(N, sock, 1);
 	n_free(N, (void *)&cobj->val->d.str, sizeof(TCP_SOCKET) + 1);
 	cobj->val->size = 0;
@@ -287,15 +279,14 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_cwd)
 
 	if (dir != NULL) {
 		tcp_fprintf(N, sock, "CWD %s\r\n", dir);
-	}
-	else {
+	} else {
 		tcp_fprintf(N, sock, "CWD\r\n");
 	}
 	do {
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "250", 3) != 0) {
 		return -1;
 	}
@@ -326,7 +317,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_pwd)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "257", 3) != 0) {
 		return -1;
 	}
@@ -365,35 +356,35 @@ static void ftp_client_ls_raw(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			nsp_setstr(N, tobj2, "perm", p, plen);
 			p += plen;
 		}
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			/* nsp_setstr(N, tobj2, "subs", p, plen); */
 			p += plen;
 		}
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			nsp_setstr(N, tobj2, "user", p, plen);
 			p += plen;
 		}
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			nsp_setstr(N, tobj2, "group", p, plen);
 			p += plen;
 		}
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			nsp_setnum(N, tobj2, "size", n_aton(N, p));
 			p += plen;
 		}
@@ -414,18 +405,17 @@ static void ftp_client_ls_raw(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 				if (strncasecmp(p, months[i], 3) == 0) t.tm_mon = i;
 			}
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			if (p[plen] == ' ' || p[plen] == '\t') {
 				while (p[plen] == ' ' || p[plen] == '\t') plen++;
 				t.tm_mday = atoi(p + plen);
-				while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+				while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			}
 			if (p[plen] == ' ' || p[plen] == '\t') {
 				while (p[plen] == ' ' || p[plen] == '\t') plen++;
 				if (p[plen + 4] == ' ') {
 					t.tm_year = atoi(p + plen) - 1900;
-				}
-				else if (p[plen + 2] == ':') {
+				} else if (p[plen + 2] == ':') {
 					t.tm_hour = atoi(p + plen);
 					t.tm_min = atoi(p + plen + 3);
 					/*
@@ -436,7 +426,7 @@ static void ftp_client_ls_raw(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 					t.tm_year = y;
 					if (t.tm_mon > m) t.tm_year--;
 				}
-				while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+				while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 				nsp_setnum(N, tobj2, "mtime", (num_t)mktime(&t));
 			}
 			p += plen;
@@ -444,7 +434,7 @@ static void ftp_client_ls_raw(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 		while (*p && (*p == ' ' || *p == '\t')) p++;
 		if (*p) {
 			plen = 0;
-			while (p[plen] && (p[plen] != ' '&&p[plen] != '\t')) plen++;
+			while (p[plen] && (p[plen] != ' ' && p[plen] != '\t')) plen++;
 			/* we already have the name */
 			nsp_setstr(N, tobj2, "name", p, plen);
 			p += plen;
@@ -452,8 +442,7 @@ static void ftp_client_ls_raw(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 		if (iobuf[0] == 'd') {
 			nsp_setstr(N, tobj2, "type", "dir", -1);
 			nsp_setnum(N, tobj2, "size", 0);
-		}
-		else if (iobuf[0] == '-') {
+		} else if (iobuf[0] == '-') {
 			nsp_setstr(N, tobj2, "type", "file", -1);
 		}
 	} while (rc > 0);
@@ -471,8 +460,7 @@ static int getunixtime(int y, int m, int d, int hh, int mm, int ss)
 		if ((i / 4.0f) == (int)(i / 4)) {
 			if ((i / 400.0f) == (int)(i / 400)) {
 				unixdate++;
-			}
-			else if ((i / 100.0f) != (int)(i / 100)) {
+			} else if ((i / 100.0f) != (int)(i / 100)) {
 				unixdate++;
 			}
 		}
@@ -483,8 +471,7 @@ static int getunixtime(int y, int m, int d, int hh, int mm, int ss)
 		if ((y / 4.0f) == (int)(y / 4)) {
 			if ((y / 400.0f) == (int)(y / 400)) {
 				unixdate++;
-			}
-			else if ((y / 100.0f) != (int)(y / 100)) {
+			} else if ((y / 100.0f) != (int)(y / 100)) {
 				unixdate++;
 			}
 		}
@@ -532,8 +519,7 @@ static void ftp_client_ls_mlst(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 					ss = se += 1;
 					break;
 				}
-			}
-			else if (strncasecmp(ss, "modify=", 7) == 0) {
+			} else if (strncasecmp(ss, "modify=", 7) == 0) {
 				// YYYYMMDDHHMMSS.sss
 				// The "." and subsequent digits("sss") are optional.However the "."
 				// MUST NOT appear unless at least one following digit also appears.
@@ -572,23 +558,20 @@ static void ftp_client_ls_mlst(nsp_state *N, TCP_SOCKET *sock2, obj_t *tobj)
 					ss = se += 1;
 					break;
 				}
-			}
-			else if (strncasecmp(ss, "size=", 5) == 0) {
+			} else if (strncasecmp(ss, "size=", 5) == 0) {
 				for (se = ss = ss + 5; *se; se++) {
 					if (*se != ';') continue;
 					nsp_setstr(N, tobj2, "size", ss, se - ss);
 					ss = se += 1;
 					break;
 				}
-			}
-			else if (strncasecmp(ss, " ", 1) == 0) {
+			} else if (strncasecmp(ss, " ", 1) == 0) {
 				for (se = ss = ss + 1; *se; se++) {
 				}
 				nsp_setstr(N, tobj2, "name", ss, se - ss);
 				ss = se += 1;
 				break;
-			}
-			else if (*ss) {
+			} else if (*ss) {
 				while (*ss && *ss != ';') ss++;
 				if (*ss == ';') ss++;
 				//n_warn(N, __FN__, "ss=[[%s]]", ss);
@@ -626,7 +609,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_ls)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "227", 3) != 0) {
 		return -1;
 	}
@@ -647,8 +630,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_ls)
 
 	if (use_mlsd) {
 		ftp_client_ls_mlst(N, &sock2, &tobj);
-	}
-	else {
+	} else {
 		ftp_client_ls_raw(N, &sock2, &tobj);
 	}
 
@@ -657,7 +639,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_ls)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "150", 3) != 0) {
 		return -1;
 	}
@@ -665,7 +647,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_ls)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "226", 3) != 0) {
 		return -1;
 	}
@@ -704,7 +686,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_retr)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "200", 3) != 0) {
 		return -1;
 	}
@@ -714,7 +696,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_retr)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "227", 3) != 0) {
 		return -1;
 	}
@@ -746,7 +728,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_retr)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "150", 3) != 0) {
 		return -1;
 	}
@@ -754,7 +736,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_retr)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "226", 3) != 0) {
 		return -1;
 	}
@@ -793,7 +775,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_stor)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "200", 3) != 0) {
 		return -1;
 	}
@@ -803,7 +785,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_stor)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "227", 3) != 0) {
 		return -1;
 	}
@@ -834,7 +816,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_stor)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "150", 3) != 0) {
 		return -1;
 	}
@@ -842,7 +824,7 @@ NSP_CLASSMETHOD(libnsp_net_ftp_client_stor)
 		if ((rc = tcp_fgets(N, sock, iobuf, sizeof(iobuf) - 1)) < 0) return -1;
 		nsp_setstr(N, thisobj, "response", iobuf, -1);
 		if (N->debug) { striprn(iobuf); n_warn(N, __FN__, "got %s", iobuf); }
-	} while (iobuf[3] != ' '&&iobuf[3] != '\0');
+	} while (iobuf[3] != ' ' && iobuf[3] != '\0');
 	if (nc_strncmp(iobuf, "226", 3) != 0) {
 		return -1;
 	}

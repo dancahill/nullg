@@ -39,16 +39,13 @@ reloop:
 		if (nc_isdigit(cobj->name[0]) && nc_isdigit(nobj->name[0])) {
 			if (order < 0) {
 				if (atoi(cobj->name) < atoi(nobj->name)) swap = 1;
-			}
-			else {
+			} else {
 				if (atoi(cobj->name) > atoi(nobj->name)) swap = 1;
 			}
-		}
-		else {
+		} else {
 			if (order < 0) {
 				if (nc_strcmp(cobj->name, nobj->name) < 0) swap = 1;
-			}
-			else {
+			} else {
 				if (nc_strcmp(cobj->name, nobj->name) > 0) swap = 1;
 			}
 		}
@@ -92,8 +89,7 @@ reloop:
 		if (subtab) {
 			sub1 = nsp_getobj(N, nsp_getobj(N, cobj, subtab), key);
 			sub2 = nsp_getobj(N, nsp_getobj(N, nobj, subtab), key);
-		}
-		else {
+		} else {
 			sub1 = nsp_getobj(N, cobj, key);
 			sub2 = nsp_getobj(N, nobj, key);
 		}
@@ -101,16 +97,13 @@ reloop:
 		if ((sub1->val->type == NT_NUMBER) && (sub2->val->type == NT_NUMBER)) {
 			if (order < 0) {
 				if (sub1->val->d.num < sub2->val->d.num) swap = 1;
-			}
-			else {
+			} else {
 				if (sub1->val->d.num > sub2->val->d.num) swap = 1;
 			}
-		}
-		else {
+		} else {
 			if (order < 0) {
 				if (nc_strcmp(nsp_tostr(N, sub1), nsp_tostr(N, sub2)) < 0) swap = 1;
-			}
-			else {
+			} else {
 				if (nc_strcmp(nsp_tostr(N, sub1), nsp_tostr(N, sub2)) > 0) swap = 1;
 			}
 		}

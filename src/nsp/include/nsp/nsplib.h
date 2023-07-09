@@ -31,7 +31,7 @@ extern "C" {
 #define NULL ((void *)0)
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define DllExport __declspec(dllexport)
 #else
 #define DllExport

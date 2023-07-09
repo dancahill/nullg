@@ -87,7 +87,7 @@ NSP_FUNCTION(libnsp_data_cdb_read)
 	cdb_toc = n_alloc(N, 2048, 1);
 	lseek(fd, 0, SEEK_SET);
 	read(fd, cdb_toc, 2048);
-	for (i = 0;i < 256;i++) {
+	for (i = 0; i < 256; i++) {
 		hashptr = cdb_toc + i * 8;
 		offset = readi4(hashptr);
 		hashptr += 4;
@@ -96,7 +96,7 @@ NSP_FUNCTION(libnsp_data_cdb_read)
 		cdb_idx = n_alloc(N, count * 8, 1);
 		lseek(fd, offset, SEEK_SET);
 		read(fd, cdb_idx, count * 8);
-		for (j = 0;j < count;j++) {
+		for (j = 0; j < count; j++) {
 			hashptr = cdb_idx + j * 8 + 4;
 			offset = readi4(hashptr);
 			if (!offset) continue;
@@ -108,8 +108,7 @@ NSP_FUNCTION(libnsp_data_cdb_read)
 				read(fd, namebuf, MAX_OBJNAMELEN);
 				namebuf[MAX_OBJNAMELEN] = 0;
 				lseek(fd, len - MAX_OBJNAMELEN, SEEK_CUR);
-			}
-			else {
+			} else {
 				read(fd, namebuf, len);
 				namebuf[len] = 0;
 			}
@@ -167,13 +166,12 @@ NSP_FUNCTION(libnsp_data_cdb_write)
 		return -1;
 	}
 	w = write(fd, cdb_toc, 2048);
-	for (cobj = cobj2->val->d.table.f;cobj;cobj = cobj->next) {
+	for (cobj = cobj2->val->d.table.f; cobj; cobj = cobj->next) {
 		kl = nc_strlen(cobj->name);
 		if (cobj->val->type == NT_STRING) {
 			p = cobj->val->d.str ? cobj->val->d.str : "";
 			vl = cobj->val->size;
-		}
-		else {
+		} else {
 			p = nsp_tostr(N, cobj);
 			vl = nc_strlen(p);
 		}
@@ -191,7 +189,7 @@ NSP_FUNCTION(libnsp_data_cdb_write)
 	}
 	datasize = w - 2048;
 	w = 0;
-	for (i = 0;i < 256;i++) {
+	for (i = 0; i < 256; i++) {
 		hashptr = cdb_toc + (i * 8 + 4);
 		j = readi4(hashptr);
 		hashptr = cdb_toc + (i * 8);
@@ -203,13 +201,12 @@ NSP_FUNCTION(libnsp_data_cdb_write)
 	if (numkeys > 0) {
 		cdb_idx = n_alloc(N, numkeys * 8, 1);
 		w = 2048;
-		for (cobj = cobj2->val->d.table.f;cobj;cobj = cobj->next) {
+		for (cobj = cobj2->val->d.table.f; cobj; cobj = cobj->next) {
 			kl = nc_strlen(cobj->name);
 			if (cobj->val->type == NT_STRING) {
 				p = cobj->val->d.str ? cobj->val->d.str : "";
 				vl = cobj->val->size;
-			}
-			else {
+			} else {
 				p = nsp_tostr(N, cobj);
 				vl = nc_strlen(p);
 			}

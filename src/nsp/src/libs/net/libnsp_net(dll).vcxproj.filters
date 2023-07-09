@@ -48,6 +48,18 @@
     <ClCompile Include="tls.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="httpd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="httpd_http.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="httpd_io.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="httpd_nsp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="net.h">

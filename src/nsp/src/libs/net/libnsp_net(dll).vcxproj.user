@@ -6,4 +6,10 @@
     <LocalDebuggerWorkingDirectory>N:\work\tests</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommand>$(SolutionDir)\bin\nsp.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>-b -f "N:\work\tests\http-proxy.ns"</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>N:\work\tests</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

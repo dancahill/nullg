@@ -1,6 +1,6 @@
 /*
     NESLA NullLogic Embedded Scripting Language
-    Copyright (C) 2007-2019 Dan Cahill
+    Copyright (C) 2007-2023 Dan Cahill
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #include <io.h>
 #include <process.h>
@@ -56,7 +56,7 @@ static int flush(nsp_state *N)
 {
 	if (N == NULL || N->outbuflen == 0) return 0;
 	N->outbuffer[N->outbuflen] = '\0';
-#if defined(WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 	OutputDebugStringA(N->outbuffer);
 #endif
 	if (write(STDOUT_FILENO, N->outbuffer, N->outbuflen) != N->outbuflen) {
@@ -72,7 +72,7 @@ static void sig_trap(int sig)
 	switch (sig) {
 	case 11:
 		printf("Segmentation Violation\r\n");
-#ifdef WIN32
+#ifdef _WIN32
 		{
 			DWORD rc;
 
@@ -115,7 +115,7 @@ static void sig_trap(int sig)
 
 static void setsigs(void)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	signal(SIGSEGV, sig_trap);
 #elif !defined(__TURBOC__)
 	struct sigaction sa;
@@ -135,7 +135,7 @@ static void timeout(int i) {
 static NSP_FUNCTION(neslib_io_gets)
 {
 	obj_t *cobj1 = nsp_getobj(N, &N->context->l, "1");
-#if !defined(WIN32)&&!defined(__TURBOC__)
+#if !defined(_WIN32)&&!defined(__TURBOC__)
 	struct sigaction sa;
 	int err = 0;
 #endif
@@ -148,14 +148,14 @@ static NSP_FUNCTION(neslib_io_gets)
 	}
 
 	flush(N);
-#if !defined(WIN32)&&!defined(__TURBOC__)
+#if !defined(_WIN32)&&!defined(__TURBOC__)
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = timeout;
 	sigaction(SIGALRM, &sa, NULL);
 	alarm(t);
 #endif
 	ret = fgets(buf, sizeof(buf) - 1, stdin);
-#if !defined(WIN32)&&!defined(__TURBOC__)
+#if !defined(_WIN32)&&!defined(__TURBOC__)
 	err = errno;
 	alarm(0);
 	if (ret == NULL) {
@@ -188,37 +188,35 @@ static void preppath(nsp_state *N, char *name)
 	if ((name[0] == '/') || (name[0] == '\\') || (name[1] == ':')) {
 		/* it's an absolute path.... probably... */
 		strncpy(buf, name, sizeof(buf) - 1);
-	}
-	else if (name[0] == '.') {
+	} else if (name[0] == '.') {
 		/* looks relative... */
-		if (getcwd(buf, sizeof(buf) - strlen(name) - 2) != NULL) {
+		if (getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2)) != NULL) {
+			strncat(buf, "/", sizeof(buf) - strlen(buf) - 1);
+			strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
+		}
+	} else {
+		if (getcwd(buf, (unsigned long)(sizeof(buf) - strlen(name) - 2)) != NULL) {
 			strncat(buf, "/", sizeof(buf) - strlen(buf) - 1);
 			strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
 		}
 	}
-	else {
-		if (getcwd(buf, sizeof(buf) - strlen(name) - 2) != NULL) {
-			strncat(buf, "/", sizeof(buf) - strlen(buf) - 1);
-			strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
-		}
-	}
-	for (j = 0;j < strlen(buf);j++) {
+	for (j = 0; j < strlen(buf); j++) {
 		if (buf[j] == '\\') buf[j] = '/';
 	}
-	for (j = strlen(buf) - 1;j > 0;j--) {
+	for (j = (unsigned long)strlen(buf) - 1; j > 0; j--) {
 		if (buf[j] == '/') { buf[j] = '\0'; p = buf + j + 1; break; }
 	}
 	nsp_setstr(N, &N->g, "_filename", p, -1);
 	nsp_setstr(N, &N->g, "_filepath", buf, -1);
-#if defined(WIN32) && defined(_DEBUG)
-	nsp_setbool(N, &N->g, "_debug", 1);
+#if defined(_WIN32) && defined(_DEBUG)
+	nsp_setbool(N, nsp_settable(N, nsp_settable(N, &N->g, "lib"), "debug"), "attached", 1);
 #endif
 	return;
 }
 
 void set_console_title(nsp_state *N)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	char tmpbuf[80];
 
 	nc_memset((void *)&tmpbuf, 0, sizeof(tmpbuf));
@@ -230,7 +228,7 @@ void set_console_title(nsp_state *N)
 
 void do_banner() {
 	printf("\r\nNullLogic Embedded Scripting Language Version " NSP_VERSION);
-	printf("\r\nCopyright (C) 2007-2019 Dan Cahill\r\n\r\n");
+	printf("\r\nCopyright (C) 2007-2023 Dan Cahill\r\n\r\n");
 	return;
 }
 
@@ -244,7 +242,7 @@ void do_help(char *arg0) {
 void do_preload(nsp_state *N)
 {
 	char sbuf[80];
-#ifdef WIN32
+#ifdef _WIN32
 	char wdbuf[80];
 
 	if (GetWindowsDirectory(wdbuf, sizeof(wdbuf)) == 0) return;
@@ -274,7 +272,7 @@ static void printstate(nsp_state *N, char *fn)
 	printf("\r\nINTERNAL STATE REPORT %s\r\n", fn);
 	if (N->allocs)   printf("\tallocs   = %s (%s bytes)\r\n", printcommas(N->allocs, buf1, 1), printcommas(N->allocmem, buf2, 1));
 	if (N->frees)    printf("\tfrees    = %s (%s bytes)\r\n", printcommas(N->frees, buf1, 1), printcommas(N->freemem, buf2, 1));
-	if (N->allocs)   printf("\tdiff     = %s (%s bytes)\r\n", printcommas(abs(N->allocs - N->frees), buf1, 1), printcommas(abs(N->allocmem - N->freemem), buf2, 1));
+	if (N->allocs)   printf("\tdiff     = %s (%s bytes)\r\n", printcommas(labs(N->allocs - N->frees), buf1, 1), printcommas(labs(N->allocmem - N->freemem), buf2, 1));
 	if (N->peakmem)  printf("\tpeak     = %s bytes\r\n", printcommas(N->peakmem, buf1, 1));
 	if (N->counter1) printf("\tcounter1 = %s\r\n", printcommas(N->counter1, buf1, 1));
 	printf("\tsizeof(nsp_state)  = %d\r\n", (int)sizeof(nsp_state));
@@ -293,7 +291,7 @@ int main(int argc, char *argv[])
 	char c;
 	short intstatus = 0;
 	short preload = 1;
-	char *fn=NULL;
+	char *fn = NULL;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 	if (argc < 2) {
@@ -307,7 +305,7 @@ int main(int argc, char *argv[])
 	//nspbase_register_all(N);
 	/* add env */
 	tobj = nsp_settable(N, &N->g, "_ENV");
-	for (i = 0;environ[i] != NULL;i++) {
+	for (i = 0; environ[i] != NULL; i++) {
 		strncpy(tmpbuf, environ[i], MAX_OBJNAMELEN);
 		p = strchr(tmpbuf, '=');
 		if (!p) continue;
@@ -317,59 +315,51 @@ int main(int argc, char *argv[])
 	}
 	/* add args */
 	tobj = nsp_settable(N, &N->g, "_ARGS");
-	for (i = 0;i < argc;i++) {
+	for (i = 0; i < argc; i++) {
 		n_ntoa(N, tmpbuf, i, 10, 0);
 		nsp_setstr(N, tobj, tmpbuf, argv[i], -1);
 	}
 	tobj = nsp_settable(N, &N->g, "io");
 	nsp_setcfunc(N, tobj, "gets", (NSP_CFUNC)neslib_io_gets);
-	for (i = 1;i < argc;i++) {
+	for (i = 1; i < argc; i++) {
 		if (argv[i] == NULL) break;
 		if (argv[i][0] == '-') {
 			c = argv[i][1];
 			if (!c) {
 				break;
-			}
-			else if ((c == 'd') || (c == 'D')) {
+			} else if ((c == 'd') || (c == 'D')) {
 				N->debug = 1;
-			}
-			else if ((c == 's') || (c == 'S')) {
+			} else if ((c == 's') || (c == 'S')) {
 				intstatus = 1;
-			}
-			else if ((c == 'b') || (c == 'B')) {
+			} else if ((c == 'b') || (c == 'B')) {
 				preload = 0;
-			}
-			else if ((c == 'e') || (c == 'E')) {
+			} else if ((c == 'e') || (c == 'E')) {
 				if (++i < argc) {
 					if (preload) do_preload(N);
 					nsp_exec(N, argv[i]);
 					if (N->err) goto err;
 				}
-			}
-			else if ((c == 'f') || (c == 'F')) {
+			} else if ((c == 'f') || (c == 'F')) {
 				if (++i < argc) {
 					preppath(N, argv[i]);
 					set_console_title(N);
 					if (preload) do_preload(N);
-					fn=argv[i];
+					fn = argv[i];
 					nsp_execfile(N, fn);
 					if (N->err) goto err;
 				}
-			}
-			else if ((c == 'v') || (c == 'V')) {
+			} else if ((c == 'v') || (c == 'V')) {
 				printf(NSP_VERSION "\r\n");
 				return 0;
-			}
-			else {
+			} else {
 				do_help(argv[0]);
 				return -1;
 			}
-		}
-		else {
+		} else {
 			preppath(N, argv[i]);
 			set_console_title(N);
 			if (preload) do_preload(N);
-			fn=argv[i];
+			fn = argv[i];
 			nsp_execfile(N, fn);
 			if (N->err) goto err;
 		}

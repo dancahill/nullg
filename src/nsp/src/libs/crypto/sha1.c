@@ -19,7 +19,7 @@
 #include "nsp/nsplib.h"
 #include "crypto.h"
 #include <fcntl.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #ifdef __TURBOC__
@@ -271,8 +271,7 @@ static void sha1_update(SHA1_CTX *context, const uint8 *data, size_t len)
 		for (; i + 63 < len; i += 64)
 			sha1_transform(context->state, &data[i]);
 		j = 0;
-	}
-	else {
+	} else {
 		i = 0;
 	}
 	(void)memcpy(&context->buffer[j], &data[i], len - i);
@@ -334,7 +333,7 @@ NSP_FUNCTION(libnsp_crypto_sha1_file)
 	sha1_final(&c, md);
 	close(fd);
 	memset(token, 0, sizeof(token));
-	for (i = 0;i < SHA1_DIGEST_LENGTH;i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
+	for (i = 0; i < SHA1_DIGEST_LENGTH; i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
 	nsp_setstr(N, &N->r, "", token, -1);
 	return 0;
 #undef __FN__
@@ -355,7 +354,7 @@ NSP_FUNCTION(libnsp_crypto_sha1_string)
 	sha1_update(&c, (uchar *)cobj1->val->d.str, cobj1->val->size);
 	sha1_final(&c, &(md[0]));
 	memset(token, 0, sizeof(token));
-	for (i = 0;i < SHA1_DIGEST_LENGTH;i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
+	for (i = 0; i < SHA1_DIGEST_LENGTH; i++) { token[i * 2] = hex[md[i] >> 4]; token[i * 2 + 1] = hex[md[i] & 15]; }
 	nsp_setstr(N, &N->r, "", token, -1);
 	return 0;
 #undef __FN__

@@ -25,7 +25,7 @@
 int nspopenssl_register_all(nsp_state *N)
 {
 	obj_t *tobj;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 	if (WSAStartup(0x101, &wsaData)) return -1;
 #endif

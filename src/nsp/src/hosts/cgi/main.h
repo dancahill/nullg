@@ -33,7 +33,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
-#ifdef WIN32
+#ifdef _WIN32
 	#include <io.h>
 #ifdef BCC
 	#define _setmode setmode

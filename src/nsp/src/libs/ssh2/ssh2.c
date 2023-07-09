@@ -50,7 +50,7 @@ typedef struct {
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define sleep(x) Sleep(x*1000)
 #define msleep(x) Sleep(x)
@@ -136,7 +136,7 @@ static void ssh_warn(nsp_state *N, const char *__FN__, SSH_CONN *sshconn)
 
 static int setfiletime(nsp_state *N, char *fname, time_t ftime)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	static int isWinNT = -1;
 	SYSTEMTIME st;
 	FILETIME locft, modft;
@@ -402,11 +402,9 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 		}
 		if (nsp_isstr(pubfile) && pubfile->val->size > 0 && nsp_isstr(prvfile) && prvfile->val->size > 0) {
 			rc = libssh2_userauth_publickey_fromfile(sshconn->session, cobj1->val->d.str, pubfile->val->d.str, prvfile->val->d.str, passwd->val->d.str);
-		}
-		else if (nsp_isstr(pubdata) && pubdata->val->size > 0 && nsp_isstr(prvdata) && prvdata->val->size > 0) {
+		} else if (nsp_isstr(pubdata) && pubdata->val->size > 0 && nsp_isstr(prvdata) && prvdata->val->size > 0) {
 			rc = libssh2_userauth_publickey_frommemory(sshconn->session, cobj1->val->d.str, cobj1->val->size, pubdata->val->d.str, pubdata->val->size, prvdata->val->d.str, prvdata->val->size, passwd->val->d.str);
-		}
-		else {
+		} else {
 			n_error(N, NE_SYNTAX, __FN__, "invalid key data");
 		}
 		if (!nsp_isstr(passwd) || passwd->val->size == 0) {
@@ -418,8 +416,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 			nsp_setbool(N, &N->r, "", 0);
 			return -1;
 		}
-	}
-	else if (nsp_isstr(cobj2) && cobj2->val->d.str != NULL) {
+	} else if (nsp_isstr(cobj2) && cobj2->val->d.str != NULL) {
 		if (strstr(userauthlist, "password") == NULL) {
 			n_warn(N, __FN__, "Authentication method \"password\" not available - Available methods: \"%s\"", userauthlist);
 			nsp_setbool(N, &N->r, "", 0);
@@ -433,8 +430,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_auth)
 			nsp_setbool(N, &N->r, "", 0);
 			return -1;
 		}
-	}
-	else {
+	} else {
 		n_error(N, NE_SYNTAX, __FN__, "expected a string or table for arg3");
 	}
 	nsp_setbool(N, &N->r, "", 1);
@@ -516,7 +512,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_cmd)
 		do {
 			memset(buf, 0, sizeof(buf));
 			rc = libssh2_channel_read(sshconn->sh_channel, buf, sizeof(buf) - 1);
-			if (rc == LIBSSH2_ERROR_EAGAIN&&retries < maxtries) {
+			if (rc == LIBSSH2_ERROR_EAGAIN && retries < maxtries) {
 				msleep(MAXWAIT);
 				retries++;
 				continue;
@@ -544,7 +540,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_cmd)
 	do {
 		memset(buf, 0, sizeof(buf));
 		rc = libssh2_channel_read(sshconn->sh_channel, buf, sizeof(buf) - 1);
-		if (rc == LIBSSH2_ERROR_EAGAIN&&retries < maxtries) {
+		if (rc == LIBSSH2_ERROR_EAGAIN && retries < maxtries) {
 			msleep(MAXWAIT);
 			retries++;
 			continue;
@@ -596,14 +592,14 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 	memset((char *)&fileinfo, 0, sizeof(fileinfo));
 	rc = libssh2_sftp_stat(sshconn->sftp_session, cobj1->val->d.str, &attrs);
 	if (rc == 0) {
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_SIZE) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_SIZE) {
 			fileinfo.st_size = (long)attrs.filesize;
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_PERMISSIONS) {
-			if (attrs.permissions&LIBSSH2_SFTP_S_IFDIR) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) {
+			if (attrs.permissions & LIBSSH2_SFTP_S_IFDIR) {
 			}
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_ACMODTIME) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_ACMODTIME) {
 			fileinfo.st_mtime = attrs.atime;
 			fileinfo.st_mtime = attrs.mtime;
 		}
@@ -640,7 +636,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 				return -1;
 			}
 			if (ppmeter) {
-				if ((pp = (int)((float)got / (float)fileinfo.st_size*100.0F)) > op) printf("\r%d%%", (int)pp);
+				if ((pp = (int)((float)got / (float)fileinfo.st_size * 100.0F)) > op) printf("\r%d%%", (int)pp);
 				op = pp;
 			}
 			write(fd, buf, rc);
@@ -653,8 +649,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_get)
 		//		printf("\r\n%s %d %d\r\n", cobj3->val->d.str, fileinfo.st_atime, fileinfo.st_mtime);
 		if (ppmeter) printf("\r%d%%\r", 100);
 		nsp_setnum(N, &N->r, "", fileinfo.st_size);
-	}
-	else {
+	} else {
 		/* downloading to mem */
 		obj_t *cobj = &N->r;
 
@@ -736,24 +731,23 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_ls)
 		tobj2 = nsp_settable(N, &tobj, rfname);
 		nsp_setstr(N, tobj2, "name", rfname, -1);
 		sym = 0;
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_SIZE) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_SIZE) {
 			nsp_setnum(N, tobj2, "size", (unsigned long)attrs.filesize);
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_UIDGID) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_UIDGID) {
 			nsp_setnum(N, tobj2, "uid", attrs.uid);
 			nsp_setnum(N, tobj2, "gid", attrs.gid);
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_PERMISSIONS) {
-			if (!(~attrs.permissions&LIBSSH2_SFTP_S_IFLNK)) sym = 1;
-			if (attrs.permissions&LIBSSH2_SFTP_S_IFDIR) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) {
+			if (!(~attrs.permissions & LIBSSH2_SFTP_S_IFLNK)) sym = 1;
+			if (attrs.permissions & LIBSSH2_SFTP_S_IFDIR) {
 				nsp_setnum(N, tobj2, "size", 0);
 				nsp_setstr(N, tobj2, "type", sym ? "dirp" : "dir", sym ? 4 : 3);
-			}
-			else {
+			} else {
 				nsp_setstr(N, tobj2, "type", sym ? "filep" : "file", sym ? 5 : 4);
 			}
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_ACMODTIME) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_ACMODTIME) {
 			nsp_setnum(N, tobj2, "atime", attrs.atime);
 			nsp_setnum(N, tobj2, "mtime", attrs.mtime);
 		}
@@ -778,7 +772,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_mkdir)
 	SSH_CONN *sshconn;
 	int rc = 0;
 
-	//	LIBSSH2_SFTP_ATTRIBUTES attrs;
+//	LIBSSH2_SFTP_ATTRIBUTES attrs;
 
 	cobj = nsp_getobj(N, thisobj, "connection");
 	if ((cobj->val->type != NT_CDATA) || (cobj->val->d.str == NULL) || (strcmp(cobj->val->d.str, "ssh-conn") != 0))
@@ -798,22 +792,21 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_mkdir)
 		n_warn(N, __FN__, "this sftp_session is dead");
 		return -1;
 	}
-	//	ssh_warn(N, __FN__, sshconn);
+//	ssh_warn(N, __FN__, sshconn);
 	if (N->debug) n_warn(N, __FN__, "libssh2_sftp_mkdir()");
-	//	rc=libssh2_sftp_mkdir(sshconn->sftp_session, cobj2->val->d.str, LIBSSH2_SFTP_S_IRWXU|LIBSSH2_SFTP_S_IRGRP|LIBSSH2_SFTP_S_IXGRP|LIBSSH2_SFTP_S_IROTH|LIBSSH2_SFTP_S_IXOTH);
+//	rc=libssh2_sftp_mkdir(sshconn->sftp_session, cobj2->val->d.str, LIBSSH2_SFTP_S_IRWXU|LIBSSH2_SFTP_S_IRGRP|LIBSSH2_SFTP_S_IXGRP|LIBSSH2_SFTP_S_IROTH|LIBSSH2_SFTP_S_IXOTH);
 
 
-	//	rc=libssh2_sftp_stat(sshconn->sftp_session, cobj1->val->d.str, &attrs);
-	//	n_warn(N, __FN__, "libssh2_sftp_stat = %d", rc);
+//	rc=libssh2_sftp_stat(sshconn->sftp_session, cobj1->val->d.str, &attrs);
+//	n_warn(N, __FN__, "libssh2_sftp_stat = %d", rc);
 
 
 	rc = libssh2_sftp_mkdir_ex(sshconn->sftp_session, cobj1->val->d.str, cobj1->val->size, 0755);
 	if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL) {
 		n_warn(N, __FN__, "LIBSSH2_ERROR_SFTP_PROTOCOL");
 		ssh_lasterr(N, sshconn);
-	}
-	else if (rc) {
-		//		n_warn(N, __FN__, "%d", rc);
+	} else if (rc) {
+//		n_warn(N, __FN__, "%d", rc);
 	}
 	nsp_setnum(N, &N->r, "", rc);
 	ssh_warn(N, __FN__, sshconn);
@@ -875,8 +868,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_put)
 			}
 		} while (rc > 0);
 		libssh2_sftp_close(handle);
-	}
-	else {
+	} else {
 		char *buf;
 		int fd;
 
@@ -890,7 +882,7 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_put)
 		}
 		fileinfo.st_mode = LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IROTH;
 		handle = libssh2_sftp_open(sshconn->sftp_session, cobj1->val->d.str, LIBSSH2_FXF_WRITE | LIBSSH2_FXF_CREAT, fileinfo.st_mode & 0777);
-		//		printf("\r\n%s %d %d\r\n", cobj3->val->d.str, sb.st_mtime, sb.st_atime);
+//		printf("\r\n%s %d %d\r\n", cobj3->val->d.str, sb.st_mtime, sb.st_atime);
 
 		if (!handle && (libssh2_session_last_errno(sshconn->session) != LIBSSH2_ERROR_EAGAIN)) {
 			n_warn(N, __FN__, "libssh2_sftp_last_error = %d", libssh2_sftp_last_error(sshconn->sftp_session));
@@ -1032,24 +1024,23 @@ NSP_CLASSMETHOD(libnsp_net_ssh_sftp_stat)
 		tobj.val = n_newval(N, NT_TABLE);
 		nsp_setstr(N, &tobj, "name", cobj1->val->d.str, cobj1->val->size);
 		sym = 0;
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_SIZE) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_SIZE) {
 			nsp_setnum(N, &tobj, "size", (unsigned long)attrs.filesize);
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_UIDGID) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_UIDGID) {
 			nsp_setnum(N, &tobj, "uid", attrs.uid);
 			nsp_setnum(N, &tobj, "gid", attrs.gid);
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_PERMISSIONS) {
-			if (!(~attrs.permissions&LIBSSH2_SFTP_S_IFLNK)) sym = 1;
-			if (attrs.permissions&LIBSSH2_SFTP_S_IFDIR) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) {
+			if (!(~attrs.permissions & LIBSSH2_SFTP_S_IFLNK)) sym = 1;
+			if (attrs.permissions & LIBSSH2_SFTP_S_IFDIR) {
 				nsp_setnum(N, &tobj, "size", 0);
 				nsp_setstr(N, &tobj, "type", sym ? "dirp" : "dir", sym ? 4 : 3);
-			}
-			else {
+			} else {
 				nsp_setstr(N, &tobj, "type", sym ? "filep" : "file", sym ? 5 : 4);
 			}
 		}
-		if (attrs.flags&LIBSSH2_SFTP_ATTR_ACMODTIME) {
+		if (attrs.flags & LIBSSH2_SFTP_ATTR_ACMODTIME) {
 			nsp_setnum(N, &tobj, "atime", attrs.atime);
 			nsp_setnum(N, &tobj, "mtime", attrs.mtime);
 		}
@@ -1135,11 +1126,11 @@ NSP_CLASS(libnsp_net_ssh_client)
 int nspssh2_register_all(nsp_state *N)
 {
 	obj_t *tobj;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 	if (WSAStartup(0x101, &wsaData)) return -1;
 #endif
-	tobj = nsp_settable(N, &N->g, "net");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "net");
 	tobj->val->attr |= NST_HIDDEN;
 	tobj = nsp_settable(N, tobj, "ssh");
 	tobj->val->attr |= NST_HIDDEN;

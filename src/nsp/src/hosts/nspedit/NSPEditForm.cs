@@ -305,6 +305,25 @@ namespace NSPEdit
 			richCodeBox1.RunScript("");
 		}
 
+		private void continueToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			richCodeBox1.ContinueScript();
+		}
+
+		private void viewMemoryToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				MemTreeForm form = new MemTreeForm();
+				form.thread = richCodeBox1.scriptThread;
+				form.ShowDialog();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(string.Format("Exception: {0}", ex.Message));
+			}
+		}
+
 		private void newToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			newToolStripButton_Click(sender, e);
@@ -462,10 +481,15 @@ namespace NSPEdit
 			//splitContainer1.ResumeLayout(false);
 			//tabPage1.ResumeLayout(false);
 
-			int p2height = splitContainer1.Height - this.OutputHeight;
-			if (p2height < 0) p2height = 0;
-			if (p2height > splitContainer1.Height) p2height = splitContainer1.Height;
-			splitContainer1.SplitterDistance = p2height;
+			try
+			{
+				int p2height = splitContainer1.Height - this.OutputHeight;
+				if (p2height < 0) p2height = 0;
+				if (p2height > splitContainer1.Height) p2height = splitContainer1.Height;
+				if (splitContainer1.SplitterDistance < p2height) splitContainer1.SplitterDistance = p2height;
+				splitContainer1.SplitterDistance = p2height;
+			}
+			catch { }
 			splitContainer1.Panel2.SizeChanged += Panel2_SizeChanged;
 
 			TabControl1_SelectedIndexChanged(null, null);

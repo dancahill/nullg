@@ -28,17 +28,17 @@ int nspcrypto_register_all(nsp_state *N)
 {
 	obj_t *tobj;
 
-	tobj = nsp_settable(N, &N->g, "crypto");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "crypto");
 	tobj->val->attr |= NST_HIDDEN;
 	nsp_setcfunc(N, tobj, "aes_cbc_encrypt", (NSP_CFUNC)libnsp_crypto_aes_encrypt);
 	nsp_setcfunc(N, tobj, "aes_cbc_decrypt", (NSP_CFUNC)libnsp_crypto_aes_decrypt);
 	nsp_setcfunc(N, tobj, "aes_ecb_encrypt", (NSP_CFUNC)libnsp_crypto_aes_encrypt);
 	nsp_setcfunc(N, tobj, "aes_ecb_decrypt", (NSP_CFUNC)libnsp_crypto_aes_decrypt);
 	nsp_setcfunc(N, tobj, "md5_passwd", (NSP_CFUNC)libnsp_crypto_md5_passwd);
-	tobj = nsp_settable(N, &N->g, "file");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "file");
 	nsp_setcfunc(N, tobj, "md5", (NSP_CFUNC)libnsp_crypto_md5_file);
 	nsp_setcfunc(N, tobj, "sha1", (NSP_CFUNC)libnsp_crypto_sha1_file);
-	tobj = nsp_settable(N, &N->g, "string");
+	tobj = nsp_settable(N, nsp_settable(N, &N->g, "lib"), "string");
 	nsp_setcfunc(N, tobj, "md5", (NSP_CFUNC)libnsp_crypto_md5_string);
 	nsp_setcfunc(N, tobj, "sha1", (NSP_CFUNC)libnsp_crypto_sha1_string);
 #if defined HAVE_OPENSSL

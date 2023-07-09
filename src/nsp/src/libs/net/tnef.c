@@ -18,7 +18,7 @@
 */
 #include "nsp/nsplib.h"
 #include "net.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #include <unistd.h>
@@ -128,7 +128,7 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 		n_warn(N, __FN__, "0x%x", readi2((&p[i])));
 		i += 2; bl -= 2;
 	}
-	for (;bl > 0;) {
+	for (; bl > 0;) {
 
 		/* ? */
 		if (bl < 1) {
@@ -201,7 +201,7 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 			}
 			n_warn(N, __FN__, "... = %d", readi4((&p[i])));
 			i += 4; bl -= 4;
-			for (j = 0;j < pcount;j++) {
+			for (j = 0; j < pcount; j++) {
 				/* Attributes */
 				if (bl < 4) {
 					n_warn(N, __FN__, "missing data");
@@ -220,7 +220,7 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 				n_warn(N, __FN__, "... = %d", readi4((&p[i])));
 				i += 4; bl -= 4;
 				if (pattr_type == 0x1F) {
-					if (pattr_id == PidTagAttachExtension || pattr_id == PidTagAttachLongFilename || PidTagAttachMimeTag) {
+					if (pattr_id == PidTagAttachExtension || pattr_id == PidTagAttachLongFilename || pattr_id == PidTagAttachMimeTag) {
 						// * Length * /
 						n_warn(N, __FN__, "check");
 						if (bl < 4) {
@@ -246,19 +246,15 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 							n_warn(N, __FN__, "padding = 0x%x", readi2((&p[i])));
 							i += 2; bl -= 2;
 						}
-					}
-					else {
+					} else {
 						n_warn(N, __FN__, "unknown attr %x with type %x", pattr_id, pattr_type);
 					}
-				}
-				else if (pattr_type == 0x40) {
+				} else if (pattr_type == 0x40) {
 					n_warn(N, __FN__, "PtypTime skipped");
 					i += 16; bl -= 16;
-				}
-				else if (pattr_type == 0x3) {
+				} else if (pattr_type == 0x3) {
 					n_warn(N, __FN__, "PtypInteger32 unhandled type");
-				}
-				else if (pattr_type == 0x001E) {
+				} else if (pattr_type == 0x001E) {
 					// * Length * /
 					n_warn(N, __FN__, "check");
 					if (bl < 4) {
@@ -279,17 +275,15 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 					i += 3;
 					bl -= 3;
 					break;
-				}
-				else {
+				} else {
 					break;
 				}
 			}
-			//			for (;bl>0;) {
-			//				n_warn(N, __FN__, "[%c][%d][%x]", p[i], p[i], p[i]);
-			//				i++; bl--;
-			//			}
-		}
-		else {
+//			for (;bl>0;) {
+//				n_warn(N, __FN__, "[%c][%d][%x]", p[i], p[i], p[i]);
+//				i++; bl--;
+//			}
+		} else {
 			i += len; bl -= len;
 		}
 		/* checksum */
@@ -297,9 +291,9 @@ NSP_FUNCTION(libnsp_net_tnef_debug)
 			n_warn(N, __FN__, "missing data");
 			goto err;
 		}
-		//		n_warn(N, __FN__, "Checksum = 0x%x", readi2((&p[i])));
+//		n_warn(N, __FN__, "Checksum = 0x%x", readi2((&p[i])));
 		i += 2; bl -= 2;
-		//		n_warn(N, __FN__, "i= %d, bl = %d", i, bl);
+//		n_warn(N, __FN__, "i= %d, bl = %d", i, bl);
 		n_warn(N, __FN__, "[lvl=%d][Attributes = 0x%x 0x%x][Length = %d]", lvl, attr_id, attr_type, len);
 	}
 err:

@@ -321,8 +321,7 @@ NSP_FUNCTION(libnsp_openssl_smime_verify)
 	if (PKCS7_verify(pkcs7, chain, store, pkcs7_bio, out, PKCS7_NOVERIFY) != 1) {
 		n_warn(N, __FN__, "Error writing PKCS#7 object");
 		goto err;
-	}
-	else {
+	} else {
 		n_warn(N, __FN__, "Certifiate and Signature verified!");
 	}
 
