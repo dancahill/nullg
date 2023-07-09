@@ -32,8 +32,7 @@ int tcp_bind(char *ifname, unsigned short port)
 	if ((strcasecmp("ANY", ifname) == 0) || (strcasecmp("INADDR_ANY", ifname) == 0)) {
 		log_error(proc.N, "core", __FILE__, __LINE__, 2, "Binding to 'INADDR_ANY:%d'", port);
 		sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	}
-	else {
+	} else {
 		log_error(proc.N, "core", __FILE__, __LINE__, 2, "Binding to '%s:%d'", ifname, port);
 		hp = gethostbyname(ifname);
 		if (hp == NULL) {
@@ -155,8 +154,7 @@ retry:
 	if (socket->ssl) {
 		rc = ssl_read(socket->ssl, buffer, len);
 		if (rc == 0) rc = -1;
-	}
-	else {
+	} else {
 		rc = recv(socket->socket, buffer, len, flags);
 	}
 #else
@@ -177,13 +175,11 @@ retry:
 		}
 		return -1;
 #endif
-	}
-	else if (rc == 0) {
+	} else if (rc == 0) {
 		msleep(1);
 		goto retry;
-	}
-	else {
-		socket->atime = time(NULL);
+	} else {
+		socket->mtime = time(NULL);
 		socket->bytes_in += rc;
 	}
 	log_error(proc.N, "tcp", __FILE__, __LINE__, 5, "[%s:%d] tcp_recv: %d bytes of binary data", socket->RemoteAddr, socket->RemotePort, rc);
@@ -202,8 +198,7 @@ int tcp_send_nolog(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 #ifdef HAVE_SSL
 	if (socket->ssl) {
 		rc = ssl_write(socket->ssl, buffer, len);
-	}
-	else {
+	} else {
 		rc = send(socket->socket, buffer, len, flags);
 	}
 #else
@@ -233,12 +228,10 @@ int tcp_send_nolog(TCP_SOCKET *socket, const char *buffer, int len, int flags)
 			}
 		}
 #endif
-	}
-	else if (rc == 0) {
+	} else if (rc == 0) {
 		msleep(1);
-	}
-	else {
-		socket->atime = time(NULL);
+	} else {
+		socket->mtime = time(NULL);
 		socket->bytes_out += rc;
 	}
 	return rc;
@@ -300,8 +293,7 @@ retry:
 		rc = tcp_recv(socket, obuffer, x, 0);
 		if (rc < 0) {
 			return -1;
-		}
-		else if (rc < 1) {
+		} else if (rc < 1) {
 			goto retry;
 		}
 		socket->recvbufsize += rc;
@@ -325,8 +317,7 @@ retry:
 			memmove(socket->recvbuf, socket->recvbuf + socket->recvbufoffset, socket->recvbufsize);
 			memset(socket->recvbuf + socket->recvbufsize, 0, sizeof(socket->recvbuf) - socket->recvbufsize);
 			socket->recvbufoffset = 0;
-		}
-		else {
+		} else {
 			memset(socket->recvbuf, 0, sizeof(socket->recvbuf));
 			socket->recvbufoffset = 0;
 			socket->recvbufsize = 0;
@@ -341,8 +332,7 @@ int tcp_close(TCP_SOCKET *socket, short int owner_killed)
 {
 	if (!owner_killed) {
 		socket->want_close = 1;
-	}
-	else {
+	} else {
 		socket->want_close = 0;
 #ifdef HAVE_SSL
 		if (socket->ssl != NULL) ssl_close(socket);

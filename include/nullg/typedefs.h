@@ -25,7 +25,7 @@ typedef struct {
 	char ServerAddr[16];
 	int  ServerPort;
 	time_t ctime; /* Creation time */
-	time_t atime; /* Last Access time */
+	time_t mtime; /* Last Modified time */
 	unsigned int bytes_in;
 	unsigned int bytes_out;
 	short int want_close;

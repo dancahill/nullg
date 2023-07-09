@@ -79,7 +79,7 @@ static void read_postdata(CONN *conn)
 			return;
 		}
 		else if (rc > 0) {
-			conn->socket.atime = time(NULL);
+			conn->socket.mtime = time(NULL);
 			i += rc;
 		}
 		bytesleft -= rc;

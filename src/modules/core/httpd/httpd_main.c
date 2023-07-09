@@ -144,7 +144,7 @@ void *htloop(void *x)
 			if (conn->dat != NULL) { free(conn->dat); conn->dat = NULL; }
 			conn->dat = calloc(1, sizeof(CONNDATA));
 			conn->dat->out_ContentLength = -1;
-			conn->socket.atime = time(NULL);
+			conn->socket.mtime = time(NULL);
 			conn->socket.ctime = time(NULL);
 			http_dorequest(conn);
 			k = 0;
@@ -277,17 +277,17 @@ DllExport int mod_cron()
 
 	if ((htproc.ListenSocketSTD.socket == -1) && (htproc.ListenSocketSSL.socket == -1)) return 0;
 	for (i = 0; i < maxconn; i++) {
-		if ((htproc.conn[i].id == 0) || (htproc.conn[i].socket.atime == 0)) continue;
+		if ((htproc.conn[i].id == 0) || (htproc.conn[i].socket.mtime == 0)) continue;
 		connections++;
 		if (htproc.conn[i].state == 0) {
-			if (ctime - htproc.conn[i].socket.atime < maxkeepalive) continue;
+			if (ctime - htproc.conn[i].socket.mtime < maxkeepalive) continue;
 		}
 		else {
-			if (ctime - htproc.conn[i].socket.atime < maxidle) continue;
+			if (ctime - htproc.conn[i].socket.mtime < maxidle) continue;
 		}
 
-		if (ctime - htproc.conn[i].socket.atime > 59) {
-			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", htproc.conn[i].socket.RemoteAddr, htproc.conn[i].socket.RemotePort, ctime - htproc.conn[i].socket.atime);
+		if (ctime - htproc.conn[i].socket.mtime > 59) {
+			log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", htproc.conn[i].socket.RemoteAddr, htproc.conn[i].socket.RemotePort, ctime - htproc.conn[i].socket.mtime);
 		}
 		/* closeconnect is _not_ ssl-friendly */
 /*

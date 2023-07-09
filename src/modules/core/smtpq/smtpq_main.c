@@ -123,15 +123,15 @@ DllExport int mod_cron()
 
 	return 0;
 	for (i = 0;i < mod_config.smtp_maxconn;i++) {
-		if ((conn[i].id == 0) || (conn[i].socket.atime == 0)) continue;
+		if ((conn[i].id == 0) || (conn[i].socket.mtime == 0)) continue;
 		connections++;
 		if (conn[i].state == 0) {
-			if (ctime - conn[i].socket.atime < 15) continue;
+			if (ctime - conn[i].socket.mtime < 15) continue;
 		}
 		else {
-			if (ctime - conn[i].socket.atime < mod_config.smtp_maxidle) continue;
+			if (ctime - conn[i].socket.mtime < mod_config.smtp_maxidle) continue;
 		}
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", conn[i].socket.RemoteAddr, conn[i].socket.RemotePort, ctime - conn[i].socket.atime);
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", conn[i].socket.RemoteAddr, conn[i].socket.RemotePort, ctime - conn[i].socket.mtime);
 		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;

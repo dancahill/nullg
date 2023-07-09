@@ -92,7 +92,7 @@ int htnsp_flush(nsp_state *N)
 	int o = 0;
 
 	do {
-		conn->socket.atime = time(NULL);
+		conn->socket.mtime = time(NULL);
 		b = sizeof(conn->dat->replybuf) - conn->dat->replybuflen - 1;
 		if (b < 512) { flushbuffer(conn); continue; }
 		if (b > N->outbuflen) b = N->outbuflen;

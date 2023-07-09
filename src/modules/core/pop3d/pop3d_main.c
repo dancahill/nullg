@@ -121,7 +121,7 @@ void *poploop(void *x)
 	proc->stats.pop3_conns++;
 	if (conn->dat != NULL) free(conn->dat);
 	conn->dat = calloc(1, sizeof(CONNDATA));
-	conn->socket.atime = time(NULL);
+	conn->socket.mtime = time(NULL);
 	conn->socket.ctime = time(NULL);
 	strncpy(conn->dat->RemoteAddr, conn->socket.RemoteAddr, sizeof(conn->dat->RemoteAddr) - 1);
 	conn->dat->RemotePort = conn->socket.RemotePort;
@@ -212,15 +212,15 @@ DllExport int mod_cron()
 
 	if ((ListenSocketSTD.socket == -1) && (ListenSocketSSL.socket == -1)) return 0;
 	for (i = 0;i < mod_config.pop3_maxconn;i++) {
-		if ((conn[i].id == 0) || (conn[i].socket.atime == 0)) continue;
+		if ((conn[i].id == 0) || (conn[i].socket.mtime == 0)) continue;
 		connections++;
 		if (conn[i].state == 0) {
-			if (ctime - conn[i].socket.atime < 15) continue;
+			if (ctime - conn[i].socket.mtime < 15) continue;
 		}
 		else {
-			if (ctime - conn[i].socket.atime < mod_config.pop3_maxidle) continue;
+			if (ctime - conn[i].socket.mtime < mod_config.pop3_maxidle) continue;
 		}
-		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", conn[i].socket.RemoteAddr, conn[i].socket.RemotePort, ctime - conn[i].socket.atime);
+		log_error(proc->N, MODSHORTNAME, __FILE__, __LINE__, 4, "Reaping idle socket [%s:%d] (idle %d seconds)", conn[i].socket.RemoteAddr, conn[i].socket.RemotePort, ctime - conn[i].socket.mtime);
 		tcp_close(&conn[i].socket, 0);
 	}
 	return 0;

@@ -135,7 +135,7 @@ int prints(CONN *conn, const char *format, ...)
 	va_list ap;
 
 	if (conn == NULL) return -1;
-	conn->socket.atime = time(NULL);
+	conn->socket.mtime = time(NULL);
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof(conn->dat->smallbuf[0]) - 1, format, ap);
 	str_len1 = strlen(buffer);
@@ -161,7 +161,7 @@ int raw_prints(CONN *conn, const char *format, ...)
 	va_list ap;
 
 	if (conn == NULL) return -1;
-	conn->socket.atime = time(NULL);
+	conn->socket.mtime = time(NULL);
 	memset(buffer, 0, sizeof(buffer));
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
@@ -222,7 +222,7 @@ int filesend(CONN *conn, char *file)
 			bytesleft -= blocksize;
 			bs = tcp_send(&conn->socket, fileblock, blocksize, 0);
 			if (bs < 0) break;
-			if (bs > 0) conn->socket.atime = time(NULL);
+			if (bs > 0) conn->socket.mtime = time(NULL);
 		}
 		free(fileblock);
 		fileblock = NULL;
