@@ -72,9 +72,9 @@
 #endif
 
 #ifdef SRVMOD_MAIN
-#define EXTERN extern
-#else
 #define EXTERN
+#else
+#define EXTERN extern
 #endif
 
 typedef int        (*MAIN_CONFIG_READ)(nsp_state *, char *, void *);
