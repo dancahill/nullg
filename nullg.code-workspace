@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": ".\\lib\\htdocs"
+		},
+		{
+			"path": ".\\lib\\scripts"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.ns": "javascript",
+			"*.nsp": "php"
+		}
+	}
+}

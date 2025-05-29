@@ -177,7 +177,7 @@ void setsigs()
 #endif
 }
 
-void init(nsp_state *N)
+void init(nsp_state *N, short int detach)
 {
 	unsigned int mask;
 
@@ -204,11 +204,11 @@ void init(nsp_state *N)
 	 */
 #ifndef WIN32
 #ifndef VALGRIND
-	daemon(0, 0);
+	if (detach) daemon(0, 0);
 #endif
 #endif
 #ifndef WIN32
-	setsigs();
+	if (detach) setsigs();
 #endif
 	pthread_mutex_init(&Lock.SQL, NULL);
 	if (proc.debug) printf("Checking DB\r\n");

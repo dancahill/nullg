@@ -2,7 +2,7 @@
 
 dl.load("net");
 
-file.append("crash.log", time.sqltime()+" stuff happened\r\n");
+file.append("crash.log", lib.time.sqltime()+" stuff happened\r\n");
 system("TASKKILL /F /IM NULLG.EXE");
 system("NET STOP NULLG");
 sleep(2);

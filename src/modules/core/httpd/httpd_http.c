@@ -839,7 +839,7 @@ void http_dorequest(CONN *conn)
 		conn->N = nsp_endstate(conn->N);
 		return;
 	}
-	tobj = nsp_getobj(conn->N, &conn->N->g, "io");
+	tobj = nsp_getobj(conn->N, nsp_getobj(conn->N, &conn->N->g, "lib"), "io");
 	nsp_setcfunc(conn->N, tobj, "flush", (void *)htnsp_flush);
 	gettimeofday(&conn->dat->runtime, NULL);
 	htobj = nsp_getobj(conn->N, &conn->N->g, "_SERVER");

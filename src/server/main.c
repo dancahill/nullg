@@ -238,7 +238,7 @@ void WINAPI ServiceMain(DWORD dwNumServiceArgs, LPTSTR *lpServiceArgs)
 			DebugBreak();
 		}
 		/* LET THE GROUPWARE BEGIN */
-		init(proc.N);
+		init(proc.N, 1);
 		memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
 		if (modules_init(proc.N) != 0) exit(-2);
 		sanity_checkdirs();
@@ -334,7 +334,7 @@ int main(int argc, char *argv[], char *envp[])
 			forcerun = 1;
 		}
 		if (forcerun) {
-			init(proc.N);
+			init(proc.N, 1);
 			memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
 			if (argc < 3) {
 				if (modules_init(proc.N) != 0) exit(-2);
@@ -419,6 +419,7 @@ int main(int argc, char *argv[], char *envp[])
 	FILE *fp = NULL;
 	struct passwd *pw;
 	unsigned short i;
+	short int detach = 1;
 	char *p;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -434,6 +435,10 @@ int main(int argc, char *argv[], char *envp[])
 	for (i = 0;i < argc;i++) {
 		sprintf(tmpbuf, "%d", i);
 		nsp_setstr(proc.N, tobj, tmpbuf, argv[i], strlen(argv[i]));
+		if (!strcmp(argv[i], "--nodetach")) {
+			printf("NOT DETACHING\r\n");
+			detach = 0;
+		}
 	}
 	/* add env */
 	tobj = nsp_settable(proc.N, &proc.N->g, "_ENV");
@@ -448,7 +453,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	proc.stats.starttime = time(NULL);
 	nsp_setstr(proc.N, &proc.N->g, "program_name", argv[0], strlen(argv[0]));
-	init(proc.N);
+	init(proc.N, detach);
 	memset((char *)&proc.srvmod, 0, sizeof(SRVMOD));
 	if (argc < 2) {
 		if (modules_init(proc.N) != 0) exit(-2);

@@ -685,7 +685,7 @@ static int htnsp_runscript(CONN *conn, char *file)
 	if (p != NULL && strcmp(p, ".nsp") == 0) {
 		char hackbuf[512];
 
-		snprintf(hackbuf, sizeof(hackbuf) - 1, "exec(convertnsp(file.readall(\"%s\")));", file);
+		snprintf(hackbuf, sizeof(hackbuf) - 1, "lib.exec(convertnsp(lib.file.readall(\"%s\")));", file);
 		//snprintf(hackbuf, sizeof(hackbuf) - 1, "convertnsp(file.readall(\"%s\"));", file);
 		nsp_exec(conn->N, hackbuf);
 	}

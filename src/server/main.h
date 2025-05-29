@@ -133,7 +133,7 @@ int     sanity_checkdirs(void);
 /* server.c functions */
 /* void    server_restart(void); */
 void    server_shutdown(void);
-void    init(nsp_state *N);
+void    init(nsp_state *N, short int detach);
 int     addlistener(char *modname, TCP_SOCKET *sock, void *fn_getconn, void *fn_doreq, int use_ssl);
 int     startlisteners(void);
 /* sql.c functions */

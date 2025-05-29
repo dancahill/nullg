@@ -43,10 +43,14 @@ void *lib_open(const char *file)
 void *lib_sym(void *handle, const char *name)
 {
 #ifdef WIN32
-	return GetProcAddress(handle, name);
+	void *x = GetProcAddress(handle, name);
+	if (x==NULL) printf("symbol %s not found\r\n", name);
+	return x;
 #else
 #ifdef HAVE_DLFCN_H
-	return dlsym(handle, name);
+	void *x = dlsym(handle, name);
+	if (x==NULL) printf("symbol %s not found\r\n", name);
+	return x;
 #else
 	return NULL;
 #endif
