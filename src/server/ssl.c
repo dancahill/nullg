@@ -21,10 +21,12 @@
 
 typedef void(*LIBSSL_LOAD_ERROR_STRINGS)(void);
 typedef int(*LIBSSL_LIBRARY_INIT)(void);
+typedef int(*LIBSSL_OPENSSL_INIT_SSL)(uint64_t, void *);
 typedef SSL_METHOD *(*LIBSSL_CLIENT_METHOD)(void);
 typedef SSL_METHOD *(*LIBSSL_SERVER_METHOD)(void);
 typedef SSL_CTX    *(*LIBSSL_CTX_NEW)(SSL_METHOD *);
 typedef long(*LIBSSL_CTX_CTRL)(SSL_CTX *, int, long, void *);
+typedef int (*LIBSSL_CTX_SET_MIN_PROTO_VERSION)(SSL_CTX *, int);
 typedef int(*LIBSSL_CTX_SET_CIPHER_LIST)(SSL_CTX *, const char *);
 typedef int(*LIBSSL_CTX_USE_CERT_FILE)(SSL_CTX *, const char *, int);
 typedef int(*LIBSSL_CTX_USE_KEY_FILE)(SSL_CTX *, const char *, int);
@@ -53,6 +55,7 @@ static struct {
 	LIBSSL_CTX_FREE				SSL_CTX_free;
 	LIBSSL_CTX_NEW				SSL_CTX_new;
 	LIBSSL_CTX_CTRL				SSL_CTX_ctrl;
+	LIBSSL_CTX_SET_MIN_PROTO_VERSION	SSL_CTX_set_min_proto_version;
 	LIBSSL_CTX_SET_CIPHER_LIST		SSL_CTX_set_cipher_list;
 	LIBSSL_CTX_USE_CERT_FILE		SSL_CTX_use_certificate_file;
 	LIBSSL_CTX_USE_KEY_FILE			SSL_CTX_use_PrivateKey_file;
@@ -60,6 +63,7 @@ static struct {
 	LIBSSL_FREE				SSL_free;
 	LIBSSL_GET_SHUTDOWN			SSL_get_shutdown;
 	LIBSSL_LIBRARY_INIT			SSL_library_init;
+	LIBSSL_OPENSSL_INIT_SSL			OPENSSL_init_ssl;
 	LIBSSL_LOAD_ERROR_STRINGS		SSL_load_error_strings;
 	LIBSSL_NEW				SSL_new;
 	LIBSSL_READ				SSL_read;
@@ -159,6 +163,9 @@ found:
 	if ((libssl.SSL_free = (LIBSSL_FREE)lib_sym(hinstLib, "SSL_free")) == NULL) goto fail;
 	if ((libssl.SSL_get_shutdown = (LIBSSL_GET_SHUTDOWN)lib_sym(hinstLib, "SSL_get_shutdown")) == NULL) goto fail;
 	if ((libssl.SSL_library_init = (LIBSSL_LIBRARY_INIT)lib_sym(hinstLib, "SSL_library_init")) == NULL) goto fail;
+
+	if ((libssl.OPENSSL_init_ssl = (LIBSSL_OPENSSL_INIT_SSL)lib_sym(hinstLib, "OPENSSL_init_ssl")) == NULL) goto fail;
+
 	if ((libssl.SSL_load_error_strings = (LIBSSL_LOAD_ERROR_STRINGS)lib_sym(hinstLib, "SSL_load_error_strings")) == NULL) goto fail;
 	if ((libssl.SSL_new = (LIBSSL_NEW)lib_sym(hinstLib, "SSL_new")) == NULL) goto fail;
 	if ((libssl.SSL_read = (LIBSSL_READ)lib_sym(hinstLib, "SSL_read")) == NULL) goto fail;
@@ -200,12 +207,16 @@ int ssl_init()
 	if (!nsp_isstr(cobj1) && !nsp_isstr(cobj2) && !nsp_isstr(cobj3)) return 0;
 	//if ((cobj1->val->type!=NT_STRING)||(cobj2->val->type!=NT_STRING)) return 0;
 	if (ssl_dl_init() < 0) return -1;
-	libssl.SSL_load_error_strings();
-	libssl.SSLeay_add_ssl_algorithms();
+	//libssl.SSL_load_error_strings();
+	//libssl.SSLeay_add_ssl_algorithms();
+	//SSL_library_init();
+	libssl.OPENSSL_init_ssl(0, NULL);
+	//SSL_load_error_strings
 	proc.ssl_meth = libssl.SSLv23_server_method();
 	proc.ssl_ctx = libssl.SSL_CTX_new(proc.ssl_meth);
-	long options = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_1;
-	libssl.SSL_CTX_ctrl(proc.ssl_ctx, SSL_CTRL_OPTIONS, options, NULL);
+	//long options = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1_1;
+	//libssl.SSL_CTX_ctrl(proc.ssl_ctx, SSL_CTRL_OPTIONS, options, NULL);
+	libssl.SSL_CTX_set_min_proto_version(proc.ssl_ctx, TLS1_3_VERSION);
 #ifdef SSL_CTRL_SET_ECDH_AUTO
 	libssl.SSL_CTX_ctrl(proc.ssl_ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL);
 #else
@@ -280,8 +291,9 @@ int ssl_connect(TCP_SOCKET *sock)
 	if (ctx == NULL) {
 		meth = libssl.SSLv23_client_method();
 		ctx = libssl.SSL_CTX_new(meth);
-		long options = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-		libssl.SSL_CTX_ctrl(ctx, SSL_CTRL_OPTIONS, options, NULL);
+		//long options = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+		//libssl.SSL_CTX_ctrl(ctx, SSL_CTRL_OPTIONS, options, NULL);
+		libssl.SSL_CTX_set_min_proto_version(proc.ssl_ctx, TLS1_3_VERSION);
 	}
 
 	/*	sock->ssl=libssl.SSL_new(proc.ssl_ctx); */
