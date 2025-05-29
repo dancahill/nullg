@@ -35,7 +35,7 @@ function mlist() {
 	calendar.html.htselect_userfilter();
 	print("</div>");
 	print("Month List - The calendar app is not started yet.");
-	utime=time.now()
+	utime=lib.time.now()
 	utime=utime-(utime%86400);
 	month=calendar.getmonth(utime);
 	print("<table class='calendar'><thead>\r\n");
@@ -53,7 +53,7 @@ function mlist() {
 			//bgcolor=day.tm_mon==month[1][0].tm_mon?'black':'grey';
 			//printf("<td"+(day.tm_mon!=month[1][0].tm_mon?" style='background-color:grey;white-space:nowrap;overflow:hidden'":"")+"><span style='color:%s'>", color);
 			printf("<td"+(day.tm_mon!=month[1][0].tm_mon?" style='background-color:grey;white-space:nowrap;overflow:hidden'":"")+">");
-			d = time.mktime(day)/86400;
+			d = lib.time.mktime(day)/86400;
 			print_datelink(d, pad(day.tm_mday));
 			//printf("</span>");
 
@@ -68,7 +68,7 @@ function mlist() {
 			for (i=0;i<sqrlen;i++) {
 				rec=sqr.rows[i];
 				id=tonumber(rec['eventid']);
-				et = new datetime(time.mktime(rec['eventstart']));
+				et = new datetime(lib.time.mktime(rec['eventstart']));
 				calendar.tz_utc2user(et);
 				//ts=""+pad(et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
 				ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");

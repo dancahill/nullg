@@ -34,7 +34,7 @@ namespace calendar {
 	// get full month in calendar table format containing a given unix timestamp
 	function getmonth(utime) {
 		utime=utime-(utime%86400);
-		t=time.gmtime(utime);
+		t=lib.time.gmtime(utime);
 		printday=t.tm_mday-t.tm_wday;
 		startday=utime/86400-t.tm_wday;
 		while (printday>1) { printday-=7; startday-=7; }
@@ -43,7 +43,7 @@ namespace calendar {
 		for (w=0;;w++) {
 			mon[w]={};
 			for (wd=0;wd<7;wd++) {
-				dt=time.gmtime(d*86400);
+				dt=lib.time.gmtime(d*86400);
 				mon[w][wd]={
 					tm_mday=dt.tm_mday;
 					tm_mon=dt.tm_mon;
@@ -52,7 +52,7 @@ namespace calendar {
 				};
 				d++;
 			}
-			dt=time.gmtime(d*86400);
+			dt=lib.time.gmtime(d*86400);
 			if (dt.tm_mon>t.tm_mon || dt.tm_year>t.tm_year) break;
 		}
 		return mon;

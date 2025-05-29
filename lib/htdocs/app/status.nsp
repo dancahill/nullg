@@ -6,10 +6,10 @@ function update_accounts() {
 	sqr=sql.query(query);
 	// sync the pop3 mailboxes first
 	foreach (row in sqr.rows) {
-		t1=time.mktime(row['lastcheck']);
-		t2=time.mktime(time.sqltime());
+		t1=lib.time.mktime(row['lastcheck']);
+		t2=lib.time.mktime(lib.time.sqltime());
 
-		//file.append("/usr/local/nullg/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], time.sqltime()));
+		//file.append("/usr/local/nullg/var/log/debug.log", sprintf("[%s][%s] - ", row['lastcheck'], lib.time.sqltime()));
 		//file.append("/usr/local/nullg/var/log/debug.log", sprintf("t1=%d t2=%d t2-t1=%d\r\n", t1, t2, t2-t1));
 		/*
 		[2018-07-25 23:59:36] [2018-07-26 13:25:18] t1=1830769236 t2=1701133218 t2-t1=-129636018
@@ -28,8 +28,8 @@ function update_accounts() {
 	}
 	// then try to send stuff
 	foreach (row in sqr.rows) {
-		t1=time.mktime(row['lastcheck']);
-		t2=time.mktime(time.sqltime());
+		t1=lib.time.mktime(row['lastcheck']);
+		t2=lib.time.mktime(lib.time.sqltime());
 		if (t2-t1<120) continue;
 		try {
 			mail.sync.smtp_sync(row);

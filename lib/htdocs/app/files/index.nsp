@@ -7,7 +7,7 @@ printf("<div style='white-space:pre;text-align:left'>");
 
 local function pad(s, p) {
 	s='0'*p+s.tostring();
-	return string.sub(s, string.len(s)-p, p);
+	return lib.string.sub(s, lib.string.len(s)-p, p);
 }
 
 ui=new db.userinfo();
@@ -19,8 +19,8 @@ printf("filedirname=[%s]<hr/>", filedirname);
 
 //printf("%s", serialize(_GLOBALS));
 //printf("MASTERGLOBAL = %s<hr/>", serialize(MASTERGLOBAL));
-printf("_SERVER = %s<hr/>", serialize(_SERVER));
-printf("dirlist filedirname = %s<hr/>", serialize(dirlist(filedirname)));
+printf("_SERVER = %s<hr/>", lib.text.serialize(_SERVER));
+printf("dirlist filedirname = %s<hr/>", lib.text.serialize(dirlist(filedirname)));
 
 printf("</div>");
 

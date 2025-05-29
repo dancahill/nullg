@@ -84,7 +84,7 @@ function show_month(utime) {
 		print("<tr>");
 		foreach (day in week) {
 			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-			d = time.mktime(day)/86400;///86400;
+			d = lib.time.mktime(day)/86400;///86400;
 			printf("<td>");
 			print_datelink(d, day.tm_mday.tostring());
 			printf("</td>");
@@ -144,7 +144,7 @@ try {
 	print("</div>");
 	printf("<b>");
 	print_datelink(day-1, "<<");
-	printf(" Calendar Events for %s ", time.sqltime(t).sub(0, 10));
+	printf(" Calendar Events for %s ", lib.time.sqltime(t).sub(0, 10));
 	print_datelink(day+1, ">>");
 	printf("</b>");
 	print("<div>");

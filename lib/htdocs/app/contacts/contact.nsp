@@ -363,7 +363,7 @@ class contact {
 
 		print("<SCRIPT LANGUAGE=\"JavaScript\" type=\"text/javascript\">\r\n<!--\r\n");
 	//	if (tz1!=tz2) {
-			t=time.now();
+			t=lib.time.now();
 	//		t+=time_tzoffset(conn, t);
 	//		t+=(tz2-tz1);
 			print(

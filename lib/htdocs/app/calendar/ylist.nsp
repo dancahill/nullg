@@ -29,7 +29,7 @@ function show_month(utime) {
 		print("<tr>");
 		foreach (day in week) {
 			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-			d = time.mktime(day)/86400;
+			d = lib.time.mktime(day)/86400;
 			printf("<td>");
 			if (m==day.tm_mon) {
 				print_datelink(d, day.tm_mday.tostring());
@@ -55,14 +55,14 @@ try {
 	print("<div style='text-align:left'>");
 	calendar.html.htselect_userfilter();
 	print("</div>");
-	tm=time.gmtime(t);
+	tm=lib.time.gmtime(t);
 	print("<br/>");
 	print("<center><table>");
 	for (i=0;i<4;i++) {
 		print("<tr>");
 		for (j=0;j<3;j++) {
 			print("<td style='vertical-align:top'>");
-			show_month(time.mktime({tm_mday=1, tm_mon=i*3+j+1, tm_year=tm.tm_year}));
+			show_month(lib.time.mktime({tm_mday=1, tm_mon=i*3+j+1, tm_year=tm.tm_year}));
 			print("</td>");
 		}
 		print("</tr>");

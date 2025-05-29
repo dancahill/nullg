@@ -97,8 +97,8 @@ namespace db {
 			printf("	if (record['Xid']==0) {\r\n");
 			// print INSERT helpers
 			printf("	c = new sqlcommand(\"INSERT INTO %s (%s) VALUES (%s);\");\r\n", tablename, a, b);
-			printf("	c.addvalue('obj_ctime', time.sqltime(time.gmtime()));\r\n");
-			printf("	c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
+			printf("	c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));\r\n");
+			printf("	c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));\r\n");
 			printf("	c.addvalue('obj_uid', ui.userid);\r\n");
 			printf("	c.addvalue('obj_gid', ui.groupid);\r\n");
 			printf("	c.addvalue('obj_did', ui.domainid);\r\n");
@@ -128,7 +128,7 @@ namespace db {
 			print("	} else {\r\n");
 			// print UPDATE helpers
 			printf("c = new sqlcommand(\"UPDATE %s SET %s %s;\");\r\n", tablename, a, b);
-			printf("c.addvalue('obj_mtime', time.sqltime(time.gmtime()));\r\n");
+			printf("c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));\r\n");
 			first=true;
 			foreach (f in t.fields) {
 				fname=f[0];
@@ -180,8 +180,8 @@ namespace db {
 				if (record['domainid']==0) {
 					c = new sqlcommand("INSERT INTO gw_domains (domainid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,domainname) VALUES (?,?,?,?,?,?,?,?,?);");
 					c.addvalue("domainid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', 0);
 					c.addvalue('obj_gid', 0);
 					c.addvalue('obj_did', 0);
@@ -197,7 +197,7 @@ namespace db {
 					record['domainid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_domains SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,domainname=? WHERE domainid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", record["obj_uid"]);
 					c.addvalue("obj_gid", record["obj_gid"]);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -249,8 +249,8 @@ namespace db {
 				if (record['domainaliasid']==0) {
 					c = new sqlcommand("INSERT INTO gw_domains_aliases (domainaliasid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,domainid,domainname) VALUES (?,?,?,?,?,?,?,?,?,?);");
 					c.addvalue("domainaliasid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', 0);
 					c.addvalue('obj_gid', 0);
 					c.addvalue('obj_did', record["domainid"]);
@@ -264,7 +264,7 @@ namespace db {
 					record['domainaliasid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_domains_aliases SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,domainname=? WHERE domainaliasid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", record["obj_uid"]);
 					c.addvalue("obj_gid", record["obj_gid"]);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -327,8 +327,8 @@ namespace db {
 				if (record['groupid']==0) {
 					c = new sqlcommand("INSERT INTO gw_groups (groupid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,groupname,availability,motd) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 					c.addvalue("groupid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', 0);
 					c.addvalue('obj_gid', 0);
 					c.addvalue('obj_did', record["obj_did"]);
@@ -343,7 +343,7 @@ namespace db {
 					record['groupid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_groups SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,groupname=?,availability=?,motd=? WHERE groupid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", 0);
 					c.addvalue("obj_gid", 0);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -394,8 +394,8 @@ namespace db {
 				if (record['groupmemberid']==0) {
 					c = new sqlcommand("INSERT INTO gw_groups_members (groupmemberid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,userid,groupid) VALUES (?,?,?,?,?,?,?,?,?,?);");
 					c.addvalue("groupmemberid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', record["userid"]);
 					c.addvalue('obj_gid', record["groupid"]);
 					c.addvalue('obj_did', record["obj_did"]);
@@ -409,7 +409,7 @@ namespace db {
 					record['groupmemberid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_groups_members SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,userid=?,groupid=? WHERE groupmemberid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", record["obj_uid"]);
 					c.addvalue("obj_gid", record["obj_gid"]);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -468,8 +468,8 @@ namespace db {
 				if (record['userid']==0) {
 					c = new sqlcommand("INSERT INTO gw_users (userid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,username,password,groupid,domainid,enabled,authdomainadmin,authadmin,authbookmarks,authcalendar,authcalls,authcontacts,authemail,authfiles,authfinance,authforums,authmessages,authprofile,authprojects,authquery,prefdaystart,prefdaylength,prefmailcurrent,prefmaildefault,prefmaxlist,prefmenustyle,preftimezone,prefgeozone,preflanguage,preftheme,availability,surname,givenname,jobtitle,division,supervisor,address,locality,region,country,postalcode,homenumber,worknumber,faxnumber,cellnumber,pagernumber,email,birthdate,hiredate,sin,isactive) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 					c.addvalue("userid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', 0);
 					c.addvalue('obj_gid', 0);
 					c.addvalue('obj_did', record["domainid"]);
@@ -534,7 +534,7 @@ namespace db {
 					record['userid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_users SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,username=?,password=?,groupid=?,domainid=?,enabled=?,authdomainadmin=?,authadmin=?,authbookmarks=?,authcalendar=?,authcalls=?,authcontacts=?,authemail=?,authfiles=?,authfinance=?,authforums=?,authmessages=?,authprofile=?,authprojects=?,authquery=?,prefdaystart=?,prefdaylength=?,prefmailcurrent=?,prefmaildefault=?,prefmaxlist=?,prefmenustyle=?,preftimezone=?,prefgeozone=?,preflanguage=?,preftheme=?,availability=?,surname=?,givenname=?,jobtitle=?,division=?,supervisor=?,address=?,locality=?,region=?,country=?,postalcode=?,homenumber=?,worknumber=?,faxnumber=?,cellnumber=?,pagernumber=?,email=?,birthdate=?,hiredate=?,sin=?,isactive=? WHERE userid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", record["obj_uid"]);
 					c.addvalue("obj_gid", record["obj_gid"]);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -651,8 +651,8 @@ namespace db {
 				if (record['zoneid']==0) {
 					c = new sqlcommand("INSERT INTO gw_zones (zoneid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,zonename) VALUES (?,?,?,?,?,?,?,?,?);");
 					c.addvalue("zoneid", null);
-					c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue('obj_uid', 0);
 					c.addvalue('obj_gid', 0);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -665,7 +665,7 @@ namespace db {
 					record['zoneid']=sqr.lastid;
 				} else {
 					c = new sqlcommand("UPDATE gw_zones SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,zonename=? WHERE zoneid=?;");
-					c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+					c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 					c.addvalue("obj_uid", record["obj_uid"]);
 					c.addvalue("obj_gid", record["obj_gid"]);
 					c.addvalue("obj_did", record["obj_did"]);
@@ -770,8 +770,8 @@ namespace db {
 			if (bookmark['bookmarkid']==0) {
 				c = new sqlcommand("INSERT INTO gw_bookmarks (bookmarkid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,bookmarkname,bookmarkurl) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('bookmarkid', null);
-				c.addvalue('obj_ctime', time.sqltime());
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_ctime', lib.time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -787,7 +787,7 @@ namespace db {
 				bookmark['bookmarkid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,bookmarkname=?,bookmarkurl=? WHERE obj_did = "+ui.domainid+" AND bookmarkid=?;");
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', tonumber(bookmark['obj_uid']));
 				c.addvalue('obj_gid', tonumber(bookmark['obj_gid']));
 				c.addvalue('obj_did', tonumber(bookmark['obj_did']));
@@ -809,8 +809,8 @@ namespace db {
 			if (folder['folderid']==0) {
 				c = new sqlcommand("INSERT INTO gw_bookmarks_folders (folderid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,parentid,foldername) VALUES (?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('folderid', null);
-				c.addvalue('obj_ctime', time.sqltime());
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_ctime', lib.time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -824,7 +824,7 @@ namespace db {
 				folder['folderid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_bookmarks_folders SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,parentid=?,foldername=? WHERE obj_did = "+ui.domainid+" AND folderid=?;");
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', tonumber(folder['obj_uid']));
 				c.addvalue('obj_gid', tonumber(folder['obj_gid']));
 				c.addvalue('obj_did', tonumber(folder['obj_did']));
@@ -893,8 +893,8 @@ namespace db {
 			if (record['contactid']==0) {
 				c = new sqlcommand("INSERT INTO gw_contacts (contactid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,folderid,username,password,enabled,geozone,timezone,surname,givenname,salutation,contacttype,referredby,altcontact,prefbilling,email,website,website2,website3,website4,website5,homenumber,worknumber,faxnumber,mobilenumber,jobtitle,organization,homeaddress,homelocality,homeregion,homecountry,homepostalcode,workaddress,worklocality,workregion,workcountry,workpostalcode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("contactid", null);
-				c.addvalue('obj_ctime', time.sqltime());
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_ctime', lib.time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -941,7 +941,7 @@ namespace db {
 				record['contactid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_contacts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,folderid=?,username=?,password=?,enabled=?,geozone=?,timezone=?,surname=?,givenname=?,salutation=?,contacttype=?,referredby=?,altcontact=?,prefbilling=?,email=?,website=?,website2=?,website3=?,website4=?,website5=?,homenumber=?,worknumber=?,faxnumber=?,mobilenumber=?,jobtitle=?,organization=?,homeaddress=?,homelocality=?,homeregion=?,homecountry=?,homepostalcode=?,workaddress=?,worklocality=?,workregion=?,workcountry=?,workpostalcode=? WHERE obj_did = "+ui.domainid+" AND contactid=?;");
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', tonumber(record['obj_uid']));
 				c.addvalue('obj_gid', tonumber(record['obj_gid']));
 				c.addvalue('obj_did', tonumber(record['obj_did']));
@@ -1030,10 +1030,10 @@ namespace db {
 				event.rows[0]['assignedto']=ui.userid;
 				event.rows[0]['busy']=1;
 				event.rows[0]['priority']=2;
-				t=time.mktime(time.gmtime())+900;
+				t=lib.time.mktime(lib.time.gmtime())+900;
 				t-=t%900;
-				event.rows[0]['eventstart']=time.sqltime(time.gmtime(t));
-				event.rows[0]['eventfinish']=time.sqltime(time.gmtime(t+900));
+				event.rows[0]['eventstart']=lib.time.sqltime(lib.time.gmtime(t));
+				event.rows[0]['eventfinish']=lib.time.sqltime(lib.time.gmtime(t+900));
 				return event;
 			}
 			sqr=sql.query("SELECT * FROM gw_events WHERE obj_did = "+ui.domainid+" AND eventid = "+id+";");
@@ -1044,8 +1044,8 @@ namespace db {
 			if (record['eventid']==0) {
 				c = new sqlcommand("INSERT INTO gw_events (eventid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,eventname,eventtype,contactid,projectid,priority,reminder,eventstart,eventfinish,busy,status,closingstatus,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("eventid", null);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1071,7 +1071,7 @@ namespace db {
 				record['eventid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_events SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,eventname=?,eventtype=?,contactid=?,projectid=?,priority=?,reminder=?,eventstart=?,eventfinish=?,busy=?,status=?,closingstatus=?,details=? WHERE obj_did = "+ui.domainid+" AND eventid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", record["obj_gid"]);
 				c.addvalue("obj_did", record["obj_did"]);
@@ -1148,8 +1148,8 @@ namespace db {
 					",address,replyto,hosttype,pophost,popport,popssl,smtphost,smtpport,smtpssl,popusername,poppassword,smtpauth,notify,remove,showdebug,signature"+
 					") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue('mailaccountid', null);
-				c.addvalue('obj_ctime', time.sqltime());
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_ctime', lib.time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1181,7 +1181,7 @@ namespace db {
 			} else {
 				c = new sqlcommand("UPDATE gw_email_accounts SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,accountname=?,realname=?,organization=?,address=?,replyto=?,hosttype=?"+
 					",popusername=?,poppassword=?,pophost=?,popport=?,popssl=?,smtpauth=?,smtphost=?,smtpport=?,smtpssl=?,notify=?,remove=?,showdebug=?,signature=? WHERE obj_did = "+ui.domainid+" AND mailaccountid=?;");
-				c.addvalue('obj_mtime', time.sqltime());
+				c.addvalue('obj_mtime', lib.time.sqltime());
 				c.addvalue('obj_uid', tonumber(record['obj_uid']));
 				c.addvalue('obj_gid', tonumber(record['obj_gid']));
 				c.addvalue('obj_did', tonumber(record['obj_did']));
@@ -1254,8 +1254,8 @@ namespace db {
 				max=tonumber(sqr.rows[0]['m']);
 				c = new sqlcommand("INSERT INTO gw_email_folders (mailfolderid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,accountid,parentfolderid,foldername) VALUES (?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("mailfolderid", max+1);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', 0);
 				c.addvalue('obj_did', ui.domainid);
@@ -1270,7 +1270,7 @@ namespace db {
 				record['mailfolderid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_email_folders SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,accountid=?,parentfolderid=?,foldername=? WHERE obj_did = "+ui.domainid+" AND accountid=? AND mailfolderid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", 0);
 				c.addvalue("obj_did", record["obj_did"]);
@@ -1327,8 +1327,8 @@ namespace db {
 			if (record['noteid']==0) {
 				c = new sqlcommand("INSERT INTO gw_notes (noteid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,tablename,tableindex,notetitle,notetext) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("noteid", null);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1344,7 +1344,7 @@ namespace db {
 				record['noteid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_notes SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,tablename=?,tableindex=?,notetitle=?,notetext=? WHERE obj_did = "+ui.domainid+" AND noteid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", record["obj_gid"]);
 				c.addvalue("obj_did", record["obj_did"]);
@@ -1382,7 +1382,7 @@ namespace db {
 		function set(record) {
 			ui=new db.userinfo();
 			c = new sqlcommand("UPDATE gw_users SET obj_mtime=?,password=?,prefdaystart=?,prefdaylength=?,prefmailcurrent=?,prefmaildefault=?,prefmaxlist=?,prefmenustyle=?,preftimezone=?,prefgeozone=?,preflanguage=?,preftheme=? WHERE domainid=? AND userid=?;");
-			c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+			c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 			c.addvalue("password", record["password"]);
 			c.addvalue("prefdaystart", tonumber(record["prefdaystart"]));
 			c.addvalue("prefdaylength", tonumber(record["prefdaylength"]));
@@ -1432,8 +1432,8 @@ namespace db {
 			if (record['projectid']==0) {
 				c = new sqlcommand("INSERT INTO gw_projects (projectid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,projectname,projectadmin,projectstart,projectfinish,status,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("projectid", null);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1451,7 +1451,7 @@ namespace db {
 				record['projectid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_projects SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,projectname=?,projectadmin=?,projectstart=?,projectfinish=?,status=?,details=? WHERE obj_did = "+ui.domainid+" AND projectid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", record["obj_gid"]);
 				c.addvalue("obj_did", record["obj_did"]);
@@ -1509,8 +1509,8 @@ namespace db {
 			if (record['queryid']==0) {
 				c = new sqlcommand("INSERT INTO gw_queries (queryid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,queryname,query) VALUES (?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("queryid", null);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1524,7 +1524,7 @@ namespace db {
 				record['queryid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_queries SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,queryname=?,query=? WHERE obj_did = "+ui.domainid+" AND queryid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", record["obj_gid"]);
 				c.addvalue("obj_did", record["obj_did"]);
@@ -1576,9 +1576,9 @@ namespace db {
 				task.rows[0]['assignedby']=ui.userid;
 				task.rows[0]['assignedto']=ui.userid;
 				task.rows[0]['priority']=2;
-				t=time.mktime(time.gmtime())+900;
+				t=lib.time.mktime(lib.time.gmtime())+900;
 				t-=t%900;
-				task.rows[0]['duedate']=time.sqltime(time.gmtime(t));
+				task.rows[0]['duedate']=lib.time.sqltime(lib.time.gmtime(t));
 				return task;
 			}
 			sqr=sql.query("select * from gw_tasks where obj_did = "+ui.domainid+" AND taskid = "+id+";");
@@ -1589,8 +1589,8 @@ namespace db {
 			if (record['taskid']==0) {
 				c = new sqlcommand("INSERT INTO gw_tasks (taskid,obj_ctime,obj_mtime,obj_uid,obj_gid,obj_did,obj_gperm,obj_operm,assignedby,assignedto,taskname,contactid,projectid,duedate,taskstart,taskfinish,priority,totaltime,progress,reminder,status,details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 				c.addvalue("taskid", null);
-				c.addvalue('obj_ctime', time.sqltime(time.gmtime()));
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_ctime', lib.time.sqltime(lib.time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue('obj_uid', ui.userid);
 				c.addvalue('obj_gid', ui.groupid);
 				c.addvalue('obj_did', ui.domainid);
@@ -1616,7 +1616,7 @@ namespace db {
 				record['taskid']=sqr.lastid;
 			} else {
 				c = new sqlcommand("UPDATE gw_tasks SET obj_mtime=?,obj_uid=?,obj_gid=?,obj_did=?,obj_gperm=?,obj_operm=?,assignedby=?,assignedto=?,taskname=?,contactid=?,projectid=?,duedate=?,taskstart=?,taskfinish=?,priority=?,totaltime=?,progress=?,reminder=?,status=?,details=? WHERE obj_did = "+ui.domainid+" AND taskid=?;");
-				c.addvalue('obj_mtime', time.sqltime(time.gmtime()));
+				c.addvalue('obj_mtime', lib.time.sqltime(lib.time.gmtime()));
 				c.addvalue("obj_uid", record["obj_uid"]);
 				c.addvalue("obj_gid", record["obj_gid"]);
 				c.addvalue("obj_did", record["obj_did"]);

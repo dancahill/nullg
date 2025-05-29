@@ -148,14 +148,14 @@ class task {
 			addfield(TASK, "contactid");
 			addfield(TASK, "projectid");
 			t=time.mktime(_POST["DUEDATE"]);
-			if (t<=0) t=time.now();
-			addfield(TASK, "duedate", time.sqltime(t).sub(0, 10));
+			if (t<=0) t=lib.time.now();
+			addfield(TASK, "duedate", lib.time.sqltime(t).sub(0, 10));
 			t=time.mktime(_POST["TASKSTART"]);
-			if (t<=0) t=time.now();
-			addfield(TASK, "taskstart", time.sqltime(t).sub(0, 10));
+			if (t<=0) t=lib.time.now();
+			addfield(TASK, "taskstart", lib.time.sqltime(t).sub(0, 10));
 			t=time.mktime(_POST["TASKFINISH"]);
-			if (t<=0) t=time.now();
-			addfield(TASK, "taskfinish", time.sqltime(t).sub(0, 10));
+			if (t<=0) t=lib.time.now();
+			addfield(TASK, "taskfinish", lib.time.sqltime(t).sub(0, 10));
 			addfield(TASK, "priority");
 			// show totaltime in hours, but store it in seconds
 			t=tonumber(_POST["TOTALTIME"])*3600;

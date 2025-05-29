@@ -141,7 +141,7 @@ namespace mail {
 		}
 	};
 	function getaddr(x) {
-		x0=net.mime.rfc2047.decode(x);
+		x0=lib.net.mime.rfc2047.decode(x);
 		if (typeof(x0)!='string') return { name=x, addr=x, full=x };
 		if ((x1=x0.str("<"))==null) return { name=x0, addr=x0, full=x0 };
 		if ((x2=x1.str(">"))==null) return { name=x0, addr=x0, full=x0 };
@@ -207,7 +207,7 @@ namespace mail {
 		c.addvalue('hdr_replyto', replyto);
 		c.addvalue('hdr_to', to);
 		c.addvalue('hdr_subject', subject);
-		c.addvalue('hdr_date', time.sqltime(dt));
+		c.addvalue('hdr_date', lib.time.sqltime(dt));
 		c.addvalue('hdr_messageid', messageid);
 		c.addvalue('hdr_inreplyto', inreplyto);
 		c.addvalue('hdr_contenttype', contenttype);
@@ -228,7 +228,7 @@ namespace mail {
 			s='0'*p+s.tostring();
 			return string.sub(s, string.len(s)-p, p);
 		}
-		//file.writeall(sprintf("%s/%d.raw", MASTERGLOBAL['CONFIG']['paths']['var_tmp'], time.now()), POSTRAWDATA);
+		//file.writeall(sprintf("%s/%d.raw", MASTERGLOBAL['CONFIG']['paths']['var_tmp'], lib.time.now()), POSTRAWDATA);
 		dim = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 		miy = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 		var userid   = tonumber(_USER['userid']);
@@ -414,7 +414,7 @@ namespace mail.sync {
 		var newmail=0;
 		var deleted=0;
 		statustext="";
-		sql.update(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d;", time.sqltime(), accountid));
+		sql.update(sprintf("UPDATE gw_email_accounts SET lastcheck = '%s' WHERE mailaccountid = %d;", lib.time.sqltime(), accountid));
 		pop=new net.pop3.client();
 		pop.username = row['popusername'];
 		pop.password = net.mime.base64.decode(row['poppassword']);

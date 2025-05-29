@@ -4,9 +4,9 @@ class datetime {
 		if (typeof(t)=="number") {
 			this.unixtime=t;
 		} else if (typeof(t)=="table") {
-			this.unixtime=time.mktime(t);
+			this.unixtime=lib.time.mktime(t);
 		} else {
-			this.unixtime=time.now();
+			this.unixtime=lib.time.now();
 		}
 	}
 
@@ -39,22 +39,22 @@ class datetime {
 	}
 
 	function gethours() {
-		t=time.gmtime(this.unixtime);
+		t=lib.time.gmtime(this.unixtime);
 		return t.tm_hour;
 	}
 
 	function getminutes() {
-		t=time.gmtime(this.unixtime);
+		t=lib.time.gmtime(this.unixtime);
 		return t.tm_min;
 	}
 
 	function getseconds() {
-		t=time.gmtime(this.unixtime);
+		t=lib.time.gmtime(this.unixtime);
 		return t.tm_sec;
 	}
 
 	function isdst() {
-		t=time.localtime(this.unixtime);
+		t=lib.time.localtime(this.unixtime);
 		return t.tm_isdst?true:false;
 	}
 
@@ -66,6 +66,6 @@ class datetime {
 	}
 
 	function tostring() {
-		return time.sqltime(time.gmtime(this.unixtime));
+		return lib.time.sqltime(lib.time.gmtime(this.unixtime));
 	}
 }

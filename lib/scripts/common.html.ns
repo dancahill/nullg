@@ -74,7 +74,7 @@ namespace html {
 				print("<TR BGCOLOR='#F0F0F0'>");
 				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'><IMG SRC='/images/file-folder.png' ALT='Directory'>&nbsp;<A HREF='", x.name, "/'>", x.name, "/</A></TD>");
 				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
-				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", time.sqltime(x.mtime), "</TD>");
+				print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", lib.time.sqltime(x.mtime), "</TD>");
 				print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 				print("</TR>\n");
 			}
@@ -84,7 +84,7 @@ namespace html {
 			print("<TR BGCOLOR='#F0F0F0'>");
 			print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'><IMG SRC='/images/file-default.png' ALT='File'>&nbsp;<A HREF='", x.name, "'>", x.name, "</A></TD>");
 			print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", commas(x.size), "</TD>");
-			print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", time.sqltime(x.mtime), "</TD>");
+			print("<TD ALIGN=right NOWRAP STYLE='border-style:solid'>", lib.time.sqltime(x.mtime), "</TD>");
 			print("<TD ALIGN=left  NOWRAP STYLE='border-style:solid'>&nbsp;</TD>");
 			print("</TR>\n");
 		}
@@ -308,8 +308,9 @@ namespace html {
 		print("<a href=\"javascript:void(0)\" class=\"closebtn\" onclick=\"ns.closeNav()\">&times;</a>");
 		foreach(mod in _CONFIG.MODULES) {
 			if (mod.name==null || mod.name.length()==0) continue;
-			printf("<a href=\"%s\" onclick=\"ns.closeNav();return ns.GoTo(event);\">", mod['uri']);
-			print("<img style=\"border:0;\" height=24 width=24 src=\"/lib/images/icons/",mod['pic'],"\" title=\"",mod['name'],"\">",mod['name'],"</a><br/>");
+			print("<a href=\"", mod.uri ,"\" onclick=\"ns.closeNav();return ns.GoTo(event);\">");
+			print("<img style=\"border:0;\" height=24 width=24 src=\"/lib/images/icons/", mod.pic, "\" title=\"", mod.name, "\">", mod.name, "</a><br/>");
+			// printf("mod <pre>[%s]</pre>", lib.text.serialize(mod));
 		}
 		printf("<hr/>");
 		printf("<a href=\"javascript:ns.ShowHelp();\">%s</a>&nbsp;&middot;&nbsp;", lang_gets("httpd", "menu_top_help"));

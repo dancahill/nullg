@@ -61,10 +61,10 @@ namespace tasks.html {
 	}
 
 	function htselect_duedate(value) {
-		if (value==null || value=='') value=time.sqltime().sub(0, 10);
-		t=time.mktime(value);
-		if (t<=0) t=time.now();
-		print(time.sqltime(t).sub(0, 10));
+		if (value==null || value=='') value=lib.time.sqltime().sub(0, 10);
+		t=lib.time.mktime(value);
+		if (t<=0) t=lib.time.now();
+		print(lib.time.sqltime(t).sub(0, 10));
 	}
 
 	function htselect_status(selected) {
@@ -136,7 +136,7 @@ namespace tasks.html {
 	function htselect_totaltime(value) {
 		// if (value==null || value=='') value=time.sqltime().sub(0, 10);
 		// t=time.mktime(value);
-		// if (t<=0) t=time.now();
+		// if (t<=0) t=lib.time.now();
 		// print(time.sqltime(t).sub(0, 10));
 		t=tonumber(value)/3600;
 		printf("%f", t);

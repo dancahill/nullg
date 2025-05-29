@@ -13,7 +13,7 @@ function motd() {
 		}
 		d1=new datetime(utime);
 		d2=d1.adddays(1);
-		// printf("utime=[%s]<br>", time.sqltime(utime));
+		// printf("utime=[%s]<br>", lib.time.sqltime(utime));
 		// printf("d1=[%s]<br>", d1.tostring());
 		// printf("d2=[%s]<br>", d2.tostring());
 		ui=new db.userinfo();
@@ -27,11 +27,11 @@ function motd() {
 			rec=sqr.rows[j];
 			found=true;
 			id=tonumber(rec['eventid']);
-			et = new datetime(time.mktime(rec['eventstart']));
+			et = new datetime(lib.time.mktime(rec['eventstart']));
 			//calendar.tz_utc2user(et);
 			et.unixtime+=et.gettzoffset();
 			ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
-			et2 = new datetime(time.mktime(rec['eventfinish']));
+			et2 = new datetime(lib.time.mktime(rec['eventfinish']));
 			//calendar.tz_utc2user(et2);
 			et2.unixtime+=et2.gettzoffset();
 			ts2=""+(et2.gethours()==0?12:(et2.gethours()>12)?(et2.gethours()-12):et2.gethours())+":"+pad(et2.getminutes())+(et2.gethours()>=12?"pm":"am");

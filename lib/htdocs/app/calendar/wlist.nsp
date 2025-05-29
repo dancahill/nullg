@@ -49,18 +49,18 @@ function show_day(utime) {
 	sqr=db.events.getlist(d1.tostring(), d2.tostring(), userid, groupid, status);
 	sqrlen=sqr.rows.length();
 	printf("<tr><th colspan=2 style='text-align:left'>");
-	print_datelink(utime/86400, time.sqltime(utime).sub(0, 10));
+	print_datelink(utime/86400, lib.time.sqltime(utime).sub(0, 10));
 	printf("</th></tr>\r\n");
 	found=false;
 	for (j=0;j<sqrlen;j++) {
 		rec=sqr.rows[j];
 		found=true;
 		id=tonumber(rec['eventid']);
-		et = new datetime(time.mktime(rec['eventstart']));
+		et = new datetime(lib.time.mktime(rec['eventstart']));
 		et.unixtime+=et.gettzoffset();
 		//calendar.tz_utc2user(et);
 		ts=""+(et.gethours()==0?12:(et.gethours()>12)?(et.gethours()-12):et.gethours())+":"+pad(et.getminutes())+(et.gethours()>=12?"pm":"am");
-		et2 = new datetime(time.mktime(rec['eventfinish']));
+		et2 = new datetime(lib.time.mktime(rec['eventfinish']));
 		//calendar.tz_utc2user(et2);
 		et2.unixtime+=et2.gettzoffset();
 		ts2=""+(et2.gethours()==0?12:(et2.gethours()>12)?(et2.gethours()-12):et2.gethours())+":"+pad(et2.getminutes())+(et2.gethours()>=12?"pm":"am");
@@ -87,7 +87,7 @@ function show_month(utime) {
 		print("<tr>");
 		foreach (day in week) {
 			color=day.t==utime?'blue':day.tm_mon==month[1][0].tm_mon?'black':'grey';
-			d = time.mktime(day)/86400;///86400;
+			d = lib.time.mktime(day)/86400;///86400;
 			printf("<td>");
 			print_datelink(d, day.tm_mday.tostring());
 			printf("</td>");
@@ -142,7 +142,7 @@ try {
 		t=day*86400;
 	}
 
-	tm=time.gmtime(t);
+	tm=lib.time.gmtime(t);
 	t1=t-(tm.tm_wday*86400);
 
 	calendar.html.headermenu(day);
@@ -151,7 +151,7 @@ try {
 	print("</div>");
 	printf("<b>");
 	print_datelink_w(day-7, "<<");
-	printf(" Calendar Events for %s to %s ", time.sqltime(t1).sub(0, 10), time.sqltime(t1+(6*86400)).sub(0, 10));
+	printf(" Calendar Events for %s to %s ", lib.time.sqltime(t1).sub(0, 10), lib.time.sqltime(t1+(6*86400)).sub(0, 10));
 	print_datelink_w(day+7, ">>");
 	printf("</b>");
 	print("<div>");

@@ -18,7 +18,7 @@ namespace nullg.smtp {
 				cc=_SERVER['REMOTE_COUNTRY_CODE'].tostring();
 				if (cc=="RU"||cc=="CN") {
 					reason=sprintf("%s (%s) banned", _SERVER['REMOTE_COUNTRY_NAME'], _SERVER['REMOTE_COUNTRY_CODE']);
-					q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], time.sqltime(time.now()+43200), reason.sub(0, 60));
+					q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], lib.time.sqltime(lib.time.now()+43200), reason.sub(0, 60));
 					logaccess(sprintf("%s:%d -- DENIED - %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], sql.escape(reason)));
 					sql.update(q);
 				}
@@ -31,7 +31,7 @@ namespace nullg.smtp {
 			try {
 				// r=this.ip2location();
 				reason=sprintf("%s from %s (%s)", reason, _SERVER['REMOTE_COUNTRY_NAME'], _SERVER['REMOTE_COUNTRY_CODE']);
-				q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], time.sqltime(time.now()+3600), reason.sub(0, 60));
+				q=sprintf("INSERT INTO gw_smtp_relayrules (relayruleid, ipaddress, ruletype, persistence, expires, reason) VALUES (0, '%s', 'deny', 'temp', '%s', '%s')", _SERVER['REMOTE_ADDR'], lib.time.sqltime(lib.time.now()+3600), reason.sub(0, 60));
 				logaccess(sprintf("%s:%d -- DENIED - %s", _SERVER['REMOTE_ADDR'], _SERVER['REMOTE_PORT'], sql.escape(reason)));
 				sql.update(q);
 			} catch (ex) {
